@@ -1,0 +1,3186 @@
+[
+  {
+    "word": "alive",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Having life; living; not dead",
+    "example": "As long as the plant is alive, he will continue to water it.",
+    "pronunciation": "/əˈlaɪv/"
+  },
+  {
+    "word": "alone",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "By oneself, solitary.",
+    "example": "I can't ask for help because I am alone.",
+    "pronunciation": "/əˈləʊn/"
+  },
+  {
+    "word": "bad",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Unfavorable; negative; not good.",
+    "example": "Abducting children is bad for mothers.",
+    "pronunciation": "/bæːd/"
+  },
+  {
+    "word": "big",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Of great size, large.",
+    "example": "Elephants are big animals, and they eat a lot.",
+    "pronunciation": "/bɪɡ/"
+  },
+  {
+    "word": "black",
+    "level": "L1",
+    "type": "noun",
+    "definition": "(in chess and similar games) The person playing with the black set of pieces.",
+    "example": "At this point black makes a disastrous move.",
+    "pronunciation": "/blak/"
+  },
+  {
+    "word": "blue",
+    "level": "L1",
+    "type": "noun",
+    "definition": "Blue clothing",
+    "example": "The boys in blue marched to the pipers.",
+    "pronunciation": "/bluː/"
+  },
+  {
+    "word": "brave",
+    "level": "L1",
+    "type": "verb",
+    "definition": "To encounter with courage and fortitude, to defy, to provoke.",
+    "example": "After braving tricks on the high-dive, he braved a jump off the first diving platform.",
+    "pronunciation": "/bɹeɪv/"
+  },
+  {
+    "word": "bright",
+    "level": "L1",
+    "type": "noun",
+    "definition": "(in the plural) The high-beam intensity of motor vehicle headlamps.",
+    "example": "Your brights are on.",
+    "pronunciation": "/bɹaɪt/"
+  },
+  {
+    "word": "broken",
+    "level": "L1",
+    "type": "verb",
+    "definition": "To separate into two or more pieces, to fracture or crack, by a process that cannot easily be reversed for reassembly.",
+    "example": "If the vase falls to the floor, it might break.",
+    "pronunciation": "/ˈbɹəʊkən/"
+  },
+  {
+    "word": "brown",
+    "level": "L1",
+    "type": "noun",
+    "definition": "A colour like that of chocolate or coffee.",
+    "example": "The browns and greens in this painting give it a nice woodsy feel.",
+    "pronunciation": "/bɹaʊn/"
+  },
+  {
+    "word": "busy",
+    "level": "L1",
+    "type": "verb",
+    "definition": "To make somebody busy or active; to occupy.",
+    "example": "On my vacation I'll busy myself with gardening.",
+    "pronunciation": "/ˈbɪzi/"
+  },
+  {
+    "word": "calm",
+    "level": "L1",
+    "type": "verb",
+    "definition": "To make calm.",
+    "example": "to calm a crying baby",
+    "pronunciation": "/kam/"
+  },
+  {
+    "word": "clean",
+    "level": "L1",
+    "type": "noun",
+    "definition": "Removal of dirt.",
+    "example": "This place needs a clean.",
+    "pronunciation": "/kleːn/"
+  },
+  {
+    "word": "cold",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "(of a thing) Having a low temperature.",
+    "example": "A cold wind whistled through the trees.",
+    "pronunciation": "/kɔʊld/"
+  },
+  {
+    "word": "cool",
+    "level": "L1",
+    "type": "noun",
+    "definition": "A moderate or refreshing state of cold; moderate temperature of the air between hot and cold; coolness.",
+    "example": "in the cool of the morning",
+    "pronunciation": "/kuːl/"
+  },
+  {
+    "word": "dark",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Having an absolute or (more often) relative lack of light.",
+    "example": "The room was too dark for reading.",
+    "pronunciation": "/dɑːk/"
+  },
+  {
+    "word": "deep",
+    "level": "L1",
+    "type": "noun",
+    "definition": "(with \"the\") The deep part of a lake, sea, etc.",
+    "example": "creatures of the deep",
+    "pronunciation": "/diːp/"
+  },
+  {
+    "word": "dirty",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Unclean; covered with or containing unpleasant substances such as dirt or grime.",
+    "example": "Despite a walk in the rain, my shoes weren't too dirty.",
+    "pronunciation": "/ˈdɜːti/"
+  },
+  {
+    "word": "dry",
+    "level": "L1",
+    "type": "noun",
+    "definition": "The process by which something is dried.",
+    "example": "This towel is still damp: I think it needs another dry.",
+    "pronunciation": "/dɹaɪ/"
+  },
+  {
+    "word": "early",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "At a time in advance of the usual or expected event.",
+    "example": "at eleven, we went for an early lunch;  she began reading at an early age;  his mother suffered an early death",
+    "pronunciation": "/ˈɜː.li/"
+  },
+  {
+    "word": "empty",
+    "level": "L1",
+    "type": "noun",
+    "definition": "(usually plural) A container, especially a bottle, whose contents have been used up, leaving it empty.",
+    "example": "Put the empties out to be recycled.",
+    "pronunciation": "/ˈɛmpti/"
+  },
+  {
+    "word": "fair",
+    "level": "L1",
+    "type": "noun",
+    "definition": "Something which is fair (in various senses of the adjective).",
+    "example": "When will we learn to distinguish between the fair and the foul?",
+    "pronunciation": "/feː(ə)/"
+  },
+  {
+    "word": "far",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Distant; remote in space.",
+    "example": "He went to a far land.",
+    "pronunciation": "/fɑː/"
+  },
+  {
+    "word": "fast",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Firmly or securely fixed in place; stable.",
+    "example": "That rope is dangerously loose. Make it fast!",
+    "pronunciation": "/fɑːst/"
+  },
+  {
+    "word": "first",
+    "level": "L1",
+    "type": "noun",
+    "definition": "The person or thing in the first position.",
+    "example": "He was the first to complete the course.",
+    "pronunciation": "/fɪrst/"
+  },
+  {
+    "word": "fixed",
+    "level": "L1",
+    "type": "verb",
+    "definition": "To attach; to affix; to hold in place or at a particular time.",
+    "example": "A dab of chewing gum will fix your note to the bulletin board.",
+    "pronunciation": "/fɪkst/"
+  },
+  {
+    "word": "flat",
+    "level": "L1",
+    "type": "noun",
+    "definition": "(in the plural) A type of ladies' shoes with very low heels.",
+    "example": "She liked to walk in her flats more than in her high heels.",
+    "pronunciation": "/flæt/"
+  },
+  {
+    "word": "found",
+    "level": "L1",
+    "type": "verb",
+    "definition": "To encounter or discover something being searched for; to locate.",
+    "example": "I found my car keys. They were under the couch.",
+    "pronunciation": "/faʊnd/"
+  },
+  {
+    "word": "fresh",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Newly produced or obtained; recent.",
+    "example": "He followed the fresh hoofprints to find the deer.",
+    "pronunciation": "/fɹɛʃ/"
+  },
+  {
+    "word": "full",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Containing the maximum possible amount that can fit in the space available.",
+    "example": "The jugs were full to the point of overflowing.",
+    "pronunciation": "/fʊl/"
+  },
+  {
+    "word": "funny",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Amusing; humorous; comical.",
+    "example": "When I went to the circus, I only found the clowns funny.",
+    "pronunciation": "/ˈfʊnɪ/"
+  },
+  {
+    "word": "gentle",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Tender and amiable; of a considerate or kindly disposition.",
+    "example": "Stuart is a gentle man; he would never hurt you.",
+    "pronunciation": "/ˈdʒɛntl̩/"
+  },
+  {
+    "word": "good",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "(when with and) Very, extremely. See good and.",
+    "example": "The soup is good and hot.",
+    "pronunciation": "/ɡʊ(d)/"
+  },
+  {
+    "word": "green",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Having green as its color.",
+    "example": "The former flag of Libya is fully green.",
+    "pronunciation": "/ɡɹiːn/"
+  },
+  {
+    "word": "happy",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Having a feeling arising from a consciousness of well-being or of enjoyment; enjoying good of any kind, such as comfort, peace, or tranquillity; blissful, contented, joyous.",
+    "example": "Music makes me feel happy.",
+    "pronunciation": "/ˈhæpiː/"
+  },
+  {
+    "word": "hard",
+    "level": "L1",
+    "type": "noun",
+    "definition": "Hard labor.",
+    "example": "The prisoners were sentenced to three years' hard.",
+    "pronunciation": "/hɑːd/"
+  },
+  {
+    "word": "heavy",
+    "level": "L1",
+    "type": "noun",
+    "definition": "A villain or bad guy; the one responsible for evil or aggressive acts.",
+    "example": "With his wrinkled, uneven face, the actor always seemed to play the heavy in films.",
+    "pronunciation": "/ˈhe.vi/"
+  },
+  {
+    "word": "high",
+    "level": "L1",
+    "type": "noun",
+    "definition": "A point of success or achievement; a time when things are at their best.",
+    "example": "It was one of the highs of his career.",
+    "pronunciation": "/haɪ/"
+  },
+  {
+    "word": "hot",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "(of an object) Having a high temperature.",
+    "example": "He forgot that the frying pan was hot and burned his hand.",
+    "pronunciation": "/hɒt/"
+  },
+  {
+    "word": "huge",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Very large.",
+    "example": "The castle was huge.",
+    "pronunciation": "[hʊudʒ]"
+  },
+  {
+    "word": "hungry",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Affected by hunger; desiring of food; having a physical need for food.",
+    "example": "My kids go to bed hungry every night because I haven't got any money.",
+    "pronunciation": "/ˈhʌŋ.ɡɹi/"
+  },
+  {
+    "word": "kind",
+    "level": "L1",
+    "type": "noun",
+    "definition": "A type, race or category; a group of entities that have common characteristics such that they may be grouped together.",
+    "example": "This is a strange kind of tobacco.",
+    "pronunciation": "/kaɪnd/"
+  },
+  {
+    "word": "last",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Final, ultimate, coming after all others of its kind.",
+    "example": "“Eyes Wide Shut” was the last film to be directed by Stanley Kubrick.",
+    "pronunciation": "/last/"
+  },
+  {
+    "word": "late",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Near the end of a period of time.",
+    "example": "It was late in the evening when we finally arrived.",
+    "pronunciation": "/leɪt/"
+  },
+  {
+    "word": "light",
+    "level": "L1",
+    "type": "noun",
+    "definition": "Visible electromagnetic radiation. The human eye can typically detect radiation (light) in the wavelength range of about 400 to 750 nanometers. Nearby shorter and longer wavelength ranges, although not visible, are commonly called ultraviolet and infrared light.",
+    "example": "As you can see, this spacious dining-room gets a lot of light in the mornings.",
+    "pronunciation": "/lʌɪt/"
+  },
+  {
+    "word": "lost",
+    "level": "L1",
+    "type": "verb",
+    "definition": "To cause (something) to cease to be in one's possession or capability due to unfortunate or unknown circumstances, events or reasons.",
+    "example": "He lost his hearing in the explosion.",
+    "pronunciation": "/lɒst/"
+  },
+  {
+    "word": "loud",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "(of a sound) Of great intensity.",
+    "example": "Turn that music down; it's too loud.",
+    "pronunciation": "/laʊd/"
+  },
+  {
+    "word": "low",
+    "level": "L1",
+    "type": "noun",
+    "definition": "Something that is low; a low point.",
+    "example": "Economic growth has hit a new low.",
+    "pronunciation": "/ləʊ/"
+  },
+  {
+    "word": "lucky",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "(of people) Favoured by luck; fortunate; having good success or good fortune",
+    "example": "The downed pilot is very lucky to be alive.",
+    "pronunciation": "/ˈlʌki/"
+  },
+  {
+    "word": "messy",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "(of a place, situation, person, etc) In a disorderly state; chaotic; disorderly.",
+    "example": "Jim ran his fingers through his messy brown hair.",
+    "pronunciation": "/ˈmɛsi/"
+  },
+  {
+    "word": "narrow",
+    "level": "L1",
+    "type": "noun",
+    "definition": "(chiefly in the plural) A narrow passage, especially a contracted part of a stream, lake, or sea; a strait connecting two bodies of water.",
+    "example": "the narrows of New York harbor",
+    "pronunciation": "/ˈnæɹəʊ/"
+  },
+  {
+    "word": "near",
+    "level": "L1",
+    "type": "verb",
+    "definition": "To come closer to; to approach.",
+    "example": "The ship nears the land.",
+    "pronunciation": "/nɪə(ɹ)/"
+  },
+  {
+    "word": "neat",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Clean, tidy; free from dirt or impurities.",
+    "example": "My room is neat because I tidied it this morning.  She has very neat hair.",
+    "pronunciation": "/niːt/"
+  },
+  {
+    "word": "new",
+    "level": "L1",
+    "type": "noun",
+    "definition": "Things that are new.",
+    "example": "Out with the old, in with the new.",
+    "pronunciation": "/njʉː/"
+  },
+  {
+    "word": "old",
+    "level": "L1",
+    "type": "noun",
+    "definition": "(with the, invariable plural only) People who are old; old beings; the older generation, taken as a group.",
+    "example": "A civilised society should always look after the old in the community.",
+    "pronunciation": "/ˈɒʊld/"
+  },
+  {
+    "word": "open",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Not physically drawn together, closed, folded or contracted; extended",
+    "example": "an open hand; an open flower",
+    "pronunciation": "/ˈəʊ.pən/"
+  },
+  {
+    "word": "orange",
+    "level": "L1",
+    "type": "noun",
+    "definition": "An evergreen tree of the genus Citrus such as Citrus sinensis.",
+    "example": null,
+    "pronunciation": "/ˈɔɹɪ̈nd͡ʒ/"
+  },
+  {
+    "word": "pink",
+    "level": "L1",
+    "type": "noun",
+    "definition": "The common minnow, Phoxinus phoxinus.",
+    "example": null,
+    "pronunciation": "/pɪŋk/"
+  },
+  {
+    "word": "plain",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Not unusually beautiful; unattractive.",
+    "example": "Throughout high school she worried that she had a rather plain face.",
+    "pronunciation": "/pleɪn/"
+  },
+  {
+    "word": "purple",
+    "level": "L1",
+    "type": "noun",
+    "definition": "Cloth, or a garment, dyed a purple colour; especially, a purple robe, worn as an emblem of rank or authority; specifically, the purple robe or mantle worn by Ancient Roman emperors as the emblem of imperial dignity.",
+    "example": "to put on the imperial purple",
+    "pronunciation": "/ˈpɜː(ɹ).pəl/"
+  },
+  {
+    "word": "quick",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Moving with speed, rapidity or swiftness, or capable of doing so; rapid; fast.",
+    "example": "He's a quick runner.",
+    "pronunciation": "/kwɪk/"
+  },
+  {
+    "word": "quiet",
+    "level": "L1",
+    "type": "noun",
+    "definition": "The absence of sound; quietness.",
+    "example": "There was a strange quiet in the normally very lively plaza.",
+    "pronunciation": "/ˈkwaɪ.ət/"
+  },
+  {
+    "word": "ready",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Prepared for immediate action or use.",
+    "example": "The porridge is ready to serve.",
+    "pronunciation": "/ˈɹɛdi/"
+  },
+  {
+    "word": "real",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Genuine, not artificial, counterfeit, or fake.",
+    "example": "This is real leather.",
+    "pronunciation": "/ɹiːl/"
+  },
+  {
+    "word": "red",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Having red as its color.",
+    "example": "The girl wore a red skirt.",
+    "pronunciation": "/ɹɛd/"
+  },
+  {
+    "word": "right",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Straight, not bent.",
+    "example": "a right line",
+    "pronunciation": "/ˈɹaɪt/"
+  },
+  {
+    "word": "rough",
+    "level": "L1",
+    "type": "verb",
+    "definition": "To create in an approximate form.",
+    "example": "Rough in the shape first, then polish the details.",
+    "pronunciation": "/ɹʌf/"
+  },
+  {
+    "word": "round",
+    "level": "L1",
+    "type": "adverb",
+    "definition": "So as to form a circle or trace a circular path, or approximation thereof.",
+    "example": "High above, vultures circled around.",
+    "pronunciation": "/ˈɹaʊnd/"
+  },
+  {
+    "word": "sad",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Unfashionable; socially inadequate or undesirable.",
+    "example": "I can't believe you use drugs; you're so sad!",
+    "pronunciation": "/sæd/"
+  },
+  {
+    "word": "safe",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Not in danger; out of harm's reach.",
+    "example": "You’ll be safe here.",
+    "pronunciation": "/seɪf/"
+  },
+  {
+    "word": "salty",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Tasting of salt.",
+    "example": null,
+    "pronunciation": "/ˈsɒl.ti/"
+  },
+  {
+    "word": "scared",
+    "level": "L1",
+    "type": "verb",
+    "definition": "To frighten, terrify, startle, especially in a minor way.",
+    "example": "Did it scare you when I said \"Boo!\"?",
+    "pronunciation": "/skɛəd/"
+  },
+  {
+    "word": "sharp",
+    "level": "L1",
+    "type": "noun",
+    "definition": "The symbol ♯, placed after the name of a note in the key signature or before a note on the staff to indicate that the note is to be played a semitone higher.",
+    "example": "The pitch pipe sounded out a perfect F♯ (F sharp).",
+    "pronunciation": "/ʃɑːp/"
+  },
+  {
+    "word": "shiny",
+    "level": "L1",
+    "type": "noun",
+    "definition": "Anything shiny; a trinket.",
+    "example": null,
+    "pronunciation": "/ˈʃaɪni/"
+  },
+  {
+    "word": "short",
+    "level": "L1",
+    "type": "noun",
+    "definition": "A short version of a garment in a particular size.",
+    "example": "38 short suits fit me right off the rack.",
+    "pronunciation": "/ʃoːt/"
+  },
+  {
+    "word": "shut",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Narrow; confined.",
+    "example": "a close alley; close quarters",
+    "pronunciation": "/ʃʌt/"
+  },
+  {
+    "word": "silly",
+    "level": "L1",
+    "type": "noun",
+    "definition": "A silly person.",
+    "example": null,
+    "pronunciation": "/ˈsɪli/"
+  },
+  {
+    "word": "sleepy",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Tending to induce sleep; soporific.",
+    "example": "a sleepy drink or potion",
+    "pronunciation": "/ˈsliːpi/"
+  },
+  {
+    "word": "slow",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Taking a long time to move or go a short distance, or to perform an action; not quick in motion; proceeding at a low speed.",
+    "example": "a slow train;  a slow computer",
+    "pronunciation": "/sləʊ/"
+  },
+  {
+    "word": "small",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Not large or big; insignificant; few in number.",
+    "example": "A small group.",
+    "pronunciation": "/smoːl/"
+  },
+  {
+    "word": "smart",
+    "level": "L1",
+    "type": "verb",
+    "definition": "To hurt or sting.",
+    "example": "After being hit with a pitch, the batter exclaimed \"Ouch, my arm smarts!\"",
+    "pronunciation": "/smɑːt/"
+  },
+  {
+    "word": "smooth",
+    "level": "L1",
+    "type": "verb",
+    "definition": "To calm or palliate.",
+    "example": "to smooth a person's temper",
+    "pronunciation": "/smuːð/"
+  },
+  {
+    "word": "soft",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Easily giving way under pressure.",
+    "example": "My head sank easily into the soft pillow.",
+    "pronunciation": "/sɑft/"
+  },
+  {
+    "word": "sour",
+    "level": "L1",
+    "type": "verb",
+    "definition": "To make sour.",
+    "example": "Too much lemon juice will sour the recipe.",
+    "pronunciation": "/ˈsaʊə/"
+  },
+  {
+    "word": "strong",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Capable of producing great physical force.",
+    "example": "a big strong man; Jake was tall and strong",
+    "pronunciation": "/stɹɑŋ/"
+  },
+  {
+    "word": "sweet",
+    "level": "L1",
+    "type": "noun",
+    "definition": "A food eaten for dessert.",
+    "example": "Can we see the sweet menu, please?",
+    "pronunciation": "/swiːt/"
+  },
+  {
+    "word": "tall",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "(of a person) Having a vertical extent greater than the average. For example, somebody with a height of over 6 feet would generally be considered to be tall.",
+    "example": "Being tall is an advantage in basketball.",
+    "pronunciation": "/tɔːl/"
+  },
+  {
+    "word": "thick",
+    "level": "L1",
+    "type": "noun",
+    "definition": "The thickest, or most active or intense, part of something.",
+    "example": "It was mayhem in the thick of battle.",
+    "pronunciation": "/θɪk/"
+  },
+  {
+    "word": "thin",
+    "level": "L1",
+    "type": "noun",
+    "definition": "Any food produced or served in thin slices.",
+    "example": "chocolate mint thins",
+    "pronunciation": "/ˈθɪn/"
+  },
+  {
+    "word": "tiny",
+    "level": "L1",
+    "type": "noun",
+    "definition": "A small child; an infant.",
+    "example": null,
+    "pronunciation": "/ˈtaɪni/"
+  },
+  {
+    "word": "tired",
+    "level": "L1",
+    "type": "verb",
+    "definition": "To become bored or impatient (with).",
+    "example": "I tire of this book.",
+    "pronunciation": "/taɪəd/"
+  },
+  {
+    "word": "true",
+    "level": "L1",
+    "type": "verb",
+    "definition": "To straighten.",
+    "example": "He trued the spokes of the bicycle wheel.",
+    "pronunciation": "/tɹuː/"
+  },
+  {
+    "word": "warm",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Having a temperature slightly higher than usual, but still pleasant; mildly hot.",
+    "example": "The tea is still warm.",
+    "pronunciation": "/wɔːm/"
+  },
+  {
+    "word": "wet",
+    "level": "L1",
+    "type": "noun",
+    "definition": "Rainy weather.",
+    "example": "Don't go out in the wet.",
+    "pronunciation": "/wɛt/"
+  },
+  {
+    "word": "white",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Bright and colourless; reflecting equal quantities of all frequencies of visible light.",
+    "example": "Write in black ink on white paper.",
+    "pronunciation": "/waɪt/"
+  },
+  {
+    "word": "whole",
+    "level": "L1",
+    "type": "noun",
+    "definition": "Something complete, without any parts missing.",
+    "example": "This variety of fascinating details didn't fall together into an enjoyable, coherent whole.",
+    "pronunciation": "/həʊl/"
+  },
+  {
+    "word": "wide",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Having a large physical extent from side to side.",
+    "example": "We walked down a wide corridor.",
+    "pronunciation": "/wɑed/"
+  },
+  {
+    "word": "wrong",
+    "level": "L1",
+    "type": "noun",
+    "definition": "Something that is immoral or not good.",
+    "example": "Injustice is a heinous wrong.",
+    "pronunciation": "/ɹɒŋ/"
+  },
+  {
+    "word": "yellow",
+    "level": "L1",
+    "type": "adjective",
+    "definition": "Related to the Liberal Democrats.",
+    "example": "2012 March 2, Andrew Grice, \"Yellow rebels take on Clegg over NHS 'betrayal'\", The Independent",
+    "pronunciation": "/jɛlə/"
+  },
+  {
+    "word": "young",
+    "level": "L1",
+    "type": "noun",
+    "definition": "People who are young; young people, collectively; youth.",
+    "example": "The young of today are well-educated.",
+    "pronunciation": "/jʌŋ/"
+  },
+  {
+    "word": "absent",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Not existing; lacking.",
+    "example": "The part was rudimental or absent.",
+    "pronunciation": "/ˈæb.sn̩t/"
+  },
+  {
+    "word": "active",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Having the power or quality of acting; causing change; communicating action or motion; acting;—opposed to passive, that receives.",
+    "example": "certain active principles",
+    "pronunciation": "/ˈæk.tɪv/"
+  },
+  {
+    "word": "amazing",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To fill with wonder and surprise; to astonish, astound, surprise or perplex.",
+    "example": "He was amazed when he found that the girl was a robot.",
+    "pronunciation": "/əˈmeɪzɪŋ/"
+  },
+  {
+    "word": "ancient",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Having lasted from a remote period; having been of long duration; of great age, very old.",
+    "example": "an ancient city  an ancient forest",
+    "pronunciation": "/ˈeɪn.ʃənt/"
+  },
+  {
+    "word": "anxious",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Having a feeling of anxiety or disquietude; extremely concerned, especially about something that will happen in the future or that is unknown.",
+    "example": "I could tell she was anxious as she was biting her nails.",
+    "pronunciation": "/ˈaŋ(k)ʃəs/"
+  },
+  {
+    "word": "beautiful",
+    "level": "L2",
+    "type": "noun",
+    "definition": "Someone who is beautiful. Can be used as a term of address.",
+    "example": "Hey, beautiful!",
+    "pronunciation": "/ˈbjuːtɪfəl/"
+  },
+  {
+    "word": "bored",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To make a hole with, or as if with, a boring instrument; to cut a circular hole by the rotary motion of a tool.",
+    "example": "An insect bores into a tree.",
+    "pronunciation": "/bɔːd/"
+  },
+  {
+    "word": "boring",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To make a hole with, or as if with, a boring instrument; to cut a circular hole by the rotary motion of a tool.",
+    "example": "An insect bores into a tree.",
+    "pronunciation": "/ˈbɔːɹɪŋ/"
+  },
+  {
+    "word": "careful",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Taking care; attentive to potential danger, error or harm; cautious.",
+    "example": "He was a slow and careful driver.",
+    "pronunciation": "/ˈkɛːfəl/"
+  },
+  {
+    "word": "careless",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Not giving sufficient attention or thought, especially concerning the avoidance of harm or mistakes.",
+    "example": "Jessica was so careless that she put her shorts on backwards.",
+    "pronunciation": "/ˈkɛələs/"
+  },
+  {
+    "word": "cheerful",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Bright and pleasant.",
+    "example": "They enjoyed a cheerful room.",
+    "pronunciation": "/ˈt͡ʃɪəfəl/"
+  },
+  {
+    "word": "clever",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Resourceful, sometimes to the point of cunning.",
+    "example": "clever like a fox",
+    "pronunciation": "/ˈklɛvɚ/"
+  },
+  {
+    "word": "clumsy",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Awkward, lacking coordination, not graceful, not dextrous.",
+    "example": "He's very clumsy. I wouldn't trust him with carrying the dishes.",
+    "pronunciation": "/ˈklʌmzi/"
+  },
+  {
+    "word": "colorful",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Possessing prominent and varied colors.",
+    "example": null,
+    "pronunciation": "/ˈkʌləfəl/"
+  },
+  {
+    "word": "common",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Mutual; shared by more than one.",
+    "example": "The two competitors have the common aim of winning the championship.",
+    "pronunciation": "/ˈkɒmən/"
+  },
+  {
+    "word": "complete",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To finish; to make done; to reach the end.",
+    "example": "He completed the assignment on time.",
+    "pronunciation": "/kəmˈpliːt/"
+  },
+  {
+    "word": "confident",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Very sure of something; positive.",
+    "example": "I'm pretty confident that she's not lying, she's acting normally.",
+    "pronunciation": "/ˈkɒn.fɪ.dənt/"
+  },
+  {
+    "word": "confused",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To puzzle, perplex, baffle, bewilder (somebody).",
+    "example": null,
+    "pronunciation": "/kənˈfjuːzd/"
+  },
+  {
+    "word": "cowardly",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Showing cowardice; lacking in courage; weakly fearful.",
+    "example": null,
+    "pronunciation": "/ˈkaʊədli/"
+  },
+  {
+    "word": "creative",
+    "level": "L2",
+    "type": "noun",
+    "definition": "A person directly involved in a creative marketing process.",
+    "example": "He is a visionary creative.",
+    "pronunciation": "/kɹiˈeɪtɪv/"
+  },
+  {
+    "word": "curious",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Tending to ask questions, or to want to explore or investigate; inquisitive; (with a negative connotation) nosy, prying.",
+    "example": "Young children are naturally curious about the world and everything in it.",
+    "pronunciation": "/ˈkjɔː-/"
+  },
+  {
+    "word": "dangerous",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Full of danger.",
+    "example": "Railway crossings without gates are highly dangerous.",
+    "pronunciation": "/ˈdeɪnd͡ʒ(ə)ɹəs/"
+  },
+  {
+    "word": "delicate",
+    "level": "L2",
+    "type": "noun",
+    "definition": "A delicate item of clothing, especially underwear or lingerie.",
+    "example": "Don't put that in with your jeans: it's a delicate!",
+    "pronunciation": "/ˈdɛlɪkət/"
+  },
+  {
+    "word": "difficult",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Hard, not easy, requiring much effort.",
+    "example": "However, the difficult weather conditions will ensure Yunnan has plenty of freshwater.",
+    "pronunciation": "/ˈdɪfɪkəlt/"
+  },
+  {
+    "word": "dull",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To render dull; to remove or blunt an edge or something that was sharp.",
+    "example": "Years of misuse have dulled the tools.",
+    "pronunciation": "/dəl/"
+  },
+  {
+    "word": "eager",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Desirous; keen to do or obtain something.",
+    "example": "I was eager to show my teacher how much I'd learned over the holidays.",
+    "pronunciation": "/ˈiːɡə/"
+  },
+  {
+    "word": "endless",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Having no end.",
+    "example": "endless time; endless praise",
+    "pronunciation": "/ˈɛndləs/"
+  },
+  {
+    "word": "energetic",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Possessing or pertaining to energy.",
+    "example": "Cosmic rays are energetic particles from outer space.",
+    "pronunciation": "/ˌɛnəˈdʒɛtɪk/"
+  },
+  {
+    "word": "excited",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To stir the emotions of.",
+    "example": "The fireworks which opened the festivities excited anyone present.",
+    "pronunciation": "/ɪkˈsaɪtɪd/"
+  },
+  {
+    "word": "explore",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To examine or investigate something systematically.",
+    "example": "The committee has been exploring alternative solutions to the problem at hand.",
+    "pronunciation": "/ɪkˈsplɔː/"
+  },
+  {
+    "word": "familiar",
+    "level": "L2",
+    "type": "noun",
+    "definition": "An attendant spirit, often in animal or demon form.",
+    "example": "The witch’s familiar was a black cat.",
+    "pronunciation": "/fəˈmɪl.i.ə/"
+  },
+  {
+    "word": "famous",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "In the public eye.",
+    "example": "Some people are only famous within their city.",
+    "pronunciation": "/ˈfeɪməs/"
+  },
+  {
+    "word": "fancy",
+    "level": "L2",
+    "type": "noun",
+    "definition": "A whim.",
+    "example": "I had a fancy to learn to play the flute.",
+    "pronunciation": "/ˈfæn.si/"
+  },
+  {
+    "word": "fearless",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Without fear.",
+    "example": null,
+    "pronunciation": "/ˈfɪələs/"
+  },
+  {
+    "word": "finished",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To complete (something).",
+    "example": "Be sure to finish your homework before you go to bed!",
+    "pronunciation": "/ˈfɪnɪʃt/"
+  },
+  {
+    "word": "foreign",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Located outside a country or place, especially one's own.",
+    "example": "He liked visiting foreign cities.",
+    "pronunciation": "/ˈfɒɹən/"
+  },
+  {
+    "word": "fragile",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Easily broken or destroyed, and thus often of subtle or intricate structure.",
+    "example": "He is a very fragile person and gets easily depressed.",
+    "pronunciation": "/ˈfɹædʒaɪl/"
+  },
+  {
+    "word": "friendly",
+    "level": "L2",
+    "type": "noun",
+    "definition": "A game which is of no consequence in terms of ranking, betting etc.",
+    "example": "This match is merely a friendly, so don't worry too much about it.",
+    "pronunciation": "/ˈfɹɛndli/"
+  },
+  {
+    "word": "generous",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Noble in behaviour or actions; principled, not petty; kind, magnanimous.",
+    "example": "Thank you for your generous words.",
+    "pronunciation": "/ˈdʒɛn(ə)ɹəs/"
+  },
+  {
+    "word": "grateful",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Appreciative; thankful.",
+    "example": "I'm grateful that you helped me out.",
+    "pronunciation": "/ˈɡɹeɪtfəl/"
+  },
+  {
+    "word": "growing",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To become larger, to increase in magnitude.",
+    "example": "Children grow quickly.",
+    "pronunciation": "/ˈɡɹəʊɪŋ/"
+  },
+  {
+    "word": "grumpy",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Dissatisfied and irritable.",
+    "example": "The old man was grumpy because he couldn’t find his glasses.",
+    "pronunciation": "/ˈɡɹʌmpi/"
+  },
+  {
+    "word": "harmful",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Of a kind likely to be damaging; injurious",
+    "example": "Wear a hat to protect your skin from harmful sunlight.",
+    "pronunciation": "/ˈhɑːmfl̩/"
+  },
+  {
+    "word": "harmless",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Incapable of causing harm or danger; safe.",
+    "example": null,
+    "pronunciation": "/ˈhɑːmləs/"
+  },
+  {
+    "word": "healthy",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Enjoying health and vigor of body, mind, or spirit: well.",
+    "example": "He was father to three healthy kids.",
+    "pronunciation": "/ˈhɛl.θi/"
+  },
+  {
+    "word": "helpful",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Furnishing help; giving aid; useful.",
+    "example": null,
+    "pronunciation": "/ˈhɛlp.fəl/"
+  },
+  {
+    "word": "honest",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "(of a person or institution) Scrupulous with regard to telling the truth; not given to swindling, lying, or fraud; upright.",
+    "example": "We’re the most honest people you will ever come across.",
+    "pronunciation": "/ˈɒnɪst/"
+  },
+  {
+    "word": "hopeful",
+    "level": "L2",
+    "type": "noun",
+    "definition": "Someone who is hoping for success or victory, especially as a candidate in a political election.",
+    "example": "Several presidential hopefuls are campaigning in New Hampshire this week.",
+    "pronunciation": "/ˈhəʊpfəl/"
+  },
+  {
+    "word": "hoping",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To want something to happen, with a sense of expectation that it might.",
+    "example": "I am still hoping that all will turn out well.",
+    "pronunciation": "/ˈhəʊpɪŋ/"
+  },
+  {
+    "word": "important",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Having relevant and crucial value.",
+    "example": "It is very important to give your daughter independence in her life so she learns from experience.",
+    "pronunciation": "/ɪmˈpɔːtənt/"
+  },
+  {
+    "word": "impossible",
+    "level": "L2",
+    "type": "noun",
+    "definition": "An impossibility",
+    "example": "Late 14th century: “Madame,” quod he, “this were an impossible!” — Geoffrey Chaucer, ‘The Franklin's Tale’, Canterbury Tales",
+    "pronunciation": "/ɪmˈpɒs.ə.bəl/"
+  },
+  {
+    "word": "joyful",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Feeling or causing joy.",
+    "example": null,
+    "pronunciation": "/ˈdʒɔɪfəl/"
+  },
+  {
+    "word": "lazy",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Unwilling to do work or make an effort; disinclined to exertion.",
+    "example": "Get out of bed, you lazy lout!",
+    "pronunciation": "/ˈleɪzi/"
+  },
+  {
+    "word": "lonely",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Unhappy because of feeling isolated from contact with other people.",
+    "example": null,
+    "pronunciation": "/ˈləʊnli/"
+  },
+  {
+    "word": "loyal",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Having or demonstrating undivided and constant support for someone or something.",
+    "example": null,
+    "pronunciation": "/ˈlɔɪəl/"
+  },
+  {
+    "word": "mean",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To have conviction in (something said or expressed); to be sincere in (what one says).",
+    "example": "Does she really mean what she said to him last night?",
+    "pronunciation": "/miːn/"
+  },
+  {
+    "word": "missing",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To fail to hit.",
+    "example": "I missed the target.",
+    "pronunciation": "/ˈmɪsɪŋ/"
+  },
+  {
+    "word": "modern",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Pertaining to a current or recent time and style; not ancient.",
+    "example": "Our online interactive game is a modern approach to teaching about gum disease.  Although it was built in the 1600s, the building still has a very modern look.",
+    "pronunciation": "/ˈmɒd(ə)n/"
+  },
+  {
+    "word": "moving",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To change place or posture; to go, in any manner, from one place or position to another.",
+    "example": "A ship moves rapidly.",
+    "pronunciation": "/ˈmuːvɪŋ/"
+  },
+  {
+    "word": "natural",
+    "level": "L2",
+    "type": "noun",
+    "definition": "One with an innate talent at or for something.",
+    "example": "He's a natural on the saxophone.",
+    "pronunciation": "/ˈnætʃəɹəl/"
+  },
+  {
+    "word": "nervous",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Of sinews and tendons.",
+    "example": null,
+    "pronunciation": "/ˈnɜːvəs/"
+  },
+  {
+    "word": "noisy",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Making a noise, especially a loud unpleasant sound",
+    "example": "the noisy crowd.",
+    "pronunciation": "/ˈnɔːɪzɪ/"
+  },
+  {
+    "word": "normal",
+    "level": "L2",
+    "type": "noun",
+    "definition": "The usual state.",
+    "example": "Heavy workload is the new normal.",
+    "pronunciation": "/ˈnɔːməl/"
+  },
+  {
+    "word": "ordinary",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Being part of the natural order of things; normal, customary, routine.",
+    "example": "On an ordinary day I wake up at nine o'clock, work for six hours, and then go to the gym.",
+    "pronunciation": "/ˈɔːdənɹi/"
+  },
+  {
+    "word": "patient",
+    "level": "L2",
+    "type": "noun",
+    "definition": "(grammar) The noun or noun phrase that is semantically on the receiving end of a verb's action.",
+    "example": "The subject of a passive verb is usually a patient.",
+    "pronunciation": "/ˈpeɪʃənt/"
+  },
+  {
+    "word": "peaceful",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Not at war or disturbed by strife or turmoil.",
+    "example": "peaceful protest",
+    "pronunciation": "/ˈpiːsfəl/"
+  },
+  {
+    "word": "playful",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Liking play, prone to play frequently, such as a child or kitten; rather sportive.",
+    "example": "Actually, we are pretty playful in our romantic life.",
+    "pronunciation": "/ˈpleɪfəl/"
+  },
+  {
+    "word": "polite",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Well-mannered, civilized.",
+    "example": "It's not polite to use a mobile phone in a restaurant.",
+    "pronunciation": "/pəˈlaɪt/"
+  },
+  {
+    "word": "popular",
+    "level": "L2",
+    "type": "noun",
+    "definition": "A person who is popular, especially at a school.",
+    "example": null,
+    "pronunciation": "/ˈpɒpjʊlə/"
+  },
+  {
+    "word": "possible",
+    "level": "L2",
+    "type": "noun",
+    "definition": "A possible choice, notably someone being considered for a position.",
+    "example": "Jones is a possible for the new opening in sales.",
+    "pronunciation": "/ˈpɒsɪbl̩/"
+  },
+  {
+    "word": "powerful",
+    "level": "L2",
+    "type": "adverb",
+    "definition": "To a great extent or degree.",
+    "example": "Not very many (of them) had been damaged.",
+    "pronunciation": "/ˈpaʊəfl/"
+  },
+  {
+    "word": "prepared",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To make ready for a specific future purpose; to set up; to assemble or equip.",
+    "example": "We prepared the spacecraft for takeoff.",
+    "pronunciation": "/pɹɪˈpɛəd/"
+  },
+  {
+    "word": "proud",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Feeling honoured (by something); feeling happy or satisfied about an event or fact; gratified.",
+    "example": "I am proud of Sivu’s schoolwork.",
+    "pronunciation": "/pɹaʊd/"
+  },
+  {
+    "word": "restless",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Not allowing or affording rest.",
+    "example": "The night before his wedding was a restless one.",
+    "pronunciation": "/ˈɹɛstləs/"
+  },
+  {
+    "word": "rude",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Bad-mannered.",
+    "example": "Karen broke up with Fred because he was often rude to her.",
+    "pronunciation": "/ɹʉːd/"
+  },
+  {
+    "word": "serious",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Without humor or expression of happiness; grave in manner or disposition",
+    "example": "It was a surprise to see the captain, who had always seemed so serious, laugh so heartily.",
+    "pronunciation": "/ˈsɪə.ɹi.əs/"
+  },
+  {
+    "word": "shallow",
+    "level": "L2",
+    "type": "noun",
+    "definition": "A shallow portion of an otherwise deep body of water.",
+    "example": "The ship ran aground in an unexpected shallow.",
+    "pronunciation": "/ˈʃaləʊ/"
+  },
+  {
+    "word": "sick",
+    "level": "L2",
+    "type": "noun",
+    "definition": "Sick people in general as a group.",
+    "example": "We have to cure the sick.",
+    "pronunciation": "/sɪk/"
+  },
+  {
+    "word": "silent",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Keeping at rest; inactive; calm; undisturbed.",
+    "example": "The wind is silent.",
+    "pronunciation": "/ˈsaɪlənt/"
+  },
+  {
+    "word": "simple",
+    "level": "L2",
+    "type": "noun",
+    "definition": "A herbal preparation made from one plant, as opposed to something made from more than one plant.",
+    "example": null,
+    "pronunciation": "/ˈsɪmpəl/"
+  },
+  {
+    "word": "special",
+    "level": "L2",
+    "type": "noun",
+    "definition": "A reduction in consumer cost (usually for a limited time) for items or services rendered.",
+    "example": "We're running a special on turkey for Thanksgiving.",
+    "pronunciation": "/ˈspɛ.ʃəl/"
+  },
+  {
+    "word": "stale",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Unreasonably long in coming, in reference to claims and actions.",
+    "example": "a stale affidavit",
+    "pronunciation": "/steɪl/"
+  },
+  {
+    "word": "strange",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Not normal; odd, unusual, surprising, out of the ordinary.",
+    "example": "He thought it strange that his girlfriend wore shorts in the winter.",
+    "pronunciation": "/ˈstɹeɪnd͡ʒ/"
+  },
+  {
+    "word": "stubborn",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Refusing to move or to change one's opinion; obstinate; firmly resisting; persistent in doing something.",
+    "example": "Blood can make a very stubborn stain on fabrics if not washed properly.",
+    "pronunciation": "/ˈstʌbən/"
+  },
+  {
+    "word": "surprised",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To cause (someone) to feel unusually alarmed or delighted by something unexpected.",
+    "example": "It surprises me that I owe twice as much as I thought I did.",
+    "pronunciation": "/səˈpɹaɪzd/"
+  },
+  {
+    "word": "terrible",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Dreadful; causing terror, alarm and fear; awesome",
+    "example": "The witch gave him a terrible curse.",
+    "pronunciation": "/ˈtɛ.ɹə.bl̩/"
+  },
+  {
+    "word": "thankful",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Showing appreciation or gratitude.",
+    "example": "I'm thankful that you helped me out today. How can I ever repay you?",
+    "pronunciation": "/ˈθæŋkfəl/"
+  },
+  {
+    "word": "thoughtful",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Demonstrating thought or careful consideration.",
+    "example": "Most thoughtful people eventually solve the puzzle.",
+    "pronunciation": "/ˈθɔːtfəl/"
+  },
+  {
+    "word": "tidy",
+    "level": "L2",
+    "type": "noun",
+    "definition": "A tabletop container for pens and stationery.",
+    "example": "a desk tidy",
+    "pronunciation": "/ˈtaɪdi/"
+  },
+  {
+    "word": "timid",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Lacking in courage or confidence.",
+    "example": "John's a very timid person. I'll doubt he'll be brave enough to face his brother.",
+    "pronunciation": "/ˈtɪmɪd/"
+  },
+  {
+    "word": "truthful",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Honest, and always telling the truth.",
+    "example": null,
+    "pronunciation": "/ˈtɹuːθ.f(ə)l/"
+  },
+  {
+    "word": "ugly",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Offensive to one's sensibilities or morality.",
+    "example": "He played an ugly trick on us.",
+    "pronunciation": "/ˈʌɡli/"
+  },
+  {
+    "word": "unlucky",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Unfortunate, marked by misfortune.",
+    "example": null,
+    "pronunciation": "/ʌnˈlʌki/"
+  },
+  {
+    "word": "useful",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Having a practical or beneficial use.",
+    "example": null,
+    "pronunciation": "/ˈjuːsfəl/"
+  },
+  {
+    "word": "useless",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Without use or possibility to be used.",
+    "example": "This fork has prongs that are bent. It's useless now.",
+    "pronunciation": "/ˈjuːs.ləs/"
+  },
+  {
+    "word": "usual",
+    "level": "L2",
+    "type": "noun",
+    "definition": "A specific good or service (e.g. a drink) that someone typically orders.",
+    "example": "I'll just have the usual.",
+    "pronunciation": "/ˈjuːʒʊəl/"
+  },
+  {
+    "word": "waiting",
+    "level": "L2",
+    "type": "verb",
+    "definition": "To delay movement or action until some event or time; to remain neglected or in readiness.",
+    "example": "Wait here until your car arrives.",
+    "pronunciation": "[ˈweɪ̯ɾɪŋ]"
+  },
+  {
+    "word": "weak",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Lacking in force (usually strength) or ability.",
+    "example": "The child was too weak to move the boulder.",
+    "pronunciation": "/wiːk/"
+  },
+  {
+    "word": "wise",
+    "level": "L2",
+    "type": "verb",
+    "definition": "Usually with \"up\", to inform or learn.",
+    "example": "After Mo had a word with him, he wised up.",
+    "pronunciation": "/waɪz/"
+  },
+  {
+    "word": "wonderful",
+    "level": "L2",
+    "type": "adjective",
+    "definition": "Surprisingly excellent; very good or admirable, extremely impressive.",
+    "example": "They served a wonderful six-course meal.",
+    "pronunciation": "/ˈwʌn.də.fl/"
+  },
+  {
+    "word": "abstract",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To draw off (interest or attention).",
+    "example": "He was wholly abstracted by other objects.",
+    "pronunciation": "/ˈæbˌstɹækt/"
+  },
+  {
+    "word": "abundant",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Fully sufficient; found in copious supply; in great quantity; overflowing.",
+    "example": "[W]ith their magical words they [poets] bring forth to our eyesight the abundant images and beauties of creation. — Leigh Hunt, On the Realities of Imagination",
+    "pronunciation": "/əˈbʌn.dn̩t/"
+  },
+  {
+    "word": "accomplish",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To execute fully; to fulfill; to complete successfully.",
+    "example": "to accomplish a design, an object, a promise",
+    "pronunciation": "/əˈkɐm.plɪʃ/"
+  },
+  {
+    "word": "adequate",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Equal to or fulfilling some requirement.",
+    "example": "an adequate definition",
+    "pronunciation": null
+  },
+  {
+    "word": "admire",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To estimate or value highly; to hold in high esteem.",
+    "example": "He had always admired the work ethos and family values of his friend.",
+    "pronunciation": "/ədˈmaɪə/"
+  },
+  {
+    "word": "ambiguous",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Open to multiple interpretations.",
+    "example": "The politician was criticized for his ambiguous statements and lack of precision.",
+    "pronunciation": "/æmˈbɪɡjuəs/"
+  },
+  {
+    "word": "ambition",
+    "level": "L3",
+    "type": "noun",
+    "definition": "Eager or inordinate desire for some object that confers distinction, as preferment, honor, superiority, political power, or literary fame; desire to distinguish one's self from other people.",
+    "example": "My son, John, wants to be a firefighter very much. He has a lot of ambition.",
+    "pronunciation": "/æmˈbɪ.ʃən/"
+  },
+  {
+    "word": "analyze",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To subject to analysis.",
+    "example": null,
+    "pronunciation": "/ˈæn.ə.laɪz/"
+  },
+  {
+    "word": "appreciate",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To be grateful or thankful for.",
+    "example": "I appreciate your efforts",
+    "pronunciation": "/əˈpɹiː.si.eɪt/"
+  },
+  {
+    "word": "argument",
+    "level": "L3",
+    "type": "noun",
+    "definition": "A value, or reference to a value, passed to a function.",
+    "example": "Parameters are like labeled fillable blanks used to define a function whereas arguments are passed to a function when calling it, filling in those blanks.",
+    "pronunciation": "/ˈɑːɡjʊmənt/"
+  },
+  {
+    "word": "assumption",
+    "level": "L3",
+    "type": "noun",
+    "definition": "The act of assuming, or taking to or upon oneself; the act of taking up or adopting.",
+    "example": "His assumption of secretarial duties was timely.",
+    "pronunciation": "/əˈsʌmp.ʃən/"
+  },
+  {
+    "word": "authentic",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Of the same origin as claimed; genuine.",
+    "example": "The experts confirmed it was an authentic signature.",
+    "pronunciation": "/ɒ.ˈθɛn.tɪk/"
+  },
+  {
+    "word": "challenge",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To invite (someone) to take part in a competition.",
+    "example": "We challenged the boys next door to a game of football.",
+    "pronunciation": "/ˈtʃæl.əndʒ/"
+  },
+  {
+    "word": "collaborate",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To work together with others to achieve a common goal.",
+    "example": "Let's collaborate on this project, and get it finished faster.",
+    "pronunciation": "/kəˈlabəɹeɪt/"
+  },
+  {
+    "word": "communicate",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To impart",
+    "example": null,
+    "pronunciation": "/kəˈmjuːnɪkeɪt/"
+  },
+  {
+    "word": "compassion",
+    "level": "L3",
+    "type": "noun",
+    "definition": "Deep awareness of the suffering of another, coupled with the wish to relieve it.",
+    "example": null,
+    "pronunciation": "/kəmˈpæʃ.ən/"
+  },
+  {
+    "word": "comprehend",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To include, comprise; to contain.",
+    "example": null,
+    "pronunciation": "/kɒmpɹɪˈhɛnd/"
+  },
+  {
+    "word": "conceive",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To become pregnant (with).",
+    "example": "Assisted procreation can help those trying to conceive.",
+    "pronunciation": "/kənˈsiːv/"
+  },
+  {
+    "word": "concrete",
+    "level": "L3",
+    "type": "noun",
+    "definition": "Specifically, a building material created by mixing cement, water, and aggregate such as gravel and sand.",
+    "example": "The road was made of concrete that had been poured in large slabs.",
+    "pronunciation": "/kɵnˈkɹiːt/"
+  },
+  {
+    "word": "consequence",
+    "level": "L3",
+    "type": "noun",
+    "definition": "A result of actions, especially if such a result is unwanted or unpleasant.",
+    "example": "I'm warning you. If you don't get me the report on time, there will be consequences.",
+    "pronunciation": "/ˈkɒnsɪkwɛns/"
+  },
+  {
+    "word": "consistent",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Of a regularly occurring, dependable nature.",
+    "example": "He is very consistent in his political choices: economy good or bad, he always votes Labour!",
+    "pronunciation": "/kənˈsɪstənt/"
+  },
+  {
+    "word": "contradict",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To deny the truth of (a statement or statements).",
+    "example": "His testimony contradicts hers.",
+    "pronunciation": "/kɒntɹəˈdɪkt/"
+  },
+  {
+    "word": "contradiction",
+    "level": "L3",
+    "type": "noun",
+    "definition": "The act of contradicting.",
+    "example": "His contradiction of the proposal was very interesting.",
+    "pronunciation": "/ˌkɒntɹəˈdɪkʃən/"
+  },
+  {
+    "word": "criticize",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To find fault (with something).",
+    "example": "They criticized him for endangering people's lives.",
+    "pronunciation": "/ˈkɹɪtɪsaɪz/"
+  },
+  {
+    "word": "deception",
+    "level": "L3",
+    "type": "noun",
+    "definition": "An instance of actions and/or schemes fabricated to mislead someone into believing a lie or inaccuracy.",
+    "example": null,
+    "pronunciation": "/dɪˈsɛpʃən/"
+  },
+  {
+    "word": "deteriorate",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To make worse; to make inferior in quality or value; to impair.",
+    "example": "to deteriorate the mind",
+    "pronunciation": "/dɪˈtɪəɹɪəɹeɪt/"
+  },
+  {
+    "word": "determine",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To fix the course of; to impel and direct; with a remoter object preceded by to.",
+    "example": "The news of his father's illness determined him to depart immediately.",
+    "pronunciation": "/dɪˈtɜːmɪn/"
+  },
+  {
+    "word": "diligent",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Performing with industrious concentration; hard-working and focused.",
+    "example": "Scientists are very diligent in their work.",
+    "pronunciation": "/ˈdɪlɪdʒənt/"
+  },
+  {
+    "word": "diminish",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To make smaller.",
+    "example": null,
+    "pronunciation": "/dɪˈmɪnɪʃ/"
+  },
+  {
+    "word": "discourage",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To extinguish the courage of; to dishearten; to depress the spirits of; to deprive of confidence; to deject.",
+    "example": "Don't be discouraged by the amount of work left to do: you'll finish it in good time.",
+    "pronunciation": "/dɪsˈkʌɹɪd͡ʒ/"
+  },
+  {
+    "word": "distinguish",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To make oneself noticeably different or better from others through accomplishments.",
+    "example": "The soldier distinguished himself in combat and received a medal.",
+    "pronunciation": "/dɪsˈtɪŋɡwɪʃ/"
+  },
+  {
+    "word": "dramatic",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Of or relating to the drama.",
+    "example": null,
+    "pronunciation": "/dɹəˈmætɪk/"
+  },
+  {
+    "word": "efficient",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Making good, thorough, or careful use of resources; not consuming extra. Especially, making good use of time or energy",
+    "example": "An efficient process would automate all the routine work.",
+    "pronunciation": "/əˈfɪʃənt/"
+  },
+  {
+    "word": "elaborate",
+    "level": "L3",
+    "type": "verb",
+    "definition": "(sometimes followed by on or upon, and then the object of the preposition) to expand/enlarge in detail",
+    "example": "Could you elaborate on the plot for your novel for me?",
+    "pronunciation": "/ɪˈlæbəɹeɪt/"
+  },
+  {
+    "word": "empathy",
+    "level": "L3",
+    "type": "noun",
+    "definition": "Identification with or understanding of the thoughts, feelings, or emotional state of another person.",
+    "example": "She had a lot of empathy for her neighbor; she knew what it was like to lose a parent too.",
+    "pronunciation": "/ˈɛmpəθi/"
+  },
+  {
+    "word": "emphasize",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To stress, give emphasis or extra weight to (something).",
+    "example": "His two-fingered gesture emphasized what he had told his boss to do with his job.",
+    "pronunciation": "/ˈɛm.fə.saɪz/"
+  },
+  {
+    "word": "encourage",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To mentally support; to motivate, give courage, hope or spirit.",
+    "example": "I encouraged him during his race.",
+    "pronunciation": "/ɪnˈkʌɹɪdʒ/"
+  },
+  {
+    "word": "endure",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To continue or carry on, despite obstacles or hardships; to persist.",
+    "example": "The singer's popularity endured for decades.",
+    "pronunciation": "/ɪnˈdjɔː(ɹ)/"
+  },
+  {
+    "word": "enhance",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To be raised up; to grow larger.",
+    "example": "A debt enhances rapidly by compound interest.",
+    "pronunciation": "/ɪnˈhɑːns/"
+  },
+  {
+    "word": "evaluate",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To draw conclusions from examining; to assess.",
+    "example": "It will take several years to evaluate the material gathered in the survey.",
+    "pronunciation": "/ɨˈvaljʊeɪt/"
+  },
+  {
+    "word": "evidence",
+    "level": "L3",
+    "type": "noun",
+    "definition": "Facts or observations presented in support of an assertion.",
+    "example": "There is no evidence that anyone was here earlier.",
+    "pronunciation": "[ˈɛvəɾəns]"
+  },
+  {
+    "word": "excessive",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Exceeding the usual bounds of something; extravagant; immoderate.",
+    "example": "Putting a wide vibrato on a single 16th triplet note at 160 beats per minute seems rather excessive.",
+    "pronunciation": "/ɪkˈsɛsɪv/"
+  },
+  {
+    "word": "experiment",
+    "level": "L3",
+    "type": "noun",
+    "definition": "A test under controlled conditions made to either demonstrate a known truth, examine the validity of a hypothesis, or determine the efficacy of something previously untried.",
+    "example": null,
+    "pronunciation": "/ɛk.ˈspɛ.ɹɪ.mənt/"
+  },
+  {
+    "word": "exquisite",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Especially fine or pleasing; exceptional.",
+    "example": "Sourav Ganguly scored an exquisite century in his debut Test match.",
+    "pronunciation": "/ɪkˈskwɪzɪt/"
+  },
+  {
+    "word": "flexible",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Capable or being adapted or molded in some way.",
+    "example": "This was a principle more flexible to their purpose. -Rogers.",
+    "pronunciation": "/ˈflɛk.sə.bəl/"
+  },
+  {
+    "word": "frustrate",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To disappoint or defeat; to vex by depriving of something expected or desired.",
+    "example": "It frustrates me to do all this work and then lose it all.",
+    "pronunciation": "/fɹəˈstɹeɪt/"
+  },
+  {
+    "word": "fundamental",
+    "level": "L3",
+    "type": "noun",
+    "definition": "(usually in the plural) A leading or primary principle, rule, law, or article, which serves as the groundwork of a system; an essential part",
+    "example": "one of the fundamentals of linear algebra",
+    "pronunciation": "/ˌfʌndəˈmɛntəl/"
+  },
+  {
+    "word": "genuine",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Not counterfeit, spurious, false, or adulterated",
+    "example": "a genuine text;  a genuine production;  genuine materials; genuine friendship",
+    "pronunciation": "/ˈdʒɛnjuːˌaɪn/"
+  },
+  {
+    "word": "hesitant",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Tending to hesitate, wait, or proceed with caution or reservation.",
+    "example": "I am hesitant to recommend him as a manager because he has a short temper.",
+    "pronunciation": "/ˈhɛzɪtənt/"
+  },
+  {
+    "word": "hypothesis",
+    "level": "L3",
+    "type": "noun",
+    "definition": "Used loosely, a tentative conjecture explaining an observation, phenomenon or scientific problem that can be tested by further observation, investigation and/or experimentation. As a scientific term of art, see the attached quotation. Compare to theory, and quotation given there.",
+    "example": null,
+    "pronunciation": "/-əsəs/"
+  },
+  {
+    "word": "illustrate",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To clarify something by giving, or serving as, an example or a comparison.",
+    "example": "We illustrate our definitions by including quotations or simple examples.",
+    "pronunciation": "/ɪ.ˈlʌs.tɹeɪt/"
+  },
+  {
+    "word": "implication",
+    "level": "L3",
+    "type": "noun",
+    "definition": "(usually in the plural) A possible effect or result of a decision or action.",
+    "example": "There are serious implications for the environment of such reforms.",
+    "pronunciation": "/ˌɪmpləˈkeɪʃən/"
+  },
+  {
+    "word": "inevitable",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Impossible to avoid or prevent.",
+    "example": "We were going so fast that the collision was inevitable.",
+    "pronunciation": "/ɪnˈɛvɪtəbəl/"
+  },
+  {
+    "word": "infer",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To introduce (something) as a reasoned conclusion; to conclude by reasoning or deduction, as from premises or evidence.",
+    "example": null,
+    "pronunciation": "/ɪnˈfɜː/"
+  },
+  {
+    "word": "influence",
+    "level": "L3",
+    "type": "noun",
+    "definition": "The power to affect, control or manipulate something or someone; the ability to change the development of fluctuating things such as conduct, thoughts or decisions.",
+    "example": "I have absolutely no influence over him.",
+    "pronunciation": "/ˈɪn.flu.əns/"
+  },
+  {
+    "word": "inspire",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To infuse into; to affect, as with a superior or supernatural influence; to fill with what animates, enlivens or exalts; to communicate inspiration to.",
+    "example": "Elders should inspire children with sentiments of virtue.",
+    "pronunciation": "/ɪn.ˈspaɪə(ɹ)/"
+  },
+  {
+    "word": "interpret",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To explain or tell the meaning of; to translate orally into intelligible or familiar language or terms. applied especially to language, but also to dreams, signs, conduct, mysteries, etc.",
+    "example": "to interpret an Indian speech",
+    "pronunciation": "/ɪnˈtɜː.pɹɪt/"
+  },
+  {
+    "word": "investigate",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To inquire into or study in order to ascertain facts or information.",
+    "example": "to investigate the causes of natural phenomena",
+    "pronunciation": "[ɪn.ˈves.tɪ.ɡeɪ̯t]"
+  },
+  {
+    "word": "justify",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To provide an acceptable explanation for.",
+    "example": "How can you justify spending so much money on clothes?",
+    "pronunciation": "/ˈdʒʌstɪfaɪ/"
+  },
+  {
+    "word": "maintain",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To support (someone), to back up or assist (someone) in an action.",
+    "example": null,
+    "pronunciation": "/meɪnˈteɪn/"
+  },
+  {
+    "word": "methodical",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Arranged with regard to method; disposed in a suitable manner, or in a manner to illustrate a subject, or to facilitate practical observation.",
+    "example": "the methodical arrangement of arguments; a methodical treatise",
+    "pronunciation": null
+  },
+  {
+    "word": "monotonous",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Having an unvarying tone or pitch.",
+    "example": null,
+    "pronunciation": "/məˈnɒtənəs/"
+  },
+  {
+    "word": "motivation",
+    "level": "L3",
+    "type": "noun",
+    "definition": "A research rating that measures how the rational and emotional elements of a commercial affect consumer intention to consider, visit, or buy something.",
+    "example": "The motivation scores showed that 65% of people wanted to visit our website to learn more about the offer after watching the commercial.",
+    "pronunciation": null
+  },
+  {
+    "word": "negotiate",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To arrange or settle something by mutual agreement.",
+    "example": "The client and server computers must first negotiate a network protocol to be used.",
+    "pronunciation": "/nəˈɡəʊ.ʃi.eɪt/"
+  },
+  {
+    "word": "obstacle",
+    "level": "L3",
+    "type": "noun",
+    "definition": "Something that impedes, stands in the way of, or holds up progress",
+    "example": "A big obstacle to understanding the manual was that it had been poorly translated from the Japanese.",
+    "pronunciation": "/ˈɒbstəkl̩/"
+  },
+  {
+    "word": "opportunity",
+    "level": "L3",
+    "type": "noun",
+    "definition": "A chance for advancement, progress or profit.",
+    "example": "The world is full of opportunities and it's up to me to see them and pursue them.",
+    "pronunciation": "/ˌɒp.əˈtjuː.nɪ.tɪ/"
+  },
+  {
+    "word": "optimistic",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Expecting the best in all possible ways.",
+    "example": "in an optimistic mood",
+    "pronunciation": "/ˌɒptɪˈmɪstɪk/"
+  },
+  {
+    "word": "peculiar",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Out of the ordinary; odd; strange; unusual.",
+    "example": "It would be rather peculiar to see a kangaroo hopping down a city street.",
+    "pronunciation": "[pʰə̥ˈkʰj̊uːljʊə]"
+  },
+  {
+    "word": "persevere",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To persist steadfastly in pursuit of an undertaking, task, journey, or goal, even if hindered by distraction, difficulty, obstacles, or discouragement.",
+    "example": null,
+    "pronunciation": null
+  },
+  {
+    "word": "persistent",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Obstinately refusing to give up or let go.",
+    "example": "She has had a persistent cough for weeks.",
+    "pronunciation": "/pəˈsɪstənt/"
+  },
+  {
+    "word": "perspective",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Of, in or relating to perspective.",
+    "example": "a perspective drawing",
+    "pronunciation": "/pɚˈspɛktɪv/"
+  },
+  {
+    "word": "persuade",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To successfully convince (someone) to agree to, accept, or do something, usually through reasoning and verbal influence.",
+    "example": "That salesman was able to persuade me into buying this bottle of lotion.",
+    "pronunciation": "/pəˈsweɪd/"
+  },
+  {
+    "word": "pessimistic",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Marked by pessimism and little hopefulness; expecting the worst.",
+    "example": "a pessimistic view of the future",
+    "pronunciation": "/ˌpɛ.səˈmɪs.tɪk/"
+  },
+  {
+    "word": "predict",
+    "level": "L3",
+    "type": "noun",
+    "definition": "A prediction.",
+    "example": null,
+    "pronunciation": "/pɹɪˈdɪkt/"
+  },
+  {
+    "word": "prejudice",
+    "level": "L3",
+    "type": "noun",
+    "definition": "An irrational hostile attitude, fear or hatred towards a particular group, race or religion.",
+    "example": "I am free of all prejudices. I hate everyone equally.",
+    "pronunciation": "/ˈpɹɛd͡ʒədɪs/"
+  },
+  {
+    "word": "prioritize",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To arrange or list a group of things in order of priority or importance.",
+    "example": null,
+    "pronunciation": "/pɹaɪˈɒɹətaɪz/"
+  },
+  {
+    "word": "reassure",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To assure anew; to restore confidence to; to free from fear or self-doubt.",
+    "example": "The boy's mother reassured him that there was no monster hiding under the bed.",
+    "pronunciation": "/ɹiəˈʃʊə(ɹ)/"
+  },
+  {
+    "word": "reliable",
+    "level": "L3",
+    "type": "noun",
+    "definition": "Something or someone reliable or dependable",
+    "example": "the old reliables",
+    "pronunciation": "/ɹɪˈlaɪəbəl/"
+  },
+  {
+    "word": "reluctant",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Not wanting to take some action; unwilling.",
+    "example": "She was reluctant to lend him the money",
+    "pronunciation": "/ɹɪˈlʌktənt/"
+  },
+  {
+    "word": "remarkable",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Worthy of being remarked or noted; notable",
+    "example": null,
+    "pronunciation": "/ɹɪˈmɑːkəbl̩/"
+  },
+  {
+    "word": "resilient",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "(of objects or substances) Returning quickly to original shape after force is applied; elastic.",
+    "example": null,
+    "pronunciation": null
+  },
+  {
+    "word": "resolve",
+    "level": "L3",
+    "type": "noun",
+    "definition": "Determination; will power.",
+    "example": "It took all my resolve to go through with the surgery.",
+    "pronunciation": "/ɹiːˈzɒlv/"
+  },
+  {
+    "word": "scrutinize",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To examine something with great care or detail, as to look for hidden or obscure flaws.",
+    "example": "to scrutinize the conduct or motives of individuals",
+    "pronunciation": "/ˈskɹuːtɨnaɪz/"
+  },
+  {
+    "word": "significant",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Signifying something; carrying meaning.",
+    "example": "a significant word or sound; a significant look",
+    "pronunciation": "/sɪɡˈnɪ.fɪ.kənt/"
+  },
+  {
+    "word": "spontaneous",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Self-generated; happening without any apparent external cause.",
+    "example": "He made a spontaneous offer of help.",
+    "pronunciation": "/spɒnˈteɪ.ni.əs/"
+  },
+  {
+    "word": "stimulate",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To encourage into action.",
+    "example": null,
+    "pronunciation": "/ˈstɪmjʊleɪt/"
+  },
+  {
+    "word": "strategy",
+    "level": "L3",
+    "type": "noun",
+    "definition": "The science and art of military command as applied to the overall planning and conduct of warfare.",
+    "example": null,
+    "pronunciation": "/ˈstɹætədʒi/"
+  },
+  {
+    "word": "subtle",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Hard to grasp; not obvious or easily understood; barely noticeable.",
+    "example": "The difference is subtle, but you can hear it if you listen carefully.",
+    "pronunciation": "/ˈsʌt(ə)l/"
+  },
+  {
+    "word": "sufficient",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Equal to the end proposed; adequate to what is needed; enough",
+    "example": "There is not sufficient access to the internet in many small rural villages.",
+    "pronunciation": "/səˈfɪʃənt/"
+  },
+  {
+    "word": "summarize",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To prepare a summary of (something).",
+    "example": "Jim was asked to summarize the document by Wednesday.",
+    "pronunciation": "/ˈsʌməˌɹaɪz/"
+  },
+  {
+    "word": "suppress",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To put an end to, especially with force, to crush, do away with; to prohibit, subdue.",
+    "example": "Political dissent was brutally suppressed.",
+    "pronunciation": "/səˈpɹɛs/"
+  },
+  {
+    "word": "sustain",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To maintain, or keep in existence.",
+    "example": "The city came under sustained attack by enemy forces.",
+    "pronunciation": "/səˈsteɪn/"
+  },
+  {
+    "word": "synthesize",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To combine two or more things to produce a new product.",
+    "example": null,
+    "pronunciation": "/ˈsɪnθəsaɪz/"
+  },
+  {
+    "word": "tedious",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "Boring, monotonous, time-consuming, wearisome.",
+    "example": null,
+    "pronunciation": "/ˈtiː.dɪəs/"
+  },
+  {
+    "word": "tolerance",
+    "level": "L3",
+    "type": "noun",
+    "definition": "The variation or deviation from a standard, especially the maximum permitted variation in an engineering measurement.",
+    "example": "Our customers can generally accept ten times the tolerance which we can achieve in our machining operations.",
+    "pronunciation": "/ˈtɒləɹəns/"
+  },
+  {
+    "word": "transform",
+    "level": "L3",
+    "type": "verb",
+    "definition": "To change greatly the appearance or form of.",
+    "example": "The alchemists sought to transform lead into gold.",
+    "pronunciation": "/tɹænzˈfɔːm/"
+  },
+  {
+    "word": "transparent",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "(of a material or object) See-through, clear; having the property that light passes through it almost undisturbed, such that one can see through it clearly.",
+    "example": "The waters of the lake were transparent until the factory dumped waste there.",
+    "pronunciation": "/tɹæn(t)sˈpæɹənt/"
+  },
+  {
+    "word": "variable",
+    "level": "L3",
+    "type": "noun",
+    "definition": "Something whose value may be dictated or discovered.",
+    "example": "There are several variables to consider here.",
+    "pronunciation": "/ˈvɛəɹ.i.ə.bl̩/"
+  },
+  {
+    "word": "vivid",
+    "level": "L3",
+    "type": "noun",
+    "definition": "A felt-tipped permanent marker.",
+    "example": null,
+    "pronunciation": "/ˈvɪvɪd/"
+  },
+  {
+    "word": "vulnerable",
+    "level": "L3",
+    "type": "adjective",
+    "definition": "More or most likely to be exposed to the chance of being attacked or harmed, either physically or emotionally.",
+    "example": "It's okay to get vulnerable every now and again.",
+    "pronunciation": "/ˈvʌln(ə)ɹəbl̩/"
+  },
+  {
+    "word": "acrimony",
+    "level": "L4",
+    "type": "noun",
+    "definition": "A sharp and bitter hatred.",
+    "example": "Her acrimony for her neighbors manifests itself with shouting and stomping.",
+    "pronunciation": null
+  },
+  {
+    "word": "altruistic",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Regardful of others; beneficent; unselfish",
+    "example": "His helping the old woman with her shopping was deemed highly altruistic by everyone, especially since her home was a mile away.",
+    "pronunciation": "/ˌɑl.tɹuˈɪs.tɪk/"
+  },
+  {
+    "word": "ameliorate",
+    "level": "L4",
+    "type": "verb",
+    "definition": "To make better, or improve, something perceived to be in a negative condition.",
+    "example": "They offered some compromises in an effort to ameliorate the situation.",
+    "pronunciation": "/əˈmiːli.əɹeɪt/"
+  },
+  {
+    "word": "anachronism",
+    "level": "L4",
+    "type": "noun",
+    "definition": "A chronological mistake; the erroneous dating of an event, circumstance, or object.",
+    "example": null,
+    "pronunciation": "/əˈnæ.kɹə.nɪ.z(ə)m/"
+  },
+  {
+    "word": "axiom",
+    "level": "L4",
+    "type": "noun",
+    "definition": "An established principle in some artistic practice or science that is universally received.",
+    "example": "The axioms of political economy cannot be considered absolute truths.",
+    "pronunciation": "/ˈaks.ɪ.əm/"
+  },
+  {
+    "word": "belligerent",
+    "level": "L4",
+    "type": "noun",
+    "definition": "A state or other armed participant in warfare",
+    "example": "The UN sent a treaty proposal to the belligerents.",
+    "pronunciation": "/bəˈlɪdʒ.(ə).ɹənt/"
+  },
+  {
+    "word": "bombastic",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "(of a person, their language or writing) showy in speech and given to using flowery or elaborate terms; grandiloquent; pompous",
+    "example": null,
+    "pronunciation": "/bɒmˈbæs.tɪk/"
+  },
+  {
+    "word": "capricious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Impulsive and unpredictable; determined by chance, impulse, or whim",
+    "example": "I almost died in a capricious winter storm.",
+    "pronunciation": "/kəˈpɹɪʃəs/"
+  },
+  {
+    "word": "circumlocution",
+    "level": "L4",
+    "type": "noun",
+    "definition": "A roundabout or indirect way of speaking; the use of more words than necessary to express an idea.",
+    "example": null,
+    "pronunciation": "/ˌsɜːkəmləˈkjuːʃən/"
+  },
+  {
+    "word": "cogent",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Forcefully persuasive; relevant, pertinent.",
+    "example": "The prosecution presented a cogent argument, convincing the jury of the defendant's guilt.",
+    "pronunciation": "/ˈkə͡ʊd͡ʒn̩t/"
+  },
+  {
+    "word": "compunction",
+    "level": "L4",
+    "type": "noun",
+    "definition": "A pricking of conscience or a feeling of regret, especially one which is slight or fleeting.",
+    "example": null,
+    "pronunciation": "/kəmˈpʌŋk.ʃən/"
+  },
+  {
+    "word": "cynical",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Of or relating to the belief that human actions are motivated only or primarily by base desires or selfishness.",
+    "example": null,
+    "pronunciation": "/ˈsɪnɪkəl/"
+  },
+  {
+    "word": "deleterious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Harmful often in a subtle or unexpected way.",
+    "example": "deleterious effects",
+    "pronunciation": "/ˌdɛlɪˈtɪəɹi.əs/"
+  },
+  {
+    "word": "dialectic",
+    "level": "L4",
+    "type": "noun",
+    "definition": "A contradiction of ideas that serves as the determining factor in their interaction.",
+    "example": "This situation created the inner dialectic of American history.",
+    "pronunciation": "/ˌdaɪəˈlɛktɪk/"
+  },
+  {
+    "word": "dichotomy",
+    "level": "L4",
+    "type": "noun",
+    "definition": "A separation or division into two; a distinction that results in such a division.",
+    "example": null,
+    "pronunciation": "/daɪˈkɒt.ə.mi/"
+  },
+  {
+    "word": "diffident",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Lacking confidence in others; distrustful.",
+    "example": null,
+    "pronunciation": "/ˈdɪfɪdənt/"
+  },
+  {
+    "word": "dilettante",
+    "level": "L4",
+    "type": "noun",
+    "definition": "An amateur, someone who dabbles in a field out of casual interest rather than as a profession or serious interest.",
+    "example": null,
+    "pronunciation": "/dɪləˈtɒnti/"
+  },
+  {
+    "word": "dogmatic",
+    "level": "L4",
+    "type": "noun",
+    "definition": "One of an ancient sect of physicians who went by general principles; opposed to the empiric.",
+    "example": null,
+    "pronunciation": "/dɒɡˈmatɪk/"
+  },
+  {
+    "word": "ebullient",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Enthusiastic; high-spirited.",
+    "example": null,
+    "pronunciation": "/ɪˈbʊljənt/"
+  },
+  {
+    "word": "eloquent",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Fluently persuasive and articulate",
+    "example": null,
+    "pronunciation": "/ˈɛl.əˌkwənt/"
+  },
+  {
+    "word": "elucidate",
+    "level": "L4",
+    "type": "verb",
+    "definition": "To make clear; to clarify; to shed light upon.",
+    "example": null,
+    "pronunciation": "/əˈluː.sɪ.de͡ɪt/"
+  },
+  {
+    "word": "enigmatic",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Pertaining to an enigma.",
+    "example": null,
+    "pronunciation": "/ˌɛnɪɡˈmætɪk/"
+  },
+  {
+    "word": "ephemeral",
+    "level": "L4",
+    "type": "noun",
+    "definition": "Something which lasts for a short period of time.",
+    "example": null,
+    "pronunciation": "/əˈfɛ.mə.ɹəl/"
+  },
+  {
+    "word": "equivocate",
+    "level": "L4",
+    "type": "verb",
+    "definition": "To use words of equivocal or doubtful signification; to express one's opinions in terms which admit of different senses, with intent to deceive; to use ambiguous expressions with a view to mislead; as, to equivocate is the work of duplicity.",
+    "example": null,
+    "pronunciation": "/ɪˈkwɪvəˌkeɪt/"
+  },
+  {
+    "word": "exacerbate",
+    "level": "L4",
+    "type": "verb",
+    "definition": "To make worse (a problem, bad situation, negative feeling, etc.); aggravate; exasperate.",
+    "example": "The proposed shutdown would exacerbate unemployment problems.",
+    "pronunciation": "/ɪkˈsæs-/"
+  },
+  {
+    "word": "fastidious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Excessively particular, demanding, or fussy about details, especially about tidiness and cleanliness.",
+    "example": null,
+    "pronunciation": "/fæˈstɪdi.əs/"
+  },
+  {
+    "word": "fatuous",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Obnoxiously stupid, vacantly silly, content in one's foolishness.",
+    "example": null,
+    "pronunciation": "/ˈfæt.ju.əs/"
+  },
+  {
+    "word": "garrulous",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Excessively or tiresomely talkative.",
+    "example": null,
+    "pronunciation": "/ˈɡæɹ.jʊ.ləs/"
+  },
+  {
+    "word": "grandiloquent",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "(of a person, their language or writing) given to using language in a showy way by using an excessive amount of difficult words to impress others; bombastic; turgid",
+    "example": null,
+    "pronunciation": "/ɡɹænˈdɪl.ə.kwənt/"
+  },
+  {
+    "word": "hegemony",
+    "level": "L4",
+    "type": "noun",
+    "definition": "Domination, influence, or authority over another, especially by one political group over a society or by one nation over others.",
+    "example": null,
+    "pronunciation": "/hɪˈdʒɛm.ə.ni/"
+  },
+  {
+    "word": "ignominious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Marked by shame or disgrace.",
+    "example": null,
+    "pronunciation": "/ɪɡnəˈmɪnɪəs/"
+  },
+  {
+    "word": "impecunious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Lacking money",
+    "example": null,
+    "pronunciation": "/ˌɪm.pəˈkjuː.ni.əs/"
+  },
+  {
+    "word": "impudent",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Not showing due respect; impertinent; bold-faced.",
+    "example": "The impudent children would not stop talking in class.",
+    "pronunciation": "/ˈɪmpjədənt/"
+  },
+  {
+    "word": "ineffable",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Beyond expression in words; unspeakable.",
+    "example": null,
+    "pronunciation": "/ɪˈnɛf.ə.bəl/"
+  },
+  {
+    "word": "inimical",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Harmful in effect.",
+    "example": null,
+    "pronunciation": "/ɪˈnɪmɪkəl/"
+  },
+  {
+    "word": "insidious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Intending to entrap; alluring but harmful.",
+    "example": "Hansel and Gretel were lured by the witch’s insidious gingerbread house.",
+    "pronunciation": "/ɪnˈsɪdi.əs/"
+  },
+  {
+    "word": "intransigent",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Unwilling to compromise or moderate a position; unreasonable",
+    "example": "Don't waste your time trying to change his mind: he's completely intransigent.",
+    "pronunciation": "/ɪnˈtɹæn.sə.d͡ʒənt/"
+  },
+  {
+    "word": "inveterate",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Firmly established from having been around for a long time; of long standing",
+    "example": "an inveterate disease",
+    "pronunciation": "/ɪnˈvɛtəɹɪt/"
+  },
+  {
+    "word": "jocular",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Humorous, amusing or joking.",
+    "example": "All we had was a short and jocular conversation.",
+    "pronunciation": "/ˈdʒɒkjʊlə/"
+  },
+  {
+    "word": "juxtaposition",
+    "level": "L4",
+    "type": "noun",
+    "definition": "The extra emphasis given to a comparison when the contrasted objects are close together.",
+    "example": "There was a poignant juxtaposition between the boys laughing in the street and the girl crying on the balcony above.",
+    "pronunciation": "/ˌdʒʌk.stə.pəˈzɪʃ.ən/"
+  },
+  {
+    "word": "laconic",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Using as few words as possible; pithy and concise.",
+    "example": null,
+    "pronunciation": "/ləˈkɒnɪk/"
+  },
+  {
+    "word": "lethargic",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Sluggish, slow",
+    "example": null,
+    "pronunciation": "/ləˈθɑɹdʒɪk/"
+  },
+  {
+    "word": "licentious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Lacking restraint, or ignoring societal standards, particularly in sexual conduct.",
+    "example": null,
+    "pronunciation": null
+  },
+  {
+    "word": "loquacious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Talkative; chatty.",
+    "example": null,
+    "pronunciation": "/ləʊˈkweɪʃəs/"
+  },
+  {
+    "word": "lugubrious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Gloomy, mournful or dismal, especially to an exaggerated degree.",
+    "example": "His client’s lugubrious expression tipped off the detective that something lurked beneath her optimistic words.",
+    "pronunciation": "/ləˈɡ(j)uːbɹi.əs/"
+  },
+  {
+    "word": "magnanimous",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Noble and generous in spirit.",
+    "example": "He thinks himself ardent, impulsive, passionate, magnanimous — capable of boundless enthusiasm for an idea or a sentiment.",
+    "pronunciation": "/mæɡˈnæn.ɪ.məs/"
+  },
+  {
+    "word": "mellifluous",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Flowing like honey.",
+    "example": null,
+    "pronunciation": "/məˈlɪflu.əs/"
+  },
+  {
+    "word": "mendacious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "(of a person) Lying, untruthful or dishonest.",
+    "example": null,
+    "pronunciation": "/mɛnˈdeɪʃəs/"
+  },
+  {
+    "word": "meretricious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Tastelessly gaudy; superficially attractive but having in reality no value or substance; falsely alluring.",
+    "example": null,
+    "pronunciation": "/ˌmɛɹəˈtɹɪʃəs/"
+  },
+  {
+    "word": "mnemonic",
+    "level": "L4",
+    "type": "noun",
+    "definition": "Anything (especially something in verbal form) used to help remember something.",
+    "example": "To remember the colours of the rainbow, use the mnemonic \"Richard of York gave battle in vain\" (red, orange, yellow, green, blue, indigo, violet).",
+    "pronunciation": "/nəˈmɒnɪk/"
+  },
+  {
+    "word": "morose",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Sullen, gloomy; showing a brooding ill humour.",
+    "example": null,
+    "pronunciation": "/məˈɹəʊs/"
+  },
+  {
+    "word": "narcissistic",
+    "level": "L4",
+    "type": "noun",
+    "definition": "A narcissist.",
+    "example": null,
+    "pronunciation": "/ˌnɑː.sɪˈsɪs.tɪk/"
+  },
+  {
+    "word": "nefarious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Sinful, villainous, criminal, or wicked, especially when noteworthy or notorious for such characteristics.",
+    "example": "Aliens have a nefarious connotation in many science fiction books.",
+    "pronunciation": "/nɛˈfɛəɹi.əs/"
+  },
+  {
+    "word": "nonchalant",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Casually calm and relaxed.",
+    "example": "We handled the whole frenetic situation with a nonchalant attitude.",
+    "pronunciation": "/ˈnɒn.ʃəl.ənt/"
+  },
+  {
+    "word": "numinous",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Of or relating to a numen (divinity); indicating the presence of a divinity.",
+    "example": "His interest in numinous objects led him on a quest for the Holy Grail.",
+    "pronunciation": "/ˈnjuːmɪnəs/"
+  },
+  {
+    "word": "obdurate",
+    "level": "L4",
+    "type": "verb",
+    "definition": "To harden; to obdure.",
+    "example": null,
+    "pronunciation": "/-ət/"
+  },
+  {
+    "word": "obfuscate",
+    "level": "L4",
+    "type": "verb",
+    "definition": "To deliberately make more confusing in order to conceal the truth.",
+    "example": "Before leaving the scene, the murderer set a fire in order to obfuscate any evidence of their identity.",
+    "pronunciation": "/ˈɒbfəskeɪt/"
+  },
+  {
+    "word": "obsequious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Obedient; compliant with someone else's orders or wishes.",
+    "example": null,
+    "pronunciation": "/əbˈsiːkwi.əs/"
+  },
+  {
+    "word": "obtuse",
+    "level": "L4",
+    "type": "verb",
+    "definition": "To dull or reduce an emotion or a physical state.",
+    "example": null,
+    "pronunciation": "/-ˈtʃuːs/"
+  },
+  {
+    "word": "ostentatious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Of ostentation.",
+    "example": null,
+    "pronunciation": "/ˌɒs.tənˈteɪ.ʃəs/"
+  },
+  {
+    "word": "paradigm",
+    "level": "L4",
+    "type": "noun",
+    "definition": "A pattern, a way of doing something, especially a pattern of thought, a system of beliefs, a conceptual framework.",
+    "example": "Thomas Kuhn's landmark “The Structure of Scientific Revolutions” got people talking about paradigm shifts, to the point the word itself now suggests an incomplete or biased perspective.",
+    "pronunciation": "/ˈpæ.ɹə.daɪm/"
+  },
+  {
+    "word": "paradox",
+    "level": "L4",
+    "type": "noun",
+    "definition": "An apparently self-contradictory statement, which can only be true if it is false, and vice versa.",
+    "example": "\"This sentence is false\" is a paradox.",
+    "pronunciation": "/ˈpaɹədɒks/"
+  },
+  {
+    "word": "parsimonious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Exhibiting parsimony; sparing in the expenditure of money; frugal to excess.",
+    "example": null,
+    "pronunciation": "/pɑɹ.sɪˈmo͡ʊn.i.əs/"
+  },
+  {
+    "word": "pedantic",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Like a pedant, overly concerned with formal rules and trivial points of learning.",
+    "example": null,
+    "pronunciation": "/pəˈdæn.tɪk/"
+  },
+  {
+    "word": "perfidious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Of, pertaining to, or representing perfidy; disloyal to what should command one's fidelity or allegiance.",
+    "example": null,
+    "pronunciation": "/pəˈfɪdi.əs/"
+  },
+  {
+    "word": "perfunctory",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Done only to fulfil a duty, or in a careless or indifferent manner; performed mechanically and as a thing of rote.",
+    "example": "He did a perfunctory job cleaning his dad's car, finishing quickly but leaving a few spots still dirty.",
+    "pronunciation": "/pəˈfʌŋk.t(ə)ɹɪ/"
+  },
+  {
+    "word": "pernicious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Causing much harm in a subtle way.",
+    "example": null,
+    "pronunciation": "/pəˈnɪʃəs/"
+  },
+  {
+    "word": "perspicacious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Of acute discernment; having keen insight; mentally perceptive.",
+    "example": null,
+    "pronunciation": "/ˌpɜː.spɪˈkeɪ.ʃəs/"
+  },
+  {
+    "word": "placid",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Calm and quiet; peaceful; tranquil",
+    "example": "a placid disposition",
+    "pronunciation": "/ˈplæs.ɪd/"
+  },
+  {
+    "word": "pragmatic",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Practical, concerned with making decisions and actions that are useful in practice, not just theory.",
+    "example": "The sturdy furniture in the student lounge was pragmatic, but unattractive.",
+    "pronunciation": "/pɹæɡˈmætɪk/"
+  },
+  {
+    "word": "propitious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Favorable; benevolent.",
+    "example": "propitious weather",
+    "pronunciation": "/pɹoʊˈpɪʃəs/"
+  },
+  {
+    "word": "pusillanimous",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Showing ignoble cowardice, or contemptible timidity.",
+    "example": null,
+    "pronunciation": "/pjuːsəlˈænəməs/"
+  },
+  {
+    "word": "querulous",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Often complaining; suggesting a complaint in expression; fretful, whining.",
+    "example": null,
+    "pronunciation": "/ˈkwɛɹ(j)ʊləs/"
+  },
+  {
+    "word": "raucous",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Harsh and rough-sounding.",
+    "example": "At night, raucous sounds come from the swamp.",
+    "pronunciation": "/ˈɹɔːkəs/"
+  },
+  {
+    "word": "recalcitrant",
+    "level": "L4",
+    "type": "noun",
+    "definition": "A person who is recalcitrant.",
+    "example": null,
+    "pronunciation": "/ɹɪ.ˈkæl.sɪ.tɹənt/"
+  },
+  {
+    "word": "recondite",
+    "level": "L4",
+    "type": "noun",
+    "definition": "A recondite (hidden or obscure) person or thing.",
+    "example": null,
+    "pronunciation": "/ɹɪˈkɒndaɪt/"
+  },
+  {
+    "word": "reticent",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Keeping one's thoughts and opinions to oneself; reserved or restrained.",
+    "example": null,
+    "pronunciation": "/ˈɹɛtɪsənt/"
+  },
+  {
+    "word": "sanctimonious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Making a show of being morally better than others, especially hypocritically pious.",
+    "example": null,
+    "pronunciation": "/ˌsæŋk.təˈməʊ.ni.əs/"
+  },
+  {
+    "word": "sanguine",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Characterized by abundance and active circulation of blood.",
+    "example": "a sanguine bodily temperament",
+    "pronunciation": "/ˈsæŋ.ɡwɪn/"
+  },
+  {
+    "word": "sardonic",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Scornfully mocking or cynical.",
+    "example": "He distances himself from people with his nasty, sardonic laughter.",
+    "pronunciation": "/saːˈdɔnɪk/"
+  },
+  {
+    "word": "sesquipedalian",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Pertaining to or given to the use of overly long words.",
+    "example": "Our dinner guest was so sesquipedalian that no one could understand what he said.",
+    "pronunciation": "/ˌsɛskwɪpɪˈdeɪlɪən/"
+  },
+  {
+    "word": "soliloquy",
+    "level": "L4",
+    "type": "noun",
+    "definition": "The act of a character speaking to themselves so as to reveal their thoughts to the audience.",
+    "example": "At the end of the second act the main villain gave a soliloquy detailing his plans to attack the protagonist.",
+    "pronunciation": "/səˈlɪləkwi/"
+  },
+  {
+    "word": "sophistry",
+    "level": "L4",
+    "type": "noun",
+    "definition": "Cunning, sometimes manifested as trickery.",
+    "example": null,
+    "pronunciation": "/ˈsɒ.fɪ.stɹi/"
+  },
+  {
+    "word": "stoic",
+    "level": "L4",
+    "type": "noun",
+    "definition": "Proponent of stoicism, a school of thought, from in 300 B.C.E. up to about the time of Marcus Aurelius, who holds that by cultivating an understanding of the logos, or natural law, one can be free of suffering.",
+    "example": null,
+    "pronunciation": "/ˈstəʊɪk/"
+  },
+  {
+    "word": "supercilious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Arrogantly superior; showing contemptuous indifference; haughty.",
+    "example": null,
+    "pronunciation": "/ˌsjuː.pə(ɹ)ˈsɪ.li.əs/"
+  },
+  {
+    "word": "sycophant",
+    "level": "L4",
+    "type": "noun",
+    "definition": "One who uses obsequious compliments to gain self-serving favor or advantage from another; a servile flatterer.",
+    "example": null,
+    "pronunciation": "/ˈsɪkəfænt/"
+  },
+  {
+    "word": "taciturn",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Silent; temperamentally untalkative; disinclined to speak.",
+    "example": "The two sisters could hardly have been more different, one so boisterous and expressive, the other so taciturn and calm.",
+    "pronunciation": "/ˈtæsɪtɜːn/"
+  },
+  {
+    "word": "tenacious",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Clinging to an object or surface; adhesive.",
+    "example": null,
+    "pronunciation": "/təˈneɪʃəs/"
+  },
+  {
+    "word": "trepidation",
+    "level": "L4",
+    "type": "noun",
+    "definition": "A fearful state; a state of concern or hesitation.",
+    "example": "I decided, with considerable trepidation, to let him drive my car without me.",
+    "pronunciation": "/ˌtɹɛp.ɪˈdeɪ.ʃən/"
+  },
+  {
+    "word": "truculent",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Cruel or savage.",
+    "example": "The truculent soldiers gave us a steely-eyed stare.",
+    "pronunciation": "/ˈtɹʌkjʊlənt/"
+  },
+  {
+    "word": "ubiquitous",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Being everywhere at once: omnipresent.",
+    "example": "To Hindus, Jews, Christians, and Muslims, God is ubiquitous.",
+    "pronunciation": "/juːˈbɪk.wə.təs/"
+  },
+  {
+    "word": "unctuous",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "(of a liquid or substance) Oily or greasy.",
+    "example": null,
+    "pronunciation": "/ˈʌnktʃuəs/"
+  },
+  {
+    "word": "verisimilitude",
+    "level": "L4",
+    "type": "noun",
+    "definition": "The property of seeming true, of resembling reality; resemblance to reality, realism.",
+    "example": null,
+    "pronunciation": "/vɛɹɪsɪˈmɪlɪtjuːd/"
+  },
+  {
+    "word": "vicissitude",
+    "level": "L4",
+    "type": "noun",
+    "definition": "Regular change or succession from one thing to another, or one part of a cycle to the next; alternation; mutual succession; interchange.",
+    "example": null,
+    "pronunciation": "[vaɪˈsɪs.ɨˌt(j)u(ː)d]"
+  },
+  {
+    "word": "vindictive",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Having a tendency to seek revenge when wronged, vengeful.",
+    "example": null,
+    "pronunciation": "/vɪnˈdɪk.tɪv/"
+  },
+  {
+    "word": "vociferous",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Making or characterized by a noisy outcry; clamorous.",
+    "example": null,
+    "pronunciation": null
+  },
+  {
+    "word": "wistful",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Full of longing or yearning.",
+    "example": "His eyes grew wistful as he recalled his university days.",
+    "pronunciation": "/ˈwɪstfəl/"
+  },
+  {
+    "word": "zealous",
+    "level": "L4",
+    "type": "adjective",
+    "definition": "Full of zeal; ardent, fervent; exhibiting enthusiasm or strong passion.",
+    "example": null,
+    "pronunciation": "/ˈzɛl.əs/"
+  }
+]

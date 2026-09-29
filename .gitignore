@@ -1,0 +1,56 @@
+# Dependencies & build output
+node_modules/
+dist/
+build/
+coverage/
+test-results/
+.quality/
+*.tsbuildinfo
+
+# SQLite — local data store (PV2-055), never committed
+*.db
+*.db-wal
+*.db-shm
+
+# Env & secrets
+.env
+.env.local
+
+# Personal / local-only (machine-specific notes, scratch)
+*.local
+*.local.*
+seeds/seed*-PRIVATE.*
+
+# Personal override files (e.g. AGENTS.override.md — per-contributor, not shared)
+*.override
+*.override.*
+
+# Local agent settings
+.claude/settings.local.json
+.codex/settings.local.json
+
+# OS / session
+.DS_Store
+.remember/
+.e2e-data/
+
+# Orca dispatch-transient files — the coordinator writes these INTO the worker's worktree with the
+# baton (dispatchId) and coordinator handle embedded. Never commit them: a worker doing `git add -A`
+# would leak the handle/baton into the PR and leave a stale orchestration script in the repo.
+ORCA_TASK_BRIEF.md
+ORCA_FIX_BRIEF*.md
+orca-done.sh
+
+# Steer/feedback scratch files — PR review comments, steer docs, etc.
+ORCA_STEER*.md
+PR_BODY.md
+.pr_body.md
+
+# Playwright MCP session artifacts (console logs, snapshots) — 131 files accumulated
+# untracked in the repo root since August, one `git add -A` away from being committed.
+.playwright-mcp/
+
+# Native git worktrees for worker dispatch. Git shows the directory as untracked, and it currently
+# holds ~7GB — a single `git add -A` in the main checkout reaches for all of it. The worktrees are
+# throwaway by design (`git worktree add`/`rm`), so nothing in here is ever meant to be committed.
+.worktrees/

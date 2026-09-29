@@ -1,0 +1,9 @@
+# audit-accessible-names baseline (#778) — one `file:line:tier` row per currently-known NONE
+# or WEAK offender, machine-generated and hand-editable. Regenerate with:
+#   node tools/dev/audit-accessible-names.mjs --write-baseline tools/dev/accessible-names-baseline.txt
+# A batch that fixes an offender removes its row here, in the SAME PR as the fix — do this
+# instead of hand-deleting the line so the row text always matches what the script itself
+# produces. A row appearing here that the live audit no longer produces (STALE) or a live-audit
+# row missing from here (a NEW, unbaselined offender) both fail `--check-baseline` — see #778,
+# #774, and quickstart.md S9 for the full rationale. Do not silently re-sort or hand-format this
+# file; regenerate it.

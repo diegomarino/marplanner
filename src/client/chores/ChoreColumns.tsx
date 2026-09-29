@@ -1,0 +1,521 @@
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { ErrorNotice } from "@/components/ErrorNotice";
+import { StatusToggle } from "@/components/StatusToggle";
+import { Button } from "@/components/ui/button";
+import { useTodayChores } from "@/chores/useTodayChores";
+import { useTranslation } from "@/i18n";
+import type { MessageKey } from "@/i18n/messages";
+import { authFetch } from "@/lib/credential";
+import { cn } from "@/lib/utils";
+import {
+  MEMBER_COLOR_KEYS,
+  type BoardChore,
+  type BoardColumn,
+  type DayPeriodDTO,
+  type MemberColorKey,
+  type PeriodId,
+} from "../../shared";
+import { resolveActivePeriod } from "../../shared/dayPeriods";
+
+const DAY_PERIOD_LABEL_KEYS: Record<PeriodId, MessageKey> = {
+  morning: "dayPeriod.morning",
+  afternoon: "dayPeriod.afternoon",
+  evening: "dayPeriod.evening",
+  night: "dayPeriod.night",
+};
+
+type MemberColorProfile = { id: string; colorKey: MemberColorKey };
+type MemberScale = {
+  column: string;
+  badge: string;
+  period: string;
+  card: string;
+  completeCard: string;
+  progress: string;
+};
+
+const MEMBER_SCALES: Record<MemberColorKey, MemberScale> = {
+  blue: {
+    column: "bg-member-blue-100 border-member-blue-200",
+    badge: "bg-member-blue-500 text-member-blue-foreground",
+    period: "bg-member-blue-200 border-member-blue-300",
+    card: "border-member-blue-200 bg-member-blue-100",
+    completeCard: "border-member-blue-500 bg-member-blue-300 text-member-blue-foreground",
+    progress: "bg-member-blue-500",
+  },
+  sky: {
+    column: "bg-member-sky-100 border-member-sky-200",
+    badge: "bg-member-sky-500 text-member-sky-foreground",
+    period: "bg-member-sky-200 border-member-sky-300",
+    card: "border-member-sky-200 bg-member-sky-100",
+    completeCard: "border-member-sky-500 bg-member-sky-300 text-member-sky-foreground",
+    progress: "bg-member-sky-500",
+  },
+  cyan: {
+    column: "bg-member-cyan-100 border-member-cyan-200",
+    badge: "bg-member-cyan-500 text-member-cyan-foreground",
+    period: "bg-member-cyan-200 border-member-cyan-300",
+    card: "border-member-cyan-200 bg-member-cyan-100",
+    completeCard: "border-member-cyan-500 bg-member-cyan-300 text-member-cyan-foreground",
+    progress: "bg-member-cyan-500",
+  },
+  teal: {
+    column: "bg-member-teal-100 border-member-teal-200",
+    badge: "bg-member-teal-500 text-member-teal-foreground",
+    period: "bg-member-teal-200 border-member-teal-300",
+    card: "border-member-teal-200 bg-member-teal-100",
+    completeCard: "border-member-teal-500 bg-member-teal-300 text-member-teal-foreground",
+    progress: "bg-member-teal-500",
+  },
+  green: {
+    column: "bg-member-green-100 border-member-green-200",
+    badge: "bg-member-green-500 text-member-green-foreground",
+    period: "bg-member-green-200 border-member-green-300",
+    card: "border-member-green-200 bg-member-green-100",
+    completeCard: "border-member-green-500 bg-member-green-300 text-member-green-foreground",
+    progress: "bg-member-green-500",
+  },
+  lime: {
+    column: "bg-member-lime-100 border-member-lime-200",
+    badge: "bg-member-lime-500 text-member-lime-foreground",
+    period: "bg-member-lime-200 border-member-lime-300",
+    card: "border-member-lime-200 bg-member-lime-100",
+    completeCard: "border-member-lime-500 bg-member-lime-300 text-member-lime-foreground",
+    progress: "bg-member-lime-500",
+  },
+  yellow: {
+    column: "bg-member-yellow-100 border-member-yellow-200",
+    badge: "bg-member-yellow-500 text-member-yellow-foreground",
+    period: "bg-member-yellow-200 border-member-yellow-300",
+    card: "border-member-yellow-200 bg-member-yellow-100",
+    completeCard: "border-member-yellow-500 bg-member-yellow-300 text-member-yellow-foreground",
+    progress: "bg-member-yellow-500",
+  },
+  amber: {
+    column: "bg-member-amber-100 border-member-amber-200",
+    badge: "bg-member-amber-500 text-member-amber-foreground",
+    period: "bg-member-amber-200 border-member-amber-300",
+    card: "border-member-amber-200 bg-member-amber-100",
+    completeCard: "border-member-amber-500 bg-member-amber-300 text-member-amber-foreground",
+    progress: "bg-member-amber-500",
+  },
+  orange: {
+    column: "bg-member-orange-100 border-member-orange-200",
+    badge: "bg-member-orange-500 text-member-orange-foreground",
+    period: "bg-member-orange-200 border-member-orange-300",
+    card: "border-member-orange-200 bg-member-orange-100",
+    completeCard: "border-member-orange-500 bg-member-orange-300 text-member-orange-foreground",
+    progress: "bg-member-orange-500",
+  },
+  red: {
+    column: "bg-member-red-100 border-member-red-200",
+    badge: "bg-member-red-500 text-member-red-foreground",
+    period: "bg-member-red-200 border-member-red-300",
+    card: "border-member-red-200 bg-member-red-100",
+    completeCard: "border-member-red-500 bg-member-red-300 text-member-red-foreground",
+    progress: "bg-member-red-500",
+  },
+  rose: {
+    column: "bg-member-rose-100 border-member-rose-200",
+    badge: "bg-member-rose-500 text-member-rose-foreground",
+    period: "bg-member-rose-200 border-member-rose-300",
+    card: "border-member-rose-200 bg-member-rose-100",
+    completeCard: "border-member-rose-500 bg-member-rose-300 text-member-rose-foreground",
+    progress: "bg-member-rose-500",
+  },
+  pink: {
+    column: "bg-member-pink-100 border-member-pink-200",
+    badge: "bg-member-pink-500 text-member-pink-foreground",
+    period: "bg-member-pink-200 border-member-pink-300",
+    card: "border-member-pink-200 bg-member-pink-100",
+    completeCard: "border-member-pink-500 bg-member-pink-300 text-member-pink-foreground",
+    progress: "bg-member-pink-500",
+  },
+  fuchsia: {
+    column: "bg-member-fuchsia-100 border-member-fuchsia-200",
+    badge: "bg-member-fuchsia-500 text-member-fuchsia-foreground",
+    period: "bg-member-fuchsia-200 border-member-fuchsia-300",
+    card: "border-member-fuchsia-200 bg-member-fuchsia-100",
+    completeCard: "border-member-fuchsia-500 bg-member-fuchsia-300 text-member-fuchsia-foreground",
+    progress: "bg-member-fuchsia-500",
+  },
+  purple: {
+    column: "bg-member-purple-100 border-member-purple-200",
+    badge: "bg-member-purple-500 text-member-purple-foreground",
+    period: "bg-member-purple-200 border-member-purple-300",
+    card: "border-member-purple-200 bg-member-purple-100",
+    completeCard: "border-member-purple-500 bg-member-purple-300 text-member-purple-foreground",
+    progress: "bg-member-purple-500",
+  },
+  violet: {
+    column: "bg-member-violet-100 border-member-violet-200",
+    badge: "bg-member-violet-500 text-member-violet-foreground",
+    period: "bg-member-violet-200 border-member-violet-300",
+    card: "border-member-violet-200 bg-member-violet-100",
+    completeCard: "border-member-violet-500 bg-member-violet-300 text-member-violet-foreground",
+    progress: "bg-member-violet-500",
+  },
+  indigo: {
+    column: "bg-member-indigo-100 border-member-indigo-200",
+    badge: "bg-member-indigo-500 text-member-indigo-foreground",
+    period: "bg-member-indigo-200 border-member-indigo-300",
+    card: "border-member-indigo-200 bg-member-indigo-100",
+    completeCard: "border-member-indigo-500 bg-member-indigo-300 text-member-indigo-foreground",
+    progress: "bg-member-indigo-500",
+  },
+};
+
+const NEUTRAL_SCALE: MemberScale = {
+  column: "bg-muted border-border",
+  badge: "bg-muted text-foreground",
+  period: "bg-muted border-border",
+  card: "border-border bg-card",
+  completeCard: "border-foreground bg-muted text-foreground",
+  progress: "bg-muted-foreground",
+};
+
+type ResolvedMemberScale = MemberScale & { colorVar: string };
+
+function memberScale(profile: MemberColorProfile | undefined): ResolvedMemberScale {
+  if (profile && MEMBER_COLOR_KEYS.includes(profile.colorKey)) {
+    return {
+      ...MEMBER_SCALES[profile.colorKey],
+      colorVar: `var(--color-member-${profile.colorKey}-500)`,
+    };
+  }
+  return { ...NEUTRAL_SCALE, colorVar: "var(--color-muted-foreground)" };
+}
+
+function householdNowMinutes(timezone: string): number {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date());
+  const hour = Number(parts.find((part) => part.type === "hour")?.value ?? 0);
+  const minute = Number(parts.find((part) => part.type === "minute")?.value ?? 0);
+  return hour * 60 + minute;
+}
+
+interface ChoreColumnsProps {
+  date?: string;
+  layout: "fit" | "scroll";
+}
+
+export function ChoreColumns({ date, layout }: ChoreColumnsProps): React.JSX.Element {
+  const { t } = useTranslation();
+  const chores = useTodayChores(date);
+  const [periods, setPeriods] = useState<DayPeriodDTO[] | null>(null);
+  const [memberProfiles, setMemberProfiles] = useState<Map<string, MemberColorProfile>>(new Map());
+  const [activePeriodByMember, setActivePeriodByMember] = useState<Record<string, PeriodId>>({});
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void authFetch("/api/members?lifecycle=active", {
+      credentials: "include",
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`members: ${res.status}`);
+        const data = (await res.json()) as MemberColorProfile[];
+        if (!Array.isArray(data)) throw new Error("members: invalid response");
+        setMemberProfiles(
+          new Map(
+            data
+              .filter((member) => MEMBER_COLOR_KEYS.includes(member.colorKey))
+              .map((member) => [member.id, member])
+          )
+        );
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void authFetch("/api/day-periods", { credentials: "include", signal: controller.signal })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`day-periods: ${res.status}`);
+        const data = await res.json();
+        if (Array.isArray(data)) setPeriods(data as DayPeriodDTO[]);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const columns = chores.columns;
+    if (columns === null || periods === null || chores.timezone === null) return;
+    const activePeriod = resolveActivePeriod(periods, householdNowMinutes(chores.timezone));
+    setActivePeriodByMember((current) => {
+      const next = { ...current };
+      for (const column of columns) {
+        if (!(column.memberId in next)) next[column.memberId] = activePeriod;
+      }
+      return next;
+    });
+  }, [chores.columns, chores.timezone, periods]);
+
+  const selectPeriod = useCallback((memberId: string, periodId: PeriodId) => {
+    setActivePeriodByMember((current) => ({
+      ...current,
+      [memberId]: periodId,
+    }));
+  }, []);
+
+  return (
+    <>
+      {chores.error && (
+        <ErrorNotice message={t(layout === "fit" ? "todayChores.error" : "chores.board.error")} />
+      )}
+      {chores.toggleError && <ErrorNotice message={chores.toggleError} className="mb-3" />}
+      {chores.columns === null && !chores.error && (
+        <p role="status" className="text-muted-foreground">
+          {t(layout === "fit" ? "todayChores.loading" : "chores.board.loading")}
+        </p>
+      )}
+      {chores.columns?.length === 0 && (
+        <p className="text-muted-foreground">
+          {t(layout === "fit" ? "todayChores.noChildren" : "chores.board.noChildren")}
+        </p>
+      )}
+      {chores.columns && chores.columns.length > 0 && (
+        <div
+          data-testid="chore-columns"
+          className="flex min-h-0 flex-1 items-stretch gap-4 overflow-x-auto pb-1"
+        >
+          {chores.columns.map((column) => (
+            <ChoreColumn
+              key={column.memberId}
+              column={column}
+              scale={memberScale(memberProfiles.get(column.memberId))}
+              activePeriod={activePeriodByMember[column.memberId] ?? column.dayPeriods[0]?.id}
+              pending={chores.pending}
+              t={t}
+              onSelectPeriod={selectPeriod}
+              onToggleChore={chores.requestToggle}
+              layout={layout}
+            />
+          ))}
+        </div>
+      )}
+      <ConfirmDialog
+        open={chores.confirmTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) chores.closeConfirm();
+        }}
+        title={t(
+          layout === "fit"
+            ? "todayChores.uncompleteConfirmTitle"
+            : "chores.board.uncompleteConfirmTitle"
+        )}
+        description={t(
+          layout === "fit"
+            ? "todayChores.uncompleteConfirmDescription"
+            : "chores.board.uncompleteConfirmDescription"
+        )}
+        confirmLabel={t(
+          layout === "fit"
+            ? "todayChores.uncompleteConfirmConfirm"
+            : "chores.board.uncompleteConfirmConfirm"
+        )}
+        cancelLabel={t(
+          layout === "fit"
+            ? "todayChores.uncompleteConfirmCancel"
+            : "chores.board.uncompleteConfirmCancel"
+        )}
+        onConfirm={chores.confirmUncomplete}
+        confirmTestId={
+          layout === "fit" ? "today-chores-uncomplete-confirm" : "chores-uncomplete-confirm"
+        }
+        cancelTestId={
+          layout === "fit" ? "today-chores-uncomplete-cancel" : "chores-uncomplete-cancel"
+        }
+      />
+    </>
+  );
+}
+
+function ChoreColumn({
+  column,
+  scale,
+  activePeriod,
+  pending,
+  t,
+  onSelectPeriod,
+  onToggleChore,
+  layout,
+}: {
+  column: BoardColumn;
+  scale: ResolvedMemberScale;
+  activePeriod: PeriodId | undefined;
+  pending: ReadonlySet<string>;
+  t: (key: MessageKey) => string;
+  onSelectPeriod: (memberId: string, periodId: PeriodId) => void;
+  onToggleChore: (chore: BoardChore, memberId: string) => void;
+  layout: "fit" | "scroll";
+}): React.JSX.Element {
+  const activeIndex = Math.max(
+    0,
+    column.dayPeriods.findIndex((period) => period.id === activePeriod)
+  );
+  const period = column.dayPeriods[activeIndex];
+  const canGoUp = activeIndex > 0;
+  const canGoDown = activeIndex < column.dayPeriods.length - 1;
+
+  return (
+    <div
+      data-testid={`${layout === "fit" ? "today-chores" : "chores-board"}-column-${column.memberId}`}
+      // eslint-disable-next-line no-restricted-syntax -- This gradient is derived from the runtime semantic member-colour token.
+      className="h-full min-w-[220px] flex-1 basis-[220px] overflow-y-auto rounded-2xl border p-3 shadow-sm [background:linear-gradient(180deg,color-mix(in_oklch,var(--member-color)_16%,white),color-mix(in_oklch,var(--member-color)_8%,white))] [border-color:color-mix(in_oklch,var(--member-color)_28%,white)]"
+      // eslint-disable-next-line no-restricted-syntax -- The configured member identity is passed through one CSS custom property into the token layer.
+      style={{ "--member-color": scale.colorVar } as CSSProperties}
+    >
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span
+            data-testid="today-chores-member-badge"
+            className={cn("rounded-full px-3 py-1 text-lg font-semibold", scale.badge)}
+          >
+            {column.displayName}
+          </span>
+          {column.streak !== null && (
+            <span className="rounded-full border bg-card px-2 py-1 text-sm">
+              {t("chores.board.streakLabel")} {column.streak}
+            </span>
+          )}
+        </div>
+        {column.todayProgress !== null && (
+          <span className="shrink-0 rounded-full border bg-card px-2 py-1 text-sm font-medium">
+            {t("chores.board.progressLabel")} {column.todayProgress.completed}/
+            {column.todayProgress.total}
+          </span>
+        )}
+      </div>
+      {column.todayProgress !== null && (
+        <div className="mb-3 h-2 overflow-hidden rounded-full bg-background" aria-hidden="true">
+          <div
+            className={cn("h-full w-[var(--today-chores-progress)] rounded-full", scale.progress)}
+            // eslint-disable-next-line no-restricted-syntax -- Dynamic progress is passed through a CSS custom property into the token layer.
+            style={
+              {
+                "--today-chores-progress": `${Math.min(
+                  100,
+                  column.todayProgress.total > 0
+                    ? (column.todayProgress.completed / column.todayProgress.total) * 100
+                    : 0
+                )}%`,
+              } as CSSProperties
+            }
+          />
+        </div>
+      )}
+      {period && (
+        <div className="mt-3 flex flex-col gap-2">
+          {canGoUp && (
+            <Button
+              type="button"
+              variant="outline"
+              aria-label={t("todayChores.previousPeriod")}
+              className="w-full"
+              onClick={() => onSelectPeriod(column.memberId, column.dayPeriods[activeIndex - 1].id)}
+            >
+              <ChevronUp aria-hidden="true" />
+            </Button>
+          )}
+          <section
+            data-testid="today-chores-active-period"
+            data-period-id={period.id}
+            // eslint-disable-next-line no-restricted-syntax -- This surface is derived from the runtime semantic member-colour token.
+            className="rounded-xl border p-2 [background:color-mix(in_oklch,var(--member-color)_10%,white)] [border-color:color-mix(in_oklch,var(--member-color)_25%,white)]"
+          >
+            <header className="mb-2 flex items-center gap-2">
+              <h3 className="font-semibold">{t(DAY_PERIOD_LABEL_KEYS[period.id])}</h3>
+              <span
+                // eslint-disable-next-line no-restricted-syntax -- This badge is derived from the runtime semantic member-colour token.
+                className="rounded-full px-2 py-0.5 text-sm [background:color-mix(in_oklch,var(--member-color)_18%,white)]"
+              >
+                {period.chores.filter((chore) => chore.completed).length}/{period.chores.length}
+              </span>
+            </header>
+            <ul className="m-0 flex list-none flex-col gap-2 p-0">
+              {period.chores.length === 0 ? (
+                <li className="text-muted-foreground">{t("todayChores.empty")}</li>
+              ) : (
+                period.chores.map((chore) => (
+                  <li key={chore.id}>
+                    <StatusToggle
+                      data-testid={
+                        layout === "fit"
+                          ? `today-chore-toggle-${column.memberId}-${chore.id}`
+                          : `chore-toggle-${chore.id}`
+                      }
+                      pressed={chore.completed}
+                      label={
+                        <span className="grid w-full grid-cols-[3rem_minmax(0,1fr)_2rem] items-center gap-2">
+                          <span
+                            aria-hidden="true"
+                            data-testid={`today-chore-icon-${column.memberId}-${chore.id}`}
+                            className={cn("text-3xl", chore.completed && "line-through opacity-55")}
+                          >
+                            {chore.icon ?? "📋"}
+                          </span>
+                          <span
+                            data-testid={`today-chore-name-${column.memberId}-${chore.id}`}
+                            className={cn(
+                              "text-left font-semibold",
+                              chore.completed && "text-muted-foreground line-through"
+                            )}
+                          >
+                            {chore.name}
+                          </span>
+                          <span
+                            aria-hidden="true"
+                            className={cn(
+                              "flex size-8 items-center justify-center rounded-full border-2",
+                              chore.completed &&
+                                // eslint-disable-next-line no-restricted-syntax -- Completion fill is derived from the runtime semantic member-colour token.
+                                "[background:color-mix(in_oklch,var(--member-color)_58%,white)]"
+                            )}
+                          >
+                            {chore.completed && <Check />}
+                          </span>
+                        </span>
+                      }
+                      accessibleName={chore.name}
+                      busy={pending.has(chore.id)}
+                      onPress={() => onToggleChore(chore, column.memberId)}
+                      wrap
+                      className={cn(
+                        "min-h-[80px] w-full rounded-2xl border-2 px-3",
+                        chore.completed
+                          ? // eslint-disable-next-line no-restricted-syntax -- Completed tasks use stronger shades of the runtime semantic member-colour token.
+                            "[background:color-mix(in_oklch,var(--member-color)_46%,white)] [border-color:color-mix(in_oklch,var(--member-color)_58%,white)]"
+                          : // eslint-disable-next-line no-restricted-syntax -- Open tasks use softer shades of the runtime semantic member-colour token.
+                            "[background:color-mix(in_oklch,var(--member-color)_16%,white)] [border-color:color-mix(in_oklch,var(--member-color)_24%,white)]"
+                      )}
+                    />
+                  </li>
+                ))
+              )}
+            </ul>
+          </section>
+          {canGoDown && (
+            <Button
+              type="button"
+              variant="outline"
+              aria-label={t("todayChores.nextPeriod")}
+              className="w-full"
+              onClick={() => onSelectPeriod(column.memberId, column.dayPeriods[activeIndex + 1].id)}
+            >
+              <ChevronDown aria-hidden="true" />
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,427 @@
+openapi: 3.1.0
+info:
+  title: marplanner printing
+  version: 1.0.0
+  description: >-
+    Durable printing jobs, printer capability registration, fenced claims, payloads, acknowledgement
+    and failure reporting. Printed state requires a valid acknowledgement. The browser performs
+    physical transport.
+security:
+  - deviceKeyCookie: []
+components:
+  securitySchemes:
+    deviceKeyCookie:
+      type: apiKey
+      in: cookie
+      name: mp_device_key
+      description: >-
+        the standard device-key cookie boundary (auth/boundary.ts); no management gate on this
+        surface (research D8)
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+          description: >-
+            machine code, present on a subset of errors: `printer_capability_missing` (403, FR-021)
+            and `render_failure` (422, FR-017) are the two this contract maps with one; a plain 400
+            validation error omits it.
+    PrintJob:
+      type: object
+      required:
+        - id
+        - recordKey
+        - outputRef
+        - targetDate
+        - state
+        - derivedState
+        - attempts
+        - createdAt
+        - updatedAt
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        recordKey:
+          type: string
+        outputRef:
+          type: string
+          description: >-
+            the producer's artifact reference — the raster is fetched via the producer's registered
+            interface at execute (ADR-041)
+        targetDate:
+          type: string
+          description: YYYY-MM-DD household date
+        memberId:
+          type:
+            - string
+            - "null"
+        state:
+          type: string
+          enum:
+            - pending
+            - claimed
+            - printed
+            - failed
+            - cancelled
+        derivedState:
+          type: string
+          description: read-time refinement (Constitution V)
+          enum:
+            - pending
+            - claimed
+            - printed
+            - failed
+            - cancelled
+            - dead-letter
+            - retrying
+        attempts:
+          type: integer
+          description: recoverable-failure count (contract retry vocabulary)
+        failureReason:
+          type:
+            - string
+            - "null"
+        claimedAt:
+          type:
+            - integer
+            - "null"
+        printedAt:
+          type:
+            - integer
+            - "null"
+        createdAt:
+          type: integer
+        updatedAt:
+          type: integer
+    ClaimResponse:
+      type: object
+      required:
+        - job
+        - leaseToken
+        - leaseExpiresAt
+      additionalProperties: false
+      properties:
+        job:
+          $ref: "#/components/schemas/PrintJob"
+        leaseToken:
+          type: string
+        leaseExpiresAt:
+          type: integer
+    JobsListResponse:
+      type: object
+      required:
+        - jobs
+      additionalProperties: false
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/PrintJob"
+    TestPrintResponse:
+      type: object
+      required:
+        - enqueued
+      additionalProperties: false
+      properties:
+        enqueued:
+          type: boolean
+        jobId:
+          type:
+            - string
+            - "null"
+        alreadyPrinted:
+          type: boolean
+          description: true when FR-012 dedup suppressed the enqueue
+    CapabilityResponse:
+      type: object
+      required:
+        - registered
+      additionalProperties: false
+      properties:
+        registered:
+          type: boolean
+          description: always true on 200 — the calling session's key is now print-capable (FR-021, ADR-035)
+    PrintingStatusResponse:
+      type: object
+      required:
+        - active
+      additionalProperties: false
+      properties:
+        active:
+          type: boolean
+          description: >-
+            current printing-plugin-active state (INV-06); the client-side read FR-013's
+            family-facing hiding gates on (issue 691) — PrintExecutor and the admin nav entry for
+            PrintingManagement both hide when false
+paths:
+  /api/printing/test-print:
+    post:
+      summary: >-
+        admin trigger — enqueue the test printable (FR-018; dedup per FR-012). Body is OPTIONAL; an
+        omitted/absent `targetDate` defaults to the household-local "today" (research D10).
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                targetDate:
+                  type: string
+                  description: >-
+                    override for the trigger's target date — MUST be strictly calendar-valid
+                    YYYY-MM-DD (Constitution IV); the one HTTP-reachable seam for this slice's
+                    target_date validity check
+      responses:
+        "200":
+          description: trigger evaluated — enqueued, or dedup-suppressed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestPrintResponse"
+        "400":
+          description: malformed body, or `targetDate` is not strictly calendar-valid (Constitution IV)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: printing plugin inactive (FR-013)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/printing/jobs:
+    get:
+      summary: admin list with derived states (SC-003 visibility)
+      responses:
+        "200":
+          description: all jobs with derived states
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobsListResponse"
+  /api/printing/status:
+    get:
+      summary: >-
+        client-side plugin-state read (FR-013, issue 691) — no capability gate (a plain read,
+        matching /jobs GET's own posture, not a printer-session action)
+      responses:
+        "200":
+          description: current plugin-active state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrintingStatusResponse"
+  /api/printing/capability:
+    post:
+      summary: register this session as print-capable on pairing (ADR-035, FR-021 — `/claim` requires it)
+      responses:
+        "200":
+          description: capability registered for the session's key (idempotent)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CapabilityResponse"
+        "403":
+          description: >-
+            defensive only, `code: "credential_invalid"` — no authenticated API key on the request
+            (should never occur past authBoundary); this route has no OTHER 403 cause (unlike /claim
+            below, it never checks an EXISTING capability, only writes one)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: printing plugin inactive (FR-013)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/printing/claim:
+    post:
+      summary: >-
+        executor claim — atomic, day-scoped (research D1); requires the session's registered printer
+        capability (FR-021, ADR-035)
+      responses:
+        "200":
+          description: one job claimed with a fresh lease
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimResponse"
+        "204":
+          description: nothing claimable
+        "403":
+          description: >-
+            TWO causes, both `ErrorResponse`: session has no registered printer capability, `code:
+            "printer_capability_missing"` (FR-021 — the common case); OR, defensively, no
+            authenticated API key on the request, `code: "credential_invalid"` (should never occur
+            past authBoundary)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: printing plugin inactive (FR-013)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/printing/jobs/{id}/payload:
+    get:
+      summary: >-
+        fetch final ESC/POS bytes — raster pulled from the producer's provider and converted at
+        fetch time (FR-017, ADR-066)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: leaseToken
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: the job's final printer-ready ESC/POS byte stream
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: unknown job id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: stale/rotated lease token (INV-05 fencing)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: >-
+            permanent conversion failure (`render_failure`) — job dead-letters, `printing.failed`
+            emitted (FR-017)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/printing/jobs/{id}/ack:
+    post:
+      summary: byte-level success acknowledgement (ADR-019, FR-004/FR-008)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - leaseToken
+              additionalProperties: false
+              properties:
+                leaseToken:
+                  type: string
+      responses:
+        "200":
+          description: printedAt stamped, `printing.completed` emitted (idempotent per lease)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrintJob"
+        "404":
+          description: unknown job id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: stale lease token — no state change (INV-05)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/printing/jobs/{id}/fail:
+    post:
+      summary: >-
+        executor-reported transport failure — recoverable → attempts+1 and immediately re-claimable;
+        permanent codes → dead-letter (FR-009)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - leaseToken
+                - reason
+              additionalProperties: false
+              properties:
+                leaseToken:
+                  type: string
+                reason:
+                  type: string
+                permanentCode:
+                  type:
+                    - string
+                    - "null"
+                  enum:
+                    - render_failure
+                    - unsupported_transport
+                    - secure_context
+                    - null
+                  description: >-
+                    present only when the executor knows the failure is permanent (contract
+                    vocabulary)
+      responses:
+        "200":
+          description: failure recorded; lease released or job dead-lettered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrintJob"
+        "400":
+          description: malformed body — missing/invalid `reason` or `permanentCode`
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: unknown job id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: stale lease token (INV-05)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"

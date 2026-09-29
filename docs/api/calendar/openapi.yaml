@@ -1,0 +1,420 @@
+openapi: 3.1.0
+info:
+  title: Marplanner — Calendar local feed API
+  version: 1.0.0
+  description: >-
+    Local and imported events, recurrence, member assignment, highlight rules and source metadata.
+    Timed events preserve UTC instants and originating timezones; all-day dates use exclusive end
+    boundaries.
+servers:
+  - url: /
+components:
+  securitySchemes:
+    deviceKeyCookie:
+      type: apiKey
+      in: cookie
+      name: mp_device_key
+  schemas:
+    EventInput:
+      type: object
+      required:
+        - title
+        - allDay
+      additionalProperties: false
+      description: >
+        Create/edit payload for a local event master. Exactly one date shape by `allDay`: all-day
+        uses `startDate`/`endDate` (half-open); timed uses `startUtc`/`endUtc` + `tzid` (ADR-062).
+        Optional `rrule`/`exdates` make it recurring.
+      properties:
+        title:
+          type: string
+          minLength: 1
+        allDay:
+          type: boolean
+        startDate:
+          type: string
+          pattern: ^\d{4}-\d{2}-\d{2}$
+          description: All-day half-open start (required when allDay=true; else null).
+        endDate:
+          type: string
+          pattern: ^\d{4}-\d{2}-\d{2}$
+          description: All-day exclusive end; MUST be > startDate (start==end rejected). *(FR-004/05)*
+        startUtc:
+          type: string
+          format: date-time
+          description: Timed start instant (required when allDay=false; else null). *(ADR-062)*
+        endUtc:
+          type: string
+          format: date-time
+          description: Timed end instant; MUST be >= startUtc.
+        tzid:
+          type: string
+          description: IANA timezone the timed event was authored in (required when allDay=false). *(ADR-062)*
+          example: Europe/Madrid
+        rrule:
+          type:
+            - string
+            - "null"
+          description: RFC-5545 RRULE; null = single occurrence. Validated by the shared expander.
+          example: FREQ=WEEKLY;BYDAY=MO
+        exdates:
+          type: array
+          items:
+            type: string
+          description: Excluded occurrences; preserved across an rrule edit (FR-014). Default [].
+    FeedItem:
+      type: object
+      required:
+        - id
+        - occurrenceStart
+        - source
+        - title
+        - allDay
+        - assignedTo
+      additionalProperties: false
+      description: One EXPANDED occurrence (not a master) returned by getEvents.
+      properties:
+        id:
+          type: string
+          description: master event id
+        occurrenceStart:
+          type: string
+          description: This occurrence's start — an instant (timed) or a YYYY-MM-DD (all-day).
+        occurrenceEnd:
+          type: string
+        source:
+          type: string
+          enum:
+            - local
+            - external
+          description: only 'local' today
+        title:
+          type: string
+        allDay:
+          type: boolean
+        tzid:
+          type:
+            - string
+            - "null"
+          description: timed only
+        assignedTo:
+          type: array
+          items:
+            type: string
+          description: Resolved active-member ids (series-level).
+        decoratedTitle:
+          type:
+            - string
+            - "null"
+          description: RESERVED (highlights, later slice) — equals title today.
+        provider:
+          type:
+            - string
+            - "null"
+          description: RESERVED external provenance — null today.
+        sourceRef:
+          type:
+            - string
+            - "null"
+          description: >-
+            RESERVED external source reference (masked) — null today. *(data-model.md
+            provider/sourceRef; slice B)*
+    AssignmentReplace:
+      type: object
+      required:
+        - memberIds
+      additionalProperties: false
+      properties:
+        memberIds:
+          type: array
+          items:
+            type: string
+          description: Full replacement set; each MUST be an active member (FR-006). Atomic replace.
+    ExternalSourceUpsert:
+      type: object
+      required:
+        - name
+        - provider
+        - feedUrl
+        - enabled
+        - pollIntervalMin
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+        provider:
+          type: string
+          description: Unknown values normalize to ics_generic.
+        feedUrl:
+          type: string
+          format: uri
+          description: Write-only configuration URL; HTTP(S), credential-free, and public-target validated.
+        enabled:
+          type: boolean
+        pollIntervalMin:
+          type: integer
+          minimum: 1
+          maximum: 1440
+    ExternalSourcePublic:
+      type: object
+      required:
+        - id
+        - name
+        - provider
+        - maskedUrl
+        - enabled
+        - pollIntervalMin
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        provider:
+          type: string
+          enum:
+            - google
+            - microsoft
+            - apple
+            - ics_generic
+        maskedUrl:
+          type: string
+          description: Masked display URL; the raw feed URL is never returned.
+        enabled:
+          type: boolean
+        pollIntervalMin:
+          type: integer
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: English diagnostic (Constitution X).
+paths:
+  /api/calendar/external-sources:
+    get:
+      summary: List configured external calendar sources without exposing raw feed URLs.
+      security:
+        - deviceKeyCookie: []
+      responses:
+        "200":
+          description: >-
+            Persisted source configuration only; this does not assert reachability or
+            synchronization.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExternalSourcePublic"
+        "401":
+          description: missing/invalid device key
+  /api/calendar/external-sources/{id}:
+    put:
+      summary: Validate and upsert an external source configuration without fetching it.
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExternalSourceUpsert"
+      responses:
+        "200":
+          description: Persisted source configuration, with the URL masked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExternalSourcePublic"
+        "400":
+          description: Invalid label, interval, URL, credentials, or unsafe DNS target.
+        "401":
+          description: missing/invalid device key
+  /api/calendar/events:
+    get:
+      summary: Read the merged feed (getEvents) — the sole cross-module read path (INV-01/AC-01).
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum:
+              - all
+              - local
+              - external
+            default: all
+        - name: assignedTo
+          in: query
+          schema:
+            type: string
+          description: member id; strict (INV-09/AC-06)
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+          description: range start (household tz)
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+          description: exclusive next-midnight upper bound (INV-03)
+        - name: query
+          in: query
+          schema:
+            type: string
+          description: RESERVED — supplying it is rejected 400 (FR-010)
+        - name: queryFields
+          in: query
+          schema:
+            type: string
+          description: RESERVED — supplying it is rejected 400 (FR-010)
+      responses:
+        "200":
+          description: Expanded, merged, member-scoped occurrences within the range.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FeedItem"
+        "400":
+          description: >
+            Fail-loud (FR-010/FR-013): `query`/`queryFields` supplied (reserved, unimplemented), OR
+            `range` extends beyond the fixed −30d/+365d window, OR a malformed date/range.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: missing/invalid device key
+    post:
+      summary: Create a local event (device-key auth; PIN is a client-only affordance gate).
+      security:
+        - deviceKeyCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventInput"
+      responses:
+        "201":
+          description: created; returns the new master event id
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                additionalProperties: false
+                properties:
+                  id:
+                    type: string
+                    description: new master event id
+        "400":
+          description: validation (start==end, bad tzid, malformed rrule, …)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: missing/invalid device key
+  /api/calendar/events/{id}:
+    patch:
+      summary: Edit a local event's fields (single-row; rrule edit preserves exdates, FR-014).
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventInput"
+      responses:
+        "200":
+          description: updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedItem"
+        "400":
+          description: validation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: missing/invalid device key
+        "404":
+          description: no such event
+    delete:
+      summary: Delete a local event + its assignments atomically (FR-009, INV-07 local).
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: deleted; event + all assignment rows removed in one transaction
+        "401":
+          description: missing/invalid device key
+        "404":
+          description: no such event
+  /api/calendar/events/{id}/assignments:
+    put:
+      summary: Replace an event's assignment set atomically (FR-009; strict active-member, FR-006).
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignmentReplace"
+      responses:
+        "200":
+          description: replaced (atomic)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedItem"
+        "400":
+          description: a target member is not active (strict-on-write)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: missing/invalid device key
+        "404":
+          description: no such event

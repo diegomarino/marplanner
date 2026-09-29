@@ -1,0 +1,806 @@
+[
+  {
+    "optionA": "volar",
+    "optionB": "ser invisible"
+  },
+  {
+    "optionA": "vivir en una casa en un árbol",
+    "optionB": "vivir en un castillo"
+  },
+  {
+    "optionA": "hablar con animales",
+    "optionB": "hablar todos los idiomas"
+  },
+  {
+    "optionA": "tener un dragón de mascota",
+    "optionB": "tener un unicornio de mascota"
+  },
+  {
+    "optionA": "comer solo pizza para siempre",
+    "optionB": "comer solo tacos para siempre"
+  },
+  {
+    "optionA": "ser capaz de respirar bajo el agua",
+    "optionB": "ser capaz de correr súper rápido"
+  },
+  {
+    "optionA": "ir al colegio en una nave espacial",
+    "optionB": "ir al colegio bajo el agua"
+  },
+  {
+    "optionA": "tener fuerza sobrehumana",
+    "optionB": "tener velocidad sobrehumana"
+  },
+  {
+    "optionA": "ser un mago",
+    "optionB": "ser un superhéroe"
+  },
+  {
+    "optionA": "explorar el espacio exterior",
+    "optionB": "explorar las profundidades del océano"
+  },
+  {
+    "optionA": "tener un mejor amigo robot",
+    "optionB": "tener un mejor amigo animal que hable"
+  },
+  {
+    "optionA": "tener siempre verano",
+    "optionB": "tener siempre invierno con mucha nieve"
+  },
+  {
+    "optionA": "ser capaz de teletransportarse",
+    "optionB": "ser capaz de viajar en el tiempo"
+  },
+  {
+    "optionA": "comer helado para desayunar todos los días",
+    "optionB": "comer gofres para cenar todos los días"
+  },
+  {
+    "optionA": "vivir en un mundo hecho de LEGO",
+    "optionB": "vivir en un mundo hecho de caramelos"
+  },
+  {
+    "optionA": "tener visión nocturna",
+    "optionB": "tener visión de rayos X"
+  },
+  {
+    "optionA": "ser capaz de encogerse al tamaño de una hormiga",
+    "optionB": "ser capaz de crecer tan alto como un edificio"
+  },
+  {
+    "optionA": "tener una mochila mágica que lo contenga todo",
+    "optionB": "tener un lápiz mágico que dibuje cosas para darles vida"
+  },
+  {
+    "optionA": "nunca tener que dormir",
+    "optionB": "nunca tener que ir al colegio"
+  },
+  {
+    "optionA": "ser el corredor más rápido del mundo",
+    "optionB": "ser el mejor nadador del mundo"
+  },
+  {
+    "optionA": "tener un tobogán desde tu dormitorio al salón",
+    "optionB": "tener un pasaje secreto en tu casa"
+  },
+  {
+    "optionA": "ser un pirata navegando por los mares",
+    "optionB": "ser un astronauta en el espacio"
+  },
+  {
+    "optionA": "comer solo alimentos dulces",
+    "optionB": "comer solo alimentos salados"
+  },
+  {
+    "optionA": "tener un trampolín en tu patio trasero",
+    "optionB": "tener una piscina en tu patio trasero"
+  },
+  {
+    "optionA": "ser capaz de leer mentes",
+    "optionB": "ser capaz de predecir el futuro"
+  },
+  {
+    "optionA": "tener pelo que cambie de color según tu estado de ánimo",
+    "optionB": "tener ojos que brillen en la oscuridad"
+  },
+  {
+    "optionA": "conocer a un alienígena amigable",
+    "optionB": "descubrir una sirena"
+  },
+  {
+    "optionA": "ser un chef famoso",
+    "optionB": "ser un explorador famoso"
+  },
+  {
+    "optionA": "saber todos los datos sobre los dinosaurios",
+    "optionB": "saber todos los datos sobre el espacio"
+  },
+  {
+    "optionA": "tener un chorro de aire",
+    "optionB": "tener una tabla flotante"
+  },
+  {
+    "optionA": "vivir en la selva",
+    "optionB": "vivir en el Ártico con osos polares"
+  },
+  {
+    "optionA": "desayunar en cada comida",
+    "optionB": "comer postre antes de cada comida"
+  },
+  {
+    "optionA": "ser capaz de controlar el fuego",
+    "optionB": "ser capaz de controlar el agua"
+  },
+  {
+    "optionA": "tener una biblioteca con todos los libros jamás escritos",
+    "optionB": "tener un cine que proyecte cualquier película al instante"
+  },
+  {
+    "optionA": "ser un músico famoso",
+    "optionB": "ser un atleta famoso"
+  },
+  {
+    "optionA": "tener la capacidad de detener el tiempo",
+    "optionB": "tener la capacidad de rebobinar el tiempo"
+  },
+  {
+    "optionA": "siempre caer de pie como un gato",
+    "optionB": "siempre rebotar al caer como una pelota de goma"
+  },
+  {
+    "optionA": "tener suministros de arte ilimitados",
+    "optionB": "tener equipamiento deportivo ilimitado"
+  },
+  {
+    "optionA": "llevar pijamas para siempre",
+    "optionB": "llevar disfraces para siempre"
+  },
+  {
+    "optionA": "ser capaz de saltar tan alto como un canguro",
+    "optionB": "ser capaz de trepar como una araña"
+  },
+  {
+    "optionA": "vivir en un mundo donde llueven gomitas",
+    "optionB": "vivir en un mundo donde los ríos están hechos de leche de chocolate"
+  },
+  {
+    "optionA": "saber tocar todos los instrumentos",
+    "optionB": "saber bailar todos los estilos"
+  },
+  {
+    "optionA": "tener una alfombra mágica que pueda volar a cualquier lugar",
+    "optionB": "tener un submarino que pueda ir a cualquier lugar bajo el agua"
+  },
+  {
+    "optionA": "ser capaz de comunicarse con las plantas",
+    "optionB": "ser capaz de comunicarse con los insectos"
+  },
+  {
+    "optionA": "tener una memoria fotográfica",
+    "optionB": "ser capaz de aprender cualquier habilidad en un día"
+  },
+  {
+    "optionA": "vivir en una ciudad flotante en una nube",
+    "optionB": "vivir en una ciudad subterránea de cuevas de cristal"
+  },
+  {
+    "optionA": "ser capaz de hacer que nieve cuando quieras",
+    "optionB": "ser capaz de hacer que haga sol cuando quieras"
+  },
+  {
+    "optionA": "tener super oído",
+    "optionB": "tener super olfato"
+  },
+  {
+    "optionA": "ser mejores amigos con un robot que habla",
+    "optionB": "ser mejores amigos con un bebé de dinosaurio"
+  },
+  {
+    "optionA": "comer siempre la misma comida favorita para siempre",
+    "optionB": "probar un nuevo alimento de un país diferente cada día"
+  },
+  {
+    "optionA": "montar una tortuga gigante para ir al colegio",
+    "optionB": "montar un águila gigante para ir al colegio"
+  },
+  {
+    "optionA": "tener un fénix como mascota",
+    "optionB": "tener un grifo como mascota"
+  },
+  {
+    "optionA": "nadar con delfines",
+    "optionB": "volar con águilas"
+  },
+  {
+    "optionA": "tener un pez dorado que hable",
+    "optionB": "tener un loro que hable"
+  },
+  {
+    "optionA": "ser capaz de hablar con perros",
+    "optionB": "ser capaz de hablar con gatos"
+  },
+  {
+    "optionA": "tener un elefante bebé como mascota",
+    "optionB": "tener una jirafa bebé como mascota"
+  },
+  {
+    "optionA": "montar un caballo que pueda galopar entre las nubes",
+    "optionB": "montar una ballena por el océano"
+  },
+  {
+    "optionA": "tener un pequeño dragón que quepa en tu bolsillo",
+    "optionB": "tener un oso gigante y amigable como tu montura"
+  },
+  {
+    "optionA": "comer sushi todos los días",
+    "optionB": "comer pasta todos los días"
+  },
+  {
+    "optionA": "beber solo zumo de frutas",
+    "optionB": "beber solo batidos"
+  },
+  {
+    "optionA": "nunca comer verduras",
+    "optionB": "nunca comer dulces"
+  },
+  {
+    "optionA": "comer comida caliente en días fríos",
+    "optionB": "comer comida fría en días calurosos"
+  },
+  {
+    "optionA": "tener chocolate ilimitado",
+    "optionB": "tener palomitas ilimitadas"
+  },
+  {
+    "optionA": "comer un sabor nuevo de pastel cada cumpleaños",
+    "optionB": "comer tu pastel favorito cada cumpleaños para siempre"
+  },
+  {
+    "optionA": "tener un jardín que cultive cualquier fruta que desees",
+    "optionB": "tener una cocina que prepare cualquier comida en un segundo"
+  },
+  {
+    "optionA": "nunca comer la misma comida dos veces",
+    "optionB": "comer siempre tu comida favorita absoluta"
+  },
+  {
+    "optionA": "tener galletas para desayunar todos los días",
+    "optionB": "tener gofres para cada cena"
+  },
+  {
+    "optionA": "ser capaz de saborear la comida solo con mirarla",
+    "optionB": "ser capaz de saber si la comida está lista oliéndola desde lejos"
+  },
+  {
+    "optionA": "ir a la escuela en la playa",
+    "optionB": "ir a la escuela en un barco"
+  },
+  {
+    "optionA": "no tener deberes nunca",
+    "optionB": "solo tener asignaturas divertidas como arte y música"
+  },
+  {
+    "optionA": "tener un profesor que sea un explorador famoso",
+    "optionB": "tener un profesor que sea un mago"
+  },
+  {
+    "optionA": "ir de excursión a la luna",
+    "optionB": "ir de excursión a la antigua Roma"
+  },
+  {
+    "optionA": "tener colegio solo tres días a la semana",
+    "optionB": "tener colegio solo cuatro horas al día"
+  },
+  {
+    "optionA": "ser realmente bueno en matemáticas",
+    "optionB": "ser realmente bueno en arte"
+  },
+  {
+    "optionA": "tener un robot que haga tus deberes",
+    "optionB": "tener un robot que llene tu mochila del colegio"
+  },
+  {
+    "optionA": "aprender hechizos mágicos en el colegio",
+    "optionB": "aprender a volar en el colegio"
+  },
+  {
+    "optionA": "vivir 100 años en el pasado",
+    "optionB": "vivir 100 años en el futuro"
+  },
+  {
+    "optionA": "acelerar el tiempo cuando estás aburrido",
+    "optionB": "ralentizar el tiempo cuando te lo estás pasando bien"
+  },
+  {
+    "optionA": "viajar al pasado como turista a cualquier momento de la historia",
+    "optionB": "saltar al futuro para ver cómo será tu vida dentro de 20 años"
+  },
+  {
+    "optionA": "ser capaz de congelar el tiempo durante un minuto cada día",
+    "optionB": "ser capaz de rebobinar los últimos cinco minutos una vez al día"
+  },
+  {
+    "optionA": "vivir en la era de los dinosaurios durante una semana",
+    "optionB": "visitar una colonia espacial dentro de 200 años durante una semana"
+  },
+  {
+    "optionA": "saber exactamente qué hora es sin mirar",
+    "optionB": "despertar siempre sintiéndose perfectamente descansado"
+  },
+  {
+    "optionA": "vivir en una casa árbol en la selva tropical",
+    "optionB": "vivir en un iglú cerca de las auroras boreales"
+  },
+  {
+    "optionA": "caminar descalzo sobre suave musgo verde",
+    "optionB": "correr sobre arena dorada y cálida en la playa"
+  },
+  {
+    "optionA": "explorar una isla volcánica",
+    "optionB": "explorar un glaciar helado"
+  },
+  {
+    "optionA": "dormir bajo las estrellas en un prado",
+    "optionB": "dormir bajo las estrellas en un desierto"
+  },
+  {
+    "optionA": "tener una cascada en tu jardín",
+    "optionB": "tener un arcoíris que visite tu jardín cada mañana"
+  },
+  {
+    "optionA": "descubrir un bosque oculto lleno de setas luminosas",
+    "optionB": "encontrar una playa con arena que brilla como las estrellas"
+  },
+  {
+    "optionA": "vivir cerca de un volcán que erupciona con confeti de colores",
+    "optionB": "vivir junto a un río que fluye con agua cristalina todo el año"
+  },
+  {
+    "optionA": "tener una nube mascota que te siga",
+    "optionB": "tener tu propio arcoíris personal que aparezca cuando estés feliz"
+  },
+  {
+    "optionA": "cantar cada vez que estés feliz",
+    "optionB": "bailar cada vez que escuches música"
+  },
+  {
+    "optionA": "pintar cuadros con los ojos cerrados",
+    "optionB": "esculpir arcilla solo con los pies"
+  },
+  {
+    "optionA": "tener una voz tan hermosa que los pájaros se detengan a escuchar",
+    "optionB": "tener unos movimientos tan geniales que todos quieran bailar contigo"
+  },
+  {
+    "optionA": "escribir historias que se cumplen",
+    "optionB": "dibujar cuadros que cobran vida"
+  },
+  {
+    "optionA": "ser capaz de tocar cualquier canción después de oírla una vez",
+    "optionB": "ser capaz de dibujar cualquier escena de memoria a la perfección"
+  },
+  {
+    "optionA": "tener tus dibujos convertidos en esculturas en 3D",
+    "optionB": "tener tu canto que invoque una lluvia suave"
+  },
+  {
+    "optionA": "tener un pincel que pinta en el aire",
+    "optionB": "tener un tambor que hace que todos se sientan felices cuando lo tocas"
+  },
+  {
+    "optionA": "cada comida familiar es un picnic al aire libre",
+    "optionB": "cada cumpleaños es una fiesta de pijamas completa"
+  },
+  {
+    "optionA": "hacer un viaje en carretera familiar cada fin de semana",
+    "optionB": "tener una noche de juegos familiares cada noche"
+  },
+  {
+    "optionA": "estar siempre de acuerdo con tu hermano en las películas",
+    "optionB": "elegir siempre dónde come la familia la cena"
+  },
+  {
+    "optionA": "tener un escondite familiar en un árbol",
+    "optionB": "tener una pista de karts familiar en el patio trasero"
+  },
+  {
+    "optionA": "celebrar cada logro con un desfile familiar",
+    "optionB": "celebrar cada logro con una comida favorita"
+  },
+  {
+    "optionA": "escalar la montaña más alta del mundo",
+    "optionB": "bucear hasta la parte más profunda del océano"
+  },
+  {
+    "optionA": "explorar una antigua ruina oculta en la jungla",
+    "optionB": "descubrir una nueva isla que nadie ha visto nunca"
+  },
+  {
+    "optionA": "dar la vuelta al mundo en un barco de vela",
+    "optionB": "viajar por el mundo en un globo aerostático"
+  },
+  {
+    "optionA": "ser la primera persona en caminar por Marte",
+    "optionB": "ser la primera persona en nadar en un océano submarino oculto"
+  },
+  {
+    "optionA": "explorar una ciudad perdida enterrada bajo la arena",
+    "optionB": "encontrar un barco hundido lleno de mapas antiguos"
+  },
+  {
+    "optionA": "hacer una travesía por una jungla con un robot guía",
+    "optionB": "navegar por un cañón de hielo en un kayak"
+  },
+  {
+    "optionA": "tener el cabello de colores del arcoíris",
+    "optionB": "tener una piel brillante que brilla con la luz del sol"
+  },
+  {
+    "optionA": "tener unas manos que brillan suavemente en la oscuridad",
+    "optionB": "tener unos pies que dejan huellas de flores por donde caminas"
+  },
+  {
+    "optionA": "ser capaz de cambiar el color de tus ojos en cualquier momento",
+    "optionB": "ser capaz de cambiar la longitud de tu cabello en cualquier momento"
+  },
+  {
+    "optionA": "tener una sombra que saluda a la gente",
+    "optionB": "tener un reflejo que te da un pulgar hacia arriba animador"
+  },
+  {
+    "optionA": "oler siempre como tu flor favorita",
+    "optionB": "sentir siempre la temperatura perfecta independientemente del clima"
+  },
+  {
+    "optionA": "dejar pequeñas chispas por dondequiera que camines",
+    "optionB": "que tu risa produzca pequeñas burbujas flotantes"
+  },
+  {
+    "optionA": "tener un superpoder que solo tú puedas usar",
+    "optionB": "compartir un superpoder con tu mejor amigo"
+  },
+  {
+    "optionA": "ser capaz de duplicar objetos una vez al día",
+    "optionB": "ser capaz de hacer desaparecer objetos una vez al día"
+  },
+  {
+    "optionA": "ser capaz de hablar con las estrellas",
+    "optionB": "ser capaz de hablar con la luna"
+  },
+  {
+    "optionA": "tener una capa que te permita mezclarte con cualquier fondo",
+    "optionB": "tener botas que te permitan caminar sobre el agua"
+  },
+  {
+    "optionA": "ser capaz de copiar cualquier habilidad que veas hacer a alguien",
+    "optionB": "ser capaz de enseñar cualquier habilidad a alguien en segundos"
+  },
+  {
+    "optionA": "tener un poder que se vuelve más fuerte cuanto más lo compartes",
+    "optionB": "tener un poder que te sorprende a ti mismo en ocasiones"
+  },
+  {
+    "optionA": "tener ojos láser que solo corten pasteles",
+    "optionB": "tener aliento de hielo que solo enfríe bebidas"
+  },
+  {
+    "optionA": "ganar un trofeo en tu deporte favorito",
+    "optionB": "marcar el punto decisivo en una final de equipo"
+  },
+  {
+    "optionA": "ser el portero que ataja el partido",
+    "optionB": "ser el delantero que marca el gol de la victoria"
+  },
+  {
+    "optionA": "competir en los Juegos Olímpicos",
+    "optionB": "competir en un campeonato mundial de videojuegos"
+  },
+  {
+    "optionA": "practicar todos los deportes a la perfección durante un día",
+    "optionB": "ser imbatible en tu deporte favorito para siempre"
+  },
+  {
+    "optionA": "tener un campo de entrenamiento deportivo en tu jardín",
+    "optionB": "tener un skate park privado solo para ti y tus amigos"
+  },
+  {
+    "optionA": "surfear una ola de 10 metros",
+    "optionB": "esquiar por la pista de montaña más empinada"
+  },
+  {
+    "optionA": "tener una nave espacial que puedas pilotar tú mismo",
+    "optionB": "tener una máquina del tiempo que puedas usar una vez al mes"
+  },
+  {
+    "optionA": "tener un robot que pueda convertirse en cualquier electrodoméstico",
+    "optionB": "tener un asistente de inteligencia artificial que pueda responder cualquier pregunta al instante"
+  },
+  {
+    "optionA": "tener una pantalla que muestre cualquier lugar del mundo en tiempo real",
+    "optionB": "tener unas gafas que te permitan ver cualquier momento de la historia"
+  },
+  {
+    "optionA": "tener gadgets que se recarguen al instante",
+    "optionB": "tener gadgets que nunca se rompan"
+  },
+  {
+    "optionA": "tener un teléfono que traduzca cualquier sonido animal",
+    "optionB": "tener un reloj que prediga el tiempo perfectamente"
+  },
+  {
+    "optionA": "tener una impresora 3D que fabrique cualquier alimento",
+    "optionB": "tener una máquina que haga crecer cualquier planta en una noche"
+  },
+  {
+    "optionA": "tener una puerta secreta en tu dormitorio que lleve a una biblioteca",
+    "optionB": "tener una puerta secreta en tu dormitorio que lleve a un taller"
+  },
+  {
+    "optionA": "despertar en un país nuevo cada mañana",
+    "optionB": "despertar en una nueva época histórica cada mañana"
+  },
+  {
+    "optionA": "saber siempre dónde has perdido algo",
+    "optionB": "recordar siempre el nombre de todos tras conocerles una sola vez"
+  },
+  {
+    "optionA": "ser capaz de encoger tu casa para llevarla en tu bolsillo",
+    "optionB": "ser capaz de ampliar cualquier habitación para que sea el doble de grande"
+  },
+  {
+    "optionA": "tener una brújula parlante que conozca todas las rutas",
+    "optionB": "tener un mapa que muestre los tesoros ocultos cerca de ti"
+  },
+  {
+    "optionA": "ser capaz de hablar con tu yo del pasado una vez",
+    "optionB": "recibir una carta de tu yo del futuro una vez"
+  },
+  {
+    "optionA": "tener una puerta que abra a cualquier lugar que imagines",
+    "optionB": "tener una ventana que muestre cualquier vista que desees"
+  },
+  {
+    "optionA": "ser capaz de ver a través de las paredes",
+    "optionB": "ser capaz de oír a través de las paredes"
+  },
+  {
+    "optionA": "tener piernas que nunca se cansen",
+    "optionB": "tener brazos que siempre sean perfectamente fuertes"
+  },
+  {
+    "optionA": "ganar siempre a los juegos de mesa",
+    "optionB": "ganar siempre a los juegos de cartas"
+  },
+  {
+    "optionA": "ser capaz de silbar tan bien que los animales vengan hacia ti",
+    "optionB": "ser capaz de tararear tan bien que las plantas crezcan más rápido a tu alrededor"
+  },
+  {
+    "optionA": "tener una capa que te convierta en cualquier animal",
+    "optionB": "tener un anillo que te permita hablar con cualquier máquina"
+  },
+  {
+    "optionA": "encontrar un cofre del tesoro en tu jardín",
+    "optionB": "encontrar un libro mágico que responda cualquier pregunta"
+  },
+  {
+    "optionA": "ser realmente bueno construyendo cosas",
+    "optionB": "ser realmente bueno arreglando cosas"
+  },
+  {
+    "optionA": "tener un techo de dormitorio que muestre el cielo nocturno",
+    "optionB": "tener un suelo de dormitorio que muestre el océano debajo"
+  },
+  {
+    "optionA": "ser el actor principal en una película",
+    "optionB": "ser el director de una película"
+  },
+  {
+    "optionA": "tener una mascota que pueda hablar pero solo cuente chistes",
+    "optionB": "tener una mascota que pueda cantar pero solo canciones de cuna"
+  },
+  {
+    "optionA": "viajar al fondo del Gran Cañón",
+    "optionB": "viajar a la cima de una nube de tormenta"
+  },
+  {
+    "optionA": "ser capaz de hacer florecer las flores al tocarlas",
+    "optionB": "ser capaz de hacer que llueva al aplaudir"
+  },
+  {
+    "optionA": "tener zapatos que te permitan caminar sobre las nubes",
+    "optionB": "tener guantes que te permitan moldear el hielo como si fuera arcilla"
+  },
+  {
+    "optionA": "tener siempre puntería perfecta al lanzar cosas",
+    "optionB": "atrapar siempre cualquier cosa que te lancen"
+  },
+  {
+    "optionA": "ser capaz de aguantar la respiración durante diez minutos",
+    "optionB": "ser capaz de correr durante una hora sin parar"
+  },
+  {
+    "optionA": "tener un gnomo de jardín que custodie tus secretos",
+    "optionB": "tener un veleta que prediga la buena suerte"
+  },
+  {
+    "optionA": "descubrir una nueva especie de animal",
+    "optionB": "descubrir una nueva clase de planta que brille"
+  },
+  {
+    "optionA": "pasar una noche en una caseta en los árboles por encima de las nubes",
+    "optionB": "pasar una noche en un hotel burbuja bajo el agua"
+  },
+  {
+    "optionA": "tener un hamaca que te balancee perfectamente hasta conciliar el sueño",
+    "optionB": "tener una manta que esté siempre a la temperatura ideal"
+  },
+  {
+    "optionA": "ser capaz de apilar tortitas de harina de maíz tan altas como una casa",
+    "optionB": "ser capaz de girar masa de pizza del tamaño de un trampolín"
+  },
+  {
+    "optionA": "que tus dibujos ganen un premio en cada competición",
+    "optionB": "que tus historias sean leídas por miles de personas"
+  },
+  {
+    "optionA": "dominar tres idiomas para mañana",
+    "optionB": "ser capaz de teclear tan rápido como piensas"
+  },
+  {
+    "optionA": "tener una bicicleta que nunca necesite ser pedaleada",
+    "optionB": "tener un monopatín que siempre encuentre el camino más liso"
+  },
+  {
+    "optionA": "ser capaz de ver colores que nadie más puede ver",
+    "optionB": "ser capaz de oír sonidos que nadie más puede oír"
+  },
+  {
+    "optionA": "convertir cualquier agua en una piscina durante un día",
+    "optionB": "convertir cualquier campo en un campo de fútbol durante un día"
+  },
+  {
+    "optionA": "tener un mejor amigo que viva al lado",
+    "optionB": "tener un mejor amigo con quien te aventuras en increíbles aventuras"
+  },
+  {
+    "optionA": "hacer el mejor pastel del mundo",
+    "optionB": "preparar el mejor sándwich del mundo"
+  },
+  {
+    "optionA": "tener acceso a todos los parques infantiles jamás construidos",
+    "optionB": "tener acceso a todos los parques temáticos jamás construidos"
+  },
+  {
+    "optionA": "ser capaz de intercambiar lugares con tu mascota durante un día",
+    "optionB": "ser capaz de ver a través de los ojos de tu mascota durante una hora"
+  },
+  {
+    "optionA": "tener una sala de trofeos llena de tus logros",
+    "optionB": "tener un álbum de recortes que registre mágicamente todos tus mejores recuerdos"
+  },
+  {
+    "optionA": "montar en una montaña rusa en la luna",
+    "optionB": "hacer bungee jumping sobre un arcoíris"
+  },
+  {
+    "optionA": "tener tu propia isla durante un verano",
+    "optionB": "tener tu propia cabaña de montaña durante un invierno"
+  },
+  {
+    "optionA": "no sentir nunca demasiado calor",
+    "optionB": "no sentir nunca demasiado frío"
+  },
+  {
+    "optionA": "tener completadas todas las series de libros jamás escritas solo para ti",
+    "optionB": "tener disponibles todas las series de juegos jamás creadas solo para ti"
+  },
+  {
+    "optionA": "tener una hamaca entre dos secuoyas gigantes",
+    "optionB": "tener un rincón de lectura dentro de un roble antiguo hueco"
+  },
+  {
+    "optionA": "ser capaz de hacer crecer cualquier planta en cualquier clima",
+    "optionB": "ser capaz de mantener cualquier animal tranquilo y amigable"
+  },
+  {
+    "optionA": "tener un pincel que nunca se queda sin pintura",
+    "optionB": "tener un cuaderno que nunca se queda sin páginas"
+  },
+  {
+    "optionA": "conocer el final de cada historia antes de leerla",
+    "optionB": "no conocer nunca el final hasta llegar a la última página"
+  },
+  {
+    "optionA": "explorar un castillo lleno de habitaciones ocultas",
+    "optionB": "explorar una cueva llena de pinturas antiguas"
+  },
+  {
+    "optionA": "ser capaz de controlar los rayos",
+    "optionB": "ser capaz de controlar el viento"
+  },
+  {
+    "optionA": "tener un chef robot que prepare cualquier cosa que describas",
+    "optionB": "tener un jardinero robot que cultive cualquier cosa que plantes"
+  },
+  {
+    "optionA": "ser capaz de aguantar la respiración bajo el agua durante cinco minutos",
+    "optionB": "ser capaz de sobrevivir en un frío glacial sin temblar"
+  },
+  {
+    "optionA": "tener un telescopio que pueda ver cualquier planeta de cerca",
+    "optionB": "tener un microscopio que pueda ver átomos"
+  },
+  {
+    "optionA": "vivir dentro de un videojuego durante una semana",
+    "optionB": "vivir dentro de un libro favorito durante una semana"
+  },
+  {
+    "optionA": "tener un kart que se conduzca solo",
+    "optionB": "tener un barco que navegue solo"
+  },
+  {
+    "optionA": "tener una memoria súper potenciada para rostros",
+    "optionB": "tener una memoria súper potenciada para datos"
+  },
+  {
+    "optionA": "ser capaz de malabarizar con cualquier objeto sin dejarlo caer",
+    "optionB": "ser capaz de equilibrarse sobre cualquier cosa sin caerse"
+  },
+  {
+    "optionA": "tener una almohada que te dé buenos sueños",
+    "optionB": "tener un despertador que te despierte perfectamente cada vez"
+  },
+  {
+    "optionA": "viajar únicamente en tirolina",
+    "optionB": "viajar únicamente en canoa"
+  },
+  {
+    "optionA": "tener zapatos que te permitan correr por paredes",
+    "optionB": "tener zapatos que te permitan correr sobre el agua"
+  },
+  {
+    "optionA": "hablar con figuras históricas durante una hora cada una",
+    "optionB": "asistir a cualquier evento de la historia como un observador invisible"
+  },
+  {
+    "optionA": "ser el héroe de tu historia favorita",
+    "optionB": "ser el autor de tu historia favorita"
+  },
+  {
+    "optionA": "tener una linterna brillante que nunca se quede sin luz",
+    "optionB": "tener una brújula que siempre señala hacia algo bueno"
+  },
+  {
+    "optionA": "ser capaz de memorizar un mapa tras una sola mirada",
+    "optionB": "saber siempre en qué dirección está el norte"
+  },
+  {
+    "optionA": "tener una voz cantante como la de tu cantante favorito",
+    "optionB": "tener los pasos de tu bailarin favorito"
+  },
+  {
+    "optionA": "tener un jardín que florezca durante todo el año",
+    "optionB": "tener un jardín donde nieve ligeramente cada mañana de Navidad"
+  },
+  {
+    "optionA": "ser capaz de hacer que cualquier dispositivo electrónico funcione perfectamente",
+    "optionB": "ser capaz de reparar cualquier objeto roto tocándolo"
+  },
+  {
+    "optionA": "tener un perro que pueda traer cualquier cosa que describas con palabras",
+    "optionB": "tener un gato que siempre sepa cuándo estás triste y te consuele"
+  },
+  {
+    "optionA": "terminar siempre cada puzzle que empieces",
+    "optionB": "ganar siempre cada partida de las escondidas"
+  },
+  {
+    "optionA": "tener una lonchera que mantenga la comida a la temperatura perfecta durante todo el día",
+    "optionB": "tener una botella de agua que se llene sola cuando se vacíe"
+  },
+  {
+    "optionA": "ser capaz de susurrar y ser oído desde un kilómetro de distancia",
+    "optionB": "ser capaz de gritar tan suavemente como una brisa"
+  }
+]

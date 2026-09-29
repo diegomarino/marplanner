@@ -1,0 +1,407 @@
+openapi: 3.1.0
+info:
+  title: Marplanner Calendar Feed Synchronization (planned)
+  version: 1.0.0
+  description: >-
+    Historical design reference. The implemented contract is openapi.yaml in this directory. This
+    file is retained for compatibility comparison and is not the installed route authority.
+components:
+  securitySchemes:
+    deviceKeyCookie:
+      type: apiKey
+      in: cookie
+      name: mp_device_key
+  schemas:
+    ExternalSourceProvider:
+      type: string
+      enum:
+        - google
+        - microsoft
+        - apple
+        - ics_generic
+    ExternalSourceErrorCode:
+      type: string
+      enum:
+        - unsafe_url
+        - unavailable
+        - timeout
+        - too_large
+        - invalid_calendar
+        - parse_failed
+        - reconcile_failed
+    SynchronizationPhase:
+      type: string
+      enum:
+        - requesting
+        - downloading
+        - parsing
+        - reconciling
+        - succeeded
+        - failed
+    ExternalSourcePut:
+      type: object
+      required:
+        - name
+        - provider
+        - feedUrl
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        provider:
+          type: string
+          description: Unknown values normalize to ics_generic.
+        feedUrl:
+          type: string
+          format: uri
+          description: Write-only HTTP(S) URL. Raw value is never returned.
+        pollIntervalMin:
+          type: integer
+          minimum: 1
+          maximum: 1440
+          default: 15
+    ExternalSourcePatch:
+      type: object
+      required:
+        - enabled
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+    ExternalSourcePublic:
+      type: object
+      required:
+        - id
+        - name
+        - provider
+        - maskedUrl
+        - enabled
+        - pollIntervalMin
+        - phase
+        - lastAttemptAt
+        - lastSuccessAt
+        - lastErrorCode
+        - consecutiveFailures
+        - lastImportedCount
+        - lastSkippedCount
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        provider:
+          $ref: "#/components/schemas/ExternalSourceProvider"
+        maskedUrl:
+          type: string
+          description: Origin plus masked path; contains no credentials or token.
+        enabled:
+          type: boolean
+        pollIntervalMin:
+          type: integer
+          minimum: 1
+          maximum: 1440
+        phase:
+          anyOf:
+            - $ref: "#/components/schemas/SynchronizationPhase"
+            - type: "null"
+        lastAttemptAt:
+          type:
+            - integer
+            - "null"
+          format: int64
+        lastSuccessAt:
+          type:
+            - integer
+            - "null"
+          format: int64
+        lastErrorCode:
+          anyOf:
+            - $ref: "#/components/schemas/ExternalSourceErrorCode"
+            - type: "null"
+        consecutiveFailures:
+          type: integer
+          minimum: 0
+        lastImportedCount:
+          type: integer
+          minimum: 0
+        lastSkippedCount:
+          type: integer
+          minimum: 0
+    HighlightRuleCreate:
+      type: object
+      required:
+        - emoji
+        - keywords
+      additionalProperties: false
+      properties:
+        emoji:
+          type: string
+          minLength: 1
+          maxLength: 32
+        keywords:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            type: string
+            minLength: 1
+            maxLength: 120
+    HighlightRulePatch:
+      type: object
+      required:
+        - enabled
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+    HighlightRule:
+      type: object
+      required:
+        - id
+        - emoji
+        - keywords
+        - enabled
+        - priority
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        emoji:
+          type: string
+        keywords:
+          type: array
+          items:
+            type: string
+        enabled:
+          type: boolean
+        priority:
+          type: integer
+          minimum: 0
+    HighlightRuleOrder:
+      type: object
+      required:
+        - orderedIds
+      additionalProperties: false
+      properties:
+        orderedIds:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+    Error:
+      type: object
+      required:
+        - error
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+          description: Stable English error code or diagnostic.
+paths:
+  /api/calendar/external-sources:
+    get:
+      summary: List safe source configuration, durable health, and transient phase.
+      security:
+        - deviceKeyCookie: []
+      responses:
+        "200":
+          description: Raw feed URLs and conditional validators are absent.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExternalSourcePublic"
+        "401":
+          description: Missing or invalid device key.
+  /api/calendar/external-sources/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Create or replace source configuration and start first synchronization after commit.
+      security:
+        - deviceKeyCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExternalSourcePut"
+      responses:
+        "202":
+          description: Configuration persisted and synchronization started or joined.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExternalSourcePublic"
+        "400":
+          description: Invalid source or unsafe URL.
+        "401":
+          description: Missing or invalid device key.
+    patch:
+      summary: Reversibly enable or disable a source without deleting retained data.
+      security:
+        - deviceKeyCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExternalSourcePatch"
+      responses:
+        "200":
+          description: Updated source state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExternalSourcePublic"
+        "400":
+          description: Invalid body.
+        "401":
+          description: Missing or invalid device key.
+        "404":
+          description: Source not found.
+    delete:
+      summary: Permanently delete source, imported events, and external assignments under the guard.
+      security:
+        - deviceKeyCookie: []
+      responses:
+        "204":
+          description: Deletion completed atomically.
+        "401":
+          description: Missing or invalid device key.
+        "404":
+          description: Source not found.
+  /api/calendar/external-sources/{id}/sync:
+    post:
+      summary: Start or observe the source's current synchronization.
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Synchronization started or an existing run is active.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExternalSourcePublic"
+        "401":
+          description: Missing or invalid device key.
+        "404":
+          description: Source not found.
+        "409":
+          description: Source is disabled or deleting.
+  /api/calendar/highlight-rules:
+    get:
+      summary: List highlight rules in persisted priority order.
+      security:
+        - deviceKeyCookie: []
+      responses:
+        "200":
+          description: Ordered rules.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HighlightRule"
+        "401":
+          description: Missing or invalid device key.
+    post:
+      summary: Create an enabled highlight rule at the end of the order.
+      security:
+        - deviceKeyCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HighlightRuleCreate"
+      responses:
+        "201":
+          description: Created rule.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HighlightRule"
+        "400":
+          description: Invalid emoji or keywords.
+        "401":
+          description: Missing or invalid device key.
+  /api/calendar/highlight-rules/reorder:
+    put:
+      summary: Atomically replace the complete highlight order.
+      security:
+        - deviceKeyCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HighlightRuleOrder"
+      responses:
+        "200":
+          description: Complete authoritative order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HighlightRule"
+        "400":
+          description: IDs do not exactly match the stored rule set.
+        "401":
+          description: Missing or invalid device key.
+  /api/calendar/highlight-rules/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    patch:
+      summary: Enable or disable one rule.
+      security:
+        - deviceKeyCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HighlightRulePatch"
+      responses:
+        "200":
+          description: Updated rule.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HighlightRule"
+        "400":
+          description: Invalid body.
+        "401":
+          description: Missing or invalid device key.
+        "404":
+          description: Rule not found.
+    delete:
+      summary: Delete one highlight rule and compact the remaining order atomically.
+      security:
+        - deviceKeyCookie: []
+      responses:
+        "204":
+          description: Rule deleted.
+        "401":
+          description: Missing or invalid device key.
+        "404":
+          description: Rule not found.

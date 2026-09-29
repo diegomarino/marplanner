@@ -1,0 +1,656 @@
+openapi: 3.1.0
+info:
+  title: Marplanner — Daily Briefing API
+  version: 1.0.0
+  description: >-
+    Briefing block configuration, generation, preview and print integration. The server composes and
+    renders content; printing uses the current registered provider at execution time.
+servers:
+  - url: /
+paths:
+  /api/daily-briefing/{memberId}/{date}:
+    get:
+      summary: Read a briefing (family/kiosk) — 019  adds `printedStatus`.
+      description: >-
+        Pure read (FR-010) — never creates a row. `printedStatus` is DERIVED, never Printing's own
+        canonical state: `completed`/`failed` when Printing is active and either the local
+        event-cache (fresh) or a read-time fallback query against Printing (FR-005/AC-04
+        dropped-event recovery) resolves one; `none` when Printing is active but no printable output
+        has ever completed or dead-lettered for this member/date; `unavailable` when the Printing
+        plugin itself is inactive (FR-007/AC-11 — distinct from `none`). Regeneration (a second call
+        to `POST /api/daily-briefing/generate` for the same member/date) preserves the briefing id,
+        atomically supersedes the prior Printing record for this output (FR-002/FR-003/FR-004, one
+        transaction — research D4  fold), and enqueues no print job itself.
+        `Briefing`/`BriefingPayload`/`BlockInstance` (the envelope v2 21-block registry) are
+        unchanged from../../010-daily-briefing-manual/contracts/openapi.yaml#/components/schemas.
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: >-
+            the read result; `printedStatus` is present only when `generated: true` (a missing
+            briefing carries no printed-status at all).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BriefingReadResultV2"
+        "401":
+          description: missing or invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedErrorResponse"
+        "403":
+          description: revoked or expired device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenErrorResponse"
+        "500":
+          description: unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalErrorResponse"
+  /api/daily-briefing/settings:
+    get:
+      summary: Read block order + schedule + trigger binding + per-member block settings (admin).
+      responses:
+        "200":
+          description: the current settings snapshot (documented defaults when no row exists yet).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyBriefingSettingsView"
+        "401":
+          description: missing or invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedErrorResponse"
+        "403":
+          description: revoked or expired device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenErrorResponse"
+        "500":
+          description: unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalErrorResponse"
+    put:
+      summary: Update generation_time and/or the auto-print trigger binding (admin).
+      description: >-
+        Partial update: an omitted field keeps its current value. `autoPrintTrigger: null`
+        explicitly clears the binding (the contract's trigger-binding model — there is deliberately
+        no boolean `autoPrint` flag). Never regenerates or invalidates existing briefings (FR-022).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DailyBriefingSettingsInput"
+      responses:
+        "200":
+          description: the updated settings snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyBriefingSettingsSnapshot"
+        "400":
+          description: invalid HH:MM, unknown trigger kind, or an unsupported field.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ValidationErrorResponse"
+                  - $ref: "#/components/schemas/FastifyParseErrorResponse"
+        "401":
+          description: missing or invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedErrorResponse"
+        "403":
+          description: revoked or expired device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenErrorResponse"
+        "500":
+          description: unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalErrorResponse"
+  /api/daily-briefing/block-order:
+    put:
+      summary: Replace the ordered block-instance list (admin).
+      description: >-
+        Body is the ordered array itself (not wrapped). A type may repeat with distinct params
+        (INV-05/ADR-044). Unknown types are REJECTED 400 at this write boundary (stricter than v1's
+        silent-ignore); applies from the next generation only (FR-022).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/BlockOrderInstance"
+      responses:
+        "200":
+          description: the validated, persisted block order.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - blockOrder
+                properties:
+                  blockOrder:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/BlockOrderInstance"
+        "400":
+          description: >-
+            not an array, an unknown block type, a malformed entry, or an unavailable
+            `params.language` (400 `corpus_language_unavailable`, FR-009).
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ValidationErrorResponse"
+                  - $ref: "#/components/schemas/CorpusLanguageUnavailableErrorResponse"
+                  - $ref: "#/components/schemas/FastifyParseErrorResponse"
+        "401":
+          description: missing or invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedErrorResponse"
+        "403":
+          description: revoked or expired device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenErrorResponse"
+        "500":
+          description: unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalErrorResponse"
+  /api/daily-briefing/block-settings/{memberId}/{blockType}:
+    put:
+      summary: Set one member's per-block settings — enabled/weekdays/params (admin).
+      description: >-
+        Partial update: an omitted field keeps its current persisted value, or the FR-013
+        default-resolution value (every type enabled EXCEPT `onThisDay`) for a row that does not
+        exist yet. `weekdays: null` means "all days"; `params.language` is validated against on-disk
+        corpus availability for `blockType` (FR-008/FR-009).
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: blockType
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberBlockSettingsInput"
+      responses:
+        "200":
+          description: the updated per-member per-block settings.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemberBlockSettings"
+        "400":
+          description: >-
+            an unknown block type, an inactive/nonexistent member, a bad weekday, or an unavailable
+            `params.language` (400 `corpus_language_unavailable`, FR-009).
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ValidationErrorResponse"
+                  - $ref: "#/components/schemas/CorpusLanguageUnavailableErrorResponse"
+                  - $ref: "#/components/schemas/FastifyParseErrorResponse"
+        "401":
+          description: missing or invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedErrorResponse"
+        "403":
+          description: revoked or expired device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenErrorResponse"
+        "500":
+          description: unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalErrorResponse"
+  /api/daily-briefing/{memberId}/{date}/preview.png:
+    get:
+      summary: Stored render PNG (admin preview).
+      description: >-
+        Serves the SAME `png` column pressedslip wrote at generation time (schema.ts: "admin/preview
+        surface only") — never re-decodes the packed 1-bit raster, never re-renders. A pure read: a
+        missing row is not generated on demand (FR-010).
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: the stored render, as a PNG.
+          content:
+            image/png:
+              schema:
+                type: string
+                contentEncoding: base64
+        "400":
+          description: an invalid date.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+        "401":
+          description: missing or invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedErrorResponse"
+        "403":
+          description: revoked or expired device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenErrorResponse"
+        "404":
+          description: no briefing exists for this member/date.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFoundErrorResponse"
+        "409":
+          description: >-
+            the briefing exists but never got a printable raster (Printing inactive at generation,
+            or a catastrophic render — D5).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrintableRasterMissingErrorResponse"
+        "500":
+          description: unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalErrorResponse"
+components:
+  securitySchemes:
+    deviceKeyCookie:
+      type: apiKey
+      in: cookie
+      name: mp_device_key
+  schemas:
+    PrintedStatus:
+      type: string
+      enum:
+        - completed
+        - failed
+        - none
+        - unavailable
+      description: >-
+        Derived (research D11) — see this file's own `/api/daily-briefing/{memberId}/{date}` GET
+        description for the full derivation. Never stored as Printing's own canonical state.
+    BriefingReadResultV2:
+      description: " delta over../../010-daily-briefing-manual/contracts/openapi.yaml#/components/schemas/BriefingReadResult — adds `printedStatus` to the `generated:true` branch; the `generated:false` branch is unchanged."
+      oneOf:
+        - type: object
+          required:
+            - generated
+          properties:
+            generated:
+              type: boolean
+              enum:
+                - false
+          additionalProperties: false
+        - type: object
+          required:
+            - generated
+            - briefing
+            - printedStatus
+          properties:
+            generated:
+              type: boolean
+              enum:
+                - true
+            briefing:
+              $ref: ../../010-daily-briefing-manual/contracts/openapi.yaml#/components/schemas/Briefing
+            printedStatus:
+              $ref: "#/components/schemas/PrintedStatus"
+          additionalProperties: false
+    AutoPrintTrigger:
+      type:
+        - string
+        - "null"
+      enum:
+        - morning_complete
+        - null
+    BlockOrderInstance:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+      properties:
+        type:
+          type: string
+        params:
+          $ref: "#/components/schemas/BlockParams"
+    BlockParams:
+      type: object
+      additionalProperties: false
+      description: >-
+        Closed per-instance params (mirrors settings.ts ALLOWED_PARAM_KEYS; unknown keys are
+        rejected 400 by validateParams —  fold closed this schema to match).
+      properties:
+        level:
+          type: string
+          enum:
+            - L1
+            - L2
+            - L3
+            - L4
+        difficulty:
+          type: string
+        language:
+          type: string
+          description: validated against corpus availability (FR-009)
+    DailyBriefingSettingsSnapshot:
+      type: object
+      additionalProperties: false
+      required:
+        - generationTime
+        - autoPrintTrigger
+        - updatedAt
+      properties:
+        generationTime:
+          type: string
+          description: strict 24h HH:MM
+        autoPrintTrigger:
+          $ref: "#/components/schemas/AutoPrintTrigger"
+        updatedAt:
+          type:
+            - integer
+            - "null"
+          description: epoch-ms; null when no row exists yet
+    DailyBriefingSettingsInput:
+      type: object
+      additionalProperties: false
+      properties:
+        generationTime:
+          type: string
+          description: strict 24h HH:MM
+        autoPrintTrigger:
+          $ref: "#/components/schemas/AutoPrintTrigger"
+    MemberBlockSettings:
+      type: object
+      additionalProperties: false
+      required:
+        - memberId
+        - blockType
+        - enabled
+        - weekdays
+        - params
+        - updatedAt
+      properties:
+        memberId:
+          type: string
+        blockType:
+          type: string
+        enabled:
+          type: boolean
+        weekdays:
+          type:
+            - array
+            - "null"
+          minItems: 0
+          items:
+            type: string
+            enum:
+              - mon
+              - tue
+              - wed
+              - thu
+              - fri
+              - sat
+              - sun
+          description: >-
+            `null` = all days (no mask). A present array is validated against the canonical mon..sun
+            set — an unknown value is rejected 400, never silently dropped, so the persisted set
+            always round-trips to EXACTLY what was accepted. `[]` (minItems: 0) is a distinct,
+            legitimate third state from `null`: the block is masked out on every weekday, i.e. it
+            never runs — 's generation-time weekday mask must not treat `[]` and `null` as
+            equivalent (P2-3, batch-B review).
+        params:
+          oneOf:
+            - $ref: "#/components/schemas/BlockParams"
+            - type: "null"
+        updatedAt:
+          type:
+            - integer
+            - "null"
+    MemberBlockSettingsInput:
+      type: object
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+        weekdays:
+          type:
+            - array
+            - "null"
+          minItems: 0
+          items:
+            type: string
+            enum:
+              - mon
+              - tue
+              - wed
+              - thu
+              - fri
+              - sat
+              - sun
+          description: >-
+            `null` = all days (no mask). A present array is validated against the canonical mon..sun
+            set — an unknown value is rejected 400, never silently dropped, so the persisted set
+            always round-trips to EXACTLY what was accepted. `[]` (minItems: 0) is a distinct,
+            legitimate third state from `null`: the block is masked out on every weekday, i.e. it
+            never runs — 's generation-time weekday mask must not treat `[]` and `null` as
+            equivalent (P2-3, batch-B review).
+        params:
+          oneOf:
+            - $ref: "#/components/schemas/BlockParams"
+            - type: "null"
+    DailyBriefingSettingsView:
+      type: object
+      additionalProperties: false
+      required:
+        - generationTime
+        - autoPrintTrigger
+        - blockOrder
+        - memberBlockSettings
+      properties:
+        generationTime:
+          type: string
+        autoPrintTrigger:
+          $ref: "#/components/schemas/AutoPrintTrigger"
+        blockOrder:
+          type: array
+          items:
+            $ref: "#/components/schemas/BlockOrderInstance"
+        memberBlockSettings:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemberBlockSettings"
+    ValidationErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          enum:
+            - validation_error
+        message:
+          type: string
+    CorpusLanguageUnavailableErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          enum:
+            - corpus_language_unavailable
+        message:
+          type: string
+    NotFoundErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          enum:
+            - not_found
+        message:
+          type: string
+    PrintableRasterMissingErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          enum:
+            - printable_raster_missing
+        message:
+          type: string
+    UnauthorizedErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          enum:
+            - unauthorized
+        message:
+          type: string
+        code:
+          type: string
+          description: >-
+            machine code from the shared auth boundary (src/server/auth/boundary.ts, fix #682) —
+            always `credential_invalid` on a 401 from this cross-cutting preHandler; optional here
+            since older/other 401 emitters may not set it.
+    ForbiddenErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          enum:
+            - forbidden
+        message:
+          type: string
+        code:
+          type: string
+          description: >-
+            machine code from the shared auth boundary/capability seam (src/server/auth/boundary.ts
+            + src/server/auth/capability.ts, fix #682) — `credential_invalid` (dead key:
+            revoked/expired) or `scope_denied` (live key, denied on scope grounds) on a 403 from
+            these cross-cutting preHandlers; optional here since older/other 403 emitters may not
+            set it.
+    InternalErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          enum:
+            - internal_error
+        message:
+          type: string
+    FastifyParseErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - statusCode
+        - code
+        - error
+        - message
+      properties:
+        statusCode:
+          type: integer
+          enum:
+            - 400
+        code:
+          type: string
+          enum:
+            - FST_ERR_CTP_INVALID_JSON_BODY
+            - FST_ERR_CTP_EMPTY_JSON_BODY
+        error:
+          type: string
+        message:
+          type: string
+security:
+  - deviceKeyCookie: []

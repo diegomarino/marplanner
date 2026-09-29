@@ -1,0 +1,114 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./member-colors.generated.css";
+
+/* Kiosk ships light-only (always-on kitchen display). The `dark` variant + tokens
+   are registered for tooling/component compatibility but are not shipped. See
+   docs/development/ui-foundation.md. */
+@custom-variant dark (&:is(.dark *));
+
+/* Household palette: beige ground, cream cards, olive primary, warm greys,
+   yellow accent and red destructive. Components use semantic roles below. */
+:root {
+  --radius: 1rem;
+  --background: #f5f2ed;
+  --foreground: oklch(0.21 0.006 60);
+  --card: #fdfbf8;
+  --card-foreground: oklch(0.21 0.006 60);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.006 60);
+  --primary: #5a5a40;
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.008 60);
+  --secondary-foreground: oklch(0.37 0.01 60);
+  --muted: oklch(0.95 0.008 60);
+  --muted-foreground: oklch(0.55 0.015 60);
+  --accent: oklch(0.78 0.17 85);
+  --accent-foreground: oklch(0.28 0.17 85);
+  --destructive: oklch(0.58 0.22 25);
+  --border: oklch(0.91 0.01 60);
+  --input: oklch(0.91 0.01 60);
+  --ring: #5a5a40;
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/*
+ * Shared height and font-size tokens keep controls consistent in each density.
+ * The root data-density attribute reaches portals as well as ordinary descendants.
+ * Comfortable defaults are 36px/14px; kiosk uses 48px/18px. All size variants consume
+ * the same tokens. Caption typography and general spacing are separate concerns.
+ * Keep values literal px/rem with at most one var() indirection: the browser-test
+ * resolver in tests/client/helpers/density.ts rejects nested aliases and calc().
+ */
+:root {
+  --control-height: 36px;
+  --control-font-size: 14px;
+}
+
+/* Kiosk minimums match the control-height and font-size assertions in
+   tests/client/helpers/density.ts. Update both when changing the density contract. */
+:root[data-density="kiosk"] {
+  --control-height: 48px;
+  --control-font-size: 18px;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .member-event-surface {
+    background: var(--member-event-background, var(--color-muted));
+    border-left-color: var(--member-event-border, transparent);
+  }
+}

@@ -1,0 +1,570 @@
+openapi: 3.1.0
+info:
+  title: Marplanner — Daily Briefing API
+  version: 1.0.0
+  description: >-
+    Member briefing generation, opt-in settings, snapshots and status. Calendar, chores, reminders,
+    meals and messages are read through their owning domain interfaces.
+servers:
+  - url: /
+components:
+  securitySchemes:
+    deviceKeyCookie:
+      type: apiKey
+      in: cookie
+      name: mp_device_key
+  schemas:
+    BriefingStatus:
+      type: string
+      enum:
+        - pending
+        - ready
+        - partial
+        - failed
+    BlockType:
+      type: string
+      enum:
+        - calendar
+        - reminders
+        - chores
+        - meals
+        - weather
+    BlockScope:
+      type: string
+      enum:
+        - shared
+        - member
+    WeatherConditionKey:
+      type: string
+      enum:
+        - clear
+        - mostlyClear
+        - partlyCloudy
+        - overcast
+        - fog
+        - drizzle
+        - freezingDrizzle
+        - rain
+        - freezingRain
+        - snow
+        - snowGrains
+        - rainShowers
+        - snowShowers
+        - thunderstorm
+        - thunderstormHail
+        - unknown
+    WeatherBlockPayload:
+      description: >
+        The `data` shape of a `BlockInstance` whose `type` is `weather` (, the Weather domain
+        contract). Present only when the household's forecast `daily[]` covers the briefing's
+        household-local `date` (WEATHER-INV-05); frozen once written (WEATHER-INV-09) — regeneration
+        is the only refresh. `BlockInstance.data` stays the generic `[object, array, 'null']` schema
+        above (untyped per-type, matching every other block type's precedent) — this schema
+        documents what a `weather`-typed block's `data` actually contains (the route-only drift gate
+        cannot see this body-shape change, hence the explicit ripple-edit).
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - conditionKey
+        - tempMinC
+        - tempMaxC
+        - rainPct
+      properties:
+        date:
+          type: string
+          description: YYYY-MM-DD, household tz
+        conditionKey:
+          $ref: "#/components/schemas/WeatherConditionKey"
+        tempMinC:
+          type: number
+        tempMaxC:
+          type: number
+        rainPct:
+          type: integer
+          minimum: 0
+          maximum: 100
+    BlockInstance:
+      type: object
+      required:
+        - type
+        - scope
+        - status
+      properties:
+        type:
+          $ref: "#/components/schemas/BlockType"
+        scope:
+          $ref: "#/components/schemas/BlockScope"
+        status:
+          type: string
+          enum:
+            - ok
+            - failed
+        data:
+          type:
+            - object
+            - array
+            - "null"
+        error:
+          type:
+            - string
+            - "null"
+    MemberIdentitySnapshot:
+      type: object
+      required:
+        - id
+        - displayName
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+    BriefingPayload:
+      type: object
+      required:
+        - schemaVersion
+        - member
+        - date
+        - blocks
+      properties:
+        schemaVersion:
+          type: integer
+        member:
+          $ref: "#/components/schemas/MemberIdentitySnapshot"
+        date:
+          type: string
+          description: YYYY-MM-DD household-tz business date
+        blocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/BlockInstance"
+    Briefing:
+      type: object
+      required:
+        - id
+        - memberId
+        - date
+        - status
+        - payload
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+        memberId:
+          type: string
+        date:
+          type: string
+        status:
+          $ref: "#/components/schemas/BriefingStatus"
+        payload:
+          $ref: "#/components/schemas/BriefingPayload"
+        createdAt:
+          type: integer
+        updatedAt:
+          type: integer
+    BriefingReadResult:
+      description: "  (research D11) adds `printedStatus` to the `generated:true` branch — see `BriefingReadResultV2` in../../019-daily-briefing-render/contracts/openapi.yaml for that delta; this schema itself stays as originally shipped (010)."
+      oneOf:
+        - type: object
+          required:
+            - generated
+          properties:
+            generated:
+              type: boolean
+              enum:
+                - false
+        - type: object
+          required:
+            - generated
+            - briefing
+          properties:
+            generated:
+              type: boolean
+              enum:
+                - true
+            briefing:
+              $ref: "#/components/schemas/Briefing"
+    GenerateInput:
+      type: object
+      additionalProperties: false
+      required:
+        - memberId
+      properties:
+        memberId:
+          type: string
+        date:
+          type:
+            - string
+            - "null"
+          description: optional YYYY-MM-DD household-tz business date; defaults to household-tz today.
+    GenerateAllInput:
+      type: object
+      additionalProperties: false
+      properties:
+        date:
+          type:
+            - string
+            - "null"
+          description: optional YYYY-MM-DD household-tz business date; defaults to household-tz today.
+    GenerateAllResponse:
+      description: |2
+         US2: routed through the background-jobs scheduler's shared in-flight guard. `already_running` means a same-job run (scheduled, catch-up, or another manual call) was already in flight — no generation happened and no duplicate rows were written.
+      oneOf:
+        - type: object
+          required:
+            - status
+            - count
+            - generated
+          properties:
+            status:
+              type: string
+              enum:
+                - completed
+            count:
+              type: integer
+            generated:
+              type: array
+              items:
+                type: object
+                required:
+                  - memberId
+                  - status
+                properties:
+                  memberId:
+                    type: string
+                  status:
+                    $ref: "#/components/schemas/BriefingStatus"
+        - type: object
+          required:
+            - status
+          properties:
+            status:
+              type: string
+              enum:
+                - already_running
+    OptInState:
+      type: object
+      required:
+        - memberId
+        - enabled
+      properties:
+        memberId:
+          type: string
+        enabled:
+          type: boolean
+    OptInInput:
+      type: object
+      additionalProperties: false
+      required:
+        - enabled
+      properties:
+        enabled:
+          type: boolean
+    ValidationErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          enum:
+            - validation_error
+        message:
+          type: string
+    InternalErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          enum:
+            - internal_error
+        message:
+          type: string
+    UnauthorizedErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          enum:
+            - unauthorized
+        message:
+          type: string
+        code:
+          type: string
+          description: >-
+            machine code from the shared auth boundary (src/server/auth/boundary.ts, fix #682) —
+            always `credential_invalid` on a 401 from this cross-cutting preHandler; optional here
+            since older/other 401 emitters may not set it.
+    ForbiddenErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          enum:
+            - forbidden
+        message:
+          type: string
+        code:
+          type: string
+          description: >-
+            machine code from the shared auth boundary/capability seam (src/server/auth/boundary.ts
+            + src/server/auth/capability.ts, fix #682) — `credential_invalid` (dead key:
+            revoked/expired) or `scope_denied` (live key, denied on scope grounds) on a 403 from
+            these cross-cutting preHandlers; optional here since older/other 403 emitters may not
+            set it.
+    FastifyParseErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - statusCode
+        - code
+        - error
+        - message
+      properties:
+        statusCode:
+          type: integer
+          enum:
+            - 400
+        code:
+          type: string
+          enum:
+            - FST_ERR_CTP_INVALID_JSON_BODY
+            - FST_ERR_CTP_EMPTY_JSON_BODY
+        error:
+          type: string
+          enum:
+            - Bad Request
+        message:
+          type: string
+security:
+  - deviceKeyCookie: []
+paths:
+  /api/daily-briefing/generate:
+    post:
+      summary: Manually generate a briefing for one opted-in active member/date (admin).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateInput"
+      responses:
+        "200":
+          description: generated briefing shell.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Briefing"
+        "400":
+          description: invalid input, invalid date, inactive member, or member not opted-in.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ValidationErrorResponse"
+                  - $ref: "#/components/schemas/FastifyParseErrorResponse"
+        "401":
+          description: missing or invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedErrorResponse"
+        "403":
+          description: revoked or expired device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenErrorResponse"
+        "500":
+          description: unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalErrorResponse"
+  /api/daily-briefing/generate-all:
+    post:
+      summary: Generate briefings for every active opted-in member (admin).
+      description: >
+        Eligibility is active AND explicitly opted-in; opted-in archived members are skipped. The
+        request date is strictly validated before candidate enumeration. Runs through the
+        background-jobs scheduler's shared in-flight guard ( US2, ADR-014): a same-job run already
+        in flight (scheduled, catch-up, or another manual call) returns `{status:"already_running"}`
+        at 200 instead of racing a second generation.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateAllInput"
+      responses:
+        "200":
+          description: generated briefing summary, or an already_running guard response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateAllResponse"
+        "400":
+          description: invalid date or unknown request property.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ValidationErrorResponse"
+                  - $ref: "#/components/schemas/FastifyParseErrorResponse"
+        "401":
+          description: missing or invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedErrorResponse"
+        "403":
+          description: revoked or expired device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenErrorResponse"
+        "500":
+          description: unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalErrorResponse"
+  /api/daily-briefing/opt-in:
+    get:
+      summary: List persisted Daily Briefing opt-in states (admin).
+      responses:
+        "200":
+          description: explicit per-member opt-in states; absent rows remain opt-out by default.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OptInState"
+        "401":
+          description: missing or invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedErrorResponse"
+        "403":
+          description: revoked or expired device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenErrorResponse"
+        "500":
+          description: unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalErrorResponse"
+  /api/daily-briefing/opt-in/{memberId}:
+    put:
+      summary: Set a member's Daily Briefing opt-in (admin).
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OptInInput"
+      responses:
+        "200":
+          description: updated opt-in state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OptInState"
+        "400":
+          description: invalid input or inactive member.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ValidationErrorResponse"
+                  - $ref: "#/components/schemas/FastifyParseErrorResponse"
+        "401":
+          description: missing or invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedErrorResponse"
+        "403":
+          description: revoked or expired device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenErrorResponse"
+        "500":
+          description: unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalErrorResponse"
+  /api/daily-briefing/{memberId}/{date}:
+    get:
+      summary: Read a member/date briefing without generating one.
+      description: Strictly validates the YYYY-MM-DD calendar date; a missing briefing remains a pure read.
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: generated briefing or the pure missing result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BriefingReadResult"
+        "400":
+          description: invalid strict calendar date.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+        "401":
+          description: missing or invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedErrorResponse"
+        "403":
+          description: revoked or expired device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenErrorResponse"
+        "500":
+          description: unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalErrorResponse"

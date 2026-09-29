@@ -1,0 +1,254 @@
+openapi: 3.1.0
+info:
+  title: Marplanner — Time Announcements API
+  version: 1.0.0
+  description: >
+    Rule-CRUD surface for. The server owns rule DATA ONLY — firing is entirely client-side (ADR-051
+    as reconciled by ADR-065): no server-side scheduler job, queue row, claim, or staleness sweep
+    exists for announcements, so this contract is the domain's WHOLE server surface (drift-checked
+    by tools/check-openapi-drift.mjs). Writes require the time-announcements:admin capability
+    (fail-closed via registerRoutesWithCapabilities, telemetry precedent); the list is kiosk-visible
+    behind the standard auth boundary (TIME-ANNOUNCEMENTS-AC-07). Validation is strict-reject, never
+    normalize (TIME-ANNOUNCEMENTS-INV-02/03); the active-overlap check runs inside the write
+    transaction on POST and PATCH (TIME-ANNOUNCEMENTS-INV-04).
+servers:
+  - url: /
+components:
+  securitySchemes:
+    deviceKeyCookie:
+      type: apiKey
+      in: cookie
+      name: mp_device_key
+  schemas:
+    TimeAnnouncementRule:
+      type: object
+      required:
+        - id
+        - time
+        - weekDays
+        - isActive
+        - createdAt
+        - updatedAt
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        time:
+          type: string
+          pattern: ^([01][0-9]|2[0-3]):[0-5][0-9]$
+          description: Strict 24h HH:MM, stored exactly as written (never normalized).
+        weekDays:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            enum:
+              - mon
+              - tue
+              - wed
+              - thu
+              - fri
+              - sat
+              - sun
+          description: Non-empty canonical set, no duplicates, canonical order on read.
+        isActive:
+          type: boolean
+        createdAt:
+          type: integer
+          description: epoch ms
+        updatedAt:
+          type: integer
+          description: epoch ms
+    TimeAnnouncementRuleCreate:
+      type: object
+      required:
+        - time
+        - weekDays
+      additionalProperties: false
+      properties:
+        time:
+          type: string
+          pattern: ^([01][0-9]|2[0-3]):[0-5][0-9]$
+        weekDays:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            enum:
+              - mon
+              - tue
+              - wed
+              - thu
+              - fri
+              - sat
+              - sun
+        isActive:
+          type: boolean
+          default: true
+    TimeAnnouncementRulePatch:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        time:
+          type: string
+          pattern: ^([01][0-9]|2[0-3]):[0-5][0-9]$
+        weekDays:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            enum:
+              - mon
+              - tue
+              - wed
+              - thu
+              - fri
+              - sat
+              - sun
+        isActive:
+          type: boolean
+    ValidationError:
+      type: object
+      required:
+        - error
+        - message
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+          enum:
+            - validation_error
+        message:
+          type: string
+    OverlapError:
+      type: object
+      required:
+        - error
+        - message
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+          enum:
+            - active_overlap
+        message:
+          type: string
+          description: Names the conflicting rule; plain rejection, no resolution UI (deferred).
+    NotFoundError:
+      type: object
+      required:
+        - error
+        - message
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+          enum:
+            - not_found
+        message:
+          type: string
+security:
+  - deviceKeyCookie: []
+paths:
+  /api/time-announcements:
+    get:
+      summary: List all rules (inactive included), ordered by time — kiosk-visible
+      responses:
+        "200":
+          description: All rules ordered by time (ties by id).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimeAnnouncementRule"
+    post:
+      summary: Create a rule (admin write capability)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TimeAnnouncementRuleCreate"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TimeAnnouncementRule"
+        "400":
+          description: Malformed time / empty or non-canonical weekdays / unknown keys — no row created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+        "409":
+          description: Active rule overlaps another active rule (same time + shared weekday).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OverlapError"
+  /api/time-announcements/{id}:
+    patch:
+      summary: >-
+        Partial edit / toggle active (admin write capability; overlap re-checked when result is
+        active)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TimeAnnouncementRulePatch"
+      responses:
+        "200":
+          description: Updated (LWW by id against latest persisted rows).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TimeAnnouncementRule"
+        "400":
+          description: Malformed fields / unknown keys / empty patch.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+        "404":
+          description: Unknown rule id.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFoundError"
+        "409":
+          description: Patch would leave an active rule overlapping another active rule.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OverlapError"
+    delete:
+      summary: Permanent delete, no archive tier (admin write capability)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted permanently.
+        "404":
+          description: Unknown rule id.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFoundError"

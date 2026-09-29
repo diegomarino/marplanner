@@ -1,0 +1,1787 @@
+# Stable boundary guarantee identities and ownership.
+# This ledger records contract guarantees; it is not instrumented coverage or proof.
+# Owning boundary, integration and browser tests establish implemented support.
+# `spec` remains a logical domain key; maintained feature pages live in docs/features/.
+# See docs/quality/verification.md for exact discovery and coverage rules.
+
+guarantees:
+  # ── Members → Daily Briefing (the confirmed pilot defect) ───────────────────────────────
+  - id: MEMBERS-AC-05
+    disposition: moved
+    owner: daily-briefing
+    spec: daily-briefing # reconciled design: realized by daily-briefing feature contract (deferred) (FR-021)
+    note: "DB eligibility OUTCOME; Members Purpose disclaims owning it. Moved to daily-briefing.md at 0b."
+  - id: MEMBERS-AC-06
+    disposition: moved
+    owner: daily-briefing
+    spec: daily-briefing # reconciled design: realized by daily-briefing feature contract (deferred) (FR-022)
+    note: "DB eligibility outcome (child without opt-in). Moved to daily-briefing.md at 0b."
+  - id: MEMBERS-INV-09
+    disposition: retired
+    note: >-
+      Daily Briefing owns the per-member opt-in eligibility rule via its own invariants;
+      Members' Coordinate-With-Daily-Briefing behavior already disclaims. Retired at 0b to
+      avoid injecting a redundant foreign invariant into Daily Briefing's list. (Refinement
+      of the ratified "move": the rule already lives at the destination.)
+
+  # ── Background Jobs → Calendar / Backups (trigger vs domain-action outcome) ──────────────
+  - id: BACKGROUND-JOBS-SCHEDULER-AC-05
+    disposition: moved
+    owner: calendar
+    spec: calendar # reconciled design: realized by calendar feature contract (deferred)
+    note: "Calendar-reconcile atomicity is Calendar's domain action (scheduler INV-03 disclaims). Moved to calendar.md at 0b."
+  - id: BACKGROUND-JOBS-SCHEDULER-AC-06
+    disposition: moved
+    owner: backups
+    spec: backups # reconciled design: realized by backups feature contract (deferred)
+    note: "Prune ordering/durability is Backups' domain action. Moved to backups.md at 0b."
+
+  # ── Daily Briefing AC-02 split (the 1→N case — peer-review T1 in the wild) ───────────────
+  - id: DAILY-BRIEFING-AC-02
+    disposition: split
+    split_into: [DAILY-BRIEFING-AC-12, PRINTING-AC-08]
+    note: >-
+      Bundled a Daily-Briefing obligation (preserve snapshot ID, invalidate own derived
+      print status, no auto-print) with Printing-owned state (record superseded/re-printable,
+      pending-or-claimed job cancelled). Split at 0b; original ID retired into the two parts.
+  - id: DAILY-BRIEFING-AC-12
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing # reconciled design: realized by daily-briefing feature contract (deferred) (FR-019)
+    note: "DB-own part of the AC-02 split."
+  - id: PRINTING-AC-08
+    disposition: active
+    owner: printing
+    spec: printing # reconciled design: realized by printing feature contract (deferred) (FR-015)
+    note: "Printing-own part of the AC-02 split (supersede / re-printable / cancel via supersedePrintRecord)."
+
+  # ── In-place reframes (guarantee narrowed to what the domain owns; stays active locally) ─
+  - id: BACKGROUND-JOBS-SCHEDULER-AC-04
+    disposition: active
+    owner: background-jobs-scheduler
+    spec: background-jobs-scheduler # reconciled design: realized by docs/features/background-jobs-scheduler.md
+    note: "Reframed at 0b: scheduler owns the catch-up TRIGGER; backup-creation outcome is Backups'."
+  - id: DAILY-BRIEFING-AC-03
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing # reconciled design: realized by daily-briefing feature contract (deferred) (FR-020)
+    note: "Reframed at 0b: re-enqueue relies on Printing's per-output idempotency reset (consumed, not owned)."
+  - id: I18N-LOCALIZATION-AC-01
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization # reconciled design: realized by docs/features/i18n-localization.md
+    note: "Reframed at 0b: i18n resolves/normalizes locales on read; language write-rejection is App Settings' (ADR-028)."
+  - id: WEATHER-AC-01
+    disposition: active
+    owner: weather
+    spec: weather # reconciled design: realized by weather feature contract (deferred) (FR-013)
+    note: "Reframed at 0b: Weather owns range-validation (INV-02); atomic persistence of the location object is App Settings'."
+
+  # ── Retire (source duplicate) ───────────────────────────────────────────────────────────
+  - id: REMINDERS-AC-09
+    disposition: retired
+    note: "Literal duplicate of REMINDERS-AC-05 in the source contract; deduped at 0b."
+
+  # ── Reminders domain — design reference slice (active, locally owned) ─────────────────
+  # All 18 in-G REMINDERS guarantees are reminders-owned and realized by reminders feature contract (deferred).
+  # This is the second falsification slice (the first non-self-declaring contract): its
+  # `calendar_gated` behavior depends on Calendar's assignedTo/getEvents WITHOUT the contract
+  # announcing the handoff. See the boundary ownership policy §design.
+  - id: REMINDERS-INV-01
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "Kind discriminant (scheduled vs calendar_gated); ADR-049."
+  - id: REMINDERS-INV-02
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "Targeting: specific-mode binds active members via assignments; zero-assignment write rejected; archived self-heal (ADR-064)."
+  - id: REMINDERS-INV-03
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "Weekdays canonical mon..sun (scheduled only); ADR-020/ADR-005."
+  - id: REMINDERS-INV-04
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "Strict YYYY-MM-DD dates at generation boundary; ADR-006."
+  - id: REMINDERS-INV-05
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "Calendar gate reads only via Calendar.getEvents, strict assignedTo; ADR-018."
+  - id: REMINDERS-INV-06
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "Consistent generation snapshot; events fetched once per member/date and reused."
+  - id: REMINDERS-INV-07
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "Rule changes do not regenerate existing briefings (immutable snapshot); ADR-022."
+  - id: REMINDERS-INV-08
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "Rule + assignments writes atomic; ADR-043 class 1."
+  - id: REMINDERS-INV-09
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "Per-member assignment discriminant (ADR-064): specific holds N one-member assignments (weekdays for scheduled, membership for calendar_gated); invalid targeting/weekday combos rejected at boundary (mirrors INV-01); emission is AC-03."
+  - id: REMINDERS-AC-01
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "Discriminated kind validation accepted; opposite combinations rejected."
+  - id: REMINDERS-AC-02
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "calendar_gated emits iff assigned+matching event via getEvents (external incl.)."
+  - id: REMINDERS-AC-03
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "scheduled emits on the applicable weekdays (rule-level apply_to_all / per-member specific); ADR-064; regardless of calendar."
+  - id: REMINDERS-AC-04
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "Specific-mode zero assignments rejected; active:false is the non-emitting mechanism."
+  - id: REMINDERS-AC-05
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "Strict assignedTo; reminder never performs member identification (Calendar's job)."
+  - id: REMINDERS-AC-06
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "Editing a rule does not alter already-generated briefings."
+  - id: REMINDERS-AC-07
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "Rule + assignments persist atomically."
+  - id: REMINDERS-AC-08
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "Weekday/date writes follow ADR-020/ADR-006."
+  - id: REMINDERS-AC-10
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "calendar_gated non-emission explainable via dry-run/explain capability."
+  - id: DAY-PERIODS-INV-01
+    disposition: active
+    owner: day-periods
+    spec: day-periods
+    note: "Fixed set of four (morning/afternoon/evening/night); no add/delete/merge/reorder; household-wide."
+  - id: DAY-PERIODS-INV-02
+    disposition: active
+    owner: day-periods
+    spec: day-periods
+    note: "Circular tiling of a 24h cycle by starts; night owns midnight; no stored ends; gaps/overlaps unrepresentable."
+  - id: DAY-PERIODS-INV-03
+    disposition: active
+    owner: day-periods
+    spec: day-periods
+    note: "Start times editable, strictly ordered and unique (each strictly between neighbours), validated at write."
+  - id: DAY-PERIODS-INV-04
+    disposition: active
+    owner: day-periods
+    spec: day-periods
+    note: "Labels are i18n translation keys, not user-editable text."
+  - id: DAY-PERIODS-INV-05
+    disposition: active
+    owner: day-periods
+    spec: day-periods
+    note: "Active = latest start <= now in household tz, else wrapping night; wrap UI-only, date stays ADR-005 calendar date."
+  - id: DAY-PERIODS-INV-06
+    disposition: active
+    owner: day-periods
+    spec: day-periods
+    note: "Routine references existing period ID; chores inherit via routine (Routines owns); empty periods render as stable anchors."
+  - id: DAY-PERIODS-AC-01
+    disposition: active
+    owner: day-periods
+    spec: day-periods
+    note: "Catalog returns exactly four ordered periods and exposes no add/delete."
+  - id: DAY-PERIODS-AC-02
+    disposition: active
+    owner: day-periods
+    spec: day-periods
+    note: "Start-time edit breaking strict order/uniqueness is rejected."
+  - id: DAY-PERIODS-AC-03
+    disposition: active
+    owner: day-periods
+    spec: day-periods
+    note: "Before the first start, the active period is the wrapping night."
+  - id: DAY-PERIODS-AC-04
+    disposition: active
+    owner: day-periods
+    spec: day-periods
+    note: "Every instant maps to exactly one period (no gap/overlap); each end equals the next start."
+  - id: DAY-PERIODS-AC-05
+    disposition: active
+    owner: day-periods
+    spec: day-periods
+    note: "Empty periods render as stable anchors in period-grouped views."
+  - id: DAILY-MESSAGES-INV-01
+    disposition: active
+    owner: daily-messages
+    spec: daily-messages
+    note: "One message per (member, date); re-save replaces text + advances updatedAt; blank is no-op."
+  - id: DAILY-MESSAGES-INV-02
+    disposition: active
+    owner: daily-messages
+    spec: daily-messages
+    note: "Targeting active members (not child-gated); inactive inassignable for writes, history readable."
+  - id: DAILY-MESSAGES-INV-03
+    disposition: active
+    owner: daily-messages
+    spec: daily-messages
+    note: "Strict YYYY-MM-DD household-local; half-open window, days capped (~60), zero/negative rejected."
+  - id: DAILY-MESSAGES-INV-04
+    disposition: active
+    owner: daily-messages
+    spec: daily-messages
+    note: "Text trimmed non-empty, stored verbatim (ADR-015); emoji/wrap are render-layer; ~500 char cap."
+  - id: DAILY-MESSAGES-INV-05
+    disposition: active
+    owner: daily-messages
+    spec: daily-messages
+    note: "Snapshot (ADR-022): edits/deletes do not mutate generated payloads nor auto-regenerate."
+  - id: DAILY-MESSAGES-INV-06
+    disposition: active
+    owner: daily-messages
+    spec: daily-messages
+    note: "Permissions (ADR-013/ADR-030): parent/admin write only; exposed only via recipient's briefing."
+  - id: DAILY-MESSAGES-INV-07
+    disposition: active
+    owner: daily-messages
+    spec: daily-messages
+    note: "Per-(member, date) last-write-wins; no etag/version."
+  - id: DAILY-MESSAGES-INV-08
+    disposition: active
+    owner: daily-messages
+    spec: daily-messages
+    note: "Reads distinguish missing member (not-found) from valid-empty (empty date-ascending list)."
+  - id: DAILY-MESSAGES-AC-01
+    disposition: active
+    owner: daily-messages
+    spec: daily-messages
+    note: "At most one message per (member, date); re-save replaces text."
+  - id: DAILY-MESSAGES-AC-02
+    disposition: active
+    owner: daily-messages
+    spec: daily-messages
+    note: "Authoring allowed for any active member (not child-gated); inactive rejected for new writes."
+  - id: DAILY-MESSAGES-AC-03
+    disposition: active
+    owner: daily-messages
+    spec: daily-messages
+    note: "Whitespace-only text rejected; blank field writes nothing and never deletes."
+  - id: DAILY-MESSAGES-AC-04
+    disposition: active
+    owner: daily-messages
+    spec: daily-messages
+    note: "Missing-member write fails; missing-member read not-found; valid-empty is empty date-asc list."
+  - id: DAILY-MESSAGES-AC-05
+    disposition: active
+    owner: daily-messages
+    spec: daily-messages
+    note: "days beyond cap or <=0 rejected; window half-open; dates strict + household tz."
+  - id: DAILY-MESSAGES-AC-06
+    disposition: active
+    owner: daily-messages
+    spec: daily-messages
+    note: "Editing/deleting does not alter already-generated briefings (explicit regen only)."
+  - id: DAILY-MESSAGES-AC-07
+    disposition: active
+    owner: daily-messages
+    spec: daily-messages
+    note: "Text stored verbatim; emoji/wrapping handled at render."
+  - id: TIME-ANNOUNCEMENTS-INV-01
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "Time/weekday/local-date/dedupe-key all resolve in household tz; never UTC/browser tz."
+  - id: TIME-ANNOUNCEMENTS-INV-02
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "time is strict HH:MM 24h (00:00-23:59), rejected not normalized at write."
+  - id: TIME-ANNOUNCEMENTS-INV-03
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "Weekdays non-empty mon..sun set (ADR-020); weekdayOf derivation."
+  - id: TIME-ANNOUNCEMENTS-INV-04
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "Two active rules must not share HH:MM + overlapping weekday; inactive may overlap; LWW re-checked at save."
+  - id: TIME-ANNOUNCEMENTS-INV-05
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "isActive soft-disables (editable/listable, no fire); delete permanent, no archive tier."
+  - id: TIME-ANNOUNCEMENTS-INV-06
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "Firing client-side per browser; server owns rule data only; leader tab + per-browser dedupe."
+  - id: TIME-ANNOUNCEMENTS-INV-07
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "Multi-device double-speak accepted (ADR-051); no cross-device coordination."
+  - id: TIME-ANNOUNCEMENTS-INV-08
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "Speech best-effort: missing/blocked is swallowed no-op, no persisted retry; dedupe failure never silences."
+  - id: TIME-ANNOUNCEMENTS-INV-09
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "Utterance lang = household locale always (ADR-015); wording localized keys, not hardcoded Spanish."
+  - id: TIME-ANNOUNCEMENTS-INV-10
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "No new settings (ADR-051): no master switch/quiet hours/volume-rate-pitch/per-device; household-wide."
+  - id: TIME-ANNOUNCEMENTS-INV-11
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "Invalid IANA tz unreachable (ADR-028 at settings boundary); scheduler defensive (no fire + health signal)."
+  - id: TIME-ANNOUNCEMENTS-AC-01
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "Malformed HH:MM / empty weekdays rejected; no row created."
+  - id: TIME-ANNOUNCEMENTS-AC-02
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "Active rule overlapping another active (same time + shared weekday) rejected; inactive overlaps allowed."
+  - id: TIME-ANNOUNCEMENTS-AC-03
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "Scheduler fires by household-local weekday + HH:MM, DST-safe."
+  - id: TIME-ANNOUNCEMENTS-AC-04
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "Within one browser at most one speak per minute (leader + dedupe); across devices each may speak."
+  - id: TIME-ANNOUNCEMENTS-AC-05
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "Utterance lang = household locale; wording localized, not hardcoded Spanish."
+  - id: TIME-ANNOUNCEMENTS-AC-06
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "Speech/dedupe failure changes no rule state and never crashes the scheduler."
+  - id: TIME-ANNOUNCEMENTS-AC-07
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "Rule CRUD requires admin write; listing is kiosk-visible."
+  - id: TIME-ANNOUNCEMENTS-AC-08
+    disposition: active
+    owner: time-announcements
+    spec: time-announcements
+    note: "No master switch / quiet hours / per-device / audio-control settings exist."
+
+  # ── Members domain — design (Tier-1 referential root; active, locally owned) ────
+  # 21 in-G MEMBERS guarantees realized by members feature contract (deferred).
+  # MEMBERS-AC-05/AC-06 moved→daily-briefing, MEMBERS-INV-09 retired (above); not re-listed.
+  - id: MEMBERS-INV-01
+    disposition: active
+    owner: members
+    spec: members
+    note: "member.role limited to parent and child"
+  - id: MEMBERS-INV-02
+    disposition: active
+    owner: members
+    spec: members
+    note: "admin is never a member role"
+  - id: MEMBERS-INV-03
+    disposition: active
+    owner: members
+    spec: members
+    note: "admin authority belongs to Auth & Sessions, not a role"
+  - id: MEMBERS-INV-04
+    disposition: active
+    owner: members
+    spec: members
+    note: "lifecycle active/archived; no hard delete (ADR-054)"
+  - id: MEMBERS-INV-05
+    disposition: active
+    owner: members
+    spec: members
+    note: "archived members invisible and inassignable in ordinary flows"
+  - id: MEMBERS-INV-06
+    disposition: active
+    owner: members
+    spec: members
+    note: "strict-on-write/tolerant-on-read referential integrity (ADR-054)"
+  - id: MEMBERS-INV-07
+    disposition: active
+    owner: members
+    spec: members
+    note: "new downstream targets default to active members"
+  - id: MEMBERS-INV-08
+    disposition: active
+    owner: members
+    spec: members
+    note: "child-facing domains use active children only, except Daily Briefing"
+  - id: MEMBERS-INV-10
+    disposition: active
+    owner: members
+    spec: members
+    note: "create makes only the profile; no Daily Briefing side effects"
+  - id: MEMBERS-INV-11
+    disposition: active
+    owner: members
+    spec: members
+    note: "member profile management is admin-protected"
+  - id: MEMBERS-INV-12
+    disposition: active
+    owner: members
+    spec: members
+    note: "old /members member-management form must not exist"
+  - id: MEMBERS-INV-13
+    disposition: active
+    owner: members
+    spec: members
+    note: "fresh v2 data store; no production-row migration"
+  - id: MEMBERS-AC-01
+    disposition: active
+    owner: members
+    spec: members
+    note: "create/update with role=admin is rejected"
+  - id: MEMBERS-AC-02
+    disposition: active
+    owner: members
+    spec: members
+    note: "successful create makes no Daily Briefing configuration"
+  - id: MEMBERS-AC-03
+    disposition: active
+    owner: members
+    spec: members
+    note: "archived member omitted from ordinary pickers"
+  - id: MEMBERS-AC-04
+    disposition: active
+    owner: members
+    spec: members
+    note: "archived member reference stays legible and read-only in history"
+  - id: MEMBERS-AC-07
+    disposition: active
+    owner: members
+    spec: members
+    note: "month/day-only birth date supports birthday matching without age"
+  - id: MEMBERS-AC-08
+    disposition: active
+    owner: members
+    spec: members
+    note: "mutation controls unavailable outside admin protection"
+  - id: MEMBERS-AC-09
+    disposition: active
+    owner: members
+    spec: members
+    note: "old /members management absent from kiosk routes"
+  - id: MEMBERS-INV-14
+    disposition: active
+    owner: members
+    spec: members
+    note: "closed-key curated on-screen identity colour; never a free value or print channel"
+  - id: MEMBERS-AC-10
+    disposition: active
+    owner: members
+    spec: members
+    note: "sixteen colours; prefer unused among active members and allow reuse after exhaustion"
+
+  # ── Calendar domain — design (active, locally owned) ────────────────────────────
+  # 17 in-G CALENDAR guarantees realized by calendar feature contract (deferred). The moved-in
+  # BACKGROUND-JOBS-SCHEDULER-AC-05 (owner: calendar) is reconciled in its own entry above.
+  - id: CALENDAR-INV-01
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "Cross-module reads go through getEvents; no direct table access."
+  - id: CALENDAR-INV-02
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "Assignments target active members; archived drop from active reads."
+  - id: CALENDAR-INV-03
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "Strict YYYY-MM-DD household-tz dates; exclusive next-midnight boundary."
+  - id: CALENDAR-INV-04
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "All-day events date-only half-open; start==end illegal."
+  - id: CALENDAR-INV-05
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "Feed URL validated on write and pre-fetch; titles sanitized; URLs masked."
+  - id: CALENDAR-INV-06
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "Provider display-only; unknown maps to ics_generic; never affects parsing."
+  - id: CALENDAR-INV-07
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "Listed mutations atomic; sync reconciliation idempotent best-effort."
+  - id: CALENDAR-INV-08
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "Source-delete acquires per-source sync guard; foreign_keys ON per connection."
+  - id: CALENDAR-INV-09
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "assignedTo returns only explicitly-assigned events; unassigned only when omitted."
+  - id: CALENDAR-INV-10
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "Generation reads accept caller read-tx context; events fetched once."
+  - id: CALENDAR-AC-01
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "Consumers obtain events only via getEvents, never a table."
+  - id: CALENDAR-AC-02
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "All-day date-only half-open; start==end rejected; correct local day."
+  - id: CALENDAR-AC-03
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "Feed URL resolving to private/loopback rejected before fetch."
+  - id: CALENDAR-AC-04
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "Source delete removes source+events+ext: assignments atomically; serialized."
+  - id: CALENDAR-AC-05
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "Sync with one malformed event reconciles rest; records source health."
+  - id: CALENDAR-AC-06
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "getEvents({assignedTo: m}) excludes events with no assignment row for m."
+  - id: CALENDAR-AC-07
+    disposition: active
+    owner: calendar
+    spec: calendar
+    note: "Unknown provider imports as ics_generic."
+
+  # ── Routines & Chores domain — design (active, locally owned) ───────────────────
+  # 14 in-G ROUTINES-CHORES guarantees realized by routines-chores feature contract (deferred).
+  - id: ROUTINES-CHORES-INV-01
+    disposition: active
+    owner: routines-chores
+    spec: routines-chores
+    note: "New assignments target active children only; archived members inassignable, read-only history"
+  - id: ROUTINES-CHORES-INV-02
+    disposition: active
+    owner: routines-chores
+    spec: routines-chores
+    note: "Weekdays canonical mon..sun codes; date-derived via weekdayOf in household tz"
+  - id: ROUTINES-CHORES-INV-03
+    disposition: active
+    owner: routines-chores
+    spec: routines-chores
+    note: "Dates strict calendar-valid YYYY-MM-DD; rejected not normalized"
+  - id: ROUTINES-CHORES-INV-04
+    disposition: active
+    owner: routines-chores
+    spec: routines-chores
+    note: "Completion eligibility evaluated against current state, not reconstructed history"
+  - id: ROUTINES-CHORES-INV-05
+    disposition: active
+    owner: routines-chores
+    spec: routines-chores
+    note: "No historical reconstruction, no admin override path for date corrections"
+  - id: ROUTINES-CHORES-INV-06
+    disposition: active
+    owner: routines-chores
+    spec: routines-chores
+    note: "Streak/summary derived-on-read; Members stores no streak fields"
+  - id: ROUTINES-CHORES-INV-07
+    disposition: active
+    owner: routines-chores
+    spec: routines-chores
+    note: "Multi-step primary writes (reorder, set-replace) atomic all-or-nothing"
+  - id: ROUTINES-CHORES-INV-08
+    disposition: active
+    owner: routines-chores
+    spec: routines-chores
+    note: "Soft-deleted rows readable for history, excluded from active reads and streak"
+  - id: ROUTINES-CHORES-INV-09
+    disposition: active
+    owner: routines-chores
+    spec: routines-chores
+    note: "Live streak is current-progress indicator, not surfaced on history views"
+  - id: ROUTINES-CHORES-AC-01
+    disposition: active
+    owner: routines-chores
+    spec: routines-chores
+    note: "Completion accepted iff currently markable; uncompletion always allowed"
+  - id: ROUTINES-CHORES-AC-02
+    disposition: active
+    owner: routines-chores
+    spec: routines-chores
+    note: "Past-date corrections succeed without admin override"
+  - id: ROUTINES-CHORES-AC-03
+    disposition: active
+    owner: routines-chores
+    spec: routines-chores
+    note: "Reorder persists atomically or rolls back; no partial order"
+  - id: ROUTINES-CHORES-AC-04
+    disposition: active
+    owner: routines-chores
+    spec: routines-chores
+    note: "Streak reflects current-active config at read time; retroactive reinterpretation expected"
+  - id: ROUTINES-CHORES-AC-05
+    disposition: active
+    owner: routines-chores
+    spec: routines-chores
+    note: "Out-of-enum weekday writes rejected; impossible dates rejected"
+
+  # ── Meals & Recipes domain — design (active, locally owned) ─────────────────────
+  # 24 in-G MEALS-RECIPES guarantees realized by meals-recipes feature contract (deferred).
+  - id: MEALS-RECIPES-INV-01
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Additive (date, slot) holds N entries; adding never displaces a sibling."
+  - id: MEALS-RECIPES-INV-02
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Exactly one content source per entry; both/neither rejected at boundary."
+  - id: MEALS-RECIPES-INV-03
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Menu derived on-read (active-plan recurring + one-off union); never materialized."
+  - id: MEALS-RECIPES-INV-04
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Canonical order: recurring before one-off, plan name ASC, createdAt ASC."
+  - id: MEALS-RECIPES-INV-05
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "No per-occurrence skip (Option A); edits change every matching weekday."
+  - id: MEALS-RECIPES-INV-06
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Household-wide only; no per-member targeting (deferred seam)."
+  - id: MEALS-RECIPES-INV-07
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Strict YYYY-MM-DD; today/week/weekday derive from household tz, no stored window."
+  - id: MEALS-RECIPES-INV-08
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Recipe delete = atomic informed cascade; plans survive; advisory split count."
+  - id: MEALS-RECIPES-INV-09
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Stale recipe ref renders tombstone on read; never errors or drops."
+  - id: MEALS-RECIPES-INV-10
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Strict update-by-id; write on deleted id returns not-found, never recreates."
+  - id: MEALS-RECIPES-INV-11
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Recipe shape: name required/trimmed/non-blank; optional fields; absent slots = all."
+  - id: MEALS-RECIPES-INV-12
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Last-write-wins per entry; no etag; concurrent adds both succeed."
+  - id: MEALS-RECIPES-INV-13
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "i18n: labels/errors/tombstone are keys; user text shown verbatim, never translated."
+  - id: MEALS-RECIPES-INV-14
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "View kiosk-visible; writes use shared parent/admin model; no meals-specific perms."
+  - id: MEALS-RECIPES-AC-01
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "(date, slot) accepts N entries; adding never deletes a sibling."
+  - id: MEALS-RECIPES-AC-02
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Entry with both recipe ref and note, or neither, is rejected."
+  - id: MEALS-RECIPES-AC-03
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Menu equals on-read union in canonical order; reads of unchanged menu match."
+  - id: MEALS-RECIPES-AC-04
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Editing/deactivating recurring entry/plan changes all weekdays; no skip."
+  - id: MEALS-RECIPES-AC-05
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Multiple active plans union additively."
+  - id: MEALS-RECIPES-AC-06
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Atomic cascade delete; split count; plans survive; deleted id not-found."
+  - id: MEALS-RECIPES-AC-07
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Deleted-recipe reference renders tombstone; never errors or silently drops."
+  - id: MEALS-RECIPES-AC-08
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Blank-after-trim name rejected; name-only accepted; absent slots = all pickers."
+  - id: MEALS-RECIPES-AC-09
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Non-strict dates rejected; week/today use household tz + weekStartDay."
+  - id: MEALS-RECIPES-AC-10
+    disposition: active
+    owner: meals-recipes
+    spec: meals-recipes
+    note: "Consumers get per-slot resolved-label list; briefing freezes it verbatim."
+
+  # ── Auth & Sessions domain — design (Tier-0 platform; active, locally owned) ─────
+  # 20 in-G AUTH-SESSIONS guarantees (12 INV + 8 AC) realized by docs/features/auth-sessions.md.
+  # No moved-in or pre-existing Phase-0b entries for this domain; all fresh.
+  - id: AUTH-SESSIONS-INV-01
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "API key is the sole backend authorization boundary; authority bounded by scopes. Boundary scoped to /api/* (frontend serving is the access gate's concern, ADR-031) — ADR-059; spec coverage unchanged."
+  - id: AUTH-SESSIONS-INV-02
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "PIN never evaluated by backend; client-side UI state only."
+  - id: AUTH-SESSIONS-INV-03
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "No server-side session table, no x-session-id, no server session lifecycle."
+  - id: AUTH-SESSIONS-INV-04
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "Fail-closed in every environment; missing credential locks (only /health), never opens. Root /health stays the sole credential-free route after the /api migration — ADR-059."
+  - id: AUTH-SESSIONS-INV-05
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "Endpoint with no declared capability rejects all requests (fail-closed default)."
+  - id: AUTH-SESSIONS-INV-06
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "Key-management requires raw `*` header key; never cookie; never scoped-delegable."
+  - id: AUTH-SESSIONS-INV-07
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "Last active `*` key cannot be revoked or expired (anti-lockout)."
+  - id: AUTH-SESSIONS-INV-08
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "Single household trust tier; key-management is the sole operator boundary; no ad-hoc admin carve-outs."
+  - id: AUTH-SESSIONS-INV-09
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "Every request re-validates credential AND key-record active; revoke/expiry effective next request."
+  - id: AUTH-SESSIONS-INV-10
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "Device keys never exposed; integration keys shown once; raw PINs never persisted/returned."
+  - id: AUTH-SESSIONS-INV-11
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "All auth state in the database; none in process memory."
+  - id: AUTH-SESSIONS-INV-12
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "Telemetry/logs never contain raw PINs, API keys, cookies, or access-gate tokens."
+  - id: AUTH-SESSIONS-AC-01
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "No credential (any env) → non-health endpoints 401/403; deployment locked, never open."
+  - id: AUTH-SESSIONS-AC-02
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "Scoped key outside scope / at key-mgmt, or cookie at key-mgmt → rejected."
+  - id: AUTH-SESSIONS-AC-03
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "Endpoint with no declared capability → rejects all requests."
+  - id: AUTH-SESSIONS-AC-04
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "Revoked device key → its cookie fails on the next request."
+  - id: AUTH-SESSIONS-AC-05
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "Only one `*` key remaining → revocation refused."
+  - id: AUTH-SESSIONS-AC-06
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "First connect with raw `*` key → `*` device key (no expiry) minted + cookie-bound; no raw key in body."
+  - id: AUTH-SESSIONS-AC-07
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "verify-pin correct → match; no session row created anywhere."
+  - id: AUTH-SESSIONS-AC-08
+    disposition: active
+    owner: auth-sessions
+    spec: auth-sessions
+    note: "Backend authorization never depends on PIN state."
+
+  # ── App Settings Registry domain — design (Tier-0 platform; active, locally owned) ──
+  # 15 in-G APP-SETTINGS-REGISTRY guarantees (8 INV + 7 AC) realized by docs/features/app-settings-registry.md.
+  - id: APP-SETTINGS-REGISTRY-INV-01
+    disposition: active
+    owner: app-settings-registry
+    spec: app-settings-registry
+    note: "API key is sole authz boundary; PIN never evaluated by settings endpoints"
+  - id: APP-SETTINGS-REGISTRY-INV-02
+    disposition: active
+    owner: app-settings-registry
+    spec: app-settings-registry
+    note: "GET /settings always available at cold boot; no admin session or PIN required"
+  - id: APP-SETTINGS-REGISTRY-INV-03
+    disposition: active
+    owner: app-settings-registry
+    spec: app-settings-registry
+    note: "PUT /settings requires valid API key; object name + schema validated pre-persist"
+  - id: APP-SETTINGS-REGISTRY-INV-04
+    disposition: active
+    owner: app-settings-registry
+    spec: app-settings-registry
+    note: "PUT write atomic per object; storage failure leaves all fields at prior values"
+  - id: APP-SETTINGS-REGISTRY-INV-05
+    disposition: active
+    owner: app-settings-registry
+    spec: app-settings-registry
+    note: "Unknown object names and schema-invalid field values are rejected"
+  - id: APP-SETTINGS-REGISTRY-INV-06
+    disposition: active
+    owner: app-settings-registry
+    spec: app-settings-registry
+    note: "Effective response includes all fields per object; defaults fill missing values"
+  - id: APP-SETTINGS-REGISTRY-INV-07
+    disposition: active
+    owner: app-settings-registry
+    spec: app-settings-registry
+    note: "Absent object = plugin inactive; no null/empty placeholder objects"
+  - id: APP-SETTINGS-REGISTRY-INV-08
+    disposition: active
+    owner: app-settings-registry
+    spec: app-settings-registry
+    note: "daily_briefing_block_order not in this registry; Daily Briefing owns block config"
+  - id: APP-SETTINGS-REGISTRY-AC-01
+    disposition: active
+    owner: app-settings-registry
+    spec: app-settings-registry
+    note: "Valid API key, no PIN: GET /settings includes locale with all three fields"
+  - id: APP-SETTINGS-REGISTRY-AC-02
+    disposition: active
+    owner: app-settings-registry
+    spec: app-settings-registry
+    note: "PUT unknown object name returns 400/422"
+  - id: APP-SETTINGS-REGISTRY-AC-03
+    disposition: active
+    owner: app-settings-registry
+    spec: app-settings-registry
+    note: "PUT locale with invalid timezone returns 400/422"
+  - id: APP-SETTINGS-REGISTRY-AC-04
+    disposition: active
+    owner: app-settings-registry
+    spec: app-settings-registry
+    note: "Storage failure mid locale write leaves all three fields at prior values"
+  - id: APP-SETTINGS-REGISTRY-AC-05
+    disposition: active
+    owner: app-settings-registry
+    spec: app-settings-registry
+    note: "Printing inactive: GET /settings omits printer and printerTransport keys"
+  - id: APP-SETTINGS-REGISTRY-AC-06
+    disposition: active
+    owner: app-settings-registry
+    spec: app-settings-registry
+    note: "Printing active: GET /settings includes printer + printerTransport with defaults"
+  - id: APP-SETTINGS-REGISTRY-AC-07
+    disposition: active
+    owner: app-settings-registry
+    spec: app-settings-registry
+    note: "PUT printerTransport type=wifi returns unsupported-transport error in v2"
+
+  # ── Client Logging / Telemetry domain — design (Tier-0 platform; active, locally owned) ──
+  # 22 in-G CLIENT-LOGGING-TELEMETRY guarantees (14 INV + 8 AC) realized by docs/features/client-logging-telemetry.md.
+  - id: CLIENT-LOGGING-TELEMETRY-INV-01
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "Telemetry never product truth, never in product control flow; failure blocks nothing"
+  - id: CLIENT-LOGGING-TELEMETRY-INV-02
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "Best-effort at-most-once; in-memory buffer, no retry/replay, failures swallowed"
+  - id: CLIENT-LOGGING-TELEMETRY-INV-03
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "Envelope contract; eventTime advisory, receivedAt retention clock; shared library"
+  - id: CLIENT-LOGGING-TELEMETRY-INV-04
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "Privacy at ingest: structural+aggregate bounding + deny-list redaction to [redacted]"
+  - id: CLIENT-LOGGING-TELEMETRY-INV-05
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "DB-sink minimization: structured data only, never user free-text; residual accepted"
+  - id: CLIENT-LOGGING-TELEMETRY-INV-06
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "Console out of redaction guarantee; prod build emits no data; raw console lint-banned"
+  - id: CLIENT-LOGGING-TELEMETRY-INV-07
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "External egress forwards only 5 enumerated fields; data never forwarded sans allowlist"
+  - id: CLIENT-LOGGING-TELEMETRY-INV-08
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "External sinks operator/deploy-configured via env/secret, not a household setting"
+  - id: CLIENT-LOGGING-TELEMETRY-INV-09
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "Retention via scheduled idempotent prune by receivedAt, independent of ingest"
+  - id: CLIENT-LOGGING-TELEMETRY-INV-10
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "Access: telemetry:write ingest, telemetry:admin/* read; PIN client-side UI only"
+  - id: CLIENT-LOGGING-TELEMETRY-INV-11
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "Admin read view: escaped text-only render + server-capped cursor pagination"
+  - id: CLIENT-LOGGING-TELEMETRY-INV-12
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "Always-on, no household setting; no migration; 119 prod rows evidence only"
+  - id: CLIENT-LOGGING-TELEMETRY-INV-13
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "i18n missing-key signal is a telemetry write, not a bus event; logging is consumer"
+  - id: CLIENT-LOGGING-TELEMETRY-INV-14
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "Not a bus participant; ingest+sinks only; component/message free-text bounded"
+  - id: CLIENT-LOGGING-TELEMETRY-AC-01
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "Secret-named key / mpk-/mpg- value -> [redacted]; over-bound data truncated/rejected"
+  - id: CLIENT-LOGGING-TELEMETRY-AC-02
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "Redaction+bounding before DB write and external send; console not covered"
+  - id: CLIENT-LOGGING-TELEMETRY-AC-03
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "External sink receives only 5 enumerated fields; data not forwarded sans allowlist"
+  - id: CLIENT-LOGGING-TELEMETRY-AC-04
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "Rows past window pruned by scheduled job even with zero ingest traffic"
+  - id: CLIENT-LOGGING-TELEMETRY-AC-05
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "Ingest needs telemetry:write; read/export telemetry:admin/*; undeclared rejected"
+  - id: CLIENT-LOGGING-TELEMETRY-AC-06
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "Telemetry outage/failure changes no product state and blocks no user action"
+  - id: CLIENT-LOGGING-TELEMETRY-AC-07
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "No client_log rows imported from legacy data"
+  - id: CLIENT-LOGGING-TELEMETRY-AC-08
+    disposition: active
+    owner: client-logging-telemetry
+    spec: client-logging-telemetry
+    note: "i18n missing-key signal lands as a telemetry write"
+
+  # ── Backups domain — design (Tier-0 platform; active, locally owned) ──
+  # 15 in-G BACKUPS guarantees (9 INV + 6 AC) realized by backups feature contract (deferred). The moved-in
+  # BACKGROUND-JOBS-SCHEDULER-AC-06 (owner: backups) is reconciled in its own entry above.
+  - id: BACKUPS-INV-01
+    disposition: active
+    owner: backups
+    spec: backups
+    note: "Backup truth lives outside active DB; list/version/source file-derived."
+  - id: BACKUPS-INV-02
+    disposition: active
+    owner: backups
+    spec: backups
+    note: "Restore reversible: pre-restore snapshot first; abort untouched if it fails."
+  - id: BACKUPS-INV-03
+    disposition: active
+    owner: backups
+    spec: backups
+    note: "No half-restored state: quiesce, force-close handles, reopen fresh, no restart."
+  - id: BACKUPS-INV-04
+    disposition: active
+    owner: backups
+    spec: backups
+    note: "Compat by migration-version number; reject downgrade, migrate same-or-older."
+  - id: BACKUPS-INV-05
+    disposition: active
+    owner: backups
+    spec: backups
+    note: "Retention count-primary, never below floor/zero; pre-restore exempt; prune post-good."
+  - id: BACKUPS-INV-06
+    disposition: active
+    owner: backups
+    spec: backups
+    note: "Import is .db-only; .sql execute-into-DB removed; download-sql read-only export."
+  - id: BACKUPS-INV-07
+    disposition: active
+    owner: backups
+    spec: backups
+    note: "Filename/path safety: allowlist, reject traversal, resolve in root, re-validate."
+  - id: BACKUPS-INV-08
+    disposition: active
+    owner: backups
+    spec: backups
+    note: "Auth: key-scoped admin class, fail-closed; downloads sensitive in same class."
+  - id: BACKUPS-INV-09
+    disposition: active
+    owner: backups
+    spec: backups
+    note: "Snapshot does not mutate household rows; only writes/prunes backup files."
+  - id: BACKUPS-AC-01
+    disposition: active
+    owner: backups
+    spec: backups
+    note: "Restore: pre-restore snapshot, typed-confirm gate, no half state, reload, no restart."
+  - id: BACKUPS-AC-02
+    disposition: active
+    owner: backups
+    spec: backups
+    note: "Downgrade rejected; same-or-older migrated; failed migration rolls back lossless."
+  - id: BACKUPS-AC-03
+    disposition: active
+    owner: backups
+    spec: backups
+    note: ".sql import rejected; download-sql still works read-only."
+  - id: BACKUPS-AC-04
+    disposition: active
+    owner: backups
+    spec: backups
+    note: "Prune keeps N + all pre-restore, never below floor/zero, only after good backup."
+  - id: BACKUPS-AC-05
+    disposition: active
+    owner: backups
+    spec: backups
+    note: "Path traversal rejected; all ops resolve inside the backups root."
+  - id: BACKUPS-AC-06
+    disposition: active
+    owner: backups
+    spec: backups
+    note: "After restore, backup list still derivable from file-derived metadata."
+
+  # ── Background Jobs / Scheduler domain — design (Tier-0 platform; active, locally owned) ─
+  # 13 in-G guarantees realized by docs/features/background-jobs-scheduler.md: 8 INV + AC-01/02/03/07
+  # fresh below; AC-04 reconciled in place above (reframed-active). AC-05→calendar, AC-06→backups
+  # are moved-out (realized in those specs), not here.
+  - id: BACKGROUND-JOBS-SCHEDULER-INV-01
+    disposition: active
+    owner: background-jobs-scheduler
+    spec: background-jobs-scheduler
+    note: "Single instance: in-process in-flight guard, no deployment-wide lease."
+  - id: BACKGROUND-JOBS-SCHEDULER-INV-02
+    disposition: active
+    owner: background-jobs-scheduler
+    spec: background-jobs-scheduler
+    note: "Singleton job never overlaps itself; manual+scheduled share one guard/idempotency boundary."
+  - id: BACKGROUND-JOBS-SCHEDULER-INV-03
+    disposition: active
+    owner: background-jobs-scheduler
+    spec: background-jobs-scheduler
+    note: "Owns no job content and no domain status table; status is domain-owned product state."
+  - id: BACKGROUND-JOBS-SCHEDULER-INV-04
+    disposition: active
+    owner: background-jobs-scheduler
+    spec: background-jobs-scheduler
+    note: "Wall-clock jobs fire on household-local time; correct across DST/host-tz."
+  - id: BACKGROUND-JOBS-SCHEDULER-INV-05
+    disposition: active
+    owner: background-jobs-scheduler
+    spec: background-jobs-scheduler
+    note: "No lazy-on-read generation; reads are pure."
+  - id: BACKGROUND-JOBS-SCHEDULER-INV-06
+    disposition: active
+    owner: background-jobs-scheduler
+    spec: background-jobs-scheduler
+    note: "Multi-step mutating job is a recoverable unit or leaves no partial user-visible state."
+  - id: BACKGROUND-JOBS-SCHEDULER-INV-07
+    disposition: active
+    owner: background-jobs-scheduler
+    spec: background-jobs-scheduler
+    note: "Plugin jobs run only while active; deactivation stops new runs, drains in-flight in guard."
+  - id: BACKGROUND-JOBS-SCHEDULER-INV-08
+    disposition: active
+    owner: background-jobs-scheduler
+    spec: background-jobs-scheduler
+    note: "Durable deferred work is a scheduled/queued job, not a persisted event."
+  - id: BACKGROUND-JOBS-SCHEDULER-AC-01
+    disposition: active
+    owner: background-jobs-scheduler
+    spec: background-jobs-scheduler
+    note: "Previous run still executing -> next tick skipped/coalesced."
+  - id: BACKGROUND-JOBS-SCHEDULER-AC-02
+    disposition: active
+    owner: background-jobs-scheduler
+    spec: background-jobs-scheduler
+    note: "Manual during scheduled run of same job -> not concurrent (shared guard)."
+  - id: BACKGROUND-JOBS-SCHEDULER-AC-03
+    disposition: active
+    owner: background-jobs-scheduler
+    spec: background-jobs-scheduler
+    note: "Wall-clock job fires at household-local time across DST."
+  - id: BACKGROUND-JOBS-SCHEDULER-AC-07
+    disposition: active
+    owner: background-jobs-scheduler
+    spec: background-jobs-scheduler
+    note: "Inactive plugin -> its jobs acquire no new runs."
+
+  # ── i18n / Localization domain — design (Tier-0 platform; active, locally owned) ─
+  # 18 in-G I18N-LOCALIZATION guarantees (12 INV + 6 AC) realized by docs/features/i18n-localization.md.
+  # AC-01 reconciled in place above (reframed-active); INV-01..12 + AC-02..06 fresh below.
+  - id: I18N-LOCALIZATION-INV-01
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n INV-01 (see docs/features/i18n-localization.md FR)."
+  - id: I18N-LOCALIZATION-INV-02
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n INV-02 (see docs/features/i18n-localization.md FR)."
+  - id: I18N-LOCALIZATION-INV-03
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n INV-03 (see docs/features/i18n-localization.md FR)."
+  - id: I18N-LOCALIZATION-INV-04
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n INV-04 (see docs/features/i18n-localization.md FR)."
+  - id: I18N-LOCALIZATION-INV-05
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n INV-05 (see docs/features/i18n-localization.md FR)."
+  - id: I18N-LOCALIZATION-INV-06
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n INV-06 (see docs/features/i18n-localization.md FR)."
+  - id: I18N-LOCALIZATION-INV-07
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n INV-07 (see docs/features/i18n-localization.md FR)."
+  - id: I18N-LOCALIZATION-INV-08
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n INV-08 (see docs/features/i18n-localization.md FR)."
+  - id: I18N-LOCALIZATION-INV-09
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n INV-09 (see docs/features/i18n-localization.md FR)."
+  - id: I18N-LOCALIZATION-INV-10
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n INV-10 (see docs/features/i18n-localization.md FR)."
+  - id: I18N-LOCALIZATION-INV-11
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n INV-11 (see docs/features/i18n-localization.md FR)."
+  - id: I18N-LOCALIZATION-INV-12
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n INV-12 (see docs/features/i18n-localization.md FR)."
+  - id: I18N-LOCALIZATION-AC-02
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n AC-02 (see docs/features/i18n-localization.md FR)."
+  - id: I18N-LOCALIZATION-AC-03
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n AC-03 (see docs/features/i18n-localization.md FR)."
+  - id: I18N-LOCALIZATION-AC-04
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n AC-04 (see docs/features/i18n-localization.md FR)."
+  - id: I18N-LOCALIZATION-AC-05
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n AC-05 (see docs/features/i18n-localization.md FR)."
+  - id: I18N-LOCALIZATION-AC-06
+    disposition: active
+    owner: i18n-localization
+    spec: i18n-localization
+    note: "i18n AC-06 (see docs/features/i18n-localization.md FR)."
+
+  # ── Plugin System domain — design (Tier-0 platform; active, locally owned) ──────
+  # 16 in-G PLUGIN-SYSTEM guarantees (9 INV + 7 AC) realized by plugin-system feature contract (deferred). All fresh.
+  - id: PLUGIN-SYSTEM-INV-01
+    disposition: active
+    owner: plugin-system
+    spec: plugin-system
+    note: "plugin-system INV-01 (see plugin-system feature contract (deferred) FR)."
+  - id: PLUGIN-SYSTEM-INV-02
+    disposition: active
+    owner: plugin-system
+    spec: plugin-system
+    note: "plugin-system INV-02 (see plugin-system feature contract (deferred) FR)."
+  - id: PLUGIN-SYSTEM-INV-03
+    disposition: active
+    owner: plugin-system
+    spec: plugin-system
+    note: "plugin-system INV-03 (see plugin-system feature contract (deferred) FR)."
+  - id: PLUGIN-SYSTEM-INV-04
+    disposition: active
+    owner: plugin-system
+    spec: plugin-system
+    note: "plugin-system INV-04 (see plugin-system feature contract (deferred) FR)."
+  - id: PLUGIN-SYSTEM-INV-05
+    disposition: active
+    owner: plugin-system
+    spec: plugin-system
+    note: "plugin-system INV-05 (see plugin-system feature contract (deferred) FR)."
+  - id: PLUGIN-SYSTEM-INV-06
+    disposition: active
+    owner: plugin-system
+    spec: plugin-system
+    note: "plugin-system INV-06 (see plugin-system feature contract (deferred) FR)."
+  - id: PLUGIN-SYSTEM-INV-07
+    disposition: active
+    owner: plugin-system
+    spec: plugin-system
+    note: "plugin-system INV-07 (see plugin-system feature contract (deferred) FR)."
+  - id: PLUGIN-SYSTEM-INV-08
+    disposition: active
+    owner: plugin-system
+    spec: plugin-system
+    note: "plugin-system INV-08 (see plugin-system feature contract (deferred) FR)."
+  - id: PLUGIN-SYSTEM-INV-09
+    disposition: active
+    owner: plugin-system
+    spec: plugin-system
+    note: "plugin-system INV-09 (see plugin-system feature contract (deferred) FR)."
+  - id: PLUGIN-SYSTEM-AC-01
+    disposition: active
+    owner: plugin-system
+    spec: plugin-system
+    note: "plugin-system AC-01 (see plugin-system feature contract (deferred) FR)."
+  - id: PLUGIN-SYSTEM-AC-02
+    disposition: active
+    owner: plugin-system
+    spec: plugin-system
+    note: "plugin-system AC-02 (see plugin-system feature contract (deferred) FR)."
+  - id: PLUGIN-SYSTEM-AC-03
+    disposition: active
+    owner: plugin-system
+    spec: plugin-system
+    note: "plugin-system AC-03 (see plugin-system feature contract (deferred) FR)."
+  - id: PLUGIN-SYSTEM-AC-04
+    disposition: active
+    owner: plugin-system
+    spec: plugin-system
+    note: "plugin-system AC-04 (see plugin-system feature contract (deferred) FR)."
+  - id: PLUGIN-SYSTEM-AC-05
+    disposition: active
+    owner: plugin-system
+    spec: plugin-system
+    note: "plugin-system AC-05 (see plugin-system feature contract (deferred) FR)."
+  - id: PLUGIN-SYSTEM-AC-06
+    disposition: active
+    owner: plugin-system
+    spec: plugin-system
+    note: "plugin-system AC-06 (see plugin-system feature contract (deferred) FR)."
+  - id: PLUGIN-SYSTEM-AC-07
+    disposition: active
+    owner: plugin-system
+    spec: plugin-system
+    note: "plugin-system AC-07 (see plugin-system feature contract (deferred) FR)."
+
+  # ── Kiosk Shell & Navigation domain — design (Tier-0 platform; active, locally owned) ─
+  # 18 in-G KIOSK-SHELL-NAVIGATION guarantees (8 INV + 10 AC) realized by kiosk-shell-navigation feature contract (deferred). All fresh.
+  - id: KIOSK-SHELL-NAVIGATION-INV-01
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "kiosk-shell INV-01 (see kiosk-shell-navigation feature contract (deferred) FR)."
+  - id: KIOSK-SHELL-NAVIGATION-INV-02
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "kiosk-shell INV-02 (see kiosk-shell-navigation feature contract (deferred) FR)."
+  - id: KIOSK-SHELL-NAVIGATION-INV-03
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "kiosk-shell INV-03 (see kiosk-shell-navigation feature contract (deferred) FR)."
+  - id: KIOSK-SHELL-NAVIGATION-INV-04
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "kiosk-shell INV-04 (see kiosk-shell-navigation feature contract (deferred) FR)."
+  - id: KIOSK-SHELL-NAVIGATION-INV-05
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "kiosk-shell INV-05 (see kiosk-shell-navigation feature contract (deferred) FR)."
+  - id: KIOSK-SHELL-NAVIGATION-INV-06
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "kiosk-shell INV-06 (see kiosk-shell-navigation feature contract (deferred) FR)."
+  - id: KIOSK-SHELL-NAVIGATION-INV-07
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "kiosk-shell INV-07 (see kiosk-shell-navigation feature contract (deferred) FR). Minimal static-token gate lands in foundation implementation (ADR-059); token lifecycle stays with auth-sessions."
+  - id: KIOSK-SHELL-NAVIGATION-AC-01
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "kiosk-shell AC-01 (see kiosk-shell-navigation feature contract (deferred) FR). Slice-001 realizes the gate-then-provisioning boot flow minimally per ADR-059 (FR-029/FR-030)."
+  - id: KIOSK-SHELL-NAVIGATION-AC-02
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "kiosk-shell AC-02 (see kiosk-shell-navigation feature contract (deferred) FR)."
+  - id: KIOSK-SHELL-NAVIGATION-AC-03
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "kiosk-shell AC-03 (see kiosk-shell-navigation feature contract (deferred) FR)."
+  - id: KIOSK-SHELL-NAVIGATION-AC-04
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "kiosk-shell AC-04 (see kiosk-shell-navigation feature contract (deferred) FR)."
+  - id: KIOSK-SHELL-NAVIGATION-AC-05
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "kiosk-shell AC-05 (see kiosk-shell-navigation feature contract (deferred) FR)."
+  - id: KIOSK-SHELL-NAVIGATION-AC-06
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "kiosk-shell AC-06 (see kiosk-shell-navigation feature contract (deferred) FR)."
+  - id: KIOSK-SHELL-NAVIGATION-AC-07
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note:
+      "kiosk-shell AC-07 (see kiosk-shell-navigation feature contract (deferred) FR). ADR-065 narrows the
+      executed-once clause to print/hardware-claim work; the announcement half is client-fired
+      per ADR-051 (announcements-continue-on-admin-routes clause unchanged)."
+  - id: KIOSK-SHELL-NAVIGATION-INV-08
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "persistent family navigation; PIN-protected admin subtree; no family Daily Briefing route"
+  - id: KIOSK-SHELL-NAVIGATION-AC-08
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "dashboard composes agenda, independent active-child chores, and today's meals with partial failure"
+  - id: KIOSK-SHELL-NAVIGATION-AC-09
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "persistent family navigation reaches four routes without typed URLs"
+  - id: KIOSK-SHELL-NAVIGATION-AC-10
+    disposition: active
+    owner: kiosk-shell-navigation
+    spec: kiosk-shell-navigation
+    note: "pre-assembly admin capabilities remain reachable under stable refresh-safe destinations"
+
+  # ── design surfaces — fresh active, locally owned (specs authored this wave) ──
+  # Daily Briefing (AC-12/AC-03 reconciled above; MEMBERS-AC-05/06 moved above):
+  - id: DAILY-BRIEFING-INV-01
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-INV-02
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-INV-03
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-INV-04
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-INV-05
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-INV-06
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-INV-07
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-INV-08
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-INV-09
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-AC-01
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-AC-04
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-AC-05
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-AC-06
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-AC-07
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-AC-08
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-AC-09
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-AC-11
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  - id: DAILY-BRIEFING-AC-10
+    disposition: active
+    owner: daily-briefing
+    spec: daily-briefing
+  # Printing (PRINTING-AC-08 reconciled above):
+  - id: PRINTING-INV-01
+    disposition: active
+    owner: printing
+    spec: printing
+  - id: PRINTING-INV-02
+    disposition: active
+    owner: printing
+    spec: printing
+  - id: PRINTING-INV-03
+    disposition: active
+    owner: printing
+    spec: printing
+  - id: PRINTING-INV-04
+    disposition: active
+    owner: printing
+    spec: printing
+  - id: PRINTING-INV-05
+    disposition: active
+    owner: printing
+    spec: printing
+  - id: PRINTING-INV-06
+    disposition: active
+    owner: printing
+    spec: printing
+  - id: PRINTING-INV-07
+    disposition: active
+    owner: printing
+    spec: printing
+  - id: PRINTING-AC-01
+    disposition: active
+    owner: printing
+    spec: printing
+  - id: PRINTING-AC-02
+    disposition: active
+    owner: printing
+    spec: printing
+  - id: PRINTING-AC-03
+    disposition: active
+    owner: printing
+    spec: printing
+  - id: PRINTING-AC-04
+    disposition: active
+    owner: printing
+    spec: printing
+  - id: PRINTING-AC-05
+    disposition: active
+    owner: printing
+    spec: printing
+  - id: PRINTING-AC-06
+    disposition: active
+    owner: printing
+    spec: printing
+  - id: PRINTING-AC-07
+    disposition: active
+    owner: printing
+    spec: printing
+  # Weather (WEATHER-AC-01 reconciled above):
+  - id: WEATHER-INV-01
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-INV-02
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-INV-03
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-INV-04
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-INV-05
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-INV-06
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-INV-07
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-INV-08
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-INV-09
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-INV-10
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-INV-11
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-INV-12
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-AC-02
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-AC-03
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-AC-04
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-AC-05
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-AC-06
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-AC-07
+    disposition: active
+    owner: weather
+    spec: weather
+  - id: WEATHER-AC-08
+    disposition: active
+    owner: weather
+    spec: weather
+  # Network Devices (no pre-existing entries):
+  - id: NETWORK-DEVICES-INV-01
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-INV-02
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-INV-03
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-INV-04
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-INV-05
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-INV-06
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-INV-07
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-INV-08
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-INV-09
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-INV-10
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-AC-01
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-AC-02
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-AC-03
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-AC-04
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-AC-05
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-AC-06
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-AC-07
+    disposition: active
+    owner: network-devices
+    spec: network-devices
+  - id: NETWORK-DEVICES-AC-08
+    disposition: active
+    owner: network-devices
+    spec: network-devices

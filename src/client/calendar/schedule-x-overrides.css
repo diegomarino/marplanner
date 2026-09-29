@@ -1,0 +1,56 @@
+.sx-week-embedded {
+  min-height: 36rem;
+  height: clamp(36rem, calc(100dvh - 18rem), 60rem);
+}
+
+.sx-week-embedded > .sx-react-calendar-wrapper {
+  min-height: 0;
+  height: 100%;
+}
+
+.sx-week-embedded .sx__calendar-header {
+  display: none;
+}
+
+.sx-week-embedded .sx__calendar-wrapper,
+.sx-week-embedded .sx__calendar,
+.sx-week-embedded .sx__view-container,
+.sx-week-embedded .sx__time-grid {
+  min-height: 0;
+  height: 100%;
+}
+
+.sx-week-embedded .sx__week-header {
+  z-index: 10;
+}
+
+.sx-week-embedded .sx__time-grid-event-inner,
+.sx-week-embedded .sx__date-grid-event-inner {
+  padding: 0 !important;
+}
+
+.sx-week-embedded .sx-mp-event-content {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.45rem;
+  text-align: left;
+}
+
+.sx-week-embedded .sx-mp-event-time {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  line-height: 1.15;
+  opacity: 0.72;
+}
+
+.sx-week-embedded .sx-mp-event-title {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: normal;
+}

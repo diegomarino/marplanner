@@ -1,0 +1,348 @@
+openapi: 3.1.0
+info:
+  title: Marplanner — Calendar-gated Reminders API delta
+  version: 1.0.0
+  description: >-
+    Calendar-gated reminders extend scheduled reminder CRUD and assignments with query rules and
+    dry-run explanations. Request shapes are discriminated by reminder kind.
+servers:
+  - url: /
+components:
+  securitySchemes:
+    deviceKeyCookie:
+      type: apiKey
+      in: cookie
+      name: mp_device_key
+  schemas:
+    Weekday:
+      type: string
+      enum:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+        - sat
+        - sun
+      description: canonical mon..sun (ADR-020); ISO 1..7 rejected.
+    ReminderQueryField:
+      type: string
+      enum:
+        - title
+        - description
+        - location
+      description: calendar fields a calendar_gated rule may match against (getEvents, research D2).
+    ReminderAssignmentInput:
+      type: object
+      required:
+        - memberId
+      additionalProperties: false
+      properties:
+        memberId:
+          type: string
+          description: must reference an active members.id.
+        weekdays:
+          type: array
+          items:
+            $ref: "#/components/schemas/Weekday"
+          description: >
+            scheduled specific: required, non-empty. calendar_gated specific: membership-only
+            targeting (AC-05) — MUST be omitted or empty; a non-empty value is rejected 400
+            (INV-01/INV-09). Enforced by the handler (manual-review aid, not machine-checked here).
+    Reminder:
+      type: object
+      description: "006 Reminder + query/queryFields (nullable; non-null for calendar_gated, finding #4)"
+      required:
+        - id
+        - kind
+        - targetingMode
+        - text
+        - weekdays
+        - active
+        - assignments
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum:
+            - scheduled
+            - calendar_gated
+        targetingMode:
+          type: string
+          enum:
+            - apply_to_all
+            - specific
+        text:
+          type: string
+          minLength: 1
+        weekdays:
+          description: rule-level weekday set for scheduled apply_to_all; null otherwise (INV-09).
+          oneOf:
+            - type: array
+              items:
+                $ref: "#/components/schemas/Weekday"
+              minItems: 1
+            - type: "null"
+        query:
+          type:
+            - string
+            - "null"
+          description: calendar_gated substring query; null for scheduled.
+        queryFields:
+          description: calendar_gated match fields; null for scheduled, non-null for calendar_gated.
+          oneOf:
+            - type: array
+              items:
+                $ref: "#/components/schemas/ReminderQueryField"
+              minItems: 1
+            - type: "null"
+        active:
+          type: boolean
+        assignments:
+          type: array
+          items:
+            type: object
+    ReminderInput:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - targetingMode
+        - text
+      description: >
+        Create payload — WIDENED (009,  +) to accept kind: calendar_gated. `scheduled` behavior is
+        unchanged (006). `calendar_gated`: requires a non-blank `query`, no `weekdays` anywhere
+        (rule-level or per-assignment — INV-01/INV-09, rejected 400); `apply_to_all` (every active
+        member) or `specific` (membership-only targeting via `assignments`, AC-05 — assignments
+        carry no weekdays); `queryFields` optional, defaults to [title, description] when omitted
+        (finding #4, never persisted null).
+      properties:
+        kind:
+          type: string
+          enum:
+            - scheduled
+            - calendar_gated
+        targetingMode:
+          type: string
+          enum:
+            - apply_to_all
+            - specific
+        text:
+          type: string
+          minLength: 1
+        weekdays:
+          type: array
+          items:
+            $ref: "#/components/schemas/Weekday"
+          minItems: 1
+          description: scheduled apply_to_all only; rejected for calendar_gated.
+        query:
+          type: string
+          minLength: 1
+          description: calendar_gated only; required, non-blank.
+        queryFields:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ReminderQueryField"
+          description: calendar_gated only; optional on input, defaults to [title, description].
+        assignments:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReminderAssignmentInput"
+          minItems: 1
+          description: >
+            required iff targetingMode=specific (scheduled: per-assignment weekdays required;
+            calendar_gated: membership-only, no weekdays — AC-05); rejected for apply_to_all.
+    ReminderEditInput:
+      type: object
+      additionalProperties: false
+      description: >
+        Edit payload — WIDENED (009, finding #5) to accept calendar_gated query/queryFields edits
+        alongside the 006 text/active/weekdays fields. kind and targetingMode remain immutable
+        (FR-013). Discriminated by the STORED reminder's kind: `weekdays` is editable only on a
+        `scheduled` apply_to_all rule — rejected 400 on a `calendar_gated` row (the #497 carry-in:
+        this used to reach the DB CHECK and surface as a 500, now rejected at the boundary);
+        `query`/`queryFields` are editable only on a `calendar_gated` rule — rejected 400 on
+        `scheduled`. Omitting `queryFields` while editing `query` PRESERVES the stored value; a
+        partial edit MUST NOT reset it to the create-time default (finding #4′).
+      properties:
+        text:
+          type: string
+          minLength: 1
+        weekdays:
+          type: array
+          items:
+            $ref: "#/components/schemas/Weekday"
+          minItems: 1
+          description: scheduled apply_to_all only; rejected on calendar_gated (400, not 500 —
+        query:
+          type: string
+          minLength: 1
+          description: calendar_gated only; rejected on scheduled.
+        queryFields:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ReminderQueryField"
+          description: calendar_gated only; omitting on a query edit PRESERVES the stored value (finding
+        active:
+          type: boolean
+    DryRunReason:
+      type: string
+      enum:
+        - no_assigned_events
+        - matched_but_unassigned
+        - query_miss
+      description: >
+        The 3 mutually-exclusive reasons a calendar_gated rule would NOT emit (present iff
+        wouldEmit=false), computed from up to 3 getEvents probes A/B/C. Precedence:
+        no_assigned_events (probe A empty) -> matched_but_unassigned (probe C non-empty, gate probe
+        B empty) -> query_miss (probe C empty) — matched_but_unassigned is checked BEFORE query_miss
+        so it is reachable (finding #2).
+    DryRunInput:
+      type: object
+      additionalProperties: false
+      required:
+        - memberId
+        - date
+      description: "POST /api/reminders/{id}/dry-run body (handler-enforced allow-list, #397)."
+      properties:
+        memberId:
+          type: string
+        date:
+          type: string
+          description: YYYY-MM-DD, household-local strict calendar date.
+    DryRunResult:
+      type: object
+      required:
+        - wouldEmit
+      description: >
+        The verdict: would this calendar_gated rule emit for (memberId, date), and if not, why.
+        wouldEmit=true iff the gate probe (member's assigned events matching the query) is
+        non-empty; reason is present iff wouldEmit=false.
+      properties:
+        wouldEmit:
+          type: boolean
+        reason:
+          $ref: "#/components/schemas/DryRunReason"
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: English diagnostic (Constitution X).
+paths:
+  /api/reminders:
+    post:
+      summary: >
+        Create a reminder — WIDENED (009,  +) to accept kind=calendar_gated (query + queryFields,
+        apply_to_all or specific/membership-only targeting) in addition to the 006 scheduled shapes.
+        Discriminated by kind; invalid kind/field combos → 400.
+      security:
+        - deviceKeyCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReminderInput"
+      responses:
+        "201":
+          description: created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+        "400":
+          description: invalid discriminant/query/weekdays/inactive-member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: missing/invalid device key
+  /api/reminders/{id}:
+    patch:
+      summary: >
+        Edit a reminder — WIDENED (009, finding #5) to accept calendar_gated query/queryFields edits
+        alongside the 006 text/active/(apply_to_all)weekdays fields. kind and targetingMode remain
+        immutable (FR-013). The path+method is already documented in 006's `contracts/openapi.yaml`;
+        this entry documents ONLY the widened body.
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReminderEditInput"
+      responses:
+        "200":
+          description: updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+        "400":
+          description: >
+            attempted kind/targetingMode change, weekdays on a calendar_gated rule (#497 carry-in,
+            400 not 500), query/queryFields on a scheduled rule, or invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/reminders/{id}/dry-run:
+    post:
+      summary: >
+        Dry-run / explain (009,) — would this calendar_gated rule emit for (memberId, date), and if
+        not, why (the 3 mutually-exclusive reasons, FR-008). 400 if the stored rule is not
+        calendar_gated (a scheduled rule's emission is not opaque).
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DryRunInput"
+      responses:
+        "200":
+          description: verdict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DryRunResult"
+        "400":
+          description: bad memberId/date/body, or the rule is not kind=calendar_gated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: rule not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"

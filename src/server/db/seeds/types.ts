@@ -1,0 +1,35 @@
+import type { DatabaseConnection } from "../client";
+
+export type SeedMode = "public" | "private";
+
+export interface SeedContext {
+  db: DatabaseConnection;
+  asOfDate: string;
+  nowMs: number;
+}
+
+export interface SeedModule {
+  id: string;
+  run(context: SeedContext): void | Promise<void>;
+}
+
+export interface SeedRunRequest {
+  mode: SeedMode;
+  asOfDate?: string;
+  nowMs?: number;
+  /** Direct callers must explicitly acknowledge that this target is disposable. */
+  disposableTarget: boolean;
+  /** Test-only or operator-provided module location; defaults to the repository's seeds directory. */
+  seedsDirectory?: string;
+  /** Test-only migration location; defaults to the repository's drizzle directory. */
+  migrationsDirectory?: string;
+}
+
+export interface SeedRunReport {
+  mode: SeedMode;
+  asOfDate: string;
+  /** Public module IDs plus ordinal-safe labels for private overlays. */
+  moduleIds: readonly string[];
+  markerAction: "created" | "repair" | "rerun";
+  status: "complete";
+}
