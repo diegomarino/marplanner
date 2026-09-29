@@ -1,0 +1,564 @@
+[
+  {
+    "question": "What has keys but no locks, space but no rooms, and you can enter but cannot go inside?",
+    "answer": "A keyboard.",
+    "difficulty": "easy"
+  },
+  { "question": "What has hands but cannot clap?", "answer": "A clock.", "difficulty": "easy" },
+  { "question": "What gets wetter the more it dries?", "answer": "A towel.", "difficulty": "easy" },
+  { "question": "What has one eye but cannot see?", "answer": "A needle.", "difficulty": "easy" },
+  { "question": "What has teeth but cannot bite?", "answer": "A comb.", "difficulty": "easy" },
+  { "question": "What has a neck but no head?", "answer": "A bottle.", "difficulty": "easy" },
+  { "question": "What has legs but cannot walk?", "answer": "A table.", "difficulty": "easy" },
+  { "question": "What has ears but cannot hear?", "answer": "Corn.", "difficulty": "easy" },
+  {
+    "question": "What can run but never walks, has a mouth but never talks, has a head but never weeps, has a bed but never sleeps?",
+    "answer": "A river.",
+    "difficulty": "easy"
+  },
+  { "question": "What goes up but never comes down?", "answer": "Your age.", "difficulty": "easy" },
+  {
+    "question": "What is full of holes but still holds water?",
+    "answer": "A sponge.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What has a face and two hands but no arms or legs?",
+    "answer": "A clock.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What has four wheels and flies?",
+    "answer": "A garbage truck.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What building has the most stories?",
+    "answer": "A library.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What has a thumb and four fingers but is not alive?",
+    "answer": "A glove.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "I speak without a mouth and hear without ears. I have no body but come alive with the wind. What am I?",
+    "answer": "An echo.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What has a tail and a head but no body?",
+    "answer": "A coin.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is always in front of you but cannot be seen?",
+    "answer": "The future.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What invention lets you look right through a wall?",
+    "answer": "A window.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "I am light as a feather, but the strongest person cannot hold me for more than five minutes. What am I?",
+    "answer": "Breath.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "I have cities but no houses, forests but no trees, and water but no fish. What am I?",
+    "answer": "A map.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The more you take, the more you leave behind. What am I?",
+    "answer": "Footsteps.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "I have branches but no fruit, trunk but no bark, and leaves but no trees. What am I?",
+    "answer": "A bank.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What can travel around the world while staying in the corner?",
+    "answer": "A postage stamp.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What comes once in a minute, twice in a moment, but never in a thousand years?",
+    "answer": "The letter M.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "I am taken from a mine and shut up in a wooden case, from which I am never released, yet I am used by almost everyone. What am I?",
+    "answer": "A pencil.",
+    "difficulty": "medium"
+  },
+  { "question": "What has a bottom at the top?", "answer": "Your legs.", "difficulty": "medium" },
+  { "question": "What can you catch but not throw?", "answer": "A cold.", "difficulty": "medium" },
+  {
+    "question": "What is so fragile that saying its name breaks it?",
+    "answer": "Silence.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What can fill a room but takes up no space?",
+    "answer": "Light.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "I have a spine but no bones. I have chapters but no lessons. What am I?",
+    "answer": "A book.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "I go in dry and come out wet, the longer I am in, the stronger I get. What am I?",
+    "answer": "A tea bag.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What has one head, one foot, and four legs?",
+    "answer": "A bed.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What word is spelled the same forwards and backwards?",
+    "answer": "Racecar.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What can you hold without touching it?",
+    "answer": "A conversation.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "I am always hungry and must always be fed. The finger I touch will soon turn red. What am I?",
+    "answer": "Fire.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What gets shorter the more you use it?",
+    "answer": "A candle.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What has many rings but no fingers?",
+    "answer": "A telephone.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What kind of room has no doors or windows?",
+    "answer": "A mushroom.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "I have a golden head, I have a golden tail, but I have no golden body. What am I?",
+    "answer": "A coin.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What goes up when rain comes down?",
+    "answer": "An umbrella.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What can you break without touching it?",
+    "answer": "A promise.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "I am not alive, but I grow. I do not have lungs, but I need air. I do not have a mouth, but water kills me. What am I?",
+    "answer": "Fire.",
+    "difficulty": "medium"
+  },
+  { "question": "What flies without wings?", "answer": "Time.", "difficulty": "medium" },
+  { "question": "What has a ring but no finger?", "answer": "A phone.", "difficulty": "medium" },
+  {
+    "question": "I shrink every time you use me. What am I?",
+    "answer": "A bar of soap.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What has an eye in the middle but cannot see?",
+    "answer": "A hurricane.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "I am the beginning of everything, the end of everywhere. I am the beginning of eternity, the end of time and space. What am I?",
+    "answer": "The letter E.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "I have a thousand needles but I do not sew. What am I?",
+    "answer": "A porcupine.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What walks on four legs in the morning, two legs at noon, and three legs in the evening?",
+    "answer": "A human.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The one who makes it sells it. The one who buys it never uses it. The one who uses it never knows they are using it. What is it?",
+    "answer": "A coffin.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "I am the son of water, but when water rises I die. What am I?",
+    "answer": "Ice.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "A man looks at a painting and says, 'Brothers and sisters I have none, but that man's father is my father's son.' Who is in the painting?",
+    "answer": "His son.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What can be seen once in a minute, twice in a moment, but never in a hundred years?",
+    "answer": "The letter M.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "I have lakes with no water, mountains with no stone, and cities with no buildings. What am I?",
+    "answer": "A map.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "I am always there, some miles before you, slightly to one side or other of the road. I cannot be reached, even touched. What am I?",
+    "answer": "The horizon.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "You throw away the outside and cook the inside. Then you eat the outside and throw away the inside. What did you eat?",
+    "answer": "Corn on the cob.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What gets bigger the more you take away from it?",
+    "answer": "A hole.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "I have no body but I wear a coat. I have no legs but I leave footprints. I have no voice but I make sounds. What am I?",
+    "answer": "Snow.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Two fathers and two sons went fishing. They caught three fish and each person had exactly one fish. How is this possible?",
+    "answer": "There were only three people: a grandfather, his son, and his grandson.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The more of me there is, the less you see. What am I?",
+    "answer": "Darkness.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What has a wing but cannot fly?",
+    "answer": "A building.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What runs all day but never gets tired?",
+    "answer": "A tap (faucet).",
+    "difficulty": "easy"
+  },
+  {
+    "question": "I have a bark but no bite. What am I?",
+    "answer": "A tree.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What has a tongue but cannot taste?",
+    "answer": "A shoe.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is always on your way but never in your way?",
+    "answer": "Your shadow.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What has two legs but cannot walk without help?",
+    "answer": "A pair of trousers.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What do you throw out when you need it and take in when you do not?",
+    "answer": "An anchor.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "I am a fruit but also a color. What am I?",
+    "answer": "An orange.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What can you catch in summer but not in winter?",
+    "answer": "A tan.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What starts with T, ends with T, and has T in it?",
+    "answer": "A teapot.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What has twenty-six letters but only four syllables?",
+    "answer": "The alphabet.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "I keep you warm but I am not alive. You put me on but I am not clothes. What am I?",
+    "answer": "A blanket.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What has spots but is not a disease?",
+    "answer": "A ladybug.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What goes around the house but never inside?",
+    "answer": "A fence.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What stands up when lying down?",
+    "answer": "A nail sticking out of the floor.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What has a head, a tail, but no body and no legs?",
+    "answer": "A tadpole.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What grows up while growing down?",
+    "answer": "A goose (or duckling) — it grows up as it grows its down feathers.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What can go up a chimney down but not down a chimney up?",
+    "answer": "An umbrella.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What do you find at the end of a rainbow?",
+    "answer": "The letter W.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What has four corners but only one room?",
+    "answer": "A box.",
+    "difficulty": "easy"
+  },
+  {
+    "question": "I have no doors, no windows, but a room inside. What am I?",
+    "answer": "An egg.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "I am wet when I dry. What am I?",
+    "answer": "A towel.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What has keys but opens no locks, with space but no room?",
+    "answer": "A piano.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What gets sharper the more you use your brain?",
+    "answer": "Your mind.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "I move without legs and leave a trail without feet. What am I?",
+    "answer": "A snail.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The more you feed me, the more I grow, but give me water and I will die. What am I?",
+    "answer": "Fire.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What always ends everything?",
+    "answer": "The letter G.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "I have hands that wave but never say hello. What am I?",
+    "answer": "A clock.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What runs but has no legs, roars but has no voice box?",
+    "answer": "A waterfall.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "I am not a mirror, yet I show your face. I am not water, yet I have waves. What am I?",
+    "answer": "A pond.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What has four legs in the morning and in the evening, but only two at noon?",
+    "answer": "A dog — puppies walk on all fours, adults walk on all fours too, but playfully the riddle mirrors the sphinx riddle flipped.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "I have a single eye but I thread the world together. What am I?",
+    "answer": "A needle and thread.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What can you serve but never eat?",
+    "answer": "A tennis ball (a serve in tennis).",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What has a heart that does not beat?",
+    "answer": "An artichoke.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "I start tall and grow short the older I get. What am I?",
+    "answer": "A candle.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What can you hold in your left hand but not your right?",
+    "answer": "Your right elbow.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What kind of coat can be put on only when wet?",
+    "answer": "A coat of paint.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "I have a head like a cat, feet like a cat, and a tail like a cat, but I am not a cat. What am I?",
+    "answer": "A kitten.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What loses its head every morning and gets it back every night?",
+    "answer": "A pillow.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is black when you buy it, red when you use it, and grey when you throw it away?",
+    "answer": "Charcoal.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What goes through a door but never goes in or comes out?",
+    "answer": "A keyhole.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "I can be cracked, played, and told, but I am not a joke. What am I?",
+    "answer": "A code.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What word has five letters but sounds like only one?",
+    "answer": "Queue.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What comes down but never goes up?",
+    "answer": "Rain.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The more you remove from me, the bigger I become. What am I?",
+    "answer": "A hole.",
+    "difficulty": "medium"
+  },
+  {
+    "question": "I have no wings but I fly. I have no eyes but I cry. What am I?",
+    "answer": "A cloud.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is seen in the middle of March and April, but cannot be seen at the beginning or end of either?",
+    "answer": "The letter R.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "I belong to you but others use me more. What am I?",
+    "answer": "Your name.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "I have no life but I can die. What am I?",
+    "answer": "A battery.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What comes once in a year, twice in a week, but never in a day?",
+    "answer": "The letter E.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "I have all the knowledge you have but I am too small to hold even half your thoughts. What am I?",
+    "answer": "Your brain (the paradox: your brain stores your knowledge yet cannot fully comprehend itself).",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What can travel faster than the speed of light, yet has no mass and carries no energy?",
+    "answer": "Your imagination.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "I am a word. I become longer when you add a letter to make me shorter. What am I?",
+    "answer": "Short (adding -er makes shorter).",
+    "difficulty": "hard"
+  },
+  {
+    "question": "A cowboy rides into town on Friday, stays three days, and rides out on Friday. How?",
+    "answer": "His horse is named Friday.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What can you put in a barrel to make it lighter?",
+    "answer": "A hole.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "I have a head and a tail, but no body. Every time you use me, you lose a little of me. What am I?",
+    "answer": "A pencil.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "I am always running but I have no legs. I am always thirsty but I have no mouth. What am I?",
+    "answer": "A river.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is so delicate that even naming it breaks it?",
+    "answer": "Silence.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "I have no mouth yet I tell stories. I have no memory yet I remember everything. What am I?",
+    "answer": "A photograph.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What disappears the moment you say its name?",
+    "answer": "Silence.",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is always behind you but can never be caught?",
+    "answer": "Your past.",
+    "difficulty": "hard"
+  }
+]

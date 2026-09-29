@@ -1,0 +1,841 @@
+openapi: 3.1.0
+info:
+  title: Marplanner — Meals & Recipes API
+  version: 1.0.0
+  description: >-
+    Recipe catalogue, meal types and additive dated or recurring meal entries. Deleting a recipe
+    requires an informed cascade; read projections remain derived from current data.
+servers:
+  - url: /
+components:
+  securitySchemes:
+    deviceKeyCookie:
+      type: apiKey
+      in: cookie
+      name: mp_device_key
+  schemas:
+    Slot:
+      type: string
+      enum:
+        - breakfast
+        - lunch
+        - snack
+        - dinner
+    Weekday:
+      type: string
+      enum:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+        - sat
+        - sun
+      description: canonical mon..sun (ADR-020); ISO 1..7 rejected.
+    Recipe:
+      type: object
+      required:
+        - id
+        - name
+        - ingredients
+        - instructions
+        - slots
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          minLength: 1
+        ingredients:
+          type:
+            - array
+            - "null"
+          items:
+            type: string
+        instructions:
+          type:
+            - string
+            - "null"
+        slots:
+          type:
+            - array
+            - "null"
+          items:
+            $ref: "#/components/schemas/Slot"
+        createdAt:
+          type: integer
+        updatedAt:
+          type: integer
+    RecipeInput:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: Lentejas
+        ingredients:
+          type: array
+          items:
+            type: string
+          description: One entry per line; blanks dropped module-side.
+        instructions:
+          type: string
+          description: Blank-after-trim normalizes to absent.
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/Slot"
+          description: Absent/empty means suitable for all slots (picker suggestion only).
+    RecipeEditInput:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: Partial edit; at least one property required.
+      properties:
+        name:
+          type: string
+          minLength: 1
+        ingredients:
+          type: array
+          items:
+            type: string
+        instructions:
+          type: string
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/Slot"
+    MealEntry:
+      type: object
+      description: "discriminated: recurring (mealPlanId+weekday) | oneoff (date); content recipeId xor note"
+      required:
+        - id
+        - kind
+        - mealPlanId
+        - weekday
+        - date
+        - slot
+        - recipeId
+        - note
+        - createdAt
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum:
+            - recurring
+            - oneoff
+        mealPlanId:
+          type:
+            - string
+            - "null"
+        weekday:
+          oneOf:
+            - $ref: "#/components/schemas/Weekday"
+            - type: "null"
+        date:
+          type:
+            - string
+            - "null"
+          description: YYYY-MM-DD (one-off only)
+        slot:
+          $ref: "#/components/schemas/Slot"
+        recipeId:
+          type:
+            - string
+            - "null"
+        note:
+          type:
+            - string
+            - "null"
+        createdAt:
+          type: integer
+    MealEntryInput:
+      type: object
+      description: >-
+        recurring (mealPlanId+weekday, no date) | oneoff (date, no mealPlanId/weekday); content is
+        recipeId xor note
+      additionalProperties: false
+      required:
+        - kind
+        - slot
+      properties:
+        kind:
+          type: string
+          enum:
+            - recurring
+            - oneoff
+        mealPlanId:
+          type: string
+          description: MUST reference an existing meal_plan (recurring only)
+        weekday:
+          $ref: "#/components/schemas/Weekday"
+        date:
+          type: string
+          description: YYYY-MM-DD (oneoff only)
+        slot:
+          $ref: "#/components/schemas/Slot"
+        recipeId:
+          type: string
+          description: MUST reference an existing recipe (FR-028)
+        note:
+          type: string
+          minLength: 1
+    MealPlan:
+      type: object
+      description: A named recurring menu template. Deactivate-only (no hard delete).
+      required:
+        - id
+        - name
+        - active
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          minLength: 1
+        active:
+          type: boolean
+        createdAt:
+          type: integer
+        updatedAt:
+          type: integer
+    MealPlanInput:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: Semana normal
+    MealPlanEditInput:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: Rename and/or activate/deactivate; at least one property required.
+      properties:
+        name:
+          type: string
+          minLength: 1
+        active:
+          type: boolean
+    MealEntryEditInput:
+      type: object
+      description: >
+        Content-only edit (Clarifications): recipeId xor note, still handler-enforced xor. To change
+        date/weekday/slot, delete the entry and add a new one.
+      additionalProperties: false
+      minProperties: 1
+      maxProperties: 1
+      properties:
+        recipeId:
+          type: string
+          description: MUST reference an existing recipe (FR-028)
+        note:
+          type: string
+          minLength: 1
+    RecipeDependentCounts:
+      type: object
+      description: Split dependent counts, advisory pre-delete (AC-06).
+      required:
+        - recurringCount
+        - oneOffCount
+      properties:
+        recurringCount:
+          type: integer
+        oneOffCount:
+          type: integer
+    MenuItem:
+      type: object
+      required:
+        - entryId
+        - slot
+        - label
+        - isTombstone
+        - source
+        - recipeId
+        - note
+      properties:
+        entryId:
+          type: string
+        slot:
+          $ref: "#/components/schemas/Slot"
+        label:
+          type: string
+        isTombstone:
+          type: boolean
+        source:
+          type: string
+          enum:
+            - recurring
+            - oneoff
+        recipeId:
+          type:
+            - string
+            - "null"
+        note:
+          type:
+            - string
+            - "null"
+    WeekMenu:
+      type: object
+      description: >
+        Week grid: a map of the 7 local YYYY-MM-DD dates of the week (from `weekStartDay` + tz) to
+        that date's derived menu grouped by slot (breakfast/lunch/snack/dinner -> MenuItem[]; an
+        empty slot is `[]`).
+      additionalProperties:
+        type: object
+        additionalProperties:
+          type: array
+          items:
+            $ref: "#/components/schemas/MenuItem"
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+security:
+  - deviceKeyCookie: []
+paths:
+  /api/recipes:
+    post:
+      summary: Create a recipe (name required; ingredients/instructions/slots optional).
+      operationId: createRecipe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecipeInput"
+      responses:
+        "201":
+          description: The created recipe.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recipe"
+        "400":
+          description: Blank/missing name, or an unrecognized body property.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing/invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      summary: >
+        List recipes, or search by name with `?search=` (case- and diacritic-insensitive substring
+        match, JS-side — research D4; e.g. `lentejas` matches "Lentejas" and "Lentéjas").
+      operationId: listRecipes
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The matching recipes (all recipes if `search` is absent/empty), possibly empty.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recipe"
+        "401":
+          description: Missing/invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/recipes/{id}:
+    get:
+      summary: Fetch one recipe by id.
+      operationId: getRecipe
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The recipe.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recipe"
+        "401":
+          description: Missing/invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: No recipe with that id (never or no longer exists).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      summary: >
+        Partial recipe edit, allow-list name/ingredients/instructions/slots (research D5 / #397
+        lesson — handler-enforced). Strict update-by-id (FR-005): a patch against a deleted/unknown
+        id returns 404 and never recreates the row.
+      operationId: editRecipe
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecipeEditInput"
+      responses:
+        "200":
+          description: The edited recipe.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recipe"
+        "400":
+          description: Blank name, empty patch body, or an unrecognized body property.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing/invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: No recipe with that id (never or no longer exists) — no recreate.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: >
+        Informed-cascade delete (FR-003/004, INV-08): removes the recipe and every referencing entry
+        (recurring + one-off) atomically; an emptied meal_plan survives untouched. Strict
+        update-by-id (FR-005): a delete against an already-deleted id returns 404, never a no-op
+        204.
+      operationId: deleteRecipe
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: The recipe and its referencing entries were removed.
+        "401":
+          description: Missing/invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: No recipe with that id (never or no longer exists).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/recipes/{id}/dependents:
+    get:
+      summary: >
+        Split dependent counts for a recipe (recurringCount/oneOffCount), advisory pre-delete
+        confirmation (AC-06).
+      operationId: getRecipeDependents
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The split dependent counts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecipeDependentCounts"
+        "401":
+          description: Missing/invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: No recipe with that id (never or no longer exists).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/meal-plans:
+    post:
+      summary: Create a meal_plan (name required; always created active).
+      operationId: createMealPlan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MealPlanInput"
+      responses:
+        "201":
+          description: The created meal_plan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealPlan"
+        "400":
+          description: Blank/missing name, or an unrecognized body property.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing/invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      summary: List all meal_plans (active and inactive).
+      operationId: listMealPlans
+      responses:
+        "200":
+          description: The meal_plans, possibly empty.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MealPlan"
+        "401":
+          description: Missing/invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/meal-plans/{id}:
+    get:
+      summary: Fetch one meal_plan by id.
+      operationId: getMealPlan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The meal_plan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealPlan"
+        "401":
+          description: Missing/invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: No meal_plan with that id (never or no longer exists).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      summary: >
+        Rename and/or activate/deactivate, allow-list name/active (research D5 / #397 lesson —
+        handler-enforced). Deactivate-only: there is NO delete route for meal_plans
+        (Clarifications). Deactivating drops the plan's recurring entries from every derived menu
+        WITHOUT deleting the rows (AC-05); reactivating restores them.
+      operationId: editMealPlan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MealPlanEditInput"
+      responses:
+        "200":
+          description: The edited meal_plan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealPlan"
+        "400":
+          description: Blank name, empty patch body, or an unrecognized body property.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing/invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: No meal_plan with that id (never or no longer exists).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/meal-plans/{id}/entries:
+    get:
+      summary: >
+        List a plan's recurring entries for management — INCLUDING those of an INACTIVE
+        (deactivated) plan (derived menu reads exclude inactive plans; this is the plan-management
+        read so a deactivated plan's entries can be edited/deleted without reactivating).
+      operationId: listPlanEntries
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The plan's recurring entries (retained even while the plan is inactive).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MealEntry"
+        "401":
+          description: Missing/invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: No meal_plan with that id (never or no longer exists).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/meal-entries:
+    post:
+      summary: Add an entry, recurring (mealPlanId+weekday) or one-off (date).
+      operationId: createMealEntry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MealEntryInput"
+      responses:
+        "201":
+          description: The created entry.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealEntry"
+        "400":
+          description: >
+            Invalid kind/date/slot/weekday, both or neither of recipeId/note, date supplied on a
+            recurring entry (or mealPlanId/weekday supplied on a oneoff entry), a recurring entry
+            missing mealPlanId/weekday, or an unrecognized body property.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing/invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: >
+            recipeId does not reference an existing recipe (FR-028), or mealPlanId does not
+            reference an existing meal_plan (recurring entries).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/meal-entries/{id}:
+    patch:
+      summary: >
+        Content-only edit (Clarifications): recipeId xor note; date/weekday/slot/unknown keys are
+        rejected. To move an entry, DELETE it and POST a new one.
+      operationId: editMealEntry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MealEntryEditInput"
+      responses:
+        "200":
+          description: The edited entry.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealEntry"
+        "400":
+          description: >
+            Both or neither of recipeId/note, a non-content key (date/weekday/slot), or an
+            unrecognized body property.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing/invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: >
+            No entry with that id (never or no longer exists), or recipeId does not reference an
+            existing recipe (FR-028).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: >
+        Delete a meal entry. Idempotent-by-404 (FR-021 LWW, no etag/version): a second delete
+        against an already-deleted id returns 404, never a no-op 204.
+      operationId: deleteMealEntry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: The entry was removed.
+        "401":
+          description: Missing/invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: No entry with that id (never or no longer exists).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/menu:
+    get:
+      summary: >
+        Derived day menu for ?date=YYYY-MM-DD[&slot=] — the union of recurring entries of every
+        ACTIVE meal_plan whose weekday matches weekdayOf(date, householdTz) and one-off entries for
+        that date, in the full D2 total order; no materialized rows (INV-03); empty list = absence
+        (FR-012); a stale recipe reference renders as a tombstone item (isTombstone:true, INV-09).
+      operationId: getMenu
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            description: YYYY-MM-DD
+        - name: slot
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Slot"
+      responses:
+        "200":
+          description: The derived menu (MenuItem[]), possibly empty.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MenuItem"
+        "400":
+          description: Invalid date/slot.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing/invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/menu/week:
+    get:
+      summary: >
+        Derived week grid for ?date=YYYY-MM-DD — the 7 local dates of the week containing `date`,
+        starting at the weekStartDay app-setting (0=Sunday/1=Monday, ADR-028), each mapped to its
+        derived day menu grouped by slot (date -> slot -> MenuItem[]); a pure view, no stored week
+        window (FR-019).
+      operationId: getWeekMenu
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            description: YYYY-MM-DD
+      responses:
+        "200":
+          description: The week grid (WeekMenu).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeekMenu"
+        "400":
+          description: Invalid date.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing/invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"

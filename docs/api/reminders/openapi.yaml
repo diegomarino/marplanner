@@ -1,0 +1,406 @@
+openapi: 3.1.0
+info:
+  title: Marplanner — Scheduled Reminders API
+  version: 1.0.0
+  description: >-
+    Scheduled reminder CRUD, assignment replacement, and live emissions. Supports all-member and
+    explicit-member modes. Assignment replacement is atomic; the advisory UI PIN does not authorize
+    backend requests.
+servers:
+  - url: /
+components:
+  securitySchemes:
+    deviceKeyCookie:
+      type: apiKey
+      in: cookie
+      name: mp_device_key
+  schemas:
+    Weekday:
+      type: string
+      enum:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+        - sat
+        - sun
+      description: canonical mon..sun (ADR-020); ISO 1..7 rejected.
+    ReminderAssignment:
+      type: object
+      required:
+        - id
+        - memberId
+        - weekdays
+        - active
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        memberId:
+          type: string
+        weekdays:
+          type: array
+          items:
+            $ref: "#/components/schemas/Weekday"
+          minItems: 1
+        active:
+          type: boolean
+    ReminderAssignmentInput:
+      type: object
+      required:
+        - memberId
+        - weekdays
+      additionalProperties: false
+      properties:
+        memberId:
+          type: string
+          description: must reference an active members.id.
+        weekdays:
+          type: array
+          items:
+            $ref: "#/components/schemas/Weekday"
+          minItems: 1
+    Reminder:
+      type: object
+      required:
+        - id
+        - kind
+        - targetingMode
+        - text
+        - weekdays
+        - active
+        - assignments
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum:
+            - scheduled
+          description: immutable after creation.
+        targetingMode:
+          type: string
+          enum:
+            - apply_to_all
+            - specific
+          description: immutable after creation (FR-013).
+        text:
+          type: string
+          minLength: 1
+          description: parent-authored, stored as authored.
+        weekdays:
+          description: >
+            rule-level weekday set for apply_to_all; null for specific (per-member weekdays live on
+            each assignment). Cross-field discriminant (INV-09).
+          oneOf:
+            - type: array
+              items:
+                $ref: "#/components/schemas/Weekday"
+              minItems: 1
+            - type: "null"
+        active:
+          type: boolean
+        assignments:
+          type: array
+          description: >
+            active assignments embedded in GET reads (the member x weekday matrix source); populated
+            for specific-mode rules, empty array for apply_to_all.
+          items:
+            $ref: "#/components/schemas/ReminderAssignment"
+    ReminderInput:
+      type: object
+      required:
+        - kind
+        - targetingMode
+        - text
+      additionalProperties: false
+      description: >
+        Create payload ( — both modes). apply_to_all requires weekdays and rejects assignments;
+        specific requires >=1 assignments and rejects rule-level weekdays (INV-01/INV-09, rejected
+        at the boundary).
+      properties:
+        kind:
+          type: string
+          enum:
+            - scheduled
+        targetingMode:
+          type: string
+          enum:
+            - apply_to_all
+            - specific
+        text:
+          type: string
+          minLength: 1
+        weekdays:
+          type: array
+          items:
+            $ref: "#/components/schemas/Weekday"
+          minItems: 1
+          description: required iff targetingMode=apply_to_all; rejected for specific.
+        assignments:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReminderAssignmentInput"
+          minItems: 1
+          description: required iff targetingMode=specific; rejected for apply_to_all.
+    ReminderAssignmentSetInput:
+      type: object
+      required:
+        - assignments
+      additionalProperties: false
+      description: >
+        The full desired active assignment set for a specific-mode rule. Applied atomically
+        (last-write-wins, no If-Match/409 — deferred #395): members present are upserted, members
+        absent are deactivated. MUST be non-empty (a specific rule may not drop to zero active
+        assignments — INV-02).
+      properties:
+        assignments:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ReminderAssignmentInput"
+    ReminderEditInput:
+      type: object
+      additionalProperties: false
+      description: >
+        Edit payload — text, active, and (apply_to_all only) rule-level weekdays. kind and
+        targetingMode are immutable and MUST NOT appear (FR-013).
+      properties:
+        text:
+          type: string
+          minLength: 1
+        weekdays:
+          type: array
+          items:
+            $ref: "#/components/schemas/Weekday"
+          minItems: 1
+        active:
+          type: boolean
+    ReminderEmission:
+      type: object
+      required:
+        - id
+        - text
+      additionalProperties: false
+      description: one emitting reminder for a (member,date); ordering/priority deferred to Daily Briefing.
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: English diagnostic (Constitution X).
+paths:
+  /api/reminders:
+    get:
+      summary: List all reminder rules (+ their assignments). Admin surface.
+      security:
+        - deviceKeyCookie: []
+      responses:
+        "200":
+          description: all reminders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reminder"
+        "401":
+          description: missing/invalid device key
+    post:
+      summary: Create a scheduled reminder (apply_to_all, or specific + assignments), atomically.
+      security:
+        - deviceKeyCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReminderInput"
+      responses:
+        "201":
+          description: created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+        "400":
+          description: >-
+            invalid kind/targetingMode, blank text, empty/non-canonical weekdays,
+            zero/inactive-member assignments, or a query/queryFields field
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: missing/invalid device key
+  /api/reminders/{id}:
+    get:
+      summary: One reminder rule + its assignments.
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: reminder
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+        "404":
+          description: not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      summary: Edit text/active/(apply_to_all weekdays). kind & targetingMode immutable (FR-013).
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReminderEditInput"
+      responses:
+        "200":
+          description: updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+        "400":
+          description: attempted kind/targetingMode change or invalid field
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: >
+        Hard-delete a reminder rule (genuine removal, distinct from active:false). Cascades to its
+        reminder_assignment rows (ON DELETE CASCADE).
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: deleted
+        "404":
+          description: not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/reminders/{id}/assignments:
+    put:
+      summary: >
+        Atomic full-set replace of a specific-mode rule's assignments (the admin matrix "save").
+        Replaces the entire active assignment set in ONE transaction — upsert the members present,
+        deactivate those absent (deactivate, never hard-delete). Last-write- wins (no If-Match/409
+        optimistic concurrency — deferred #395). The ONLY assignment- write operation, so a
+        multi-member edit (add one, remove another, change weekdays) commits or rolls back as a
+        whole — no partial per-row writes. An empty set is rejected (a specific rule may not drop to
+        zero active assignments — use the rule's active:false to silence instead; FR-005/INV-02).
+        apply_to_all rules reject this endpoint (they carry no assignments).
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReminderAssignmentSetInput"
+      responses:
+        "200":
+          description: the resulting active assignment set
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReminderAssignment"
+        "400":
+          description: apply_to_all rule, empty set, inactive member, or non-canonical weekday
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: reminder not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/reminders/emissions:
+    get:
+      summary: >-
+        Outbound read — scheduled reminders emitting for (member,date). Daily-Briefing consumer
+        interface.
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: memberId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            description: strict YYYY-MM-DD
+      responses:
+        "200":
+          description: emitting reminders (empty if member inactive or none apply)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReminderEmission"
+        "400":
+          description: invalid/impossible date
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: unauthorized

@@ -1,0 +1,1938 @@
+[
+  {
+    "text": "Ants have two stomachs — one for themselves and a second called the crop that stores food to share with others.",
+    "animal": "ant"
+  },
+  {
+    "text": "Raccoons have unusually sensitive front paws with four times more mechanoreceptors than most mammals, making them remarkably dexterous.",
+    "animal": "raccoon"
+  },
+  {
+    "text": "Leafcutter ants carry leaf fragments up to 50 times their own body weight back to the nest to grow fungus gardens for food.",
+    "animal": "ant"
+  },
+  {
+    "text": "Chimpanzee communities have complex social hierarchies, and individuals form alliances, share food, and sometimes reconcile after conflicts.",
+    "animal": "chimpanzee"
+  },
+  {
+    "text": "A tortoise's shell has nerve endings and blood vessels inside, so it can feel pressure and even gentle touches on its shell.",
+    "animal": "tortoise"
+  },
+  {
+    "text": "Bombardier beetles heat a mix of chemicals in a special chamber in their abdomen to eject a scalding spray at predators.",
+    "animal": "beetle"
+  },
+  {
+    "text": "The temperature at which sea turtle eggs incubate determines the sex of the hatchlings — warmer nests produce more females.",
+    "animal": "turtle"
+  },
+  {
+    "text": "Cuttlefish pass versions of the marshmallow test — they wait longer for a preferred prey if they know a better option is coming.",
+    "animal": "cuttlefish"
+  },
+  {
+    "text": "Dogs dream — brain activity during their REM sleep closely resembles the patterns seen in humans during active dreaming.",
+    "animal": "dog"
+  },
+  {
+    "text": "Dolphins live in social groups called pods and cooperate to herd fish into tight balls for easier feeding.",
+    "animal": "dolphin"
+  },
+  {
+    "text": "The aye-aye lemur uses an elongated middle finger to tap on wood and listen for hollow chambers where grubs are hiding.",
+    "animal": "lemur"
+  },
+  {
+    "text": "Cheetahs have hard, non-retractable claws that work like cleats, giving them extra traction during high-speed sprints.",
+    "animal": "cheetah"
+  },
+  {
+    "text": "Dolphins use echolocation, emitting clicks that bounce off objects and return to help them navigate and find food.",
+    "animal": "dolphin"
+  },
+  {
+    "text": "Dragonflies can control each of their four wings independently, allowing them to fly forwards, backwards, and sideways with ease.",
+    "animal": "dragonfly"
+  },
+  {
+    "text": "Boars use their sensitive snout to locate food underground and can smell truffles buried up to a meter below the surface.",
+    "animal": "boar"
+  },
+  {
+    "text": "Koalas have fingerprints nearly identical to human fingerprints — so similar that even experts can have trouble telling them apart.",
+    "animal": "koala"
+  },
+  {
+    "text": "Parrots are zygodactyl, meaning two toes point forward and two point back, giving them an excellent grip on branches.",
+    "animal": "parrot"
+  },
+  {
+    "text": "Fireflies produce light through a chemical reaction in their bodies with nearly 100 percent efficiency — almost no energy is lost as heat.",
+    "animal": "beetle"
+  },
+  {
+    "text": "Meerkats use around 30 different sounds to convey specific messages, from predator alerts to contact calls.",
+    "animal": "meerkat"
+  },
+  {
+    "text": "Flamingos are highly social and form flocks of thousands. They synchronize their courtship dances across the whole group.",
+    "animal": "flamingo"
+  },
+  {
+    "text": "Moles dig tunnel networks of up to 200 meters per day using powerful, outward-facing forelegs shaped like shovels.",
+    "animal": "mole"
+  },
+  {
+    "text": "Sloths have a specialized set of tendons in their feet that lock around branches, allowing them to hang without using any muscle effort.",
+    "animal": "sloth"
+  },
+  {
+    "text": "Greenland sharks grow extremely slowly and can live for over 400 years, making them the longest-lived vertebrate known.",
+    "animal": "shark"
+  },
+  {
+    "text": "Koalas rarely need to drink water — they get almost all the moisture they need from the eucalyptus leaves they eat.",
+    "animal": "koala"
+  },
+  {
+    "text": "Kangaroos cannot walk backwards — their leg structure and heavy tail prevent reverse movement on land.",
+    "animal": "kangaroo"
+  },
+  {
+    "text": "A dog's sense of smell is at least 10,000 times more sensitive than a human's, with about 300 million smell receptors.",
+    "animal": "dog"
+  },
+  {
+    "text": "Bees have five eyes — two large compound eyes and three smaller simple eyes on top of their heads.",
+    "animal": "bee"
+  },
+  {
+    "text": "Worker honey bees communicate the location of flowers to their hivemates using a waggle dance that encodes direction and distance.",
+    "animal": "bee"
+  },
+  {
+    "text": "Baby capybaras can walk almost immediately after birth and quickly join a communal group of young from multiple families.",
+    "animal": "capybara"
+  },
+  {
+    "text": "Some ant species keep other insects as livestock, herding and protecting aphids in exchange for the sweet liquid the aphids produce.",
+    "animal": "ant"
+  },
+  {
+    "text": "A crocodile's bite force is the strongest of any animal ever measured, capable of exerting over 16,000 newtons of pressure.",
+    "animal": "crocodile"
+  },
+  {
+    "text": "Snow leopards have wide, fur-covered paws that act as natural snowshoes and insulate their feet on frozen ground.",
+    "animal": "snowleopard"
+  },
+  {
+    "text": "Crocodiles can go months without eating — their slow metabolism means a large meal can sustain them for a very long time.",
+    "animal": "crocodile"
+  },
+  {
+    "text": "An elephant's large ears act as radiators, helping the animal cool its blood by fanning them in the heat.",
+    "animal": "elephant"
+  },
+  {
+    "text": "Honey badgers use tools in captivity — rolling logs and rocks to stand on to reach higher places or escape enclosures.",
+    "animal": "honeybadger"
+  },
+  {
+    "text": "Bats are the only mammals capable of true sustained flight, using wings formed by a thin membrane stretched over elongated fingers.",
+    "animal": "bat"
+  },
+  {
+    "text": "Praying mantises are the only insects with a single ear, located on the underside of their body, used to detect bat sonar.",
+    "animal": "mantis"
+  },
+  {
+    "text": "Bats use echolocation to navigate in complete darkness, emitting ultrasonic pulses and listening to the echoes.",
+    "animal": "bat"
+  },
+  {
+    "text": "Seahorses anchor themselves to coral or seagrass with their prehensile tails to avoid being swept away by currents.",
+    "animal": "seahorse"
+  },
+  {
+    "text": "Tardigrades survive extreme conditions by entering a state called cryptobiosis, where all metabolic activity nearly stops.",
+    "animal": "tardigrade"
+  },
+  {
+    "text": "Spider silk is stronger than steel by weight, yet elastic enough to stretch to 140 percent of its length before snapping.",
+    "animal": "spider"
+  },
+  {
+    "text": "Flamingo parents produce a red nutritious liquid called crop milk to feed their chicks in the first weeks of life.",
+    "animal": "flamingo"
+  },
+  {
+    "text": "A seahorse's eyes can move independently of each other, similar to a chameleon, scanning for food in different directions at once.",
+    "animal": "seahorse"
+  },
+  {
+    "text": "Tortoise eggs are temperature-sensitive: warmer nests tend to produce more females, while cooler nests produce more males.",
+    "animal": "tortoise"
+  },
+  {
+    "text": "A cat's purr vibrates at frequencies between 25 and 150 Hz, which researchers believe may promote bone density and healing.",
+    "animal": "cat"
+  },
+  {
+    "text": "Humpback whales have been observed forming groups of up to 200 individuals, the largest groups ever recorded for baleen whales.",
+    "animal": "whale"
+  },
+  {
+    "text": "Despite looking like larvae, axolotls are sexually mature and can reproduce while still retaining their juvenile body form.",
+    "animal": "axolotl"
+  },
+  {
+    "text": "Giraffes only sleep about 30 minutes a day in total, often in short bursts of just a few minutes.",
+    "animal": "giraffe"
+  },
+  {
+    "text": "The diving bell spider builds an underwater air bubble from silk, allowing it to breathe and live entirely underwater.",
+    "animal": "spider"
+  },
+  {
+    "text": "Porcupine quills have microscopic backward-facing barbs that make them very difficult to remove once embedded.",
+    "animal": "porcupine"
+  },
+  {
+    "text": "Giraffes hum to each other at night using low-frequency vocalizations only recently discovered and confirmed by researchers.",
+    "animal": "giraffe"
+  },
+  {
+    "text": "Chimpanzees share about 98.7 percent of their DNA with humans, making them our closest living relatives.",
+    "animal": "chimpanzee"
+  },
+  {
+    "text": "The star-nosed mole has 22 pink tentacles on its nose containing over 25,000 minute sensory receptors called Eimer's organs.",
+    "animal": "mole"
+  },
+  {
+    "text": "A kangaroo joey is about the size of a lima bean at birth and crawls into the mother's pouch unaided within minutes.",
+    "animal": "kangaroo"
+  },
+  {
+    "text": "Penguins have an organ above their eyes that filters salt from seawater, allowing them to drink from the ocean.",
+    "animal": "penguin"
+  },
+  {
+    "text": "Sloths descend from trees to the ground only about once a week, usually to use the bathroom.",
+    "animal": "sloth"
+  },
+  {
+    "text": "Clams produce pearls when an irritant enters their shell — they coat it in nacre layer by layer over many years.",
+    "animal": "clam"
+  },
+  {
+    "text": "Red pandas are crepuscular, meaning they are most active at dawn and dusk and rest in trees during the day.",
+    "animal": "redpanda"
+  },
+  {
+    "text": "Some deep-sea jellyfish produce their own light through bioluminescence, creating vivid blue and green glows in total darkness.",
+    "animal": "jellyfish"
+  },
+  {
+    "text": "The total weight of all ants on Earth is estimated to be comparable to the total weight of all humans.",
+    "animal": "ant"
+  },
+  {
+    "text": "Firefly light is the most efficient light in the world — nearly 100 percent of the energy is emitted as light, with almost no heat.",
+    "animal": "firefly"
+  },
+  {
+    "text": "Sea turtles can hold their breath for up to seven hours when resting on the seafloor during sleep.",
+    "animal": "turtle"
+  },
+  {
+    "text": "Giant pandas have a carnivore's digestive system but eat almost exclusively bamboo, absorbing only a fraction of its nutrients.",
+    "animal": "panda"
+  },
+  {
+    "text": "Gorillas communicate using a range of vocalizations, facial expressions, and chest beating, which is used to convey power or excitement.",
+    "animal": "gorilla"
+  },
+  {
+    "text": "Pandas are solitary animals with large home ranges and communicate primarily through scent marking.",
+    "animal": "panda"
+  },
+  {
+    "text": "Honey badger skin is so thick it can resist bee stings, porcupine quills, and even machete blows in some documented cases.",
+    "animal": "honeybadger"
+  },
+  {
+    "text": "Cheetahs are the fastest land animals, reaching speeds of up to 112 km/h in short bursts during chases.",
+    "animal": "cheetah"
+  },
+  {
+    "text": "A group of jellyfish is called a bloom or a smack, and blooms can contain millions of individuals.",
+    "animal": "jellyfish"
+  },
+  {
+    "text": "Homing pigeons can fly at speeds up to 160 km/h over long distances, making them remarkable long-distance athletes.",
+    "animal": "pigeon"
+  },
+  {
+    "text": "Mantis shrimp are one of the few animals known to see circularly polarized light, which they also use for communication.",
+    "animal": "mantisshrimp"
+  },
+  {
+    "text": "A shark can detect one drop of blood diluted in an Olympic swimming pool's worth of water.",
+    "animal": "shark"
+  },
+  {
+    "text": "Koalas sleep up to 22 hours a day because their eucalyptus diet provides very little energy and requires a long time to digest.",
+    "animal": "koala"
+  },
+  {
+    "text": "A dolphin's brain-to-body ratio is second only to humans, reflecting their remarkable intelligence.",
+    "animal": "dolphin"
+  },
+  {
+    "text": "The glass frog of Central and South America has transparent skin on its underside, making its organs visible from below.",
+    "animal": "frog"
+  },
+  {
+    "text": "Some dragonfly species migrate thousands of kilometers across oceans, with the globe skimmer traveling over 14,000 km.",
+    "animal": "dragonfly"
+  },
+  {
+    "text": "Baby koalas, called joeys, spend their first six months in their mother's pouch and another six months riding on her back.",
+    "animal": "koala"
+  },
+  {
+    "text": "Gray whales undertake one of the longest migrations of any mammal, traveling up to 20,000 km round trip each year.",
+    "animal": "whale"
+  },
+  {
+    "text": "Octopus arms regenerate fully if lost, growing back within a few weeks with no permanent damage.",
+    "animal": "octopus"
+  },
+  {
+    "text": "Owls have specialized feathers with comb-like serrations that break up turbulence, making their flight nearly silent.",
+    "animal": "owl"
+  },
+  {
+    "text": "Young chimpanzees learn skills from their mothers and older group members over years of observation, much like human children.",
+    "animal": "chimpanzee"
+  },
+  {
+    "text": "Dolphins sleep with one eye open, keeping half their brain awake so they can breathe and stay alert.",
+    "animal": "dolphin"
+  },
+  {
+    "text": "A rhino's horn is made of keratin — the same material as human fingernails — and grows throughout the animal's life.",
+    "animal": "rhino"
+  },
+  {
+    "text": "Hippos are more closely related to whales and dolphins than to any land mammal, sharing a common ancestor about 55 million years ago.",
+    "animal": "hippo"
+  },
+  {
+    "text": "Sea stars have a light-sensitive eyespot at the tip of each arm, allowing them to sense the direction of light.",
+    "animal": "starfish"
+  },
+  {
+    "text": "Barn owls can locate prey in complete darkness using hearing alone — their ears are asymmetrically placed to pinpoint sound in three dimensions.",
+    "animal": "owl"
+  },
+  {
+    "text": "A panda's black and white coloring may help it regulate temperature — black patches absorb heat while white patches reflect it.",
+    "animal": "panda"
+  },
+  {
+    "text": "Adult male gorillas are called silverbacks because of the patch of silvery hair that develops on their backs with age.",
+    "animal": "gorilla"
+  },
+  {
+    "text": "Each of an octopus's eight arms has its own cluster of neurons and can act somewhat independently from the central brain.",
+    "animal": "octopus"
+  },
+  {
+    "text": "Manta ray spots and markings are unique to each individual, allowing researchers to identify them in the wild by photograph.",
+    "animal": "manta"
+  },
+  {
+    "text": "A chameleon's tongue can be up to twice the length of its body and accelerates faster than a jet fighter.",
+    "animal": "chameleon"
+  },
+  {
+    "text": "Dogs can understand around 250 words and gestures and can count to around five, according to animal cognition research.",
+    "animal": "dog"
+  },
+  {
+    "text": "Sharks have a sixth sense called the ampullae of Lorenzini that detects the tiny electric fields generated by other animals.",
+    "animal": "shark"
+  },
+  {
+    "text": "The skin of an elephant can be up to 2.5 centimeters thick in places, yet it is highly sensitive to touch and sunburn.",
+    "animal": "elephant"
+  },
+  {
+    "text": "Penguin feathers are so densely packed — about 100 per square centimeter — that they form a nearly waterproof layer.",
+    "animal": "penguin"
+  },
+  {
+    "text": "The diving beetle traps a bubble of air beneath its wing covers to breathe underwater, acting as a portable tank.",
+    "animal": "beetle"
+  },
+  {
+    "text": "Baby sea turtles hatch together and race toward the ocean, guided by the natural light on the horizon.",
+    "animal": "turtle"
+  },
+  {
+    "text": "Elephants communicate using low-frequency rumbles that travel through the ground and can be detected by other elephants miles away.",
+    "animal": "elephant"
+  },
+  {
+    "text": "Flamingo chicks are born grey and white and only develop pink feathers once they begin eating pigmented food.",
+    "animal": "flamingo"
+  },
+  {
+    "text": "Dolphins have been observed teaching their young to use sponges as tools to protect their snouts while foraging on the seafloor.",
+    "animal": "dolphin"
+  },
+  {
+    "text": "The star-nosed mole is the fastest-eating mammal, identifying and consuming prey in under 120 milliseconds.",
+    "animal": "mole"
+  },
+  {
+    "text": "Fireflies synchronize their flashes in some species — thousands of males flash in unison to attract females.",
+    "animal": "firefly"
+  },
+  {
+    "text": "One jellyfish species, Turritopsis dohrnii, can revert to its juvenile polyp stage after reaching adulthood, theoretically repeating its life cycle.",
+    "animal": "jellyfish"
+  },
+  {
+    "text": "Komodo dragons can smell carrion up to 10 km away using their forked tongue to sample the air.",
+    "animal": "komodo"
+  },
+  {
+    "text": "Cats have a third eyelid, and when it becomes visible it often signals the cat is not feeling well.",
+    "animal": "cat"
+  },
+  {
+    "text": "Raccoons are highly adaptable and thrive in cities, using urban resources while remaining largely nocturnal.",
+    "animal": "raccoon"
+  },
+  {
+    "text": "Female Komodo dragons can reproduce without mating, through a process called parthenogenesis, producing only male offspring.",
+    "animal": "komodo"
+  },
+  {
+    "text": "Hermit crabs live in abandoned shells and must find a larger shell as they grow. They sometimes form chains to trade shells in sequence.",
+    "animal": "hermitcrab"
+  },
+  {
+    "text": "Arctic terns live for up to 30 years and may travel the equivalent of three trips to the moon over a lifetime of migration.",
+    "animal": "tern"
+  },
+  {
+    "text": "Crocodiles have been on Earth in roughly their current form for about 200 million years, surviving the extinction that killed the dinosaurs.",
+    "animal": "crocodile"
+  },
+  {
+    "text": "Flying fish use gliding to escape predators below — but they sometimes end up as prey for birds waiting above.",
+    "animal": "flyingfish"
+  },
+  {
+    "text": "A giraffe's heart is enormous — about 60 cm long and 11 kg in weight — needed to pump blood up the long neck.",
+    "animal": "giraffe"
+  },
+  {
+    "text": "Tortoises are the only reptiles with a fused backbone — the shell is part of their skeleton and cannot be removed.",
+    "animal": "tortoise"
+  },
+  {
+    "text": "Ant colonies can contain millions of individuals, all coordinated without any central leader through chemical signals called pheromones.",
+    "animal": "ant"
+  },
+  {
+    "text": "The reintroduction of wolves into Yellowstone National Park in 1995 caused a cascade of ecological changes that transformed the landscape.",
+    "animal": "wolf"
+  },
+  {
+    "text": "Despite their bulk, hippos can run at 30 km/h for short distances — faster than most humans.",
+    "animal": "hippo"
+  },
+  {
+    "text": "River otters can close their nostrils and ears when diving, staying underwater for up to eight minutes.",
+    "animal": "otter"
+  },
+  {
+    "text": "Some parrot species can live for over 80 years, outliving their human owners.",
+    "animal": "parrot"
+  },
+  {
+    "text": "Young albatrosses spend several years at sea without ever touching land before returning to breed for the first time.",
+    "animal": "albatross"
+  },
+  {
+    "text": "Giraffes have the same number of neck vertebrae as most other mammals — just seven — but each bone can be over 25 cm long.",
+    "animal": "giraffe"
+  },
+  {
+    "text": "Manta rays have cephalic fins that unfurl near their mouths to funnel plankton-rich water in while they feed.",
+    "animal": "manta"
+  },
+  {
+    "text": "The mantis shrimp can throw a punch at 80 km/h — fast enough to shatter aquarium glass and boil water around the impact.",
+    "animal": "mantisshrimp"
+  },
+  {
+    "text": "Mantis eggs are laid in a foam case called an ootheca that hardens into a protective shell over winter.",
+    "animal": "mantis"
+  },
+  {
+    "text": "Spiders are not insects — they are arachnids, with eight legs and a body divided into two segments rather than three.",
+    "animal": "spider"
+  },
+  {
+    "text": "Clownfish live among the stinging tentacles of sea anemones — a special mucus layer prevents the anemone from stinging them.",
+    "animal": "clownfish"
+  },
+  {
+    "text": "Seahorses have no stomach — food passes through their digestive system so quickly that they must eat almost constantly.",
+    "animal": "seahorse"
+  },
+  {
+    "text": "An ant can survive being submerged in water for 24 hours, because it breathes through tiny pores along its body.",
+    "animal": "ant"
+  },
+  {
+    "text": "Jellyfish have inhabited Earth's oceans for at least 500 million years — they predate the dinosaurs by hundreds of millions of years.",
+    "animal": "jellyfish"
+  },
+  {
+    "text": "Crows can remember human faces and have been known to hold grudges against people who have harmed them.",
+    "animal": "crow"
+  },
+  {
+    "text": "Electric eels use low-voltage pulses to sense their environment by detecting distortions in the electric field around them.",
+    "animal": "eel"
+  },
+  {
+    "text": "Bottlenose dolphins can reach speeds of about 37 km/h and often ride the bow waves of ships for fun.",
+    "animal": "dolphin"
+  },
+  {
+    "text": "Manta rays have the largest brain-to-body ratio of any fish and have passed the mirror self-awareness test in some studies.",
+    "animal": "manta"
+  },
+  {
+    "text": "Eucalyptus leaves are poisonous to most animals, but koalas have a specialized digestive system that safely breaks down the toxins.",
+    "animal": "koala"
+  },
+  {
+    "text": "Male frogs produce their distinctive calls by pushing air over vocal cords, and some species can be heard from over 1.6 km away.",
+    "animal": "frog"
+  },
+  {
+    "text": "Some hermit crabs use shells adorned with sea anemones for extra protection — and the anemone benefits from scraps of the crab's food.",
+    "animal": "hermitcrab"
+  },
+  {
+    "text": "Male lyrebirds spend most of their lives in dense forest and may mimic the calls of over 20 other bird species.",
+    "animal": "lyrebird"
+  },
+  {
+    "text": "Owls can rotate their heads up to 270 degrees because they have twice as many neck vertebrae as most other birds.",
+    "animal": "owl"
+  },
+  {
+    "text": "New quills begin growing immediately after old ones are shed, and a full coat of quills regrows within a few months.",
+    "animal": "porcupine"
+  },
+  {
+    "text": "Otters have a pocket of loose skin under each forearm where they store their favorite rocks and snacks for later use.",
+    "animal": "otter"
+  },
+  {
+    "text": "The pygmy leaf chameleon is one of the smallest reptiles on Earth, measuring only a few centimeters from nose to tail tip.",
+    "animal": "chameleon"
+  },
+  {
+    "text": "Elephants spend up to 18 hours a day eating, consuming hundreds of kilograms of vegetation.",
+    "animal": "elephant"
+  },
+  {
+    "text": "Koalas make a deep, bellowing call surprisingly loud for their size, which males use to communicate across large territories.",
+    "animal": "koala"
+  },
+  {
+    "text": "Bees can recognize human faces using a process called configural processing, similar to how humans identify one another.",
+    "animal": "bee"
+  },
+  {
+    "text": "Otter pups cannot swim at birth and must be taught by their mother, who sometimes carries them on her belly.",
+    "animal": "otter"
+  },
+  {
+    "text": "Arctic terns experience two summers each year by following the sun from pole to pole, giving them the most daylight of any animal.",
+    "animal": "tern"
+  },
+  {
+    "text": "Cuttlefish bones are lightweight calcium carbonate structures that regulate buoyancy, allowing precise depth control.",
+    "animal": "cuttlefish"
+  },
+  {
+    "text": "Algae grows in the grooves of a sloth's fur, giving it a greenish tint that helps it blend into the forest canopy.",
+    "animal": "sloth"
+  },
+  {
+    "text": "Jellyfish have no brain, no heart, no blood, and no bones — their bodies are about 95 percent water.",
+    "animal": "jellyfish"
+  },
+  {
+    "text": "Narwhals live year-round in the Arctic and use leads in sea ice to breathe, sometimes swimming under ice for kilometers.",
+    "animal": "narwhal"
+  },
+  {
+    "text": "The harpy eagle of South America has talons as long as a grizzly bear's claws, allowing it to carry prey its own weight.",
+    "animal": "eagle"
+  },
+  {
+    "text": "The Goliath frog of West Africa is the world's largest frog, reaching up to 32 centimeters in length and weighing over 3 kg.",
+    "animal": "frog"
+  },
+  {
+    "text": "Bald eagles build the largest nests of any bird in North America, sometimes weighing over a ton after years of additions.",
+    "animal": "eagle"
+  },
+  {
+    "text": "Seahorses are poor swimmers — their tiny dorsal fin beats 35 times per second but they are easily exhausted.",
+    "animal": "seahorse"
+  },
+  {
+    "text": "Polar bears can smell a seal through nearly a meter of compacted snow from up to 1.6 km away.",
+    "animal": "polarbear"
+  },
+  {
+    "text": "Many butterfly species can see ultraviolet light, revealing patterns on flowers and other butterflies invisible to the human eye.",
+    "animal": "butterfly"
+  },
+  {
+    "text": "Boar piglets are born with striped coats that fade within a few months, providing camouflage in dappled forest light.",
+    "animal": "boar"
+  },
+  {
+    "text": "Rhinos are surprisingly agile and can reach speeds of 50 km/h over short distances despite their enormous size.",
+    "animal": "rhino"
+  },
+  {
+    "text": "Giant pandas spend 10 to 16 hours a day eating bamboo, consuming up to 40 kilograms to meet their nutritional needs.",
+    "animal": "panda"
+  },
+  {
+    "text": "Clownfish and their host anemone have a mutualistic relationship — the fish gets shelter and the anemone gets cleaning and protection.",
+    "animal": "clownfish"
+  },
+  {
+    "text": "Some owl species, like the burrowing owl, make their home in underground tunnels dug by prairie dogs or ground squirrels.",
+    "animal": "owl"
+  },
+  {
+    "text": "A hummingbird's heart beats over 1,200 times per minute during flight, the fastest of any bird.",
+    "animal": "hummingbird"
+  },
+  {
+    "text": "Capybara teeth never stop growing — constant chewing on grasses keeps them worn to the right length.",
+    "animal": "capybara"
+  },
+  {
+    "text": "Mantis shrimp are highly territorial and some individuals have been observed living in the same burrow for over 20 years.",
+    "animal": "mantisshrimp"
+  },
+  {
+    "text": "Sea otters use rocks as tools to crack open shellfish, and some individuals carry a favorite rock under their arm.",
+    "animal": "otter"
+  },
+  {
+    "text": "Naked mole rats are extraordinarily resistant to cancer — researchers have studied them for insights into cancer prevention.",
+    "animal": "molertat"
+  },
+  {
+    "text": "Wild boars are highly intelligent and have been used in some research as successfully as dogs in scent-detection tasks.",
+    "animal": "boar"
+  },
+  {
+    "text": "Cassowaries are the world's most dangerous bird, capable of delivering a powerful kick with dagger-like claws on their feet.",
+    "animal": "cassowary"
+  },
+  {
+    "text": "A sloth's slow metabolism means it can survive on very little food — mostly leaves that would be toxic to most other animals.",
+    "animal": "sloth"
+  },
+  {
+    "text": "A monarch butterfly's wings carry chemical markers that help it navigate to the same overwintering sites its ancestors used.",
+    "animal": "butterfly"
+  },
+  {
+    "text": "A porcupine can have up to 30,000 quills on its body, each coated in an antibiotic that helps prevent infection after quilling.",
+    "animal": "porcupine"
+  },
+  {
+    "text": "A cheetah can go from 0 to 100 km/h in about three seconds — faster than most sports cars.",
+    "animal": "cheetah"
+  },
+  {
+    "text": "Seahorse pairs greet each other each morning with a synchronized color-change dance that can last several minutes.",
+    "animal": "seahorse"
+  },
+  {
+    "text": "Clownfish are highly territorial and will charge at fish many times their size to defend their anemone home.",
+    "animal": "clownfish"
+  },
+  {
+    "text": "Mantis shrimps have 16 types of color receptors in their eyes, compared to just three in humans.",
+    "animal": "mantisshrimp"
+  },
+  {
+    "text": "White rhinos are the second largest land animals after elephants, weighing up to 2,300 kilograms.",
+    "animal": "rhino"
+  },
+  {
+    "text": "The martial eagle of Africa can fly at over 160 km/h in a dive, making it one of the fastest birds in a stoop.",
+    "animal": "eagle"
+  },
+  {
+    "text": "Meerkats are immune to certain venoms, including the venom of some scorpions, which are a regular part of their diet.",
+    "animal": "meerkat"
+  },
+  {
+    "text": "Elephants have a sixth toenail-like structure at the base of each foot that acts as a cushioned pad, softening each step.",
+    "animal": "elephant"
+  },
+  {
+    "text": "Naked mole rats are the only cold-blooded mammals — they cannot regulate body temperature and rely on their environment for warmth.",
+    "animal": "molertat"
+  },
+  {
+    "text": "Arctic foxes have the warmest fur of any animal tested — they can sleep comfortably at temperatures as low as minus 70 degrees Celsius.",
+    "animal": "fox"
+  },
+  {
+    "text": "The axolotl is native only to a single lake complex near Mexico City and is critically endangered in the wild.",
+    "animal": "axolotl"
+  },
+  {
+    "text": "Axolotls can regenerate entire limbs, portions of their heart, and even parts of their brain with no scarring.",
+    "animal": "axolotl"
+  },
+  {
+    "text": "The immortal jellyfish reverts from its adult medusa stage back to a juvenile polyp stage, beginning its life cycle anew.",
+    "animal": "jellyfish"
+  },
+  {
+    "text": "The platypus is one of only five mammal species that lay eggs instead of giving birth to live young.",
+    "animal": "platypus"
+  },
+  {
+    "text": "Leatherback sea turtles are the largest reptiles on Earth and can dive deeper than 1,000 meters to feed on jellyfish.",
+    "animal": "turtle"
+  },
+  {
+    "text": "Sharks shed thousands of teeth throughout their lives — some species replace every tooth every one to two weeks.",
+    "animal": "shark"
+  },
+  {
+    "text": "Snow leopards cannot roar — their vocal anatomy produces a puffing sound called a chuff, used as a friendly greeting.",
+    "animal": "snowleopard"
+  },
+  {
+    "text": "Eagles are monogamous and often return to the same nest year after year, adding new sticks and materials each season.",
+    "animal": "eagle"
+  },
+  {
+    "text": "Mother rhinos are fiercely protective and will charge at threats many times their size to defend their calves.",
+    "animal": "rhino"
+  },
+  {
+    "text": "Vampire bats are the only mammals that feed exclusively on blood, and they share blood meals with hungry roostmates.",
+    "animal": "bat"
+  },
+  {
+    "text": "Moles store live earthworms in larder tunnels, biting their heads to paralyze them but keep them fresh for later.",
+    "animal": "mole"
+  },
+  {
+    "text": "Octopuses are masters of camouflage and can change both the color and texture of their skin in under a second.",
+    "animal": "octopus"
+  },
+  {
+    "text": "Capybaras are the world's largest rodent, growing up to 65 kilograms — about the size of a large dog.",
+    "animal": "capybara"
+  },
+  {
+    "text": "A platypus's bill contains thousands of electroreceptors that detect the electric fields produced by the muscles of prey underwater.",
+    "animal": "platypus"
+  },
+  {
+    "text": "The club-like appendages of a mantis shrimp are made of a material so tough that engineers study it to design better body armor.",
+    "animal": "mantisshrimp"
+  },
+  {
+    "text": "The peregrine falcon is the fastest animal on Earth, reaching dive speeds of over 320 km/h.",
+    "animal": "falcon"
+  },
+  {
+    "text": "Frogs have been on Earth for about 265 million years, making them older than most dinosaur species.",
+    "animal": "frog"
+  },
+  {
+    "text": "A snow leopard's tail is nearly as long as its body and is used for balance on rocky terrain and as a blanket in cold weather.",
+    "animal": "snowleopard"
+  },
+  {
+    "text": "Penguins are birds, but they are flightless. Their wings evolved into flippers perfectly shaped for swimming.",
+    "animal": "penguin"
+  },
+  {
+    "text": "Meerkat groups called mobs can contain up to 30 individuals, all cooperating in pup-rearing and territory defense.",
+    "animal": "meerkat"
+  },
+  {
+    "text": "Each firefly species has a unique flash pattern, and females choose mates partly based on the timing and intensity of the flash.",
+    "animal": "firefly"
+  },
+  {
+    "text": "Hummingbirds can see into the ultraviolet spectrum, allowing them to spot nectar-rich flowers invisible to human eyes.",
+    "animal": "hummingbird"
+  },
+  {
+    "text": "Lemurs are found only on Madagascar and have a highly developed sense of smell used for communication and mate recognition.",
+    "animal": "lemur"
+  },
+  {
+    "text": "Crows and ravens use sticks, wire, and other objects as tools, shaping them to retrieve food from hard-to-reach places.",
+    "animal": "crow"
+  },
+  {
+    "text": "Cats spend up to half their waking hours grooming — saliva on their fur acts as a cooling agent and removes parasites.",
+    "animal": "cat"
+  },
+  {
+    "text": "Eagles have eyesight four to eight times sharper than a human's and can spot a rabbit from about three kilometers away.",
+    "animal": "eagle"
+  },
+  {
+    "text": "Sharks have been on Earth for at least 450 million years, making them older than trees.",
+    "animal": "shark"
+  },
+  {
+    "text": "Butterfly wings are covered in thousands of microscopic scales that reflect and refract light to produce vivid colors.",
+    "animal": "butterfly"
+  },
+  {
+    "text": "Octopuses have been observed collecting shells and rocks to build shelters, showing a level of tool use rare outside mammals.",
+    "animal": "octopus"
+  },
+  {
+    "text": "Penguins are highly social and live in large colonies called rookeries, sometimes numbering in the millions.",
+    "animal": "penguin"
+  },
+  {
+    "text": "After spawning, Pacific salmon decompose in the streams, fertilizing the surrounding forest with marine nutrients carried from the ocean.",
+    "animal": "salmon"
+  },
+  {
+    "text": "Sea otters hold hands while sleeping so that they don't drift apart. These groups are called rafts.",
+    "animal": "otter"
+  },
+  {
+    "text": "Sloths have four times more slow-twitch muscle fibers than similarly sized mammals, perfectly suited for their low-energy lifestyle.",
+    "animal": "sloth"
+  },
+  {
+    "text": "Dogs have a third eyelid, the nictitating membrane, that sweeps across the eye from the inner corner to keep it clean.",
+    "animal": "dog"
+  },
+  {
+    "text": "Male platypuses have venomous spurs on their hind legs. The venom is powerful enough to cause intense pain in humans.",
+    "animal": "platypus"
+  },
+  {
+    "text": "Chimpanzees can recognize themselves in a mirror — one of the few non-human species to pass the mirror self-recognition test.",
+    "animal": "chimpanzee"
+  },
+  {
+    "text": "Chameleons can move each eye independently, giving them a nearly 360-degree field of vision without moving their head.",
+    "animal": "chameleon"
+  },
+  {
+    "text": "Honey badgers have extremely loose, tough skin that allows them to twist around inside their own hide to bite attackers.",
+    "animal": "honeybadger"
+  },
+  {
+    "text": "Falcon chicks are called eyases and are brooded by both parents in a nest called an eyrie, often on a high cliff ledge.",
+    "animal": "falcon"
+  },
+  {
+    "text": "Tardigrades, also called water bears, are microscopic animals that can survive in space, extreme cold, radiation, and complete dehydration.",
+    "animal": "tardigrade"
+  },
+  {
+    "text": "Red pandas are not closely related to giant pandas — they belong to their own family, Ailuridae, and are more like raccoons.",
+    "animal": "redpanda"
+  },
+  {
+    "text": "Octopuses have three hearts. Two pump blood to the gills, while the third pumps it to the rest of the body.",
+    "animal": "octopus"
+  },
+  {
+    "text": "Komodo dragons are the world's largest living lizard, reaching up to three meters in length and 70 kilograms in weight.",
+    "animal": "komodo"
+  },
+  {
+    "text": "The bee hummingbird from Cuba is the world's smallest bird, weighing less than two grams.",
+    "animal": "hummingbird"
+  },
+  {
+    "text": "Horses can sleep both standing up and lying down. They need to lie down for REM sleep for a few hours each day.",
+    "animal": "horse"
+  },
+  {
+    "text": "After a chase, a cheetah needs 15–20 minutes to recover before it can eat, because its body temperature rises dangerously high.",
+    "animal": "cheetah"
+  },
+  {
+    "text": "Flying fish can leap out of the water and glide on their pectoral fins for up to 400 meters at speeds of 70 km/h.",
+    "animal": "flyingfish"
+  },
+  {
+    "text": "Hummingbirds have an excellent memory for flowers and can remember every flower they have visited, along with how long ago.",
+    "animal": "hummingbird"
+  },
+  {
+    "text": "The sonic snap of a pistol shrimp is louder than a gunshot and can stun or kill small prey from a distance.",
+    "animal": "pistolshrimp"
+  },
+  {
+    "text": "The bombardier beetle generates its defensive spray at nearly 100 degrees Celsius through a rapid exothermic chemical reaction.",
+    "animal": "beetle"
+  },
+  {
+    "text": "The blue whale is the largest animal known to have ever lived, reaching up to 30 meters in length.",
+    "animal": "whale"
+  },
+  {
+    "text": "The color-changing ability of chameleons is controlled by layers of specialized cells called chromatophores and iridophores in the skin.",
+    "animal": "chameleon"
+  },
+  {
+    "text": "Bats have one of the longest lifespans relative to body size of any mammal — some small species live more than 30 years.",
+    "animal": "bat"
+  },
+  {
+    "text": "Raccoon litters average three to five kits, which stay with the mother for about a year before becoming independent.",
+    "animal": "raccoon"
+  },
+  {
+    "text": "Ring-tailed lemurs sunbathe each morning in a yoga-like pose with arms spread wide, warming their dark belly skin in the sun.",
+    "animal": "lemur"
+  },
+  {
+    "text": "A crow's brain-to-body ratio is comparable to that of great apes, reflecting their remarkable problem-solving ability.",
+    "animal": "crow"
+  },
+  {
+    "text": "Clams can sense light and movement through their mantle, which contains hundreds of tiny eyes called pallial eyes.",
+    "animal": "clam"
+  },
+  {
+    "text": "Otters have up to one million hairs per square centimeter of skin — the densest fur of any mammal.",
+    "animal": "otter"
+  },
+  {
+    "text": "Polar bears are classified as marine mammals because they spend so much time at sea on Arctic ice floes.",
+    "animal": "polarbear"
+  },
+  {
+    "text": "Baby sloths cling to their mothers for the first six months of life, learning which leaves are safe to eat.",
+    "animal": "sloth"
+  },
+  {
+    "text": "Foxes are highly adaptable and live on every continent except Antarctica, thriving in deserts, forests, and cities.",
+    "animal": "fox"
+  },
+  {
+    "text": "Poison dart frogs are brightly colored to warn predators that they are toxic — a strategy called aposematism.",
+    "animal": "frog"
+  },
+  {
+    "text": "A jellyfish's tentacles can still sting after the animal has died, even if the tentacle has been separated from the body.",
+    "animal": "jellyfish"
+  },
+  {
+    "text": "Hummingbirds are the only birds that can fly backwards, upside down, and hover in place with precision.",
+    "animal": "hummingbird"
+  },
+  {
+    "text": "Otters are playful animals and often build slides on muddy or snowy riverbanks that they use repeatedly for fun.",
+    "animal": "otter"
+  },
+  {
+    "text": "Cheetah mothers raise their cubs alone and spend up to 18 months teaching them to hunt before they become independent.",
+    "animal": "cheetah"
+  },
+  {
+    "text": "Wombats have a backward-facing pouch so that dirt doesn't fall in while the mother digs her burrow.",
+    "animal": "wombat"
+  },
+  {
+    "text": "Axolotls communicate by releasing chemical signals into the water, which other axolotls can detect with sensitive receptors.",
+    "animal": "axolotl"
+  },
+  {
+    "text": "Sharks do not have bones — their skeletons are made entirely of cartilage, which is lighter and more flexible than bone.",
+    "animal": "shark"
+  },
+  {
+    "text": "A cheetah's spots are solid, unlike a leopard's rosette patterns. Each cheetah has a unique spot arrangement.",
+    "animal": "cheetah"
+  },
+  {
+    "text": "Panda cubs are tiny at birth — about 1/900th the size of the mother — and are among the smallest newborns of any placental mammal.",
+    "animal": "panda"
+  },
+  {
+    "text": "Capybaras are semi-aquatic and can stay submerged for up to five minutes to hide from predators.",
+    "animal": "capybara"
+  },
+  {
+    "text": "When a whale exhales, the mist from its blowhole can spread the whale's microbiome across the water's surface, seeding nutrients.",
+    "animal": "whale"
+  },
+  {
+    "text": "Whales breathe through blowholes on top of their heads. A blue whale's blow can reach nine meters high.",
+    "animal": "whale"
+  },
+  {
+    "text": "Kangaroo mothers can pause the development of an embryo until the older joey leaves the pouch — a process called embryonic diapause.",
+    "animal": "kangaroo"
+  },
+  {
+    "text": "Giant clams can weigh over 200 kilograms and live for over a century, filtering hundreds of liters of water each day.",
+    "animal": "clam"
+  },
+  {
+    "text": "Meerkat pups are taught to handle prey safely by adults who bring progressively more live creatures as the pups grow.",
+    "animal": "meerkat"
+  },
+  {
+    "text": "Many shark species must swim continuously to breathe, because they rely on moving forward to push water over their gills.",
+    "animal": "shark"
+  },
+  {
+    "text": "Cats have a specialized collarbone that allows them to always land on their feet by righting themselves mid-fall.",
+    "animal": "cat"
+  },
+  {
+    "text": "Polar bears have black skin beneath their white fur. Their hollow, transparent hairs channel sunlight toward the skin to help retain warmth.",
+    "animal": "polarbear"
+  },
+  {
+    "text": "Manta rays visit cleaning stations on coral reefs where small fish remove parasites, sometimes lining up and waiting their turn.",
+    "animal": "manta"
+  },
+  {
+    "text": "Parrots use their feet like hands, holding food with one foot while they eat, showing a preference for left or right foot.",
+    "animal": "parrot"
+  },
+  {
+    "text": "Dragonflies spend most of their lives underwater as nymphs, sometimes for several years, before emerging as adults for just a few months.",
+    "animal": "dragonfly"
+  },
+  {
+    "text": "Moray eels have a second set of jaws inside their throat, called pharyngeal jaws, that grab prey and pull it inward.",
+    "animal": "eel"
+  },
+  {
+    "text": "Chameleons don't change color to camouflage — they primarily change to communicate mood, temperature, and social status.",
+    "animal": "chameleon"
+  },
+  {
+    "text": "Sea turtles return to the beach where they were born to lay their own eggs, navigating by the Earth's magnetic field.",
+    "animal": "turtle"
+  },
+  {
+    "text": "Bald eagles are not actually bald — their name comes from an older English word meaning 'white-headed.'",
+    "animal": "eagle"
+  },
+  {
+    "text": "About 70 percent of all bat species eat insects, with a single brown bat capable of catching 1,000 insects in a single hour.",
+    "animal": "bat"
+  },
+  {
+    "text": "Bowhead whales are among the longest-lived mammals on Earth, with some individuals estimated to be over 200 years old.",
+    "animal": "whale"
+  },
+  {
+    "text": "Jumping spiders can leap up to 50 times their body length and use their keen vision to stalk prey like tiny cats.",
+    "animal": "spider"
+  },
+  {
+    "text": "A polar bear's paw can measure 30 centimeters across — a natural snowshoe that distributes weight on thin ice.",
+    "animal": "polarbear"
+  },
+  {
+    "text": "Red kangaroos can bound at 56 km/h and cover over 8 meters in a single leap.",
+    "animal": "kangaroo"
+  },
+  {
+    "text": "Frogs use their sticky tongues to catch insects at speeds too fast for the human eye to follow without slow-motion cameras.",
+    "animal": "frog"
+  },
+  {
+    "text": "Chameleons have zygodactyl feet — their toes are fused into two opposing groups — giving them a powerful pincer-like grip on branches.",
+    "animal": "chameleon"
+  },
+  {
+    "text": "Some spider species use vibrations on their webs to communicate — the frequency and pattern carry different messages.",
+    "animal": "spider"
+  },
+  {
+    "text": "Flying fish build up speed underwater before breaking the surface, then spread their stiff fins wide to glide above the waves.",
+    "animal": "flyingfish"
+  },
+  {
+    "text": "Dogs can detect changes in human body chemistry that signal fear, illness, or stress, often before the person is aware.",
+    "animal": "dog"
+  },
+  {
+    "text": "A wolf's howl can be heard up to 16 km away and serves to communicate location and reinforce bonds within the pack.",
+    "animal": "wolf"
+  },
+  {
+    "text": "European eels migrate up to 6,000 km across the Atlantic to breed in the Sargasso Sea, then their young drift back on ocean currents.",
+    "animal": "eel"
+  },
+  {
+    "text": "Border collies are widely considered the most intelligent dog breed, capable of learning the names of over 1,000 objects.",
+    "animal": "dog"
+  },
+  {
+    "text": "The Hercules beetle is one of the strongest animals on Earth relative to its size, able to carry 850 times its own weight.",
+    "animal": "beetle"
+  },
+  {
+    "text": "Lemurs use scent glands on their wrists and chests to mark territory and communicate social status.",
+    "animal": "lemur"
+  },
+  {
+    "text": "Some sea star species have up to 40 arms, though the most familiar species have just five.",
+    "animal": "starfish"
+  },
+  {
+    "text": "Dolphins have been recorded mimicking human speech patterns, adjusting the timing and rhythm of their clicks to match.",
+    "animal": "dolphin"
+  },
+  {
+    "text": "The kakapo of New Zealand is the world's heaviest parrot and the only flightless parrot species, weighing up to four kilograms.",
+    "animal": "parrot"
+  },
+  {
+    "text": "Snow leopards are so rarely observed in the wild that they were once called the ghost of the mountains.",
+    "animal": "snowleopard"
+  },
+  {
+    "text": "Sperm whales have the largest brain of any animal that has ever lived, weighing up to eight kilograms.",
+    "animal": "whale"
+  },
+  {
+    "text": "Baby tortoises hatch fully formed and independent — the mother does not stay to raise them.",
+    "animal": "tortoise"
+  },
+  {
+    "text": "Hermit crabs communicate by stridulation, rubbing parts of their body together to produce sounds, especially during disputes.",
+    "animal": "hermitcrab"
+  },
+  {
+    "text": "City pigeons are often feral descendants of domesticated rock pigeons that escaped or were released over centuries.",
+    "animal": "pigeon"
+  },
+  {
+    "text": "Chimpanzees make and use tools in the wild, shaping sticks to fish for termites and stones to crack open nuts.",
+    "animal": "chimpanzee"
+  },
+  {
+    "text": "Whale sharks, the largest fish on Earth, are gentle filter feeders that eat mainly plankton and small fish.",
+    "animal": "shark"
+  },
+  {
+    "text": "Clownfish are all born male. The dominant fish in a group can change sex to become female when the previous female dies.",
+    "animal": "clownfish"
+  },
+  {
+    "text": "During cold nights, hummingbirds enter a state called torpor — a mini-hibernation where their metabolism drops by 95 percent.",
+    "animal": "hummingbird"
+  },
+  {
+    "text": "Peregrines have adapted to cities and nest on skyscrapers, using urban pigeons as a readily available food source.",
+    "animal": "falcon"
+  },
+  {
+    "text": "Crows sometimes use twigs as probes, showing they can plan ahead and select the right tool for a task.",
+    "animal": "crow"
+  },
+  {
+    "text": "Terns are fiercely protective of their nesting colonies and will dive-bomb and strike any animal, including humans, that approaches.",
+    "animal": "tern"
+  },
+  {
+    "text": "Kangaroos use their tail as a fifth limb when moving slowly and as a powerful balance point during high-speed bounding.",
+    "animal": "kangaroo"
+  },
+  {
+    "text": "Salmon change color dramatically during spawning season, turning from silver to vivid red or green depending on the species.",
+    "animal": "salmon"
+  },
+  {
+    "text": "Giraffe calves are born dropping nearly two meters to the ground, and can run within hours of birth.",
+    "animal": "giraffe"
+  },
+  {
+    "text": "Albatross pairs bond for life, returning to the same mate and nest site year after year after months apart at sea.",
+    "animal": "albatross"
+  },
+  {
+    "text": "Little blue penguins, the world's smallest penguin species, stand only about 30 centimeters tall.",
+    "animal": "penguin"
+  },
+  {
+    "text": "Horses communicate emotions through facial expressions, using at least 17 distinct muscle movements in their face.",
+    "animal": "horse"
+  },
+  {
+    "text": "A dragonfly's compound eyes cover nearly its entire head, giving it almost 360-degree vision.",
+    "animal": "dragonfly"
+  },
+  {
+    "text": "Polar bears are strong swimmers and have been tracked swimming over 300 km without rest in the open Arctic Ocean.",
+    "animal": "polarbear"
+  },
+  {
+    "text": "Cuttlefish are colorblind, yet can match color patterns in their environment with extraordinary accuracy, using polarized light cues instead.",
+    "animal": "cuttlefish"
+  },
+  {
+    "text": "The pistol shrimp snaps its claw so fast that it creates a cavitation bubble that collapses at over 4,000 degrees Celsius.",
+    "animal": "pistolshrimp"
+  },
+  {
+    "text": "Despite being slow on land, sloths are surprisingly good swimmers and can hold their breath for up to 40 minutes.",
+    "animal": "sloth"
+  },
+  {
+    "text": "Fruit-eating bats are important seed dispersers, helping forests regrow by depositing seeds far from the parent plant.",
+    "animal": "bat"
+  },
+  {
+    "text": "Tortoises have been around for over 200 million years, outlasting the dinosaurs by a wide margin.",
+    "animal": "tortoise"
+  },
+  {
+    "text": "Cats have 32 muscles in each ear and can rotate their ears independently to locate sounds more precisely.",
+    "animal": "cat"
+  },
+  {
+    "text": "Army ants are blind but march in enormous columns, following scent trails left by the ants ahead of them.",
+    "animal": "ant"
+  },
+  {
+    "text": "A mother octopus guards her eggs without eating for weeks, and often dies shortly after they hatch.",
+    "animal": "octopus"
+  },
+  {
+    "text": "Orca whales, also called killer whales, are actually the largest members of the dolphin family.",
+    "animal": "whale"
+  },
+  {
+    "text": "Pigeons can recognize themselves in mirrors and distinguish between photographs of different humans and objects.",
+    "animal": "pigeon"
+  },
+  {
+    "text": "African grey parrots can associate spoken words with meanings, not just imitate sounds — they understand what they say.",
+    "animal": "parrot"
+  },
+  {
+    "text": "A horse's heart can weigh up to five kilograms, pumping about 75 liters of blood per minute during intense exercise.",
+    "animal": "horse"
+  },
+  {
+    "text": "Polar bear cubs are born weighing less than half a kilogram, smaller than a guinea pig, in a snow den.",
+    "animal": "polarbear"
+  },
+  {
+    "text": "Male cassowaries incubate the eggs and raise the chicks alone — the female plays no role in raising the offspring.",
+    "animal": "cassowary"
+  },
+  {
+    "text": "Crows use traffic to crack nuts, placing them on roads for passing cars to run over, then waiting for a red light to collect them.",
+    "animal": "crow"
+  },
+  {
+    "text": "The bolas spider mimics moth pheromones to lure male moths, then swings a sticky ball on a silk thread to catch them.",
+    "animal": "spider"
+  },
+  {
+    "text": "Wolves live in family groups called packs, typically led by a breeding pair, and cooperate to raise pups and hunt large prey.",
+    "animal": "wolf"
+  },
+  {
+    "text": "A blue whale's heart is roughly the size of a small car and beats only five to six times per minute.",
+    "animal": "whale"
+  },
+  {
+    "text": "Most chameleon species are found only on the island of Madagascar, where they have evolved into an extraordinary variety of forms.",
+    "animal": "chameleon"
+  },
+  {
+    "text": "Naked mole rats can live over 30 years — ten times longer than similar-sized rodents — and show few signs of aging.",
+    "animal": "molertat"
+  },
+  {
+    "text": "Pistol shrimp often pair with goby fish — the shrimp digs a shared burrow while the fish watches for danger and signals with its tail.",
+    "animal": "pistolshrimp"
+  },
+  {
+    "text": "A horse's hooves are made of keratin — the same protein as human fingernails — and grow about one centimeter per month.",
+    "animal": "horse"
+  },
+  {
+    "text": "Pigeons can navigate back to their home loft from hundreds of kilometers away, using landmarks, the sun, and magnetic fields.",
+    "animal": "pigeon"
+  },
+  {
+    "text": "Arctic terns make the longest migration of any animal — flying from the Arctic to the Antarctic and back, up to 90,000 km per year.",
+    "animal": "tern"
+  },
+  {
+    "text": "The mimic octopus can impersonate over 15 different species, including flatfish, lionfish, and sea snakes, by changing shape and color.",
+    "animal": "octopus"
+  },
+  {
+    "text": "Emperor penguins can dive to depths of over 550 meters and hold their breath for more than 20 minutes.",
+    "animal": "penguin"
+  },
+  {
+    "text": "Eagles have a second eyelid, the nictitating membrane, that protects the eye during flight and when feeding.",
+    "animal": "eagle"
+  },
+  {
+    "text": "Seahorses are the only animal species where the male carries and gives birth to the young.",
+    "animal": "seahorse"
+  },
+  {
+    "text": "Hippos spend most of the day in water to stay cool and moist, emerging at night to graze on grasses.",
+    "animal": "hippo"
+  },
+  {
+    "text": "Whales are descended from land-dwelling mammals that returned to the sea roughly 50 million years ago.",
+    "animal": "whale"
+  },
+  {
+    "text": "Komodo dragons have venom glands between their teeth that deliver anticoagulant compounds, as confirmed by researchers in 2009.",
+    "animal": "komodo"
+  },
+  {
+    "text": "Crocodiles cannot chew — they swallow rocks as ballast and to help grind food in their stomach.",
+    "animal": "crocodile"
+  },
+  {
+    "text": "A cat can hear sounds up to 64,000 Hz — far beyond the range of both humans and dogs.",
+    "animal": "cat"
+  },
+  {
+    "text": "Electric eels are not true eels — they are more closely related to catfish. Their organs generate up to 860 volts of electricity.",
+    "animal": "eel"
+  },
+  {
+    "text": "A falcon's eye has two foveas — focal points — allowing it to see forward and to the side with equal sharpness simultaneously.",
+    "animal": "falcon"
+  },
+  {
+    "text": "Kangaroos can have two joeys at different developmental stages at the same time — one in the pouch, one still in the womb.",
+    "animal": "kangaroo"
+  },
+  {
+    "text": "Monarch butterflies use a time-compensated sun compass to navigate south, adjusting their flight path as the sun moves across the sky.",
+    "animal": "butterfly"
+  },
+  {
+    "text": "Octopus blood is blue because it contains copper-based hemocyanin instead of the iron-based hemoglobin found in human blood.",
+    "animal": "octopus"
+  },
+  {
+    "text": "Giraffes have distinctive spot patterns that are unique to each individual, like a fingerprint.",
+    "animal": "giraffe"
+  },
+  {
+    "text": "A hummingbird must consume roughly half its body weight in nectar every day to fuel its rapid metabolism.",
+    "animal": "hummingbird"
+  },
+  {
+    "text": "Hyacinth macaws, the largest flying parrot, have beaks strong enough to crack open coconut shells.",
+    "animal": "parrot"
+  },
+  {
+    "text": "Young crows and ravens play games with each other, sliding down snow banks and dropping objects to catch mid-air.",
+    "animal": "crow"
+  },
+  {
+    "text": "Desert tortoises can survive for a year without drinking water, obtaining moisture from the plants they eat.",
+    "animal": "tortoise"
+  },
+  {
+    "text": "Aldabra giant tortoises can live for over 200 years and are among the longest-lived animals on Earth.",
+    "animal": "tortoise"
+  },
+  {
+    "text": "Octopuses can open screw-top jars, navigate mazes, and recognize individual human faces.",
+    "animal": "octopus"
+  },
+  {
+    "text": "Meerkats post sentinel guards who scan the horizon for predators while the rest of the group forages safely.",
+    "animal": "meerkat"
+  },
+  {
+    "text": "Elephants have been documented visiting the bones of deceased relatives and touching them gently with their trunks.",
+    "animal": "elephant"
+  },
+  {
+    "text": "Red pandas mark territory with scent glands near the base of their tail and use scent posts throughout their range.",
+    "animal": "redpanda"
+  },
+  {
+    "text": "Some octopus species mimic the appearance and movements of more dangerous animals, such as flounders and lionfish.",
+    "animal": "octopus"
+  },
+  {
+    "text": "An elephant's trunk contains about 40,000 individual muscles and is strong enough to uproot a tree.",
+    "animal": "elephant"
+  },
+  {
+    "text": "Manta rays can leap entirely out of the water, sometimes performing multiple somersaults before splashing back down.",
+    "animal": "manta"
+  },
+  {
+    "text": "Red pandas spend most of their time in trees and use their bushy tails as a blanket to keep warm on cold nights.",
+    "animal": "redpanda"
+  },
+  {
+    "text": "Young salmon, called parr, can recognize and avoid the scent of a predator that caught a fellow parr, without ever seeing it themselves.",
+    "animal": "salmon"
+  },
+  {
+    "text": "The cassowary's helmet-like casque on top of its head may amplify low-frequency sounds used in communication.",
+    "animal": "cassowary"
+  },
+  {
+    "text": "A dolphin's skin is replaced every two hours, keeping it smooth and reducing drag in the water.",
+    "animal": "dolphin"
+  },
+  {
+    "text": "Fire ants can link their bodies together to form living rafts that float on water during floods.",
+    "animal": "ant"
+  },
+  {
+    "text": "A tardigrade's body is about 0.5 mm long — small enough to live in a film of water on a moss leaf.",
+    "animal": "tardigrade"
+  },
+  {
+    "text": "A honey bee visits roughly 1,500 flowers and flies about three kilometers to produce a single teaspoon of honey.",
+    "animal": "bee"
+  },
+  {
+    "text": "Indri lemurs, the largest living lemurs, produce haunting wailing songs that carry for kilometers through the forest.",
+    "animal": "lemur"
+  },
+  {
+    "text": "Wombats produce cube-shaped droppings — unique in the animal kingdom — which they use to mark territory on top of rocks and logs.",
+    "animal": "wombat"
+  },
+  {
+    "text": "Dragonflies have been flying over Earth for over 300 million years and were once much larger — some had wingspans of 75 cm.",
+    "animal": "dragonfly"
+  },
+  {
+    "text": "A hippo's yawn is not a sign of tiredness — it is a display of its enormous tusks to signal aggression or warning.",
+    "animal": "hippo"
+  },
+  {
+    "text": "Dragonflies are among the most effective aerial hunters on Earth, catching over 95 percent of the prey they pursue.",
+    "animal": "dragonfly"
+  },
+  {
+    "text": "Gorillas are primarily herbivores, spending most of their day eating plants, fruit, and bark.",
+    "animal": "gorilla"
+  },
+  {
+    "text": "Crow communities practice mobbing, grouping together to chase off much larger predators that threaten the group.",
+    "animal": "crow"
+  },
+  {
+    "text": "In their dormant state, tardigrades can remain viable for decades and revive when rehydrated with a droplet of water.",
+    "animal": "tardigrade"
+  },
+  {
+    "text": "Chimpanzees have been observed seeking out and eating specific plants when they are ill, suggesting a basic form of self-medication.",
+    "animal": "chimpanzee"
+  },
+  {
+    "text": "Most spiders have eight eyes, though the number and arrangement varies by species. Some cave-dwelling spiders have no eyes at all.",
+    "animal": "spider"
+  },
+  {
+    "text": "Falcons have a notch in their beak called a tomial tooth, used to sever the spinal cord of prey quickly.",
+    "animal": "falcon"
+  },
+  {
+    "text": "A sloth's slow movement is actually a survival strategy — predators that rely on motion to spot prey often overlook them entirely.",
+    "animal": "sloth"
+  },
+  {
+    "text": "Cassowaries swallow large fruit whole and disperse the seeds across the forest in their droppings, making them vital for rainforest health.",
+    "animal": "cassowary"
+  },
+  {
+    "text": "Beetles make up about 25 percent of all known animal species — there are more beetle species than any other type of animal.",
+    "animal": "beetle"
+  },
+  {
+    "text": "When swimming, a platypus closes its eyes, nose, and ears and relies entirely on its electroreceptive bill to navigate.",
+    "animal": "platypus"
+  },
+  {
+    "text": "Parrots preen each other as a sign of bonding and affection — a behavior called allopreening.",
+    "animal": "parrot"
+  },
+  {
+    "text": "Electric eels breathe air and must surface every few minutes because their gut has evolved into a breathing organ.",
+    "animal": "eel"
+  },
+  {
+    "text": "Foxes use Earth's magnetic field to estimate distance when pouncing, increasing their hunting accuracy in deep snow.",
+    "animal": "fox"
+  },
+  {
+    "text": "Hermit crabs have been observed gathering at a prized shell and forming a vacancy chain, each moving into the shell just vacated by the next.",
+    "animal": "hermitcrab"
+  },
+  {
+    "text": "Sea stars have no blood — they use a water vascular system to move their tube feet and transport nutrients.",
+    "animal": "starfish"
+  },
+  {
+    "text": "Penguins recognize their partners and chicks by voice, even among thousands of identical-looking neighbors.",
+    "animal": "penguin"
+  },
+  {
+    "text": "The axolotl's genome is ten times larger than a human's, containing more genetic information than almost any other animal studied.",
+    "animal": "axolotl"
+  },
+  {
+    "text": "Butterflies taste with their feet — chemoreceptors on their tarsi detect sugars and other compounds before they even begin to eat.",
+    "animal": "butterfly"
+  },
+  {
+    "text": "Raccoons often handle and seemingly 'wash' their food in water, which actually heightens the sensitivity of their paws.",
+    "animal": "raccoon"
+  },
+  {
+    "text": "Owls regurgitate the indigestible parts of their prey — bones, fur, and feathers — in compact pellets.",
+    "animal": "owl"
+  },
+  {
+    "text": "Firefly larvae are also bioluminescent and use their glow to warn predators that they taste unpleasant.",
+    "animal": "firefly"
+  },
+  {
+    "text": "Dolphins have names for each other — individuals learn a unique whistle that functions as a personal identifier.",
+    "animal": "dolphin"
+  },
+  {
+    "text": "Crows and ravens are the only non-primate animals observed making and using hooked tools in the wild.",
+    "animal": "crow"
+  },
+  {
+    "text": "Axolotls can grow back a damaged eye lens with nearly perfect accuracy, a feat impossible for most vertebrates.",
+    "animal": "axolotl"
+  },
+  {
+    "text": "Gorillas build a new nest to sleep in each night, bending branches and leaves into a comfortable platform.",
+    "animal": "gorilla"
+  },
+  {
+    "text": "Sea stars can regenerate lost arms — and in some species, a single severed arm can grow into an entirely new animal.",
+    "animal": "starfish"
+  },
+  {
+    "text": "A colony of Mexican free-tailed bats can consume several tons of insects on a single summer night.",
+    "animal": "bat"
+  },
+  {
+    "text": "An octopus can fit through any opening large enough for its beak, which is the only hard part of its body.",
+    "animal": "octopus"
+  },
+  {
+    "text": "Domestic cats are crepuscular and are most active at dawn and dusk, though many adapt to their owner's schedule.",
+    "animal": "cat"
+  },
+  {
+    "text": "Male cuttlefish can display a female coloration on one side of their body to sneak past rival males while courting a female on the other.",
+    "animal": "cuttlefish"
+  },
+  {
+    "text": "A giraffe's tongue is about 50 cm long and dark blue-purple in color, possibly an adaptation to protect it from sunburn.",
+    "animal": "giraffe"
+  },
+  {
+    "text": "Albatrosses can travel more than 120,000 km in a single year and glide for hours without flapping their wings.",
+    "animal": "albatross"
+  },
+  {
+    "text": "Starfish, more accurately called sea stars, are not fish at all — they belong to the echinoderm family, related to sea urchins.",
+    "animal": "starfish"
+  },
+  {
+    "text": "Atlantic salmon can jump up to three meters high to clear waterfalls and rapids during their upstream migration.",
+    "animal": "salmon"
+  },
+  {
+    "text": "Narwhals have a single spiraling tusk that is actually an elongated tooth with up to 10 million nerve endings near its surface.",
+    "animal": "narwhal"
+  },
+  {
+    "text": "Frogs absorb water through their skin rather than drinking it, so clean, moist environments are critical for their survival.",
+    "animal": "frog"
+  },
+  {
+    "text": "A gorilla's arms are longer than its legs, and it often moves by knuckle-walking — placing weight on the backs of its fingers.",
+    "animal": "gorilla"
+  },
+  {
+    "text": "Wandering albatrosses have the longest wingspan of any living bird, reaching up to 3.5 meters from tip to tip.",
+    "animal": "albatross"
+  },
+  {
+    "text": "Humpback whales sing complex, evolving songs that can last for hours and are unique to specific ocean populations.",
+    "animal": "whale"
+  },
+  {
+    "text": "Naked mole rats live in eusocial colonies like bees or ants, with a queen who is the only one to reproduce.",
+    "animal": "molertat"
+  },
+  {
+    "text": "Some butterfly species migrate thousands of kilometers. The monarch butterfly travels up to 4,800 km between Canada and Mexico.",
+    "animal": "butterfly"
+  },
+  {
+    "text": "Platypuses have no stomach — food passes directly from the esophagus to the intestine, where digestion takes place.",
+    "animal": "platypus"
+  },
+  {
+    "text": "Mantises can rotate their heads 180 degrees — the only insect capable of looking over its own shoulder.",
+    "animal": "mantis"
+  },
+  {
+    "text": "Mantises are the only insects known to hunt and catch birds regularly, using a strike faster than the eye can follow.",
+    "animal": "mantis"
+  },
+  {
+    "text": "Some frog species in cold climates can survive being almost entirely frozen during winter, thawing out in spring completely unharmed.",
+    "animal": "frog"
+  },
+  {
+    "text": "The lyrebird of Australia is one of the world's greatest mimics, reproducing chainsaws, camera shutters, and other bird calls with startling accuracy.",
+    "animal": "lyrebird"
+  },
+  {
+    "text": "Cuttlefish change color patterns so rapidly that researchers have recorded over a thousand distinct displays in a single individual.",
+    "animal": "cuttlefish"
+  },
+  {
+    "text": "Salmon return to the exact stream where they were born to reproduce, navigating thousands of kilometers by sense of smell.",
+    "animal": "salmon"
+  },
+  {
+    "text": "The queen bee can lay up to 2,000 eggs per day during peak season — more than her own body weight in eggs each day.",
+    "animal": "bee"
+  },
+  {
+    "text": "Horses have the largest eyes of any land mammal and can see nearly 360 degrees around them.",
+    "animal": "horse"
+  },
+  {
+    "text": "Young Komodo dragons spend their first years living in trees to avoid being eaten by adults on the ground.",
+    "animal": "komodo"
+  },
+  {
+    "text": "Wombats have cartilaginous plates on their rump, which they use to block the entrance to their burrow against predators.",
+    "animal": "wombat"
+  },
+  {
+    "text": "The narwhal tusk is found on males and some females — it can grow up to three meters long.",
+    "animal": "narwhal"
+  },
+  {
+    "text": "Wolves can travel 80 km or more in a single day when searching for food across large territories.",
+    "animal": "wolf"
+  },
+  {
+    "text": "Naked mole rats can survive up to 18 minutes with no oxygen by switching to a fructose-based metabolic pathway.",
+    "animal": "molertat"
+  },
+  {
+    "text": "Crows have been observed leaving gifts — small shiny objects or food — for humans who regularly feed them.",
+    "animal": "crow"
+  },
+  {
+    "text": "Pigeons were used to carry messages in both World Wars and had a success rate of around 95 percent in delivering them.",
+    "animal": "pigeon"
+  },
+  {
+    "text": "Horses have a memory comparable to elephants — they can recognize individual humans and other horses years after separation.",
+    "animal": "horse"
+  },
+  {
+    "text": "Wolves have large paws with a webbing between the toes that acts like a snowshoe, helping them move through deep snow.",
+    "animal": "wolf"
+  },
+  {
+    "text": "Giant pandas have a bone called the radial sesamoid that acts like a thumb, helping them grip bamboo stalks.",
+    "animal": "panda"
+  },
+  {
+    "text": "Sea turtles have existed for over 100 million years, surviving the mass extinction that wiped out most dinosaurs.",
+    "animal": "turtle"
+  },
+  {
+    "text": "A newborn elephant can stand within minutes of birth and is guided and supported by the whole herd.",
+    "animal": "elephant"
+  },
+  {
+    "text": "Baby platypuses hatch from eggs and lap up milk that oozes through the mother's skin — she has no nipples.",
+    "animal": "platypus"
+  },
+  {
+    "text": "Sea otters eat about 25 percent of their body weight in food each day to maintain their body temperature in cold water.",
+    "animal": "otter"
+  },
+  {
+    "text": "Dolphins have a highly developed sense of hearing and can detect sounds at frequencies far beyond the human range.",
+    "animal": "dolphin"
+  },
+  {
+    "text": "Owls have three eyelids: one for blinking, one for sleeping, and a third called a nictitating membrane that cleans the eye.",
+    "animal": "owl"
+  },
+  {
+    "text": "Fennec foxes have enormous ears relative to their body, which radiate heat to keep them cool in the Sahara Desert.",
+    "animal": "fox"
+  },
+  {
+    "text": "Cuttlefish have W-shaped pupils that allow them to see in almost all directions at once, with nearly no blind spots.",
+    "animal": "cuttlefish"
+  },
+  {
+    "text": "Groups of narwhals, called pods or schools, sometimes number in the thousands during summer migrations.",
+    "animal": "narwhal"
+  },
+  {
+    "text": "Wombat burrows can be over 30 meters long and provide shelter for other species like wallabies and lizards.",
+    "animal": "wombat"
+  },
+  {
+    "text": "Orchid mantises mimic flower petals so closely that pollinating insects actually approach them expecting nectar.",
+    "animal": "mantis"
+  },
+  {
+    "text": "Honey never spoils. Archaeologists have found 3,000-year-old honey in Egyptian tombs that was still edible.",
+    "animal": "bee"
+  },
+  {
+    "text": "There are about 30 known species of clownfish, and each tends to associate with specific species of sea anemone.",
+    "animal": "clownfish"
+  },
+  {
+    "text": "Male emperor penguins incubate their eggs on their feet, huddling together for warmth during the Antarctic winter without eating.",
+    "animal": "penguin"
+  },
+  {
+    "text": "Wild boars are strong swimmers and have been recorded crossing rivers several kilometers wide during migrations.",
+    "animal": "boar"
+  },
+  {
+    "text": "Narwhals can dive to depths of over 1,500 meters and spend more time in deep water during winter than any other cetacean.",
+    "animal": "narwhal"
+  },
+  {
+    "text": "Elephants can recognize themselves in a mirror, a cognitive ability shared by only a handful of species.",
+    "animal": "elephant"
+  },
+  {
+    "text": "Without bees pollinating crops, about one third of the food humans eat would disappear from the food supply.",
+    "animal": "bee"
+  },
+  {
+    "text": "Hippos secrete a natural sunscreen — a reddish oily liquid that also has antibiotic properties — to protect their sensitive skin.",
+    "animal": "hippo"
+  },
+  {
+    "text": "During metamorphosis, a caterpillar's body dissolves almost entirely into a soup of cells before reorganizing into a butterfly.",
+    "animal": "butterfly"
+  },
+  {
+    "text": "Lyrebird tail feathers are shaped like the Greek instrument the lyre and take up to seven years to grow fully.",
+    "animal": "lyrebird"
+  },
+  {
+    "text": "Honeybees die after stinging a human because their barbed stinger gets stuck and tears away from their abdomen.",
+    "animal": "bee"
+  },
+  {
+    "text": "All domestic dog breeds are descended from wolves, with the two sharing about 99.9 percent of their mitochondrial DNA.",
+    "animal": "wolf"
+  },
+  {
+    "text": "Cuttlefish can count — experiments show they delay gratification for preferred food when they learn a larger reward is coming.",
+    "animal": "cuttlefish"
+  },
+  {
+    "text": "A dog's nose print is as unique as a human fingerprint and is used in some countries to identify individual animals.",
+    "animal": "dog"
+  },
+  {
+    "text": "Scientists study axolotls closely because their regeneration abilities could inform future medical research on tissue repair.",
+    "animal": "axolotl"
+  },
+  {
+    "text": "Cheetahs purr like domestic cats and cannot roar. They are the only big cat that can purr on both inhale and exhale.",
+    "animal": "cheetah"
+  },
+  {
+    "text": "Albatrosses can live for over 70 years. A female named Wisdom is the oldest known wild bird, at over 70 years old.",
+    "animal": "albatross"
+  },
+  {
+    "text": "Dung beetles navigate by the Milky Way — they are the only insects confirmed to use stars for orientation.",
+    "animal": "beetle"
+  },
+  {
+    "text": "Butterflies are cold-blooded and must warm their wings in the sun before they can fly on cool mornings.",
+    "animal": "butterfly"
+  },
+  {
+    "text": "The box jellyfish has 24 eyes arranged in four clusters, giving it nearly 360-degree vision despite having no brain.",
+    "animal": "jellyfish"
+  },
+  {
+    "text": "Platypus fur glows a blue-green color under ultraviolet light, a trait shared by very few other mammals.",
+    "animal": "platypus"
+  },
+  {
+    "text": "An owl's eyes are not spherical — they are tube-shaped, which means owls cannot move their eyes in their sockets.",
+    "animal": "owl"
+  },
+  {
+    "text": "Porcupines cannot shoot their quills — a predator must touch them to be impaled, as the quills release on contact.",
+    "animal": "porcupine"
+  },
+  {
+    "text": "Elephants are the only mammals that cannot jump, due to their immense weight and bone structure.",
+    "animal": "elephant"
+  },
+  {
+    "text": "Mother crocodiles carefully carry their newly hatched young to the water in their mouth without harming them.",
+    "animal": "crocodile"
+  },
+  {
+    "text": "The great grey owl can plunge through 60 centimeters of snow to snatch a vole it heard moving beneath the surface.",
+    "animal": "owl"
+  },
+  {
+    "text": "Honey badgers have been recorded successfully repelling lions, leopards, and hyenas, despite being much smaller.",
+    "animal": "honeybadger"
+  },
+  {
+    "text": "A flamingo's beak is specially shaped to filter food from water — it feeds upside down, using its tongue as a pump.",
+    "animal": "flamingo"
+  },
+  {
+    "text": "Rhinos have poor eyesight but an excellent sense of smell and hearing, which they rely on to detect danger.",
+    "animal": "rhino"
+  },
+  {
+    "text": "Foxes make a wide range of sounds — over 40 different calls, including a distinctive scream-like bark used during mating season.",
+    "animal": "fox"
+  },
+  {
+    "text": "Gorillas share about 98.3 percent of their DNA with humans, making them one of our closest living relatives.",
+    "animal": "gorilla"
+  },
+  {
+    "text": "Red foxes have vertical slit pupils that give them excellent low-light vision for hunting at dusk and dawn.",
+    "animal": "fox"
+  },
+  {
+    "text": "Flamingos sleep standing on one leg. Scientists believe this reduces the muscle effort needed to stay balanced and may conserve warmth.",
+    "animal": "flamingo"
+  },
+  {
+    "text": "Raccoons have been shown to solve puzzles and remember solutions for up to three years.",
+    "animal": "raccoon"
+  },
+  {
+    "text": "Honey bees maintain the temperature inside the hive at almost exactly 35 degrees Celsius by fanning their wings or clustering together.",
+    "animal": "bee"
+  },
+  {
+    "text": "Tardigrades have been found on every continent, from the Himalayas to the deep ocean, making them one of the most widespread animals.",
+    "animal": "tardigrade"
+  },
+  {
+    "text": "Capybaras are famously social and tolerant, often sharing their space with birds, monkeys, and other animals.",
+    "animal": "capybara"
+  },
+  {
+    "text": "Baby bats, called pups, are born knowing how to fold their wings and will be carried by their mother until they can fly.",
+    "animal": "bat"
+  },
+  {
+    "text": "Bats always turn left when exiting a cave, a consistent behavior that researchers believe may be linked to brain lateralization.",
+    "animal": "bat"
+  },
+  {
+    "text": "The geoduck clam is among the longest-lived animals on Earth, with some individuals living over 160 years.",
+    "animal": "clam"
+  },
+  {
+    "text": "A sea star's mouth is on its underside, and it can push its stomach out of its body to digest food externally.",
+    "animal": "starfish"
+  },
+  {
+    "text": "Flamingos are not pink by nature — they get their color from carotenoid pigments in the algae and crustaceans they eat.",
+    "animal": "flamingo"
+  },
+  {
+    "text": "Chimpanzees use a wide variety of gestures to communicate, and researchers have identified over 66 distinct intentional gestures.",
+    "animal": "chimpanzee"
+  },
+  {
+    "text": "The lifespan of most adult butterflies is only a few weeks, though the monarch can live up to nine months.",
+    "animal": "butterfly"
+  },
+  {
+    "text": "Like giant pandas, red pandas eat primarily bamboo, using a modified wrist bone as a pseudo-thumb to grip stalks.",
+    "animal": "redpanda"
+  },
+  {
+    "text": "Axolotls retain juvenile features for their entire lives — a condition called neoteny — including feathery external gills.",
+    "animal": "axolotl"
+  }
+]

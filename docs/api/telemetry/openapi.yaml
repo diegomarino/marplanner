@@ -1,0 +1,207 @@
+openapi: 3.1.0
+info:
+  title: Marplanner Client Logging / Telemetry API
+  version: 1.0.0
+  description: >
+    Telemetry ingest + admin read. Ingest is best-effort at-most-once: a well-formed batch ALWAYS
+    returns 200 (accepted/dropped counts), never 429 and never per-entry errors the client would
+    react to. Redaction and bounding happen server-side before storage (Constitution II).
+    Capabilities: telemetry:write (ingest) / telemetry:admin (read); full-access ('*') keys satisfy
+    both.
+servers:
+  - url: /
+components:
+  securitySchemes:
+    deviceKeyCookie:
+      type: apiKey
+      in: cookie
+      name: mp_device_key
+  schemas:
+    ClientLogLevel:
+      type: string
+      enum:
+        - debug
+        - info
+        - warn
+        - error
+    ClientLogEntryInput:
+      type: object
+      additionalProperties: false
+      required:
+        - level
+        - component
+        - message
+      properties:
+        level:
+          $ref: "#/components/schemas/ClientLogLevel"
+        component:
+          type: string
+          minLength: 1
+          maxLength: 64
+        message:
+          type: string
+          minLength: 1
+          maxLength: 256
+        data:
+          description: Arbitrary structured diagnostic values; bounded and redacted at ingest.
+        eventTime:
+          type: integer
+          description: Client-claimed epoch ms; advisory only (received_at is authoritative).
+    ClientLogBatch:
+      type: object
+      additionalProperties: false
+      required:
+        - entries
+      properties:
+        entries:
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/ClientLogEntryInput"
+    ClientLogIngestResult:
+      type: object
+      additionalProperties: false
+      required:
+        - accepted
+        - dropped
+      properties:
+        accepted:
+          type: integer
+        dropped:
+          type: integer
+    ClientLogRow:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - eventId
+        - eventTime
+        - receivedAt
+        - level
+        - component
+        - message
+        - data
+      properties:
+        id:
+          type: string
+        eventId:
+          type: string
+        eventTime:
+          type:
+            - integer
+            - "null"
+        receivedAt:
+          type: integer
+        level:
+          $ref: "#/components/schemas/ClientLogLevel"
+        component:
+          type: string
+        message:
+          type: string
+        data:
+          type:
+            - string
+            - "null"
+          description: Redacted, bounded JSON text exactly as stored, or null.
+    ClientLogPage:
+      type: object
+      additionalProperties: false
+      required:
+        - rows
+        - nextCursor
+      properties:
+        rows:
+          type: array
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/ClientLogRow"
+        nextCursor:
+          type:
+            - string
+            - "null"
+    ValidationError:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          enum:
+            - validation_error
+        message:
+          type: string
+security:
+  - deviceKeyCookie: []
+paths:
+  /api/telemetry/client-log:
+    post:
+      operationId: ingestClientLog
+      summary: Ingest a bounded batch of client log entries (telemetry:write)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientLogBatch"
+      responses:
+        "200":
+          description: >
+            Batch processed best-effort. Invalid entries and flood-dropped entries are counted in
+            `dropped`; the response is 200 even when every entry was dropped.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientLogIngestResult"
+        "400":
+          description: Structurally unparseable body (not JSON / not the batch shape).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+    get:
+      operationId: readClientLog
+      summary: Read the client log, filtered and cursor-paged (telemetry:admin)
+      parameters:
+        - name: level
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/ClientLogLevel"
+        - name: component
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: from
+          in: query
+          required: false
+          description: Inclusive lower bound on received_at (epoch ms).
+          schema:
+            type: integer
+        - name: to
+          in: query
+          required: false
+          description: Inclusive upper bound on received_at (epoch ms).
+          schema:
+            type: integer
+        - name: cursor
+          in: query
+          required: false
+          description: Opaque continuation cursor from a previous page.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Newest-first page, server-hard-capped at 50 rows.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientLogPage"
+        "400":
+          description: Invalid filter or cursor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"

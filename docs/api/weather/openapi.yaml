@@ -1,0 +1,308 @@
+openapi: 3.1.0
+info:
+  title: Marplanner — Weather API
+  version: 1.0.0
+  description: >-
+    Household location settings and forecast reads. Location may be unset. Provider unavailability
+    is explicit; inactive plugin settings are omitted from effective settings.
+servers:
+  - url: /
+components:
+  securitySchemes:
+    deviceKeyCookie:
+      type: apiKey
+      in: cookie
+      name: mp_device_key
+  schemas:
+    SettingsWrite:
+      type: object
+      required:
+        - object
+        - settings
+      additionalProperties: false
+      properties:
+        object:
+          type: string
+          enum:
+            - locale
+            - weather
+            - printer
+            - printerTransport
+          description: Registered object name; unknown names are rejected 400/422.
+        settings:
+          description: >-
+            Object payload validated against the named object's schema BEFORE any write; persisted
+            atomically as a whole-object replace.
+          oneOf:
+            - $ref: "#/components/schemas/LocaleSettings"
+            - $ref: "#/components/schemas/WeatherLocation"
+            - $ref: "#/components/schemas/PrinterSettings"
+            - $ref: "#/components/schemas/PrinterTransportSettings"
+    PrinterSettings:
+      type: object
+      required:
+        - paperWidthDots
+      additionalProperties: false
+      properties:
+        paperWidthDots:
+          type: integer
+          minimum: 1
+      description: Persisted printer configuration only; it does not assert a connected or capable printer.
+    PrinterTransportSettings:
+      type: object
+      required:
+        - deviceId
+        - name
+        - serviceUuid
+        - characteristicUuid
+      additionalProperties: false
+      properties:
+        deviceId:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        serviceUuid:
+          type: string
+          format: uuid
+        characteristicUuid:
+          type: string
+          format: uuid
+      description: >-
+        Private local transport configuration accepted only while Printing is active; it is not
+        pairing, connectivity, capability, or activity state.
+    LocaleSettings:
+      type: object
+      required:
+        - timezone
+        - language
+        - weekStartDay
+      additionalProperties: false
+      properties:
+        timezone:
+          type: string
+          description: IANA timezone, e.g. Europe/Madrid
+        language:
+          type: string
+          enum:
+            - es
+            - en
+        weekStartDay:
+          type: integer
+          enum:
+            - 0
+            - 1
+      description: >-
+        The complete canonical locale object — PUT is whole-object replace, so a write MUST carry
+        all three fields (a language-only write would silently reset timezone/weekStartDay to
+        defaults).
+    EffectiveSettings:
+      type: object
+      required:
+        - locale
+      additionalProperties: false
+      properties:
+        locale:
+          $ref: "#/components/schemas/LocaleSettings"
+        weather:
+          $ref: "#/components/schemas/WeatherLocation"
+        printer:
+          $ref: "#/components/schemas/PrinterSettings"
+        printerTransport:
+          $ref: "#/components/schemas/PrinterTransportSettings"
+      description: >-
+        Core settings and active plugin-owned settings, with defaults filling unpersisted fields.
+        Weather is omitted while its plugin is inactive.
+    WeatherLocation:
+      type: object
+      additionalProperties: false
+      properties:
+        lat:
+          type:
+            - number
+            - "null"
+          minimum: -90
+          maximum: 90
+        lon:
+          type:
+            - number
+            - "null"
+          minimum: -180
+          maximum: 180
+        label:
+          type: string
+          maxLength: 80
+          description: >-
+            Optional free text; absent ⇒ no place label rendered; never reverse-geocoded
+            (WEATHER-INV-08).
+      description: >-
+        Both-or-neither non-null (partial pair rejected on write, WEATHER-INV-02); clearing writes
+        both null as one unit.
+    ForecastCurrent:
+      type: object
+      required:
+        - conditionKey
+        - tempC
+        - rainPct
+      additionalProperties: false
+      properties:
+        conditionKey:
+          $ref: "#/components/schemas/ConditionKey"
+        tempC:
+          type: number
+        rainPct:
+          type: integer
+          minimum: 0
+          maximum: 100
+    ForecastHour:
+      type: object
+      required:
+        - time
+        - conditionKey
+        - tempC
+        - rainPct
+      additionalProperties: false
+      properties:
+        time:
+          type: string
+          description: ISO datetime in household tz
+        conditionKey:
+          $ref: "#/components/schemas/ConditionKey"
+        tempC:
+          type: number
+        rainPct:
+          type: integer
+          minimum: 0
+          maximum: 100
+    ForecastDay:
+      type: object
+      required:
+        - date
+        - conditionKey
+        - tempMinC
+        - tempMaxC
+        - rainPct
+      additionalProperties: false
+      properties:
+        date:
+          type: string
+          description: YYYY-MM-DD in household tz (WEATHER-INV-04)
+        conditionKey:
+          $ref: "#/components/schemas/ConditionKey"
+        tempMinC:
+          type: number
+        tempMaxC:
+          type: number
+        rainPct:
+          type: integer
+          minimum: 0
+          maximum: 100
+    ConditionKey:
+      type: string
+      enum:
+        - clear
+        - mostlyClear
+        - partlyCloudy
+        - overcast
+        - fog
+        - drizzle
+        - freezingDrizzle
+        - rain
+        - freezingRain
+        - snow
+        - snowGrains
+        - rainShowers
+        - snowShowers
+        - thunderstorm
+        - thunderstormHail
+        - unknown
+      description: Closed union from the single shared WMO map (WEATHER-INV-06).
+    WeatherResponse:
+      type: object
+      required:
+        - forecast
+      additionalProperties: false
+      properties:
+        forecast:
+          description: >-
+            null = silent absence: blank location, operator-disabled, or failed/timed-out fetch
+            (WEATHER-INV-12). Never expressed as an HTTP error.
+          oneOf:
+            - type: "null"
+            - type: object
+              required:
+                - current
+                - hourly
+                - daily
+              additionalProperties: false
+              properties:
+                current:
+                  $ref: "#/components/schemas/ForecastCurrent"
+                hourly:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/ForecastHour"
+                daily:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/ForecastDay"
+    ValidationError:
+      type: object
+      required:
+        - error
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+security:
+  - deviceKeyCookie: []
+paths:
+  /api/settings:
+    put:
+      summary: Write one registered settings object (atomic replace)
+      description: >-
+        API-key-gated; NO PIN evaluation server-side (ADR-013/033). Unknown object or schema-invalid
+        payload rejected before any persistence (APP-SETTINGS-REGISTRY-INV-03, AC-02/03); valid
+        payload replaces the named object atomically (INV-04).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsWrite"
+      responses:
+        "200":
+          description: >-
+            Object replaced; returns the updated EFFECTIVE settings map (the registry contract's
+            post-write read — same shape as GET /api/settings).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EffectiveSettings"
+        "400":
+          description: Unknown object name or schema-invalid payload; nothing persisted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+        "401":
+          description: Missing/invalid API key.
+  /api/weather:
+    get:
+      summary: Read the normalized forecast for the household's configured location
+      description: >
+        WEATHER's only own surface (FR-024) — the location is read/written ONLY through App
+        Settings; no weather settings endpoint exists (negative-proved via `app.hasRoute`).
+        `forecast: null` covers every absence case alike (blank location, operator-disabled via
+        `WEATHER_ENABLED`, or a failed/timed-out upstream fetch) — NEVER a 5xx (WEATHER-INV-12, D3).
+        Gated only by the app-wide API-key boundary, no capability (mirrors `GET /api/settings`).
+      responses:
+        "200":
+          description: "Always 200 — absence is expressed as `forecast: null`, never an error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeatherResponse"
+        "401":
+          description: Missing/invalid API key.

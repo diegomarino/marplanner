@@ -1,0 +1,1832 @@
+[
+  {
+    "fact": "1 es el primer número figurado de cada tipo, como el número triangular, el número pentagonal y el número hexagonal centrado, por nombrar solo algunos.",
+    "kind": "math",
+    "number": 1
+  },
+  {
+    "fact": "2 es el número de soluciones al problema de las n reinas para n = 4.",
+    "kind": "math",
+    "number": 2
+  },
+  {
+    "fact": "3 es la suma de aliquot de 4.",
+    "kind": "math",
+    "number": 3
+  },
+  {
+    "fact": "4 es el número mínimo de colores suficientes para colorear todos los mapas planares.",
+    "kind": "math",
+    "number": 4
+  },
+  {
+    "fact": "5 es el número de sólidos platónicos.",
+    "kind": "math",
+    "number": 5
+  },
+  {
+    "fact": "6 es el segundo número compuesto más pequeño, siendo sus divisores propios 1, 2 y 3.",
+    "kind": "math",
+    "number": 6
+  },
+  {
+    "fact": "7 es la única dimensión, además de la conocida 3, en la que se puede definir un producto vectorial.",
+    "kind": "math",
+    "number": 7
+  },
+  {
+    "fact": "8 es un número compuesto, siendo sus divisores propios 1, 2 y 4.",
+    "kind": "math",
+    "number": 8
+  },
+  {
+    "fact": "9 es el número máximo de cubos que se necesitan para sumar cualquier número entero positivo.",
+    "kind": "math",
+    "number": 9
+  },
+  {
+    "fact": "10 es un número compuesto, siendo sus divisores propios 1, 2 y 5.",
+    "kind": "math",
+    "number": 10
+  },
+  {
+    "fact": "11 es un número de Størmer, un número de Heegner y un primo de Mills.",
+    "kind": "math",
+    "number": 11
+  },
+  {
+    "fact": "12 es un número sublime, un número que tiene un número perfecto de divisores, y la suma de sus divisores también es un número perfecto.",
+    "kind": "math",
+    "number": 12
+  },
+  {
+    "fact": "13 es el número de sólidos arquimedianos.",
+    "kind": "math",
+    "number": 13
+  },
+  {
+    "fact": "14 es en sí mismo la suma de aliquot de dos números: el semiprimo discreto 22 y el número cuadrado 196.",
+    "kind": "math",
+    "number": 14
+  },
+  {
+    "fact": "15 es el cuarto semiprimo discreto (3.5) y el primer miembro de la familia de semiprimos discretos (3.q).",
+    "kind": "math",
+    "number": 15
+  },
+  {
+    "fact": "16 es el primer número que es la suma de aliquot de un número menor (12); también es la suma de aliquot del número mayor (el semiprimo discreto, 26).",
+    "kind": "math",
+    "number": 16
+  },
+  {
+    "fact": "17 es el número de grupos de simetría del plano.",
+    "kind": "math",
+    "number": 17
+  },
+  {
+    "fact": "18 es el único número positivo que es el doble de la suma de sus dígitos.",
+    "kind": "math",
+    "number": 18
+  },
+  {
+    "fact": "19 es un número triangular centrado, un número hexagonal centrado y un número de Heegner.",
+    "kind": "math",
+    "number": 19
+  },
+  {
+    "fact": "20 es el número abundante primitivo más pequeño.",
+    "kind": "math",
+    "number": 20
+  },
+  {
+    "fact": "21 es el número mínimo de cuadrados distintos necesarios para teselar un cuadrado.",
+    "kind": "math",
+    "number": 21
+  },
+  {
+    "fact": "22 es un número compuesto par, siendo sus divisores propios 1, 2 y 11.",
+    "kind": "math",
+    "number": 22
+  },
+  {
+    "fact": "23 es el número mínimo de cajas con lados enteros que teselan una caja de modo que ninguna pareja de cajas comparta una longitud común.",
+    "kind": "math",
+    "number": 23
+  },
+  {
+    "fact": "24 es el factorial de 4 y un número compuesto, siendo el primer número de la forma 23q, donde q es un primo impar.",
+    "kind": "math",
+    "number": 24
+  },
+  {
+    "fact": "25 también es un número de Cullen.",
+    "kind": "math",
+    "number": 25
+  },
+  {
+    "fact": "El único número positivo que se encuentra directamente entre un cuadrado y un cubo.",
+    "kind": "math",
+    "number": 26
+  },
+  {
+    "fact": "El vigésimo octavo (y vigésimo noveno) dígito de π.",
+    "kind": "math",
+    "number": 27
+  },
+  {
+    "fact": "El segundo número perfecto.",
+    "kind": "math",
+    "number": 28
+  },
+  {
+    "fact": "Un número de Perrin, precedido en la secuencia por 12, 17, 22.",
+    "kind": "math",
+    "number": 29
+  },
+  {
+    "fact": "El mayor número con la propiedad de que todos los números menores que él que son coprimos con él son primos.",
+    "kind": "math",
+    "number": 30
+  },
+  {
+    "fact": "Un número triangular centrado, un número pentagonal centrado y un número decagonal centrado.",
+    "kind": "math",
+    "number": 31
+  },
+  {
+    "fact": "La quinta potencia no trivial más pequeña.",
+    "kind": "math",
+    "number": 32
+  },
+  {
+    "fact": "El mayor número entero positivo que no puede expresarse como una suma de diferentes números triangulares.",
+    "kind": "math",
+    "number": 33
+  },
+  {
+    "fact": "El noveno semiprimo distinto y tiene cuatro divisores, incluyendo la unidad y sí mismo.",
+    "kind": "math",
+    "number": 34
+  },
+  {
+    "fact": "La suma de los cinco primeros números triangulares, lo que lo convierte en un número tetraédrico.",
+    "kind": "math",
+    "number": 35
+  },
+  {
+    "fact": "También es un número 13-gonal.",
+    "kind": "math",
+    "number": 36
+  },
+  {
+    "fact": "El número máximo de quintas potencias necesarias para sumar cualquier número.",
+    "kind": "math",
+    "number": 37
+  },
+  {
+    "fact": "La suma de los cuadrados de los tres primeros números primos.",
+    "kind": "math",
+    "number": 38
+  },
+  {
+    "fact": "El número más pequeño que tiene 3 particiones diferentes en 3 partes con el mismo producto.",
+    "kind": "math",
+    "number": 39
+  },
+  {
+    "fact": "El número de soluciones del problema de las n reinas para n = 7.",
+    "kind": "math",
+    "number": 40
+  },
+  {
+    "fact": "El 13.º número primo más pequeño.",
+    "kind": "math",
+    "number": 41
+  },
+  {
+    "fact": "El quinto número de Catalan.",
+    "kind": "math",
+    "number": 42
+  },
+  {
+    "fact": "Un repidígito en base 6 (111).",
+    "kind": "math",
+    "number": 43
+  },
+  {
+    "fact": "El número de desarreglos de 5 elementos.",
+    "kind": "math",
+    "number": 44
+  },
+  {
+    "fact": "El sexto número entero positivo con una factorización prima de la forma p2q, siendo p y q números primos.",
+    "kind": "math",
+    "number": 45
+  },
+  {
+    "fact": "El número de arreglos diferentes (considerando rotaciones y reflexiones) de 9 reinas que no se atacan entre sí en un tablero de ajedrez de 9×9.",
+    "kind": "math",
+    "number": 46
+  },
+  {
+    "fact": "El mayor número de cubos que no pueden teselar un cubo.",
+    "kind": "math",
+    "number": 47
+  },
+  {
+    "fact": "El número más pequeño con 10 divisores.",
+    "kind": "math",
+    "number": 48
+  },
+  {
+    "fact": "El cuadrado de siete y es, por lo tanto, el cuarto número primo al cuadrado.",
+    "kind": "math",
+    "number": 49
+  },
+  {
+    "fact": "El número más pequeño que se puede escribir como la suma de 2 cuadrados de 2 maneras.",
+    "kind": "math",
+    "number": 50
+  },
+  {
+    "fact": "51 es un número pentagonal y también un número pentagonal centrado (uno de los pocos números que es ambos), además de ser un número 18-gonal y un número de Perrin.",
+    "kind": "math",
+    "number": 51
+  },
+  {
+    "fact": "52 es el 5.º número de Bell.",
+    "kind": "math",
+    "number": 52
+  },
+  {
+    "fact": "53 es el único número de dos dígitos que se invierte en hexadecimal.",
+    "kind": "math",
+    "number": 53
+  },
+  {
+    "fact": "54 es el número más pequeño que se puede escribir como la suma de 3 cuadrados de 3 maneras distintas.",
+    "kind": "math",
+    "number": 54
+  },
+  {
+    "fact": "55 es un semiprimo, siendo el producto de 5 y 11, y es el 2.º miembro de la familia de semiprimos (5.q).",
+    "kind": "math",
+    "number": 55
+  },
+  {
+    "fact": "56 es la suma de los primeros seis números triangulares (lo que lo convierte en un número tetraédrico), así como la suma de seis primos consecutivos (3 + 5 + 7 + 11 + 13 + 17).",
+    "kind": "math",
+    "number": 56
+  },
+  {
+    "fact": "57 es un repidígito en base 7 (111).",
+    "kind": "math",
+    "number": 57
+  },
+  {
+    "fact": "58 es el número de semigrupos conmutativos de orden 4.",
+    "kind": "math",
+    "number": 58
+  },
+  {
+    "fact": "59 también es un número altamente cototiente.",
+    "kind": "math",
+    "number": 59
+  },
+  {
+    "fact": "60 es el número más pequeño divisible por los números del 1 al 6.",
+    "kind": "math",
+    "number": 60
+  },
+  {
+    "fact": "61 es el 3.er número secante.",
+    "kind": "math",
+    "number": 61
+  },
+  {
+    "fact": "62 es el número más pequeño que se puede escribir como la suma de 3 cuadrados distintos de 2 maneras.",
+    "kind": "math",
+    "number": 62
+  },
+  {
+    "fact": "63 es el número de conjuntos parcialmente ordenados de 5 elementos.",
+    "kind": "math",
+    "number": 63
+  },
+  {
+    "fact": "64 es el cuadrado de 8, el cubo de 4 y la sexta potencia de 2.",
+    "kind": "math",
+    "number": 64
+  },
+  {
+    "fact": "65 es el número más pequeño que se vuelve cuadrado si se le suma o se le resta su reverso.",
+    "kind": "math",
+    "number": 65
+  },
+  {
+    "fact": "66 es el número de 8-iamonds.",
+    "kind": "math",
+    "number": 66
+  },
+  {
+    "fact": "67 es el número más pequeño que es palindrómico en bases 5 y 6.",
+    "kind": "math",
+    "number": 67
+  },
+  {
+    "fact": "68 es la cadena de 2 dígitos que aparece más tarde en la expansión decimal de p.",
+    "kind": "math",
+    "number": 68
+  },
+  {
+    "fact": "69 es un valor de n donde n^{2} y n^{3} juntas contienen cada dígito una vez.",
+    "kind": "math",
+    "number": 69
+  },
+  {
+    "fact": "70 es el número extraño más pequeño.",
+    "kind": "math",
+    "number": 70
+  },
+  {
+    "fact": "71 es un número heptagonal centrado.",
+    "kind": "math",
+    "number": 71
+  },
+  {
+    "fact": "72 es la suma de cuatro primos consecutivos (13 + 17 + 19 + 23), así como la suma de seis primos consecutivos (5 + 7 + 11 + 13 + 17 + 19).",
+    "kind": "math",
+    "number": 72
+  },
+  {
+    "fact": "73 es el único repunit primo en base 8 (1118).",
+    "kind": "math",
+    "number": 73
+  },
+  {
+    "fact": "74 es el número de poliedros no hamiltonianos con un número mínimo de vértices.",
+    "kind": "math",
+    "number": 74
+  },
+  {
+    "fact": "75 es el número de ordenaciones de 4 objetos con empates permitidos.",
+    "kind": "math",
+    "number": 75
+  },
+  {
+    "number": 76,
+    "fact": "76 es un número automórfico.",
+    "kind": "math"
+  },
+  {
+    "number": 77,
+    "fact": "77 es el número de dígitos del duodécimo número perfecto.",
+    "kind": "math"
+  },
+  {
+    "number": 78,
+    "fact": "78 es un número triangular, y su factorización lo convierte en un número esfénico.",
+    "kind": "math"
+  },
+  {
+    "number": 79,
+    "fact": "79 es un primo de Pillai, porque 23!.",
+    "kind": "math"
+  },
+  {
+    "number": 80,
+    "fact": "80 es el número n más pequeño en el que n y n+1 son ambos productos de 4 o más números primos.",
+    "kind": "math"
+  },
+  {
+    "number": 81,
+    "fact": "81 es el cuadrado de la suma de sus cifras.",
+    "kind": "math"
+  },
+  {
+    "number": 82,
+    "fact": "82 es un número de Pell compañero.",
+    "kind": "math"
+  },
+  {
+    "number": 83,
+    "fact": "83 es también el 23.º número primo, tras el 79 y antes del 89.",
+    "kind": "math"
+  },
+  {
+    "number": 84,
+    "fact": "84 es también el límite superior del mayor subgrupo finito del grupo de clases de mapeo de una superficie de género g dividido por g.",
+    "kind": "math"
+  },
+  {
+    "number": 85,
+    "fact": "85 es el producto de dos números primos (5 y 17), y por tanto es un biprimo; específicamente, el vigésimo cuarto biprimo sin contar los cuadrados perfectos.",
+    "kind": "math"
+  },
+  {
+    "number": 86,
+    "fact": "86 es un repidígito en base 6 (222).",
+    "kind": "math"
+  },
+  {
+    "number": 87,
+    "fact": "87 es la suma de los cuadrados de los primeros cuatro números primos.",
+    "kind": "math"
+  },
+  {
+    "number": 88,
+    "fact": "88 es uno de los únicos 2 números conocidos cuyo cuadrado no tiene dígitos aislados.",
+    "kind": "math"
+  },
+  {
+    "number": 89,
+    "fact": "89 es también un número de Markov, que aparece en las soluciones de la ecuación diofántica de Markov junto con otros números de Fibonacci de índice impar.",
+    "kind": "math"
+  },
+  {
+    "number": 90,
+    "fact": "90 es el número de grados en un ángulo recto.",
+    "kind": "math"
+  },
+  {
+    "number": 91,
+    "fact": "91 es un repdígito en base 9 (111).",
+    "kind": "math"
+  },
+  {
+    "number": 92,
+    "fact": "92 es un número pentagonal.",
+    "kind": "math"
+  },
+  {
+    "number": 93,
+    "fact": "93 es un repdígit en base 5 (333).",
+    "kind": "math"
+  },
+  {
+    "number": 94,
+    "fact": "94 es el vigésimo novésimo semiprimo distinto y el decimocuarto de la forma (2.q).",
+    "kind": "math"
+  },
+  {
+    "number": 95,
+    "fact": "95 es el número de particiones planas de 10.",
+    "kind": "math"
+  },
+  {
+    "number": 96,
+    "fact": "96 es el número más pequeño que puede escribirse como la diferencia de dos cuadrados de cuatro maneras distintas.",
+    "kind": "math"
+  },
+  {
+    "number": 97,
+    "fact": "97 es el factor más pequeño de uno más el producto de los primeros veinticinco términos de la secuencia de Euclid-Mullin, lo que la convierte en el vigesimosexto término.",
+    "kind": "math"
+  },
+  {
+    "number": 98,
+    "fact": "98 es un número de Wedderburn-Etherington y un nontotiente.",
+    "kind": "math"
+  },
+  {
+    "number": 99,
+    "fact": "99 es el noveno número repdigito, un número palindrómico y un número de Kaprekar.",
+    "kind": "math"
+  },
+  {
+    "number": 100,
+    "fact": "100 es también un número 18-gonal.",
+    "kind": "math"
+  },
+  {
+    "number": 101,
+    "fact": "101 es el número de particiones de 13.",
+    "kind": "math"
+  },
+  {
+    "number": 102,
+    "fact": "102 es el número más pequeño con tres dígitos distintos.",
+    "kind": "math"
+  },
+  {
+    "number": 103,
+    "fact": "103 es un número estrictamente no palindrómico.",
+    "kind": "math"
+  },
+  {
+    "number": 104,
+    "fact": "104 es el número más pequeño conocido de segmentos de línea unitarios que pueden existir en el plano, con 4 tocándose en cada vértice.",
+    "kind": "math"
+  },
+  {
+    "number": 105,
+    "fact": "105 es también un número n para el cual n − 2k es primo, para 0 < k < log2(n).",
+    "kind": "math"
+  },
+  {
+    "number": 106,
+    "fact": "106 es el trigésimo primer biprimo distinto y el decimoquinto de la forma (2.q).",
+    "kind": "math"
+  },
+  {
+    "number": 107,
+    "fact": "107 es el 28.º número primo.",
+    "kind": "math"
+  },
+  {
+    "number": 108,
+    "fact": "108 es el resultado de la ecuación que da la proporción áurea.",
+    "kind": "math"
+  },
+  {
+    "number": 109,
+    "fact": "109 es el factor más pequeño de uno más el producto de los primeros veintitrés términos de la secuencia de Euclid-Mullin, lo que la convierte en el vigésimo cuarto término.",
+    "kind": "math"
+  },
+  {
+    "number": 110,
+    "fact": "110 es un número esfenico y un número prónico.",
+    "kind": "math"
+  },
+  {
+    "number": 111,
+    "fact": "111 es la constante mágica más pequeña posible de un cuadrado mágico 3×3 de primos distintos.",
+    "kind": "math"
+  },
+  {
+    "number": 112,
+    "fact": "112 es un número abundante y un número heptagonal.",
+    "kind": "math"
+  },
+  {
+    "number": 113,
+    "fact": "113 es un número cototiente altamente y un número cuadrado centrado.",
+    "kind": "math"
+  },
+  {
+    "number": 114,
+    "fact": "114 es un número abundante, un número esfenico y un número Harshad.",
+    "kind": "math"
+  },
+  {
+    "number": 115,
+    "fact": "115 es el número de árboles enraizados con 8 vértices.",
+    "kind": "math"
+  },
+  {
+    "number": 116,
+    "fact": "116 es un no cototiente, lo que significa que no hay solución para la ecuación m − φ(m) = n, donde φ representa la función totiente de Euler.",
+    "kind": "math"
+  },
+  {
+    "number": 117,
+    "fact": "117 es un número pentagonal.",
+    "kind": "math"
+  },
+  {
+    "number": 118,
+    "fact": "118 es el número más pequeño que tiene 4 particiones distintas en 3 partes con el mismo producto.",
+    "kind": "math"
+  },
+  {
+    "number": 119,
+    "fact": "119 es el número compuesto más pequeño que es 1 menos que un factorial (120 es 5!).",
+    "kind": "math"
+  },
+  {
+    "number": 120,
+    "fact": "120 es el primer número multiplicamente perfecto de orden tres (un número 3-perfecto, triplicado).",
+    "kind": "math"
+  },
+  {
+    "number": 121,
+    "fact": "121 es también un número estelar y un número octagonal centrado.",
+    "kind": "math"
+  },
+  {
+    "number": 122,
+    "fact": "122 es el número más pequeño n>1 tal que n concatenado con n-1 ceros concatenado con la inversa de n es primo.",
+    "kind": "math"
+  },
+  {
+    "number": 123,
+    "fact": "123 es el 10.º número de Lucas.",
+    "kind": "math"
+  },
+  {
+    "number": 124,
+    "fact": "124 es el número más pequeño con la propiedad de que sus tres primeros múltiplos contienen el dígito 2.",
+    "kind": "math"
+  },
+  {
+    "number": 125,
+    "fact": "125 es el único número conocido que contiene todos sus divisores propios como subcadenas propias.",
+    "kind": "math"
+  },
+  {
+    "number": 126,
+    "fact": "126 es un número piramidal pentagonal, así como un número decagonal y un número pentatópico.",
+    "kind": "math"
+  },
+  {
+    "number": 127,
+    "fact": "127 es el 7.º número de Motzkin.",
+    "kind": "math"
+  },
+  {
+    "number": 128,
+    "fact": "128 es el único número de 3 dígitos que es una potencia séptima.",
+    "kind": "math"
+  },
+  {
+    "number": 129,
+    "fact": "129 es un repdígito en base 6 (333).",
+    "kind": "math"
+  },
+  {
+    "number": 130,
+    "fact": "130 es el número de funciones de 6 puntos no etiquetados en sí mismos.",
+    "kind": "math"
+  },
+  {
+    "number": 131,
+    "fact": "131 es un primo reptendo completo en base 10.",
+    "kind": "math"
+  },
+  {
+    "number": 132,
+    "fact": "132 es el sexto número de Catalan.",
+    "kind": "math"
+  },
+  {
+    "number": 133,
+    "fact": "133 es el número más pequeño n para el cual la suma de los divisores propios de n divide a f(n).",
+    "kind": "math"
+  },
+  {
+    "number": 134,
+    "fact": "134 es $\\binom{8}{1} + \\binom{8}{3} + \\binom{8}{4}$.",
+    "kind": "math"
+  },
+  {
+    "number": 135,
+    "fact": "El número 135 en base 10 puede expresarse mediante operaciones utilizando sus propias dígitos de al menos dos formas diferentes.",
+    "kind": "math"
+  },
+  {
+    "number": 136,
+    "fact": "136 es un número autodescriptivo en base 4.",
+    "kind": "math"
+  },
+  {
+    "number": 137,
+    "fact": "137 es un número estrictamente no palindrómico y un número primordial.",
+    "kind": "math"
+  },
+  {
+    "number": 138,
+    "fact": "138 es un número de Ulam (A002858 de Sloane).",
+    "kind": "math"
+  },
+  {
+    "number": 139,
+    "fact": "139 es el 34.º número primo, por lo que solo es divisible por sí mismo y por 1.",
+    "kind": "math"
+  },
+  {
+    "number": 140,
+    "fact": "140 es un número divisor armónico.",
+    "kind": "math"
+  },
+  {
+    "number": 141,
+    "fact": "141 es el 6.º coeficiente trinomial central.",
+    "kind": "math"
+  },
+  {
+    "number": 142,
+    "fact": "142 es el número de grafos planos con 6 vértices.",
+    "kind": "math"
+  },
+  {
+    "number": 143,
+    "fact": "143 es el número quasi-Carmichael más pequeño en base 8.",
+    "kind": "math"
+  },
+  {
+    "number": 144,
+    "fact": "144 es un número que es divisible por el valor de su función φ, que en este caso devuelve 48.",
+    "kind": "math"
+  },
+  {
+    "number": 145,
+    "fact": "145 es un número pentagonal y un número cuadrado centrado.",
+    "kind": "math"
+  },
+  {
+    "number": 146,
+    "fact": "146 es un repdígitimo en base 8 (222).",
+    "kind": "math"
+  },
+  {
+    "number": 147,
+    "fact": "147 es el número de lados de los 6-hexes.",
+    "kind": "math"
+  },
+  {
+    "number": 148,
+    "fact": "148 es el número de grafos perfectos con 6 vértices.",
+    "kind": "math"
+  },
+  {
+    "number": 149,
+    "fact": "149 es un número estrictamente no palindrómico, lo que significa que no es palindrómico en ninguna base desde la binaria hasta la base 147.",
+    "kind": "math"
+  },
+  {
+    "number": 150,
+    "fact": "150 es la suma de ocho números primos consecutivos (7 + 11 + 13 + 17 + 19 + 23 + 29 + 31).",
+    "kind": "math"
+  },
+  {
+    "number": 151,
+    "fact": "151 es un número primo palindrómico.",
+    "kind": "math"
+  },
+  {
+    "number": 152,
+    "fact": "152 es la suma de cuatro primos consecutivos (31 + 37 + 41 + 43).",
+    "kind": "math"
+  },
+  {
+    "number": 153,
+    "fact": "153 es un número narcisista.",
+    "kind": "math"
+  },
+  {
+    "number": 154,
+    "fact": "154 es la suma de los seis primeros factoriales.",
+    "kind": "math"
+  },
+  {
+    "number": 155,
+    "fact": "155 es la suma de los números primos comprendidos entre su factor primo más pequeño y su factor primo más grande.",
+    "kind": "math"
+  },
+  {
+    "number": 156,
+    "fact": "156 es un número prónico, un número dodecagonal, un número refactorizable y un número de Harshad.",
+    "kind": "math"
+  },
+  {
+    "number": 157,
+    "fact": "157 es un repdígit en base 12 (111).",
+    "kind": "math"
+  },
+  {
+    "number": 158,
+    "fact": "158 es un número de Perrin, que aparece después de 68, 90 y 119.",
+    "kind": "math"
+  },
+  {
+    "number": 159,
+    "fact": "159 es el número de isómeros del C_{11}H_{24}.",
+    "kind": "math"
+  },
+  {
+    "number": 160,
+    "fact": "160 es la suma de los primeros 11 números primos, así como la suma de los cubos de los tres primeros números primos.",
+    "kind": "math"
+  },
+  {
+    "number": 161,
+    "fact": "161 es un número piramidal hexagonal.",
+    "kind": "math"
+  },
+  {
+    "number": 162,
+    "fact": "162 es divisible por 2, 3, 6, 9, 18, 27, 54 y 81.",
+    "kind": "math"
+  },
+  {
+    "number": 163,
+    "fact": "163 es el valor de la función f(n) = n² + n + 41 que produce valores primos para todos los valores de n entre 0 y 39, y para n < 107 aproximadamente la mitad de todos los valores son primos.",
+    "kind": "math"
+  },
+  {
+    "number": 164,
+    "fact": "164 es la suma de dos cuadrados, 10² + 8².",
+    "kind": "math"
+  },
+  {
+    "number": 165,
+    "fact": "165 es la media aritmética del n-ésimo primo mayor y el n-ésimo primo menor, para 1 = n = 6.",
+    "kind": "math"
+  },
+  {
+    "number": 166,
+    "fact": "166 es el número de funciones booleanas monótonas de 4 variables.",
+    "kind": "math"
+  },
+  {
+    "number": 167,
+    "fact": "167 es un número estrictamente no palindrómico; por tanto, no es palindrómico en ninguna base desde la binaria hasta la base 165.",
+    "kind": "math"
+  },
+  {
+    "number": 168,
+    "fact": "168 es el producto de los dos primeros números perfectos.",
+    "kind": "math"
+  },
+  {
+    "number": 169,
+    "fact": "169 es el 7.º número de Pell.",
+    "kind": "math"
+  },
+  {
+    "number": 170,
+    "fact": "170 es el menor n para el cual φ(n) y σ(n) son ambos cuadrados (64 y 324, respectivamente).",
+    "kind": "math"
+  },
+  {
+    "number": 171,
+    "fact": "171 es un número ondulado.",
+    "kind": "math"
+  },
+  {
+    "number": 172,
+    "fact": "172 es la suma de la función totiente de Euler φ(x) para los primeros veintitrés enteros.",
+    "kind": "math"
+  },
+  {
+    "number": 173,
+    "fact": "173 es un primo de Eisenstein sin parte imaginaria.",
+    "kind": "math"
+  },
+  {
+    "number": 174,
+    "fact": "174 es el número más pequeño que puede escribirse como suma de 4 cuadrados distintos positivos de 6 maneras.",
+    "kind": "math"
+  },
+  {
+    "number": 175,
+    "fact": "175 es un número poligonal centrado de 29 lados.",
+    "kind": "math"
+  },
+  {
+    "number": 176,
+    "fact": "176 es un número pentagonal.",
+    "kind": "math"
+  },
+  {
+    "number": 177,
+    "fact": "177 es el número de grafos con 7 aristas.",
+    "kind": "math"
+  },
+  {
+    "number": 178,
+    "fact": "178 es un número libre de cuadrados.",
+    "kind": "math"
+  },
+  {
+    "number": 179,
+    "fact": "179 es un número estrictamente no palindrómico.",
+    "kind": "math"
+  },
+  {
+    "number": 180,
+    "fact": "180 es el número total de grados en un triángulo.",
+    "kind": "math"
+  },
+  {
+    "number": 181,
+    "fact": "181 es un número libre de cuadrados.",
+    "kind": "math"
+  },
+  {
+    "number": 182,
+    "fact": "182 es un repdígito en el sistema de numeración D'ni (77) y en base 9 (222).",
+    "kind": "math"
+  },
+  {
+    "number": 183,
+    "fact": "183 es un número poligonal central, n² − n + 1, donde n = 14 (A002061).",
+    "kind": "math"
+  },
+  {
+    "number": 184,
+    "fact": "184 es la suma de cuatro números primos consecutivos (41 + 43 + 47 + 53).",
+    "kind": "math"
+  },
+  {
+    "number": 185,
+    "fact": "185 es el número de clases de conjugación en el grupo de automorfismos del hipercubo de dimensión 8.",
+    "kind": "math"
+  },
+  {
+    "number": 186,
+    "fact": "186 es un número libre de cuadrados.",
+    "kind": "math"
+  },
+  {
+    "number": 187,
+    "fact": "187 es un número poligonal centrado de 31 lados.",
+    "kind": "math"
+  },
+  {
+    "number": 188,
+    "fact": "188 es el número de semigrupos de orden 4.",
+    "kind": "math"
+  },
+  {
+    "number": 189,
+    "fact": "189 es un número heptagonal.",
+    "kind": "math"
+  },
+  {
+    "number": 190,
+    "fact": "190 es un número triangular.",
+    "kind": "math"
+  },
+  {
+    "number": 191,
+    "fact": "191 es un número n tal que n, n+2, n+6 y n+8 son todos primos.",
+    "kind": "math"
+  },
+  {
+    "number": 192,
+    "fact": "192 es un número compuesto, cuyos factores son 2 × 2 × 2 × 2 × 2 × 2 × 3.",
+    "kind": "math"
+  },
+  {
+    "number": 193,
+    "fact": "193 es la aproximación más precisa del número de Euler (e) tal que tanto el numerador como el denominador son números enteros menores que 200 (aprox.)",
+    "kind": "math"
+  },
+  {
+    "number": 194,
+    "fact": "194 es un número libre de cuadrados.",
+    "kind": "math"
+  },
+  {
+    "number": 195,
+    "fact": "195 es el valor más pequeño de n tal que _{2n}C_{n} es divisible por n^{2}.",
+    "kind": "math"
+  },
+  {
+    "number": 196,
+    "fact": "196 es un número piramidal heptagonal.",
+    "kind": "math"
+  },
+  {
+    "number": 197,
+    "fact": "197 es un número Keith o repfigit.",
+    "kind": "math"
+  },
+  {
+    "number": 198,
+    "fact": "198 es un número de Harshad, divisible por la suma de sus dígitos.",
+    "kind": "math"
+  },
+  {
+    "number": 199,
+    "fact": "199 es el 11.º número de Lucas.",
+    "kind": "math"
+  },
+  {
+    "number": 200,
+    "fact": "200 es el número más pequeño que no puede convertirse en primo cambiando uno de sus dígitos.",
+    "kind": "math"
+  },
+  {
+    "number": 201,
+    "fact": "201 es una constante de Kaprekar en base 4.",
+    "kind": "math"
+  },
+  {
+    "number": 202,
+    "fact": "202 es un número Smith en base 10, ya que su factorización es 2 × 101, y 2 + 0 + 2 = 2 + 1 + 0 + 1 = 4.",
+    "kind": "math"
+  },
+  {
+    "number": 203,
+    "fact": "203 es el 6.º número de Bell, es decir,",
+    "kind": "math"
+  },
+  {
+    "number": 204,
+    "fact": "204 es un miembro de la secuencia de Mian-Chowla, siendo el número más pequeño posterior a 182 tal que las sumas por pares de los términos anteriores son todas distintas.",
+    "kind": "math"
+  },
+  {
+    "number": 205,
+    "fact": "205 es 5 × 41.",
+    "kind": "math"
+  },
+  {
+    "number": 206,
+    "fact": "206 es el número más pequeño cuyo nombre en inglés contiene exactamente una vez cada una de las cinco vocales.",
+    "kind": "math"
+  },
+  {
+    "number": 207,
+    "fact": "207 es un número de Wedderburn-Etherington.",
+    "kind": "math"
+  },
+  {
+    "number": 208,
+    "fact": "208 es un número tetranacci.",
+    "kind": "math"
+  },
+  {
+    "number": 209,
+    "fact": "209 es el número quasi-Carmichael más pequeño en base 9.",
+    "kind": "math"
+  },
+  {
+    "number": 210,
+    "fact": "210 es el producto de los primeros 4 números primos.",
+    "kind": "math"
+  },
+  {
+    "number": 211,
+    "fact": "211 es un primo primorial, suma de tres primos consecutivos (67 + 71 + 73), primo de Chen, primo decagonal centrado y primo auto.",
+    "kind": "math"
+  },
+  {
+    "number": 212,
+    "fact": "El 212 es el prefijo telefónico de Manhattan, uno de los códigos de área originales y considerado el más codiciado de Estados Unidos.",
+    "kind": "trivia"
+  },
+  {
+    "number": 213,
+    "fact": "213 es el número de rectángulos cuadrados perfectos de orden 13.",
+    "kind": "math"
+  },
+  {
+    "number": 214,
+    "fact": "214 es un número compuesto y un número poligonal de 37 lados.",
+    "kind": "math"
+  },
+  {
+    "number": 215,
+    "fact": "215 es un número compuesto y un semiprimo.",
+    "kind": "math"
+  },
+  {
+    "number": 216,
+    "fact": "216 es el cubo más pequeño que puede escribirse como la suma de 3 cubos.",
+    "kind": "math"
+  },
+  {
+    "number": 217,
+    "fact": "217 es una constante de Kaprekar en base 2.",
+    "kind": "math"
+  },
+  {
+    "number": 218,
+    "fact": "218 es el número de digrafos con 4 vértices.",
+    "kind": "math"
+  },
+  {
+    "number": 219,
+    "fact": "219 es el número de grupos espaciales, sin incluir la quiralidad.",
+    "kind": "math"
+  },
+  {
+    "number": 220,
+    "fact": "220 es un número tetraédrico, la suma de los diez primeros números triangulares.",
+    "kind": "math"
+  },
+  {
+    "number": 221,
+    "fact": "221 es la suma de nueve números primos consecutivos (11 + 13 + 17 + 19 + 23 + 29 + 31 + 37 + 41).",
+    "kind": "math"
+  },
+  {
+    "number": 222,
+    "fact": "222 es el número de retículas en 8 nodos no etiquetados.",
+    "kind": "math"
+  },
+  {
+    "number": 223,
+    "fact": "223 es un primo largo, un primo fuerte, un primo afortunado y un primo sexy (con 229).",
+    "kind": "math"
+  },
+  {
+    "number": 224,
+    "fact": "224 es la suma de cuatro primos consecutivos (47 + 53 + 59 + 61).",
+    "kind": "math"
+  },
+  {
+    "number": 225,
+    "fact": "225 es un número cuadrado octagonal.",
+    "kind": "math"
+  },
+  {
+    "number": 226,
+    "fact": "226 es un número compuesto, con sus divisores 1, 2, 4, 5, 10, 11, 20, 22, 44, 55 y 110, lo que lo convierte en un número amigo de 284.",
+    "kind": "math"
+  },
+  {
+    "number": 227,
+    "fact": "227 es también un primo regular.",
+    "kind": "math"
+  },
+  {
+    "number": 228,
+    "fact": "228 es el número de formas, hasta rotación y reflexión, de descomponer un polígono regular de 11 lados en 9 triángulos.",
+    "kind": "math"
+  },
+  {
+    "number": 229,
+    "fact": "229 es un primo regular, un primo largo, un primo gemelo (con 227), un primo primo y un primo sexy.",
+    "kind": "math"
+  },
+  {
+    "number": 230,
+    "fact": "230 es un número compuesto, cuyos divisores son 2, 5, 10, 23, 46 y 115.",
+    "kind": "math"
+  },
+  {
+    "number": 231,
+    "fact": "231 es un número compuesto, siendo sus divisores 2, 5, 10, 23, 46 y 115.",
+    "kind": "math"
+  },
+  {
+    "number": 232,
+    "fact": "232 es un número compuesto, cuyos divisores son 2, 5, 10, 23, 46 y 115.",
+    "kind": "math"
+  },
+  {
+    "number": 233,
+    "fact": "233 es el 13.º número de Fibonacci, siendo la suma de 89 y 144.",
+    "kind": "math"
+  },
+  {
+    "number": 234,
+    "fact": "234 es el número de formas de apilar 12 monedas de un penique en una línea de modo que cada moneda repose sobre la mesa o sobre dos monedas.",
+    "kind": "math"
+  },
+  {
+    "number": 235,
+    "fact": "235 es el número de árboles con 11 vértices.",
+    "kind": "math"
+  },
+  {
+    "number": 236,
+    "fact": "236 es el número de posiciones posibles en Othello después de 2 jugadas de ambos jugadores.",
+    "kind": "math"
+  },
+  {
+    "number": 237,
+    "fact": "237 es un número compuesto, siendo sus divisores 2, 5, 10, 23, 46 y 115.",
+    "kind": "math"
+  },
+  {
+    "number": 238,
+    "fact": "238 es el número de órdenes parciales conexas sobre 6 elementos no etiquetados.",
+    "kind": "math"
+  },
+  {
+    "number": 239,
+    "fact": "239 es el mayor número que no puede escribirse como suma de 8 o menos cubos.",
+    "kind": "math"
+  },
+  {
+    "number": 240,
+    "fact": "240 es el número más pequeño con 20 divisores.",
+    "kind": "math"
+  },
+  {
+    "number": 241,
+    "fact": "241 es el único número n para el cual el enésimo primo es p(np(n)).",
+    "kind": "math"
+  },
+  {
+    "number": 242,
+    "fact": "242 es el entero más pequeño que inicia una sucesión de cuatro enteros consecutivos con el mismo número de divisores.",
+    "kind": "math"
+  },
+  {
+    "number": 243,
+    "fact": "243 es la suma de cinco números primos consecutivos (41 + 43 + 47 + 53 + 59).",
+    "kind": "math"
+  },
+  {
+    "number": 244,
+    "fact": "244 es el número más pequeño (aparte de 2) que puede escribirse como la suma de dos cuadrados o como la suma de dos quintas potencias.",
+    "kind": "math"
+  },
+  {
+    "number": 245,
+    "fact": "245 es un número octángulo estrellado.",
+    "kind": "math"
+  },
+  {
+    "number": 246,
+    "fact": "246 es _{9}C_{2} + _{9}C_{4} + _{9}C_{6}.",
+    "kind": "math"
+  },
+  {
+    "number": 247,
+    "fact": "247 es la menor diferencia posible entre dos enteros que juntos contienen cada dígito exactamente una vez.",
+    "kind": "math"
+  },
+  {
+    "number": 248,
+    "fact": "248 es el número más pequeño n>1 para el cual las medias aritmética, geométrica y armónica de f(n) y s(n) son todas enteras.",
+    "kind": "math"
+  },
+  {
+    "number": 249,
+    "fact": "249 es el índice de un número de Woodall primo.",
+    "kind": "math"
+  },
+  {
+    "number": 250,
+    "fact": "250 es el número con más de un dígito más pequeño de tal manera que la suma de los cuadrados de sus factores primos es igual a la suma de los cuadrados de sus dígitos.",
+    "kind": "math"
+  },
+  {
+    "number": 251,
+    "fact": "251 es el número más pequeño que puede escribirse como suma de 3 cubos de 2 maneras.",
+    "kind": "math"
+  },
+  {
+    "number": 252,
+    "fact": "252 es el 5.º coeficiente binomial central.",
+    "kind": "math"
+  },
+  {
+    "number": 253,
+    "fact": "253 es el número estrellado triangular no trivial más pequeño.",
+    "kind": "math"
+  },
+  {
+    "number": 254,
+    "fact": "254 es el número compuesto de varios dígitos más pequeño cuyos divisores propios contienen todos el dígito 2.",
+    "kind": "math"
+  },
+  {
+    "number": 255,
+    "fact": "255 es un repdígito en base 2 (11111111), en base 4 (3333) y en base 16 (FF).",
+    "kind": "math"
+  },
+  {
+    "number": 256,
+    "fact": "256 es la frecuencia del Do central en hercios según el afinación científica.",
+    "kind": "math"
+  },
+  {
+    "number": 257,
+    "fact": "257 es un número primo de la forma y, por tanto, un primo de Fermat.",
+    "kind": "math"
+  },
+  {
+    "number": 258,
+    "fact": "258 es un valor de n tal que n(n+9) es un palíndromo.",
+    "kind": "math"
+  },
+  {
+    "number": 259,
+    "fact": "259 es el producto de 7 y 37.",
+    "kind": "math"
+  },
+  {
+    "number": 260,
+    "fact": "260 es la constante de un cuadrado mágico de 8×8.",
+    "kind": "math"
+  },
+  {
+    "number": 261,
+    "fact": "261 es el número de formas esencialmente distintas de dividir un hexadecágono en 7 cuadriláteros.",
+    "kind": "math"
+  },
+  {
+    "number": 262,
+    "fact": "262 es el 5.º número meandriforme y el 9.º número meandriforme abierto.",
+    "kind": "math"
+  },
+  {
+    "number": 263,
+    "fact": "263 es el mayor número primo conocido cuyo cuadrado es estrobogramático.",
+    "kind": "math"
+  },
+  {
+    "number": 264,
+    "fact": "264 es el mayor número conocido cuyo cuadrado es ondulatorio.",
+    "kind": "math"
+  },
+  {
+    "number": 265,
+    "fact": "265 es el número de permutaciones sin puntos fijos de 6 elementos.",
+    "kind": "math"
+  },
+  {
+    "number": 266,
+    "fact": "266 es el número de Stirling de segunda clase S(8,6).",
+    "kind": "math"
+  },
+  {
+    "number": 267,
+    "fact": "267 es el número de particiones planas de 12.",
+    "kind": "math"
+  },
+  {
+    "number": 268,
+    "fact": "268 es el número más pequeño cuyo producto de dígitos es 6 veces la suma de sus dígitos.",
+    "kind": "math"
+  },
+  {
+    "number": 269,
+    "fact": "269 es el número de 6-octos.",
+    "kind": "math"
+  },
+  {
+    "number": 270,
+    "fact": "270 es el cuarto número que es divisible por su promedio de divisores enteros (secuencia A007340 en OEIS).",
+    "kind": "math"
+  },
+  {
+    "number": 271,
+    "fact": "271 es la suma de los conteos de números coprimos para los primeros 29 enteros, que es 270.",
+    "kind": "math"
+  },
+  {
+    "number": 272,
+    "fact": "272 es el cuarto número tangente.",
+    "kind": "math"
+  },
+  {
+    "number": 273,
+    "fact": "273 es el número de segundos en la composición para piano 4'33\" de silencio del compositor estadounidense John Cage, en tres movimientos.",
+    "kind": "trivia"
+  },
+  {
+    "number": 274,
+    "fact": "274 es el número de Stirling de primera especie s(6,2).",
+    "kind": "math"
+  },
+  {
+    "number": 275,
+    "fact": "275 es el número de particiones de 28 en las que ninguna parte aparece solo una vez.",
+    "kind": "math"
+  },
+  {
+    "number": 276,
+    "fact": "276 es 1^{5} + 2^{5} + 3^{5}.",
+    "kind": "math"
+  },
+  {
+    "number": 277,
+    "fact": "277 es el quincuagésimo noveno número primo, siguiendo al 271 y precediendo al 281.",
+    "kind": "math"
+  },
+  {
+    "number": 278,
+    "fact": "278 es el entero más cercano a 6^{p}.",
+    "kind": "math"
+  },
+  {
+    "number": 279,
+    "fact": "279 es el número máximo de octavas potencias necesarias para sumar cualquier número.",
+    "kind": "math"
+  },
+  {
+    "number": 280,
+    "fact": "280 es el número de formas en que 18 personas sentadas alrededor de una mesa redonda pueden darse la mano sin que se crucen, salvo por rotación.",
+    "kind": "math"
+  },
+  {
+    "number": 281,
+    "fact": "281 es la suma de los primeros 14 números primos.",
+    "kind": "math"
+  },
+  {
+    "number": 282,
+    "fact": "282 es el número de particiones planas de 9.",
+    "kind": "math"
+  },
+  {
+    "number": 283,
+    "fact": "283 es un número primo.",
+    "kind": "math"
+  },
+  {
+    "number": 284,
+    "fact": "284 es un número par.",
+    "kind": "math"
+  },
+  {
+    "number": 285,
+    "fact": "285 es el número de árboles binarios enraizados con 13 vértices.",
+    "kind": "math"
+  },
+  {
+    "number": 286,
+    "fact": "286 es el número de árboles enraizados con 9 vértices.",
+    "kind": "math"
+  },
+  {
+    "number": 287,
+    "fact": "287 es la suma de primos consecutivos de 3 maneras diferentes.",
+    "kind": "math"
+  },
+  {
+    "number": 288,
+    "fact": "288 es el menor número no palíndromo ni cuadrado que, al multiplicarse por su inverso, da un cuadrado.",
+    "kind": "math"
+  },
+  {
+    "number": 289,
+    "fact": "289 es el producto de 17 y 17.",
+    "kind": "math"
+  },
+  {
+    "number": 290,
+    "fact": "290 es un número par.",
+    "kind": "math"
+  },
+  {
+    "number": 291,
+    "fact": "291 es el mayor número que no es la suma de potencias no triviales distintas.",
+    "kind": "math"
+  },
+  {
+    "number": 292,
+    "fact": "292 es el número de formas de hacer cambio de un dólar.",
+    "kind": "math"
+  },
+  {
+    "number": 293,
+    "fact": "293 es el número de formas de apilar 20 cajas en una fila de modo que cada caja esté sobre la mesa o sobre una caja adyacente a 2 cajas.",
+    "kind": "math"
+  },
+  {
+    "number": 294,
+    "fact": "294 es el número de grafos planares 2-conexos con 7 vértices.",
+    "kind": "math"
+  },
+  {
+    "number": 295,
+    "fact": "295 es un número hexacontahedral deltoide estructurado.",
+    "kind": "math"
+  },
+  {
+    "number": 296,
+    "fact": "296 es el número de particiones de 30 en partes distintas.",
+    "kind": "math"
+  },
+  {
+    "number": 297,
+    "fact": "297 es el producto de 3 y 99.",
+    "kind": "math"
+  },
+  {
+    "number": 298,
+    "fact": "298 es un valor de n tal que n(n+3) es un número capicúa.",
+    "kind": "math"
+  },
+  {
+    "number": 299,
+    "fact": "299 es el número máximo de regiones en las que se puede dividir un cubo con 12 cortes.",
+    "kind": "math"
+  },
+  {
+    "number": 300,
+    "fact": "300 es la puntuación máxima posible en bolos.",
+    "kind": "math"
+  },
+  {
+    "number": 301,
+    "fact": "301 es un número 6-hiperperfecto.",
+    "kind": "math"
+  },
+  {
+    "number": 302,
+    "fact": "302 es el número de formas de jugar los tres primeros movimientos en las damas.",
+    "kind": "math"
+  },
+  {
+    "number": 303,
+    "fact": "303 es el número de grafos bipartitos con 8 vértices.",
+    "kind": "math"
+  },
+  {
+    "number": 304,
+    "fact": "304 es un número semiperfecto primitivo.",
+    "kind": "math"
+  },
+  {
+    "number": 305,
+    "fact": "305 es un número de prisma hexagonal.",
+    "kind": "math"
+  },
+  {
+    "number": 306,
+    "fact": "306 es el número de números triangulares de 5 dígitos.",
+    "kind": "math"
+  },
+  {
+    "number": 307,
+    "fact": "307 es un no-palíndromo con un cuadrado palíndromo.",
+    "kind": "math"
+  },
+  {
+    "number": 308,
+    "fact": "308 es un número piramidal heptagonal.",
+    "kind": "math"
+  },
+  {
+    "number": 309,
+    "fact": "309 es el número más pequeño cuya quinta potencia contiene cada dígito al menos una vez.",
+    "kind": "math"
+  },
+  {
+    "number": 310,
+    "fact": "310 es un número par.",
+    "kind": "math"
+  },
+  {
+    "number": 311,
+    "fact": "311 es un número primo.",
+    "kind": "math"
+  },
+  {
+    "number": 312,
+    "fact": "312 es un número par.",
+    "kind": "math"
+  },
+  {
+    "number": 313,
+    "fact": "313 es el número de intersecciones cuando se trazan todas las diagonales de un dodecágono regular.",
+    "kind": "math"
+  },
+  {
+    "number": 314,
+    "fact": "314 es el número más pequeño que puede escribirse como suma de 3 cuadrados distintos positivos de 6 formas.",
+    "kind": "math"
+  },
+  {
+    "number": 315,
+    "fact": "315 es (4+3) × (4+1) × (4+5).",
+    "kind": "math"
+  },
+  {
+    "number": 316,
+    "fact": "316 es un número par.",
+    "kind": "math"
+  },
+  {
+    "number": 317,
+    "fact": "317 es el número de matrices binarias de 4×4 hasta permutaciones de filas y columnas.",
+    "kind": "math"
+  },
+  {
+    "number": 318,
+    "fact": "318 es el número de conjuntos parcialmente ordenados no etiquetados de 6 elementos.",
+    "kind": "math"
+  },
+  {
+    "number": 319,
+    "fact": "319 es el número más pequeño con la propiedad de que la partición con el producto más grande no tiene un número máximo de partes.",
+    "kind": "math"
+  },
+  {
+    "number": 320,
+    "fact": "320 es el determinante máximo de una matriz binaria de 10×10.",
+    "kind": "math"
+  },
+  {
+    "number": 321,
+    "fact": "321 es el producto de 3 y 107.",
+    "kind": "math"
+  },
+  {
+    "number": 322,
+    "fact": "322 es el 12.º número de Lucas.",
+    "kind": "math"
+  },
+  {
+    "number": 323,
+    "fact": "323 es el número compuesto n más pequeño que divide al término (n+1)-ésimo de la sucesión de Fibonacci.",
+    "kind": "math"
+  },
+  {
+    "number": 324,
+    "fact": "324 es el producto máximo posible de enteros positivos cuya suma es 16.",
+    "kind": "math"
+  },
+  {
+    "number": 325,
+    "fact": "325 es un número 3-hiperperfecto.",
+    "kind": "math"
+  },
+  {
+    "number": 326,
+    "fact": "326 es el número de permutaciones de algún subconjunto de 5 elementos.",
+    "kind": "math"
+  },
+  {
+    "number": 327,
+    "fact": "327 es el mayor número n tal que n, 2n y 3n contienen juntos cada dígito del 1 al 9 exactamente una vez.",
+    "kind": "math"
+  },
+  {
+    "number": 328,
+    "fact": "328 es el peso en libras de un quiste ovárico extraído de una mujer en Galveston, Texas, en 1905, un récord mundial.",
+    "kind": "trivia"
+  },
+  {
+    "number": 329,
+    "fact": "329 es el número de bosques con 10 vértices.",
+    "kind": "math"
+  },
+  {
+    "number": 330,
+    "fact": "330 es un número par.",
+    "kind": "math"
+  },
+  {
+    "number": 331,
+    "fact": "331 es tanto un número pentagonal centrado como un número hexagonal centrado.",
+    "kind": "math"
+  },
+  {
+    "number": 332,
+    "fact": "332 es el número de grafos 2-conexos con 7 vértices.",
+    "kind": "math"
+  },
+  {
+    "number": 333,
+    "fact": "333 es el número de heptaminas.",
+    "kind": "math"
+  },
+  {
+    "number": 334,
+    "fact": "334 es el número de árboles con 13 vértices y diámetro 7.",
+    "kind": "math"
+  },
+  {
+    "number": 335,
+    "fact": "335 es el número de polinomios irreducibles de grado 12 sobre GF(2).",
+    "kind": "math"
+  },
+  {
+    "number": 336,
+    "fact": "336 es el número de hoyos de una pelota de golf estadounidense.",
+    "kind": "trivia"
+  },
+  {
+    "number": 337,
+    "fact": "337 es el número de resistencias diferentes que se pueden crear en un circuito de 8 resistores iguales.",
+    "kind": "math"
+  },
+  {
+    "number": 338,
+    "fact": "338 es el número más pequeño para el cual tanto el número de divisores como la suma de sus factores primos son números perfectos.",
+    "kind": "math"
+  },
+  {
+    "number": 339,
+    "fact": "339 es el número de formas de dividir 5 cuentas negras y 5 cuentas blancas en montones.",
+    "kind": "math"
+  },
+  {
+    "number": 340,
+    "fact": "340 es un valor de n para el cual n!.",
+    "kind": "math"
+  },
+  {
+    "number": 341,
+    "fact": "341 es el pseudoprimo más pequeño en base 2.",
+    "kind": "math"
+  },
+  {
+    "number": 342,
+    "fact": "342 es el número de códigos lineales binarios inequivalentes de longitud 8.",
+    "kind": "math"
+  },
+  {
+    "number": 343,
+    "fact": "343 es un número de Friedman fuerte.",
+    "kind": "math"
+  },
+  {
+    "number": 344,
+    "fact": "344 es el número más pequeño que puede escribirse como la suma de un cubo y una potencia séptima de más de una manera.",
+    "kind": "math"
+  },
+  {
+    "number": 345,
+    "fact": "345 es la mitad más grande que la suma de sus divisores propios.",
+    "kind": "math"
+  },
+  {
+    "number": 346,
+    "fact": "346 es un número par.",
+    "kind": "math"
+  },
+  {
+    "number": 347,
+    "fact": "347 es un número primo.",
+    "kind": "math"
+  },
+  {
+    "number": 348,
+    "fact": "348 es el número más pequeño cuya quinta potencia contiene exactamente los mismos dígitos que otra quinta potencia.",
+    "kind": "math"
+  },
+  {
+    "number": 349,
+    "fact": "349 es un número similar al Tetranacci que comienza con 1, 1, 1 y 1.",
+    "kind": "math"
+  },
+  {
+    "number": 350,
+    "fact": "350 es el número de Stirling de segunda clase S(7,4).",
+    "kind": "math"
+  },
+  {
+    "number": 351,
+    "fact": "351 es el número más pequeño tal que él y los números adyacentes son todos productos de 4 o más factores primos.",
+    "kind": "math"
+  },
+  {
+    "number": 352,
+    "fact": "352 es el número de disposiciones distintas de 9 reinas no atacantes en un tablero de ajedrez de 9×9.",
+    "kind": "math"
+  },
+  {
+    "number": 353,
+    "fact": "353 es el número más pequeño cuya cuarta potencia puede escribirse como la suma de cuatro cuartas potencias.",
+    "kind": "math"
+  },
+  {
+    "number": 354,
+    "fact": "354 es la suma de las primeras cuatro potencias cuarta.",
+    "kind": "math"
+  },
+  {
+    "number": 355,
+    "fact": "355 es el número de topologías etiquetadas con 4 elementos.",
+    "kind": "math"
+  },
+  {
+    "number": 356,
+    "fact": "356 es el número feliz más pequeño de altura 6.",
+    "kind": "math"
+  },
+  {
+    "number": 357,
+    "fact": "357 es el producto de 3 y 119.",
+    "kind": "math"
+  },
+  {
+    "number": 358,
+    "fact": "358 es un número par.",
+    "kind": "math"
+  },
+  {
+    "number": 359,
+    "fact": "359 es un número primo.",
+    "kind": "math"
+  },
+  {
+    "number": 360,
+    "fact": "360 es el número de grados en un círculo.",
+    "kind": "math"
+  },
+  {
+    "number": 361,
+    "fact": "361 es el número de intersecciones en un tablero de Go.",
+    "kind": "math"
+  },
+  {
+    "number": 362,
+    "fact": "362 es un número par.",
+    "kind": "math"
+  },
+  {
+    "number": 363,
+    "fact": "363 es un número totiente perfecto.",
+    "kind": "math"
+  },
+  {
+    "number": 364,
+    "fact": "364 es el número total de regalos recibidos en la canción \"Los doce días de Navidad\".",
+    "kind": "trivia"
+  },
+  {
+    "number": 365,
+    "fact": "365 es el número más pequeño que puede escribirse como suma de cuadrados consecutivos de más de una manera.",
+    "kind": "math"
+  },
+  {
+    "number": 366,
+    "fact": "366 es el número de días en un año bisiesto.",
+    "kind": "math"
+  }
+]

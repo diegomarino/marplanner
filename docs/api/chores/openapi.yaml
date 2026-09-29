@@ -1,0 +1,730 @@
+openapi: 3.1.0
+info:
+  title: Marplanner — Household Daily Chores Board API
+  version: 1.0.0
+  description: >-
+    Routines, member assignments, dated completion and derived streaks. Active-member validation
+    applies on writes; historical reads tolerate archived members.
+servers:
+  - url: /
+components:
+  securitySchemes:
+    deviceKeyCookie:
+      type: apiKey
+      in: cookie
+      name: mp_device_key
+  schemas:
+    Routine:
+      type: object
+      required:
+        - id
+        - name
+        - dayPeriodId
+        - active
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          minLength: 1
+        dayPeriodId:
+          type: string
+          description: immutable after creation (FR-017).
+        active:
+          type: boolean
+    RoutineInput:
+      type: object
+      required:
+        - name
+        - dayPeriodId
+      additionalProperties: false
+      description: Create payload. dayPeriodId is write-once — absent from RoutineEditInput.
+      properties:
+        name:
+          type: string
+          minLength: 1
+        dayPeriodId:
+          type: string
+          description: must reference an existing day_periods.id.
+    RoutineEditInput:
+      type: object
+      additionalProperties: false
+      description: Edit payload — name and/or active only; dayPeriodId is immutable (FR-017).
+      properties:
+        name:
+          type: string
+          minLength: 1
+        active:
+          type: boolean
+    Chore:
+      type: object
+      required:
+        - id
+        - routineId
+        - name
+        - sortOrder
+        - active
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        routineId:
+          type: string
+        name:
+          type: string
+          minLength: 1
+        sortOrder:
+          type: integer
+          minimum: 0
+        active:
+          type: boolean
+    ChoreInput:
+      type: object
+      required:
+        - name
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+    ChoreEditInput:
+      type: object
+      additionalProperties: false
+      description: name, routineId (move to a different routine, FR-019), and/or active.
+      properties:
+        name:
+          type: string
+          minLength: 1
+        routineId:
+          type: string
+        active:
+          type: boolean
+    ChoreOrderInput:
+      type: object
+      required:
+        - choreIds
+      additionalProperties: false
+      properties:
+        choreIds:
+          type: array
+          items:
+            type: string
+          description: Full ordered list of the routine's active chore ids (atomic replace, FR-005/FR-006).
+    Assignment:
+      type: object
+      required:
+        - id
+        - memberId
+        - weekdays
+        - active
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        memberId:
+          type: string
+        weekdays:
+          type: array
+          items:
+            type: string
+            enum:
+              - mon
+              - tue
+              - wed
+              - thu
+              - fri
+              - sat
+              - sun
+        active:
+          type: boolean
+    AssignmentUpsert:
+      type: object
+      required:
+        - weekdays
+      additionalProperties: false
+      description: >
+        Upsert (create-or-edit) the one logical assignment row for (routineId, memberId) —
+        reactivation reuses the existing row (FR-005). memberId MUST be an active child at write
+        time (INV-01/FR-001).
+      properties:
+        weekdays:
+          type: array
+          items:
+            type: string
+            enum:
+              - mon
+              - tue
+              - wed
+              - thu
+              - fri
+              - sat
+              - sun
+        active:
+          type: boolean
+          default: true
+    BoardChore:
+      type: object
+      required:
+        - id
+        - name
+        - completed
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        completed:
+          type: boolean
+    BoardDayPeriod:
+      type: object
+      required:
+        - id
+        - labelKey
+        - chores
+      additionalProperties: false
+      description: One of the four fixed periods, always present even when chores is empty (DAY-PERIODS-AC-05).
+      properties:
+        id:
+          type: string
+          enum:
+            - morning
+            - afternoon
+            - evening
+            - night
+        labelKey:
+          type: string
+          description: i18n key, not display text (DAY-PERIODS-INV-04).
+        chores:
+          type: array
+          items:
+            $ref: "#/components/schemas/BoardChore"
+    BoardColumn:
+      type: object
+      required:
+        - memberId
+        - displayName
+        - dayPeriods
+        - streak
+        - todayProgress
+      additionalProperties: false
+      description: One active child's column (FR-017/FR-018).
+      properties:
+        memberId:
+          type: string
+        displayName:
+          type: string
+        dayPeriods:
+          type: array
+          items:
+            $ref: "#/components/schemas/BoardDayPeriod"
+        streak:
+          type:
+            - integer
+            - "null"
+          description: >
+            Consecutive qualifying days ending at the most recent one (FR-013). Present (a number,
+            possibly 0) ONLY when the requested date is today; null for any other date — the
+            suppression (FR-014, INV-09) is enforced server-side, not left to the client to hide.
+        todayProgress:
+          type:
+            - object
+            - "null"
+          description: Same today-only suppression as streak (FR-014).
+          properties:
+            completed:
+              type: integer
+            total:
+              type: integer
+    CompletionInput:
+      type: object
+      required:
+        - memberId
+        - date
+      additionalProperties: false
+      properties:
+        memberId:
+          type: string
+        date:
+          type: string
+          pattern: ^\d{4}-\d{2}-\d{2}$
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: English diagnostic (Constitution X).
+paths:
+  /api/routines:
+    get:
+      summary: List active routines (admin config).
+      security:
+        - deviceKeyCookie: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Routine"
+        "401":
+          description: missing/invalid device key
+    post:
+      summary: Create a routine, attached to one day period (immutable thereafter, FR-017).
+      security:
+        - deviceKeyCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoutineInput"
+      responses:
+        "201":
+          description: created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Routine"
+        "400":
+          description: validation (bad dayPeriodId, empty name)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: missing/invalid device key
+  /api/routines/{id}:
+    get:
+      summary: >
+        Fetch one routine by id — tolerant of soft-deleted rows (FR-007/INV-08: a soft-deleted
+        routine stays readable for history). The single-fetch companion to the active-only list in
+        GET /api/routines.
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK — active or soft-deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Routine"
+        "401":
+          description: missing/invalid device key
+        "404":
+          description: no such routine ever existed
+    patch:
+      summary: Edit a routine's name/active — dayPeriodId is immutable (FR-017).
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoutineEditInput"
+      responses:
+        "200":
+          description: updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Routine"
+        "400":
+          description: validation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: missing/invalid device key
+        "404":
+          description: no such routine
+    delete:
+      summary: Soft-delete a routine (INV-08) — excluded from active reads/streak, stays historical.
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: soft-deleted
+        "401":
+          description: missing/invalid device key
+        "404":
+          description: no such routine
+  /api/routines/{id}/chores:
+    get:
+      summary: List a routine's active chores, ordered.
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Chore"
+        "401":
+          description: missing/invalid device key
+    post:
+      summary: Add a chore to a routine (appended at the end of sortOrder).
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChoreInput"
+      responses:
+        "201":
+          description: created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Chore"
+        "400":
+          description: validation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: missing/invalid device key
+        "404":
+          description: no such routine
+  /api/routines/{id}/chores/order:
+    put:
+      summary: >-
+        Atomically reorder a routine's chores (FR-005/FR-006) — full-order replace, no partial
+        state.
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChoreOrderInput"
+      responses:
+        "200":
+          description: reordered (atomic)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Chore"
+        "400":
+          description: choreIds does not match the routine's active chore set
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: missing/invalid device key
+        "404":
+          description: no such routine
+  /api/chores/{id}:
+    get:
+      summary: >
+        Fetch one chore by id — tolerant of soft-deleted rows (FR-007/INV-08: a soft-deleted chore
+        stays readable for history). The single-fetch companion to the active-only list in GET
+        /api/routines/{id}/chores.
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK — active or soft-deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Chore"
+        "401":
+          description: missing/invalid device key
+        "404":
+          description: no such chore ever existed
+    patch:
+      summary: Edit a chore's name and/or move it to a different routine (FR-019), and/or active.
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChoreEditInput"
+      responses:
+        "200":
+          description: updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Chore"
+        "400":
+          description: validation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: missing/invalid device key
+        "404":
+          description: no such chore
+    delete:
+      summary: Soft-delete a chore (INV-08).
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: soft-deleted
+        "401":
+          description: missing/invalid device key
+        "404":
+          description: no such chore
+  /api/routines/{id}/assignments:
+    get:
+      summary: List a routine's assignments (active and inactive, for admin history).
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Assignment"
+        "401":
+          description: missing/invalid device key
+  /api/routines/{id}/assignments/{memberId}:
+    put:
+      summary: Upsert the routine/member assignment (FR-001/FR-002/FR-005) — reactivation reuses the row.
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignmentUpsert"
+      responses:
+        "200":
+          description: upserted (atomic)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Assignment"
+        "400":
+          description: member not an active child (INV-01), or a weekday outside the 7-code enum (AC-05)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: missing/invalid device key
+        "404":
+          description: no such routine
+    delete:
+      summary: Soft-deactivate the assignment (sets active=false; row is never hard-deleted, INV-08).
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: deactivated
+        "401":
+          description: missing/invalid device key
+        "404":
+          description: no such assignment
+  /api/chores/board:
+    get:
+      summary: >
+        The household board (FR-017/FR-018) — one column per active child, all four day periods
+        always present (DAY-PERIODS-AC-05), streak/progress today-only (FR-014). No PIN required
+        (FR-019).
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^\d{4}-\d{2}-\d{2}$
+          description: household-local date; strict-valid (INV-03/AC-05).
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BoardColumn"
+        "400":
+          description: malformed or impossible date
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: missing/invalid device key
+  /api/chores/{id}/completions:
+    post:
+      summary: Complete a chore for a member/date (FR-008) — idempotent, no PIN required (FR-019).
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompletionInput"
+      responses:
+        "204":
+          description: >-
+            completed (or already was — idempotent); emits routines.completion_changed post-commit
+            (FR-015).
+        "400":
+          description: >-
+            malformed or impossible date, missing/blank memberId, or not currently markable (INV-04)
+            — member/chore/routine/assignment state does not cover this date
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: missing/invalid device key
+        "404":
+          description: no such chore
+    delete:
+      summary: Uncomplete a chore for a member/date (FR-009) — ALWAYS allowed, idempotent, no PIN.
+      security:
+        - deviceKeyCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: memberId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^\d{4}-\d{2}-\d{2}$
+      responses:
+        "204":
+          description: >-
+            uncompleted (or already was — idempotent); emits routines.completion_changed post-commit
+            if a row existed.
+        "400":
+          description: malformed or impossible date, or missing/blank memberId
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: missing/invalid device key
+        "404":
+          description: no such chore

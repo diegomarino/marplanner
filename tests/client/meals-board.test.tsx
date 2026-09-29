@@ -1,0 +1,451 @@
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { MealsBoard } from "@/meals/MealsBoard";
+import { MealPlanGrid } from "@/meals/MealPlanGrid";
+import { HouseholdSettingsProvider } from "@/lib/householdSettings";
+import { LanguageProvider } from "@/i18n";
+import type { MenuItem, Slot } from "../../src/shared";
+
+function week(): Record<string, Record<Slot, MenuItem[]>> {
+  return Object.fromEntries(
+    [
+      "2026-09-21",
+      "2026-09-22",
+      "2026-09-23",
+      "2026-09-24",
+      "2026-09-25",
+      "2026-09-26",
+      "2026-09-27",
+    ].map((date) => [
+      date,
+      {
+        breakfast: [],
+        lunch: [],
+        snack: [],
+        dinner:
+          date === "2026-09-25"
+            ? [
+                {
+                  entryId: "recurring-1",
+                  slot: "dinner",
+                  label: "Pizza",
+                  isTombstone: false,
+                  source: "recurring",
+                  recipeId: "recipe-1",
+                  note: null,
+                },
+                {
+                  entryId: "oneoff-1",
+                  slot: "dinner",
+                  label: "Pizza",
+                  isTombstone: false,
+                  source: "oneoff",
+                  recipeId: null,
+                  note: "Pizza",
+                },
+              ]
+            : [],
+      },
+    ])
+  );
+}
+
+function emptyWeek(): Record<string, Record<Slot, MenuItem[]>> {
+  return Object.fromEntries(
+    [
+      "2026-09-21",
+      "2026-09-22",
+      "2026-09-23",
+      "2026-09-24",
+      "2026-09-25",
+      "2026-09-26",
+      "2026-09-27",
+    ].map((date) => [date, { breakfast: [], lunch: [], snack: [], dinner: [] }])
+  );
+}
+
+describe("MealsBoard weekly planner", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    cleanup();
+  });
+
+  it("renders seven dates, fixed slot rows, duplicate labels, and an add affordance", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: string | URL) => {
+        const url = String(input);
+        if (url.endsWith("/api/settings"))
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({ locale: { timezone: "UTC", weekStartDay: 1, language: "en" } })
+            )
+          );
+        if (url.includes("/api/recipes")) return Promise.resolve(new Response(JSON.stringify([])));
+        if (url.includes("/api/menu/week"))
+          return Promise.resolve(new Response(JSON.stringify(week())));
+        throw new Error(`unexpected fetch: ${url}`);
+      })
+    );
+
+    render(
+      <HouseholdSettingsProvider>
+        <LanguageProvider>
+          <MealsBoard />
+        </LanguageProvider>
+      </HouseholdSettingsProvider>
+    );
+    const grid = await screen.findByTestId("meal-plan-grid");
+    expect(
+      within(screen.getByTestId("meal-cell-2026-09-25-dinner")).getAllByTestId("meal-entry-card")
+    ).toHaveLength(2);
+    expect(
+      within(screen.getByTestId("meal-cell-2026-09-25-dinner")).getAllByText("Pizza")
+    ).toHaveLength(2);
+    expect(screen.getAllByTestId(/meal-day-heading-/)).toHaveLength(7);
+    expect(
+      within(grid).getByRole("button", { name: "Add dinner on Friday, September 25" })
+    ).toBeVisible();
+    expect(
+      [...grid.querySelectorAll("[data-slot-row]")].map((row) => row.getAttribute("data-slot-row"))
+    ).toEqual(["breakfast", "lunch", "snack", "dinner"]);
+  });
+
+  it("uses the week range as the main title with compact navigation and v1 day headings", () => {
+    render(
+      <LanguageProvider>
+        <MealPlanGrid
+          weekDates={Object.keys(week())}
+          weekMenu={week()}
+          todayDate="2026-09-25"
+          pending={false}
+          onPrevious={vi.fn()}
+          onCurrent={vi.fn()}
+          onNext={vi.fn()}
+          onAdd={vi.fn()}
+          onSelect={vi.fn()}
+        />
+      </LanguageProvider>
+    );
+
+    expect(screen.getByRole("heading", { level: 1, name: "Sep 21 – Sep 27" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Previous week" })).toHaveTextContent("");
+    expect(screen.getByRole("button", { name: "Next week" })).toHaveTextContent("");
+    expect(screen.getByText("Slot")).toBeVisible();
+    expect(screen.getByTestId("meal-day-heading-2026-09-25")).toHaveTextContent("FRI25");
+    expect(screen.getByTestId("meal-day-heading-2026-09-25")).toHaveClass("bg-accent/20");
+  });
+
+  it("fills the available height with the rounded meal-plan shell", () => {
+    render(
+      <LanguageProvider>
+        <MealPlanGrid
+          weekDates={Object.keys(emptyWeek())}
+          weekMenu={emptyWeek()}
+          todayDate={null}
+          pending={false}
+          onPrevious={vi.fn()}
+          onCurrent={vi.fn()}
+          onNext={vi.fn()}
+          onAdd={vi.fn()}
+          onSelect={vi.fn()}
+        />
+      </LanguageProvider>
+    );
+
+    expect(screen.getByRole("region", { name: "Week Menu" })).toHaveClass(
+      "flex",
+      "h-full",
+      "flex-col"
+    );
+    expect(screen.getByTestId("meal-plan-grid")).toHaveClass("flex-1");
+  });
+
+  it("makes the empty cell the add control and reveals its plus only on hover or focus", () => {
+    render(
+      <LanguageProvider>
+        <MealPlanGrid
+          weekDates={Object.keys(emptyWeek())}
+          weekMenu={emptyWeek()}
+          todayDate="2026-09-25"
+          pending={false}
+          onPrevious={vi.fn()}
+          onCurrent={vi.fn()}
+          onNext={vi.fn()}
+          onAdd={vi.fn()}
+          onSelect={vi.fn()}
+        />
+      </LanguageProvider>
+    );
+
+    const cell = screen.getByTestId("meal-cell-2026-09-25-breakfast");
+    expect(cell.tagName).toBe("BUTTON");
+    expect(cell).toHaveAccessibleName("Add breakfast on Friday, September 25");
+    expect(cell).toHaveClass("bg-accent/10");
+    expect(within(cell).getByTestId("meal-cell-add-icon")).toHaveClass(
+      "opacity-0",
+      "group-hover:opacity-100",
+      "group-focus-visible:opacity-100"
+    );
+  });
+
+  it("keeps multiple meals as separate warm cards in stable order", () => {
+    render(
+      <LanguageProvider>
+        <MealPlanGrid
+          weekDates={Object.keys(week())}
+          weekMenu={week()}
+          todayDate={null}
+          pending={false}
+          onPrevious={vi.fn()}
+          onCurrent={vi.fn()}
+          onNext={vi.fn()}
+          onAdd={vi.fn()}
+          onSelect={vi.fn()}
+        />
+      </LanguageProvider>
+    );
+
+    const cards = within(screen.getByTestId("meal-cell-2026-09-25-dinner")).getAllByTestId(
+      "meal-entry-card"
+    );
+    expect(cards).toHaveLength(2);
+    expect(cards.map((card) => card.getAttribute("data-entry-id"))).toEqual([
+      "recurring-1",
+      "oneoff-1",
+    ]);
+    expect(cards[0]).toHaveClass("border-accent", "bg-accent/20", "text-accent-foreground");
+  });
+
+  it("shows a visible retry after an initial week failure and recovers the interactive grid", async () => {
+    let weekAttempts = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: string | URL) => {
+        const url = String(input);
+        if (url.endsWith("/api/settings"))
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({ locale: { timezone: "UTC", weekStartDay: 1, language: "en" } })
+            )
+          );
+        if (url.includes("/api/recipes")) return Promise.resolve(new Response(JSON.stringify([])));
+        if (url.includes("/api/menu/week")) {
+          weekAttempts += 1;
+          return Promise.resolve(
+            weekAttempts === 1
+              ? new Response(null, { status: 500 })
+              : new Response(JSON.stringify(week()))
+          );
+        }
+        throw new Error(`unexpected fetch: ${url}`);
+      })
+    );
+
+    render(
+      <HouseholdSettingsProvider>
+        <LanguageProvider>
+          <MealsBoard />
+        </LanguageProvider>
+      </HouseholdSettingsProvider>
+    );
+
+    const retry = await screen.findByRole("button", { name: "Retry" });
+    fireEvent.click(retry);
+    expect(await screen.findByTestId("meal-plan-grid")).toBeVisible();
+    expect(weekAttempts).toBe(2);
+  });
+
+  it("keeps a recipe failure local to the catalogue and retries it", async () => {
+    let recipeAttempts = 0;
+    let allowRecipeRead = false;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: string | URL) => {
+        const url = String(input);
+        if (url.endsWith("/api/settings"))
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({ locale: { timezone: "UTC", weekStartDay: 1, language: "en" } })
+            )
+          );
+        if (url.includes("/api/recipes")) {
+          recipeAttempts += 1;
+          return Promise.resolve(
+            allowRecipeRead ? new Response(JSON.stringify([])) : new Response(null, { status: 500 })
+          );
+        }
+        if (url.includes("/api/menu/week"))
+          return Promise.resolve(new Response(JSON.stringify(week())));
+        throw new Error(`unexpected fetch: ${url}`);
+      })
+    );
+    render(
+      <HouseholdSettingsProvider>
+        <LanguageProvider>
+          <MealsBoard />
+        </LanguageProvider>
+      </HouseholdSettingsProvider>
+    );
+    const catalogue = await screen.findByTestId("recipe-catalogue");
+    expect(await within(catalogue).findByText("Failed to load recipes.")).toBeVisible();
+    const attemptsBeforeRetry = recipeAttempts;
+    allowRecipeRead = true;
+    fireEvent.click(within(catalogue).getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(recipeAttempts).toBeGreaterThan(attemptsBeforeRetry));
+  });
+
+  it("localizes workspace chrome and date labels while retaining authored content", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: string | URL) => {
+        const url = String(input);
+        if (url.endsWith("/api/settings"))
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({ locale: { timezone: "UTC", weekStartDay: 1, language: "es" } })
+            )
+          );
+        if (url.includes("/api/recipes")) return Promise.resolve(new Response(JSON.stringify([])));
+        if (url.includes("/api/menu/week"))
+          return Promise.resolve(new Response(JSON.stringify(week())));
+        throw new Error(`unexpected fetch: ${url}`);
+      })
+    );
+    render(
+      <HouseholdSettingsProvider>
+        <LanguageProvider>
+          <MealsBoard />
+        </LanguageProvider>
+      </HouseholdSettingsProvider>
+    );
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "21 sept – 27 sept" })
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Semana anterior" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: /Añadir cena el viernes, 25 de septiembre/ })
+    ).toBeVisible();
+    expect(screen.getAllByText("Pizza")).toHaveLength(2);
+  });
+
+  it("uses the household date rather than the device date for the initial week request", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-25T23:30:00.000Z"));
+    const fetchMock = vi.fn((input: string | URL) => {
+      const url = String(input);
+      if (url.endsWith("/api/settings"))
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              locale: { timezone: "Pacific/Kiritimati", weekStartDay: 1, language: "en" },
+            })
+          )
+        );
+      if (url.includes("/api/recipes")) return Promise.resolve(new Response(JSON.stringify([])));
+      if (url.includes("/api/menu/week"))
+        return Promise.resolve(new Response(JSON.stringify(week())));
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <HouseholdSettingsProvider>
+        <LanguageProvider>
+          <MealsBoard />
+        </LanguageProvider>
+      </HouseholdSettingsProvider>
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(screen.getByTestId("meal-plan-grid")).toBeVisible();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/menu/week?date=2026-09-26",
+      expect.objectContaining({ credentials: "include" })
+    );
+  });
+
+  it("renders a tombstone as non-editable instead of exposing its deleted recipe", async () => {
+    const tombstoneWeek = week();
+    tombstoneWeek["2026-09-25"].dinner = [
+      {
+        entryId: "deleted-1",
+        slot: "dinner",
+        label: "Removed pizza",
+        isTombstone: true,
+        source: "oneoff",
+        recipeId: "deleted-recipe",
+        note: null,
+      },
+    ];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: string | URL) => {
+        const url = String(input);
+        if (url.endsWith("/api/settings"))
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({ locale: { timezone: "UTC", weekStartDay: 1, language: "en" } })
+            )
+          );
+        if (url.includes("/api/recipes")) return Promise.resolve(new Response(JSON.stringify([])));
+        if (url.includes("/api/menu/week"))
+          return Promise.resolve(new Response(JSON.stringify(tombstoneWeek)));
+        throw new Error(`unexpected fetch: ${url}`);
+      })
+    );
+    render(
+      <HouseholdSettingsProvider>
+        <LanguageProvider>
+          <MealsBoard />
+        </LanguageProvider>
+      </HouseholdSettingsProvider>
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Deleted recipe" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Deleted recipe");
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: "Recipe" })).not.toBeInTheDocument();
+  });
+
+  it("keeps every slot interactive when a valid week contains no entries", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: string | URL) => {
+        const url = String(input);
+        if (url.endsWith("/api/settings"))
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({ locale: { timezone: "UTC", weekStartDay: 1, language: "en" } })
+            )
+          );
+        if (url.includes("/api/recipes")) return Promise.resolve(new Response(JSON.stringify([])));
+        if (url.includes("/api/menu/week"))
+          return Promise.resolve(new Response(JSON.stringify(emptyWeek())));
+        throw new Error(`unexpected fetch: ${url}`);
+      })
+    );
+    render(
+      <HouseholdSettingsProvider>
+        <LanguageProvider>
+          <MealsBoard />
+        </LanguageProvider>
+      </HouseholdSettingsProvider>
+    );
+
+    const grid = await screen.findByTestId("meal-plan-grid");
+    expect(within(grid).queryAllByTestId("meal-entry-card")).toHaveLength(0);
+    expect(within(grid).getAllByRole("button", { name: /^Add / })).toHaveLength(28);
+    fireEvent.click(screen.getByTestId("meal-cell-2026-09-21-breakfast"));
+    fireEvent.click(screen.getByRole("radio", { name: "Note" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Note" }), {
+      target: { value: "Porridge" },
+    });
+    expect(screen.getByRole("button", { name: "Add Entry" })).toBeEnabled();
+  });
+});

@@ -1,0 +1,1832 @@
+[
+  {
+    "number": 1,
+    "fact": "1 is the first figurate number of every kind, such as triangular number, pentagonal number and centered hexagonal number, to name just a few.",
+    "kind": "math"
+  },
+  {
+    "number": 2,
+    "fact": "2 is the number of n-Queens Problem solutions for n = 4.",
+    "kind": "math"
+  },
+  {
+    "number": 3,
+    "fact": "3 is the aliquot sum of 4.",
+    "kind": "math"
+  },
+  {
+    "number": 4,
+    "fact": "4 is the smallest number of colors sufficient to color all planar maps.",
+    "kind": "math"
+  },
+  {
+    "number": 5,
+    "fact": "5 is the number of Platonic solids.",
+    "kind": "math"
+  },
+  {
+    "number": 6,
+    "fact": "6 is the second smallest composite number, its proper divisors being 1, 2 and 3.",
+    "kind": "math"
+  },
+  {
+    "number": 7,
+    "fact": "7 is the only dimension, besides the familiar 3, in which a vector cross product can be defined.",
+    "kind": "math"
+  },
+  {
+    "number": 8,
+    "fact": "8 is a composite number, its proper divisors being 1, 2, and 4.",
+    "kind": "math"
+  },
+  {
+    "number": 9,
+    "fact": "9 is the maximum number of cubes that are needed to sum to any positive integer.",
+    "kind": "math"
+  },
+  {
+    "number": 10,
+    "fact": "10 is a composite number, its proper divisors being 1, 2 and 5.",
+    "kind": "math"
+  },
+  {
+    "number": 11,
+    "fact": "11 is a Størmer number, a Heegner number, and a Mills prime.",
+    "kind": "math"
+  },
+  {
+    "number": 12,
+    "fact": "12 is a sublime number, a number that has a perfect number of divisors, and the sum of its divisors is also a perfect number.",
+    "kind": "math"
+  },
+  {
+    "number": 13,
+    "fact": "13 is the number of Archimedian solids.",
+    "kind": "math"
+  },
+  {
+    "number": 14,
+    "fact": "14 is itself the Aliquot sum of two numbers; the discrete semiprime 22, and the square number 196.",
+    "kind": "math"
+  },
+  {
+    "number": 15,
+    "fact": "15 is the 4th discrete semiprime (3.5) and the first member of the (3.q) discrete semiprime family.",
+    "kind": "math"
+  },
+  {
+    "number": 16,
+    "fact": "16 is the first number to be the aliquot sum of a lesser number; 12, it is also the aliquot sum of the greater number; the discrete semiprime, 26.",
+    "kind": "math"
+  },
+  {
+    "number": 17,
+    "fact": "17 is the number of wallpaper groups.",
+    "kind": "math"
+  },
+  {
+    "number": 18,
+    "fact": "18 is the only positive number that is twice the sum of its digits.",
+    "kind": "math"
+  },
+  {
+    "number": 19,
+    "fact": "19 is a centered triangular number, centered hexagonal number and a Heegner number.",
+    "kind": "math"
+  },
+  {
+    "number": 20,
+    "fact": "20 is the smallest primitive abundant number.",
+    "kind": "math"
+  },
+  {
+    "number": 21,
+    "fact": "21 is the smallest number of distinct squares needed to tile a square.",
+    "kind": "math"
+  },
+  {
+    "number": 22,
+    "fact": "22 is an even composite number, its proper divisors being 1, 2 and 11.",
+    "kind": "math"
+  },
+  {
+    "number": 23,
+    "fact": "23 is the smallest number of integer-sided boxes that tile a box so that no two boxes share a common length.",
+    "kind": "math"
+  },
+  {
+    "number": 24,
+    "fact": "24 is the factorial of 4 and a composite number, being the first number of the form 23q, where q is an odd prime.",
+    "kind": "math"
+  },
+  {
+    "number": 25,
+    "fact": "25 is also a Cullen number.",
+    "kind": "math"
+  },
+  {
+    "number": 26,
+    "fact": "26 is the only positive number to be directly between a square and a cube.",
+    "kind": "math"
+  },
+  {
+    "number": 27,
+    "fact": "27 is the twenty-eighth (and twenty-ninth) digit in π.",
+    "kind": "math"
+  },
+  {
+    "number": 28,
+    "fact": "28 is the 2^{nd} perfect number.",
+    "kind": "math"
+  },
+  {
+    "number": 29,
+    "fact": "29 is a Perrin number, preceded in the sequence by 12, 17, 22.",
+    "kind": "math"
+  },
+  {
+    "number": 30,
+    "fact": "30 is the largest number with the property that all smaller numbers relatively prime to it are prime.",
+    "kind": "math"
+  },
+  {
+    "number": 31,
+    "fact": "31 is a centered triangular number, a centered pentagonal number and centered decagonal number.",
+    "kind": "math"
+  },
+  {
+    "number": 32,
+    "fact": "32 is the smallest non-trivial 5^{th} power.",
+    "kind": "math"
+  },
+  {
+    "number": 33,
+    "fact": "33 is the largest positive integer that cannot be expressed as a sum of different triangular numbers.",
+    "kind": "math"
+  },
+  {
+    "number": 34,
+    "fact": "34 is the ninth distinct semiprime and has four divisors including unity and itself.",
+    "kind": "math"
+  },
+  {
+    "number": 35,
+    "fact": "35 is the sum of the first five triangular numbers, making it a tetrahedral number.",
+    "kind": "math"
+  },
+  {
+    "number": 36,
+    "fact": "36 is also a 13-gonal number.",
+    "kind": "math"
+  },
+  {
+    "number": 37,
+    "fact": "37 is the maximum number of 5^{th} powers needed to sum to any number.",
+    "kind": "math"
+  },
+  {
+    "number": 38,
+    "fact": "38 is the sum of the squares of the first three primes.",
+    "kind": "math"
+  },
+  {
+    "number": 39,
+    "fact": "39 is the smallest number which has 3 different partitions into 3 parts with the same product.",
+    "kind": "math"
+  },
+  {
+    "number": 40,
+    "fact": "40 is the number of n-queens problem solutions for n = 7.",
+    "kind": "math"
+  },
+  {
+    "number": 41,
+    "fact": "41 is the 13th smallest prime number.",
+    "kind": "math"
+  },
+  {
+    "number": 42,
+    "fact": "42 is the 5^{th} Catalan number.",
+    "kind": "math"
+  },
+  {
+    "number": 43,
+    "fact": "43 is a repdigit in base 6 (111).",
+    "kind": "math"
+  },
+  {
+    "number": 44,
+    "fact": "44 is the number of derangements of 5 items.",
+    "kind": "math"
+  },
+  {
+    "number": 45,
+    "fact": "45 is the sixth positive integer with a prime factorization of the form p2q, with p and q being prime.",
+    "kind": "math"
+  },
+  {
+    "number": 46,
+    "fact": "46 is the number of different arrangements (up to rotation and reflection) of 9 non-attacking queens on a 9×9 chessboard.",
+    "kind": "math"
+  },
+  {
+    "number": 47,
+    "fact": "47 is the largest number of cubes that cannot tile a cube.",
+    "kind": "math"
+  },
+  {
+    "number": 48,
+    "fact": "48 is the smallest number with 10 divisors.",
+    "kind": "math"
+  },
+  {
+    "number": 49,
+    "fact": "49 is the square of seven and is therefore the fourth squared prime number.",
+    "kind": "math"
+  },
+  {
+    "number": 50,
+    "fact": "50 is the smallest number that can be written as the sum of of 2 squares in 2 ways.",
+    "kind": "math"
+  },
+  {
+    "number": 51,
+    "fact": "51 is a pentagonal number as well as a centered pentagonal number (one of the few numbers to be both) and an 18-gonal number and a Perrin number.",
+    "kind": "math"
+  },
+  {
+    "number": 52,
+    "fact": "52 is the 5^{th} Bell number.",
+    "kind": "math"
+  },
+  {
+    "number": 53,
+    "fact": "53 is the only two digit number that is reversed in hexadecimal.",
+    "kind": "math"
+  },
+  {
+    "number": 54,
+    "fact": "54 is the smallest number that can be written as the sum of 3 squares in 3 ways.",
+    "kind": "math"
+  },
+  {
+    "number": 55,
+    "fact": "55 is a semiprime, being the product of 5 and 11 and it is the 2nd member of the (5.q) semiprime family.",
+    "kind": "math"
+  },
+  {
+    "number": 56,
+    "fact": "56 is the sum of the first six triangular numbers (making it a tetrahedral number), as well as the sum of six consecutive primes (3 + 5 + 7 + 11 + 13 + 17).",
+    "kind": "math"
+  },
+  {
+    "number": 57,
+    "fact": "57 is a repdigit in base 7 (111).",
+    "kind": "math"
+  },
+  {
+    "number": 58,
+    "fact": "58 is the number of commutative semigroups of order 4.",
+    "kind": "math"
+  },
+  {
+    "number": 59,
+    "fact": "59 is also a highly cototient number.",
+    "kind": "math"
+  },
+  {
+    "number": 60,
+    "fact": "60 is the smallest number divisible by the numbers 1 to 6.",
+    "kind": "math"
+  },
+  {
+    "number": 61,
+    "fact": "61 is the 3^{rd} secant number.",
+    "kind": "math"
+  },
+  {
+    "number": 62,
+    "fact": "62 is the smallest number that can be written as the sum of of 3 distinct squares in 2 ways.",
+    "kind": "math"
+  },
+  {
+    "number": 63,
+    "fact": "63 is the number of partially ordered sets of 5 elements.",
+    "kind": "math"
+  },
+  {
+    "number": 64,
+    "fact": "64 is the square of 8, the cube of 4, and the sixth power of 2.",
+    "kind": "math"
+  },
+  {
+    "number": 65,
+    "fact": "65 is the smallest number that becomes square if its reverse is either added to or subtracted from it.",
+    "kind": "math"
+  },
+  {
+    "number": 66,
+    "fact": "66 is the number of 8-iamonds.",
+    "kind": "math"
+  },
+  {
+    "number": 67,
+    "fact": "67 is the smallest number which is palindromic in bases 5 and 6.",
+    "kind": "math"
+  },
+  {
+    "number": 68,
+    "fact": "68 is the 2-digit string that appears latest in the decimal expansion of p.",
+    "kind": "math"
+  },
+  {
+    "number": 69,
+    "fact": "69 is a value of n where n^{2} and n^{3} together contain each digit once.",
+    "kind": "math"
+  },
+  {
+    "number": 70,
+    "fact": "70 is the smallest weird number.",
+    "kind": "math"
+  },
+  {
+    "number": 71,
+    "fact": "71 is a centered heptagonal number.",
+    "kind": "math"
+  },
+  {
+    "number": 72,
+    "fact": "72 is the sum of four consecutive primes (13 + 17 + 19 + 23), as well as the sum of six consecutive primes (5 + 7 + 11 + 13 + 17 + 19).",
+    "kind": "math"
+  },
+  {
+    "number": 73,
+    "fact": "73 is the only prime repunit in base 8 (1118).",
+    "kind": "math"
+  },
+  {
+    "number": 74,
+    "fact": "74 is the number of different non-Hamiltonian polyhedra with a minimum number of vertices.",
+    "kind": "math"
+  },
+  {
+    "number": 75,
+    "fact": "75 is the number of orderings of 4 objects with ties allowed.",
+    "kind": "math"
+  },
+  {
+    "number": 76,
+    "fact": "76 is an automorphic number.",
+    "kind": "math"
+  },
+  {
+    "number": 77,
+    "fact": "77 is the number of digits of the 12th perfect number.",
+    "kind": "math"
+  },
+  {
+    "number": 78,
+    "fact": "78 is a triangular number, and its factorization makes it a sphenic number.",
+    "kind": "math"
+  },
+  {
+    "number": 79,
+    "fact": "79 is a Pillai prime, because 23!.",
+    "kind": "math"
+  },
+  {
+    "number": 80,
+    "fact": "80 is the smallest number n where n and n+1 are both products of 4 or more primes.",
+    "kind": "math"
+  },
+  {
+    "number": 81,
+    "fact": "81 is the square of the sum of its digits.",
+    "kind": "math"
+  },
+  {
+    "number": 82,
+    "fact": "82 is a companion Pell number.",
+    "kind": "math"
+  },
+  {
+    "number": 83,
+    "fact": "83 is also the 23rd prime number, following 79 and preceding 89.",
+    "kind": "math"
+  },
+  {
+    "number": 84,
+    "fact": "84 is also the lim sup of the largest finite subgroup of the mapping class group of a genus g surface divided by g.",
+    "kind": "math"
+  },
+  {
+    "number": 85,
+    "fact": "85 is the product of two prime numbers (5 and 17), and is therefore a biprime; specifically, the 24th biprime not counting perfect squares.",
+    "kind": "math"
+  },
+  {
+    "number": 86,
+    "fact": "86 is a repdigit in base 6 (222).",
+    "kind": "math"
+  },
+  {
+    "number": 87,
+    "fact": "87 is the sum of the squares of the first four primes.",
+    "kind": "math"
+  },
+  {
+    "number": 88,
+    "fact": "88 is one of only 2 numbers known whose square has no isolated digits.",
+    "kind": "math"
+  },
+  {
+    "number": 89,
+    "fact": "89 is also a Markov number, appearing in solutions to the Markov Diophantine equation with other odd-indexed Fibonacci numbers.",
+    "kind": "math"
+  },
+  {
+    "number": 90,
+    "fact": "90 is the number of degrees in a right angle.",
+    "kind": "math"
+  },
+  {
+    "number": 91,
+    "fact": "91 is a repdigit in base 9 (111).",
+    "kind": "math"
+  },
+  {
+    "number": 92,
+    "fact": "92 is a pentagonal number.",
+    "kind": "math"
+  },
+  {
+    "number": 93,
+    "fact": "93 is a repdigit in base 5 (333).",
+    "kind": "math"
+  },
+  {
+    "number": 94,
+    "fact": "94 is the twenty-ninth distinct semiprime and the fourteenth of the form (2.q).",
+    "kind": "math"
+  },
+  {
+    "number": 95,
+    "fact": "95 is the number of planar partitions of 10.",
+    "kind": "math"
+  },
+  {
+    "number": 96,
+    "fact": "96 is the smallest number that can be written as the difference of 2 squares in 4 ways.",
+    "kind": "math"
+  },
+  {
+    "number": 97,
+    "fact": "97 is the smallest factor of one more than the product of the first twenty-five terms of the Euclid–Mullin sequence, making it the twenty-sixth term.",
+    "kind": "math"
+  },
+  {
+    "number": 98,
+    "fact": "98 is a Wedderburn-Etherington number and a nontotient.",
+    "kind": "math"
+  },
+  {
+    "number": 99,
+    "fact": "99 is the ninth repdigit, a palindromic number and a Kaprekar number.",
+    "kind": "math"
+  },
+  {
+    "number": 100,
+    "fact": "100 is also an 18-gonal number.",
+    "kind": "math"
+  },
+  {
+    "number": 101,
+    "fact": "101 is the number of partitions of 13.",
+    "kind": "math"
+  },
+  {
+    "number": 102,
+    "fact": "102 is the smallest number with three different digits.",
+    "kind": "math"
+  },
+  {
+    "number": 103,
+    "fact": "103 is a strictly non-palindromic number.",
+    "kind": "math"
+  },
+  {
+    "number": 104,
+    "fact": "104 is the smallest known number of unit line segments that can exist in the plane, 4 touching at every vertex.",
+    "kind": "math"
+  },
+  {
+    "number": 105,
+    "fact": "105 is also a number n for which n − 2k is prime, for 0 < k < log2(n).",
+    "kind": "math"
+  },
+  {
+    "number": 106,
+    "fact": "106 is the thirty-first distinct biprime and the fifteenth of the form (2.q).",
+    "kind": "math"
+  },
+  {
+    "number": 107,
+    "fact": "107 is the 28th prime number.",
+    "kind": "math"
+  },
+  {
+    "number": 108,
+    "fact": "108 is the equation results in the Golden ratio.",
+    "kind": "math"
+  },
+  {
+    "number": 109,
+    "fact": "109 is the smallest factor of one more than the product of the first twenty-three terms of the Euclid–Mullin sequence, making it the twenty-fourth term.",
+    "kind": "math"
+  },
+  {
+    "number": 110,
+    "fact": "110 is a sphenic number and a pronic number.",
+    "kind": "math"
+  },
+  {
+    "number": 111,
+    "fact": "111 is the smallest possible magic constant of a 3×3 magic square of distinct primes.",
+    "kind": "math"
+  },
+  {
+    "number": 112,
+    "fact": "112 is an abundant number and a heptagonal number.",
+    "kind": "math"
+  },
+  {
+    "number": 113,
+    "fact": "113 is a highly cototient number and a centered square number.",
+    "kind": "math"
+  },
+  {
+    "number": 114,
+    "fact": "114 is an abundant number, a sphenic number and a Harshad number.",
+    "kind": "math"
+  },
+  {
+    "number": 115,
+    "fact": "115 is the number of rooted trees with 8 vertices.",
+    "kind": "math"
+  },
+  {
+    "number": 116,
+    "fact": "116 is a noncototient, meaning that there is no solution to the equation m − φ(m) = n, where φ stands for Euler's totient function.",
+    "kind": "math"
+  },
+  {
+    "number": 117,
+    "fact": "117 is a pentagonal number.",
+    "kind": "math"
+  },
+  {
+    "number": 118,
+    "fact": "118 is the smallest number that has 4 different partitions into 3 parts with the same product.",
+    "kind": "math"
+  },
+  {
+    "number": 119,
+    "fact": "119 is the smallest composite number that is 1 less than a factorial (120 is 5!.",
+    "kind": "math"
+  },
+  {
+    "number": 120,
+    "fact": "120 is the first multiply perfect number of order three (a 3-perfect number, triperfect).",
+    "kind": "math"
+  },
+  {
+    "number": 121,
+    "fact": "121 is also a star number and a centered octagonal number.",
+    "kind": "math"
+  },
+  {
+    "number": 122,
+    "fact": "122 is the smallest number n>1 so that n concatenated with n-1 0's concatenated with the reverse of n is prime.",
+    "kind": "math"
+  },
+  {
+    "number": 123,
+    "fact": "123 is the 10^{th} Lucas number.",
+    "kind": "math"
+  },
+  {
+    "number": 124,
+    "fact": "124 is the smallest number with the property that its first 3 multiples contain the digit 2.",
+    "kind": "math"
+  },
+  {
+    "number": 125,
+    "fact": "125 is the only number known that contains all its proper divisors as proper substrings.",
+    "kind": "math"
+  },
+  {
+    "number": 126,
+    "fact": "126 is a pentagonal pyramidal number, and a decagonal number as well as a pentatope number.",
+    "kind": "math"
+  },
+  {
+    "number": 127,
+    "fact": "127 is the 7th Motzkin number.",
+    "kind": "math"
+  },
+  {
+    "number": 128,
+    "fact": "128 is the only 3-digit number that is a 7th power.",
+    "kind": "math"
+  },
+  {
+    "number": 129,
+    "fact": "129 is a repdigit in base 6 (333).",
+    "kind": "math"
+  },
+  {
+    "number": 130,
+    "fact": "130 is the number of functions from 6 unlabeled points to themselves.",
+    "kind": "math"
+  },
+  {
+    "number": 131,
+    "fact": "131 is a full reptend prime in base 10.",
+    "kind": "math"
+  },
+  {
+    "number": 132,
+    "fact": "132 is the sixth Catalan number.",
+    "kind": "math"
+  },
+  {
+    "number": 133,
+    "fact": "133 is the smallest number n for which the sum of the proper divisors of n divides f(n).",
+    "kind": "math"
+  },
+  {
+    "number": 134,
+    "fact": "134 is _{8}C_{1} + _{8}C_{3} + _{8}C_{4}.",
+    "kind": "math"
+  },
+  {
+    "number": 135,
+    "fact": "135 is this number in base 10 can be expressed in operations using its own digits in at least two different ways.",
+    "kind": "math"
+  },
+  {
+    "number": 136,
+    "fact": "136 is a self-descriptive number in base 4.",
+    "kind": "math"
+  },
+  {
+    "number": 137,
+    "fact": "137 is a strictly non-palindromic number and a primeval number.",
+    "kind": "math"
+  },
+  {
+    "number": 138,
+    "fact": "138 is an Ulam number (Sloane's A002858).",
+    "kind": "math"
+  },
+  {
+    "number": 139,
+    "fact": "139 is the 34th prime number, so it is divisible only by itself and 1.",
+    "kind": "math"
+  },
+  {
+    "number": 140,
+    "fact": "140 is a harmonic divisor number.",
+    "kind": "math"
+  },
+  {
+    "number": 141,
+    "fact": "141 is the 6^{th} central trinomial coefficient.",
+    "kind": "math"
+  },
+  {
+    "number": 142,
+    "fact": "142 is the number of planar graphs with 6 vertices.",
+    "kind": "math"
+  },
+  {
+    "number": 143,
+    "fact": "143 is the smallest quasi-Carmichael number in base 8.",
+    "kind": "math"
+  },
+  {
+    "number": 144,
+    "fact": "144 is a number that is divisible by the value of its φ function, which returns 48 in this case.",
+    "kind": "math"
+  },
+  {
+    "number": 145,
+    "fact": "145 is a pentagonal number and a centered square number.",
+    "kind": "math"
+  },
+  {
+    "number": 146,
+    "fact": "146 is a repdigit in base 8 (222).",
+    "kind": "math"
+  },
+  {
+    "number": 147,
+    "fact": "147 is the number of sided 6-hexes.",
+    "kind": "math"
+  },
+  {
+    "number": 148,
+    "fact": "148 is the number of perfect graphs with 6 vertices.",
+    "kind": "math"
+  },
+  {
+    "number": 149,
+    "fact": "149 is a strictly non-palindromic number, meaning that it is not palindromic in any base from binary to base 147.",
+    "kind": "math"
+  },
+  {
+    "number": 150,
+    "fact": "150 is the sum of eight consecutive primes (7 + 11 + 13 + 17 + 19 + 23 + 29 + 31).",
+    "kind": "math"
+  },
+  {
+    "number": 151,
+    "fact": "151 is a palindromic prime.",
+    "kind": "math"
+  },
+  {
+    "number": 152,
+    "fact": "152 is the sum of four consecutive primes (31 + 37 + 41 + 43).",
+    "kind": "math"
+  },
+  {
+    "number": 153,
+    "fact": "153 is a narcissistic number.",
+    "kind": "math"
+  },
+  {
+    "number": 154,
+    "fact": "154 is the sum of the first six factorials.",
+    "kind": "math"
+  },
+  {
+    "number": 155,
+    "fact": "155 is the sum of the primes between its smallest and largest prime factor.",
+    "kind": "math"
+  },
+  {
+    "number": 156,
+    "fact": "156 is a pronic number, a dodecagonal number, a refactorable number and a Harshad number.",
+    "kind": "math"
+  },
+  {
+    "number": 157,
+    "fact": "157 is a repdigit in base 12 (111).",
+    "kind": "math"
+  },
+  {
+    "number": 158,
+    "fact": "158 is a Perrin number, appearing after 68, 90, 119.",
+    "kind": "math"
+  },
+  {
+    "number": 159,
+    "fact": "159 is the number of isomers of C_{11}H_{24}.",
+    "kind": "math"
+  },
+  {
+    "number": 160,
+    "fact": "160 is the sum of the first 11 primes, as well as the sum of the cubes of the first three primes.",
+    "kind": "math"
+  },
+  {
+    "number": 161,
+    "fact": "161 is a hexagonal pyramidal number.",
+    "kind": "math"
+  },
+  {
+    "number": 162,
+    "fact": "162 is divisible by 2, 3, 6, 9, 18, 27, 54, and 81.",
+    "kind": "math"
+  },
+  {
+    "number": 163,
+    "fact": "163 is the function f(n) = n2 + n + 41 gives prime values for all values of n between 0 and 39, and for n < 107 approximately half of all values are prime.",
+    "kind": "math"
+  },
+  {
+    "number": 164,
+    "fact": "164 is the sum of two squares, 102 + 82.",
+    "kind": "math"
+  },
+  {
+    "number": 165,
+    "fact": "165 is the midpoint of the n^{th} larger prime and n^{th} smaller prime, for 1 = n = 6.",
+    "kind": "math"
+  },
+  {
+    "number": 166,
+    "fact": "166 is the number of monotone Boolean functions of 4 variables.",
+    "kind": "math"
+  },
+  {
+    "number": 167,
+    "fact": "167 is a strictly non-palindromic number; thus its not palindromic in any base from binary to base 165.",
+    "kind": "math"
+  },
+  {
+    "number": 168,
+    "fact": "168 is the product of first two perfect numbers.",
+    "kind": "math"
+  },
+  {
+    "number": 169,
+    "fact": "169 is the 7^{th} Pell number.",
+    "kind": "math"
+  },
+  {
+    "number": 170,
+    "fact": "170 is the smallest n for which φ(n) and σ(n) are both square(64 and 324 respectively).",
+    "kind": "math"
+  },
+  {
+    "number": 171,
+    "fact": "171 is an undulating number.",
+    "kind": "math"
+  },
+  {
+    "number": 172,
+    "fact": "172 is the sum of Euler's totient function φ(x) over the first twenty-three integers.",
+    "kind": "math"
+  },
+  {
+    "number": 173,
+    "fact": "173 is an Eisenstein prime with no imaginary part.",
+    "kind": "math"
+  },
+  {
+    "number": 174,
+    "fact": "174 is the smallest number that can be written as the sum of of 4 positive distinct squares in 6 ways.",
+    "kind": "math"
+  },
+  {
+    "number": 175,
+    "fact": "175 is a centered 29-gonal number.",
+    "kind": "math"
+  },
+  {
+    "number": 176,
+    "fact": "176 is a pentagonal number.",
+    "kind": "math"
+  },
+  {
+    "number": 177,
+    "fact": "177 is the number of graphs with 7 edges.",
+    "kind": "math"
+  },
+  {
+    "number": 178,
+    "fact": "178 is a square-free number.",
+    "kind": "math"
+  },
+  {
+    "number": 179,
+    "fact": "179 is a strictly non-palindromic number.",
+    "kind": "math"
+  },
+  {
+    "number": 180,
+    "fact": "180 is the total number of degrees in a triangle.",
+    "kind": "math"
+  },
+  {
+    "number": 181,
+    "fact": "181 is a square-free number.",
+    "kind": "math"
+  },
+  {
+    "number": 182,
+    "fact": "182 is a repdigit in the D'ni numeral system (77), and in base 9 (222).",
+    "kind": "math"
+  },
+  {
+    "number": 183,
+    "fact": "183 is a central polygonal number, n2 − n + 1, where n = 14 ( A002061).",
+    "kind": "math"
+  },
+  {
+    "number": 184,
+    "fact": "184 is the sum of four consecutive prime numbers (41 + 43 + 47 + 53).",
+    "kind": "math"
+  },
+  {
+    "number": 185,
+    "fact": "185 is the number of conjugacy classes in the automorphism group of the 8 dimensional hypercube.",
+    "kind": "math"
+  },
+  {
+    "number": 186,
+    "fact": "186 is a square-free number.",
+    "kind": "math"
+  },
+  {
+    "number": 187,
+    "fact": "187 is a centered 31-gonal number.",
+    "kind": "math"
+  },
+  {
+    "number": 188,
+    "fact": "188 is the number of semigroups of order 4.",
+    "kind": "math"
+  },
+  {
+    "number": 189,
+    "fact": "189 is a heptagonal number.",
+    "kind": "math"
+  },
+  {
+    "number": 190,
+    "fact": "190 is a triangular number.",
+    "kind": "math"
+  },
+  {
+    "number": 191,
+    "fact": "191 is a number n for which n, n+2, n+6, and n+8 are all prime.",
+    "kind": "math"
+  },
+  {
+    "number": 192,
+    "fact": "192 is a composite number, having as its factors 2 × 2 × 2 × 2 × 2 × 2 × 3.",
+    "kind": "math"
+  },
+  {
+    "number": 193,
+    "fact": "193 is the most accurate approximation of Euler's Number (e) such that both the numerator and the denominator are integers less than 200 (approx.",
+    "kind": "math"
+  },
+  {
+    "number": 194,
+    "fact": "194 is a square-free number.",
+    "kind": "math"
+  },
+  {
+    "number": 195,
+    "fact": "195 is the smallest value of n such that _{2n}C_{n} is divisible by n^{2}.",
+    "kind": "math"
+  },
+  {
+    "number": 196,
+    "fact": "196 is a heptagonal pyramidal number.",
+    "kind": "math"
+  },
+  {
+    "number": 197,
+    "fact": "197 is a Keith or repfigit number.",
+    "kind": "math"
+  },
+  {
+    "number": 198,
+    "fact": "198 is a Harshad number, divisible by the sum of its digits.",
+    "kind": "math"
+  },
+  {
+    "number": 199,
+    "fact": "199 is the 11^{th} Lucas number.",
+    "kind": "math"
+  },
+  {
+    "number": 200,
+    "fact": "200 is the smallest number which can not be made prime by changing one of its digits.",
+    "kind": "math"
+  },
+  {
+    "number": 201,
+    "fact": "201 is a Kaprekar constant in base 4.",
+    "kind": "math"
+  },
+  {
+    "number": 202,
+    "fact": "202 is a Smith number in base 10, because its factorization is 2 × 101, and 2 + 0 + 2 = 2 + 1 + 0 + 1 = 4.",
+    "kind": "math"
+  },
+  {
+    "number": 203,
+    "fact": "203 is the 6th Bell number, i.e.",
+    "kind": "math"
+  },
+  {
+    "number": 204,
+    "fact": "204 is a member of the Mian–Chowla sequence, being the smallest number after 182 such that the pairwise sums of the previous terms are all distinct.",
+    "kind": "math"
+  },
+  {
+    "number": 205,
+    "fact": "205 is 5 x 41.",
+    "kind": "math"
+  },
+  {
+    "number": 206,
+    "fact": "206 is the smallest number whose English name contains all five vowels exactly once.",
+    "kind": "math"
+  },
+  {
+    "number": 207,
+    "fact": "207 is a Wedderburn-Etherington number.",
+    "kind": "math"
+  },
+  {
+    "number": 208,
+    "fact": "208 is a tetranacci number.",
+    "kind": "math"
+  },
+  {
+    "number": 209,
+    "fact": "209 is the smallest quasi-Carmichael number in base 9.",
+    "kind": "math"
+  },
+  {
+    "number": 210,
+    "fact": "210 is the product of the first 4 primes.",
+    "kind": "math"
+  },
+  {
+    "number": 211,
+    "fact": "211 is a primorial prime, sum of three consecutive primes (67 + 71 + 73), Chen prime, centered decagonal prime, and self prime.",
+    "kind": "math"
+  },
+  {
+    "number": 212,
+    "fact": "212 is the area code for Manhattan, one of the original area codes, and considered the most coveted in America.",
+    "kind": "trivia"
+  },
+  {
+    "number": 213,
+    "fact": "213 is the number of perfect squared rectangles of order 13.",
+    "kind": "math"
+  },
+  {
+    "number": 214,
+    "fact": "214 is a composite number and a 37-gonal number.",
+    "kind": "math"
+  },
+  {
+    "number": 215,
+    "fact": "215 is a composite number and a semiprime.",
+    "kind": "math"
+  },
+  {
+    "number": 216,
+    "fact": "216 is the smallest cube that can be written as the sum of 3 cubes.",
+    "kind": "math"
+  },
+  {
+    "number": 217,
+    "fact": "217 is a Kaprekar constant in base 2.",
+    "kind": "math"
+  },
+  {
+    "number": 218,
+    "fact": "218 is the number of digraphs with 4 vertices.",
+    "kind": "math"
+  },
+  {
+    "number": 219,
+    "fact": "219 is the number of space groups, not including handedness.",
+    "kind": "math"
+  },
+  {
+    "number": 220,
+    "fact": "220 is a tetrahedral number, the sum of the first ten triangular numbers.",
+    "kind": "math"
+  },
+  {
+    "number": 221,
+    "fact": "221 is the sum of nine consecutive prime numbers (11 + 13 + 17 + 19 + 23 + 29 + 31 + 37 + 41).",
+    "kind": "math"
+  },
+  {
+    "number": 222,
+    "fact": "222 is the number of lattices on 8 unlabeled nodes.",
+    "kind": "math"
+  },
+  {
+    "number": 223,
+    "fact": "223 is a long prime, a strong prime, a lucky prime and a sexy prime (with 229).",
+    "kind": "math"
+  },
+  {
+    "number": 224,
+    "fact": "224 is the sum of four consecutive primes (47 + 53 + 59 + 61).",
+    "kind": "math"
+  },
+  {
+    "number": 225,
+    "fact": "225 is an octagonal square number.",
+    "kind": "math"
+  },
+  {
+    "number": 226,
+    "fact": "226 is a composite number, with its divisors being 1, 2, 4, 5, 10, 11, 20, 22, 44, 55 and 110, making it an amicable number with 284.",
+    "kind": "math"
+  },
+  {
+    "number": 227,
+    "fact": "227 is also a regular prime.",
+    "kind": "math"
+  },
+  {
+    "number": 228,
+    "fact": "228 is the number of ways, up to rotation and reflection, of dissecting a regular 11-gon into 9 triangles.",
+    "kind": "math"
+  },
+  {
+    "number": 229,
+    "fact": "229 is a regular prime, a long prime, a twin prime (with 227), a cousin prime, and a sexy prime.",
+    "kind": "math"
+  },
+  {
+    "number": 230,
+    "fact": "230 is a composite number, with its divisors being 2, 5, 10, 23, 46, and 115.",
+    "kind": "math"
+  },
+  {
+    "number": 231,
+    "fact": "231 is a composite number, with its divisors being 2, 5, 10, 23, 46, and 115.",
+    "kind": "math"
+  },
+  {
+    "number": 232,
+    "fact": "232 is a composite number, with its divisors being 2, 5, 10, 23, 46, and 115.",
+    "kind": "math"
+  },
+  {
+    "number": 233,
+    "fact": "233 is the 13th Fibonacci number, being the sum of 89 and 144.",
+    "kind": "math"
+  },
+  {
+    "number": 234,
+    "fact": "234 is the number of ways to stack 12 pennies in a line so that each penny lies on the table or on two pennies.",
+    "kind": "math"
+  },
+  {
+    "number": 235,
+    "fact": "235 is the number of trees with 11 vertices.",
+    "kind": "math"
+  },
+  {
+    "number": 236,
+    "fact": "236 is the number of possible positions in Othello after 2 moves by both players.",
+    "kind": "math"
+  },
+  {
+    "number": 237,
+    "fact": "237 is a composite number, with its divisors being 2, 5, 10, 23, 46, and 115.",
+    "kind": "math"
+  },
+  {
+    "number": 238,
+    "fact": "238 is the number of connected partial orders on 6 unlabeled elements.",
+    "kind": "math"
+  },
+  {
+    "number": 239,
+    "fact": "239 is the largest number that cannot be written as a sum of 8 or fewer cubes.",
+    "kind": "math"
+  },
+  {
+    "number": 240,
+    "fact": "240 is the smallest number with 20 divisors.",
+    "kind": "math"
+  },
+  {
+    "number": 241,
+    "fact": "241 is the only number n for which the n^{th} prime is p(n p(n)).",
+    "kind": "math"
+  },
+  {
+    "number": 242,
+    "fact": "242 is the smallest integer to start a run of four consecutive integers with the same number of divisors.",
+    "kind": "math"
+  },
+  {
+    "number": 243,
+    "fact": "243 is the sum of five consecutive prime numbers (41 + 43 + 47 + 53 + 59).",
+    "kind": "math"
+  },
+  {
+    "number": 244,
+    "fact": "244 is the smallest number (besides 2) that can be written as the sum of 2 squares or the sum of two 5^{th} powers.",
+    "kind": "math"
+  },
+  {
+    "number": 245,
+    "fact": "245 is a stella octangula number.",
+    "kind": "math"
+  },
+  {
+    "number": 246,
+    "fact": "246 is _{9}C_{2} + _{9}C_{4} + _{9}C_{6}.",
+    "kind": "math"
+  },
+  {
+    "number": 247,
+    "fact": "247 is the smallest possible difference between two integers that together contain each digit exactly once.",
+    "kind": "math"
+  },
+  {
+    "number": 248,
+    "fact": "248 is the smallest number n>1 for which the arithmetic, geometric, and harmonic means of f(n) and s(n) are all integers.",
+    "kind": "math"
+  },
+  {
+    "number": 249,
+    "fact": "249 is the index of a prime Woodall number.",
+    "kind": "math"
+  },
+  {
+    "number": 250,
+    "fact": "250 is the smallest multi-digit number so that the sum of the squares of its prime factors equals the sum of the squares of its digits.",
+    "kind": "math"
+  },
+  {
+    "number": 251,
+    "fact": "251 is the smallest number that can be written as the sum of 3 cubes in 2 ways.",
+    "kind": "math"
+  },
+  {
+    "number": 252,
+    "fact": "252 is the 5^{th} central binomial coefficient.",
+    "kind": "math"
+  },
+  {
+    "number": 253,
+    "fact": "253 is the smallest non-trivial triangular star number.",
+    "kind": "math"
+  },
+  {
+    "number": 254,
+    "fact": "254 is the smallest multi-digit composite number all of whose proper divisors contain the digit 2.",
+    "kind": "math"
+  },
+  {
+    "number": 255,
+    "fact": "255 is a repdigit in base 2 (11111111) in base 4 (3333), and in base 16 (FF).",
+    "kind": "math"
+  },
+  {
+    "number": 256,
+    "fact": "256 is the frequency of Middle C in hertz under scientific pitch.",
+    "kind": "math"
+  },
+  {
+    "number": 257,
+    "fact": "257 is a prime number of the form and therefore a Fermat prime.",
+    "kind": "math"
+  },
+  {
+    "number": 258,
+    "fact": "258 is a value of n so that n(n+9) is a palindrome.",
+    "kind": "math"
+  },
+  {
+    "number": 259,
+    "fact": "259 is the product of 7 and 37.",
+    "kind": "math"
+  },
+  {
+    "number": 260,
+    "fact": "260 is the constant of an 8×8 magic square.",
+    "kind": "math"
+  },
+  {
+    "number": 261,
+    "fact": "261 is the number of essentially different ways to dissect a 16-gon into 7 quadrilaterals.",
+    "kind": "math"
+  },
+  {
+    "number": 262,
+    "fact": "262 is the 5^{th} meandric number and the 9^{th} open meandric number.",
+    "kind": "math"
+  },
+  {
+    "number": 263,
+    "fact": "263 is the largest known prime whose square is strobogrammatic.",
+    "kind": "math"
+  },
+  {
+    "number": 264,
+    "fact": "264 is the largest known number whose square is undulating.",
+    "kind": "math"
+  },
+  {
+    "number": 265,
+    "fact": "265 is the number of derangements of 6 items.",
+    "kind": "math"
+  },
+  {
+    "number": 266,
+    "fact": "266 is the Stirling number of the second kind S(8,6).",
+    "kind": "math"
+  },
+  {
+    "number": 267,
+    "fact": "267 is the number of planar partitions of 12.",
+    "kind": "math"
+  },
+  {
+    "number": 268,
+    "fact": "268 is the smallest number whose product of digits is 6 times the sum of its digits.",
+    "kind": "math"
+  },
+  {
+    "number": 269,
+    "fact": "269 is the number of 6-octs.",
+    "kind": "math"
+  },
+  {
+    "number": 270,
+    "fact": "270 is the fourth number that is divisible by its average integer divisor (sequence A007340 in OEIS).",
+    "kind": "math"
+  },
+  {
+    "number": 271,
+    "fact": "271 is the sum of the coprime counts for the first 29 integers is 270.",
+    "kind": "math"
+  },
+  {
+    "number": 272,
+    "fact": "272 is the 4^{th} tangent number.",
+    "kind": "math"
+  },
+  {
+    "number": 273,
+    "fact": "273 is the number of seconds in American composer John Cage's piano composition 4'33\" of silence, in three movements.",
+    "kind": "trivia"
+  },
+  {
+    "number": 274,
+    "fact": "274 is the Stirling number of the first kind s(6,2).",
+    "kind": "math"
+  },
+  {
+    "number": 275,
+    "fact": "275 is the number of partitions of 28 in which no part occurs only once.",
+    "kind": "math"
+  },
+  {
+    "number": 276,
+    "fact": "276 is 1^{5} + 2^{5} + 3^{5}.",
+    "kind": "math"
+  },
+  {
+    "number": 277,
+    "fact": "277 is the fifty-ninth prime number, following 271 and preceding 281.",
+    "kind": "math"
+  },
+  {
+    "number": 278,
+    "fact": "278 is the closest integer to 6^{p}.",
+    "kind": "math"
+  },
+  {
+    "number": 279,
+    "fact": "279 is the maximum number of 8^{th} powers needed to sum to any number.",
+    "kind": "math"
+  },
+  {
+    "number": 280,
+    "fact": "280 is the number of ways 18 people around a round table can shake hands in a non-crossing way, up to rotation.",
+    "kind": "math"
+  },
+  {
+    "number": 281,
+    "fact": "281 is the sum of the first 14 primes.",
+    "kind": "math"
+  },
+  {
+    "number": 282,
+    "fact": "282 is the number of planar partitions of 9.",
+    "kind": "math"
+  },
+  {
+    "number": 283,
+    "fact": "283 is a prime number.",
+    "kind": "math"
+  },
+  {
+    "number": 284,
+    "fact": "284 is an even number.",
+    "kind": "math"
+  },
+  {
+    "number": 285,
+    "fact": "285 is the number of binary rooted trees with 13 vertices.",
+    "kind": "math"
+  },
+  {
+    "number": 286,
+    "fact": "286 is the number of rooted trees with 9 vertices.",
+    "kind": "math"
+  },
+  {
+    "number": 287,
+    "fact": "287 is the sum of consecutive primes in 3 different ways.",
+    "kind": "math"
+  },
+  {
+    "number": 288,
+    "fact": "288 is the smallest non-palindrome non-square that when multiplied by its reverse is a square.",
+    "kind": "math"
+  },
+  {
+    "number": 289,
+    "fact": "289 is the product of 17 and 17.",
+    "kind": "math"
+  },
+  {
+    "number": 290,
+    "fact": "290 is an even number.",
+    "kind": "math"
+  },
+  {
+    "number": 291,
+    "fact": "291 is the largest number that is not the sum of distinct non-trivial powers.",
+    "kind": "math"
+  },
+  {
+    "number": 292,
+    "fact": "292 is the number of ways to make change for a dollar.",
+    "kind": "math"
+  },
+  {
+    "number": 293,
+    "fact": "293 is the number of ways to stack 20 boxes in a line so that each box lies on the table or on a box next to 2 boxes.",
+    "kind": "math"
+  },
+  {
+    "number": 294,
+    "fact": "294 is the number of planar 2-connected graphs with 7 vertices.",
+    "kind": "math"
+  },
+  {
+    "number": 295,
+    "fact": "295 is a structured deltoidal hexacontahedral number.",
+    "kind": "math"
+  },
+  {
+    "number": 296,
+    "fact": "296 is the number of partitions of 30 into distinct parts.",
+    "kind": "math"
+  },
+  {
+    "number": 297,
+    "fact": "297 is the product of 3 and 99.",
+    "kind": "math"
+  },
+  {
+    "number": 298,
+    "fact": "298 is a value of n so that n(n+3) is a palindrome.",
+    "kind": "math"
+  },
+  {
+    "number": 299,
+    "fact": "299 is the maximum number of regions a cube can be cut into with 12 cuts.",
+    "kind": "math"
+  },
+  {
+    "number": 300,
+    "fact": "300 is the largest possible score in bowling.",
+    "kind": "math"
+  },
+  {
+    "number": 301,
+    "fact": "301 is a 6-hyperperfect number.",
+    "kind": "math"
+  },
+  {
+    "number": 302,
+    "fact": "302 is the number of ways to play the first 3 moves in Checkers.",
+    "kind": "math"
+  },
+  {
+    "number": 303,
+    "fact": "303 is the number of bipartite graphs with 8 vertices.",
+    "kind": "math"
+  },
+  {
+    "number": 304,
+    "fact": "304 is a primitive semiperfect number.",
+    "kind": "math"
+  },
+  {
+    "number": 305,
+    "fact": "305 is an hexagonal prism number.",
+    "kind": "math"
+  },
+  {
+    "number": 306,
+    "fact": "306 is the number of 5-digit triangular numbers.",
+    "kind": "math"
+  },
+  {
+    "number": 307,
+    "fact": "307 is a non-palindrome with a palindromic square.",
+    "kind": "math"
+  },
+  {
+    "number": 308,
+    "fact": "308 is a heptagonal pyramidal number.",
+    "kind": "math"
+  },
+  {
+    "number": 309,
+    "fact": "309 is the smallest number whose 5^{th} power contains every digit at least once.",
+    "kind": "math"
+  },
+  {
+    "number": 310,
+    "fact": "310 is an even number.",
+    "kind": "math"
+  },
+  {
+    "number": 311,
+    "fact": "311 is a prime number.",
+    "kind": "math"
+  },
+  {
+    "number": 312,
+    "fact": "312 is an even number.",
+    "kind": "math"
+  },
+  {
+    "number": 313,
+    "fact": "313 is the number of intersections when all the diagonals of a regular dodecagon are drawn.",
+    "kind": "math"
+  },
+  {
+    "number": 314,
+    "fact": "314 is the smallest number that can be written as the sum of of 3 positive distinct squares in 6 ways.",
+    "kind": "math"
+  },
+  {
+    "number": 315,
+    "fact": "315 is (4+3) × (4+1) × (4+5).",
+    "kind": "math"
+  },
+  {
+    "number": 316,
+    "fact": "316 is an even number.",
+    "kind": "math"
+  },
+  {
+    "number": 317,
+    "fact": "317 is the number of binary 4×4 matrices up to permutations of rows and columns.",
+    "kind": "math"
+  },
+  {
+    "number": 318,
+    "fact": "318 is the number of unlabeled partially ordered sets of 6 elements.",
+    "kind": "math"
+  },
+  {
+    "number": 319,
+    "fact": "319 is the smallest number with the property that the partition with the largest product does not have a maximum number of parts.",
+    "kind": "math"
+  },
+  {
+    "number": 320,
+    "fact": "320 is the maximum determinant of a binary 10×10 matrix.",
+    "kind": "math"
+  },
+  {
+    "number": 321,
+    "fact": "321 is the product of 3 and 107.",
+    "kind": "math"
+  },
+  {
+    "number": 322,
+    "fact": "322 is the 12^{th} Lucas number.",
+    "kind": "math"
+  },
+  {
+    "number": 323,
+    "fact": "323 is the smallest composite number n that divides the (n+1)^{st} Fibonacci number.",
+    "kind": "math"
+  },
+  {
+    "number": 324,
+    "fact": "324 is the largest possible product of positive integers with sum 16.",
+    "kind": "math"
+  },
+  {
+    "number": 325,
+    "fact": "325 is a 3-hyperperfect number.",
+    "kind": "math"
+  },
+  {
+    "number": 326,
+    "fact": "326 is the number of permutations of some subset of 5 elements.",
+    "kind": "math"
+  },
+  {
+    "number": 327,
+    "fact": "327 is the largest number n so that n, 2n, and 3n together contain every digit from 1-9 exactly once.",
+    "kind": "math"
+  },
+  {
+    "number": 328,
+    "fact": "328 is the weight in pounds of an ovarian cyst removed from a woman in Galveston, Texas, in 1905, a world record.",
+    "kind": "trivia"
+  },
+  {
+    "number": 329,
+    "fact": "329 is the number of forests with 10 vertices.",
+    "kind": "math"
+  },
+  {
+    "number": 330,
+    "fact": "330 is an even number.",
+    "kind": "math"
+  },
+  {
+    "number": 331,
+    "fact": "331 is both a centered pentagonal number and a centered hexagonal number.",
+    "kind": "math"
+  },
+  {
+    "number": 332,
+    "fact": "332 is the number of 2-connected graphs with 7 vertices.",
+    "kind": "math"
+  },
+  {
+    "number": 333,
+    "fact": "333 is the number of 7-hexes.",
+    "kind": "math"
+  },
+  {
+    "number": 334,
+    "fact": "334 is the number of trees on 13 vertices with diameter 7.",
+    "kind": "math"
+  },
+  {
+    "number": 335,
+    "fact": "335 is the number of degree 12 irreducible polynomials over GF(2).",
+    "kind": "math"
+  },
+  {
+    "number": 336,
+    "fact": "336 is the number of dimples on an American golf ball.",
+    "kind": "trivia"
+  },
+  {
+    "number": 337,
+    "fact": "337 is the number of different resistances that can be created in a circuit of 8 equal resistors.",
+    "kind": "math"
+  },
+  {
+    "number": 338,
+    "fact": "338 is the smallest number for which both the number of divisors and the sum of its prime factors is a perfect number.",
+    "kind": "math"
+  },
+  {
+    "number": 339,
+    "fact": "339 is the number of ways to divide 5 black and 5 white beads into piles.",
+    "kind": "math"
+  },
+  {
+    "number": 340,
+    "fact": "340 is a value of n for which n!.",
+    "kind": "math"
+  },
+  {
+    "number": 341,
+    "fact": "341 is the smallest pseudoprime in base 2.",
+    "kind": "math"
+  },
+  {
+    "number": 342,
+    "fact": "342 is the number of inequivalent binary linear codes of length 8.",
+    "kind": "math"
+  },
+  {
+    "number": 343,
+    "fact": "343 is a strong Friedman number.",
+    "kind": "math"
+  },
+  {
+    "number": 344,
+    "fact": "344 is the smallest number that can be written as the sum of a cube and a 7^{th} power in more than one way.",
+    "kind": "math"
+  },
+  {
+    "number": 345,
+    "fact": "345 is half again as large as the sum of its proper divisors.",
+    "kind": "math"
+  },
+  {
+    "number": 346,
+    "fact": "346 is an even number.",
+    "kind": "math"
+  },
+  {
+    "number": 347,
+    "fact": "347 is a prime number.",
+    "kind": "math"
+  },
+  {
+    "number": 348,
+    "fact": "348 is the smallest number whose 5^{th} power contains exactly the same digits as another 5^{th} power.",
+    "kind": "math"
+  },
+  {
+    "number": 349,
+    "fact": "349 is a Tetranacci-like number starting from 1, 1, 1, and 1.",
+    "kind": "math"
+  },
+  {
+    "number": 350,
+    "fact": "350 is the Stirling number of the second kind S(7,4).",
+    "kind": "math"
+  },
+  {
+    "number": 351,
+    "fact": "351 is the smallest number so that it and the surrounding numbers are all products of 4 or more primes.",
+    "kind": "math"
+  },
+  {
+    "number": 352,
+    "fact": "352 is the number of different arrangements of 9 non-attacking queens on an 9×9 chessboard.",
+    "kind": "math"
+  },
+  {
+    "number": 353,
+    "fact": "353 is the smallest number whose 4^{th} power can be written as the sum of four 4^{th} powers.",
+    "kind": "math"
+  },
+  {
+    "number": 354,
+    "fact": "354 is the sum of the first four 4^{th} powers.",
+    "kind": "math"
+  },
+  {
+    "number": 355,
+    "fact": "355 is the number of labeled topologies with 4 elements.",
+    "kind": "math"
+  },
+  {
+    "number": 356,
+    "fact": "356 is the smallest happy number of height 6.",
+    "kind": "math"
+  },
+  {
+    "number": 357,
+    "fact": "357 is the product of 3 and 119.",
+    "kind": "math"
+  },
+  {
+    "number": 358,
+    "fact": "358 is an even number.",
+    "kind": "math"
+  },
+  {
+    "number": 359,
+    "fact": "359 is a prime number.",
+    "kind": "math"
+  },
+  {
+    "number": 360,
+    "fact": "360 is the number of degrees in a circle.",
+    "kind": "math"
+  },
+  {
+    "number": 361,
+    "fact": "361 is the number of intersections on a Go board.",
+    "kind": "math"
+  },
+  {
+    "number": 362,
+    "fact": "362 is an even number.",
+    "kind": "math"
+  },
+  {
+    "number": 363,
+    "fact": "363 is a perfect totient number.",
+    "kind": "math"
+  },
+  {
+    "number": 364,
+    "fact": "364 is the total number of gifts received in the song \"The Twelve Days of Christmas\".",
+    "kind": "trivia"
+  },
+  {
+    "number": 365,
+    "fact": "365 is the smallest number that can be written as a sum of consecutive squares in more than 1 way.",
+    "kind": "math"
+  },
+  {
+    "number": 366,
+    "fact": "366 is the number of days in a leap year.",
+    "kind": "math"
+  }
+]

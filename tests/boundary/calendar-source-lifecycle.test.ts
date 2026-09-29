@@ -1,0 +1,158 @@
+import { beforeEach, describe, expect, it } from "vitest";
+import { getDb } from "../../src/server/db/client";
+import { getEvents } from "../../src/server/modules/calendar/index";
+import {
+  deleteExternalSource,
+  setExternalSourceEnabled,
+} from "../../src/server/modules/calendar/external-sources";
+import { startExternalSourceSynchronization } from "../../src/server/modules/calendar/sync-coordinator";
+import { useIsolatedDb } from "../helpers/db";
+
+let sourceId = "";
+let sequence = 0;
+const range = { from: "2026-10-15", to: "2026-10-15" };
+const feed = [
+  "BEGIN:VCALENDAR",
+  "VERSION:2.0",
+  "BEGIN:VEVENT",
+  "UID:school-day",
+  "DTSTAMP:20260928T000000Z",
+  "DTSTART;VALUE=DATE:20261015",
+  "SUMMARY:Alex school day",
+  "END:VEVENT",
+  "END:VCALENDAR",
+].join("\r\n");
+
+function insertSource(): void {
+  getDb()
+    .prepare(
+      `INSERT INTO calendar_external_sources (id, name, provider, feed_url, created_at, updated_at)
+       VALUES (?, 'School', 'ics_generic', 'https://calendar.example.test/feed', 1, 1)`
+    )
+    .run(sourceId);
+  getDb()
+    .prepare(
+      `INSERT INTO members (id, display_name, role, lifecycle, created_at, updated_at)
+       VALUES ('alex', 'Alex', 'child', 'active', 1, 1)`
+    )
+    .run();
+}
+
+const dependencies = {
+  lookup: async () => [{ address: "8.8.8.8", family: 4 }],
+  transport: async () => feed,
+};
+
+describe("calendar external-source lifecycle", () => {
+  useIsolatedDb();
+  beforeEach(() => {
+    sourceId = `lifecycle-source-${++sequence}`;
+  });
+
+  it("hides retained rows on disable and immediately restores them on enable", async () => {
+    insertSource();
+    await startExternalSourceSynchronization(sourceId, dependencies);
+    expect(getEvents({ source: "external", range })).toHaveLength(1);
+
+    expect(setExternalSourceEnabled(sourceId, false)?.enabled).toBe(false);
+    expect(getEvents({ source: "external", range })).toEqual([]);
+    expect(getDb().prepare("SELECT COUNT(*) AS count FROM calendar_events").get()).toEqual({
+      count: 1,
+    });
+    expect(
+      getDb().prepare("SELECT COUNT(*) AS count FROM calendar_external_event_meta").get()
+    ).toEqual({
+      count: 1,
+    });
+
+    expect(setExternalSourceEnabled(sourceId, true)?.enabled).toBe(true);
+    expect(getEvents({ source: "external", range })).toHaveLength(1);
+  });
+
+  it("lets an active run settle after disable but blocks every later trigger", async () => {
+    insertSource();
+    let release!: (body: string) => void;
+    let entered!: () => void;
+    const waiting = new Promise<string>((resolve) => (release = resolve));
+    const started = new Promise<void>((resolve) => (entered = resolve));
+    let requests = 0;
+    const run = startExternalSourceSynchronization(sourceId, {
+      ...dependencies,
+      transport: async () => {
+        requests += 1;
+        entered();
+        return waiting;
+      },
+    });
+    await started;
+    setExternalSourceEnabled(sourceId, false);
+    const later = startExternalSourceSynchronization(sourceId, dependencies);
+    release(feed);
+    await Promise.all([run, later]);
+    await startExternalSourceSynchronization(sourceId, dependencies);
+    expect(requests).toBe(1);
+    expect(getDb().prepare("SELECT COUNT(*) AS count FROM calendar_events").get()).toEqual({
+      count: 1,
+    });
+    expect(getEvents({ source: "external", range })).toEqual([]);
+  });
+
+  it("waits for an active run, blocks waiting triggers, and leaves no source-owned rows", async () => {
+    insertSource();
+    let release!: (body: string) => void;
+    let entered!: () => void;
+    const waiting = new Promise<string>((resolve) => (release = resolve));
+    const started = new Promise<void>((resolve) => (entered = resolve));
+    let requests = 0;
+    const run = startExternalSourceSynchronization(sourceId, {
+      ...dependencies,
+      transport: async () => {
+        requests += 1;
+        entered();
+        return waiting;
+      },
+    });
+    await started;
+    const deletion = deleteExternalSource(sourceId);
+    const waitingTrigger = startExternalSourceSynchronization(sourceId, dependencies);
+    expect(
+      getDb().prepare("SELECT COUNT(*) AS count FROM calendar_external_sources").get()
+    ).toEqual({ count: 1 });
+    release(feed);
+    expect(await deletion).toBe(true);
+    await Promise.all([run, waitingTrigger]);
+    await startExternalSourceSynchronization(sourceId, dependencies);
+    expect(requests).toBe(1);
+    for (const table of [
+      "calendar_external_sources",
+      "calendar_external_event_meta",
+      "calendar_assignments",
+      "calendar_events",
+    ]) {
+      expect(getDb().prepare(`SELECT COUNT(*) AS count FROM ${table}`).get()).toEqual({ count: 0 });
+    }
+    expect(getEvents({ source: "external", range })).toEqual([]);
+    expect(await deleteExternalSource(sourceId)).toBe(false);
+  });
+
+  it("keeps the successful snapshot after a later failed retrieval", async () => {
+    insertSource();
+    await startExternalSourceSynchronization(sourceId, dependencies);
+    const before = getEvents({ source: "external", range });
+    await startExternalSourceSynchronization(sourceId, {
+      ...dependencies,
+      transport: async () => {
+        throw new Error("upstream unavailable");
+      },
+    });
+    expect(getEvents({ source: "external", range })).toEqual(before);
+    expect(
+      getDb()
+        .prepare("SELECT last_error_code, consecutive_failures FROM calendar_external_sources")
+        .get()
+    ).toEqual({
+      last_error_code: "unavailable",
+      consecutive_failures: 1,
+    });
+  });
+});
