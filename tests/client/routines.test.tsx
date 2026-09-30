@@ -277,6 +277,28 @@ describe("RoutinesManagement — kiosk density (SC-001, SC-002, SC-003, SC-009)"
     }
   });
 
+  it("meets kiosk density with the chore emoji picker open", async () => {
+    mockBackend();
+    const uninject = await injectDensityStyles({
+      extraCandidates: ["size-[var(--control-height)]"],
+    });
+    document.documentElement.setAttribute("data-density", "kiosk");
+
+    try {
+      renderSurface();
+      const card = await screen.findByTestId("routine-r1");
+      fireEvent.click(within(card).getByRole("button", { name: "View Chores" }));
+      await screen.findByTestId("chore-c1");
+
+      fireEvent.click(within(card).getByRole("button", { name: "Select chore icon" }));
+      const picker = await screen.findByRole("dialog", { name: "Choose a chore icon" });
+      expect(within(picker).getAllByRole("button", { pressed: false }).length).toBeGreaterThan(0);
+      expect(() => assertKioskDensityCompliant(picker)).not.toThrow();
+    } finally {
+      uninject();
+    }
+  });
+
   it("meets kiosk density with the delete ConfirmDialog open, portalled OUTSIDE this surface's own subtree (SC-003)", async () => {
     mockBackend();
     const uninject = await injectDensityStyles();
