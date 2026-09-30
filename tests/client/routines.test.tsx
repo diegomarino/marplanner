@@ -206,6 +206,18 @@ describe("RoutinesManagement — chore icon editing", () => {
       expect(JSON.parse(String(edit?.[1]?.body))).toEqual({ name: "Brush teeth", icon: null });
     });
   });
+
+  it("renders the chore's vendored Noto SVG instead of the literal emoji glyph", async () => {
+    mockBackend();
+    renderSurface();
+    const card = await screen.findByTestId("routine-r1");
+    fireEvent.click(within(card).getByRole("button", { name: "View Chores" }));
+
+    const row = await screen.findByTestId("chore-c1");
+    const icon = row.querySelector("img");
+    expect(icon).not.toBeNull();
+    expect(icon).toHaveAttribute("src", expect.stringContaining("emoji_u1faa5"));
+  });
 });
 
 describe("RoutinesManagement — kiosk density (SC-001, SC-002, SC-003, SC-009)", () => {

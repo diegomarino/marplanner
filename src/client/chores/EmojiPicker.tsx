@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { useTranslation } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { EMOJI_CATEGORIES } from "./emoji-catalog";
+import { NotoEmoji } from "./noto-emoji";
 
 interface EmojiPickerProps {
   value: string | null | undefined;
@@ -47,7 +48,7 @@ export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
         aria-haspopup="dialog"
         onClick={() => setOpen((current) => !current)}
       >
-        <span aria-hidden="true">{value ?? "＋"}</span>
+        {value ? <NotoEmoji emoji={value} size={24} /> : <span aria-hidden="true">＋</span>}
       </Button>
       {open && (
         <div
@@ -80,7 +81,7 @@ export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
                       title={`${item.label} (${item.keywords.join(", ")})`}
                       onClick={() => choose(item.emoji)}
                     >
-                      <span aria-hidden="true">{item.emoji}</span>
+                      <NotoEmoji emoji={item.emoji} size={20} />
                     </Button>
                   ))}
                 </div>
