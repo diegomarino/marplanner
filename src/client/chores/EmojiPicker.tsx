@@ -54,7 +54,7 @@ export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
         <div
           role="dialog"
           aria-label={t("routines.emojiPicker.title")}
-          className="bg-card absolute top-full left-0 z-50 mt-2 w-85 rounded-2xl border p-3 shadow-xl"
+          className="bg-card absolute top-full left-0 z-50 mt-2 w-max rounded-2xl border p-3 shadow-xl"
         >
           <Input
             value={search}
@@ -69,13 +69,13 @@ export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
                 <h4 className="text-muted-foreground mb-1 text-xs font-semibold uppercase tracking-wide">
                   {category.name}
                 </h4>
-                <div className="grid grid-cols-8 gap-1">
+                <div className="grid grid-cols-[repeat(8,var(--control-height))] gap-1">
                   {category.items.map((item) => (
                     <Button
                       key={`${category.id}-${item.emoji}`}
                       type="button"
                       variant={value === item.emoji ? "secondary" : "ghost"}
-                      className="size-9 p-0 text-2xl"
+                      size="icon"
                       aria-label={`${t("routines.emojiPicker.choose")} ${item.label}`}
                       aria-pressed={value === item.emoji}
                       title={`${item.label} (${item.keywords.join(", ")})`}
