@@ -206,6 +206,50 @@ describe("PrintExecutor (T009)", () => {
     expect(claimIndex).toBeGreaterThan(capabilityIndex);
   });
 
+  it("prints newly queued work immediately without a polling tick", async () => {
+    const transport = createFakePrintTransport();
+    mockFetch.mockResolvedValueOnce(jsonResponse({ registered: true }));
+    mockFetch.mockResolvedValue(new Response(null, { status: 204 }));
+    renderExecutor({ transport, pollIntervalMs: 15_000 });
+    fireEvent.click(screen.getByTestId("print-executor-pair-button"));
+    await flushMicrotasks();
+
+    mockFetch.mockResolvedValueOnce(claimResponse());
+    mockFetch.mockResolvedValueOnce(payloadResponse());
+    mockFetch.mockResolvedValueOnce(jsonResponse(makeJob({ state: "printed" })));
+    act(() => window.dispatchEvent(new Event("marplanner:print-intent-enqueued")));
+    await flushMicrotasks();
+
+    expect(transport.recordedChunks()).toHaveLength(1);
+    expect(screen.getByTestId("print-executor-state")).toHaveTextContent("Ready");
+    await act(async () => vi.advanceTimersByTimeAsync(60_000));
+    expect(transport.recordedChunks()).toHaveLength(1);
+  });
+
+  it("retains a queue wakeup received while a claim is in flight", async () => {
+    const transport = createFakePrintTransport();
+    let settleClaim!: (response: Response) => void;
+    mockFetch.mockResolvedValueOnce(jsonResponse({ registered: true }));
+    mockFetch.mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          settleClaim = resolve;
+        })
+    );
+    renderExecutor({ transport, pollIntervalMs: 15_000 });
+    fireEvent.click(screen.getByTestId("print-executor-pair-button"));
+    await flushMicrotasks();
+
+    mockFetch.mockResolvedValueOnce(claimResponse());
+    mockFetch.mockResolvedValueOnce(payloadResponse());
+    mockFetch.mockResolvedValueOnce(jsonResponse(makeJob({ state: "printed" })));
+    act(() => window.dispatchEvent(new Event("marplanner:print-intent-enqueued")));
+    settleClaim(new Response(null, { status: 204 }));
+    await flushMicrotasks();
+
+    expect(transport.recordedChunks()).toHaveLength(1);
+  });
+
   it("re-registers capability when /claim answers 403 printer_capability_missing", async () => {
     const transport = createFakePrintTransport();
     mockFetch.mockResolvedValueOnce(jsonResponse({ registered: true })); // initial capability (pair)
