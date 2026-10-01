@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -90,6 +90,40 @@ test("--check exits non-zero when the vendored directory drifts from the catalog
     await writeFile(join(vendorDir, "emoji_u1f305.svg"), "<svg></svg>");
     const clean = run();
     assert.equal(clean.status, 0);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("generation preserves the custom blonde ponytail override", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "noto-override-"));
+  try {
+    const catalogPath = join(dir, "catalog.ts");
+    const vendorDir = join(dir, "vendor");
+    const cacheDir = join(dir, "cache");
+    const svgDir = join(cacheDir, "svg");
+    await mkdir(svgDir, { recursive: true });
+    await writeFile(catalogPath, '{ emoji: "👱‍♀️" },');
+    for (let i = 0; i < 101; i++) await writeFile(join(svgDir, `${i}.svg`), "<svg/>");
+    await writeFile(join(svgDir, "emoji_u1f471_200d_2640.svg"), "<svg>upstream</svg>");
+    const run = spawnSync(
+      process.execPath,
+      [
+        GENERATOR_PATH,
+        "--catalog",
+        catalogPath,
+        "--vendor-dir",
+        vendorDir,
+        "--cache-dir",
+        cacheDir,
+      ],
+      { encoding: "utf8" }
+    );
+    assert.equal(run.status, 0, run.stderr);
+    assert.deepEqual(
+      await readFile(join(vendorDir, "emoji_u1f471_200d_2640.svg")),
+      await readFile(join(ROOT, "tools/dev/noto-overrides/emoji_u1f471_200d_2640.svg"))
+    );
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
