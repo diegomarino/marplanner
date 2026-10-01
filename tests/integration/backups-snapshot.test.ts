@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
@@ -453,7 +454,7 @@ describe("backups end-to-end smoke (real app: snapshot -> list)", () => {
   it("POST /api/backups/snapshot then GET /api/backups shows the created file, and member reads stay green", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
     const deviceKey = seedAdminKey();
-    seedMember("m1");
+    seedMember(randomUUID());
     const app = await buildApp();
     try {
       const snapshotRes = await app.inject({

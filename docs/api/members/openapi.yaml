@@ -45,6 +45,23 @@ components:
       in: cookie
       name: mp_device_key
   schemas:
+    AuthForbidden:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+        - code
+      properties:
+        error:
+          const: forbidden
+        message:
+          type: string
+        code:
+          type: string
+          enum:
+            - credential_invalid
+            - scope_denied
     MemberColorKey:
       type: string
       description: Curated screen identity only; never a CSS value or a monochrome print input.
@@ -99,8 +116,14 @@ components:
         - updatedAt
       properties:
         id:
-          type: string
-          format: uuid
+          oneOf:
+            - type: string
+              format: uuid
+            - type: string
+              pattern: ^demo:member:[a-z0-9][a-z0-9-]*$
+          description: >-
+            Public creation generates UUIDs; the maintained public seed uses stable demo:member
+            identities. Restores preserve those identities.
         displayName:
           type: string
         colorKey:
@@ -231,6 +254,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "403":
+          description: >-
+            Revoked/expired credential or denied capability; code distinguishes credential loss from
+            scope denial.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthForbidden"
     post:
       operationId: createMember
       summary: Create a Member (optionally with a birth date and colour key).
@@ -255,9 +286,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Member"
         "400":
-          description: >-
-            Validation error — role=admin, unknown role, blank name, invalid birth date or colour
-            key.
+          description: Validation error — role=admin, unknown role, blank name, invalid birth date or colour key.
           content:
             application/json:
               schema:

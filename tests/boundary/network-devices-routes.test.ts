@@ -669,7 +669,9 @@ describe("network-devices routes — T009", () => {
         blockMac: vi.fn(async () => {
           throw new UniFiControllerRejectedError();
         }),
-        unblockMac: vi.fn(async () => {}),
+        unblockMac: vi.fn(async () => {
+          throw new UniFiControllerRejectedError();
+        }),
       },
     ],
     [
@@ -679,11 +681,13 @@ describe("network-devices routes — T009", () => {
         blockMac: vi.fn(async () => {
           throw new Error("boom");
         }),
-        unblockMac: vi.fn(async () => {}),
+        unblockMac: vi.fn(async () => {
+          throw new Error("boom");
+        }),
       },
     ],
   ])(
-    "POST /api/network-devices/:id/block — 502 on %s, NOTHING mirrored (row unchanged)",
+    "POST /api/network-devices/:id/block and unblock — 502 on %s, NOTHING mirrored (row unchanged)",
     async (_label, client) => {
       __setLiveCacheAccessorForTests(() => freshSnapshot());
       // Register with a WORKING client first so the device row exists, then swap in the
@@ -708,23 +712,29 @@ describe("network-devices routes — T009", () => {
         expect(before.belief_diverged_at).toBeNull();
 
         __setUniFiClientForTests(client);
-        const res = await app.inject({
-          method: "POST",
-          url: `/api/network-devices/${device.id}/block`,
-          cookies: { mp_device_key: mgmtKey },
-        });
-        expect(res.statusCode).toBe(502);
-        const body = JSON.parse(res.body);
-        // the 502 branch now forwards `err.code` too (previously omitted),
-        // so a client can distinguish unavailable/rejected/unreachable without pattern-matching
-        // `.message` text — the same `{error, code}` shape 409 already used.
-        expect(Object.keys(body).sort()).toEqual(["code", "error"]);
-        expect(body.code).toMatch(/^controller_(unavailable|rejected|unreachable)$/);
-        assertNoIpProperty(body);
+        for (const operation of ["block", "unblock"] as const) {
+          getDb()
+            .prepare("UPDATE network_devices SET is_blocked = ? WHERE id = ?")
+            .run(operation === "unblock" ? 1 : 0, device.id);
+          const stateBefore = rawDeviceRow(device.id);
+          const res = await app.inject({
+            method: "POST",
+            url: `/api/network-devices/${device.id}/${operation}`,
+            cookies: { mp_device_key: mgmtKey },
+          });
+          expect(res.statusCode).toBe(502);
+          const body = JSON.parse(res.body);
+          // the 502 branch now forwards `err.code` too (previously omitted),
+          // so a client can distinguish unavailable/rejected/unreachable without pattern-matching
+          // `.message` text — the same `{error, code}` shape 409 already used.
+          expect(Object.keys(body).sort()).toEqual(["code", "error"]);
+          expect(body.code).toMatch(/^controller_(unavailable|rejected|unreachable)$/);
+          assertNoIpProperty(body);
 
-        const after = rawDeviceRow(device.id);
-        expect(after.is_blocked).toBe(0);
-        expect(after.belief_diverged_at).toBeNull();
+          const after = rawDeviceRow(device.id);
+          expect(after).toEqual(stateBefore);
+          expect(after.belief_diverged_at).toBeNull();
+        }
       } finally {
         await app.close();
       }

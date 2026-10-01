@@ -766,6 +766,17 @@
             "normalizes Playwright stable spec ID and expected status",
             "rejects a Node-only modifier even when the runner executes all cases",
             "standard gate checks Node and Vitest without a Playwright artifact"
+          ],
+          "tools/noto-emojis.test.mjs": [
+            "parseEmojisFromCatalog extracts unique emoji literals in first-seen order",
+            "parseEmojisFromCatalog throws when the catalog has no emoji entries",
+            "emojiToCodepoint converts a single-codepoint emoji to lowercase hex",
+            "emojiToCodepoint strips the FE0F variation selector",
+            "notoFilename builds the Noto SVG filename for a codepoint",
+            "computeSyncPlan reports catalog emojis missing a vendored file",
+            "computeSyncPlan reports vendored files no longer referenced by the catalog",
+            "--check exits non-zero when the vendored directory drifts from the catalog",
+            "generation preserves the custom blonde ponytail override"
           ]
         }
       },
@@ -802,21 +813,6 @@
             "full-access authentication boundary fails closed before disclosure when cookie and bearer credentials conflict",
             "full-access authentication boundary does not accept an Admin PIN as backend authorization"
           ],
-          "tests/boundary/auth-throttling.test.ts": [
-            "authentication failure backoff public paths aggregates cookie, bearer and missing failures across routes; valid traffic survives cooldown",
-            "authentication failure backoff public paths doubles at exact cooldown boundaries, caps at 60 seconds and does not extend cooldown",
-            "authentication failure backoff public paths excludes unknown routes, transport conflicts, scope denials and input failures",
-            "authentication failure backoff public paths counts revoked and exactly expired credentials without leaking them",
-            "authentication failure backoff public paths isolates transport source and bootstrap flow, ignoring spoofed forwarding headers",
-            "authentication failure backoff public paths resets fixed observation windows at their exact upper boundary",
-            "authentication failure backoff public paths serializes concurrent failures without losing counts or escalating during cooldown",
-            "authentication failure backoff public paths retains failures through successful NAT traffic and resets only at the quiet boundary",
-            "authentication failure backoff public paths bounds state to 5000 entries, evicts the least recently failed source and expires idle state",
-            "authentication failure backoff public paths normalizes expanded IPv6 and hexadecimal IPv4-mapped peers",
-            "authentication failure backoff public paths bootstrap counts missing, revoked and expired failures, preserving exact expiry semantics",
-            "authentication failure backoff public paths does not count absent bootstrap configuration or unreconciled server records",
-            "authentication failure backoff public paths handles scoped IPv6 transport peers without converting credential failures to server errors"
-          ],
           "tests/boundary/backups-lineage.test.ts": [
             "backup restore lineage classification accepts a sentinel-equal backup without a forward migration",
             "backup restore lineage classification rejects a readable pre-baseline migration ledger as unsupported_lineage without exposing internals",
@@ -826,6 +822,7 @@
           ],
           "tests/boundary/backups-routes.test.ts": [
             "backups routes \u2014 scheduler-unavailable fail-safe (review F6) POST /api/backups/snapshot with no scheduler initialized returns 503 scheduler_unavailable (contract envelope, no leaked internals)",
+            "POST /api/backups/restore \u2014 live lifecycle handoff rejects invalid, missing and concurrent restore requests without changing household data or the shelf",
             "POST /api/backups/restore \u2014 live lifecycle handoff passes the app lifecycle into restore reconciliation before returning success",
             "backups envelope routes \u2014 capability fail-closed on EVERY route (BACKUPS-INV-08) BACKUPS-INV-08: DELETE /api/backups/:filename rejects a request with NO device key cookie (401)",
             "backups envelope routes \u2014 capability fail-closed on EVERY route (BACKUPS-INV-08) BACKUPS-INV-08: DELETE /api/backups/:filename rejects a VALID key whose scope does not include backups:admin (403)",
@@ -1010,6 +1007,9 @@
             "Calendar merged feed read keeps distinct recurrence identities and the household date range"
           ],
           "tests/boundary/calendar-mutate.test.ts": [
+            "calendar-mutate (T012 \u2014 RED by design, T013 turns green) rejects malformed create and partial-edit fields without changing stored state",
+            "calendar-mutate (T012 \u2014 RED by design, T013 turns green) PATCH updates timed instants and timezone while preserving recurrence and assignments",
+            "calendar-mutate (T012 \u2014 RED by design, T013 turns green) PATCH validates all-day dates against merged state before rescheduling",
             "calendar-mutate (T012 \u2014 RED by design, T013 turns green) DELETE /api/calendar/events/:id returns 204 and removes event + assignments",
             "calendar-mutate (T012 \u2014 RED by design, T013 turns green) PATCH /api/calendar/events/:id editing title returns 200 with single-row update",
             "calendar-mutate (T012 \u2014 RED by design, T013 turns green) PATCH /api/calendar/events/:id editing rrule preserves existing exdates",
@@ -1566,6 +1566,7 @@
             "meals-entries boundary tests (T006/T007) POST /api/meal-entries kind:recurring with an unknown mealPlanId -> domain 400/404, never a raw FK error"
           ],
           "tests/boundary/meals-menu.test.ts": [
+            "meals-menu boundary tests (T006/T007) rejects invalid dates on both menu HTTP reads without writes",
             "meals-menu boundary tests (T006/T007) GET /api/menu?date= (no slot) unions every slot's one-off entries for that date",
             "meals-menu boundary tests (T006/T007) GET /api/menu for a (date,slot) with no entries -> [] (absence, not a placeholder)",
             "meals-menu boundary tests (T006/T007) GET /api/menu for a date with no entries at all -> [] across every slot",
@@ -1930,9 +1931,9 @@
             "network-devices routes \u2014 T009 POST /api/network-devices/:id/block \u2014 200, controller called, belief mirror written",
             "network-devices routes \u2014 T009 POST /api/network-devices/:id/unblock \u2014 200, controller called, belief mirror written",
             "network-devices routes \u2014 T009 POST /api/network-devices/:id/block \u2014 404 for an unknown id (checked before any controller call)",
-            "network-devices routes \u2014 T009 POST /api/network-devices/:id/block \u2014 502 on controller unconfigured (null), NOTHING mirrored (row unchanged)",
-            "network-devices routes \u2014 T009 POST /api/network-devices/:id/block \u2014 502 on controller rejected (401/403), NOTHING mirrored (row unchanged)",
-            "network-devices routes \u2014 T009 POST /api/network-devices/:id/block \u2014 502 on controller unreachable (timeout/network), NOTHING mirrored (row unchanged)",
+            "network-devices routes \u2014 T009 POST /api/network-devices/:id/block and unblock \u2014 502 on controller unconfigured (null), NOTHING mirrored (row unchanged)",
+            "network-devices routes \u2014 T009 POST /api/network-devices/:id/block and unblock \u2014 502 on controller rejected (401/403), NOTHING mirrored (row unchanged)",
+            "network-devices routes \u2014 T009 POST /api/network-devices/:id/block and unblock \u2014 502 on controller unreachable (timeout/network), NOTHING mirrored (row unchanged)",
             "network-devices routes \u2014 T009 NetworkDeviceControllerUnavailableError carries no MAC in its message (sanity on the 502 body itself)"
           ],
           "tests/boundary/network-devices-rule-b.test.ts": [
@@ -2014,6 +2015,9 @@
             "first-party plugin manifest inventory cannot be expanded or rewritten through runtime registration"
           ],
           "tests/boundary/plugin-routes.test.ts": [
+            "plugin lifecycle routes rejects unauthenticated assembled briefing, meals and lifecycle requests without writes",
+            "plugin lifecycle routes rejects revoked credentials on every assembled briefing route before writes or rendering",
+            "plugin lifecycle routes denies a live scoped credential on every assembled lifecycle operation without invoking work",
             "plugin lifecycle routes mounts the lifecycle API in the application when the lifecycle dependency is supplied",
             "plugin lifecycle routes serves the closed catalog with a valid device cookie",
             "plugin lifecycle routes executes activate with a valid device cookie",
@@ -2023,11 +2027,15 @@
             "plugin lifecycle routes executes activate with a valid raw bearer key",
             "plugin lifecycle routes executes deactivate with a valid raw bearer key",
             "plugin lifecycle routes accepts an allow-listed contribution fault with a valid raw bearer key",
-            "plugin lifecycle routes rejects unknown plugin IDs before invoking lifecycle work",
+            "plugin lifecycle routes rejects unknown plugin IDs before invoking activate lifecycle work",
+            "plugin lifecycle routes rejects unknown plugin IDs before invoking deactivate lifecycle work",
+            "plugin lifecycle routes rejects unknown plugin IDs before invoking fault lifecycle work",
             "plugin lifecycle routes rejects raw or unknown fault fields without invoking containment (case 0)",
             "plugin lifecycle routes rejects raw or unknown fault fields without invoking containment (case 1)",
             "plugin lifecycle routes rejects raw or unknown fault fields without invoking containment (case 2)",
-            "plugin lifecycle routes maps opposite-target contention to the stable safe 409 shape",
+            "plugin lifecycle routes maps activate contention to the stable safe 409 shape",
+            "plugin lifecycle routes maps deactivate contention to the stable safe 409 shape",
+            "plugin lifecycle routes maps fault contention to the stable safe 409 shape",
             "plugin lifecycle routes retains the pre-operation catalog snapshot when busy handling cannot reread it",
             "plugin lifecycle routes maps lifecycle failure to the stable safe 503 shape without raw detail",
             "plugin lifecycle routes retains the pre-operation catalog snapshot when failure handling cannot reread it",
@@ -2137,6 +2145,7 @@
             "printing routes \u2014 T007 FR-021 negative: a bare provisioned session's claim is refused 403 printer_capability_missing",
             "printing routes \u2014 T007 FR-021 positive: after POST /capability the SAME session claims fine",
             "printing routes \u2014 T007 POST /capability \u2014 409 while the printing plugin is inactive (FR-013)",
+            "printing routes \u2014 T007 serves exact binary payload bytes and acknowledges the same lease idempotently",
             "printing routes \u2014 T007 POST /jobs/:id/ack \u2014 409 stale lease token, no state change (INV-05 fencing, HTTP-level)",
             "printing routes \u2014 T007 POST /jobs/:id/fail \u2014 recoverable (no permanentCode): pending, attempts+1, immediately re-claimable",
             "printing routes \u2014 T007 POST /jobs/:id/fail \u2014 permanent (permanentCode set): terminal failed, dead-lettered immediately",
@@ -2172,6 +2181,7 @@
             "reminders-assembly (T002 \u2014 real-process smoke, Scenario A) Scenario A: create an apply_to_all reminder, then read emissions over real HTTP"
           ],
           "tests/boundary/reminders-assignments.test.ts": [
+            "reminders-assignments boundary tests (T007/T008) rejects replacement for a missing reminder and invalid emission dates without writes",
             "reminders-assignments boundary tests (T007/T008) POST specific create with 2 members creates the rule + assignments atomically \u2192 201, embeds them",
             "reminders-assignments boundary tests (T007/T008) POST specific create where one assignment targets an inactive member \u2192 400, NOTHING persisted \u2014 atomic create (INV-08/AC-07, SC-004)",
             "reminders-assignments boundary tests (T007/T008) specific rule emits for each member on ONLY their own assigned weekdays (FR-011, SC-002)",
@@ -2358,6 +2368,7 @@
             "routines-complete boundary tests (T015 \u2014 US2) does NOT emit routines.completion_changed when the underlying write fails"
           ],
           "tests/boundary/routines-crud.test.ts": [
+            "routines-crud boundary tests (T008 \u2014 red-by-design) rejects invalid routine edits and chore icons without changing stored rows",
             "routines-crud boundary tests (T008 \u2014 red-by-design) POST /api/routines with valid dayPeriodId \u2192 201 (FR-001)",
             "routines-crud boundary tests (T008 \u2014 red-by-design) POST /api/routines with unknown dayPeriodId \u2192 400 (FR-001)",
             "routines-crud boundary tests (T008 \u2014 red-by-design) GET /api/routines/:id fetches active routine by id (FR-007)",
@@ -2454,6 +2465,7 @@
           ],
           "tests/boundary/settings-seam.test.ts": [
             "settings domain seam validates seedable locale, weather, printer, and transport objects without implying printer runtime state",
+            "settings domain seam returns an opaque HTTP 500 when the injected settings writer fails before persistence",
             "settings domain seam keeps settings HTTP routing as an injected adapter rather than a domain dependency"
           ],
           "tests/boundary/settings-write.test.ts": [
@@ -3477,7 +3489,9 @@
             "PrintExecutor (T009) FOLD-1(b): a retried ack that succeeds clears pendingAck/error, with no duplicate print and no /fail",
             "PrintExecutor (T009) FOLD-1(c): an ack retry that gets 409 drops pendingAck, and the NEXT tick claims normally",
             "PrintExecutor (T009) FOLD-2(d): a scripted onDisconnect event transitions to disconnected without any write",
-            "PrintExecutor (T009) FOLD-2(e): transport not-ready at a poll tick fires zero /claim and transitions to disconnected"
+            "PrintExecutor (T009) FOLD-2(e): transport not-ready at a poll tick fires zero /claim and transitions to disconnected",
+            "PrintExecutor (T009) prints newly queued work immediately without a polling tick",
+            "PrintExecutor (T009) retains a queue wakeup received while a claim is in flight"
           ],
           "tests/client/printing-i18n-parity.test.ts": [
             "printing-i18n-parity every printing key in en exists in es",
@@ -3623,7 +3637,9 @@
             "RoutinesManagement \u2014 adopts the AdminPanel L2 frame (T012c retrofit) wraps the surface in a landmark region labelled by its own title, with a heading of the same name",
             "RoutinesManagement \u2014 WEEKDAY_LABEL_KEYS maps each weekday to its OWN translation key, through the shared WeekdayPicker labels the WeekdayPicker with the household's own Spanish weekday abbreviations, in canonical mon..sun order",
             "RoutinesManagement \u2014 DAY_PERIOD_LABEL_KEYS indexes each routine's OWN day period, through the shared map (#814) renders the morning routine's card with 'Ma\u00f1ana' and the evening routine's card with 'Tarde'",
-            "RoutinesManagement \u2014 DAY_PERIOD_LABEL_KEYS indexes each routine's OWN day period, through the shared map (#814) the create form's day-period Select lists each period under its OWN label (the second changed call site \u2014 a Radix popover no other test ever opens)"
+            "RoutinesManagement \u2014 DAY_PERIOD_LABEL_KEYS indexes each routine's OWN day period, through the shared map (#814) the create form's day-period Select lists each period under its OWN label (the second changed call site \u2014 a Radix popover no other test ever opens)",
+            "RoutinesManagement \u2014 chore icon editing renders the chore's vendored Noto SVG instead of the literal emoji glyph",
+            "RoutinesManagement \u2014 kiosk density (SC-001, SC-002, SC-003, SC-009) meets kiosk density with the chore emoji picker open"
           ],
           "tests/client/schedule-x-week-view.test.ts": [
             "ScheduleXWeekView event projection does not format a stale portal after its event has been filtered out",
@@ -4716,6 +4732,28 @@
             "telemetry retention prune (T011 \u2014 research D7) CLIENT-LOGGING-TELEMETRY-INV-09: strictly-older-than-cutoff deletion idempotent re-run: a second prune at the same frozen instant deletes nothing further",
             "telemetry retention prune (T011 \u2014 research D7) real registration path \u2014 runJobNow(\"telemetry.prune\") CLIENT-LOGGING-TELEMETRY-AC-04/-INV-09: prunes aged rows and keeps fresh rows through the actual registered scheduler job",
             "telemetry retention prune (T011 \u2014 research D7) real registration path \u2014 runJobNow(\"telemetry.prune\") re-running the real registered job after a prune completes without deleting anything further"
+          ],
+          "tests/client/noto-emoji.test.tsx": [
+            "emojiToCodepoint converts a single-codepoint emoji to its lowercase hex codepoint",
+            "emojiToCodepoint strips the FE0F variation selector",
+            "emojiToCodepoint joins multi-codepoint sequences with underscores",
+            "NotoEmoji renders an img sourced from the url map for a vendored emoji",
+            "NotoEmoji falls back to the literal Unicode glyph when the emoji is not vendored"
+          ],
+          "tests/boundary/auth-throttling.test.ts": [
+            "authentication failure backoff public paths aggregates cookie, bearer and missing failures across routes; valid traffic survives cooldown",
+            "authentication failure backoff public paths doubles at exact cooldown boundaries, caps at 60 seconds and does not extend cooldown",
+            "authentication failure backoff public paths excludes unknown routes, transport conflicts, scope denials and input failures",
+            "authentication failure backoff public paths counts revoked and exactly expired credentials without leaking them",
+            "authentication failure backoff public paths isolates transport source and bootstrap flow, ignoring spoofed forwarding headers",
+            "authentication failure backoff public paths resets fixed observation windows at their exact upper boundary",
+            "authentication failure backoff public paths serializes concurrent failures without losing counts or escalating during cooldown",
+            "authentication failure backoff public paths retains failures through successful NAT traffic and resets only at the quiet boundary",
+            "authentication failure backoff public paths bounds state to 5000 entries, evicts the least recently failed source and expires idle state",
+            "authentication failure backoff public paths normalizes expanded IPv6 and hexadecimal IPv4-mapped peers",
+            "authentication failure backoff public paths bootstrap counts missing, revoked and expired failures, preserving exact expiry semantics",
+            "authentication failure backoff public paths does not count absent bootstrap configuration or unreconciled server records",
+            "authentication failure backoff public paths handles scoped IPv6 transport peers without converting credential failures to server errors"
           ]
         }
       },
@@ -5000,7 +5038,7 @@
         }
       },
       "src/client/admin/PrintingManagement.tsx": {
-        "sha256": "86d0271ec5ae3c59e5e8994150557b96362010145b606aed0079acc2b63c7e33",
+        "sha256": "e2496e6d6ed7ad7fe2191205fc458f23e46e205e7d98c71f87365615a3077383",
         "layer": "client",
         "minimumTotals": {
           "lines": 38,
@@ -5032,7 +5070,7 @@
         }
       },
       "src/client/admin/RoutinesManagement.tsx": {
-        "sha256": "278e5102235a2e61d01117a3de1427458d209280698d23c55fcbe08acb9a6fe5",
+        "sha256": "d202de1d89041bdea43d9037f6056a32683da57d072a1fb1e6eb7e8957c90737",
         "layer": "client",
         "minimumTotals": {
           "lines": 165,
@@ -5256,7 +5294,7 @@
         }
       },
       "src/client/chores/EmojiPicker.tsx": {
-        "sha256": "ba3fbb14eff9a32868facdfe632ed45935105be9c54aa35b0198b27f5f0d2e8e",
+        "sha256": "1ab4f4dcf511433e3a36be7f15f85e67e07b93eac8498e3887df9fadcff1617a",
         "layer": "client",
         "minimumTotals": {
           "lines": 20,
@@ -5272,7 +5310,7 @@
         }
       },
       "src/client/chores/emoji-catalog.ts": {
-        "sha256": "6730e785ba630fdbcd371616dbf1cca8226a018e99caf51d0b73ebd038444645",
+        "sha256": "56be89b1eda13d09addbbea98c26853fa147509404e569253422bd570fa53d89",
         "layer": "client",
         "minimumTotals": {
           "lines": 1,
@@ -5287,8 +5325,24 @@
           "branches": 100
         }
       },
+      "src/client/chores/noto-emoji.tsx": {
+        "sha256": "89b9980550d5905cfe02e11455a7677f095812e6490bb3b15b9c763e76cec80d",
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 13,
+          "statements": 13,
+          "functions": 6,
+          "branches": 5
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 80
+        }
+      },
       "src/client/chores/useTodayChores.ts": {
-        "sha256": "cfa8d0abd74128987d70933ca08e8deb48ab77b05c20e0c304ccf5e91e6b9c60",
+        "sha256": "d29812a7a04d69a781c851c839ba54a43a731faf5593955af1a9aa7c3e5ee47d",
         "layer": "client",
         "minimumTotals": {
           "lines": 56,
@@ -6088,7 +6142,7 @@
         }
       },
       "src/client/printing/PrintExecutor.tsx": {
-        "sha256": "56e0fa780235cb098877c8ba927c748d513fed98ee3cac8ba7c2d21f099eaf38",
+        "sha256": "b1d0050de9517a4a791d03675154216bd57808d57abd03f4dfff791ffcdc974a",
         "layer": "client",
         "minimumTotals": {
           "lines": 116,
@@ -6149,6 +6203,22 @@
           "statements": 90.9,
           "functions": 100,
           "branches": 81.25
+        }
+      },
+      "src/client/printing/queueWakeup.ts": {
+        "sha256": "d639576f868f157a7807701e36b577945305172c254f877e9aa9fe288d1ba9cf",
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 2,
+          "statements": 2,
+          "functions": 1,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/client/printing/transport.ts": {
@@ -6535,22 +6605,6 @@
           "branches": 95.45
         }
       },
-      "src/server/auth/throttle.ts": {
-        "sha256": "9511623e98c88c448484f89ea7ad02716aac85a318426813a533ed597dfc2203",
-        "layer": "server",
-        "minimumTotals": {
-          "lines": 43,
-          "statements": 48,
-          "functions": 4,
-          "branches": 24
-        },
-        "minimumRates": {
-          "lines": 100,
-          "statements": 100,
-          "functions": 100,
-          "branches": 100
-        }
-      },
       "src/server/backups/job.ts": {
         "sha256": "743b68a0be4bea0115d07100fac3630644ed57af4e2937a9c0d5c02654820458",
         "layer": "server",
@@ -6840,7 +6894,7 @@
         }
       },
       "src/server/modules/calendar/index.ts": {
-        "sha256": "f434b86d406d408bb102c975a7d19309dd02ef171e0703fb61f35f7dd6edd25d",
+        "sha256": "21df22252675433861cbcaa7a049aab29b41bb87d869f76b2d382ee7ce50f8a6",
         "layer": "server",
         "minimumTotals": {
           "lines": 272,
@@ -8967,6 +9021,22 @@
           "functions": 100,
           "branches": 100
         }
+      },
+      "src/server/auth/throttle.ts": {
+        "sha256": "9511623e98c88c448484f89ea7ad02716aac85a318426813a533ed597dfc2203",
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 43,
+          "statements": 48,
+          "functions": 4,
+          "branches": 24
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
       }
     }
   },
@@ -9179,6 +9249,84 @@
     "src/client/chores/ChoresBoard.tsx",
     "src/client/chores/EmojiPicker.tsx",
     "src/client/chores/emoji-catalog.ts",
+    "src/client/chores/noto-emoji.tsx",
+    "src/client/chores/noto/emoji_u1f305.svg",
+    "src/client/chores/noto/emoji_u1f319.svg",
+    "src/client/chores/noto/emoji_u1f321.svg",
+    "src/client/chores/noto/emoji_u1f34e.svg",
+    "src/client/chores/noto/emoji_u1f35e.svg",
+    "src/client/chores/noto/emoji_u1f373.svg",
+    "src/client/chores/noto/emoji_u1f37d.svg",
+    "src/client/chores/noto/emoji_u1f381.svg",
+    "src/client/chores/noto/emoji_u1f382.svg",
+    "src/client/chores/noto/emoji_u1f388.svg",
+    "src/client/chores/noto/emoji_u1f389.svg",
+    "src/client/chores/noto/emoji_u1f38a.svg",
+    "src/client/chores/noto/emoji_u1f392.svg",
+    "src/client/chores/noto/emoji_u1f393.svg",
+    "src/client/chores/noto/emoji_u1f3b5.svg",
+    "src/client/chores/noto/emoji_u1f3b6.svg",
+    "src/client/chores/noto/emoji_u1f3b8.svg",
+    "src/client/chores/noto/emoji_u1f3b9.svg",
+    "src/client/chores/noto/emoji_u1f3bc.svg",
+    "src/client/chores/noto/emoji_u1f3be.svg",
+    "src/client/chores/noto/emoji_u1f3c0.svg",
+    "src/client/chores/noto/emoji_u1f3c3.svg",
+    "src/client/chores/noto/emoji_u1f3c6.svg",
+    "src/client/chores/noto/emoji_u1f3ca.svg",
+    "src/client/chores/noto/emoji_u1f3cb.svg",
+    "src/client/chores/noto/emoji_u1f3e5.svg",
+    "src/client/chores/noto/emoji_u1f453.svg",
+    "src/client/chores/noto/emoji_u1f454.svg",
+    "src/client/chores/noto/emoji_u1f455.svg",
+    "src/client/chores/noto/emoji_u1f458.svg",
+    "src/client/chores/noto/emoji_u1f45f.svg",
+    "src/client/chores/noto/emoji_u1f471_200d_2640.svg",
+    "src/client/chores/noto/emoji_u1f48a.svg",
+    "src/client/chores/noto/emoji_u1f4bb.svg",
+    "src/client/chores/noto/emoji_u1f4c5.svg",
+    "src/client/chores/noto/emoji_u1f4d6.svg",
+    "src/client/chores/noto/emoji_u1f4da.svg",
+    "src/client/chores/noto/emoji_u1f4dd.svg",
+    "src/client/chores/noto/emoji_u1f507.svg",
+    "src/client/chores/noto/emoji_u1f5d1.svg",
+    "src/client/chores/noto/emoji_u1f634.svg",
+    "src/client/chores/noto/emoji_u1f697.svg",
+    "src/client/chores/noto/emoji_u1f6b4.svg",
+    "src/client/chores/noto/emoji_u1f6bf.svg",
+    "src/client/chores/noto/emoji_u1f6cf.svg",
+    "src/client/chores/noto/emoji_u1f94b.svg",
+    "src/client/chores/noto/emoji_u1f955.svg",
+    "src/client/chores/noto/emoji_u1f95b.svg",
+    "src/client/chores/noto/emoji_u1f963.svg",
+    "src/client/chores/noto/emoji_u1f964.svg",
+    "src/client/chores/noto/emoji_u1f96a.svg",
+    "src/client/chores/noto/emoji_u1f9b7.svg",
+    "src/client/chores/noto/emoji_u1f9d8.svg",
+    "src/client/chores/noto/emoji_u1f9e0.svg",
+    "src/client/chores/noto/emoji_u1f9ea.svg",
+    "src/client/chores/noto/emoji_u1f9eb.svg",
+    "src/client/chores/noto/emoji_u1f9ee.svg",
+    "src/client/chores/noto/emoji_u1f9ef.svg",
+    "src/client/chores/noto/emoji_u1f9f3.svg",
+    "src/client/chores/noto/emoji_u1f9f4.svg",
+    "src/client/chores/noto/emoji_u1f9f8.svg",
+    "src/client/chores/noto/emoji_u1f9f9.svg",
+    "src/client/chores/noto/emoji_u1f9fa.svg",
+    "src/client/chores/noto/emoji_u1f9fc.svg",
+    "src/client/chores/noto/emoji_u1f9fd.svg",
+    "src/client/chores/noto/emoji_u1fa79.svg",
+    "src/client/chores/noto/emoji_u1faa3.svg",
+    "src/client/chores/noto/emoji_u1faa5.svg",
+    "src/client/chores/noto/emoji_u1faae.svg",
+    "src/client/chores/noto/emoji_u1fab4.svg",
+    "src/client/chores/noto/emoji_u1fae7.svg",
+    "src/client/chores/noto/emoji_u23f0.svg",
+    "src/client/chores/noto/emoji_u262e.svg",
+    "src/client/chores/noto/emoji_u26bd.svg",
+    "src/client/chores/noto/emoji_u270f.svg",
+    "src/client/chores/noto/emoji_u2764.svg",
+    "src/client/chores/noto/emoji_u2b50.svg",
     "src/client/chores/useTodayChores.ts",
     "src/client/components/AdminPanel.tsx",
     "src/client/components/CheckboxField.tsx",
@@ -9233,6 +9381,7 @@
     "src/client/printing/PrinterAttention.tsx",
     "src/client/printing/PrinterSession.tsx",
     "src/client/printing/pluginStatus.ts",
+    "src/client/printing/queueWakeup.ts",
     "src/client/printing/transport.ts",
     "src/client/shell/DensityControl.tsx",
     "src/client/shell/HouseholdChrome.tsx",
@@ -9649,6 +9798,7 @@
     "tests/client/network-devices-i18n-parity.test.ts",
     "tests/client/network-devices-management.test.tsx",
     "tests/client/network-weather-admin.test.tsx",
+    "tests/client/noto-emoji.test.tsx",
     "tests/client/plugin-contributions.test.tsx",
     "tests/client/plugin-management.test.tsx",
     "tests/client/presentation-mode.test.tsx",
@@ -9819,6 +9969,7 @@
     "tools/api-contract-audit/README.md",
     "tools/api-contract-audit/audit.mjs",
     "tools/api-contract-audit/audit.test.mjs",
+    "tools/api-contract-audit/capture-route.mjs",
     "tools/api-contract-audit/capture.mjs",
     "tools/audit-accessible-names.test.mjs",
     "tools/candidate-identity.mjs",
@@ -9832,7 +9983,9 @@
     "tools/dev/check-exception-list.mjs",
     "tools/dev/count-ui-debt.mjs",
     "tools/dev/generate-member-colors.mjs",
+    "tools/dev/generate-noto-emojis.mjs",
     "tools/dev/member-colors.json",
+    "tools/dev/noto-overrides/emoji_u1f471_200d_2640.svg",
     "tools/dev/smoke-dist-render.mjs",
     "tools/e2e-data-dir.mjs",
     "tools/e2e-data-dir.test.mjs",
@@ -9840,6 +9993,7 @@
     "tools/gen-openapi.test.mjs",
     "tools/local-env.test.mjs",
     "tools/member-colors.test.mjs",
+    "tools/noto-emojis.test.mjs",
     "tools/validation/provider-egress-observer.mjs",
     "tools/verify-coverage.mjs",
     "tools/verify-coverage.test.mjs",

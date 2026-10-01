@@ -44,6 +44,25 @@ components:
       in: cookie
       name: mp_device_key
   schemas:
+    BlockParams:
+      type: object
+      additionalProperties: false
+      description: >-
+        Closed per-instance params (mirrors settings.ts ALLOWED_PARAM_KEYS; unknown keys are rejected
+        400 by validateParams —  fold closed this schema to match).
+      properties:
+        level:
+          type: string
+          enum:
+            - L1
+            - L2
+            - L3
+            - L4
+        difficulty:
+          type: string
+        language:
+          type: string
+          description: validated against corpus availability (FR-009)
     BriefingStatus:
       type: string
       enum:
@@ -51,14 +70,33 @@ components:
         - ready
         - partial
         - failed
+        - render-failed
     BlockType:
       type: string
       enum:
         - calendar
-        - reminders
         - chores
-        - meals
+        - shotgun
+        - message
+        - streak
+        - today
         - weather
+        - meals
+        - birthday
+        - reminders
+        - dadJoke
+        - wordOfDay
+        - animalFact
+        - numberFact
+        - onThisDay
+        - quoteOfDay
+        - trivia
+        - riddle
+        - wouldYouRather
+        - wordSearch
+        - drawingPrompt
+        - streakText
+        - weatherText
     BlockScope:
       type: string
       enum:
@@ -131,14 +169,19 @@ components:
             - ok
             - failed
         data:
-          type:
-            - object
-            - array
-            - "null"
+          description: Frozen block data, present for successful blocks.
         error:
-          type:
-            - string
-            - "null"
+          type: string
+        index:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+        language:
+          type: string
+        params:
+          $ref: "#/components/schemas/BlockParams"
+      additionalProperties: false
     MemberIdentitySnapshot:
       type: object
       required:
@@ -149,6 +192,7 @@ components:
           type: string
         displayName:
           type: string
+      additionalProperties: false
     BriefingPayload:
       type: object
       required:
@@ -159,6 +203,9 @@ components:
       properties:
         schemaVersion:
           type: integer
+          enum:
+            - 1
+            - 2
         member:
           $ref: "#/components/schemas/MemberIdentitySnapshot"
         date:
@@ -168,6 +215,54 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/BlockInstance"
+      allOf:
+        - if:
+            properties:
+              schemaVersion:
+                const: 1
+            required:
+              - schemaVersion
+          then:
+            properties:
+              blocks:
+                items:
+                  properties:
+                    type:
+                      enum:
+                        - calendar
+                        - reminders
+                        - chores
+                        - meals
+                        - weather
+          else:
+            properties:
+              blocks:
+                items:
+                  properties:
+                    type:
+                      enum:
+                        - shotgun
+                        - message
+                        - streak
+                        - today
+                        - weather
+                        - meals
+                        - birthday
+                        - reminders
+                        - dadJoke
+                        - wordOfDay
+                        - animalFact
+                        - numberFact
+                        - onThisDay
+                        - quoteOfDay
+                        - trivia
+                        - riddle
+                        - wouldYouRather
+                        - wordSearch
+                        - drawingPrompt
+                        - streakText
+                        - weatherText
+      additionalProperties: false
     Briefing:
       type: object
       required:
@@ -193,8 +288,9 @@ components:
           type: integer
         updatedAt:
           type: integer
+      additionalProperties: false
     BriefingReadResult:
-      description: "  (research D11) adds `printedStatus` to the `generated:true` branch — see `BriefingReadResultV2` in../../019-daily-briefing-render/contracts/openapi.yaml for that delta; this schema itself stays as originally shipped (010)."
+      description: Pure read result; printedStatus is documented by the overlapping briefing-render contract.
       oneOf:
         - type: object
           required:

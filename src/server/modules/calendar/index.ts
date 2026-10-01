@@ -43,6 +43,21 @@ export class NotFoundError extends Error {
   }
 }
 
+// Public create/edit fields share one strict type boundary; merged-state validation follows.
+const eventFieldsSchema = z
+  .object({
+    title: z.string().min(1),
+    allDay: z.boolean(),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+    startUtc: z.string().datetime({ offset: true }).optional(),
+    endUtc: z.string().datetime({ offset: true }).optional(),
+    tzid: z.string().optional(),
+    rrule: z.string().nullable().optional(),
+    exdates: z.array(z.string()).max(1000).optional(),
+  })
+  .strict();
+
 function validateEventShape(input: Partial<EventInput>): void {
   if (!input.title) {
     throw new ValidationError("Event title is required");
@@ -498,6 +513,8 @@ export function getEvents(params: GetEventsParams): FeedItem[] {
 }
 
 export function createEvent(input: EventInput): { id: string } {
+  if (!eventFieldsSchema.safeParse(input).success)
+    throw new ValidationError("Invalid event fields");
   const db = getDb();
 
   validateEventShape(input);
@@ -750,6 +767,8 @@ export function deleteEvent(id: string): void {
  * Returns the updated event as a real FeedItem for the PATCH 200 response.
  */
 export function editEvent(id: string, fields: Partial<EventInput>): FeedItem {
+  if (!eventFieldsSchema.partial().safeParse(fields).success)
+    throw new ValidationError("Invalid event edit fields");
   const db = getDb();
 
   const existing = db

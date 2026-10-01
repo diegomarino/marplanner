@@ -122,6 +122,50 @@ describe("POST /api/backups/restore — live lifecycle handoff", () => {
   useIsolatedDb();
   afterEach(() => __resetRestoreStateForTests());
 
+  it("rejects invalid, missing and concurrent restore requests without changing household data or the shelf", async () => {
+    const deviceKey = seedAdminKey();
+    const snapshot = await createSnapshot("snapshot");
+    if (!snapshot.ok) throw new Error(`Snapshot fixture failed: ${snapshot.error}`);
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    const membersBefore = getDb().prepare("SELECT * FROM members ORDER BY id").all();
+    const shelfBefore = listBackups()
+      .map((backup) => backup.filename)
+      .sort();
+    try {
+      const absent = "snapshot-20260615-120000-000.db";
+      for (const [payload, statusCode, status] of [
+        [{}, 400, "validation_error"],
+        [{ filename: snapshot.filename, confirmFilename: "wrong" }, 400, "confirmation_mismatch"],
+        [{ filename: absent, confirmFilename: absent }, 404, "not_found"],
+        [
+          { filename: snapshot.filename, confirmFilename: snapshot.filename },
+          409,
+          "restore_in_progress",
+        ],
+      ] as const) {
+        __setRestoreInProgressForTests(statusCode === 409);
+        const response = await app.inject({
+          method: "POST",
+          url: "/api/backups/restore",
+          cookies: { mp_device_key: deviceKey },
+          payload,
+        });
+        expect(response.statusCode).toBe(statusCode);
+        expect(response.json()).toEqual({ status, message: expect.any(String) });
+        expect(getDb().prepare("SELECT * FROM members ORDER BY id").all()).toEqual(membersBefore);
+        expect(
+          listBackups()
+            .map((backup) => backup.filename)
+            .sort()
+        ).toEqual(shelfBefore);
+      }
+    } finally {
+      __resetRestoreStateForTests();
+      await app.close();
+    }
+  });
+
   it("passes the app lifecycle into restore reconciliation before returning success", async () => {
     const deviceKey = seedAdminKey();
     const snapshot = await createSnapshot("snapshot");
@@ -823,6 +867,7 @@ describe("POST /api/backups/upload (BACKUPS-INV-06, BACKUPS-AC-03, research D10)
       expect(body.filename).toMatch(/^upload-\d{8}-\d{6}-\d{3}(-\d+)?\.db$/);
       const listed = listBackups().find((b) => b.filename === body.filename);
       expect(listed?.type).toBe("upload");
+      expect(fs.readFileSync(path.join(resolveBackupsRoot(), body.filename))).toEqual(bytes);
     } finally {
       await app.close();
     }

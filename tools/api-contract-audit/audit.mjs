@@ -132,6 +132,7 @@ export function audit(documents, rows, { Ajv, formats }) {
         type,
         observed: 0,
         invalid: 0,
+        transport: schema?.format === "binary" ? "binary" : undefined,
         ...(schema === undefined ? { compileError: "No body schema declared" } : compile(schema)),
       };
       if (entry.compileError)
@@ -191,7 +192,7 @@ export function audit(documents, rows, { Ajv, formats }) {
     }
   }
   const check = (entry, value, kind, where) => {
-    if (!entry.validate) return;
+    if (!entry.validate || entry.transport === "binary") return;
     entry.observed++;
     if (!entry.validate(value)) {
       entry.invalid++;
@@ -235,7 +236,7 @@ export function audit(documents, rows, { Ajv, formats }) {
         const type = media(row.requestContentType);
         const request =
           op.requests[type] ?? op.requests[`${type.split("/")[0]}/*`] ?? op.requests["*/*"];
-        if (row.requestBody === undefined && op.requestRequired)
+        if (row.requestBody === undefined && op.requestRequired && request?.transport !== "binary")
           addFinding({ kind: "accepted-missing-request", ...where });
         else if (request && row.requestBody !== undefined)
           check(request, row.requestBody, "accepted-invalid-request", where);
@@ -342,6 +343,7 @@ async function main() {
     observations = join(out, "observations.jsonl");
     writeFileSync(observations, "");
     symlinkSync(join(product, "node_modules"), join(out, "node_modules"));
+    copyFileSync(new URL("./capture-route.mjs", import.meta.url), join(out, "capture-route.mjs"));
     const setup = readFileSync(new URL("./capture.mjs", import.meta.url), "utf8");
     writeFileSync(join(out, "capture.mjs"), setup);
     writeFileSync(
@@ -354,6 +356,13 @@ export default { ...base, test: { ...base.test, projects, fileParallelism: false
     );
     const log = openSync(join(out, "tests.log"), "w");
     try {
+      // Built-entrypoint tests must not depend on another test building dist first.
+      const build = spawnSync("npm", ["run", "build"], {
+        cwd: product,
+        stdio: ["ignore", log, log],
+      });
+      if (build.status !== 0)
+        throw Error(`Isolated product build failed; see ${join(out, "tests.log")}`);
       const result = spawnSync(
         process.execPath,
         [
@@ -397,6 +406,7 @@ export default { ...base, test: { ...base.test, projects, fileParallelism: false
     testExit,
     toolSha256: hash(readFileSync(fileURLToPath(import.meta.url))),
     captureSha256: hash(readFileSync(new URL("./capture.mjs", import.meta.url))),
+    routeClassifierSha256: hash(readFileSync(new URL("./capture-route.mjs", import.meta.url))),
     ajvVersion: dependencyRequire("ajv/package.json").version,
   };
   report.limits = [

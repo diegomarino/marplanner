@@ -1,4 +1,6 @@
 import { readFileSync } from "node:fs";
+import Fastify from "fastify";
+import { settingsRoutes } from "../../src/server/routes/settings";
 import { describe, expect, it } from "vitest";
 import { getDb } from "../../src/server/db/client";
 import { readEffectiveSettings, writeSettingsObject } from "../../src/server/modules/settings";
@@ -48,6 +50,34 @@ describe("settings domain seam", () => {
     expect(getDb().prepare("SELECT COUNT(*) AS count FROM printer_capabilities").get()).toEqual({
       count: 0,
     });
+  });
+
+  it("returns an opaque HTTP 500 when the injected settings writer fails before persistence", async () => {
+    const app = Fastify();
+    await settingsRoutes(app, {
+      readEffectiveSettings,
+      writeSettingsObject: () => {
+        throw new Error("private database path");
+      },
+      isValidationError: () => false,
+    });
+    try {
+      const before = getDb().prepare("SELECT total_changes() AS changes").get();
+      const response = await app.inject({
+        method: "PUT",
+        url: "/api/settings",
+        payload: {
+          object: "locale",
+          settings: { timezone: "UTC", language: "en", weekStartDay: 0 },
+        },
+      });
+      expect(response.statusCode).toBe(500);
+      expect(response.json()).toEqual({ error: "Internal server error" });
+      expect(response.body).not.toContain("private");
+      expect(getDb().prepare("SELECT total_changes() AS changes").get()).toEqual(before);
+    } finally {
+      await app.close();
+    }
   });
 
   it("keeps settings HTTP routing as an injected adapter rather than a domain dependency", () => {

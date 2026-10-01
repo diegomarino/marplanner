@@ -85,9 +85,10 @@ components:
       properties:
         entries:
           type: array
-          maxItems: 100
           items:
-            $ref: "#/components/schemas/ClientLogEntryInput"
+            description: >-
+              Each raw entry is validated independently; invalid entries and entries beyond the first
+              100 are dropped and counted. ClientLogEntryInput describes an admissible entry.
     ClientLogIngestResult:
       type: object
       additionalProperties: false

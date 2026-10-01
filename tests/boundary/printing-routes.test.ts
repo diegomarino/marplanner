@@ -252,6 +252,74 @@ describe("printing routes — T007", () => {
     return { jobId: body.job.id, leaseToken: body.leaseToken };
   }
 
+  it("serves exact binary payload bytes and acknowledges the same lease idempotently", async () => {
+    const deviceKey = await provisionRealDeviceKey();
+    const app = await buildApp();
+    try {
+      const bits = Uint8Array.from({ length: 72 }, (_, i) => (i % 2 ? 0xff : 0x00));
+      registerPrintableProvider("transport-check", () => ({ bits, width: 576, height: 1 }));
+      const { jobId, leaseToken } = await claimFreshJob(app, deviceKey, "transport-check");
+      const payload = await app.inject({
+        method: "GET",
+        url: `/api/printing/jobs/${jobId}/payload?leaseToken=${encodeURIComponent(leaseToken)}`,
+        cookies: { mp_device_key: deviceKey },
+      });
+      expect(payload.statusCode).toBe(200);
+      expect(payload.headers["content-type"]).toBe("application/octet-stream");
+      expect(payload.rawPayload).toEqual(
+        Buffer.from([
+          0x1b,
+          0x40,
+          0x1b,
+          0x32,
+          0x1d,
+          0x76,
+          0x30,
+          0,
+          72,
+          0,
+          1,
+          0,
+          ...bits,
+          0x1b,
+          0x64,
+          3,
+          0x1d,
+          0x56,
+          0,
+        ])
+      );
+      const acknowledge = () =>
+        app.inject({
+          method: "POST",
+          url: `/api/printing/jobs/${jobId}/ack`,
+          cookies: { mp_device_key: deviceKey },
+          payload: { leaseToken },
+        });
+      const ack = await acknowledge();
+      expect(ack.statusCode).toBe(200);
+      expect(ack.json()).toMatchObject({ id: jobId, state: "printed", printedAt: Date.now() });
+      const repeatedAck = await acknowledge();
+      expect(repeatedAck.statusCode).toBe(200);
+      expect(repeatedAck.json()).toEqual(ack.json());
+      for (const method of ["GET", "POST"] as const) {
+        const response = await app.inject({
+          method,
+          url:
+            method === "GET"
+              ? "/api/printing/jobs/does-not-exist/payload?leaseToken=x"
+              : "/api/printing/jobs/does-not-exist/ack",
+          cookies: { mp_device_key: deviceKey },
+          ...(method === "POST" ? { payload: { leaseToken: "x" } } : {}),
+        });
+        expect(response.statusCode).toBe(404);
+        expect(response.json()).toMatchObject({ error: "not_found", message: expect.any(String) });
+      }
+    } finally {
+      await app.close();
+    }
+  });
+
   // ── /ack route ────────────────────────────────────────────────────────────
 
   it("POST /jobs/:id/ack — 409 stale lease token, no state change (INV-05 fencing, HTTP-level)", async () => {
