@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/credential";
+import { notifyPrintIntentEnqueued } from "@/printing/queueWakeup";
 import { useHouseholdSettings } from "@/lib/householdSettings";
 import { useTranslation } from "@/i18n";
 import type { BoardChore, BoardColumn, CompletionInput } from "../../shared";
@@ -93,6 +94,7 @@ export function useTodayChores(forDate?: string): TodayChoresState {
               body: JSON.stringify({ memberId, date: targetDate } satisfies CompletionInput),
             });
         if (!res.ok) throw new Error(`toggle: ${res.status}`);
+        if (!chore.completed) notifyPrintIntentEnqueued();
         await fetchBoard(targetDate);
       } catch {
         setToggleError(t("chores.board.toggleError"));
