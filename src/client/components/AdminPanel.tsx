@@ -70,11 +70,7 @@ export function AdminPanel({
           <Heading id={headingId} className="text-xl font-bold">
             {title}
           </Heading>
-          {description && (
-            <p className="text-muted-foreground text-[length:var(--control-font-size)]">
-              {description}
-            </p>
-          )}
+          {description && <p className="text-muted-foreground text-control">{description}</p>}
         </div>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>

@@ -17,7 +17,8 @@ import type { Server } from "node:http";
  * to loopback (127.0.0.1) for the lifetime of the whole e2e run (globalSetup ->
  * globalTeardown), not per-worker/per-test.
  */
-export const WEATHER_FIXTURE_PORT = 41837;
+// Override per isolated validation lane; runner and provider import the same value.
+export const WEATHER_FIXTURE_PORT = Number(process.env.MP_E2E_WEATHER_FIXTURE_PORT ?? "41837");
 export const WEATHER_FIXTURE_ORIGIN = `http://127.0.0.1:${WEATHER_FIXTURE_PORT}`;
 
 /** Builds an Open-Meteo-shaped `/v1/forecast` response whose integer temperature IS the

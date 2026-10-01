@@ -8,7 +8,8 @@ describe("memberEventStyle", () => {
 
   it("uses a soft surface and identity border for one member", () => {
     expect(memberEventStyle(["rose"])).toEqual({
-      "--member-event-background": "color-mix(in oklch, var(--color-member-rose-500) 22%, white)",
+      "--member-event-background":
+        "color-mix(in oklch, var(--color-member-rose-500) 22%, var(--member-mix-ground))",
       "--member-event-border": "var(--color-member-rose-500)",
     });
   });

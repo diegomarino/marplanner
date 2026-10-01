@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n";
 import { Plus } from "lucide-react";
 import type { MenuItem, Slot } from "../../shared";
@@ -27,10 +28,11 @@ export function MealCell({ date, slot, items, isToday, onAdd, onSelect }: MealCe
 
   if (items.length === 0) {
     return (
+      // eslint-disable-next-line ui-policy/raw-controls -- Native grid-cell surface stretches to the whole meal row; token-sized and covered by family density tests.
       <button
         type="button"
         data-testid={`meal-cell-${date}-${slot}`}
-        className={`group min-h-[var(--control-height)] border-t text-[length:var(--control-font-size)] transition-colors hover:bg-accent/10 focus-visible:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${isToday ? "bg-accent/10" : ""}`}
+        className={`group min-h-[var(--control-height)] border-t text-control transition-colors hover:bg-accent/10 focus-visible:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${isToday ? "bg-accent/10" : ""}`}
         onClick={() => onAdd(date, slot)}
         aria-label={addLabel}
       >
@@ -50,26 +52,29 @@ export function MealCell({ date, slot, items, isToday, onAdd, onSelect }: MealCe
     >
       <div className="flex min-w-0 flex-col gap-2 pb-8">
         {items.map((item) => (
+          // eslint-disable-next-line ui-policy/raw-controls -- Native entry card grows with user content and retains block text flow inside the meal grid.
           <button
             key={item.entryId}
             type="button"
             data-testid="meal-entry-card"
             data-entry-id={item.entryId}
             data-source={item.source}
-            className="min-h-[var(--control-height)] rounded-xl border border-accent bg-accent/20 px-3 py-2 text-left text-[length:var(--control-font-size)] text-accent-foreground shadow-xs transition-shadow hover:shadow-md"
+            className="min-h-[var(--control-height)] rounded-xl border border-accent bg-accent/20 px-3 py-2 text-left text-control text-accent-foreground shadow-xs transition-shadow hover:shadow-md"
             onClick={() => onSelect(date, item)}
           >
             <span>{item.isTombstone ? t("meals.menu.tombstoneLabel") : item.label}</span>
           </button>
         ))}
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           type="button"
-          className="absolute right-2 bottom-2 flex h-[var(--control-height)] w-[var(--control-height)] items-center justify-center rounded-full text-[length:var(--control-font-size)] text-muted-foreground opacity-0 transition-opacity hover:bg-accent/20 hover:text-accent-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover:opacity-100 group-focus-within:opacity-100"
+          className="absolute right-2 bottom-2 flex h-[var(--control-height)] w-[var(--control-height)] items-center justify-center rounded-full text-control text-muted-foreground opacity-0 transition-opacity hover:bg-accent/20 hover:text-accent-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover:opacity-100 group-focus-within:opacity-100"
           onClick={() => onAdd(date, slot)}
           aria-label={addLabel}
         >
           <Plus aria-hidden="true" />
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -304,7 +305,7 @@ export function DailyMessagesManagement() {
                       >
                         {formatDateLabel(date, language)}
                       </label>
-                      <textarea
+                      <Textarea
                         id={inputId}
                         aria-label={formatDateLabel(date, language)}
                         data-testid={inputId}
@@ -323,7 +324,7 @@ export function DailyMessagesManagement() {
                           event.currentTarget.rows = 1;
                           void saveMessage(date);
                         }}
-                        className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-[var(--control-height)] flex-1 resize-none rounded-md border px-3 py-2 text-[length:var(--control-font-size)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="bg-background flex-1 resize-none"
                       />
                       {existing && (
                         <Button

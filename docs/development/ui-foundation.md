@@ -51,10 +51,10 @@ kiosk contract + v1's product design and are **not** provisional:
 - **Landscape-primary, orientation-adaptive.** Support both, but design for landscape first. v1 uses
   real `portrait` / `landscape` Tailwind variants driving layout — reuse that pattern when a screen
   is orientation-sensitive.
-- **Large touch targets.** Controls are finger-sized: form controls ~`h-12`, primary actions up to
-  `h-14`. Do not ship default-height desktop controls.
-- **Distance-legible.** Readable from kitchen viewing distance — generous type, a display font for
-  headings, high enough contrast.
+- **Large touch targets.** Controls are finger-sized: the document-wide `--control-height` is 48px in kiosk and 36px in comfortable mode.
+  Every shared control variant consumes that token; intentionally larger layouts require review.
+- **Distance-legible.** Readable from kitchen viewing distance — density-driven control type (18px kiosk, 14px comfortable) and high enough contrast.
+  A separate display font and heading scale are not currently implemented.
 - **Per-member colour coding.** Members carry a stored colour used across avatars/badges; the palette
   must provide a named per-member colour set (v1: 16 named OKLCH hues). Relevant once members render.
 - **Fail-closed surfaces.** The shell renders nothing household-runtime until provisioned+connected
@@ -62,10 +62,9 @@ kiosk contract + v1's product design and are **not** provisional:
 
 ## What NOT to do (yet)
 
-- **No bespoke wrapper components** (`<KioskButton>`, a custom form kit, etc.). Use the shadcn
-  primitives directly. Extract a shared wrapper only when the **rule of three** fires (three real
-  consumers of the same pattern) — premature abstraction here would ossify the wrong shape before the
-  first slice reveals the real reuse.
+- **Shared compositions need a contract.** Admit state, wiring or accessibility responsibility
+  under the style guide's D3 test; a consumer count alone does not justify a wrapper. Plain class
+  combinations belong in recipes. Reuse `@/ui` and consult `COMPONENTS.md` first.
 - **No parallel token source.** Token values live in `:root`/`.dark` and are exposed via `@theme
 inline`; that is the single source. No component-local colour
   constants, no second CSS file of variables.

@@ -22,13 +22,7 @@ export const LABEL_INLINE_CLASSES = "text-muted-foreground inline-flex items-cen
  * `components/ui/select.tsx` primitive. See the style guide for why (`.selectOption` in
  * `tests/e2e/meals.spec.ts` requires a real native element). */
 export const NATIVE_SELECT_CLASSES =
-  "border-input h-[var(--control-height)] rounded-md border bg-transparent px-2 text-[length:var(--control-font-size)]";
-
-/** A plain native `<textarea>`, styled to the token dialect. No shared textarea primitive exists
- * yet — see the style guide for the gap this recipe
- * stands in for. */
-export const NATIVE_TEXTAREA_CLASSES =
-  "border-input min-h-[var(--control-height)] w-full rounded-md border bg-transparent px-3 py-2 text-[length:var(--control-font-size)]";
+  "border-input h-[var(--control-height)] rounded-md border bg-transparent px-2 text-control";
 
 /** A bare, density-sized `<input type="checkbox">` with NO visible label — the one shape
  * `WeekdayPicker`/`CheckboxField` deliberately does not cover (a member × weekday matrix cell,
@@ -38,4 +32,4 @@ export const NATIVE_TEXTAREA_CLASSES =
  * would repeat a day abbreviation in every table cell. See the style guide for why this is a
  * recipe and the accessible-name obligation that comes with dropping the visible label. */
 export const BARE_CHECKBOX_INPUT_CLASSES =
-  "accent-primary border-input size-[var(--control-height)] shrink-0 rounded-sm text-[length:var(--control-font-size)]";
+  "accent-primary border-input size-[var(--control-height)] shrink-0 rounded-sm text-control";

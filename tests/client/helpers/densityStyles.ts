@@ -69,6 +69,7 @@ const BASE_DENSITY_UTILITY_CANDIDATES: readonly string[] = [
   // it cannot edit. Cheaper to include it than to have thirteen batches each rediscover this.
   "min-h-[var(--control-height)]",
   "text-[length:var(--control-font-size)]",
+  "text-control",
 ];
 
 type TailwindBuilder = { build(candidates: string[]): string };

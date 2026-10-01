@@ -1,3 +1,4 @@
+import { CheckboxField } from "@/components/CheckboxField";
 import { useState, type CSSProperties } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -23,12 +24,12 @@ export function HighlightRuleCard({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: rule.id,
   });
-  /* eslint-disable no-restricted-syntax -- DnD Kit frame values enter only CSS custom properties; classes own transform and transition. */
   return (
     <>
       <article
         ref={setNodeRef}
         data-testid={`highlight-rule-${rule.id}`}
+        // eslint-disable-next-line ui-policy/debt -- DnD frame values only forward CSS custom properties; token classes own presentation.
         style={
           {
             "--drag-transform": CSS.Transform.toString(transform) ?? "none",
@@ -39,7 +40,9 @@ export function HighlightRuleCard({
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 items-start gap-2">
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               type="button"
               className="cursor-grab touch-none rounded p-1 active:cursor-grabbing"
               aria-label={t("calendar.admin.dragRule").replace("{emoji}", rule.emoji)}
@@ -48,7 +51,7 @@ export function HighlightRuleCard({
               {...listeners}
             >
               <GripVertical aria-hidden="true" className="size-4" />
-            </button>
+            </Button>
             <p className="min-w-0 break-words font-medium">
               {rule.emoji} {rule.keywords.join(", ")}
             </p>
@@ -64,15 +67,12 @@ export function HighlightRuleCard({
             <Trash2 aria-hidden="true" className="size-4" />
           </Button>
         </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={rule.enabled}
-            disabled={busy}
-            onChange={(event) => onToggle(rule.id, event.target.checked)}
-          />
-          {t("calendar.admin.enabled")}
-        </label>
+        <CheckboxField
+          checked={rule.enabled}
+          disabled={busy}
+          onChange={(checked) => onToggle(rule.id, checked)}
+          label={t("calendar.admin.enabled")}
+        />
       </article>
       <ConfirmDialog
         open={confirmOpen}
@@ -85,5 +85,4 @@ export function HighlightRuleCard({
       />
     </>
   );
-  /* eslint-enable no-restricted-syntax */
 }

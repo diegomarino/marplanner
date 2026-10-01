@@ -18,8 +18,7 @@ export function memberEventStyle(colorKeys: readonly MemberColorKey[]): MemberEv
   const first = memberColour(uniqueKeys[0]);
   if (uniqueKeys.length === 1) {
     return {
-      // eslint-disable-next-line no-restricted-syntax -- The runtime member token must be softened without replacing the member's configured identity colour.
-      "--member-event-background": `color-mix(in oklch, ${first} 22%, white)`,
+      "--member-event-background": `color-mix(in oklch, ${first} 22%, var(--member-mix-ground))`,
       "--member-event-border": first,
     };
   }
@@ -28,8 +27,7 @@ export function memberEventStyle(colorKeys: readonly MemberColorKey[]): MemberEv
     .map((key, index) => {
       const start = (index / uniqueKeys.length) * 100;
       const end = ((index + 1) / uniqueKeys.length) * 100;
-      // eslint-disable-next-line no-restricted-syntax -- Each diagonal band is derived from a semantic member token selected at runtime.
-      return `color-mix(in oklch, ${memberColour(key)} 18%, white) ${start}% ${end}%`;
+      return `color-mix(in oklch, ${memberColour(key)} 18%, var(--member-mix-ground)) ${start}% ${end}%`;
     })
     .join(", ");
 
@@ -43,8 +41,7 @@ export function memberEventStyle(colorKeys: readonly MemberColorKey[]): MemberEv
 export function memberFilterStyle(key: MemberColorKey): CSSProperties {
   const colour = memberColour(key);
   return {
-    // eslint-disable-next-line no-restricted-syntax -- The selected state is derived from the active member's semantic colour token at runtime.
-    backgroundColor: `color-mix(in oklch, ${colour} 24%, white)`,
+    backgroundColor: `color-mix(in oklch, ${colour} 24%, var(--member-mix-ground))`,
     borderColor: colour,
     color: `var(--color-member-${key}-foreground)`,
   };

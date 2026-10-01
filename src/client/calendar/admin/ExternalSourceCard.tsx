@@ -1,3 +1,4 @@
+import { CheckboxField } from "@/components/CheckboxField";
 import { useState } from "react";
 import { RefreshCcw, Trash2 } from "lucide-react";
 import type { ExternalSourcePublic, SynchronizationPhase } from "../../../shared";
@@ -91,15 +92,12 @@ export function ExternalSourceCard({
           </Button>
         </div>
       </div>
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={source.enabled}
-          disabled={busy}
-          onChange={(event) => onToggle(source.id, event.target.checked)}
-        />
-        {t("calendar.admin.enabled")}
-      </label>
+      <CheckboxField
+        checked={source.enabled}
+        disabled={busy}
+        onChange={(checked) => onToggle(source.id, checked)}
+        label={t("calendar.admin.enabled")}
+      />
       {source.phase && (
         <p role="status" className="text-sm">
           {t(phaseKeys[source.phase])}

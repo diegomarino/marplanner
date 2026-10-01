@@ -111,14 +111,15 @@ export function CalendarMonthView({
                 {dayEvents.map((event) => {
                   const time = formatTime(event, locale, timezone);
                   return (
+                    // eslint-disable-next-line ui-policy/raw-controls -- Native multiline event chip keeps inline time/title flow; token-sized and member-calendar density tested.
                     <button
                       key={presentationEventId(event)}
                       type="button"
                       data-testid="calendar-event-row"
                       data-presentation-id={presentationEventId(event)}
                       onClick={() => onEventClick(event)}
-                      className="member-event-surface focus:ring-primary min-h-[var(--control-height)] w-full cursor-pointer rounded-md border border-l-4 px-2 py-1.5 text-left text-[length:var(--control-font-size)] font-medium shadow-sm hover:brightness-95 focus:ring-2 focus:ring-offset-1 focus:outline-none"
-                      // eslint-disable-next-line no-restricted-syntax -- Dynamic assignment styling passes only semantic member-token CSS custom properties.
+                      className="member-event-surface focus:ring-primary min-h-[var(--control-height)] w-full cursor-pointer rounded-md border border-l-4 px-2 py-1.5 text-left text-control font-medium shadow-sm hover:brightness-95 focus:ring-2 focus:ring-offset-1 focus:outline-none"
+                      // eslint-disable-next-line ui-policy/debt -- Dynamic assignment styling passes only semantic member-token CSS custom properties.
                       style={eventStyle(event, members)}
                       title={event.title}
                     >

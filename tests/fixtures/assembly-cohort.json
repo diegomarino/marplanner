@@ -702,7 +702,7 @@
             "colourLiterals: does NOT fire on an identifier that merely ends in a colour-function name",
             "colourLiterals: still fires on a real lab() alongside such an identifier",
             "colourLiterals: fires on color-mix() in a BACKTICK literal",
-            "colourLiterals: does NOT fire on a case-variant named colour (documented gap, see COLOUR_RE)",
+            "colourLiterals: fires on case-variant CSS named colours",
             "H2: box-comment describing removed debt yields zero across all four counters",
             "line comments describing removed debt yield zero, not just block comments",
             "H3: a regex literal containing a quote does not desync string/comment parsing",
@@ -710,7 +710,9 @@
             "H3: a template literal with an interpolated expression containing a comment-like token is handled",
             "stripComments leaves JSX text that BEGINS with '//' untouched (it is content, not trivia)",
             "stripComments leaves JSX text that begins with '/*' untouched",
-            "PATTERNS regex objects are non-empty and match their known-positive fixtures"
+            "AST oracle matches all four known-positive forms",
+            "AST oracle measures inline attributes, spread props and createElement equally",
+            "AST oracle permits translation copy and token-only colour composition, rejects literal mixes"
           ],
           "tools/e2e-data-dir.test.mjs": [
             "creates and removes one owned data directory for a normal E2E run",
@@ -777,6 +779,9 @@
             "computeSyncPlan reports vendored files no longer referenced by the catalog",
             "--check exits non-zero when the vendored directory drifts from the catalog",
             "generation preserves the custom blonde ponytail override"
+          ],
+          "tools/ui-catalog.test.mjs": [
+            "UI catalog matches the real shared exports and detects a new export"
           ]
         }
       },
@@ -2663,7 +2668,13 @@
             "UI debt enforcement ratchet (T007, FR-014/FR-015/FR-017) \u2014 executable proof, not just eslint.config.mjs prose SC-011's selector fires on an unannounced error-coloured element (Literal className) at a governed path",
             "UI debt enforcement ratchet (T007, FR-014/FR-015/FR-017) \u2014 executable proof, not just eslint.config.mjs prose SC-011's selector also fires when the error class arrives via a template literal (P1-6)",
             "UI debt enforcement ratchet (T007, FR-014/FR-015/FR-017) \u2014 executable proof, not just eslint.config.mjs prose SC-011's selector does NOT fire when role=\"alert\" is present on the same element",
-            "UI debt enforcement ratchet (T007, FR-014/FR-015/FR-017) \u2014 executable proof, not just eslint.config.mjs prose SC-011's selector fires at a FORMERLY exception-listed path (DailyBriefingManagement.tsx) \u2014 it never depended on the FR-014 exemption and still does not"
+            "UI debt enforcement ratchet (T007, FR-014/FR-015/FR-017) \u2014 executable proof, not just eslint.config.mjs prose SC-011's selector fires at a FORMERLY exception-listed path (DailyBriefingManagement.tsx) \u2014 it never depended on the FR-014 exemption and still does not",
+            "rejects adversarial debt forms while allowing semantic token composition and translation copy",
+            "protects layer boundaries, recipe expressions and imported primitive sizing without dropping existing rules",
+            "keeps measurement and lint in agreement for colours and style props at the public seam",
+            "rejects new raw controls and smaller minimums, permits native recipes and token forwarding",
+            "rejects reviewer probes for literal fallback, calculated shrinking, relative imports and fake recipes",
+            "rejects arbitrary-property density overrides while preserving tokens, growth and descendants"
           ],
           "tests/boundary/verify-pin.test.ts": [
             "verify-pin: match/no-match no-session (T025 \u2014 red-by-design, T028 turns green) correct PIN \u21d2 {match:true} and incorrect PIN \u21d2 {match:false}, no session row either way (FR-016/FR-026)"
@@ -2905,6 +2916,7 @@
             "Admin Calendar sources keeps toggle, sync, and confirmed delete as separate actions",
             "Admin Calendar sources polls only active phases and refreshes Calendar events after success",
             "Admin Calendar sources uses the household language for the durable success time",
+            "Admin Calendar sources keeps native provider, enabled toggles and drag handles at kiosk density",
             "Admin Calendar highlights creates a trimmed, deduplicated rule and keeps the source policy hidden",
             "Admin Calendar highlights keeps toggle and confirmed delete independent and restores focus on cancel",
             "Admin Calendar highlights keyboard drag submits one complete order and announces the move",
@@ -3095,6 +3107,7 @@
           "tests/client/daily-messages-management.test.tsx": [
             "DailyMessagesManagement 14-day editor renders every household date from today through the next thirteen days",
             "DailyMessagesManagement 14-day editor upserts a changed non-empty row when its textarea loses focus",
+            "DailyMessagesManagement 14-day editor preserves an existing note when its native textarea is cleared or blurred unchanged",
             "DailyMessagesManagement 14-day editor keeps the loaded editor visible when the active member is selected again",
             "DailyMessagesManagement 14-day editor moves through 14-day windows without allowing navigation before today"
           ],
@@ -3210,7 +3223,9 @@
             "B0 foundation primitives renders no error live region when clear and supports polite notice when present",
             "B0 foundation primitives passes checkbox and radio changes through native labels while respecting disabled controls",
             "B0 foundation primitives keeps status name invariant, exposes pressed/busy state and blocks repeat press",
-            "B0 foundation primitives uses canonical weekday order for multi selections and preserves the group name"
+            "B0 foundation primitives uses canonical weekday order for multi selections and preserves the group name",
+            "scales the localized built-in dialog close in both densities and closes the portal",
+            "renders every interactive primitive in the density census and exposes new omissions"
           ],
           "tests/client/foundation-settings.test.tsx": [
             "B0 client settings and localization provides an inert fallback outside the provider",
@@ -4846,7 +4861,7 @@
     },
     "files": {
       "src/client/admin/AdminGate.tsx": {
-        "sha256": "e7c931879644ec3cc2ed21f265ec1dbc9f0abed08119d730b063a3327982967a",
+        "sha256": "d60b7796b570d9292a6319fcdc21913adb58c4a70d97807409b5c5274ee9f38a",
         "layer": "client",
         "minimumTotals": {
           "lines": 68,
@@ -4878,7 +4893,7 @@
         }
       },
       "src/client/admin/BackupsManagement.tsx": {
-        "sha256": "79843bdde155f7ed454042ff3c312cd9afb684f594901e1f390f00449f621175",
+        "sha256": "a3010e20dbcc54b1ba1c9655329eb1dc77753203974d9712668fb4a4b1e5b4c3",
         "layer": "client",
         "minimumTotals": {
           "lines": 125,
@@ -4894,7 +4909,7 @@
         }
       },
       "src/client/admin/CalendarManagement.tsx": {
-        "sha256": "f40ba48efc41fd7dc6589ac7b4ab178dac9b3539b4e649555dd319bb0ed91c2f",
+        "sha256": "0f92a6512cb893a5c814f356dbf6cfb7488297f36d741196a6eae4a0bdcfffbc",
         "layer": "client",
         "minimumTotals": {
           "lines": 162,
@@ -4926,7 +4941,7 @@
         }
       },
       "src/client/admin/DailyBriefingManagement.tsx": {
-        "sha256": "dd5c9862ac1fad315d432558b45642781fe85265a013afdd4b05bfddc40a06ac",
+        "sha256": "823fc8236b0a209eb66907ba2e96377d354ec99b6a887516fdb05542d9cbafb7",
         "layer": "client",
         "minimumTotals": {
           "lines": 313,
@@ -4942,7 +4957,7 @@
         }
       },
       "src/client/admin/DailyMessagesManagement.tsx": {
-        "sha256": "954208041bf19636b601f1d9c8b534bd09127b5c5af08aa33967bf8ac080059a",
+        "sha256": "a8ec2ad77e04aea3cfc5dc3fae858ef89f548af612cfa2d8d1f276a1cd90228f",
         "layer": "client",
         "minimumTotals": {
           "lines": 138,
@@ -4958,7 +4973,7 @@
         }
       },
       "src/client/admin/DayPeriodsManagement.tsx": {
-        "sha256": "bb0d5f6b6326a56410738deb65ee4807dc12a392b4267ea09d64254d94f9ea9f",
+        "sha256": "64966ac3c50c2d7e6812b20f4a4accfd46df23016808aa0ff6a081ea9e9a8f5b",
         "layer": "client",
         "minimumTotals": {
           "lines": 99,
@@ -4974,7 +4989,7 @@
         }
       },
       "src/client/admin/MealsManagement.tsx": {
-        "sha256": "d05bb4f09d9732de761356c1c652212158eb12d39805a75b066ca6ed344286b5",
+        "sha256": "583bcf9666f53accae967a3a90b04a4dfca9a94ec36677cbdf7902a50dc606e4",
         "layer": "client",
         "minimumTotals": {
           "lines": 368,
@@ -4990,7 +5005,7 @@
         }
       },
       "src/client/admin/MemberCreateForm.tsx": {
-        "sha256": "3dee23a382b1b03bea733182a55718e9e87c2ed889d084eea617fd9ca1f23493",
+        "sha256": "3ad4308c74be0da403abbdecf60b8104dafddf4e326cc3a98a40f50f89567421",
         "layer": "client",
         "minimumTotals": {
           "lines": 78,
@@ -5006,7 +5021,7 @@
         }
       },
       "src/client/admin/MembersManagement.tsx": {
-        "sha256": "f1856be1b0e5bc6bb6eea4a66715b0a12e0c4924415738c0fa9ff9b025134f1b",
+        "sha256": "9ec0056fbad90a590c2bf35b171cd7118e33c6464217e8177de3f015607d788a",
         "layer": "client",
         "minimumTotals": {
           "lines": 149,
@@ -5022,7 +5037,7 @@
         }
       },
       "src/client/admin/NetworkDevicesManagement.tsx": {
-        "sha256": "76338ed77ebb3944c22443eca4763c33cb17a66a7eacf7ef11eb045c39e15904",
+        "sha256": "9080e01c16f26ad62dfc68594a309f4a26da27656918e58e382ebc0e99c22183",
         "layer": "client",
         "minimumTotals": {
           "lines": 167,
@@ -5054,7 +5069,7 @@
         }
       },
       "src/client/admin/RemindersManagement.tsx": {
-        "sha256": "98929423691af19da8b445a4d9b299b136549b298dbe35d51bac26fb3eb95d54",
+        "sha256": "3e8ea96591f90bc4e2c7a2cb8c437099fae9fff4a477581d937d9c52bada462f",
         "layer": "client",
         "minimumTotals": {
           "lines": 251,
@@ -5086,7 +5101,7 @@
         }
       },
       "src/client/admin/TelemetryManagement.tsx": {
-        "sha256": "cdbd8f85a6ba3ec370ec8ebb7fb380f479b5b8dbc4f33ef7351dcc4eb019642d",
+        "sha256": "5dd30a26301e4112ea051f53f13e8332f03b4adb71a3698af4fbf3159636969a",
         "layer": "client",
         "minimumTotals": {
           "lines": 57,
@@ -5102,7 +5117,7 @@
         }
       },
       "src/client/admin/TimeAnnouncementsManagement.tsx": {
-        "sha256": "3539774058607aac832f12edd9e8bbf5d3364bab9bf8baf2d5716a74b2918ec4",
+        "sha256": "cdc04565e91396bfe1500dfe88a79ce55ff47bd4c7d4f02087bc75923acc9f20",
         "layer": "client",
         "minimumTotals": {
           "lines": 88,
@@ -5118,7 +5133,7 @@
         }
       },
       "src/client/admin/WeatherManagement.tsx": {
-        "sha256": "c8c5ff8a443420c783db01eb14a275a53cb0bd448fea2b555fe5537b8593cf60",
+        "sha256": "2cf1ad08b25c85a96adeda2885ce47fbd36782d07dcc8cf4f615f36e8b0e6179",
         "layer": "client",
         "minimumTotals": {
           "lines": 85,
@@ -5134,7 +5149,7 @@
         }
       },
       "src/client/calendar/CalendarMonthView.tsx": {
-        "sha256": "e59e4f66a265a72a577fd805c1a93941b6513ad1c29f32c25c3876beee41fd14",
+        "sha256": "f86acf3e3ae04195f9f258dfb1f5e01bde08f7289e69a92e7d6632fa562a158d",
         "layer": "client",
         "minimumTotals": {
           "lines": 22,
@@ -5150,7 +5165,7 @@
         }
       },
       "src/client/calendar/CalendarView.tsx": {
-        "sha256": "9a131f0acf770430fa4e8009046994850a7c63f87b66f9fdc4c6bbabb405290e",
+        "sha256": "79b2375346c57d9875ceb21395f5eb7ed326740617f2434893df6859b601eb0c",
         "layer": "client",
         "minimumTotals": {
           "lines": 273,
@@ -5166,7 +5181,7 @@
         }
       },
       "src/client/calendar/ScheduleXWeekView.tsx": {
-        "sha256": "dcede1c93f47dd34e5d4ebaa677ff4e52e14700c27fed9617923a5437b20175c",
+        "sha256": "726d16523f88dcef385cb375355e8afe37d4c4e5bd625cb4f2ab526c1fc90afd",
         "layer": "client",
         "minimumTotals": {
           "lines": 56,
@@ -5182,7 +5197,7 @@
         }
       },
       "src/client/calendar/admin/ExternalSourceCard.tsx": {
-        "sha256": "9954b959d7bc9264232b672de05efb21a93f9f080da37a10dfebb935951729ac",
+        "sha256": "7576d04f4ec2af2cb00def913fcc44b5ef282ffb7667f06f8623ef471c3a388f",
         "layer": "client",
         "minimumTotals": {
           "lines": 13,
@@ -5198,7 +5213,7 @@
         }
       },
       "src/client/calendar/admin/HighlightRuleCard.tsx": {
-        "sha256": "716b5bfa22bdc71cd14ca756d24c8953a0e365e43994dc56d0728f550b879689",
+        "sha256": "63e647e0ab35b6a4051e49af4b62fe527d3d959c23aba22cccd9dffbb80389ed",
         "layer": "client",
         "minimumTotals": {
           "lines": 7,
@@ -5246,7 +5261,7 @@
         }
       },
       "src/client/calendar/member-event-style.ts": {
-        "sha256": "8e408ba5fadfb961dbbe6d1c761dcf537ea53c0ba9bde4fefd261c55badd7312",
+        "sha256": "62d64194d7d8cf3a02de8cac17b3d04522d88df6593fddc5a14fc9d81eb7c1ed",
         "layer": "client",
         "minimumTotals": {
           "lines": 13,
@@ -5262,7 +5277,7 @@
         }
       },
       "src/client/chores/ChoreColumns.tsx": {
-        "sha256": "600f71e5172c40fc700e9d0981a9cb484261ce0cf18ddb5e914a658f4925e41d",
+        "sha256": "0329603e8e1459ba8174c0a8f9a555fe498e2bc97a46164f5d4167922835185b",
         "layer": "client",
         "minimumTotals": {
           "lines": 57,
@@ -5294,7 +5309,7 @@
         }
       },
       "src/client/chores/EmojiPicker.tsx": {
-        "sha256": "1ab4f4dcf511433e3a36be7f15f85e67e07b93eac8498e3887df9fadcff1617a",
+        "sha256": "9953ae1ade8eeb18dcd4b822105569f467862bd568a60daf3517c43963de1f75",
         "layer": "client",
         "minimumTotals": {
           "lines": 20,
@@ -5325,22 +5340,6 @@
           "branches": 100
         }
       },
-      "src/client/chores/noto-emoji.tsx": {
-        "sha256": "89b9980550d5905cfe02e11455a7677f095812e6490bb3b15b9c763e76cec80d",
-        "layer": "client",
-        "minimumTotals": {
-          "lines": 13,
-          "statements": 13,
-          "functions": 6,
-          "branches": 5
-        },
-        "minimumRates": {
-          "lines": 100,
-          "statements": 100,
-          "functions": 100,
-          "branches": 80
-        }
-      },
       "src/client/chores/useTodayChores.ts": {
         "sha256": "d29812a7a04d69a781c851c839ba54a43a731faf5593955af1a9aa7c3e5ee47d",
         "layer": "client",
@@ -5358,7 +5357,7 @@
         }
       },
       "src/client/components/AdminPanel.tsx": {
-        "sha256": "16da1b1ddf5732d3146a54a5fcce95acab6eca34d266c2c0e8022665e371f38b",
+        "sha256": "ba685a9d2d230919a424e1b29837e2faa51abf750efa3425b43b6b418ba655d1",
         "layer": "client",
         "minimumTotals": {
           "lines": 4,
@@ -5374,7 +5373,7 @@
         }
       },
       "src/client/components/CheckboxField.tsx": {
-        "sha256": "84aa76cd1cf25d9b54b0026873acd382354ecafc9035d96cc2de039010c8946c",
+        "sha256": "96de6a847a6a4b8c36dc1bf69d05acda3b190ce851ed4e428bd009066585f57c",
         "layer": "client",
         "minimumTotals": {
           "lines": 2,
@@ -5406,7 +5405,7 @@
         }
       },
       "src/client/components/ErrorNotice.tsx": {
-        "sha256": "ada6414d32ebf259a6a5ff2c98b0aca61bf49114873a952ec59d7cc7910be8cf",
+        "sha256": "2e20be89e1def8271a1f61e9d905d665c594c2520733df43587388f03b385d47",
         "layer": "client",
         "minimumTotals": {
           "lines": 3,
@@ -5422,7 +5421,7 @@
         }
       },
       "src/client/components/Field.tsx": {
-        "sha256": "20f2f3651a16c0fe97ea7165fe0f914230e42b67670d24c7e39a3a81a6bcd388",
+        "sha256": "322cc021d3ebdae32ec5e4ff471273826c0bb6bc60df7bc6284d20def2cd8833",
         "layer": "client",
         "minimumTotals": {
           "lines": 7,
@@ -5438,7 +5437,7 @@
         }
       },
       "src/client/components/RadioField.tsx": {
-        "sha256": "f91888f0772c3dffe7267c306eb83dadd48d131913ab06bdfba58a6df9ef2679",
+        "sha256": "01b587d55ce438db4009d3c517c6c88c0d1b5e21acc813f66800b6e1b98a137b",
         "layer": "client",
         "minimumTotals": {
           "lines": 2,
@@ -5470,7 +5469,7 @@
         }
       },
       "src/client/components/WeekdayPicker.tsx": {
-        "sha256": "ec6fca581db2b3f002d36c2fb2c30c61b3cdf77d74e4aef7a75d046b17f61f4c",
+        "sha256": "8826977886d97f56a8e7698c9b6b62d6619ff1936c17c3f82e42046e7182bee3",
         "layer": "client",
         "minimumTotals": {
           "lines": 23,
@@ -5486,7 +5485,7 @@
         }
       },
       "src/client/components/ui/button.tsx": {
-        "sha256": "5d434e3a331432cdf1fc718294f70b864d82565e8d9cccde5e3949bae92706fe",
+        "sha256": "413b90d067e5e0ed50314c7391d7ce652543638f868e4b61b72ea88ba2c0deb5",
         "layer": "client",
         "minimumTotals": {
           "lines": 3,
@@ -5518,7 +5517,7 @@
         }
       },
       "src/client/components/ui/dialog.tsx": {
-        "sha256": "6f06e568f01ebc5897c72d527c99f19329de2b7e2347510d051a2a9921c0844a",
+        "sha256": "83714205224f0eacb068c88aa7a9c6200f1a5bbaf91a72d8b0a8bc66de72dc9a",
         "layer": "client",
         "minimumTotals": {
           "lines": 10,
@@ -5534,7 +5533,7 @@
         }
       },
       "src/client/components/ui/input.tsx": {
-        "sha256": "1174d4742877e1c424b58950e3d80185105fbebcf7c301d570b8071df870d5a4",
+        "sha256": "411261b33cfaa23eb41672010fa7d6131d494ec9d5df593f31b35a5f669b58b0",
         "layer": "client",
         "minimumTotals": {
           "lines": 1,
@@ -5566,7 +5565,7 @@
         }
       },
       "src/client/components/ui/select.tsx": {
-        "sha256": "0b6bb9db00e76f1fdb27bf95ceb52cdb3a8e8f1499c0841353ec135831959c9f",
+        "sha256": "6df9660a65b73f806f08a1e7ab14f4cb30d7fa58a5171568c71a9fabc82a1fbc",
         "layer": "client",
         "minimumTotals": {
           "lines": 10,
@@ -5630,7 +5629,7 @@
         }
       },
       "src/client/home/TodayAgenda.tsx": {
-        "sha256": "77d00402a42e84b3ec0b213b4b5abf0a2d6a03259f0ee39709400adeab694efe",
+        "sha256": "7b25f85b03840e2d60faa87558e9075e686e7e01fb620be39b48e47d80f61647",
         "layer": "client",
         "minimumTotals": {
           "lines": 62,
@@ -5678,7 +5677,7 @@
         }
       },
       "src/client/home/WeatherPill.tsx": {
-        "sha256": "8caccae96035bea17f247c3068121a72f5c2637c9410768b308e209b41f3bb4e",
+        "sha256": "a8b821a497ade7e314cbcca428190656f01f5607ad0dfe96d57e42dd88298705",
         "layer": "client",
         "minimumTotals": {
           "lines": 48,
@@ -5870,11 +5869,11 @@
         }
       },
       "src/client/lib/recipes.ts": {
-        "sha256": "b7de6f30bcb758bddb9b59fa3bf19674d513042a845bae7d10b34cee912ba1e3",
+        "sha256": "6ef2c77f407af01006f543e8e41339f2a7558658464f3f467144d91ec60d9e28",
         "layer": "client",
         "minimumTotals": {
-          "lines": 4,
-          "statements": 4,
+          "lines": 3,
+          "statements": 3,
           "functions": 0,
           "branches": 0
         },
@@ -5886,7 +5885,7 @@
         }
       },
       "src/client/lib/utils.ts": {
-        "sha256": "d2b6f55bd521d439691278f9c2e7873210751e598c1948b249b2606fb58cf281",
+        "sha256": "c01591eca897ab0baa81cc3fac8c5179348e18c0918bc65140280416504e777e",
         "layer": "client",
         "minimumTotals": {
           "lines": 1,
@@ -5918,7 +5917,7 @@
         }
       },
       "src/client/meals/MealCell.tsx": {
-        "sha256": "bbf7dda5f3ac700fc3735adb1138407e4893c23967d9ccec37d04c761eb6778f",
+        "sha256": "48956a297a23d1d91a20ff491523cf1f660ac0f5884795c65c6c0b175caf0dc0",
         "layer": "client",
         "minimumTotals": {
           "lines": 11,
@@ -5934,7 +5933,7 @@
         }
       },
       "src/client/meals/MealEntryDialog.tsx": {
-        "sha256": "08bbda2605ea504cc671a3d934073f4af9c4eb35e03de9a62525a80fa2953882",
+        "sha256": "a14ef1db6a627da33f77de5c1d1857463a435707aa9a36b8f568a440d919edfa",
         "layer": "client",
         "minimumTotals": {
           "lines": 40,
@@ -6014,7 +6013,7 @@
         }
       },
       "src/client/meals/RecipeDialog.tsx": {
-        "sha256": "44b578322a132e8a92b5ce1764308391e3e48d14720b700f4d9148ad9ef02f13",
+        "sha256": "86526186f7e780513ef7e0276b0494945754acee3056d2dd408213754f5d5849",
         "layer": "client",
         "minimumTotals": {
           "lines": 32,
@@ -6203,22 +6202,6 @@
           "statements": 90.9,
           "functions": 100,
           "branches": 81.25
-        }
-      },
-      "src/client/printing/queueWakeup.ts": {
-        "sha256": "d639576f868f157a7807701e36b577945305172c254f877e9aa9fe288d1ba9cf",
-        "layer": "client",
-        "minimumTotals": {
-          "lines": 2,
-          "statements": 2,
-          "functions": 1,
-          "branches": 0
-        },
-        "minimumRates": {
-          "lines": 100,
-          "statements": 100,
-          "functions": 100,
-          "branches": 100
         }
       },
       "src/client/printing/transport.ts": {
@@ -9022,6 +9005,38 @@
           "branches": 100
         }
       },
+      "src/client/chores/noto-emoji.tsx": {
+        "sha256": "89b9980550d5905cfe02e11455a7677f095812e6490bb3b15b9c763e76cec80d",
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 13,
+          "statements": 13,
+          "functions": 6,
+          "branches": 5
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 80
+        }
+      },
+      "src/client/printing/queueWakeup.ts": {
+        "sha256": "d639576f868f157a7807701e36b577945305172c254f877e9aa9fe288d1ba9cf",
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 2,
+          "statements": 2,
+          "functions": 1,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/server/auth/throttle.ts": {
         "sha256": "9511623e98c88c448484f89ea7ad02716aac85a318426813a533ed597dfc2203",
         "layer": "server",
@@ -9030,6 +9045,38 @@
           "statements": 48,
           "functions": 4,
           "branches": 24
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/client/components/ui/textarea.tsx": {
+        "sha256": "c5f7c3edfde46a050f837186867355d027c631b5a743faf45b9f4801b4259e14",
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 1,
+          "statements": 1,
+          "functions": 1,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/client/ui.ts": {
+        "sha256": "4dc2a888888588017d33dd06aaa12dec9c341f97417a78f86d86351707595056",
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 0,
+          "statements": 0,
+          "functions": 0,
+          "branches": 0
         },
         "minimumRates": {
           "lines": 100,
@@ -9050,6 +9097,7 @@
     ".nvmrc",
     ".prettierignore",
     ".prettierrc.json",
+    "COMPONENTS.md",
     "CONTRIBUTING.md",
     "LICENSE",
     "README.md",
@@ -9342,6 +9390,7 @@
     "src/client/components/ui/input.tsx",
     "src/client/components/ui/label.tsx",
     "src/client/components/ui/select.tsx",
+    "src/client/components/ui/textarea.tsx",
     "src/client/daily-briefing/DailyBriefingView.tsx",
     "src/client/daily-briefing/blockRenderers.tsx",
     "src/client/home/HomeSurface.tsx",
@@ -9398,6 +9447,7 @@
     "src/client/time-announcements/seams.ts",
     "src/client/time-announcements/service.tsx",
     "src/client/time-announcements/speech.ts",
+    "src/client/ui.ts",
     "src/server/app.ts",
     "src/server/auth/boundary.ts",
     "src/server/auth/capability.ts",
@@ -9984,6 +10034,7 @@
     "tools/dev/count-ui-debt.mjs",
     "tools/dev/generate-member-colors.mjs",
     "tools/dev/generate-noto-emojis.mjs",
+    "tools/dev/generate-ui-catalog.mjs",
     "tools/dev/member-colors.json",
     "tools/dev/noto-overrides/emoji_u1f471_200d_2640.svg",
     "tools/dev/smoke-dist-render.mjs",
@@ -9994,6 +10045,7 @@
     "tools/local-env.test.mjs",
     "tools/member-colors.test.mjs",
     "tools/noto-emojis.test.mjs",
+    "tools/ui-catalog.test.mjs",
     "tools/validation/provider-egress-observer.mjs",
     "tools/verify-coverage.mjs",
     "tools/verify-coverage.test.mjs",

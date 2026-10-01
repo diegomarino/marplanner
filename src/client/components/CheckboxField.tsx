@@ -39,7 +39,7 @@ export function CheckboxField({
   return (
     <label
       className={cn(
-        "inline-flex items-center gap-2 text-[length:var(--control-font-size)]",
+        "inline-flex items-center gap-2 text-control",
         disabled && "opacity-50",
         className
       )}
@@ -49,7 +49,7 @@ export function CheckboxField({
         checked={checked}
         disabled={disabled}
         onChange={(event) => onChange(event.target.checked)}
-        className="accent-primary border-input size-[var(--control-height)] shrink-0 rounded-sm text-[length:var(--control-font-size)]"
+        className="accent-primary border-input size-[var(--control-height)] shrink-0 rounded-sm text-control"
         {...rest}
       />
       {label}

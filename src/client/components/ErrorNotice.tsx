@@ -49,7 +49,7 @@ export function ErrorNotice({
       aria-live={politeness}
       aria-atomic="true"
       className={cn(
-        "text-destructive border-destructive/40 bg-destructive/10 rounded-md border px-3 py-2 text-[length:var(--control-font-size)]",
+        "text-destructive border-destructive/40 bg-destructive/10 rounded-md border px-3 py-2 text-control",
         className
       )}
       {...rest}
