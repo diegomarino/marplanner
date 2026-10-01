@@ -38,6 +38,7 @@ export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
       <Button
         type="button"
         variant="outline"
+        // eslint-disable-next-line ui-policy/sizing -- Decorative 24px glyph; this icon-only button retains its density-controlled touch target.
         className="size-[var(--control-height)] p-0 [font-size:1.5rem]"
         aria-label={
           value

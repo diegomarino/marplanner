@@ -225,10 +225,7 @@ export function TelemetryManagement() {
         </p>
       ) : (
         <div className="bg-card overflow-x-auto rounded-lg shadow">
-          <table
-            className="w-full text-[length:var(--control-font-size)]"
-            data-testid="telemetry-table"
-          >
+          <table className="w-full text-control" data-testid="telemetry-table">
             <thead>
               <tr className="border-b text-left">
                 <th className="p-2">{t("telemetry.management.columnReceivedAt")}</th>

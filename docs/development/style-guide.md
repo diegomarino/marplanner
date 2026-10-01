@@ -40,7 +40,7 @@ components that _do_ carry that wiring.
 
 - **Single-line pairs only.** A multi-line control (e.g. a `<textarea>`) does not fit inside an
   inline-flex label the way a single-line caption+input pair does — use a **sibling** `<label>`
-  with an explicit `htmlFor`/`id` pair instead (see `NATIVE_TEXTAREA_CLASSES` below for the
+  with an explicit `htmlFor`/`id` pair instead (see the multiline-input guidance below for the
   textarea case, and the correction this project made in `MealsManagement.tsx` after an earlier
   revision wrongly wrapped one).
 - **`text-xs` does not scale with density** (HIGH-3, independent review on PR #760): FR-004 shipped
@@ -85,24 +85,9 @@ before copying this recipe into a new surface.
 
 ---
 
-### `NATIVE_TEXTAREA_CLASSES`
+### Multiline inputs
 
-See `src/client/lib/recipes.ts` for the current class string.
-
-**What it's for**: styles a plain native `<textarea>` to the token dialect (border colour, density-
-aware minimum height and text size, full width).
-
-**Why it's a recipe, not a component** — fails all three D3 tests, for the same reason as
-`NATIVE_SELECT_CLASSES`: no state of its own, nothing to coordinate (one element), and no
-accessibility contract beyond the native `<textarea>` element's own.
-
-**Constraint on use**: this recipe is a stand-in for a **real gap**, not a permanent design
-choice — no shared `ui/textarea.tsx` primitive exists yet (the primitives batch, T004, migrated
-only `button`, `input` and `select`). Its caption must be a **sibling** `<label>` with an explicit
-`htmlFor`/`id` pair, never a wrapping label (a multi-line control does not fit the
-`LABEL_INLINE_CLASSES` shape — see that entry). Retire this recipe in favour of a real primitive if
-one is ever added; until then, every new `<textarea>` should use it rather than inventing another
-private class string.
+Use `Textarea` from `@/ui`. The former `NATIVE_TEXTAREA_CLASSES` stand-in is retired after its last consumer migrated. `rows`, native editing/selection, localized labels and taller minimums remain caller-owned; height and font density come from the primitive.
 
 ---
 
@@ -138,7 +123,11 @@ label reintroduces the unnamed-control defect this recipe's own adoption was mea
 
 ## Enforcement and review limits
 
-The `eslint.config.mjs` rule catches a variable whose name ends in `Classes` or `_CLASSES` and whose initializer is a literal, template literal or cast. It catches an exported or local constant with that shape. It can also flag an unrelated value such as `MAX_CLASSES = 5`; explain a necessary suppression next to the line. Object properties, concatenations, helper calls, renamed values and inline class strings are outside this rule's reach. Review still has to decide whether a new string is a recipe and whether the shared primitive already carries the behavior.
+The recipe rule catches variables and object properties whose names end in `Classes` or `_CLASSES`, regardless of initializer shape (including concatenation, arrays, `join`, `cn`, casts and exports). It can flag unrelated values with those names; justify a necessary suppression at the line. Renamed values and inline class strings still need review. This is a naming-convention net, not a general expression evaluator.
+
+Control text uses the shared `text-control` utility. `cn` registers it as a font-size class with tailwind-merge, so semantic foreground classes do not erase density typography.
+
+Native selects are a supported platform choice for these forms, not a defect imposed by tests. Use `NATIVE_SELECT_CLASSES` consistently; changing a select to Radix requires a concrete interaction need and native/browser test migration.
 
 Keep each recipe value in `src/client/lib/recipes.ts` only. A copied value in this guide can drift while typecheck, lint and focused tests remain green. The entries above explain purpose and constraints without duplicating the class strings.
 

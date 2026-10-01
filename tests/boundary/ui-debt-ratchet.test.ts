@@ -2,27 +2,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ESLint } from "eslint";
 
-/** FR-014 (the three enforced UI-debt lint
- * rules — raw Tailwind scale classes, inline `style={{...}}` attributes, hardcoded colour
- * literals) and FR-015 (the `UI_DEBT_EXCEPTION_FILES` narrowing) ship as `eslint.config.mjs`
- * prose plus `tools/dev/check-exception-list.mjs`'s size-only monotonicity check, but with NO
- * executable proof that the rules actually fire, or that the exception narrows FR-014 alone
- * without also disabling INV-05 (the logger `data`-shape invariant). Both facts can be
- * silently switched off:
- * - A wildcard swap: replacing `UI_DEBT_EXCEPTION_FILES` with
- * `["src/client/* \/*.{ts,tsx}"]` kills FR-014 across the entire client tree. It stays a
- * 20-entry array (`check-exception-list.mjs` PASSes — same size), `npx eslint --no-cache
- * src/client` stays clean, and `telemetry-negatives.test.ts` §5 (which asserts INV-05, not
- * FR-014) still passes. Nothing here would have caught it before this test existed.
- * - A duplicate glob block: appending a third `files: ["src/client/* \/*.{ts,tsx}"]` block with
- * its own `no-restricted-syntax` array to the SAME glob (see the "MANDATORY two-block shape"
- * comment directly above the real config's INV-05/FR-014 block) silently REPLACES the
- * existing array under ESLint flat config, killing INV-05 *and* every FR-014 selector at
- * once, with zero lint messages anywhere and only a code comment guarding against it.
- * This test drives the REAL, live `eslint.config.mjs` through the ESLint Node API (same
- * technique as tests/boundary/weather-rule-b.test.ts and telemetry-negatives.test.ts §5) against
- * in-memory fixtures at a real non-exception path and a real exception-listed path, so a change
- * to either block above shows up here as a red test rather than as silence.
+/** Exercise the public ESLint configuration: FR-014 debt, FR-015 exceptions,
+ * recipe admission, layering, density, and preservation of INV-05/SC-011.
+ * Fixtures are linted at governed paths, so configuration drift fails here.
  */
 const repoRoot = join(__dirname, "../..");
 
@@ -34,15 +16,11 @@ async function lint(relativeFilePath: string, code: string) {
   return results[0]?.messages ?? [];
 }
 
-// One violation per FR-014 selector class: a raw Tailwind scale class, an inline `style={{...}}`
+// One violation per FR-014 debt category: a raw Tailwind scale class, an inline `style={{...}}`
 // object literal, and a hardcoded hex colour literal.
 const FR014_FIXTURE = [
   'export const debtClass = "bg-red-500";',
-  // A HOISTED style object, deliberately. The literal form `style={{ … }}` is caught by BOTH the
-  // narrow selector (`style > JSXExpressionContainer > ObjectExpression`) and the broad one, so a
-  // fixture using only that form leaves this test green if someone narrows the selector back —
-  // and the hoisted form is exactly the evasion (the hoisted form) the broadening closed. The
-  // most recently fixed hole must be the one the guard can see.
+  // Keep literal and hoisted styles: object-literal-only enforcement misses the latter.
   'const HOISTED_STYLE = { padding: "1rem" };',
   "export function Widget() {",
   "  return (",
@@ -72,7 +50,7 @@ describe("UI debt enforcement ratchet (T007, FR-014/FR-015/FR-017) — executabl
   it("FR-014's three rules fire on a fixture at a NON-exception client path (src/client/home/WeatherPill.tsx)", async () => {
     const messages = await lint("src/client/home/WeatherPill.tsx", FR014_FIXTURE);
     const fr014 = messages.filter(
-      (m) => m.ruleId === "no-restricted-syntax" && /FR-014/.test(m.message ?? "")
+      (m) => m.ruleId === "ui-policy/debt" && /FR-014/.test(m.message ?? "")
     );
 
     expect(fr014.some((m) => /raw Tailwind scale class/.test(m.message))).toBe(true);
@@ -107,7 +85,7 @@ describe("UI debt enforcement ratchet (T007, FR-014/FR-015/FR-017) — executabl
       );
 
       const fr014 = messages.filter(
-        (m) => m.ruleId === "no-restricted-syntax" && /FR-014/.test(m.message ?? "")
+        (m) => m.ruleId === "ui-policy/debt" && /FR-014/.test(m.message ?? "")
       );
       expect(fr014.length).toBeGreaterThan(0);
 
@@ -122,7 +100,7 @@ describe("UI debt enforcement ratchet (T007, FR-014/FR-015/FR-017) — executabl
   // assertion as the first test above, called out again explicitly as the tripwire it doubles as.
   // Widening UI_DEBT_EXCEPTION_FILES to `["src/client/* /*.{ts,tsx}"]` — or replacing the shared
   // INV-05/FR-014 block with a third glob-duplicate block — makes WeatherPill.tsx stop matching
-  // FR-014 (or stop matching any no-restricted-syntax rule at all), so `fr014` above comes back
+  // FR-014 (or stop matching any UI debt rule at all), so `fr014` above comes back
   // empty and this test goes RED. Demonstrated live in this 's evidence (not re-asserted here
   // as a no-op): temporarily widening the exception list to the wildcard turns this exact test
   // red; reverting turns it green again.
@@ -209,4 +187,189 @@ describe("UI debt enforcement ratchet (T007, FR-014/FR-015/FR-017) — executabl
     );
     expect(sc011.length).toBeGreaterThan(0);
   });
+});
+
+it("rejects adversarial debt forms while allowing semantic token composition and translation copy", async () => {
+  const invalid = [
+    'export const colour = "CRIMSON";',
+    'export const css = "bg-white/50";',
+    'export const mix = "color-mix(in oklch, var(--primary), White)";',
+    'export const Widget = () => <div {...{ style: { padding: "1rem" } }} />;',
+    'import { createElement } from "react"; export const x = createElement("div", { style: { padding: "1rem" } });',
+  ];
+  for (const code of invalid) {
+    const messages = await lint("src/client/home/WeatherPill.tsx", code);
+    expect(
+      messages.some((m) => /FR-014/.test(m.message)),
+      code
+    ).toBe(true);
+  }
+  for (const code of [
+    'export const css = "color-mix(in oklch, var(--primary) 20%, var(--background))";',
+    'export const css = "var(--color-member-red-500)";',
+  ]) {
+    expect(
+      (await lint("src/client/home/WeatherPill.tsx", code)).filter((m) => /FR-014/.test(m.message))
+    ).toHaveLength(0);
+  }
+  expect(
+    (
+      await lint(
+        "src/client/i18n/messages.ts",
+        'export const messages = { "weather.condition.snow": "Snow" };'
+      )
+    ).filter((m) => /FR-014/.test(m.message))
+  ).toHaveLength(0);
+});
+
+it("protects layer boundaries, recipe expressions and imported primitive sizing without dropping existing rules", async () => {
+  for (const code of [
+    'import * as Dialog from "@radix-ui/react-dialog"; export { Dialog };',
+    'export const styles = { LABEL_CLASSES: "border" };',
+    'export const LABEL_CLASSES = ["border", "rounded"].join(" ");',
+    'import * as UI from "@/ui"; export const X = () => <UI.Button className="size-9" />;',
+    'import { Button as Action } from "@/components/ui/button"; export const X = () => <Action className="hover:size-9">Act</Action>;',
+  ]) {
+    expect(
+      (await lint("src/client/home/WeatherPill.tsx", code)).some((m) =>
+        /G2|G3|#762/.test(m.message)
+      ),
+      code
+    ).toBe(true);
+  }
+  expect(
+    (
+      await lint(
+        "src/client/components/ui/input.tsx",
+        'import { useT } from "@/i18n"; export { useT };'
+      )
+    ).some((m) => /G5/.test(m.message))
+  ).toBe(true);
+  const config = await new ESLint({ cwd: repoRoot }).calculateConfigForFile(
+    join(repoRoot, "src/client/lib/recipes.ts")
+  );
+  expect(JSON.stringify(config.rules["no-restricted-syntax"])).toContain("SC-011");
+});
+
+it("keeps measurement and lint in agreement for colours and style props at the public seam", async () => {
+  const { countSource } = await import(join(repoRoot, "tools/dev/count-ui-debt.mjs"));
+  for (const code of [
+    'export const x = "[background:Red]";',
+    'export const x = "var(--primary, WHITE)";',
+    'export const x = "color-mix(in oklch, var(--primary), rgb(1 2 3))";',
+    "export const x = `color-mix(in oklch, ${token}, White)`;",
+    'export const x = "var(--color-member-red-500)";',
+    'export const x = "color-mix(in oklch, var(--primary), var(--background))";',
+    'const props = { style: { "--progress": 50 } }; export const x = <div {...props} />;',
+  ]) {
+    const counts = countSource("src/client/home/WeatherPill.tsx", code);
+    const messages = await lint("src/client/home/WeatherPill.tsx", code);
+    expect(messages.filter((m) => m.ruleId === "ui-policy/debt")).toHaveLength(
+      counts.scaleClasses + counts.inlineStyles + counts.colourLiterals
+    );
+  }
+  expect(
+    (await lint("src/client/i18n/messages.ts", 'export const colour = "CRIMSON";')).some((m) =>
+      /FR-014/.test(m.message)
+    )
+  ).toBe(true);
+});
+
+it("rejects new raw controls and smaller minimums, permits native recipes and token forwarding", async () => {
+  for (const code of [
+    "export const X = () => <button>Act</button>;",
+    'export const X = () => <textarea aria-label="Notes" />;',
+    'export const X = () => <input type="text" aria-label="Name" />;',
+    'export const X = () => <select aria-label="Choice" />;',
+    'import { Textarea } from "@/ui"; export const X = () => <Textarea className="min-h-0" />;',
+    'import { Textarea } from "@/ui"; export const X = () => <Textarea className="min-h-10" />;',
+  ])
+    expect(
+      (await lint("src/client/home/WeatherPill.tsx", code)).some((m) => /G1|G3/.test(m.message)),
+      code
+    ).toBe(true);
+  for (const code of [
+    'import { NATIVE_SELECT_CLASSES } from "@/lib/recipes"; export const X = () => <select aria-label="Choice" className={NATIVE_SELECT_CLASSES} />;',
+    'import { Textarea } from "@/ui"; export const X = () => <Textarea className="min-h-24 w-full" />;',
+    'import { Button } from "@/ui"; export const X = () => <Button className="text-[color:var(--primary)] [&_svg]:size-4" />;',
+    '// eslint-disable-next-line ui-policy/debt -- Only the closed member token is forwarded.\nexport const X = () => <div style={{ "--member-color": "var(--color-member-blue-500)" }} />;',
+  ])
+    expect(
+      (await lint("src/client/home/WeatherPill.tsx", code)).filter((m) =>
+        /FR-014|G1|G3/.test(m.message)
+      ),
+      code
+    ).toHaveLength(0);
+});
+
+it("rejects reviewer probes for literal fallback, calculated shrinking, relative imports and fake recipes", async () => {
+  for (const code of [
+    'export const x = "var(--primary, rgb(255 0 0))";',
+    'export const x = "var(--primary, oklch(60% 0.2 20))";',
+    'import { Button } from "@/ui"; export const X = () => <Button className="h-[calc(var(--control-height)/2)]" />;',
+    'import { Button } from "@/ui"; export const X = () => <Button className="[&]:h-4" />;',
+    'import { Textarea } from "@/ui"; export const X = () => <Textarea rows={1} className="!min-h-0" />;',
+    'import { Button } from "@/ui"; export const X = () => <Button className="max-h-4" />;',
+    'import { Button } from "@/ui"; export const X = () => <Button className="text-[calc(var(--control-font-size)/2)]" />;',
+    'import { Button } from "@/ui"; export const X = () => <Button className="!h-4" />;',
+
+    'import { Button } from "../ui"; export const X = () => <Button className="h-4" />;',
+    'export const X = () => <select className="NATIVE_SELECT_CLASSES h-4" />;',
+    'import { NATIVE_SELECT_CLASSES } from "@/lib/recipes"; export const X = () => <select className={cn(NATIVE_SELECT_CLASSES, "h-4")} />;',
+  ])
+    expect(
+      (await lint("src/client/home/WeatherPill.tsx", code)).some((m) =>
+        /FR-014|G1|G3/.test(m.message)
+      ),
+      code
+    ).toBe(true);
+  expect(
+    (
+      await lint(
+        "src/client/home/WeatherPill.tsx",
+        'import { NATIVE_SELECT_CLASSES as recipe } from "../lib/recipes"; export const X = () => <select className={recipe} />;'
+      )
+    ).filter((m) => /G1/.test(m.message))
+  ).toHaveLength(0);
+});
+
+it("rejects arbitrary-property density overrides while preserving tokens, growth and descendants", async () => {
+  for (const classes of [
+    "[height:10px] [font-size:8px]",
+    "[min-height:0]",
+    "[max-height:10px]",
+    "[font-size:8px]",
+    "md:[height:10px]",
+    "![min-height:0]",
+    "[height:10px]!",
+    "[&]:[height:10px]",
+    "[height:calc(var(--control-height)/2)]",
+    "[font-size:var(--control-font-size,8px)]",
+  ]) {
+    const code = `import { Button } from "@/ui"; export const X = () => <Button className="${classes}" />;`;
+    expect(
+      (await lint("src/client/home/WeatherPill.tsx", code)).some((m) => /G3/.test(m.message)),
+      classes
+    ).toBe(true);
+  }
+  for (const classes of [
+    "[height:var(--control-height)] [font-size:var(--control-font-size)]",
+    "[min-height:var(--control-height)] [max-height:var(--control-height)]",
+    "[min-height:48px]",
+    "md:[min-height:96px] [width:10px]",
+    "[&_svg]:[height:10px] [&>svg]:[font-size:8px]",
+  ]) {
+    const code = `import { Button } from "@/ui"; export const X = () => <Button className="${classes}" />;`;
+    expect(
+      (await lint("src/client/home/WeatherPill.tsx", code)).filter((m) => /G3/.test(m.message)),
+      classes
+    ).toHaveLength(0);
+  }
+  const reviewedGlyph = [
+    'import { Button } from "@/ui";',
+    "export const X = () => <Button",
+    "// eslint-disable-next-line ui-policy/sizing -- Decorative glyph; token height retains the touch target.",
+    'className="[font-size:1.5rem]" />;',
+  ].join("\n");
+  expect(await lint("src/client/home/WeatherPill.tsx", reviewedGlyph)).toHaveLength(0);
 });

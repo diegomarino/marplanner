@@ -204,6 +204,7 @@ export function AdminGate() {
                 type="button"
                 variant="outline"
                 size="lg"
+                // eslint-disable-next-line ui-policy/sizing -- PIN keypad intentionally exceeds both density minima (64px target, 24px glyph); preserve accessible kiosk layout.
                 className="h-[64px] w-[64px] rounded-full text-[24px] font-semibold"
                 aria-label={`Digit ${digit}`}
                 data-testid={`admin-pin-digit-${digit}`}
@@ -217,6 +218,7 @@ export function AdminGate() {
               type="button"
               variant="ghost"
               size="lg"
+              // eslint-disable-next-line ui-policy/sizing -- PIN keypad intentionally exceeds both density minima (64px target, 24px glyph); preserve accessible kiosk layout.
               className="h-[64px] w-[64px] rounded-full text-[24px]"
               aria-label="Backspace"
               data-testid="admin-pin-backspace"
@@ -232,6 +234,7 @@ export function AdminGate() {
               type="button"
               variant="outline"
               size="lg"
+              // eslint-disable-next-line ui-policy/sizing -- PIN keypad intentionally exceeds both density minima (64px target, 24px glyph); preserve accessible kiosk layout.
               className="h-[64px] w-[64px] rounded-full text-[24px] font-semibold"
               aria-label="Digit 0"
               data-testid="admin-pin-digit-0"
@@ -243,6 +246,7 @@ export function AdminGate() {
             <Button
               type="button"
               size="lg"
+              // eslint-disable-next-line ui-policy/sizing -- PIN keypad intentionally exceeds both density minima (64px target, 24px glyph); preserve accessible kiosk layout.
               className="h-[64px] w-[64px] rounded-full text-[24px]"
               aria-label="Unlock Admin"
               data-testid="admin-pin-unlock"

@@ -247,7 +247,7 @@ export function NetworkDevicesManagement() {
   if (loading) {
     return (
       <AdminPanel title={t("networkDevices.management.title")}>
-        <p className="text-muted-foreground text-[length:var(--control-font-size)]">
+        <p className="text-muted-foreground text-control">
           {t("networkDevices.management.loading")}
         </p>
       </AdminPanel>
@@ -286,10 +286,7 @@ export function NetworkDevicesManagement() {
  (its untouched initial value) rendered BOTH "failed to load" AND "no devices
  registered yet", which reads as a contradiction. */}
       {!listError && devices.length === 0 ? (
-        <p
-          className="text-muted-foreground text-[length:var(--control-font-size)]"
-          data-testid="network-devices-empty"
-        >
+        <p className="text-muted-foreground text-control" data-testid="network-devices-empty">
           {t("networkDevices.management.empty")}
         </p>
       ) : listError ? null : (
@@ -503,7 +500,7 @@ function DeviceStatusBadges({
 
   return (
     <div
-      className="text-muted-foreground text-[length:var(--control-font-size)]"
+      className="text-muted-foreground text-control"
       data-testid={`network-devices-status-${device.id}`}
     >
       <span>{t(liveStatusKey)}</span>
@@ -534,13 +531,11 @@ function DeviceStatusBadges({
 function MemberLabel({ t, device }: { t: (key: MessageKey) => string; device: RegisteredDevice }) {
   if (device.memberId === null) {
     return (
-      <div className="text-muted-foreground text-[length:var(--control-font-size)]">
-        {t("networkDevices.member.none")}
-      </div>
+      <div className="text-muted-foreground text-control">{t("networkDevices.member.none")}</div>
     );
   }
   return (
-    <div className="text-muted-foreground text-[length:var(--control-font-size)]">
+    <div className="text-muted-foreground text-control">
       {device.memberLabel}
       {device.memberInactive && <> ({t("networkDevices.member.inactive")})</>}
     </div>
@@ -654,7 +649,7 @@ function RegistrationPicker({ t, activeMembers, onCancel, onRegistered }: Regist
       <h3 id="network-devices-picker-title" className="font-semibold mb-2">
         {t("networkDevices.picker.title")}
       </h3>
-      <p className="text-muted-foreground text-[length:var(--control-font-size)] mb-2">
+      <p className="text-muted-foreground text-control mb-2">
         {t("networkDevices.picker.description")}
       </p>
 

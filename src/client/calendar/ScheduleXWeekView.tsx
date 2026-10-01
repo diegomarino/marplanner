@@ -71,7 +71,7 @@ function EventContent({
       className="member-event-surface sx-mp-event-content"
       data-testid="calendar-event-row"
       data-presentation-id={event ? presentationEventId(event) : String(calendarEvent.id)}
-      // eslint-disable-next-line no-restricted-syntax -- Dynamic assignment styling passes only semantic member-token CSS custom properties.
+      // eslint-disable-next-line ui-policy/debt -- Dynamic assignment styling passes only semantic member-token CSS custom properties.
       style={eventStyle(event, members)}
     >
       {time && <div className="sx-mp-event-time">{time}</div>}

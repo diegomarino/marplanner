@@ -199,6 +199,36 @@ describe("Admin Calendar sources", () => {
       )
     ).toBeInTheDocument();
   });
+
+  it("keeps native provider, enabled toggles and drag handles at kiosk density", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input) =>
+        json(
+          String(input).endsWith("/external-sources")
+            ? [source]
+            : String(input).endsWith("/highlight-rules")
+              ? rules
+              : []
+        )
+      )
+    );
+    const { injectDensityStyles } = await import("./helpers/densityStyles");
+    const { assertKioskDensityCompliant } = await import("./helpers/density");
+    const uninject = await injectDensityStyles({
+      extraCandidates: ["size-[var(--control-height)]"],
+    });
+    document.documentElement.setAttribute("data-density", "kiosk");
+    try {
+      renderPage();
+      await screen.findByTestId("external-source-source-1");
+      expect(screen.getAllByRole("checkbox", { name: "Enabled" }).length).toBeGreaterThan(0);
+      assertKioskDensityCompliant(document.body);
+    } finally {
+      uninject();
+      document.documentElement.removeAttribute("data-density");
+    }
+  });
 });
 
 describe("Admin Calendar highlights", () => {

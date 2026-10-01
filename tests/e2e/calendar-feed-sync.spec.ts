@@ -417,7 +417,12 @@ test("T014 Admin journey keeps source controls distinct and highlight order obse
     const firstRuleCard = page.getByTestId(`highlight-rule-${initialRules[1].id}`);
     const enabledCheckbox = firstRuleCard.getByRole("checkbox", { name: "Enabled" });
     await expect(enabledCheckbox).toBeEnabled();
-    await enabledCheckbox.click();
+    // @dnd-kit PointerSensor retains its document click suppression for 50ms after
+    // detach, including checkbox clicks synthesized by Space. Wait for that known
+    // sensor cleanup boundary, then exercise native checkbox keyboard activation.
+    await page.waitForTimeout(50);
+    await enabledCheckbox.focus();
+    await page.keyboard.press("Space");
     await expect
       .poll(async () => (await readRules()).find((rule) => rule.id === initialRules[1].id)?.enabled)
       .toBe(false);

@@ -733,7 +733,7 @@ export function DailyBriefingManagement() {
         title={t("dailyBriefing.management.title")}
         data-testid="daily-briefing-management"
       >
-        <p className="text-muted-foreground text-[length:var(--control-font-size)]">
+        <p className="text-muted-foreground text-control">
           {t("dailyBriefing.management.loading")}
         </p>
       </AdminPanel>
@@ -781,7 +781,7 @@ export function DailyBriefingManagement() {
         className="space-y-6"
       >
         {activeMembers.length === 0 ? (
-          <p className="text-muted-foreground text-[length:var(--control-font-size)]">
+          <p className="text-muted-foreground text-control">
             {t("dailyBriefing.management.noActiveMembers")}
           </p>
         ) : (
@@ -798,7 +798,7 @@ export function DailyBriefingManagement() {
                   return (
                     <div
                       key={member.id}
-                      className="flex items-center gap-2 rounded-full border bg-background p-1 pr-3 text-[length:var(--control-font-size)]"
+                      className="flex items-center gap-2 rounded-full border bg-background p-1 pr-3 text-control"
                     >
                       <Button
                         type="button"
@@ -846,7 +846,7 @@ export function DailyBriefingManagement() {
                 {t("dailyBriefing.management.generateTitle")}
               </h3>
               {optedInMembers.length === 0 ? (
-                <p className="text-muted-foreground text-[length:var(--control-font-size)]">
+                <p className="text-muted-foreground text-control">
                   {t("dailyBriefing.management.noOptedInMembers")}
                 </p>
               ) : (
@@ -912,7 +912,7 @@ export function DailyBriefingManagement() {
 
               {generateAllInfo && (
                 <p
-                  className="mt-4 text-muted-foreground text-[length:var(--control-font-size)]"
+                  className="mt-4 text-muted-foreground text-control"
                   data-testid="daily-briefing-generate-all-info"
                   role="status"
                   aria-live="polite"

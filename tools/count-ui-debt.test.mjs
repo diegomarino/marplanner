@@ -11,7 +11,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { countSource, stripComments, PATTERNS } from "./dev/count-ui-debt.mjs";
+import { countSource, stripComments } from "./dev/count-ui-debt.mjs";
 
 // ── Known-positive: each detector still fires on an unambiguous real violation ─────────────────
 test("scaleClasses: fires on a raw Tailwind scale class", () => {
@@ -54,7 +54,7 @@ test("colourLiterals: fires on CSS named colours beyond the old 17-name list", (
 // ──: every modern CSS colour function, not just the original rgb/hsl/oklch trio ───────────
 // Fixtures per new form, so a future narrowing of COLOUR_RE (e.g. an edit that only re-derives
 // the hex/rgb/hsl/oklch alternatives and drops the rest) goes red instead of reading as progress
-// — the same H5 rule the PATTERNS regression guard below already applies to the pre-existing four.
+// — the same H5 rule the AST regression guard below already applies to the pre-existing four.
 test("colourLiterals: fires on color()", () => {
   const counts = countSource("x.ts", `export const c = "color(display-p3 1 0 0)";`);
   assert.equal(counts.colourLiterals, 1);
@@ -107,17 +107,8 @@ test("colourLiterals: fires on color-mix() in a BACKTICK literal", () => {
   assert.equal(counts.colourLiterals, 1);
 });
 
-// ──: case-variant named colours — a DOCUMENTED, DELIBERATE gap, not an oversight ───────────
-// also proposed an `i` flag on the whole colour regex so `"Red"`/`"CRIMSON"` would count.
-// That was measured and rejected for this change: it moves colourLiterals from 63 to 64, because
-// src/client/i18n/messages.ts:662 has `"weather.condition.snow": "Snow"` — a legitimate English
-// translation string, not a hardcoded colour, that collides with the CSS keyword "snow" once case
-// is ignored (see the comment above COLOUR_RE). This test locks the CURRENT behaviour so that
-// decision, whichever way it eventually lands, changes visibly here rather than silently drifting
-// counts up or down as a side effect of an unrelated regex edit.
-test("colourLiterals: does NOT fire on a case-variant named colour (documented gap, see COLOUR_RE)", () => {
-  const counts = countSource("x.ts", `export const c = "Red";`);
-  assert.equal(counts.colourLiterals, 0);
+test("colourLiterals: fires on case-variant CSS named colours", () => {
+  assert.equal(countSource("x.ts", 'export const c = "Red";').colourLiterals, 1);
 });
 
 // ── H2: a provenance comment documenting removed debt is not itself counted as debt ────────────
@@ -196,16 +187,49 @@ test("stripComments leaves JSX text that begins with '/*' untouched", () => {
   assert.ok(stripped.includes("not a comment, rendered text"));
 });
 
-// ── Regression guard against a silently-broken pattern (the escaped-pipe bug class) ──
-test("PATTERNS regex objects are non-empty and match their known-positive fixtures", () => {
-  assert.equal(countSourceWithPattern(PATTERNS.scaleClasses, "bg-slate-500"), 1);
-  assert.equal(countSourceWithPattern(PATTERNS.inlineStyles, "style={{"), 1);
-  assert.equal(countSourceWithPattern(PATTERNS.translationCasts, "as MessageKey"), 1);
-  assert.equal(countSourceWithPattern(PATTERNS.colourLiterals, '"#ff00aa"'), 1);
+test("AST oracle matches all four known-positive forms", () => {
+  assert.deepEqual(
+    countSource(
+      "x.tsx",
+      'export const X = <div className="bg-slate-500" style={{ color: "#ff00aa" }} />; const key = "home.title" as MessageKey;'
+    ),
+    { scaleClasses: 1, inlineStyles: 1, colourLiterals: 1, translationCasts: 1 }
+  );
 });
 
-function countSourceWithPattern(re, text) {
-  re.lastIndex = 0;
-  const m = text.match(re);
-  return m ? m.length : 0;
-}
+test("AST oracle measures inline attributes, spread props and createElement equally", () => {
+  assert.equal(
+    countSource(
+      "x.tsx",
+      'const props = { style: { padding: "1rem" } }; export const X = <div {...props} />;'
+    ).inlineStyles,
+    1
+  );
+  assert.equal(countSource("x.tsx", "export const X = <div style={props} />;").inlineStyles, 1);
+  assert.equal(countSource("x.ts", 'React.createElement("div", { style: {} });').inlineStyles, 1);
+});
+test("AST oracle permits translation copy and token-only colour composition, rejects literal mixes", () => {
+  assert.equal(
+    countSource(
+      "src/client/i18n/messages.ts",
+      'export const messages = { "weather.snow": "Snow" };'
+    ).colourLiterals,
+    0
+  );
+  assert.equal(
+    countSource(
+      "x.ts",
+      'export const x = "color-mix(in oklch, var(--primary), var(--background))";'
+    ).colourLiterals,
+    0
+  );
+  assert.equal(
+    countSource("x.ts", 'export const x = "var(--color-member-red-500)";').scaleClasses,
+    0
+  );
+  assert.equal(
+    countSource("x.ts", 'export const x = "color-mix(in oklch, var(--primary), WHITE)";')
+      .colourLiterals,
+    1
+  );
+});

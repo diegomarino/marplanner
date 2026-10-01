@@ -36,7 +36,7 @@ export function RadioField({
   return (
     <label
       className={cn(
-        "inline-flex items-center gap-2 text-[length:var(--control-font-size)]",
+        "inline-flex items-center gap-2 text-control",
         disabled && "opacity-50",
         className
       )}
@@ -48,7 +48,7 @@ export function RadioField({
         checked={checked}
         disabled={disabled}
         onChange={() => onChange(value)}
-        className="accent-primary border-input size-[var(--control-height)] shrink-0 text-[length:var(--control-font-size)]"
+        className="accent-primary border-input size-[var(--control-height)] shrink-0 text-control"
         {...rest}
       />
       {label}

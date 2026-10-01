@@ -1,53 +1,14 @@
+import { dirname, resolve } from "node:path";
 import js from "@eslint/js";
 import globals from "globals";
 import tsEslint from "typescript-eslint";
 import importX from "eslint-plugin-import-x";
-import { PATTERNS, NAMED_COLOURS } from "./tools/dev/count-ui-debt.mjs";
+import { debtFindings } from "./tools/dev/count-ui-debt.mjs";
 
-// FR-014/FR-015/FR-017 — the enforcement ratchet for the migrated UI dialect.
-//
-// `tools/dev/count-ui-debt.mjs` is the MEASUREMENT oracle — it drives the four
-// zero-target counters and is the only thing baselines are compared against. This ratchet is the
-// separate ENFORCEMENT mechanism: it must reject the same three violation classes at lint time
-// (FR-014 covers raw scale classes, inline style attributes and colour literals — NOT the fourth
-// counter, translation-key casts, which is a different guarantee with no lint-time equivalent
-// here). Reusing `PATTERNS.scaleClasses` keeps the scale-class detector byte-for-byte identical
-// between measurement and enforcement; the colour detector's REGEX is still built here rather
-// than imported, because the counter's colour regex is quote-delimited (it matches raw SOURCE
-// TEXT, so a named colour must appear as `"red"`/`'red'`/`` `red` ``), while an ESLint `Literal`/
-// `TemplateElement` node's `.value`/`.raw` is already unquoted — reusing the source verbatim would
-// silently never match. The underlying NAMED COLOUR LIST, however, is imported (above) —
-// see the comment near `COLOUR_NAMED_EXACT_SOURCE` below.
-const SCALE_CLASS_SOURCE = PATTERNS.scaleClasses.source;
-
-// This used to be its own 149-entry copy of `tools/dev/count-ui-debt.mjs`'s NAMED_COLOURS
-// list, hand-duplicated and asserted nowhere to match. A single definition site prevents the copies from diverging —
-// `NAMED_COLOURS` is now imported (above) directly from the counter module, which remains the
-// SOURCE OF TRUTH for which names count. There is no separate regex OBJECT to reuse here (the
-// counter's is baked into a quote-delimited alternation — `"(?:red|...)"` — that has no meaning
-// against an already-unquoted AST literal value), but the underlying array is now one thing, not
-// two: growing the list means editing exactly one file, and both the counter and this ratchet see
-// the change immediately.
-
-// Hex / functional colour forms — substring match anywhere in the literal, mirroring the
-// counter's unanchored `#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(|oklch\(|oklab\(|hwb\(|lab\(|lch\(
-// |color-mix\(|color\(`. This list covers modern CSS colour functions (color,
-// hwb, lab, lch, oklab, color-mix), not just the original rgb/hsl/oklch trio — verified
-// baseline-neutral (adding these alone leaves colourLiterals at 63; see count-ui-debt.mjs).
-const COLOUR_HEX_FUNCTIONAL_SOURCE =
-  "#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(|oklab\\(|hwb\\(|lab\\(|lch\\(|color-mix\\(|color\\(";
-// Named colours — ANCHORED (whole literal must equal one name), mirroring the counter's
-// quote-delimited exact match (`"red"`, not `"very red"`). `NAMED_COLOURS` is imported
-// (top of file) from the counter module rather than duplicated here —
-// This applies the same single-source-of-truth rule to the tooling itself.
-// A previous update also proposed making this match case-insensitive (`color: "Red"` currently counts as
-// zero). NOT shipped: doing so moves the counter's colourLiterals from 63 to 64, because
-// src/client/i18n/messages.ts:662 contains `"weather.condition.snow": "Snow"` — a legitimate
-// English translation string that collides with the CSS named colour "snow" once case is
-// ignored. Per the rule ("if the count moves off 63... decide deliberately — do
-// not silently rebaseline"), that part is left for a deliberate follow-up decision rather than
-// shipped silently; see count-ui-debt.mjs's COLOUR_RE comment for the full evidence.
-const COLOUR_NAMED_EXACT_SOURCE = `^(?:${NAMED_COLOURS.join("|")})$`;
+function clientImport(context, source) {
+  if (source.startsWith("@/")) return resolve(context.cwd, "src/client", source.slice(2));
+  return source.startsWith(".") ? resolve(dirname(context.filename), source) : null;
+}
 
 // CLIENT-LOGGING-TELEMETRY-INV-05 — the pre-existing logger
 // `data`-must-be-structured selectors. Extracted to a constant so they can be appended to
@@ -85,93 +46,227 @@ const INV05_NO_RESTRICTED_SYNTAX = [
   },
 ];
 
-// FR-014 — the three enforced violation classes. AST-selector based (esquery), so they run
-// through the same `no-restricted-syntax` rule as INV-05 above rather than a fourth eslint rule,
-// keeping the client glob's rule set to one entry.
-const UI_DEBT_SELECTORS = [
-  {
-    selector: `Literal[value=/${SCALE_CLASS_SOURCE}/]`,
-    message:
-      "FR-014: raw Tailwind scale class — use a semantic token from src/client/styles/globals.css instead (slice-020 research D1).",
+// FR-014: measurement and lint share the AST oracle, including token-only colour mixes.
+const uiPolicy = {
+  rules: {
+    debt: {
+      meta: { type: "problem", schema: [] },
+      create(context) {
+        return {
+          Program(node) {
+            const labels = {
+              scaleClasses: "raw Tailwind scale class",
+              inlineStyles: "inline style attribute",
+              colourLiterals: "hardcoded colour literal",
+            };
+            for (const finding of debtFindings(node, context.filename))
+              context.report({
+                node: finding.node,
+                message: `FR-014: ${labels[finding.kind]} — use semantic tokens/shared components; narrowly justified token forwarding may use a per-line disable.`,
+              });
+          },
+        };
+      },
+    },
+    layers: {
+      meta: { type: "problem", schema: [] },
+      create(context) {
+        const client = resolve(context.cwd, "src/client");
+        const primitives = resolve(client, "components/ui");
+        const inPrimitive = context.filename.startsWith(`${primitives}/`);
+        function check(node) {
+          const source = node.source?.value;
+          if (typeof source !== "string") return;
+          if (!inPrimitive && /^(?:@radix-ui\/|radix-ui(?:\/|$))/.test(source))
+            context.report({
+              node,
+              message: "G2: Radix belongs in components/ui; use the shared primitive.",
+            });
+          if (!inPrimitive || !(source.startsWith(".") || source.startsWith("@/"))) return;
+          const target = source.startsWith("@/")
+            ? resolve(client, source.slice(2))
+            : resolve(dirname(context.filename), source);
+          if (
+            !target.startsWith(`${primitives}/`) &&
+            ![
+              resolve(client, "lib/utils"),
+              resolve(client, "lib/utils.ts"),
+              resolve(client, "lib/recipes"),
+              resolve(client, "lib/recipes.ts"),
+            ].includes(target)
+          )
+            context.report({
+              node,
+              message:
+                "G5: primitives are a leaf; import only lib utilities and sibling primitives.",
+            });
+        }
+        return {
+          ImportDeclaration: check,
+          ExportNamedDeclaration: check,
+          ExportAllDeclaration: check,
+          ImportExpression: check,
+        };
+      },
+    },
+    "raw-controls": {
+      meta: { type: "problem", schema: [] },
+      create(context) {
+        if (
+          context.filename.includes("/components/ui/") ||
+          /components\/(CheckboxField|RadioField)\.tsx$/.test(context.filename)
+        )
+          return {};
+        function imported(node, name, module) {
+          if (node?.type !== "Identifier") return false;
+          let scope = context.sourceCode.getScope(node);
+          while (scope) {
+            const variable = scope.variables.find((v) => v.name === node.name);
+            if (variable)
+              return variable.defs.some(
+                (def) =>
+                  def.type === "ImportBinding" &&
+                  def.node.imported?.name === name &&
+                  clientImport(context, def.parent.source.value) ===
+                    resolve(context.cwd, "src/client", module)
+              );
+            scope = scope.upper;
+          }
+          return false;
+        }
+        function usesRecipe(node, name) {
+          if (!node) return false;
+          if (imported(node, name, "lib/recipes")) return true;
+          if (node.type === "CallExpression" && imported(node.callee, "cn", "lib/utils"))
+            return node.arguments.some((arg) => usesRecipe(arg, name));
+          if (node.type === "ConditionalExpression")
+            return usesRecipe(node.consequent, name) && usesRecipe(node.alternate, name);
+          if (node.type === "TemplateLiteral")
+            return node.expressions.some((expression) => usesRecipe(expression, name));
+          if (node.type === "BinaryExpression" && node.operator === "+")
+            return usesRecipe(node.left, name) || usesRecipe(node.right, name);
+          return false;
+        }
+        return {
+          JSXOpeningElement(node) {
+            const name = node.name.name;
+            if (!["button", "input", "textarea", "select"].includes(name)) return;
+            const type = node.attributes.find(
+              (a) => a.type === "JSXAttribute" && a.name.name === "type"
+            )?.value?.value;
+            const classes = node.attributes.find(
+              (a) => a.type === "JSXAttribute" && a.name.name === "className"
+            );
+            const recipe = classes?.value?.expression;
+            if (name === "select" && usesRecipe(recipe, "NATIVE_SELECT_CLASSES")) return;
+            if (
+              name === "input" &&
+              type === "checkbox" &&
+              usesRecipe(recipe, "BARE_CHECKBOX_INPUT_CLASSES")
+            )
+              return;
+            context.report({
+              node,
+              message:
+                "G1: reuse Button/Input/Textarea or CheckboxField/RadioField. Native selects use NATIVE_SELECT_CLASSES; domain-only controls need an exact, justified per-line exception.",
+            });
+          },
+        };
+      },
+    },
+    sizing: {
+      meta: { type: "problem", schema: [] },
+      create(context) {
+        if (context.filename.includes("/components/ui/")) return {};
+        const controls = new Set();
+        const namespaces = new Set();
+        return {
+          ImportDeclaration(node) {
+            const target = clientImport(context, node.source.value);
+            const client = resolve(context.cwd, "src/client");
+            if (
+              target &&
+              (target.startsWith(`${client}/components/ui/`) ||
+                [resolve(client, "ui"), resolve(client, "ui.ts")].includes(target))
+            )
+              for (const s of node.specifiers) {
+                if (s.type === "ImportNamespaceSpecifier") namespaces.add(s.local.name);
+                if (
+                  ["Button", "Input", "Textarea", "SelectTrigger", "SelectItem"].includes(
+                    s.imported?.name
+                  )
+                )
+                  controls.add(s.local.name);
+              }
+          },
+          JSXOpeningElement(node) {
+            const member =
+              node.name.type === "JSXMemberExpression" &&
+              namespaces.has(node.name.object.name) &&
+              ["Button", "Input", "Textarea", "SelectTrigger", "SelectItem"].includes(
+                node.name.property.name
+              );
+            if (
+              !controls.has(node.name.name) &&
+              !member &&
+              !["button", "input", "select", "textarea"].includes(node.name.name)
+            )
+              return;
+            const attribute = node.attributes.find(
+              (a) => a.type === "JSXAttribute" && a.name.name === "className"
+            );
+            if (!attribute) return;
+            const text = context.sourceCode.getText(attribute);
+            // Width/minimum growth and icon descendants are layout concerns; control height and
+            // font overrides must be token-driven or explicitly reviewed at the exact call site.
+            const candidates = text.match(/[^\s"'`]+/g) ?? [];
+            const invalid = candidates.some((c) => {
+              if (/\[&[_>+~]/.test(c)) return false;
+              const property = c.match(
+                /(?:^|:)!?\[(height|min-height|max-height|font-size):([^\]]+)\]!?$/
+              );
+              if (property) {
+                const [, name, value] = property;
+                const token = name === "font-size" ? "--control-font-size" : "--control-height";
+                if (value === `var(${token})`) return false;
+                const pixels = value.match(/^(\d+(?:\.\d+)?)px$/);
+                return !(name === "min-height" && pixels && Number(pixels[1]) >= 48);
+              }
+              const minimum = c.match(/(?:^|:)!?min-h-(.*)/)?.[1];
+              if (minimum && !/^\[var\(--control-height\)\](?:$|[}])/.test(minimum)) {
+                const scale = minimum.match(/^(\d+(?:\.\d+)?)(?:$|[}])/);
+                const pixels = minimum.match(/^\[(\d+(?:\.\d+)?)px\]/);
+                if (!(scale && Number(scale[1]) >= 12) && !(pixels && Number(pixels[1]) >= 48))
+                  return true;
+              }
+              return (
+                /(?:^|:)!?(?:(?:h|max-h|size)-|text-(?:xs|sm|base|lg|xl|[2-9]xl|\[(?!color:|var\(--)))/.test(
+                  c
+                ) &&
+                !/(?:^|:)(?:(?:h|size)-\[var\(--control-height\)\]|text-\[length:var\(--control-font-size\)\])(?:$|[}])/.test(
+                  c
+                )
+              );
+            });
+            if (invalid)
+              context.report({
+                node: attribute,
+                message:
+                  "G3: primitive height/font override bypasses document density. Use a size/wrap variant or a justified per-line exception for a larger intentional layout.",
+              });
+          },
+        };
+      },
+    },
   },
-  {
-    selector: `TemplateElement[value.raw=/${SCALE_CLASS_SOURCE}/]`,
-    message:
-      "FR-014: raw Tailwind scale class in a template literal — use a semantic token from src/client/styles/globals.css instead (slice-020 research D1).",
-  },
-  {
-    // The selector must match the `style` attribute itself. Requiring an object literal as the
-    // direct child of `JSXExpressionContainer` catches only `style={{...}}` and misses other
-    // `style={...}` forms, including a hoisted style object (`style={HOISTED}`), a
-    // conditional (`style={cond ? {...}: {...}}`), or a function call (`style={makeStyle}`).
-    // Since SC-005's lexical counter (count-ui-debt.mjs) names this ESLint rule as its semantic
-    // backstop, a selector that only catches the object-literal-direct-child form is not a
-    // backstop at all — hoisting a file's style objects would zero its counter AND stay lint-clean.
-    // Shortened to flag the JSX `style` ATTRIBUTE itself regardless of what expression is bound to
-    // it, closing all three forms above. NOT closed by this change (still open, unrelated to this
-    // fix's scope): `<div {...{ style: {...} }} />` (a `JSXSpreadAttribute`, not a `JSXAttribute`,
-    // so this selector never sees it) and `React.createElement("div", { style: {...} })` (not JSX
-    // at all — a `Property`, matched by no `JSXAttribute` selector). Verified (`npx eslint
-    // --no-cache src/client`) this produces zero collateral: every existing `style={...}` site in
-    // the client tree is already inside an exception-listed file, and no non-object `style={...}`
-    // exists in unlisted client code today.
-    selector: "JSXAttribute[name.name='style']",
-    message:
-      "FR-014: inline style attribute — use the token layer / shared component instead of any style={...} form, hoisted objects included (slice-020 research D1). To set a CSS CUSTOM PROPERTY inline (the token-correct way to pass a dynamic value into the token layer) or to forward a caller's style prop, use an eslint-disable-next-line with a one-line justification — see quickstart S4.",
-  },
-  {
-    selector: `Literal[value=/${COLOUR_HEX_FUNCTIONAL_SOURCE}/]`,
-    message:
-      "FR-014: hardcoded colour literal (hex, or any CSS colour function: rgb/hsl/oklch/color/hwb/lab/lch/oklab/color-mix) — use a semantic colour token instead (slice-020 research D1).",
-  },
-  {
-    selector: `TemplateElement[value.raw=/${COLOUR_HEX_FUNCTIONAL_SOURCE}/]`,
-    message:
-      "FR-014: hardcoded colour literal (hex, or any CSS colour function: rgb/hsl/oklch/color/hwb/lab/lch/oklab/color-mix) in a template literal — use a semantic colour token instead (slice-020 research D1).",
-  },
-  {
-    selector: `Literal[value=/${COLOUR_NAMED_EXACT_SOURCE}/]`,
-    message:
-      "FR-014: hardcoded CSS named colour — use a semantic colour token instead (slice-020 research D1).",
-  },
-];
+};
 
-// This is the mechanized half of the style-guide DoD (docs/development/style-guide.md,
-// "Mechanization"). A recipe/component design gap left nowhere to put a recipe
-// and declared three private constants — `LABEL_INLINE_CLASSES`, `NATIVE_SELECT_CLASSES`,
-// `NATIVE_TEXTAREA_CLASSES` — all module-scope, all string literals, all name-suffixed the same
-// way. This selector flags a `const` whose name ends in
-// `Classes`/`_CLASSES` and whose initializer is ANY literal or `as`/`satisfies` cast, outside
-// `src/client/lib/recipes.ts` — the one file allowed to declare them (narrowed back off below,
-// same technique as the FR-015 exception list).
-//
-// The original selector was anchored `Program >
-// VariableDeclaration > VariableDeclarator`, so it matched an unexported module-scope `const` only.
-// An `export const` is wrapped in an `ExportNamedDeclaration`, which `Program >
-// VariableDeclaration` never matches, so an `export const` evades the rule. The exemption for
-// `src/client/lib/recipes.ts` did not need the selector because its declarations did not match it;
-// its three real exports (`export const LABEL_INLINE_CLASSES = "..."`, etc.) never matched the
-// anchored selector either way — the exemption existed to permit exactly what the rule could not
-// flag. Fixed by dropping the `Program >` anchor entirely (an esquery selector with no ancestor
-// constraint matches a `VariableDeclarator` regardless of what wraps its `VariableDeclaration` —
-// `Program`, `ExportNamedDeclaration`, or anything else) and widening `init.type` from the bare
-// `'Literal'` to `Literal|TemplateLiteral|TSAsExpression` (catches a template-literal class string
-// and a trailing `as const`/`as SomeType`, both realistic recipe-shaped forms). Re-verified after
-// the fix (`npx eslint --no-cache src/client`): deleting the `recipes.ts` exemption block now
-// makes `recipes.ts` go red — the exemption is load-bearing again.
-//
-// It is still a NAMING-CONVENTION net, not a general "is this string a Tailwind class list"
-// detector: a constant named or shaped differently (an object property, string concatenation, a
-// `.join(" ")`/`cn(...)` call, or inlining the string at the call site with no constant at all)
-// evades it — see the measured evasion matrix in docs/development/style-guide.md's
-// "Mechanization" section for the full accounting, including the one documented false positive
-// (a `*_CLASSES`/`*Classes`-suffixed constant whose value is a non-Tailwind string, e.g. SQL) and
-// its escape hatch (an `eslint-disable-next-line` with a one-line justification, same convention
-// as the inline-style selector above).
+// Naming-convention recipe net: initializer shape cannot evade it. Renamed/inline class
+// strings still require review; this is deliberately not a Tailwind expression evaluator.
 const RECIPE_CONSTANT_SELECTOR = [
   {
     selector:
-      "VariableDeclarator[id.name=/(_CLASSES|Classes)$/][init.type=/^(Literal|TemplateLiteral|TSAsExpression|TSSatisfiesExpression)$/]",
+      "VariableDeclarator[id.name=/(_CLASSES|Classes)$/], Property[key.name=/(_CLASSES|Classes)$/], Property[key.value=/(_CLASSES|Classes)$/]",
     message:
       "#762: class-string constant outside src/client/lib/recipes.ts — this is a D3 " +
       "recipe. Add it as a named export in src/client/lib/recipes.ts and document it in " +
@@ -294,6 +389,16 @@ export { UI_DEBT_EXCEPTION_FILES };
 // to keep SC-011 enforced regardless of a file's FR-014 migration status.
 
 export default [
+  {
+    files: ["src/client/**/*.{ts,tsx}"],
+    plugins: { "ui-policy": uiPolicy },
+    rules: {
+      "ui-policy/debt": "error",
+      "ui-policy/sizing": "error",
+      "ui-policy/raw-controls": "error",
+      "ui-policy/layers": "error",
+    },
+  },
   // Unused `eslint-disable-next-line` directives must fail lint. ESLint 10 defaults these to
   // warnings, and `npm run lint` does not set `--max-warnings`; without this option, stale
   // directives would exit successfully.
@@ -546,28 +651,13 @@ export default [
   // not a taint-analysis hard gate (residual risk accepted per the contract).
   // FR-014/FR-015/FR-017 require this two-block shape (see the comment above
   // `INV05_NO_RESTRICTED_SYNTAX`) — this is the SAME block INV-05 has always lived in, with
-  // `UI_DEBT_SELECTORS` appended to the same `no-restricted-syntax` array rather than declared in
-  // a new block for the same glob. Do not split this into a third `files:
-  // ["src/client/**/*.{ts,tsx}"]` block: the last matching block for a given rule REPLACES the
-  // array entirely under ESLint flat config, so a second `no-restricted-syntax` entry for this
-  // exact glob would silently disable INV-05.
-  //
-  // `SC011_SELECTOR` is appended here too (in its own array, kept separate from
-  // `UI_DEBT_SELECTORS` — a different guarantee, FR-014 debt vs SC-011 announcement, independently
-  // narrowable). SUPERSEDED: files on `UI_DEBT_EXCEPTION_FILES` used
-  // to get a free pass from THIS selector too, because that block (below) dropped the entire
-  // FR-014 debt path for them without re-adding `SC011_SELECTOR` — which meant SC-011 was
-  // completely inert on exactly the files carrying every one of the 12 measured misses (100% of
-  // them). Fixed: the `UI_DEBT_EXCEPTION_FILES` narrowing block below now re-adds
-  // `SC011_SELECTOR`, so it is enforced on every client file without exception; the 12 pre-existing
-  // sites are grandfathered per-line instead (see `SC011_SELECTOR`'s own comment for the map).
+  // Keep logging, recipe and live-region selectors together: flat config replaces arrays.
   {
     files: ["src/client/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-syntax": [
         "error",
         ...INV05_NO_RESTRICTED_SYNTAX,
-        ...UI_DEBT_SELECTORS,
         ...RECIPE_CONSTANT_SELECTOR,
         ...SC011_SELECTOR,
       ],
@@ -582,7 +672,7 @@ export default [
   {
     files: ["src/client/lib/recipes.ts"],
     rules: {
-      "no-restricted-syntax": ["error", ...INV05_NO_RESTRICTED_SYNTAX, ...UI_DEBT_SELECTORS],
+      "no-restricted-syntax": ["error", ...INV05_NO_RESTRICTED_SYNTAX, ...SC011_SELECTOR],
     },
   },
   // FR-015 exception paths re-declare the INV-05 selectors while omitting the three FR-014
@@ -598,6 +688,7 @@ export default [
         {
           files: UI_DEBT_EXCEPTION_FILES,
           rules: {
+            "ui-policy/debt": "off",
             "no-restricted-syntax": [
               "error",
               ...INV05_NO_RESTRICTED_SYNTAX,

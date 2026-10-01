@@ -330,7 +330,7 @@ export function BackupsManagement() {
         </div>
         {snapshotInfo && (
           <p
-            className="text-muted-foreground mt-2 text-[length:var(--control-font-size)]"
+            className="text-muted-foreground mt-2 text-control"
             role="status"
             aria-live="polite"
             data-testid="backups-snapshot-info"
@@ -353,10 +353,7 @@ export function BackupsManagement() {
         </p>
       ) : (
         <div className="bg-card overflow-x-auto rounded-lg shadow">
-          <table
-            className="w-full text-[length:var(--control-font-size)]"
-            data-testid="backups-table"
-          >
+          <table className="w-full text-control" data-testid="backups-table">
             <thead>
               <tr className="border-b text-left">
                 <th className="p-2">{t("backups.management.columnFilename")}</th>
@@ -434,7 +431,7 @@ export function BackupsManagement() {
           <h3 className="mb-2 text-lg font-semibold">
             {t("backups.management.restoreConfirmTitle")}
           </h3>
-          <p className="text-muted-foreground mb-2 text-[length:var(--control-font-size)]">
+          <p className="text-muted-foreground mb-2 text-control">
             {t("backups.management.restoreConfirmLabel")}: <strong>{restoreTarget}</strong>
           </p>
           <div className="flex flex-wrap items-end gap-3">

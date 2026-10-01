@@ -378,7 +378,7 @@ function ReminderCreateForm({ t, activeMembers, onCreate }: ReminderCreateFormPr
       <h3 className="text-md font-semibold mb-2">{t("reminders.management.createTitle")}</h3>
       <div className="flex flex-col gap-2">
         <div className="flex gap-2 items-center flex-wrap">
-          <span className="text-muted-foreground text-[length:var(--control-font-size)]">
+          <span className="text-muted-foreground text-control">
             {t("reminders.management.kindLabel")}
           </span>
           <RadioField
@@ -453,14 +453,14 @@ function ReminderCreateForm({ t, activeMembers, onCreate }: ReminderCreateFormPr
               />
             </label>
             <div className="flex gap-2 items-center flex-wrap">
-              <span className="text-muted-foreground text-[length:var(--control-font-size)]">
+              <span className="text-muted-foreground text-control">
                 {t("reminders.calendarGated.queryFieldsLabel")}
               </span>
               <QueryFieldsPicker t={t} selected={queryFields} onToggle={toggleQueryField} />
             </div>
             {targetingMode === "specific" && (
               <div>
-                <span className="text-muted-foreground text-[length:var(--control-font-size)]">
+                <span className="text-muted-foreground text-control">
                   {t("reminders.calendarGated.membershipTitle")}
                 </span>
                 <MembershipChecklist
@@ -669,7 +669,7 @@ function ReminderCard({
                 />
               </label>
               <div className="flex gap-2 items-center flex-wrap">
-                <span className="text-muted-foreground text-[length:var(--control-font-size)]">
+                <span className="text-muted-foreground text-control">
                   {t("reminders.calendarGated.queryFieldsLabel")}
                 </span>
                 <QueryFieldsPicker t={t} selected={queryFieldsDraft} onToggle={toggleQueryField} />
@@ -716,17 +716,17 @@ function ReminderCard({
         <div className="flex justify-between items-start">
           <div>
             <h4 className="text-md font-semibold">{reminder.text}</h4>
-            <p className="text-muted-foreground text-[length:var(--control-font-size)]">
+            <p className="text-muted-foreground text-control">
               {isCalendarGated ? t("reminders.kind.calendarGated") : t("reminders.kind.scheduled")}
             </p>
-            <p className="text-muted-foreground text-[length:var(--control-font-size)]">
+            <p className="text-muted-foreground text-control">
               {isCalendarGated
                 ? reminder.query
                 : isSpecific
                   ? t("reminders.management.targetingSpecific")
                   : (reminder.weekdays ?? []).map((day) => t(WEEKDAY_LABEL_KEYS[day])).join(", ")}
             </p>
-            <p className="text-muted-foreground text-[length:var(--control-font-size)]">
+            <p className="text-muted-foreground text-control">
               {reminder.active ? t("reminders.status.active") : t("reminders.status.inactive")}
             </p>
           </div>
@@ -944,9 +944,7 @@ function MembershipChecklist({
   onToggle,
 }: MembershipChecklistProps) {
   if (members.length === 0) {
-    return (
-      <p className="text-muted-foreground text-[length:var(--control-font-size)]">{emptyMessage}</p>
-    );
+    return <p className="text-muted-foreground text-control">{emptyMessage}</p>;
   }
 
   return (
@@ -987,9 +985,7 @@ function AssignmentMatrixGrid({
 }: AssignmentMatrixGridProps) {
   if (members.length === 0) {
     return (
-      <p className="text-muted-foreground text-[length:var(--control-font-size)]">
-        {t("reminders.matrix.noActiveMembers")}
-      </p>
+      <p className="text-muted-foreground text-control">{t("reminders.matrix.noActiveMembers")}</p>
     );
   }
 

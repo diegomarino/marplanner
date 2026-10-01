@@ -19,7 +19,7 @@ This contract defines the shared token, primitive, density and accessibility pro
 density exists.
 
 **What a consumer must not do**: fix a control's height or text size independently. That silently
-opts out of the guarantee, and is the specific escape three primitives make today.
+opts out of the guarantee. Shared Button, Input, Textarea, Select controls and the built-in Dialog close consume the density tokens.
 
 ---
 
@@ -37,7 +37,7 @@ opts out of the guarantee, and is the specific escape three primitives make toda
 surface, with no other edit. That promise is what makes a theme a decision rather than a project —
 and it is what SC-013 demonstrates.
 
-**Not in this contract**: member-identity colour. It belongs to audit row 4 and therefore to slice 021. A surface must not anticipate it.
+**Member identity**: slice 021 supplies closed member keys and generated colour tokens. Dynamic CSS custom-property forwarding is permitted with an exact, justified `ui-policy/debt` directive; literal colours are not.
 
 ---
 
@@ -71,12 +71,12 @@ Satisfying none makes it a recipe — documented in the style guide
 > **Once a file is migrated, the build rejects hardcoded colour literals, inline style attributes,
 > and raw scale classes in it.**
 
-| Guarantee      | Detail                                                                          |
-| -------------- | ------------------------------------------------------------------------------- |
-| Scope          | files not on the exception list                                                 |
-| Exception list | strictly shrinking; empty at close                                              |
-| Counting       | by committed command over `src/client/**/*.{ts,tsx}` (see research D1)          |
-| Durability     | survives a configuration reload; the two-block shape is required, not stylistic |
+| Guarantee      | Detail                                                                                                          |
+| -------------- | --------------------------------------------------------------------------------------------------------------- |
+| Scope          | files not on the exception list                                                                                 |
+| Exception list | strictly shrinking; empty at close                                                                              |
+| Counting       | by committed command over `src/client/**/*.{ts,tsx}` (see research D1)                                          |
+| Durability     | survives a configuration reload; shared AST oracle; syntax-rule arrays retain logging and live-region selectors |
 
 **What a consumer may rely on**: a migrated surface cannot silently drift back. The ratchet catches
 the _edit_, not merely the original migration.
@@ -94,3 +94,14 @@ Recorded so no consumer builds on an assumption the component foundation never m
   A batch that adds them has left the component foundation's scope.
 - **No behaviour change.** Same requests, same optimistic-update discipline, same copy — a migration
   that alters behaviour is a defect, not a bonus.
+
+## Shared UI enforcement
+
+Import from `@/ui`; [COMPONENTS.md](../../COMPONENTS.md) inventories the actual exported API and links to its prop contracts. Its generator/drift check uses the installed TypeScript parser; no documentation dependency is required.
+
+- G1 rejects new raw buttons, text inputs and textareas. Native selects retain the shared recipe and native platform interaction. Native checkbox/radio wrappers and the bare labelled matrix recipe are supported. Exact per-line exceptions cover meal-grid surfaces, calendar event chips and nested filter checkboxes; there is no file-wide migration list.
+- G2 keeps scoped or unified Radix imports/re-exports/dynamic imports inside the primitive layer. G5 permits primitive imports only from sibling primitives, `lib/utils` and `lib/recipes`, resolving relative paths and `@/` aliases.
+- G3 protects imported controls' literal height, maximum height, square size, minimum height and font classes, including arbitrary properties, conditional/cn expressions and responsive variants, important utilities and self selectors. Descendant icons remain independent. Width and minimum growth of at least 48px remain layout choices. The 64px/24px PIN keypad has explicit per-line exceptions. Runtime-built or forwarded class strings still require review.
+- G6 discovers the primitive directory in the foundation test census. Interactive primitives have rendered density checks, including open portal controls; Card and Label are documented noninteractive exemptions.
+
+The debt command counts AST violation nodes, including justified inline styles; lint suppression grants permission rather than erasing measurement. Token-only colour mixes and CSS member-token names are allowed, and named colours are case-insensitive. Translation values under the `messages` declaration in `src/client/i18n/messages.ts` are copy, not colours; arbitrary code in that file remains governed. Explicit style-bearing props objects (including spreads, hoists and createElement) are counted. Dynamic unknown spreads and arbitrary runtime colour/class construction are not exhaustively evaluated. Existing SC-011 announcement limitations remain separate from debt enforcement.

@@ -106,14 +106,13 @@ ON CONFLICT(id) DO NOTHING` (idempotent vs re-run/edit/archive/partial-failure; 
 ### Generated artifacts & component reuse (Q17)
 
 - **Generated (4), each generator + drift check:** Drizzle migrations · OpenAPI spec
-  (`@fastify/swagger`) · i18n key parity (ADR-015) · `COMPONENTS.md`/json (react-docgen-typescript;
-  shadcn tweaks: filter native props, surface cva variants). **API docs served LIVE at `/docs`** (not
+  (`@fastify/swagger`) · i18n key parity (ADR-015) · `COMPONENTS.md` (TypeScript export inventory; prop and cva contracts linked to maintained source). **API docs served LIVE at `/docs`** (not
   committed → can't drift). **NOT generated** (avoided by structure): API client types (shared via
   `src/shared`), route tree, ER diagram (YAGNI), design tokens (Tailwind config is source).
 - **OpenAPI schema-coverage gate:** a Fastify `ready` hook asserts every route carries a schema
   (also serves ADR-028) [peer-review S-a].
 - **Component-reuse (the agent-sprawl fear), three layers, NOT Storybook:** (1) one `@/ui` barrel;
-  (2) **lint banning raw primitives outside `src/ui/`** (`eslint-plugin-marplanner`) → inline
+  (2) **lint rejecting unsupported raw controls outside `src/client/components/ui/`** (`ui-policy` local rules; documented native recipes and exact domain exceptions) → inline
   re-invention fails CI; (3) the generated `COMPONENTS.md` catalog (agents read it before building
   UI). Storybook deferred (visual-only; weak for reuse — agents don't browse it).
 

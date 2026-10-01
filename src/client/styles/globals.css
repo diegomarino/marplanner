@@ -11,6 +11,10 @@
    yellow accent and red destructive. Components use semantic roles below. */
 :root {
   --radius: 1rem;
+  --member-mix-ground: #fff;
+  --member-avatar-foreground: #fff;
+  --destructive-foreground: #fff;
+  --overlay: #000;
   --background: #f5f2ed;
   --foreground: oklch(0.21 0.006 60);
   --card: #fdfbf8;
@@ -53,6 +57,9 @@
 }
 
 @theme inline {
+  --color-member-avatar-foreground: var(--member-avatar-foreground);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-overlay: var(--overlay);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -111,4 +118,9 @@
     background: var(--member-event-background, var(--color-muted));
     border-left-color: var(--member-event-border, transparent);
   }
+}
+
+/* Control typography follows the document density, including portals. */
+@utility text-control {
+  font-size: var(--control-font-size);
 }
