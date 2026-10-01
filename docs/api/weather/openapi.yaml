@@ -8,6 +8,36 @@ info:
 servers:
   - url: /
 components:
+  responses:
+    AuthenticationBackoff:
+      description: >
+        Repeated credential failures from this transport source. Valid active credentials remain
+        usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.
+      headers:
+        Retry-After:
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Remaining cooldown in seconds, rounded up. Retry manually.
+        Cache-Control:
+          required: true
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [error, message]
+            properties:
+              error:
+                type: string
+                const: too_many_requests
+              message:
+                type: string
+                const: Authentication retry required
   securitySchemes:
     deviceKeyCookie:
       type: apiKey
@@ -272,6 +302,8 @@ paths:
             schema:
               $ref: "#/components/schemas/SettingsWrite"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: >-
             Object replaced; returns the updated EFFECTIVE settings map (the registry contract's
@@ -298,6 +330,8 @@ paths:
         `WEATHER_ENABLED`, or a failed/timed-out upstream fetch) — NEVER a 5xx (WEATHER-INV-12, D3).
         Gated only by the app-wide API-key boundary, no capability (mirrors `GET /api/settings`).
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: "Always 200 — absence is expressed as `forecast: null`, never an error."
           content:

@@ -13,7 +13,7 @@ each endpoint requires (each domain declares its own).
 
 ## Implementation status
 
-Provisioning, request authorization, frontend access gating and PIN verification are implemented. Key create/list/revoke, last-key anti-lockout and `set-pin` are not implemented. Requirements for those future interfaces remain labeled below; they are not operating instructions.
+Provisioning, failure-only authentication backoff, request authorization, frontend access gating and PIN verification are implemented. See the [auth contract](../architecture/contracts/auth-sessions.md#failure-only-authentication-backoff) for provisional thresholds, retry semantics and protection limits. Key create/list/revoke, last-key anti-lockout and `set-pin` are not implemented. Requirements for those future interfaces remain labeled below; they are not operating instructions.
 
 ## Behavior
 
@@ -68,7 +68,7 @@ authorization never consults PIN state.
 
 - **FR-010**: Given raw credential values, when a key or PIN is handled, then device keys MUST never be exposed, integration keys MUST be shown exactly once at creation, and raw PINs MUST never be persisted or returned. _(Realizes: AUTH-SESSIONS-INV-10)_
 
-- **FR-011**: Given any auth state, when it is stored, then it MUST live in the database and MUST NOT be held in process memory. _(Realizes: AUTH-SESSIONS-INV-11)_
+- **FR-011**: Given any auth state, when it is stored, then credential/authorization state MUST live in the database, with no in-memory sessions or cached authority. Transient failed-attempt counters under ADR-037 are not authentication state. _(Realizes: AUTH-SESSIONS-INV-11)_
 
 - **FR-012**: Given telemetry or logs, when they are written, then they MUST never contain raw PINs, API keys, cookies, or access-gate tokens. _(Realizes: AUTH-SESSIONS-INV-12)_
 

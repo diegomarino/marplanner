@@ -9,6 +9,36 @@ info:
 servers:
   - url: /
 components:
+  responses:
+    AuthenticationBackoff:
+      description: >
+        Repeated credential failures from this transport source. Valid active credentials remain
+        usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.
+      headers:
+        Retry-After:
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Remaining cooldown in seconds, rounded up. Retry manually.
+        Cache-Control:
+          required: true
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [error, message]
+            properties:
+              error:
+                type: string
+                const: too_many_requests
+              message:
+                type: string
+                const: Authentication retry required
   securitySchemes:
     deviceKeyCookie:
       type: apiKey
@@ -185,6 +215,8 @@ paths:
     get:
       summary: List the curated registry with derived live status (ZERO writes — INV-05)
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           content:
             application/json:
@@ -201,6 +233,8 @@ paths:
             schema:
               $ref: "#/components/schemas/RegisterDeviceRequest"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "201":
           content:
             application/json:
@@ -220,6 +254,8 @@ paths:
     get:
       summary: Picker feed — the controller's current live clients
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           content:
             application/json:
@@ -243,6 +279,8 @@ paths:
             schema:
               $ref: "#/components/schemas/EditDeviceRequest"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           content:
             application/json:
@@ -263,6 +301,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "204":
           description: always succeeds locally, blocked devices included
         "403":
@@ -279,6 +319,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: >-
             Controller accepted; body reflects the belief (possibly beliefDiverged when the mirror
@@ -307,6 +349,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           content:
             application/json:

@@ -8,6 +8,36 @@ info:
 servers:
   - url: /
 components:
+  responses:
+    AuthenticationBackoff:
+      description: >
+        Repeated credential failures from this transport source. Valid active credentials remain
+        usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.
+      headers:
+        Retry-After:
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Remaining cooldown in seconds, rounded up. Retry manually.
+        Cache-Control:
+          required: true
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [error, message]
+            properties:
+              error:
+                type: string
+                const: too_many_requests
+              message:
+                type: string
+                const: Authentication retry required
   securitySchemes:
     deviceKeyCookie:
       type: apiKey
@@ -200,6 +230,8 @@ paths:
       security:
         - deviceKeyCookie: []
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Raw feed URLs and conditional validators are absent.
           content:
@@ -228,6 +260,8 @@ paths:
             schema:
               $ref: "#/components/schemas/ExternalSourcePut"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "202":
           description: Configuration persisted and first synchronization started.
           content:
@@ -249,6 +283,8 @@ paths:
             schema:
               $ref: "#/components/schemas/ExternalSourcePatch"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Updated source state.
           content:
@@ -266,6 +302,8 @@ paths:
       security:
         - deviceKeyCookie: []
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "204":
           description: Deletion completed atomically.
         "401":
@@ -284,6 +322,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "202":
           description: Synchronization started or an existing run is active.
           content:
@@ -302,6 +342,8 @@ paths:
       security:
         - deviceKeyCookie: []
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Ordered rules.
           content:
@@ -323,6 +365,8 @@ paths:
             schema:
               $ref: "#/components/schemas/HighlightRuleCreate"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "201":
           description: Created rule.
           content:
@@ -345,6 +389,8 @@ paths:
             schema:
               $ref: "#/components/schemas/HighlightRuleOrder"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Complete authoritative order.
           content:
@@ -375,6 +421,8 @@ paths:
             schema:
               $ref: "#/components/schemas/HighlightRulePatch"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Updated rule.
           content:
@@ -392,6 +440,8 @@ paths:
       security:
         - deviceKeyCookie: []
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "204":
           description: Rule deleted.
         "401":

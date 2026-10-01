@@ -169,6 +169,39 @@ describe("Shell — unprovisioned gate", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
+  it("shows the server retry delay for provisioning 429 without automatic retries", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(null, { status: 429, headers: { "Retry-After": "2" } })
+    );
+    render(<Shell />);
+    fireEvent.change(screen.getByLabelText("Bootstrap key"), { target: { value: "wrong" } });
+    fireEvent.click(screen.getByRole("button", { name: "Provision Device" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Too many failed attempts. Wait at least 2 seconds before trying again."
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: "Provision Device" })).not.toBeDisabled();
+  });
+
+  it.each([null, "garbage", "0", "-1", "1.5", "9007199254740993"])(
+    "shows no invented retry duration for unusable Retry-After %s",
+    async (header) => {
+      mockFetch.mockResolvedValue(
+        new Response(null, {
+          status: 429,
+          headers: header === null ? {} : { "Retry-After": header },
+        })
+      );
+      render(<Shell />);
+      fireEvent.change(screen.getByLabelText("Bootstrap key"), { target: { value: "wrong" } });
+      fireEvent.click(screen.getByRole("button", { name: "Provision Device" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Too many failed attempts. Wait before trying again."
+      );
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    }
+  );
+
   it("renders the household shell when the provisioned marker is present (FR-031)", async () => {
     document.cookie = "mp_provisioned=1; path=/";
     mockFetch.mockImplementation((url: string | URL) => {

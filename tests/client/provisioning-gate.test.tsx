@@ -266,6 +266,25 @@ describe("ProvisioningScreen — structural copy follows the BROWSER language, b
     }
   });
 
+  it("localizes the server retry delay in Spanish without exposing diagnostics", () => {
+    const restore = stubBrowserLanguage("es-ES");
+    try {
+      render(
+        <ProvisioningScreen
+          onProvision={() => {}}
+          provisioning={false}
+          error={true}
+          retryAfter={8}
+        />
+      );
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Demasiados intentos fallidos. Espera al menos 8 segundos antes de volver a intentarlo."
+      );
+    } finally {
+      restore();
+    }
+  });
+
   it("resolves an unsupported browser language (e.g. French) to the English default, never an empty/undefined render", () => {
     const restore = stubBrowserLanguage("fr-FR");
     try {

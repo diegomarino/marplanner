@@ -8,6 +8,36 @@ info:
 servers:
   - url: /
 components:
+  responses:
+    AuthenticationBackoff:
+      description: >
+        Repeated credential failures from this transport source. Valid active credentials remain
+        usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.
+      headers:
+        Retry-After:
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Remaining cooldown in seconds, rounded up. Retry manually.
+        Cache-Control:
+          required: true
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [error, message]
+            properties:
+              error:
+                type: string
+                const: too_many_requests
+              message:
+                type: string
+                const: Authentication retry required
   securitySchemes:
     deviceKeyCookie:
       type: apiKey
@@ -322,6 +352,8 @@ paths:
             schema:
               $ref: "#/components/schemas/RecipeInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "201":
           description: The created recipe.
           content:
@@ -352,6 +384,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: The matching recipes (all recipes if `search` is absent/empty), possibly empty.
           content:
@@ -377,6 +411,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: The recipe.
           content:
@@ -414,6 +450,8 @@ paths:
             schema:
               $ref: "#/components/schemas/RecipeEditInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: The edited recipe.
           content:
@@ -452,6 +490,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "204":
           description: The recipe and its referencing entries were removed.
         "401":
@@ -479,6 +519,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: The split dependent counts.
           content:
@@ -508,6 +550,8 @@ paths:
             schema:
               $ref: "#/components/schemas/MealPlanInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "201":
           description: The created meal_plan.
           content:
@@ -530,6 +574,8 @@ paths:
       summary: List all meal_plans (active and inactive).
       operationId: listMealPlans
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: The meal_plans, possibly empty.
           content:
@@ -555,6 +601,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: The meal_plan.
           content:
@@ -593,6 +641,8 @@ paths:
             schema:
               $ref: "#/components/schemas/MealPlanEditInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: The edited meal_plan.
           content:
@@ -631,6 +681,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: The plan's recurring entries (retained even while the plan is inactive).
           content:
@@ -662,6 +714,8 @@ paths:
             schema:
               $ref: "#/components/schemas/MealEntryInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "201":
           description: The created entry.
           content:
@@ -710,6 +764,8 @@ paths:
             schema:
               $ref: "#/components/schemas/MealEntryEditInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: The edited entry.
           content:
@@ -750,6 +806,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "204":
           description: The entry was removed.
         "401":
@@ -785,6 +843,8 @@ paths:
           schema:
             $ref: "#/components/schemas/Slot"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: The derived menu (MenuItem[]), possibly empty.
           content:
@@ -821,6 +881,8 @@ paths:
             type: string
             description: YYYY-MM-DD
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: The week grid (WeekMenu).
           content:

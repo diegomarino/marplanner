@@ -802,6 +802,21 @@
             "full-access authentication boundary fails closed before disclosure when cookie and bearer credentials conflict",
             "full-access authentication boundary does not accept an Admin PIN as backend authorization"
           ],
+          "tests/boundary/auth-throttling.test.ts": [
+            "authentication failure backoff public paths aggregates cookie, bearer and missing failures across routes; valid traffic survives cooldown",
+            "authentication failure backoff public paths doubles at exact cooldown boundaries, caps at 60 seconds and does not extend cooldown",
+            "authentication failure backoff public paths excludes unknown routes, transport conflicts, scope denials and input failures",
+            "authentication failure backoff public paths counts revoked and exactly expired credentials without leaking them",
+            "authentication failure backoff public paths isolates transport source and bootstrap flow, ignoring spoofed forwarding headers",
+            "authentication failure backoff public paths resets fixed observation windows at their exact upper boundary",
+            "authentication failure backoff public paths serializes concurrent failures without losing counts or escalating during cooldown",
+            "authentication failure backoff public paths retains failures through successful NAT traffic and resets only at the quiet boundary",
+            "authentication failure backoff public paths bounds state to 5000 entries, evicts the least recently failed source and expires idle state",
+            "authentication failure backoff public paths normalizes expanded IPv6 and hexadecimal IPv4-mapped peers",
+            "authentication failure backoff public paths bootstrap counts missing, revoked and expired failures, preserving exact expiry semantics",
+            "authentication failure backoff public paths does not count absent bootstrap configuration or unreconciled server records",
+            "authentication failure backoff public paths handles scoped IPv6 transport peers without converting credential failures to server errors"
+          ],
           "tests/boundary/backups-lineage.test.ts": [
             "backup restore lineage classification accepts a sentinel-equal backup without a forward migration",
             "backup restore lineage classification rejects a readable pre-baseline migration ledger as unsupported_lineage without exposing internals",
@@ -2997,6 +3012,7 @@
             "authFetch / reportCredentialLoss (FR-013) clears the mp_provisioned marker and dispatches CREDENTIAL_LOST_EVENT on 401",
             "authFetch / reportCredentialLoss (FR-013) clears the mp_provisioned marker and dispatches CREDENTIAL_LOST_EVENT on 403",
             "authFetch / reportCredentialLoss (FR-013) does NOT clear the marker or dispatch on a successful (2xx) response",
+            "authFetch / reportCredentialLoss (FR-013) preserves provisioning and passes through 429 without retrying or reporting credential loss",
             "authFetch / reportCredentialLoss (FR-013) reportCredentialLoss clears the marker and dispatches the event directly",
             "authFetch \u2014 scope-403 vs credential-invalid (#682) does NOT clear the marker on a scope-403 (requireManagementKey rejecting a device key, real body shape)",
             "authFetch \u2014 scope-403 vs credential-invalid (#682) does NOT clear the marker on a scope-403 (requireCapability's 'not granted' branch, real body shape)",
@@ -3538,6 +3554,7 @@
             "ProvisioningScreen \u2014 kiosk density across every reachable state (SC-001, SC-002) DELIBERATE NEGATIVE \u2014 forcing this surface's own submit button below the kiosk minimum makes the assertion fail, and reverting restores compliance",
             "ProvisioningScreen \u2014 structural copy follows the BROWSER language, both household languages (FR-019, Traces: I18N-LOCALIZATION-INV-12) renders English structural copy when the browser language is English (the jsdom default)",
             "ProvisioningScreen \u2014 structural copy follows the BROWSER language, both household languages (FR-019, Traces: I18N-LOCALIZATION-INV-12) renders Spanish structural copy when the browser language is Spanish, with NO reliance on the English fallback",
+            "ProvisioningScreen \u2014 structural copy follows the BROWSER language, both household languages (FR-019, Traces: I18N-LOCALIZATION-INV-12) localizes the server retry delay in Spanish without exposing diagnostics",
             "ProvisioningScreen \u2014 structural copy follows the BROWSER language, both household languages (FR-019, Traces: I18N-LOCALIZATION-INV-12) resolves an unsupported browser language (e.g. French) to the English default, never an empty/undefined render",
             "provisioning.gate i18n parity \u2014 every key exists in both catalogues with a non-empty value every provisioning.gate key in en exists in es, and vice versa",
             "provisioning.gate i18n parity \u2014 every key exists in both catalogues with a non-empty value every provisioning.gate key resolves to a non-empty string in both languages"
@@ -3686,6 +3703,13 @@
           ],
           "tests/client/shell.test.tsx": [
             "Shell \u2014 unprovisioned gate renders ProvisioningScreen when no device-provisioned marker cookie is present (FR-031)",
+            "Shell \u2014 unprovisioned gate shows the server retry delay for provisioning 429 without automatic retries",
+            "Shell \u2014 unprovisioned gate shows no invented retry duration for unusable Retry-After null",
+            "Shell \u2014 unprovisioned gate shows no invented retry duration for unusable Retry-After garbage",
+            "Shell \u2014 unprovisioned gate shows no invented retry duration for unusable Retry-After 0",
+            "Shell \u2014 unprovisioned gate shows no invented retry duration for unusable Retry-After -1",
+            "Shell \u2014 unprovisioned gate shows no invented retry duration for unusable Retry-After 1.5",
+            "Shell \u2014 unprovisioned gate shows no invented retry duration for unusable Retry-After 9007199254740993",
             "Shell \u2014 unprovisioned gate renders the household shell when the provisioned marker is present (FR-031)",
             "Shell \u2014 unprovisioned gate marks the current family destination and exposes Options as an Escape-dismissible disclosure",
             "Shell \u2014 unprovisioned gate organizes the household chrome into compact navigation, contextual center, and secondary actions",
@@ -5680,7 +5704,7 @@
         }
       },
       "src/client/i18n/messages.ts": {
-        "sha256": "f37416c8caa2821c750fe3cfbb93847de234162e56704ae8a638523b1a7c2f03",
+        "sha256": "a430e5b0ace6ceceeb08ed7a9d8bf0d48059f2e95aad11859e7ccc98f5283910",
         "layer": "client",
         "minimumTotals": {
           "lines": 4,
@@ -6176,13 +6200,13 @@
         }
       },
       "src/client/shell/Shell.tsx": {
-        "sha256": "77dffbba443dad9594d04501d6133d622920d2901e36f8be77889ca0893ab23b",
+        "sha256": "3df85f2d31480b363b90a77463b38b240d9a28ca5c6a3323f6a413996032c03f",
         "layer": "client",
         "minimumTotals": {
-          "lines": 56,
-          "statements": 64,
+          "lines": 62,
+          "statements": 70,
           "functions": 27,
-          "branches": 34
+          "branches": 48
         },
         "minimumRates": {
           "lines": 89.09,
@@ -6368,13 +6392,13 @@
         }
       },
       "src/server/auth/boundary.ts": {
-        "sha256": "58889d7e463870bb2130f2b6685bb267d5102ae1457a4619e46bfabb048ada45",
+        "sha256": "fa46a0278fdbd56c41d084088bc56cef5915ea6c31b681a1226a36f591681732",
         "layer": "server",
         "minimumTotals": {
-          "lines": 46,
-          "statements": 49,
-          "functions": 4,
-          "branches": 40
+          "lines": 51,
+          "statements": 55,
+          "functions": 5,
+          "branches": 46
         },
         "minimumRates": {
           "lines": 97.82,
@@ -6480,13 +6504,13 @@
         }
       },
       "src/server/auth/provision.ts": {
-        "sha256": "115eced7efbc2730c148039538e702011370c74bf200e908fe89af9d90edc44e",
+        "sha256": "0809fb44414a88e8a2f8c86c8d8cd5dd7c4d166c2abf483870ae3403f1a53a6d",
         "layer": "server",
         "minimumTotals": {
-          "lines": 37,
-          "statements": 37,
-          "functions": 2,
-          "branches": 20
+          "lines": 42,
+          "statements": 43,
+          "functions": 3,
+          "branches": 22
         },
         "minimumRates": {
           "lines": 89.18,
@@ -6509,6 +6533,22 @@
           "statements": 100,
           "functions": 100,
           "branches": 95.45
+        }
+      },
+      "src/server/auth/throttle.ts": {
+        "sha256": "9511623e98c88c448484f89ea7ad02716aac85a318426813a533ed597dfc2203",
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 43,
+          "statements": 48,
+          "functions": 4,
+          "branches": 24
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/server/backups/job.ts": {
@@ -9219,6 +9259,7 @@
     "src/server/auth/pin.ts",
     "src/server/auth/provision.ts",
     "src/server/auth/reconcile.ts",
+    "src/server/auth/throttle.ts",
     "src/server/backups/job.ts",
     "src/server/backups/restore.ts",
     "src/server/backups/storage.ts",
@@ -9390,6 +9431,7 @@
     "src/shared/weather.ts",
     "tests/boundary/access-gate.test.ts",
     "tests/boundary/auth-boundary.test.ts",
+    "tests/boundary/auth-throttling.test.ts",
     "tests/boundary/backups-lineage.test.ts",
     "tests/boundary/backups-routes.test.ts",
     "tests/boundary/backups-storage.test.ts",

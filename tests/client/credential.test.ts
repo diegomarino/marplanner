@@ -69,6 +69,25 @@ describe("authFetch / reportCredentialLoss (FR-013)", () => {
     window.removeEventListener(CREDENTIAL_LOST_EVENT, listener);
   });
 
+  it("preserves provisioning and passes through 429 without retrying or reporting credential loss", async () => {
+    const response = new Response(JSON.stringify({ error: "too_many_requests" }), {
+      status: 429,
+      headers: { "Retry-After": "8" },
+    });
+    mockFetch.mockResolvedValueOnce(response);
+    const listener = vi.fn();
+    window.addEventListener(CREDENTIAL_LOST_EVENT, listener);
+    try {
+      expect(await authFetch("/api/settings")).toBe(response);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(document.cookie).toContain("mp_provisioned=1");
+      expect(listener).not.toHaveBeenCalled();
+      expect(await response.json()).toEqual({ error: "too_many_requests" });
+    } finally {
+      window.removeEventListener(CREDENTIAL_LOST_EVENT, listener);
+    }
+  });
+
   it("reportCredentialLoss clears the marker and dispatches the event directly", () => {
     const listener = vi.fn();
     window.addEventListener(CREDENTIAL_LOST_EVENT, listener);

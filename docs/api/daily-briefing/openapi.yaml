@@ -8,6 +8,36 @@ info:
 servers:
   - url: /
 components:
+  responses:
+    AuthenticationBackoff:
+      description: >
+        Repeated credential failures from this transport source. Valid active credentials remain
+        usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.
+      headers:
+        Retry-After:
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Remaining cooldown in seconds, rounded up. Retry manually.
+        Cache-Control:
+          required: true
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [error, message]
+            properties:
+              error:
+                type: string
+                const: too_many_requests
+              message:
+                type: string
+                const: Authentication retry required
   securitySchemes:
     deviceKeyCookie:
       type: apiKey
@@ -364,6 +394,8 @@ paths:
             schema:
               $ref: "#/components/schemas/GenerateInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: generated briefing shell.
           content:
@@ -412,6 +444,8 @@ paths:
             schema:
               $ref: "#/components/schemas/GenerateAllInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: generated briefing summary, or an already_running guard response.
           content:
@@ -448,6 +482,8 @@ paths:
     get:
       summary: List persisted Daily Briefing opt-in states (admin).
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: explicit per-member opt-in states; absent rows remain opt-out by default.
           content:
@@ -490,6 +526,8 @@ paths:
             schema:
               $ref: "#/components/schemas/OptInInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: updated opt-in state.
           content:
@@ -538,6 +576,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: generated briefing or the pure missing result.
           content:

@@ -35,6 +35,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: >-
             the read result; `printedStatus` is present only when `generated: true` (a missing
@@ -65,6 +67,8 @@ paths:
     get:
       summary: Read block order + schedule + trigger binding + per-member block settings (admin).
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: the current settings snapshot (documented defaults when no row exists yet).
           content:
@@ -102,6 +106,8 @@ paths:
             schema:
               $ref: "#/components/schemas/DailyBriefingSettingsInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: the updated settings snapshot.
           content:
@@ -150,6 +156,8 @@ paths:
               items:
                 $ref: "#/components/schemas/BlockOrderInstance"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: the validated, persisted block order.
           content:
@@ -219,6 +227,8 @@ paths:
             schema:
               $ref: "#/components/schemas/MemberBlockSettingsInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: the updated per-member per-block settings.
           content:
@@ -273,6 +283,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: the stored render, as a PNG.
           content:
@@ -319,6 +331,36 @@ paths:
               schema:
                 $ref: "#/components/schemas/InternalErrorResponse"
 components:
+  responses:
+    AuthenticationBackoff:
+      description: >
+        Repeated credential failures from this transport source. Valid active credentials remain
+        usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.
+      headers:
+        Retry-After:
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Remaining cooldown in seconds, rounded up. Retry manually.
+        Cache-Control:
+          required: true
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [error, message]
+            properties:
+              error:
+                type: string
+                const: too_many_requests
+              message:
+                type: string
+                const: Authentication retry required
   securitySchemes:
     deviceKeyCookie:
       type: apiKey
