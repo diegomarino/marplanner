@@ -9,6 +9,36 @@ info:
 servers:
   - url: /
 components:
+  responses:
+    AuthenticationBackoff:
+      description: >
+        Repeated credential failures from this transport source. Valid active credentials remain
+        usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.
+      headers:
+        Retry-After:
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Remaining cooldown in seconds, rounded up. Retry manually.
+        Cache-Control:
+          required: true
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [error, message]
+            properties:
+              error:
+                type: string
+                const: too_many_requests
+              message:
+                type: string
+                const: Authentication retry required
   securitySchemes:
     deviceKeyCookie:
       type: apiKey
@@ -200,6 +230,8 @@ paths:
       security:
         - deviceKeyCookie: []
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: >-
             Persisted source configuration only; this does not assert reachability or
@@ -230,6 +262,8 @@ paths:
             schema:
               $ref: "#/components/schemas/ExternalSourceUpsert"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Persisted source configuration, with the URL masked.
           content:
@@ -283,6 +317,8 @@ paths:
             type: string
           description: RESERVED — supplying it is rejected 400 (FR-010)
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Expanded, merged, member-scoped occurrences within the range.
           content:
@@ -312,6 +348,8 @@ paths:
             schema:
               $ref: "#/components/schemas/EventInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "201":
           description: created; returns the new master event id
           content:
@@ -351,6 +389,8 @@ paths:
             schema:
               $ref: "#/components/schemas/EventInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: updated
           content:
@@ -378,6 +418,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "204":
           description: deleted; event + all assignment rows removed in one transaction
         "401":
@@ -402,6 +444,8 @@ paths:
             schema:
               $ref: "#/components/schemas/AssignmentReplace"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: replaced (atomic)
           content:

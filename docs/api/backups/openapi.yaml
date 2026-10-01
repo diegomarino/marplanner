@@ -9,6 +9,36 @@ info:
 servers:
   - url: /
 components:
+  responses:
+    AuthenticationBackoff:
+      description: >
+        Repeated credential failures from this transport source. Valid active credentials remain
+        usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.
+      headers:
+        Retry-After:
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Remaining cooldown in seconds, rounded up. Retry manually.
+        Cache-Control:
+          required: true
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [error, message]
+            properties:
+              error:
+                type: string
+                const: too_many_requests
+              message:
+                type: string
+                const: Authentication retry required
   securitySchemes:
     deviceKeyCookie:
       type: apiKey
@@ -167,6 +197,8 @@ paths:
       operationId: listBackups
       summary: List the backup shelf (file-derived; backups:admin)
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Newest-first shelf listing.
           content:
@@ -178,6 +210,8 @@ paths:
       operationId: createSnapshot
       summary: Create a snapshot now (routes through the scheduler's manual entry)
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Completed (with filename) or an honest already_running.
           content:
@@ -221,6 +255,8 @@ paths:
             schema:
               $ref: "#/components/schemas/RestoreRequest"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Restored; clients should reload (dbGeneration bumped).
           content:
@@ -283,6 +319,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "204":
           description: Deleted.
         "400":
@@ -316,6 +354,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: The backup file.
           content:
@@ -346,6 +386,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: SQL text export.
           content:
@@ -376,6 +418,8 @@ paths:
               type: string
               format: binary
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Stored on the shelf with an upload- prefix.
           content:

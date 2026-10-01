@@ -45,7 +45,7 @@ It does not own member identity (Members), route structure or the admin-unlock U
 - **AUTH-SESSIONS-INV-08** **Single household trust tier (`ADR-058`).** There is **no second server-side privilege tier** by design. A provisioned device's `*` cookie is full household trust; kiosks and parent-admin-via-PIN both operate here. The **sole** server-side kiosk/operator boundary is **key-management** (the line above — the one self-escalating catastrophic act); `ADR-053` device-block is the lone pre-existing extra carve-out. All other operations (backups, plugins, telemetry-read, settings) are household-tier (device-`*` cookie + client-side PIN), reversible/recoverable. **Anti-pattern: no ad-hoc per-endpoint "admin scope" carve-outs** — a future op that seems to need one is a signal to re-examine the threat model, not to add a tier.
 - **AUTH-SESSIONS-INV-09** Every authenticated request validates the credential AND that the referenced key record is active (not revoked, not expired). Revocation/expiry take effect on the next request.
 - **AUTH-SESSIONS-INV-10** Raw key values: device keys are never exposed; future generated integration keys must be shown exactly once at creation; current management keys are supplied through deployment configuration. Raw PINs are never persisted or returned.
-- **AUTH-SESSIONS-INV-11** All auth state lives in the database. No auth state in process memory.
+- **AUTH-SESSIONS-INV-11** Credential and authorization state lives in the database; no in-memory sessions or cached authority. Transient failed-attempt counters (ADR-037) are not authentication state and never grant access.
 - **AUTH-SESSIONS-INV-12** Telemetry/logs must never contain raw PINs, API keys, cookies, or access-gate tokens (`ADR-016`).
 
 ## Behaviors
@@ -58,7 +58,7 @@ It does not own member identity (Members), route structure or the admin-unlock U
 
 **Integration setup.** Startup reconciles the operator-provided `MP_MANAGEMENT_KEY`. A create/list/revoke management endpoint is not implemented; the future issuance contract requires showing generated raw keys only once.
 
-**Authorize a request.** The middleware resolves the presented credential (cookie or raw header key) to a key record, verifies it is active, and checks it carries the capability the endpoint declares (or `*`). Otherwise 401/403.
+**Authorize a request.** The middleware resolves the presented credential (cookie or raw header key) to a key record, verifies it is active, and checks it carries the capability the endpoint declares (or `*`). Otherwise 401/403, or an immediate generic 429 for repeated credential failures under ADR-037; capability denials do not consume backoff.
 
 **Revocation enforcement and rotation limits.** Request authorization rejects records with `revokedAt` or an elapsed expiry. This enforcement exists, but there is no supported API to mutate revocation or rotate keys. Changing environment values does not revoke old records; last-key anti-lockout is not implemented.
 
@@ -71,6 +71,35 @@ It does not own member identity (Members), route structure or the admin-unlock U
 **Gate frontend pages.** Without a valid access-gate cookie, the server serves the access-token entry form instead of the app shell. The gate covers page serving only, not `/api/*`. Misconfiguration fails closed (does not serve the app open).
 
 **API cookie.** Provisioning with the configured bootstrap credential creates a device key and places it in the protected cookie. Clearing browser storage removes the local cookie but does not revoke the database key. No server-side cookie-revocation endpoint is installed.
+
+## Failure-only authentication backoff
+
+The API and bootstrap flows have separate source buckets; API failures aggregate across installed
+routes. Defaults are 20 failures/1 minute for API credentials and 5 failures/10 minutes for bootstrap.
+Fixed windows start at the first failure and exclude the upper endpoint. The threshold-reaching
+failure returns 429; later eligible failures double cooldowns through 1, 2, 4, 8, 16, 32, 60 seconds.
+Failures within cooldown do not extend it or escalate it. All failures, including those during
+cooldown, refresh the 15-minute quiet-reset clock. Successful authentications neither consume nor
+reset failure buckets, and active valid credentials always continue through the normal checks.
+
+429 carries integer-second `Retry-After` rounded up, `Cache-Control: no-store`, and a generic
+`{error: "too_many_requests", message: "Authentication retry required"}` body. Earlier failures
+retain 401/403. Missing/unknown/revoked/expired credentials count; conflicting transports,
+capability denials, request validation, unknown routes and server misconfiguration do not.
+Provisioning consumes only its bootstrap bucket. Expiry at the current instant is inactive.
+
+The store is bounded to 5000 source/flow entries, prunes 15-minute-idle state on failure updates,
+and evicts least-recently-failed entries at capacity. It is process-local and not restored from
+backups: eviction or restart resets counters. These are provisional defaults, not measured
+protection guarantees. Sources use direct transport `request.ip`, normalize IPv4-mapped IPv6
+and canonical IPv6 spelling, and ignore forwarding headers without enabling proxy trust.
+NAT/proxy pooling, IPv6 address rotation and distributed sources limit per-address protection.
+
+Validation runs before backoff: ignored 429s still incur credential work and a correct guess
+succeeds. This is cooperative retry backpressure, not a hard brute-force/CPU ceiling. Successful
+provisioning volume, edge controls, distributed stores and hard bootstrap lockout are separate
+policy decisions. The client preserves provisioning on 429, exposes the server's retry delay
+without inventing one when absent/malformed, and offers manual retry without an automatic loop.
 
 ## Interfaces
 
@@ -90,8 +119,8 @@ Implemented interfaces:
 (ADR-040.) **Emits: none. Subscribes: none.** Auth is a **pull / request-time** model, not
 a bus participant. Revocation and expiry take effect because **every request re-validates
 the key record** (active, not revoked, not expired) — not via a broadcast notification, so
-there is no `key.revoked` event to drop or race. All auth state lives in the database
-(no in-memory auth state, no push). This non-participation is deliberate and fail-closed:
+there is no `key.revoked` event to drop or race. Credential authority lives in the database
+(no in-memory sessions or cached authority, no push); transient backoff counters are not credentials. This non-participation is deliberate and fail-closed:
 authority is decided at the boundary on each call, never cached off an event.
 
 ## Data / Setup Contract

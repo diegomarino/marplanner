@@ -9,6 +9,36 @@ info:
 servers:
   - url: /
 components:
+  responses:
+    AuthenticationBackoff:
+      description: >
+        Repeated credential failures from this transport source. Valid active credentials remain
+        usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.
+      headers:
+        Retry-After:
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Remaining cooldown in seconds, rounded up. Retry manually.
+        Cache-Control:
+          required: true
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [error, message]
+            properties:
+              error:
+                type: string
+                const: too_many_requests
+              message:
+                type: string
+                const: Authentication retry required
   securitySchemes:
     deviceKeyCookie:
       type: apiKey
@@ -205,6 +235,8 @@ paths:
       security:
         - deviceKeyCookie: []
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: all reminders
           content:
@@ -226,6 +258,8 @@ paths:
             schema:
               $ref: "#/components/schemas/ReminderInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "201":
           description: created
           content:
@@ -254,6 +288,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: reminder
           content:
@@ -283,6 +319,8 @@ paths:
             schema:
               $ref: "#/components/schemas/ReminderEditInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: updated
           content:
@@ -314,6 +352,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "204":
           description: deleted
         "404":
@@ -348,6 +388,8 @@ paths:
             schema:
               $ref: "#/components/schemas/ReminderAssignmentSetInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: the resulting active assignment set
           content:
@@ -388,6 +430,8 @@ paths:
             type: string
             description: strict YYYY-MM-DD
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: emitting reminders (empty if member inactive or none apply)
           content:

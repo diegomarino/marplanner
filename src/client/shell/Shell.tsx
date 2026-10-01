@@ -117,12 +117,9 @@ function ShellServices({ children }: { children: ReactNode }) {
 
 export function Shell() {
   const [ready, setReady] = useState<boolean>(false);
-  // (FR-019/I18N-LOCALIZATION-INV-12): a plain boolean, not the raw fetch/Error
-  // detail — a status code or exception message is developer-facing diagnostic text, which must
-  // stay English always, so it is never rendered on this family-facing screen. See
-  // `ProvisioningScreen`'s own `error` prop doc for the one localized, friendly copy that covers
-  // every failure shape identically.
+  // Localized failure/retry copy uses only status and Retry-After, never raw error details.
   const [error, setError] = useState(false);
+  const [retryAfter, setRetryAfter] = useState<number | null>();
   const [provisioning, setProvisioning] = useState(false);
   // Determine current path for SPA routing (no router - parse window.location.pathname)
   const [currentPath, setCurrentPath] = useState<string>(window.location.pathname);
@@ -160,6 +157,7 @@ export function Shell() {
   const handleProvision = (bootstrapKey: string) => {
     setProvisioning(true);
     setError(false);
+    setRetryAfter(undefined);
 
     fetch("/api/auth/provision", {
       method: "POST",
@@ -168,6 +166,11 @@ export function Shell() {
       },
     })
       .then((res) => {
+        if (res.status === 429) {
+          const header = res.headers.get("Retry-After");
+          const seconds = header && /^\d+$/.test(header) ? Number(header) : NaN;
+          setRetryAfter(Number.isSafeInteger(seconds) && seconds > 0 ? seconds : null);
+        }
         if (!res.ok) throw new Error(`Provisioning failed: ${res.status}`);
         return res.json();
       })
@@ -184,7 +187,7 @@ export function Shell() {
       .catch((err: unknown) => {
         // The specific detail (a bad status, a thrown network error) is developer-facing
         // diagnostic text (FR-019) — never surfaced to the family; the boolean flag drives the
-        // ONE localized, friendly error copy in `ProvisioningScreen`. But DISCARDING it entirely
+        // localized, friendly error copy in `ProvisioningScreen`. But DISCARDING it entirely
         // would leave a failed provision with no diagnostic trace anywhere on a kiosk device.
         // INV-12 constrains the family-facing screen, not diagnostics — and the client logger is
         // strictly better than the console here: it feeds telemetry, so a device that will not
@@ -202,7 +205,12 @@ export function Shell() {
 
   if (!ready) {
     return (
-      <ProvisioningScreen onProvision={handleProvision} provisioning={provisioning} error={error} />
+      <ProvisioningScreen
+        onProvision={handleProvision}
+        provisioning={provisioning}
+        error={error}
+        retryAfter={retryAfter}
+      />
     );
   }
 
@@ -313,14 +321,20 @@ interface ProvisioningScreenProps {
   provisioning: boolean;
   /** Whether the last provision attempt failed. Deliberately a boolean, not the raw fetch/Error
    * detail (FR-019 / I18N-LOCALIZATION-INV-12: developer-facing diagnostic text stays English
-   * always and is therefore never surfaced on this family-facing screen) — the ONE localized,
-   * friendly error copy below covers a bad status, a thrown network error, or any other failure
-   * shape identically.
+   * always and is therefore never surfaced on this family-facing screen). Retry information
+   * comes only from the separate Retry-After value below.
    */
   error: boolean;
+  /** Undefined for ordinary failures; null when 429 carries no usable delay. No automatic retry. */
+  retryAfter?: number | null;
 }
 
-function ProvisioningScreen({ onProvision, provisioning, error }: ProvisioningScreenProps) {
+function ProvisioningScreen({
+  onProvision,
+  provisioning,
+  error,
+  retryAfter,
+}: ProvisioningScreenProps) {
   const [key, setKey] = useState("");
   const language = resolveProvisioningLanguage();
   const t = (messageKey: MessageKey): string =>
@@ -344,7 +358,15 @@ function ProvisioningScreen({ onProvision, provisioning, error }: ProvisioningSc
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <Field
             label={t("provisioning.gate.bootstrapKeyLabel")}
-            error={error ? t("provisioning.gate.error") : null}
+            error={
+              error
+                ? retryAfter === undefined
+                  ? t("provisioning.gate.error")
+                  : retryAfter === null
+                    ? t("provisioning.gate.throttled")
+                    : t("provisioning.gate.retryAfter").replace("{seconds}", String(retryAfter))
+                : null
+            }
           >
             <Input
               type="password"

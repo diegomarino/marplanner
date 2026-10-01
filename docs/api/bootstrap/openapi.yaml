@@ -17,6 +17,36 @@ components:
       description: >
         The minted `*` device key (an `mpk-…` value). Set HttpOnly+Secure+SameSite=Lax at
         provisioning; never readable by client JS and never echoed in any response body.
+  responses:
+    AuthenticationBackoff:
+      description: >
+        Repeated credential failures from this transport source. Valid active credentials remain
+        usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.
+      headers:
+        Retry-After:
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Remaining cooldown in seconds, rounded up. Retry manually.
+        Cache-Control:
+          required: true
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [error, message]
+            properties:
+              error:
+                type: string
+                const: too_many_requests
+              message:
+                type: string
+                const: Authentication retry required
   schemas:
     Health:
       type: object
@@ -146,6 +176,8 @@ paths:
             example: Bearer mpk-cedar-lantern-otter-ridge-velvet-amber
           description: The raw `*` bootstrap key. Never logged; never returned.
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Provisioned. Device key delivered via Set-Cookie; body has no raw key.
           headers:
@@ -171,6 +203,8 @@ paths:
         - deviceKeyCookie: []
       description: Available at cold boot with a valid key and no PIN (FR-008/009/011).
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Effective settings including the fully-populated locale object.
           content:
@@ -199,6 +233,8 @@ paths:
             schema:
               $ref: "#/components/schemas/WriteSettingsRequest"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Effective settings after the write.
           content:
@@ -240,6 +276,8 @@ paths:
             schema:
               $ref: "#/components/schemas/VerifyPinRequest"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Correct PIN → match true; incorrect PIN → match false. No state written.
           content:

@@ -8,6 +8,8 @@ import { generateKey, hashKey, verifyKey } from "./credentials";
 import { DEVICE_COOKIE, serializeAuthCookie } from "./cookies";
 import argon2 from "argon2";
 
+import { authenticationBackoff, sendAuthenticationBackoff } from "./throttle";
+
 const BOOTSTRAP_ENV = "MP_BOOTSTRAP_KEY";
 
 /** Provisioning logic — validate bootstrap key, mint cookie-bound device key.
@@ -16,41 +18,36 @@ const BOOTSTRAP_ENV = "MP_BOOTSTRAP_KEY";
  * contain the raw key.
  */
 export async function provisionDevice(app: FastifyInstance): Promise<void> {
+  const backoff = authenticationBackoff(app);
   app.post("/api/auth/provision", async (request: FastifyRequest, reply: FastifyReply) => {
+    const rejectCredential = (message: string) => {
+      const seconds = backoff.failure("bootstrap", request.ip);
+      if (seconds) return sendAuthenticationBackoff(reply, seconds);
+      return reply.code(401).send({ error: "unauthorized", message });
+    };
+    // Missing deployment configuration is not a credential failure, even without a header.
+    const configuredKey = process.env[BOOTSTRAP_ENV];
+    if (!configuredKey) {
+      return reply
+        .code(401)
+        .send({ error: "unauthorized", message: "Bootstrap key not configured" });
+    }
+
     // The raw `*` bootstrap key is presented in the Authorization header.
     const authHeader = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return reply.code(401).send({
-        error: "unauthorized",
-        message: "Bootstrap key is required",
-      });
+      return rejectCredential("Bootstrap key is required");
     }
 
     const rawBootstrapKey = authHeader.slice("Bearer ".length);
     if (!rawBootstrapKey) {
-      return reply.code(401).send({
-        error: "unauthorized",
-        message: "Bootstrap key is required",
-      });
-    }
-
-    // Read the configured bootstrap key from the environment.
-    const configuredKey = process.env[BOOTSTRAP_ENV];
-    if (!configuredKey) {
-      // No bootstrap key configured — the deployment stays locked (FR-003).
-      return reply.code(401).send({
-        error: "unauthorized",
-        message: "Bootstrap key not configured",
-      });
+      return rejectCredential("Bootstrap key is required");
     }
 
     // Validate the presented raw key against the configured bootstrap credential
     // using timing-safe comparison.
     if (!verifyKey(rawBootstrapKey, hashKey(configuredKey))) {
-      return reply.code(401).send({
-        error: "unauthorized",
-        message: "Invalid bootstrap key",
-      });
+      return rejectCredential("Invalid bootstrap key");
     }
 
     // The bootstrap key is valid — verify an active bootstrap row exists in DB.
@@ -77,18 +74,12 @@ export async function provisionDevice(app: FastifyInstance): Promise<void> {
 
     // Check active: revoked_at IS NULL AND (expires_at IS NULL OR expires_at > now).
     if (bootstrapRecord.revokedAt !== null) {
-      return reply.code(401).send({
-        error: "unauthorized",
-        message: "Bootstrap key has been revoked",
-      });
+      return rejectCredential("Bootstrap key has been revoked");
     }
 
     const now = Date.now();
-    if (bootstrapRecord.expiresAt !== null && bootstrapRecord.expiresAt < now) {
-      return reply.code(401).send({
-        error: "unauthorized",
-        message: "Bootstrap key has expired",
-      });
+    if (bootstrapRecord.expiresAt !== null && bootstrapRecord.expiresAt <= now) {
+      return rejectCredential("Bootstrap key has expired");
     }
 
     // Active bootstrap row confirmed — mint a new device key.

@@ -1060,6 +1060,9 @@ export const messages = {
     "provisioning.gate.submit": "Provision Device",
     "provisioning.gate.submitting": "Provisioning…",
     "provisioning.gate.error": "Provisioning failed. Check the bootstrap key and try again.",
+    "provisioning.gate.throttled": "Too many failed attempts. Wait before trying again.",
+    "provisioning.gate.retryAfter":
+      "Too many failed attempts. Wait at least {seconds} seconds before trying again.",
 
     // FR-002/FR-002a — the per-device kiosk-density control
     // (`src/client/shell/DensityControl.tsx`), shell chrome mounted alongside the printer
@@ -2110,6 +2113,10 @@ export const messages = {
     "provisioning.gate.submitting": "Aprovisionando…",
     "provisioning.gate.error":
       "No se pudo aprovisionar. Comprueba la clave de arranque e inténtalo de nuevo.",
+    "provisioning.gate.throttled":
+      "Demasiados intentos fallidos. Espera antes de volver a intentarlo.",
+    "provisioning.gate.retryAfter":
+      "Demasiados intentos fallidos. Espera al menos {seconds} segundos antes de volver a intentarlo.",
 
     // See the en block's comment for behavior details.
     "shell.density.accessibleName": "Modo kiosco",
