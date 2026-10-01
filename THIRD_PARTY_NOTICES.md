@@ -31,3 +31,9 @@ The local product preserves these implemented assets. Public redistribution is
 blocked until their source, permissions and required attribution are verified,
 and complete notices for bundled dependencies are assembled. Do not publish the
 corpora or infer clearance from the application's source license.
+
+## Blonde ponytail icon
+
+The chore catalog includes a blonde recoloring of the CC0 OpenClipart
+[female avatar with ponytail](https://freesvg.org/female-avatar-with-pony-tail).
+The original source attribution is retained in the SVG.

@@ -173,7 +173,8 @@ async function main() {
   let missing = 0;
   for (const emoji of emojis) {
     const filename = notoFilename(emojiToCodepoint(emoji));
-    const src = join(svgDir, filename);
+    const override = join(ROOT, "tools/dev/noto-overrides", filename);
+    const src = fs.existsSync(override) ? override : join(svgDir, filename);
     if (!fs.existsSync(src)) {
       console.warn(`  ⚠️  Missing from Noto source: ${emoji} → ${filename}`);
       missing++;
