@@ -154,16 +154,26 @@ describe("member colour public boundary (slice 021 T002)", () => {
   it("keeps database keys required and closed while supporting omitted raw-SQL inserts", async () => {
     const db = getDb();
     db.prepare(
-      "INSERT INTO members (id, display_name, role, created_at, updated_at) VALUES ('legacy', 'Legacy', 'parent', 1, 1)"
+      "INSERT INTO members (id, display_name, role, created_at, updated_at) VALUES ('10000000-0000-4000-8000-000000000001', 'Legacy', 'parent', 1, 1)"
     ).run();
     const listed = await app.inject({ method: "GET", url: "/api/members", cookies });
-    expect(listed.json()).toEqual([expect.objectContaining({ id: "legacy", colorKey: "blue" })]);
+    expect(listed.json()).toEqual([
+      expect.objectContaining({ id: "10000000-0000-4000-8000-000000000001", colorKey: "blue" }),
+    ]);
     for (const key of [null, "#ff0000", "not-a-key"]) {
       expect(() =>
-        db.prepare("UPDATE members SET color_key = ? WHERE id = 'legacy'").run(key)
+        db
+          .prepare(
+            "UPDATE members SET color_key = ? WHERE id = '10000000-0000-4000-8000-000000000001'"
+          )
+          .run(key)
       ).toThrow();
     }
-    expect(db.prepare("SELECT color_key FROM members WHERE id = 'legacy'").get()).toEqual({
+    expect(
+      db
+        .prepare("SELECT color_key FROM members WHERE id = '10000000-0000-4000-8000-000000000001'")
+        .get()
+    ).toEqual({
       color_key: "blue",
     });
   });

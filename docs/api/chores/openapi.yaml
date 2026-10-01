@@ -44,6 +44,20 @@ components:
       in: cookie
       name: mp_device_key
   schemas:
+    RouteError:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          enum:
+            - not_found
+            - internal_error
+        message:
+          type: string
     Routine:
       type: object
       required:
@@ -87,6 +101,8 @@ components:
           minLength: 1
         active:
           type: boolean
+        dayPeriodId:
+          description: Accepted and ignored for compatibility; the stored period is immutable.
     Chore:
       type: object
       required:
@@ -95,6 +111,7 @@ components:
         - name
         - sortOrder
         - active
+        - icon
       additionalProperties: false
       properties:
         id:
@@ -109,6 +126,10 @@ components:
           minimum: 0
         active:
           type: boolean
+        icon:
+          type:
+            - string
+            - "null"
     ChoreInput:
       type: object
       required:
@@ -118,6 +139,10 @@ components:
         name:
           type: string
           minLength: 1
+        icon:
+          type:
+            - string
+            - "null"
     ChoreEditInput:
       type: object
       additionalProperties: false
@@ -130,6 +155,10 @@ components:
           type: string
         active:
           type: boolean
+        icon:
+          type:
+            - string
+            - "null"
     ChoreOrderInput:
       type: object
       required:
@@ -199,6 +228,7 @@ components:
         - id
         - name
         - completed
+        - icon
       additionalProperties: false
       properties:
         id:
@@ -207,6 +237,10 @@ components:
           type: string
         completed:
           type: boolean
+        icon:
+          type:
+            - string
+            - "null"
     BoardDayPeriod:
       type: object
       required:
@@ -438,6 +472,12 @@ paths:
                   $ref: "#/components/schemas/Chore"
         "401":
           description: missing/invalid device key
+        "404":
+          description: The requested routine does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteError"
     post:
       summary: Add a chore to a routine (appended at the end of sortOrder).
       security:
@@ -618,6 +658,12 @@ paths:
                   $ref: "#/components/schemas/Assignment"
         "401":
           description: missing/invalid device key
+        "404":
+          description: The requested routine does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteError"
   /api/routines/{id}/assignments/{memberId}:
     put:
       summary: Upsert the routine/member assignment (FR-001/FR-002/FR-005) — reactivation reuses the row.
@@ -744,8 +790,8 @@ paths:
             (FR-015).
         "400":
           description: >-
-            malformed or impossible date, missing/blank memberId, or not currently markable (INV-04)
-            — member/chore/routine/assignment state does not cover this date
+            malformed or impossible date, missing/blank memberId, or not currently markable (INV-04) —
+            member/chore/routine/assignment state does not cover this date
           content:
             application/json:
               schema:
@@ -754,6 +800,12 @@ paths:
           description: missing/invalid device key
         "404":
           description: no such chore
+        "500":
+          description: Unexpected storage failure; no completion event is emitted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteError"
     delete:
       summary: Uncomplete a chore for a member/date (FR-009) — ALWAYS allowed, idempotent, no PIN.
       security:

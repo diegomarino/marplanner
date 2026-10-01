@@ -45,6 +45,75 @@ components:
       in: cookie
       name: mp_device_key
   schemas:
+    DumpInternalError:
+      type: object
+      additionalProperties: false
+      required:
+        - statusCode
+        - error
+        - message
+      properties:
+        statusCode:
+          const: 500
+        error:
+          const: Internal Server Error
+        message:
+          type: string
+    Quiescing:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+      properties:
+        error:
+          const: quiescing
+        message:
+          type: string
+    PluginUnavailable:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+      properties:
+        code:
+          const: plugin_unavailable
+        message:
+          type: string
+    AuthForbidden:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+        - code
+      properties:
+        error:
+          const: forbidden
+        message:
+          type: string
+        code:
+          type: string
+          enum:
+            - credential_invalid
+            - scope_denied
+    AuthUnauthorized:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+        - code
+      properties:
+        error:
+          const: unauthorized
+        message:
+          type: string
+        code:
+          type: string
+          enum:
+            - credential_invalid
     BackupType:
       type: string
       enum:
@@ -205,6 +274,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BackupListResponse"
+        "401":
+          description: Missing, ambiguous or invalid API credential (shared authentication boundary).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUnauthorized"
+        "403":
+          description: >-
+            Revoked/expired credential or denied capability; code distinguishes credential loss from
+            scope denial.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthForbidden"
+        "503":
+          description: >-
+            The owning plugin is inactive or unavailable. Ordinary API traffic is also unavailable
+            during quiescent restore.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/PluginUnavailable"
+                  - $ref: "#/components/schemas/Quiescing"
   /api/backups/snapshot:
     post:
       operationId: createSnapshot
@@ -226,24 +319,23 @@ paths:
                 $ref: "#/components/schemas/BackupsError"
         "500":
           description: >
-            The snapshot write itself failed (e.g. ENOSPC) — error "backup_failed". `backup_failed`
-            IS a member of the closed RestoreResult error-code enum above (F7, review #636/#637) —
-            included there only for that union's exhaustiveness, since `restoreDatabase` itself
-            never returns it, same precedent as `upload_too_large`. The failure is also surfaced via
-            GET /api/backups's lastBackupError field and server logs.
+            The snapshot write itself failed (e.g. ENOSPC) — error "backup_failed". `backup_failed` IS
+            a member of the closed RestoreResult error-code enum above (F7, review #636/#637) —
+            included there only for that union's exhaustiveness, since `restoreDatabase` itself never
+            returns it, same precedent as `upload_too_large`. The failure is also surfaced via GET
+            /api/backups's lastBackupError field and server logs.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/BackupsError"
         "503":
-          description: >
-            The scheduler is not available (e.g. SCHEDULER_DISABLED=1 — the default Playwright
-            e2e/dev posture never calls initScheduler). A stable, English, internals-free envelope
-            (review F6) — never the scheduler's raw thrown message.
+          description: The owning plugin is inactive or unavailable.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BackupsError"
+                anyOf:
+                  - $ref: "#/components/schemas/BackupsError"
+                  - $ref: "#/components/schemas/PluginUnavailable"
   /api/backups/restore:
     post:
       operationId: restoreBackup
@@ -269,6 +361,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RestoreResult"
+        "401":
+          description: Missing, ambiguous or invalid API credential (shared authentication boundary).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUnauthorized"
         "404":
           description: The named backup vanished between list and action (or failed the F9 hardened resolve).
           content:
@@ -299,15 +397,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RestoreResult"
         "503":
-          description: >
-            Either: quiesce drain deadline expired — restore aborted fail-safe, active DB untouched,
-            scheduler restarted (self-resolving, retry shortly); OR the rollback itself failed
-            (`rollback_failed`) — a double-fault terminal state where the server remains quiesced
-            pending MANUAL recovery (never self-resolving; do not retry).
+          description: The owning plugin is inactive or unavailable.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RestoreResult"
+                anyOf:
+                  - $ref: "#/components/schemas/RestoreResult"
+                  - $ref: "#/components/schemas/PluginUnavailable"
   /api/backups/{filename}:
     delete:
       operationId: deleteBackup
@@ -329,6 +425,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BackupsError"
+        "401":
+          description: Missing, ambiguous or invalid API credential (shared authentication boundary).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUnauthorized"
+        "403":
+          description: >-
+            Revoked/expired credential or denied capability; code distinguishes credential loss from
+            scope denial.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthForbidden"
         "404":
           description: The named backup vanished between list and action.
           content:
@@ -337,12 +447,18 @@ paths:
                 $ref: "#/components/schemas/BackupsError"
         "409":
           description: >
-            Floor violation (retention_floor) or a pre-restore snapshot targeted while a restore is
-            in progress (protected_pre_restore).
+            Floor violation (retention_floor) or a pre-restore snapshot targeted while a restore is in
+            progress (protected_pre_restore).
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/BackupsError"
+        "503":
+          description: The owning plugin is inactive or unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginUnavailable"
   /api/backups/{filename}/download:
     get:
       operationId: downloadBackup
@@ -369,12 +485,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BackupsError"
+        "401":
+          description: Missing, ambiguous or invalid API credential (shared authentication boundary).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUnauthorized"
+        "403":
+          description: >-
+            Revoked/expired credential or denied capability; code distinguishes credential loss from
+            scope denial.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthForbidden"
         "404":
           description: The named backup vanished between list and action.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/BackupsError"
+        "503":
+          description: The owning plugin is inactive or unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginUnavailable"
   /api/backups/{filename}/download-sql:
     get:
       operationId: downloadBackupSql
@@ -400,12 +536,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BackupsError"
+        "401":
+          description: Missing, ambiguous or invalid API credential (shared authentication boundary).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUnauthorized"
+        "403":
+          description: >-
+            Revoked/expired credential or denied capability; code distinguishes credential loss from
+            scope denial.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthForbidden"
         "404":
           description: The named backup vanished between list and action.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/BackupsError"
+        "500":
+          description: Opening or re-validating the SQL dump source failed before streaming.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DumpInternalError"
+        "503":
+          description: The owning plugin is inactive or unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginUnavailable"
   /api/backups/upload:
     post:
       operationId: uploadBackup
@@ -432,6 +594,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BackupsError"
+        "401":
+          description: Missing, ambiguous or invalid API credential (shared authentication boundary).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUnauthorized"
+        "403":
+          description: >-
+            Revoked/expired credential or denied capability; code distinguishes credential loss from
+            scope denial.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthForbidden"
         "413":
           description: Over the size cap; zero bytes written.
           content:
@@ -449,9 +625,15 @@ paths:
         "500":
           description: >
             An unexpected failure inside the upload route (e.g. a disk write or rename failure). A
-            stable, English, internals-free upload_failed envelope — never the raw thrown message
-            (F4, independent review of #639/#640).
+            stable, English, internals-free upload_failed envelope — never the raw thrown message (F4,
+            independent review of #639/#640).
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/BackupsError"
+        "503":
+          description: The owning plugin is inactive or unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginUnavailable"

@@ -44,6 +44,17 @@ components:
       in: cookie
       name: mp_device_key
   schemas:
+    PluginUnavailable:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+      properties:
+        code:
+          const: plugin_unavailable
+        message:
+          type: string
     SettingsWrite:
       type: object
       required:
@@ -320,15 +331,26 @@ paths:
                 $ref: "#/components/schemas/ValidationError"
         "401":
           description: Missing/invalid API key.
+        "500":
+          description: Unexpected settings persistence failure; internal details are not exposed.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                additionalProperties: false
+                properties:
+                  error:
+                    const: Internal server error
   /api/weather:
     get:
       summary: Read the normalized forecast for the household's configured location
       description: >
-        WEATHER's only own surface (FR-024) — the location is read/written ONLY through App
-        Settings; no weather settings endpoint exists (negative-proved via `app.hasRoute`).
-        `forecast: null` covers every absence case alike (blank location, operator-disabled via
-        `WEATHER_ENABLED`, or a failed/timed-out upstream fetch) — NEVER a 5xx (WEATHER-INV-12, D3).
-        Gated only by the app-wide API-key boundary, no capability (mirrors `GET /api/settings`).
+        WEATHER's only own surface (FR-024) — the location is read/written ONLY through App Settings;
+        no weather settings endpoint exists (negative-proved via `app.hasRoute`). `forecast: null`
+        covers every absence case alike (blank location, operator-disabled via `WEATHER_ENABLED`, or a
+        failed/timed-out upstream fetch) — NEVER a 5xx (WEATHER-INV-12, D3). Gated only by the
+        app-wide API-key boundary, no capability (mirrors `GET /api/settings`).
       responses:
         "429":
           $ref: "#/components/responses/AuthenticationBackoff"
@@ -340,3 +362,9 @@ paths:
                 $ref: "#/components/schemas/WeatherResponse"
         "401":
           description: Missing/invalid API key.
+        "503":
+          description: The owning plugin is inactive or unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginUnavailable"

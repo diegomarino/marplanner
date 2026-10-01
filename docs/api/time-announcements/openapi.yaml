@@ -50,6 +50,34 @@ components:
       in: cookie
       name: mp_device_key
   schemas:
+    PluginUnavailable:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+      properties:
+        code:
+          const: plugin_unavailable
+        message:
+          type: string
+    AuthForbidden:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+        - code
+      properties:
+        error:
+          const: forbidden
+        message:
+          type: string
+        code:
+          type: string
+          enum:
+            - credential_invalid
+            - scope_denied
     TimeAnnouncementRule:
       type: object
       required:
@@ -198,6 +226,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/TimeAnnouncementRule"
+        "503":
+          description: The owning plugin is inactive or unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginUnavailable"
     post:
       summary: Create a rule (admin write capability)
       requestBody:
@@ -221,6 +255,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ValidationError"
+        "403":
+          description: >-
+            Revoked/expired credential or denied capability; code distinguishes credential loss from
+            scope denial.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthForbidden"
         "409":
           description: Active rule overlaps another active rule (same time + shared weekday).
           content:
@@ -259,6 +301,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ValidationError"
+        "403":
+          description: >-
+            Revoked/expired credential or denied capability; code distinguishes credential loss from
+            scope denial.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthForbidden"
         "404":
           description: Unknown rule id.
           content:
@@ -284,6 +334,14 @@ paths:
           $ref: "#/components/responses/AuthenticationBackoff"
         "204":
           description: Deleted permanently.
+        "403":
+          description: >-
+            Revoked/expired credential or denied capability; code distinguishes credential loss from
+            scope denial.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthForbidden"
         "404":
           description: Unknown rule id.
           content:

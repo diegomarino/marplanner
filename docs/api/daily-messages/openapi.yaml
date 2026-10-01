@@ -45,6 +45,17 @@ components:
       in: cookie
       name: mp_device_key
   schemas:
+    PluginUnavailable:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+      properties:
+        code:
+          const: plugin_unavailable
+        message:
+          type: string
     DailyMessage:
       type: object
       required:
@@ -223,10 +234,10 @@ paths:
   /api/daily-messages/current:
     get:
       summary: >
-        Outbound single read — the current message for (memberId, date), computed LIVE every call
-        (no stored snapshot). Consumed by Daily Briefing. Tolerant read: gates on member existence
-        not active-status (INV-08/AC-04, P2-B) — an unknown member -> 404, an archived member's
-        historical row stays readable.
+        Outbound single read — the current message for (memberId, date), computed LIVE every call (no
+        stored snapshot). Consumed by Daily Briefing. Tolerant read: gates on member existence not
+        active-status (INV-08/AC-04, P2-B) — an unknown member -> 404, an archived member's historical
+        row stays readable.
       security:
         - deviceKeyCookie: []
       parameters:
@@ -260,3 +271,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "503":
+          description: The owning plugin is inactive or unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginUnavailable"

@@ -48,6 +48,23 @@ components:
                 type: string
                 const: Authentication retry required
   schemas:
+    AuthForbidden:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+        - code
+      properties:
+        error:
+          const: forbidden
+        message:
+          type: string
+        code:
+          type: string
+          enum:
+            - credential_invalid
+            - scope_denied
     Health:
       type: object
       required:
@@ -217,6 +234,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "403":
+          description: >-
+            Revoked/expired credential or denied capability; code distinguishes credential loss from
+            scope denial.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthForbidden"
     put:
       operationId: putSettings
       summary: Replace one registered settings object.
@@ -224,8 +249,8 @@ paths:
         - deviceKeyCookie: []
       description: >
         Validates the envelope and entire object before persisting it. Successful writes return the
-        current effective settings projection. Unknown object names and invalid settings fail
-        without a partial write. The UI PIN does not authorize this operation.
+        current effective settings projection. Unknown object names and invalid settings fail without
+        a partial write. The UI PIN does not authorize this operation.
       requestBody:
         required: true
         content:

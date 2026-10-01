@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { describe, it, expect } from "vitest";
 import { hashKey } from "../../src/server/auth/credentials";
 import { getDb } from "../../src/server/db/client";
@@ -243,7 +244,7 @@ describe("member-write (T016 — US3 birthdate write-path)", () => {
       const db = getDb();
       const deviceKey = seedKeys(db);
 
-      const appId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const appId = randomUUID();
       const now = Date.now();
       db.prepare(
         "INSERT INTO members (id, display_name, role, lifecycle, birth_month, birth_day, birth_year, created_at, updated_at) VALUES (?, ?, ?, 'active', 6, 15, 1980, ?, ?)"
@@ -276,7 +277,7 @@ describe("member-write (T016 — US3 birthdate write-path)", () => {
       const db = getDb();
       const deviceKey = seedKeys(db);
 
-      const appId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const appId = randomUUID();
       const now = Date.now();
       db.prepare(
         "INSERT INTO members (id, display_name, role, lifecycle, birth_month, birth_day, birth_year, created_at, updated_at) VALUES (?, ?, ?, 'active', 3, 15, null, ?, ?)"
@@ -309,7 +310,7 @@ describe("member-write (T016 — US3 birthdate write-path)", () => {
       const db = getDb();
       const deviceKey = seedKeys(db);
 
-      const appId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const appId = randomUUID();
       const now = Date.now();
       db.prepare(
         "INSERT INTO members (id, display_name, role, lifecycle, birth_month, birth_day, birth_year, created_at, updated_at) VALUES (?, ?, ?, 'active', NULL, NULL, NULL, ?, ?)"
@@ -342,7 +343,7 @@ describe("member-write (T016 — US3 birthdate write-path)", () => {
       const db = getDb();
       const deviceKey = seedKeys(db);
 
-      const appId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const appId = randomUUID();
       const now = Date.now();
       db.prepare(
         "INSERT INTO members (id, display_name, role, lifecycle, birth_month, birth_day, birth_year, created_at, updated_at) VALUES (?, ?, ?, 'active', 6, 15, 1980, ?, ?)"
@@ -375,7 +376,7 @@ describe("member-write (T016 — US3 birthdate write-path)", () => {
       const db = getDb();
       const deviceKey = seedKeys(db);
 
-      const appId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const appId = randomUUID();
       const now = Date.now();
       db.prepare(
         "INSERT INTO members (id, display_name, role, lifecycle, birth_month, birth_day, birth_year, created_at, updated_at) VALUES (?, ?, ?, 'active', 6, 15, 1980, ?, ?)"
@@ -408,7 +409,7 @@ describe("member-write (T016 — US3 birthdate write-path)", () => {
       const db = getDb();
       const deviceKey = seedKeys(db);
 
-      const appId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const appId = randomUUID();
       const now = Date.now();
       db.prepare(
         "INSERT INTO members (id, display_name, role, lifecycle, birth_month, birth_day, birth_year, created_at, updated_at) VALUES (?, ?, ?, 'active', 6, 15, 1980, ?, ?)"
@@ -445,7 +446,7 @@ describe("member-write (T016 — US3 birthdate write-path)", () => {
       const db = getDb();
       const deviceKey = seedKeys(db);
 
-      const appId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const appId = randomUUID();
       const now = Date.now();
       db.prepare(
         "INSERT INTO members (id, display_name, role, lifecycle, created_at, updated_at) VALUES (?, ?, ?, 'active', ?, ?)"
@@ -502,7 +503,7 @@ describe("member-write (T016 — US3 birthdate write-path)", () => {
       const db = getDb();
       const deviceKey = seedKeys(db);
 
-      const appId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const appId = randomUUID();
       const now = Date.now();
       db.prepare(
         "INSERT INTO members (id, display_name, role, lifecycle, created_at, updated_at) VALUES (?, ?, ?, 'active', ?, ?)"
@@ -534,7 +535,7 @@ describe("member-write (T016 — US3 birthdate write-path)", () => {
       const db = getDb();
       const deviceKey = seedKeys(db);
 
-      const appId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const appId = randomUUID();
       const now = Date.now();
       db.prepare(
         "INSERT INTO members (id, display_name, role, lifecycle, created_at, updated_at) VALUES (?, ?, ?, 'active', ?, ?)"
@@ -565,7 +566,7 @@ describe("member-write (T016 — US3 birthdate write-path)", () => {
       const db = getDb();
       const deviceKey = seedKeys(db);
 
-      const appId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const appId = randomUUID();
       const now = Date.now();
       db.prepare(
         "INSERT INTO members (id, display_name, role, lifecycle, created_at, updated_at) VALUES (?, ?, ?, 'active', ?, ?)"

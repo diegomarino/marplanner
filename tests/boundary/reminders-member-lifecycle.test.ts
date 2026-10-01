@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { describe, it, expect } from "vitest";
 import { hashKey } from "../../src/server/auth/credentials";
 import { getDb } from "../../src/server/db/client";
@@ -30,7 +31,7 @@ describe("reminders-member-lifecycle boundary tests (T010/T011)", () => {
 
   function seedMember(role: "parent" | "child" = "child") {
     const db = getDb();
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const id = randomUUID();
     const now = Date.now();
     db.prepare(
       "INSERT INTO members (id, display_name, role, lifecycle, created_at, updated_at) VALUES (?, ?, ?, 'active', ?, ?)"

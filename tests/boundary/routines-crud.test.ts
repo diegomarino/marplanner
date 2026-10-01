@@ -49,6 +49,70 @@ describe("routines-crud boundary tests (T008 — red-by-design)", () => {
     }
   }
 
+  it("rejects invalid routine edits and chore icons without changing stored rows", async () => {
+    seedDayPeriods();
+    const { deviceKey } = seedKeys();
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    try {
+      const routine = (
+        await app.inject({
+          method: "POST",
+          url: "/api/routines",
+          cookies: { mp_device_key: deviceKey },
+          payload: { name: "Morning", dayPeriodId: "morning" },
+        })
+      ).json();
+      const chore = (
+        await app.inject({
+          method: "POST",
+          url: `/api/routines/${routine.id}/chores`,
+          cookies: { mp_device_key: deviceKey },
+          payload: { name: "Brush teeth", icon: "🪥" },
+        })
+      ).json();
+      const before = getDb().prepare("SELECT total_changes() AS changes").get();
+      for (const [method, url, payload] of [
+        ["PATCH", `/api/routines/${routine.id}`, { name: "Changed", active: "yes" }],
+        ["POST", `/api/routines/${routine.id}/chores`, { name: "New", icon: 7 }],
+        ["PATCH", `/api/chores/${chore.id}`, { name: "Changed", icon: 7 }],
+      ] as const) {
+        const response = await app.inject({
+          method,
+          url,
+          cookies: { mp_device_key: deviceKey },
+          payload,
+        });
+        expect(response.statusCode, url).toBe(400);
+        expect(response.json()).toMatchObject({
+          error: "validation_error",
+          message: expect.any(String),
+        });
+      }
+      expect(getDb().prepare("SELECT total_changes() AS changes").get()).toEqual(before);
+      expect(
+        (
+          await app.inject({
+            method: "GET",
+            url: `/api/routines/${routine.id}`,
+            cookies: { mp_device_key: deviceKey },
+          })
+        ).json()
+      ).toEqual(routine);
+      expect(
+        (
+          await app.inject({
+            method: "GET",
+            url: `/api/chores/${chore.id}`,
+            cookies: { mp_device_key: deviceKey },
+          })
+        ).json()
+      ).toEqual(chore);
+    } finally {
+      await app.close();
+    }
+  });
+
   // ── POST /api/routines — create a routine ────────────────────────────────
 
   it("POST /api/routines with valid dayPeriodId → 201 (FR-001)", async () => {

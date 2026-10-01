@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { describe, it, expect } from "vitest";
 import { hashKey } from "../../src/server/auth/credentials";
 import { getDb } from "../../src/server/db/client";
@@ -30,7 +31,7 @@ describe("member-assembly (T003 — wiring verification)", () => {
       "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
     ).run(`${Date.now()}-device`, deviceHash, now);
 
-    const memberId = `${Date.now()}-member`;
+    const memberId = randomUUID();
     db.prepare(
       "INSERT INTO members (id, display_name, role, lifecycle, created_at, updated_at) VALUES (?, ?, ?, 'active', ?, ?)"
     ).run(memberId, "Test Member", "parent", now, now);
@@ -66,7 +67,7 @@ describe("member-assembly (T003 — wiring verification)", () => {
       "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
     ).run(`${Date.now()}-device`, deviceHash, now);
 
-    const memberId = `${Date.now()}-member`;
+    const memberId = randomUUID();
     db.prepare(
       "INSERT INTO members (id, display_name, role, lifecycle, created_at, updated_at) VALUES (?, ?, ?, 'active', ?, ?)"
     ).run(memberId, "Test Member", "parent", now, now);
@@ -107,7 +108,7 @@ describe("member-assembly (T003 — wiring verification)", () => {
       "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
     ).run(`${Date.now()}-device`, deviceHash, now);
 
-    const memberId = `${Date.now()}-member`;
+    const memberId = randomUUID();
     db.prepare(
       "INSERT INTO members (id, display_name, role, lifecycle, created_at, updated_at) VALUES (?, ?, ?, 'archived', ?, ?)"
     ).run(memberId, "Test Member", "parent", now, now);
