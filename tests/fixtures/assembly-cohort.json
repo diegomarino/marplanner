@@ -771,7 +771,9 @@
             "raw V8 report omitting an unexecuted source is rejected",
             "raw V8 counters preserve an unexecuted file's denominator",
             "raw V8 report rejects a production file absent from reviewed policy",
-            "declaration files remain visible with zero executable metrics"
+            "declaration files remain visible with zero executable metrics",
+            "preflight rejects stale coverage fingerprints before runners",
+            "browser preflight rejects inherited fixture and server overrides"
           ],
           "tools/verify-test-cohorts.test.mjs": [
             "accepts exact independently expected files and runtime case IDs",
@@ -9122,7 +9124,6 @@
     ".github/dependabot.yml",
     ".github/runtime-paths.regex",
     ".github/workflows/coverage.yml",
-    ".github/workflows/full-gate.yml",
     ".gitignore",
     ".nvmrc",
     ".prettierignore",
