@@ -125,8 +125,22 @@ Document runnable commands in [onboarding](../../development/onboarding.md) and 
 The implemented check workflow runs standard once in CI, then transfers and verifies its raw artifacts in the dependent browser job. Early preflights reject stale source policy and known environment mistakes before expensive work; they do not authenticate all historical execution inputs.
 
 The coordinated local launcher and portable container recipe implement bounded
-installation workflows. Runtime `BASE_PATH` injection, automatic pre-migration
-snapshots and the remaining distribution safety obligations are still open. The
+installation workflows. The shared boot/seed/restore migration runner creates a unique private logical SQLite
+recovery snapshot through synchronous `VACUUM INTO`, including committed WAL data.
+The snapshot file and containing directory are fsynced before migration ledger or
+schema writes.
+Snapshot failure aborts boot/seed; during restore it invokes existing rollback to
+the original active pre-restore state. The migration snapshot captures the restored
+older candidate, not that original active state. No pending migrations create no snapshot.
+Fresh pending migrations also snapshot, and SQL failures retain the restore point.
+Snapshots live under `BACKUPS_ROOT/pre-migration/snapshot-<unique>/database.db`, require
+operator-managed disk space/retention, and are recovered offline outside the Admin
+backup shelf. Failed attempts may leave partial files/directories; recovery requires
+a completed, independently verified snapshot. These are logical snapshots, not
+physical-byte copies. Explicit declared IDs survive; implicit rowids may change. See
+[operations](../../operations.md#pre-migration-recovery-snapshots). Runtime `BASE_PATH`
+injection, `SKIP_MIGRATION`, historical upgrade compatibility and remaining
+distribution safety obligations are still open. The
 container check is an explicit command; this ADR does not prove that every release
 gate or publishing lane described above is implemented.
 

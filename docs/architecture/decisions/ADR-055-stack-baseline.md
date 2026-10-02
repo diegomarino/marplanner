@@ -88,8 +88,14 @@ instance and a local persistent volume. The server and seed CLI enforce exclusiv
 storage ownership, and all shared product SQLite opens reject recognized Linux
 network filesystem types. Database file symlinks and hardlinks are rejected; parent
 directory aliases are canonicalized. Direct external SQLite writers and individual
-file bind-mount aliases bypass this cooperative boundary. Runtime `BASE_PATH` and
-automatic pre-migration snapshots remain open obligations. Packaging and platform-specific runtime evidence do not establish
+file bind-mount aliases bypass this cooperative boundary. Pending migrations now
+require a flushed logical pre-migration recovery snapshot in the shared boot/seed/restore
+runner; snapshot failure aborts before migration SQL. During restore, existing rollback
+recovers the original active pre-restore state, distinct from the older restored
+candidate captured by the migration snapshot. Failed attempts may retain partial
+files; only completed, verified snapshots are recovery points. Recovery and retention are operator-managed, as described in
+[operations](../../operations.md#pre-migration-recovery-snapshots). Runtime `BASE_PATH`
+and the remaining migration/distribution obligations remain open. Packaging and platform-specific runtime evidence do not establish
 full distribution acceptance.
 
 ## Acceptance criteria
@@ -107,13 +113,15 @@ full distribution acceptance.
 - ~~Host-coupling re-scan of ADR-001..054 (config-externalization audit) — tracked, not yet
   executed.~~ **DONE 2026-06-30 (peer-reviewed).** Verdict: ADR-001..036 structurally clean
   (ADR-032/033 over-deliver on portability); no destructive backward ripple. Findings folded into
-  [developer verification policy](../../quality/verification.md) § _Operator Configuration & Runtime Environment_: canonical env-var
-  scheme (resolves "reserved names" below + ADR-042 backups root + ADR-053 UniFi key); operator-only
+  [operations](../../operations.md): current operator configuration and storage
+  contract (resolves "reserved names" below + ADR-042 backups root + ADR-053 UniFi key); operator-only
   `WEATHER_ENDPOINT`/`WEATHER_ENABLED` (ADR-052); volume UID/GID writability + boot preflight; host
   clock (NTP) precondition.
 - ~~Exact reserved data dir / env var names (`DATABASE_PATH`, `DATA_DIR`, `BASE_PATH`) — naming
-  only.~~ **Resolved** in the DX contract env-var registry (`DATA_DIR` root; `DATABASE_PATH` /
-  `BACKUPS_ROOT` derive from it; plugin keys `MARPLANNER_PLUGIN_<ID>_<KEY>`).
+  only.~~ **Resolved** by the maintained [operator contract](../../operations.md): `DATA_DIR`
+  is the storage root; `DATABASE_PATH` defaults to `marplanner.db`; `BACKUPS_ROOT`
+  defaults under `DATA_DIR`. Integration overrides use the explicit keys in the
+  environment examples and Compose allowlist. `BASE_PATH` implementation remains open.
 - ~~**OPEN (parked, structural):** `BASE_PATH` × Vite — build-time `base` vs single prebuilt
   image.~~ **RESOLVED at spec level (2026-06-30):** `BASE_PATH` is a **runtime** env (build-arg
   excluded — it would break this image's pull-one-prebuilt distribution); the SPA base path is

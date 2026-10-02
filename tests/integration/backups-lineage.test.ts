@@ -113,4 +113,49 @@ describe("backup restore lineage integration", () => {
       rmSync(migrationsDir, { recursive: true, force: true });
     }
   });
+
+  it("rolls back active data and retains pre-restore snapshot when pre-migration recovery is blocked", async () => {
+    const migrationsDir = makeMigrationsDirectory(
+      "CREATE TABLE lineage_probe (id INTEGER PRIMARY KEY NOT NULL);"
+    );
+    const root = resolveBackupsRoot();
+    const lane = path.join(root, "pre-migration");
+    const retainedLane = path.join(root, "pre-migration-retained");
+    fs.renameSync(lane, retainedLane);
+    fs.writeFileSync(lane, "blocked recovery lane");
+    try {
+      insertActiveMember("Protected recovery failure data");
+      const filename = nextSnapshotFilename();
+      writeBaselineBackup(filename);
+
+      const result = await restoreDatabase(
+        { filename, confirmFilename: filename },
+        { migrationsDir }
+      );
+
+      expect(result).toMatchObject({ status: "migration_failed_rolled_back" });
+      expect(activeMemberNames()).toEqual(["Protected recovery failure data"]);
+      expect(
+        getDb().prepare("SELECT name FROM sqlite_schema WHERE name = 'lineage_probe'").get()
+      ).toBeUndefined();
+      const preRestore = fs.readdirSync(root).filter((name) => name.startsWith("pre-restore-"));
+      expect(preRestore).toHaveLength(1);
+      const snapshot = new Database(path.join(root, preRestore[0]), {
+        readonly: true,
+        fileMustExist: true,
+      });
+      try {
+        expect(snapshot.prepare("SELECT display_name FROM members").all()).toEqual([
+          { display_name: "Protected recovery failure data" },
+        ]);
+        expect(snapshot.pragma("integrity_check", { simple: true })).toBe("ok");
+      } finally {
+        snapshot.close();
+      }
+    } finally {
+      fs.unlinkSync(lane);
+      fs.renameSync(retainedLane, lane);
+      rmSync(migrationsDir, { recursive: true, force: true });
+    }
+  });
 });

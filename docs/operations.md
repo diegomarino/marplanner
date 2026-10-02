@@ -63,8 +63,8 @@ Product SQLite opens reject recognized Linux NFS, SMB and CIFS filesystem types.
 Other Linux filesystem types are allowed; macOS and other platforms warn that
 classification is unavailable. This check does not certify arbitrary mounts as
 safe: use local storage suitable for SQLite WAL. Runtime `BASE_PATH` support
-remains unimplemented: serve at `/`. Automatic pre-migration snapshots also remain
-an open obligation.
+remains unimplemented: serve at `/`. Before pending migrations, the server creates
+a recovery snapshot as described below; this does not establish full distribution acceptance.
 
 Loopback publication supports local browser access. Remote browser access requires
 a trusted external reverse proxy terminating HTTPS and forwarding to the loopback
@@ -81,8 +81,8 @@ docker compose --env-file infra/docker/.env.local -f infra/docker/compose.yaml -
 
 `down` retains the named data volume. Do not use `down -v` for an installation
 whose data must survive. Before an upgrade, activate Backups, create a consistent
-snapshot and preserve it separately; automatic migrations at boot do not establish
-the still-open automatic pre-migration snapshot requirement. Never seed at container
+snapshot and preserve it separately. Automatic pre-migration recovery snapshots
+provide a local restore point; they do not replace a separately retained upgrade backup. Never seed at container
 startup. The recipe has no provider agent, platform workaround or automatic
 publishing/deployment. For container acceptance, build with source provenance labels
 from the maintained candidate inventory, then run the harness:
@@ -146,6 +146,51 @@ configuration and a management credential; ordinary device credentials cannot
 manage it. Spoken time requires browser speech support. Printing requires pairing
 from a supported browser with an explicit user gesture. These integrations do not
 become live merely because their configuration form is available.
+
+## Pre-migration recovery snapshots
+
+The shared migration runner used by boot, seed and restore creates a consistent
+logical SQLite snapshot using synchronous `VACUUM INTO` before applying pending migration SQL. It writes a unique private
+`BACKUPS_ROOT/pre-migration/snapshot-<unique>/database.db` file, defaulting to
+`DATA_DIR/backups/pre-migration/snapshot-<unique>/database.db`. The snapshot includes committed WAL data. Creation uses a temporary `.pending.db`
+file, fsyncs it, renames it to `database.db`, and fsyncs its containing directory
+before migration ledger or schema writes. Newly created directory parents are
+also synced. New recovery directories use mode `0700` and snapshots use `0600`. If snapshot creation or flushing fails, startup aborts without
+applying pending migrations. A fresh database with pending migrations also gets a
+snapshot; a database with no pending migrations does not. A SQL failure retains the
+snapshot for recovery. Failed attempts may leave `.pending.db` or attempt
+directories, and a failed final directory sync may leave `database.db` without a
+successful completion record. Use only completed, independently verified snapshots
+for recovery.
+
+During restore, this migration snapshot captures the restored older candidate
+before its upgrade. It is distinct from the pre-restore snapshot of the original
+active database. A migration-snapshot failure during restore invokes the existing
+rollback to that original pre-restore state; rollback failure keeps the server
+quiesced and requires the recovery procedure below.
+
+These files contain household data and credentials. Keep their directory private
+and on persistent storage. Reserve disk space for another complete logical database
+before an upgrade. Recovery snapshots accumulate: there is no automatic pruning.
+Operators may remove obsolete recovery files only after verifying a separate
+recoverable backup and confirming the files are no longer needed. These snapshots
+are for offline recovery and do not appear in the Admin backup shelf.
+
+For offline recovery, stop every application and seed process using the database,
+disable automatic restarts, and exclude external SQLite writers. Preserve the
+original database, any matching WAL/SHM sidecars, the recovery snapshot and the
+ownership sentinel separately before arranging a swap. Restore the consistent
+snapshot as the database with fresh sidecars, retaining the stable ownership
+sentinel; do not pair the restored snapshot with the original WAL/SHM. Never delete
+WAL files from a live database or remove the sentinel to bypass an owner. Keep the
+original recovery materials until the restored instance and its household state
+have been verified. Re-running the same failed upgrade is not recovery: use a
+reviewed runtime/migration correction before restarting.
+
+`VACUUM INTO` is a logical snapshot, not an exact physical-byte copy. It preserves
+explicit declared IDs but may change implicit SQLite rowids.
+The migration runner itself does not provide `SKIP_MIGRATION`, automatic rollback, arbitrary
+historical-version compatibility or runtime subpath hosting.
 
 ## Snapshot and restore
 
