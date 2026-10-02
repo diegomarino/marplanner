@@ -78,8 +78,18 @@ export async function runSeedCli(
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  const { acquireStorageOwnership } = await import("../runtime-storage");
+  const { resetDb, resolveDbPath } = await import("../client");
   void runSeedCli(process.argv.slice(2), {
-    runSeedProfile,
+    runSeedProfile: async (options) => {
+      const releaseOwnership = acquireStorageOwnership(resolveDbPath());
+      try {
+        return await runSeedProfile(options);
+      } finally {
+        resetDb();
+        releaseOwnership();
+      }
+    },
     seedsDirectory: process.env.SEED_DIRECTORY,
     stdout: (line) => process.stdout.write(line),
     stderr: (line) => process.stderr.write(line),
