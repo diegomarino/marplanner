@@ -12,7 +12,7 @@
   },
   "scripts": {
     "test": "node --test tools/*.test.mjs",
-    "dev": "vite",
+    "dev": "node tools/dev/start-local.mjs",
     "dev:server": "node --env-file-if-exists=.env.local --import tsx --watch src/server/index.ts",
     "seed": "node --env-file-if-exists=.env.local --import tsx src/server/db/seeds/cli.ts --mode public",
     "seed:private": "node --env-file-if-exists=.env.local --import tsx src/server/db/seeds/cli.ts --mode private",
@@ -52,7 +52,8 @@
     "test:api-contract-audit": "node tools/api-contract-audit/audit.test.mjs .",
     "check:openapi-bodies": "node tools/api-contract-audit/audit.mjs --product .",
     "generate:ui-catalog": "node tools/dev/generate-ui-catalog.mjs",
-    "check:ui-catalog": "node tools/dev/generate-ui-catalog.mjs --check"
+    "check:ui-catalog": "node tools/dev/generate-ui-catalog.mjs --check",
+    "check:container": "node tools/container-smoke.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "6.3.1",

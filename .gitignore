@@ -11,6 +11,9 @@ test-results/
 # under src/client/chores/noto/ are committed; this raw upstream cache is not.
 tools/dev/.noto-emoji-cache/
 
+# Per-worktree development storage
+.data/
+
 # SQLite — local data store (PV2-055), never committed
 *.db
 *.db-wal

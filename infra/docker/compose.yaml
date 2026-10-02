@@ -1,0 +1,37 @@
+services:
+  marplanner:
+    image: marplanner:review
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    ports:
+      - target: 3000
+        published: "${PUBLISHED_PORT:-0}"
+        host_ip: 127.0.0.1
+        protocol: tcp
+    volumes:
+      - marplanner-data:/data
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=3000
+      - DATA_DIR=/data
+      - DATABASE_PATH=marplanner.db
+      - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN:?MP_ACCESS_TOKEN is required}
+      - MP_BOOTSTRAP_KEY=${MP_BOOTSTRAP_KEY:?MP_BOOTSTRAP_KEY is required}
+      - ADMIN_PIN=${ADMIN_PIN:?ADMIN_PIN is required}
+      - MP_MANAGEMENT_KEY
+      - BACKUPS_ROOT
+      - UNIFI_API_KEY
+      - UNIFI_SITE_ID
+      - UNIFI_HOST
+      - UNIFI_CONSOLE_ID
+      - UNIFI_TLS_INSECURE
+      - WEATHER_ENABLED
+      - WEATHER_ENDPOINT
+      - QUOTE_ENDPOINT
+      - ONTHISDAY_ENDPOINT
+    stop_grace_period: 15s
+
+volumes:
+  marplanner-data:

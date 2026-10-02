@@ -53,7 +53,7 @@ self-hosters** (N users × 1 instance each):
   templates); **the image NEVER** — leaking platform specifics into the image forks the artifact.
 - **Phase 1 (committed):** one platform-agnostic Docker image as source-of-truth runtime; config
   100% via env + mounted volume (no baked secrets/paths/host assumptions); SQLite on a persistent
-  named volume (ADR-017/042 backups copy the volume file); a reference `docker-compose.yml`.
+  named volume (ADR-017/042 backups copy the volume file); a reference `infra/docker/compose.yaml`.
 - **Phase 2 (additive, on-demand):** per-platform recipes over the SAME image; Fly.io demoted from
   assumed target to one optional recipe. For a SQLite app the only substantial per-PaaS variance is
   **persistent storage for the `.db`** + backup wiring.
@@ -74,6 +74,14 @@ self-hosters** (N users × 1 instance each):
    (single-process makes this trivial) + explicit `SQLITE_BUSY` handling so writes are never silently
    lost. **Pin `better-sqlite3` to a build bundling SQLite ≥ 3.51.3** (pre-3.51.3 WAL-reset
    multi-writer corruption bug); assert the bundled version in `check:standard`.
+
+## Implementation status (2026-10-02)
+
+The portable container recipe supports root-path hosting with one application
+instance and a local persistent volume. Runtime `BASE_PATH`, enforced single-writer
+locking, network-filesystem detection and automatic pre-migration snapshots remain
+open obligations. Packaging and platform-specific runtime evidence do not establish
+full distribution acceptance.
 
 ## Acceptance criteria
 

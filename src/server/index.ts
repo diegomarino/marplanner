@@ -178,6 +178,7 @@ export async function main(): Promise<void> {
     const shutdown = async (): Promise<void> => {
       if (shuttingDown) return;
       shuttingDown = true;
+      if (process.env.MP_LOCAL_READINESS === "1") console.log('MP_LOCAL_READY {"type":"stopping"}');
 
       // A hung `app.close`/`scheduler.stop` must not wedge the process
       // forever — force-exit after a few seconds. `unref`d so it never
@@ -223,6 +224,13 @@ export async function main(): Promise<void> {
       port: Number(process.env.PORT ?? 3000),
       host: process.env.HOST ?? "0.0.0.0",
     });
+
+    if (process.env.MP_LOCAL_READINESS === "1") {
+      const address = app.server.address();
+      if (address && typeof address !== "string") {
+        console.log(`MP_LOCAL_READY ${JSON.stringify({ type: "ready", port: address.port })}`);
+      }
+    }
 
     // `publish` closes the C3 race directly: it fires before `startScheduler`'s internal
     // `await scheduler.start` (which can itself await a real, slow catch-up write), so

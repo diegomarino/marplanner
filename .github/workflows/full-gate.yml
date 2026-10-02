@@ -25,6 +25,10 @@ jobs:
       - run: echo "MP_CANDIDATE_ID=$(node tools/candidate-identity.mjs)" >> "$GITHUB_ENV"
       - run: npx playwright install --with-deps --only-shell chromium
       - run: npm run check:full
+      - name: Build production container (runner architecture only)
+        run: docker build -f infra/docker/Dockerfile --label org.marplanner.candidate="$MP_CANDIDATE_ID" --label org.opencontainers.image.revision="$GITHUB_SHA" -t marplanner:review .
+      - name: Accept built container lifecycle and browser flow
+        run: npm run check:container -- --image marplanner:review
       - name: Retain raw discovery, results, V8 coverage and browser report
         if: always()
         uses: actions/upload-artifact@v4

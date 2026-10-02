@@ -42,6 +42,15 @@ describe("access gate", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toContain("access-gate-form");
     expect(res.body).not.toContain(SHELL_SENTINEL);
+
+    const unrelatedCookie = await app.inject({
+      method: "GET",
+      url: "/",
+      headers: { cookie: "unrelated=value" },
+    });
+    expect(unrelatedCookie.statusCode).toBe(200);
+    expect(unrelatedCookie.body).toContain("access-gate-form");
+    expect(unrelatedCookie.body).not.toContain(SHELL_SENTINEL);
   });
 
   it("any frontend route: GET /some/deep/route with no cookie → form (no shell, no 401)", async () => {
@@ -77,6 +86,11 @@ describe("access gate", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toContain("access-gate-form");
     expect(res.headers["set-cookie"]).toBeUndefined();
+
+    const frontend = await app.inject({ method: "GET", url: "/" });
+    expect(frontend.statusCode).toBe(200);
+    expect(frontend.body).toContain("access-gate-form");
+    expect(frontend.body).not.toContain(SHELL_SENTINEL);
   });
 
   it("fail-closed: non-mpg token ⇒ gate unpassable", async () => {
