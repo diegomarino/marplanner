@@ -122,6 +122,10 @@ export async function main(): Promise<void> {
     const DATA_DIR = process.env.DATA_DIR ?? process.cwd();
     assertDataDirWritable(DATA_DIR);
 
+    const { acquireStorageOwnership } = await import("./db/runtime-storage");
+    const { resolveDbPath } = await import("./db/client");
+    acquireStorageOwnership(resolveDbPath());
+
     const { runMigrations } = await import("./db/migrate");
     runMigrations();
 

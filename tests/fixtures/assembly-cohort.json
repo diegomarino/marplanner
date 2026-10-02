@@ -740,6 +740,24 @@
             "package exposes a named member-colour drift command inside check:fast",
             "check mode detects generated stylesheet drift and restores cleanly"
           ],
+          "tools/noto-emojis.test.mjs": [
+            "parseEmojisFromCatalog extracts unique emoji literals in first-seen order",
+            "parseEmojisFromCatalog throws when the catalog has no emoji entries",
+            "emojiToCodepoint converts a single-codepoint emoji to lowercase hex",
+            "emojiToCodepoint strips the FE0F variation selector",
+            "notoFilename builds the Noto SVG filename for a codepoint",
+            "computeSyncPlan reports catalog emojis missing a vendored file",
+            "computeSyncPlan reports vendored files no longer referenced by the catalog",
+            "--check exits non-zero when the vendored directory drifts from the catalog",
+            "generation preserves the custom blonde ponytail override"
+          ],
+          "tools/storage-runtime.test.mjs": [
+            "storage ownership rejects aliases, and releases after clean exit and crash",
+            "ownership remains held while the product connection is reset and its inode replaced"
+          ],
+          "tools/ui-catalog.test.mjs": [
+            "UI catalog matches the real shared exports and detects a new export"
+          ],
           "tools/verify-coverage.test.mjs": [
             "accepts complete numeric evidence",
             "rejects unexecuted source omitted",
@@ -772,20 +790,6 @@
             "normalizes Playwright stable spec ID and expected status",
             "rejects a Node-only modifier even when the runner executes all cases",
             "standard gate checks Node and Vitest without a Playwright artifact"
-          ],
-          "tools/noto-emojis.test.mjs": [
-            "parseEmojisFromCatalog extracts unique emoji literals in first-seen order",
-            "parseEmojisFromCatalog throws when the catalog has no emoji entries",
-            "emojiToCodepoint converts a single-codepoint emoji to lowercase hex",
-            "emojiToCodepoint strips the FE0F variation selector",
-            "notoFilename builds the Noto SVG filename for a codepoint",
-            "computeSyncPlan reports catalog emojis missing a vendored file",
-            "computeSyncPlan reports vendored files no longer referenced by the catalog",
-            "--check exits non-zero when the vendored directory drifts from the catalog",
-            "generation preserves the custom blonde ponytail override"
-          ],
-          "tools/ui-catalog.test.mjs": [
-            "UI catalog matches the real shared exports and detects a new export"
           ]
         }
       },
@@ -821,6 +825,21 @@
             "full-access authentication boundary denies a expired integration bearer credential before the protected handler can disclose",
             "full-access authentication boundary fails closed before disclosure when cookie and bearer credentials conflict",
             "full-access authentication boundary does not accept an Admin PIN as backend authorization"
+          ],
+          "tests/boundary/auth-throttling.test.ts": [
+            "authentication failure backoff public paths aggregates cookie, bearer and missing failures across routes; valid traffic survives cooldown",
+            "authentication failure backoff public paths doubles at exact cooldown boundaries, caps at 60 seconds and does not extend cooldown",
+            "authentication failure backoff public paths excludes unknown routes, transport conflicts, scope denials and input failures",
+            "authentication failure backoff public paths counts revoked and exactly expired credentials without leaking them",
+            "authentication failure backoff public paths isolates transport source and bootstrap flow, ignoring spoofed forwarding headers",
+            "authentication failure backoff public paths resets fixed observation windows at their exact upper boundary",
+            "authentication failure backoff public paths serializes concurrent failures without losing counts or escalating during cooldown",
+            "authentication failure backoff public paths retains failures through successful NAT traffic and resets only at the quiet boundary",
+            "authentication failure backoff public paths bounds state to 5000 entries, evicts the least recently failed source and expires idle state",
+            "authentication failure backoff public paths normalizes expanded IPv6 and hexadecimal IPv4-mapped peers",
+            "authentication failure backoff public paths bootstrap counts missing, revoked and expired failures, preserving exact expiry semantics",
+            "authentication failure backoff public paths does not count absent bootstrap configuration or unreconciled server records",
+            "authentication failure backoff public paths handles scoped IPv6 transport peers without converting credential failures to server errors"
           ],
           "tests/boundary/backups-lineage.test.ts": [
             "backup restore lineage classification accepts a sentinel-equal backup without a forward migration",
@@ -1384,7 +1403,11 @@
             "db-pragmas journal_mode is WAL",
             "db-pragmas foreign_keys is ON",
             "db-pragmas STRICT tables reject BLOB values for typed columns",
-            "db-pragmas STRICT tables reject NULL on NOT NULL typed columns"
+            "db-pragmas STRICT tables reject NULL on NOT NULL typed columns",
+            "runtime storage safeguards rejects recognized Linux network storage before any SQLite files are created",
+            "runtime storage safeguards checks the existing database mount and propagates filesystem errors",
+            "runtime storage safeguards rejects file aliases and preserves malformed sentinels",
+            "runtime storage safeguards holds ownership independently of product connections and releases idempotently"
           ],
           "tests/boundary/encoding-bypass.test.ts": [
             "percent-encoded /api bypass is blocked \u2014 multi-variant (#99) GET /%61pi/settings \u2192 401 unauthorized at the auth-boundary middleware",
@@ -2422,7 +2445,8 @@
             "seed CLI adapter imports without running seeds, writing streams or changing exit status",
             "seed CLI adapter runs the public profile with an injected directory and formats its report",
             "seed CLI adapter accepts private mode and rejects invalid arguments before effects",
-            "seed CLI adapter contains runner failures and unknown thrown values"
+            "seed CLI adapter contains runner failures and unknown thrown values",
+            "executes the real CLI entrypoint with storage ownership and releases it after seeding"
           ],
           "tests/boundary/seed-daily-content.test.ts": [
             "daily content demo seed boundary seeds fictional messages and briefing preferences through authoritative reads",
@@ -3450,6 +3474,13 @@
             "WeatherManagement \u2014 every error state is announced (SC-011) announces a load failure through ErrorNotice's live region",
             "WeatherManagement \u2014 every error state is announced (SC-011) announces a save failure through ErrorNotice's live region",
             "WeatherManagement \u2014 unchanged behaviour after migration (regression guard) still writes the household weather location via PUT /api/settings on Save"
+          ],
+          "tests/client/noto-emoji.test.tsx": [
+            "emojiToCodepoint converts a single-codepoint emoji to its lowercase hex codepoint",
+            "emojiToCodepoint strips the FE0F variation selector",
+            "emojiToCodepoint joins multi-codepoint sequences with underscores",
+            "NotoEmoji renders an img sourced from the url map for a vendored emoji",
+            "NotoEmoji falls back to the literal Unicode glyph when the emoji is not vendored"
           ],
           "tests/client/plugin-contributions.test.tsx": [
             "active plugin contribution projection (Slice 026 T010) renders active contributions only while core and active siblings remain",
@@ -4751,28 +4782,6 @@
             "telemetry retention prune (T011 \u2014 research D7) CLIENT-LOGGING-TELEMETRY-INV-09: strictly-older-than-cutoff deletion idempotent re-run: a second prune at the same frozen instant deletes nothing further",
             "telemetry retention prune (T011 \u2014 research D7) real registration path \u2014 runJobNow(\"telemetry.prune\") CLIENT-LOGGING-TELEMETRY-AC-04/-INV-09: prunes aged rows and keeps fresh rows through the actual registered scheduler job",
             "telemetry retention prune (T011 \u2014 research D7) real registration path \u2014 runJobNow(\"telemetry.prune\") re-running the real registered job after a prune completes without deleting anything further"
-          ],
-          "tests/client/noto-emoji.test.tsx": [
-            "emojiToCodepoint converts a single-codepoint emoji to its lowercase hex codepoint",
-            "emojiToCodepoint strips the FE0F variation selector",
-            "emojiToCodepoint joins multi-codepoint sequences with underscores",
-            "NotoEmoji renders an img sourced from the url map for a vendored emoji",
-            "NotoEmoji falls back to the literal Unicode glyph when the emoji is not vendored"
-          ],
-          "tests/boundary/auth-throttling.test.ts": [
-            "authentication failure backoff public paths aggregates cookie, bearer and missing failures across routes; valid traffic survives cooldown",
-            "authentication failure backoff public paths doubles at exact cooldown boundaries, caps at 60 seconds and does not extend cooldown",
-            "authentication failure backoff public paths excludes unknown routes, transport conflicts, scope denials and input failures",
-            "authentication failure backoff public paths counts revoked and exactly expired credentials without leaking them",
-            "authentication failure backoff public paths isolates transport source and bootstrap flow, ignoring spoofed forwarding headers",
-            "authentication failure backoff public paths resets fixed observation windows at their exact upper boundary",
-            "authentication failure backoff public paths serializes concurrent failures without losing counts or escalating during cooldown",
-            "authentication failure backoff public paths retains failures through successful NAT traffic and resets only at the quiet boundary",
-            "authentication failure backoff public paths bounds state to 5000 entries, evicts the least recently failed source and expires idle state",
-            "authentication failure backoff public paths normalizes expanded IPv6 and hexadecimal IPv4-mapped peers",
-            "authentication failure backoff public paths bootstrap counts missing, revoked and expired failures, preserving exact expiry semantics",
-            "authentication failure backoff public paths does not count absent bootstrap configuration or unreconciled server records",
-            "authentication failure backoff public paths handles scoped IPv6 transport peers without converting credential failures to server errors"
           ]
         }
       },
@@ -5344,6 +5353,22 @@
           "branches": 100
         }
       },
+      "src/client/chores/noto-emoji.tsx": {
+        "sha256": "89b9980550d5905cfe02e11455a7677f095812e6490bb3b15b9c763e76cec80d",
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 13,
+          "statements": 13,
+          "functions": 6,
+          "branches": 5
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 80
+        }
+      },
       "src/client/chores/useTodayChores.ts": {
         "sha256": "d29812a7a04d69a781c851c839ba54a43a731faf5593955af1a9aa7c3e5ee47d",
         "layer": "client",
@@ -5581,6 +5606,22 @@
           "lines": 70,
           "statements": 70,
           "functions": 70,
+          "branches": 100
+        }
+      },
+      "src/client/components/ui/textarea.tsx": {
+        "sha256": "c5f7c3edfde46a050f837186867355d027c631b5a743faf45b9f4801b4259e14",
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 1,
+          "statements": 1,
+          "functions": 1,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
           "branches": 100
         }
       },
@@ -6208,6 +6249,22 @@
           "branches": 81.25
         }
       },
+      "src/client/printing/queueWakeup.ts": {
+        "sha256": "d639576f868f157a7807701e36b577945305172c254f877e9aa9fe288d1ba9cf",
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 2,
+          "statements": 2,
+          "functions": 1,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/client/printing/transport.ts": {
         "sha256": "d5fd993827c5302e905354cb193da223af9e72c31535ec7b6cf1ca1bb2025ac4",
         "layer": "client",
@@ -6432,6 +6489,22 @@
           "branches": 82.35
         }
       },
+      "src/client/ui.ts": {
+        "sha256": "4dc2a888888588017d33dd06aaa12dec9c341f97417a78f86d86351707595056",
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 0,
+          "statements": 0,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/server/app.ts": {
         "sha256": "4d4cdfae0acd1260c130870c09319d99171822927bdae6ec06f0cfafa4c3ba5f",
         "layer": "server",
@@ -6592,6 +6665,22 @@
           "branches": 95.45
         }
       },
+      "src/server/auth/throttle.ts": {
+        "sha256": "9511623e98c88c448484f89ea7ad02716aac85a318426813a533ed597dfc2203",
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 43,
+          "statements": 48,
+          "functions": 4,
+          "branches": 24
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/server/backups/job.ts": {
         "sha256": "743b68a0be4bea0115d07100fac3630644ed57af4e2937a9c0d5c02654820458",
         "layer": "server",
@@ -6641,7 +6730,7 @@
         }
       },
       "src/server/db/client.ts": {
-        "sha256": "ea11ad361531d7931ad02718d274b8e5d89466bc48578ae4411a9905cacffc46",
+        "sha256": "31982aae6e5a0e606691396b2aa20799ad69af4a9d7114b2fde9b7d6d26b923a",
         "layer": "server",
         "minimumTotals": {
           "lines": 12,
@@ -6672,6 +6761,22 @@
           "branches": 93.33
         }
       },
+      "src/server/db/runtime-storage.ts": {
+        "sha256": "88d5137ed0d162029d01357b0e3cadca615d883184838c2be4bbac216189c702",
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 43,
+          "statements": 48,
+          "functions": 4,
+          "branches": 20
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/server/db/schema.ts": {
         "sha256": "1f82156a0e2c6139d51dd6d5c0b09824422d67f1f5c4d5ac9a026db0fdace91a",
         "layer": "server",
@@ -6689,7 +6794,7 @@
         }
       },
       "src/server/db/seeds/cli.ts": {
-        "sha256": "f341b1e9afcc90ab86594b5d3d50c51f3963c33f855ef9237a47dc86323acf75",
+        "sha256": "8892079aff867577461e443e4183c04d01cd3589282f9d11dc7cfb334efeceb2",
         "layer": "server",
         "minimumTotals": {
           "lines": 37,
@@ -6769,7 +6874,7 @@
         }
       },
       "src/server/index.ts": {
-        "sha256": "98e6249caaea45094ec7019953b4e710190c1dc6ccf3a4bb3296df3155e22ae6",
+        "sha256": "79ab7ddecacdf23c84c88f0ec84389e13cdd2bc001c683ca92a93da5f02ddeed",
         "layer": "server",
         "minimumTotals": {
           "lines": 84,
@@ -9008,86 +9113,6 @@
           "functions": 100,
           "branches": 100
         }
-      },
-      "src/client/chores/noto-emoji.tsx": {
-        "sha256": "89b9980550d5905cfe02e11455a7677f095812e6490bb3b15b9c763e76cec80d",
-        "layer": "client",
-        "minimumTotals": {
-          "lines": 13,
-          "statements": 13,
-          "functions": 6,
-          "branches": 5
-        },
-        "minimumRates": {
-          "lines": 100,
-          "statements": 100,
-          "functions": 100,
-          "branches": 80
-        }
-      },
-      "src/client/printing/queueWakeup.ts": {
-        "sha256": "d639576f868f157a7807701e36b577945305172c254f877e9aa9fe288d1ba9cf",
-        "layer": "client",
-        "minimumTotals": {
-          "lines": 2,
-          "statements": 2,
-          "functions": 1,
-          "branches": 0
-        },
-        "minimumRates": {
-          "lines": 100,
-          "statements": 100,
-          "functions": 100,
-          "branches": 100
-        }
-      },
-      "src/server/auth/throttle.ts": {
-        "sha256": "9511623e98c88c448484f89ea7ad02716aac85a318426813a533ed597dfc2203",
-        "layer": "server",
-        "minimumTotals": {
-          "lines": 43,
-          "statements": 48,
-          "functions": 4,
-          "branches": 24
-        },
-        "minimumRates": {
-          "lines": 100,
-          "statements": 100,
-          "functions": 100,
-          "branches": 100
-        }
-      },
-      "src/client/components/ui/textarea.tsx": {
-        "sha256": "c5f7c3edfde46a050f837186867355d027c631b5a743faf45b9f4801b4259e14",
-        "layer": "client",
-        "minimumTotals": {
-          "lines": 1,
-          "statements": 1,
-          "functions": 1,
-          "branches": 0
-        },
-        "minimumRates": {
-          "lines": 100,
-          "statements": 100,
-          "functions": 100,
-          "branches": 100
-        }
-      },
-      "src/client/ui.ts": {
-        "sha256": "4dc2a888888588017d33dd06aaa12dec9c341f97417a78f86d86351707595056",
-        "layer": "client",
-        "minimumTotals": {
-          "lines": 0,
-          "statements": 0,
-          "functions": 0,
-          "branches": 0
-        },
-        "minimumRates": {
-          "lines": 100,
-          "statements": 100,
-          "functions": 100,
-          "branches": 100
-        }
       }
     }
   },
@@ -9473,6 +9498,7 @@
     "src/server/backups/storage.ts",
     "src/server/db/client.ts",
     "src/server/db/migrate.ts",
+    "src/server/db/runtime-storage.ts",
     "src/server/db/schema.ts",
     "src/server/db/seeds/cli.ts",
     "src/server/db/seeds/ownership.ts",
@@ -10057,6 +10083,7 @@
     "tools/local-runtime.test.mjs",
     "tools/member-colors.test.mjs",
     "tools/noto-emojis.test.mjs",
+    "tools/storage-runtime.test.mjs",
     "tools/ui-catalog.test.mjs",
     "tools/validation/provider-egress-observer.mjs",
     "tools/verify-coverage.mjs",

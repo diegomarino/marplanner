@@ -51,9 +51,20 @@ initialized from the image's owned `/data` directory. Existing volumes and bind
 mounts must already grant that user write access; startup rejects unwritable
 storage. Preserve data and verify ownership before switching mount types. Use
 local storage suitable for SQLite WAL and run one application instance per volume.
-The application does not yet enforce a single-writer lock or detect network
-filesystems. Runtime `BASE_PATH` support remains unimplemented: serve at `/`.
-These open ADR-055/056 obligations are not closed by the container recipe.
+The server and seed CLI refuse a second application instance using the same database.
+A stable `<database>.instance-lock.sqlite` sentinel holds an OS-backed exclusive lock
+through restore and connection resets; clean exit and process crashes release it.
+Never delete or replace this sentinel while an instance runs. Keep the database
+and its sentinel together on the same local volume; individual database file
+bind mounts and external SQLite writers bypass this cooperative protection.
+Database file symlinks and hardlinks are rejected. Directory aliases are supported.
+
+Product SQLite opens reject recognized Linux NFS, SMB and CIFS filesystem types.
+Other Linux filesystem types are allowed; macOS and other platforms warn that
+classification is unavailable. This check does not certify arbitrary mounts as
+safe: use local storage suitable for SQLite WAL. Runtime `BASE_PATH` support
+remains unimplemented: serve at `/`. Automatic pre-migration snapshots also remain
+an open obligation.
 
 Loopback publication supports local browser access. Remote browser access requires
 a trusted external reverse proxy terminating HTTPS and forwarding to the loopback

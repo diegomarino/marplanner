@@ -103,3 +103,44 @@ describe("seed CLI adapter", () => {
     expect(h.output).toEqual([]);
   });
 });
+
+it("executes the real CLI entrypoint with storage ownership and releases it after seeding", async () => {
+  const { mkdtempSync, writeFileSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { fileURLToPath } = await import("node:url");
+  const directory = mkdtempSync(join(tmpdir(), "mp-seed-entry-"));
+  const originalArgv = process.argv;
+  const originalExitCode = process.exitCode;
+  const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+  const stderr = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+  try {
+    writeFileSync(
+      join(directory, "seed-000-storage.mjs"),
+      'export default { id: "public:storage", run() {} };'
+    );
+    vi.stubEnv("DATA_DIR", directory);
+    vi.stubEnv("DATABASE_PATH", "marplanner.db");
+    vi.stubEnv("SEED_DIRECTORY", directory);
+    const entry = fileURLToPath(new URL("../../src/server/db/seeds/cli.ts", import.meta.url));
+    process.argv = [process.execPath, entry, "--mode", "public", "--as-of", "2026-10-02"];
+    process.exitCode = undefined;
+    vi.resetModules();
+    await import("../../src/server/db/seeds/cli");
+    await vi.waitFor(() => expect(process.exitCode).toBe(0));
+    expect(stdout).toHaveBeenCalledWith(
+      "mode=public as-of=2026-10-02 modules=[public:storage] status=complete\n"
+    );
+    const { acquireStorageOwnership } = await import("../../src/server/db/runtime-storage");
+    const release = acquireStorageOwnership(join(directory, "marplanner.db"));
+    release();
+  } finally {
+    stdout.mockRestore();
+    stderr.mockRestore();
+    process.argv = originalArgv;
+    process.exitCode = originalExitCode;
+    vi.unstubAllEnvs();
+    vi.resetModules();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

@@ -63,12 +63,18 @@ self-hosters** (N users × 1 instance each):
 
 ## Peer-review hardening (folded, all from the distributable surface)
 
-1. **Single-writer guard (Critical):** at boot, advisory lock (`flock`) on a sentinel file → refuse
+1. **Single-writer guard (Critical):** at boot, an OS-backed exclusive lock on a stable sentinel SQLite file → refuse
    to start if another instance already holds the DB, with a clear error; Fly recipe sets
    `max_machines_running = 1`. Prevents two VMs sharing one volume opening one WAL → corruption.
-   Generalizes to every platform, not just Fly.
-2. **Network-filesystem guard:** at boot, `statfs(2)` `f_type` check → refuse/warn on NFS/SMB/CIFS
-   (WAL is unsafe on network FS; Synology/TrueNAS self-hosters); prominent compose warning.
+   Generalizes to every platform, not just Fly. The installed SQLite dependency
+   acquires the sentinel in rollback-journal EXCLUSIVE locking mode with a committed
+   write. Its dedicated connection survives product connection resets and restore;
+   OS process termination releases ownership. The seed CLI uses the same guard.
+   The sentinel is never deleted or replaced while an instance runs.
+2. **Network-filesystem guard:** before SQLite opens, `statfs(2)` `f_type` check → refuse recognized Linux NFS/SMB/CIFS
+   (WAL is unsafe on network FS; Synology/TrueNAS self-hosters). Other Linux
+   filesystem types remain allowed; macOS and other platforms warn that classification
+   is unavailable. This is a known-type denylist, not proof every allowed mount is local.
 3. **Write serialization:** `busy_timeout` is a retry loop, not a queue → with deliberate multiple
    writers (scheduler/reconciler/briefing, ADR-014/035/053) add **in-process write serialization**
    (single-process makes this trivial) + explicit `SQLITE_BUSY` handling so writes are never silently
@@ -78,9 +84,12 @@ self-hosters** (N users × 1 instance each):
 ## Implementation status (2026-10-02)
 
 The portable container recipe supports root-path hosting with one application
-instance and a local persistent volume. Runtime `BASE_PATH`, enforced single-writer
-locking, network-filesystem detection and automatic pre-migration snapshots remain
-open obligations. Packaging and platform-specific runtime evidence do not establish
+instance and a local persistent volume. The server and seed CLI enforce exclusive
+storage ownership, and all shared product SQLite opens reject recognized Linux
+network filesystem types. Database file symlinks and hardlinks are rejected; parent
+directory aliases are canonicalized. Direct external SQLite writers and individual
+file bind-mount aliases bypass this cooperative boundary. Runtime `BASE_PATH` and
+automatic pre-migration snapshots remain open obligations. Packaging and platform-specific runtime evidence do not establish
 full distribution acceptance.
 
 ## Acceptance criteria
