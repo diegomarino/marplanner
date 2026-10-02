@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { verifyCoverage, fromV8Coverage } from "./verify-coverage.mjs";
+import {
+  verifyCoverage,
+  fromV8Coverage,
+  preflightCoverage,
+  preflightBrowserEnvironment,
+} from "./verify-coverage.mjs";
 
 const metrics = (covered, total) =>
   Object.fromEntries(
@@ -156,4 +161,54 @@ test("declaration files remain visible with zero executable metrics", () => {
     () => fromV8Coverage({}, { files: { "src/server/app.ts": { declaration: true } } }, root),
     /declaration/i
   );
+});
+
+test("preflight rejects stale coverage fingerprints before runners", async () => {
+  const fs = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { createHash } = await import("node:crypto");
+  const root = fs.mkdtempSync(join(tmpdir(), "mp-preflight-"));
+  try {
+    fs.writeFileSync(join(root, "a.ts"), "export const a = 1;\n");
+    const policy = {
+      toolchain: expected.toolchain,
+      files: {
+        "a.ts": {
+          sha256: createHash("sha256")
+            .update(fs.readFileSync(join(root, "a.ts")))
+            .digest("hex"),
+        },
+      },
+    };
+    const pkg = { packageManager: "npm@11.19.0", devDependencies: { vitest: "5.0.2" } };
+    const runtime = { node: "24.21.0", npm: "11.19.0" };
+    assert.equal(preflightCoverage(policy, pkg, runtime, root).files, 1);
+    fs.writeFileSync(join(root, "a.ts"), "changed");
+    assert.throws(() => preflightCoverage(policy, pkg, runtime, root), /source hash differs/);
+    policy.files["a.ts"].sha256 = "invalid";
+    assert.throws(() => preflightCoverage(policy, pkg, runtime, root), /expected hash invalid/);
+    assert.throws(
+      () => preflightCoverage(policy, pkg, { ...runtime, node: "26.9.0" }, root),
+      /node toolchain/
+    );
+    assert.throws(
+      () => preflightCoverage(policy, pkg, { ...runtime, npm: "11.19.1" }, root),
+      /npm toolchain/
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("browser preflight rejects inherited fixture and server overrides", () => {
+  preflightBrowserEnvironment({});
+  preflightBrowserEnvironment({ E2E_DATA_DIR: "/tmp/existing" });
+  preflightBrowserEnvironment({ PORT: "43174", BASE_URL: "http://127.0.0.1:43174" });
+  for (const env of [
+    { SCHEDULER_DISABLED: "1" },
+    { PW_REUSE_SERVER: "1" },
+    { PORT: "43174", BASE_URL: "http://localhost:43173" },
+  ])
+    assert.throws(() => preflightBrowserEnvironment(env));
 });

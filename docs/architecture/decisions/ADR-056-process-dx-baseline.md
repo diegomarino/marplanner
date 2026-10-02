@@ -32,18 +32,19 @@ modes by construction rather than by discipline.
   mechanism is an impl choice between two known patterns (placeholder + entrypoint rewrite of built
   assets, or Fastify templating `index.html` with `<base href>` + a runtime `window.__BASE_PATH__`
   for the router). [peer-review I-b]
-- **Worktree-safety = externalized config** (per-worktree `DATABASE_PATH`), NOT a tool. The cause of the previous worktree failures (pnpm `nodeLinker:isolated` + monorepo + harness node_modules symlink → MODULE_NOT_FOUND +
+- **Worktree-safety = externalized config** (per-worktree `DATA_DIR`, optional `DATABASE_PATH`), NOT a tool. The cause of the previous worktree failures (pnpm `nodeLinker:isolated` + monorepo + harness node_modules symlink → MODULE_NOT_FOUND +
   cache write-through corruption) is eliminated by ADR-055 single-package + npm. Residual rules:
   each worktree runs `npm ci`; **build caches/tsbuildinfo/Vite cache live OUTSIDE `node_modules`**.
 
-### Check levels (Q12) — `tsc --noEmit` is its own gate in every level
+### Check levels (Q12)
 
-- **`check:fast`** (pre-commit): prettier --check · eslint · tsc --noEmit. No tests/build.
-- **`check:standard`** (PR/CI default): fast + unit/integration + boundary HTTP tests
-  (`fastify.inject`) + prod build + drizzle migration check + generated-artifact drift.
-- **`check:full`** (release gate): standard + Docker image build & runtime smoke + e2e of critical
-  flows + migration/data-safety on prod-like data + backup/restore verify. Full thoroughness is
-  proportional to the distributable premise (a broken release hurts N self-hosters).
+Current commands are defined by `package.json` and described in the [verification policy](../../quality/verification.md). The daily sequence is focused edit tests → broader `check:fast` checkpoint → exact `check:standard` acceptance → one `check:aggregate-only` browser milestone on unchanged bytes with retained valid standard evidence. A fresh `check:full` invocation combines both acceptance stages when no standard evidence is available.
+
+- **`check:fast`**: formatting, generated member-color/emoji freshness, types and lint, plus all top-level Node tool tests and client unit tests. This command is not static-only.
+- **`check:standard`**: early inventory/coverage-fingerprint/toolchain preflight, maintained candidate stamp, static/generated checks, production build, discovered Node and Vitest cohorts, instrumented coverage, OpenAPI checks, UI debt, exception-list and accessible-name gates, and standard evidence verification.
+- **`check:full`**: standard plus retained-evidence/browser-environment preflight, built-render smoke, full Playwright discovery/execution and aggregate evidence verification. Container smoke remains a separate explicit command.
+
+Run acceptance in a fresh validation worktree at the reviewed local candidate with its own `npm ci`. Development secrets and household data remain in the development checkout: ignored files still fail the strict candidate inventory. Preserve failed artifacts outside the validation tree before a retry; focused retries establish diagnosis, not a fabricated full pass. Historical release requirements below remain requirements until their implementation and runtime evidence exist.
 
 ### Tooling (Q13/Q14)
 
@@ -120,6 +121,8 @@ ON CONFLICT(id) DO NOTHING` (idempotent vs re-run/edit/archive/partial-failure; 
 Document runnable commands in [onboarding](../../development/onboarding.md) and verify them against `package.json`. Enforce module boundaries through lint and tests; keep generated artifacts under drift checks. A change to a shared contract requires consumer regression checks. Historical tool choices in this decision do not establish that a command or gate exists in the current repository.
 
 ## Implementation status (2026-10-02)
+
+The implemented check workflow runs standard once in CI, then transfers and verifies its raw artifacts in the dependent browser job. Early preflights reject stale source policy and known environment mistakes before expensive work; they do not authenticate all historical execution inputs.
 
 The coordinated local launcher and portable container recipe implement bounded
 installation workflows. Runtime `BASE_PATH` injection, automatic pre-migration

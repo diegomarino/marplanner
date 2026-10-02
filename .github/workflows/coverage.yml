@@ -7,6 +7,7 @@ permissions:
   contents: read
 jobs:
   standard:
+    name: standard
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -24,12 +25,66 @@ jobs:
       - run: npm ci
       - run: echo "MP_CANDIDATE_ID=$(node tools/candidate-identity.mjs)" >> "$GITHUB_ENV"
       - run: npm run check:standard
+      - name: Archive standard evidence with original timestamps
+        if: always()
+        shell: bash
+        run: |
+          paths=()
+          for path in .quality coverage; do
+            if [ -d "$path" ]; then paths+=("$path"); fi
+          done
+          if [ "${#paths[@]}" -eq 0 ]; then exit 0; fi
+          tar --format=pax -czf "$RUNNER_TEMP/standard-evidence.tar.gz" "${paths[@]}"
       - name: Retain raw discovery, results and V8 coverage
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: standard-evidence
+          name: standard-evidence-${{ github.run_id }}
+          path: ${{ runner.temp }}/standard-evidence.tar.gz
+          overwrite: true
+          if-no-files-found: warn
+  full:
+    name: full
+    needs: standard
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+          cache: npm
+      - run: npm install --global npm@11.19.0
+      - run: test "$(node --version)" = v24.21.0 && test "$(npm --version)" = 11.19.0
+      - run: npm ci
+      - run: echo "MP_CANDIDATE_ID=$(node tools/candidate-identity.mjs)" >> "$GITHUB_ENV"
+      - run: npx playwright install --with-deps --only-shell chromium
+      - name: Download standard evidence from this workflow run
+        uses: actions/download-artifact@v4
+        with:
+          name: standard-evidence-${{ github.run_id }}
+          path: ${{ runner.temp }}/standard-evidence
+      - name: Restore standard evidence with original timestamps
+        run: tar -xzf "$RUNNER_TEMP/standard-evidence/standard-evidence.tar.gz"
+      - run: npm run check:aggregate-only
+      - name: Build production container (runner architecture only)
+        run: docker build -f infra/docker/Dockerfile --label org.marplanner.candidate="$MP_CANDIDATE_ID" --label org.opencontainers.image.revision="$GITHUB_SHA" -t marplanner:review .
+      - name: Accept built container lifecycle and browser flow
+        run: npm run check:container -- --image marplanner:review
+      - name: Retain raw discovery, results, V8 coverage and browser report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
           path: |
             .quality/
             coverage/
+            playwright-report/
+            test-results/
+          overwrite: true
           if-no-files-found: error
