@@ -322,7 +322,7 @@ async function hardKill(child: ChildProcess): Promise<void> {
   await Promise.race([exited, new Promise<void>((res) => setTimeout(res, 5_000))]);
 }
 
-describe("entrypoint — scheduler runnable skeleton (T004)", () => {
+describe("entrypoint — scheduler runnable skeleton", () => {
   let activeChild: ChildProcess | null = null;
   let activeDataDir: string | null = null;
 

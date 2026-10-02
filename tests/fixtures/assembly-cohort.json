@@ -912,8 +912,8 @@
             "backups upload validation + boot sweep (T006, F10 follow-up) sweepOrphanedBackupTempFiles: a no-op (never throws) when the root has no temp files"
           ],
           "tests/boundary/boot.test.ts": [
-            "boot: factory + boot sequence (T013) assertDataDirWritable passes on a valid temp dir and throws on a non-writable path",
-            "boot: factory + boot sequence (T013) buildApp returns a Fastify instance, health returns 200, and /api/settings is fail-closed (401)"
+            "boot: factory + boot sequence assertDataDirWritable passes on a valid temp dir and throws on a non-writable path",
+            "boot: factory + boot sequence buildApp returns a Fastify instance, health returns 200, and /api/settings is fail-closed (401)"
           ],
           "tests/boundary/bootstrap-reconcile.test.ts": [
             "bootstrap-reconcile \u2014 T020 / ADR-032 (idempotent seed) with MP_BOOTSTRAP_KEY set, inserts exactly one active '*' bootstrap row whose key_hash matches hashKey(MP_BOOTSTRAP_KEY)",
@@ -4540,10 +4540,10 @@
             "database lifecycle aggregate recovery journey recovers the ordered public profile through a later migration while preserving ordinary and failed-restore targets"
           ],
           "tests/integration/entrypoint.test.ts": [
-            "entrypoint \u2014 scheduler runnable skeleton (T004) SCHEDULER_SMOKE_JOB=1: registers the calendar feed job, fires the smoke job, and serves /health meanwhile",
-            "entrypoint \u2014 scheduler runnable skeleton (T004) BACKGROUND-JOBS-SCHEDULER-INV-06: SIGINT during a slow smoke run drains the in-flight job's two-step write to completion before exiting cleanly",
-            "entrypoint \u2014 scheduler runnable skeleton (T004) SCHEDULER_DISABLED=1 logs 'scheduler disabled' and starts no timers (the smoke job never fires)",
-            "entrypoint \u2014 scheduler runnable skeleton (T004) #633: SCHEDULER_DISABLED=1 still lets a manual runJobNow call (the admin daily-briefing generate-all route) succeed instead of 500ing, and starts no timers"
+            "entrypoint \u2014 scheduler runnable skeleton SCHEDULER_SMOKE_JOB=1: registers the calendar feed job, fires the smoke job, and serves /health meanwhile",
+            "entrypoint \u2014 scheduler runnable skeleton BACKGROUND-JOBS-SCHEDULER-INV-06: SIGINT during a slow smoke run drains the in-flight job's two-step write to completion before exiting cleanly",
+            "entrypoint \u2014 scheduler runnable skeleton SCHEDULER_DISABLED=1 logs 'scheduler disabled' and starts no timers (the smoke job never fires)",
+            "entrypoint \u2014 scheduler runnable skeleton #633: SCHEDULER_DISABLED=1 still lets a manual runJobNow call (the admin daily-briefing generate-all route) succeed instead of 500ing, and starts no timers"
           ],
           "tests/integration/foundation-entrypoint.test.ts": [
             "built foundation entrypoint serves reviewed core routes, isolates static assets, and drains both smoke writes on SIGINT",
@@ -9208,7 +9208,7 @@
     "docs/architecture/decisions/ADR-056-process-dx-baseline.md",
     "docs/architecture/decisions/ADR-057-admin-telemetry-read-view.md",
     "docs/architecture/decisions/ADR-058-kiosk-operator-trust-calibration.md",
-    "docs/architecture/decisions/ADR-059-slice-001-serving-and-boundary-reconciliation.md",
+    "docs/architecture/decisions/ADR-059-serving-and-boundary-reconciliation.md",
     "docs/architecture/decisions/ADR-060-deployment-transport-posture-and-cookie-security.md",
     "docs/architecture/decisions/ADR-061-members-local-i18n-seam.md",
     "docs/architecture/decisions/ADR-062-calendar-timed-event-utc-plus-tzid.md",

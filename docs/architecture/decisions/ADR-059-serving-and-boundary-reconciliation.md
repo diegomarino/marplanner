@@ -1,4 +1,4 @@
-# ADR-059 Slice-001 Serving & API-Boundary Reconciliation
+# ADR-059 Serving & API-Boundary Reconciliation
 
 Status: accepted
 Owner: architecture
@@ -8,12 +8,12 @@ cannot be deferred; Constitution II is non-negotiable)
 
 ## Context
 
-Slice-001 (bootstrap tracer bullet) implemented its auth boundary as a single app-wide
-API-key deny hook and never assembled a runnable, client-serving deployment: routes are bare
-(no `/api`), the SPA is never built or served (`dev`/`build` scripts are stubs; no `start`),
-the entrypoint guard (`import.meta.main`) never fires under `tsx`, and the ADR-031 access gate
-is absent. The first task needing the running app (T032, the critical-flow browser e2e) made
-all of this due at once. This ADR reconciles the slice with the already-accepted architecture
+The initial bootstrap implemented its auth boundary as a single app-wide
+API-key deny hook and never assembled a runnable, client-serving deployment: routes were bare
+(no `/api`), the SPA was never built or served (`dev`/`build` scripts were stubs; no `start`),
+the entrypoint guard (`import.meta.main`) never fired under `tsx`, and the ADR-031 access gate
+was absent. The critical-flow browser test required the running app and made
+all of this due at once. This ADR reconciles the bootstrap with the already-accepted architecture
 (ADR-031, ADR-055, ADR-056); it decides sequencing and minimal scope, not new topology.
 
 ## Decision
@@ -30,13 +30,13 @@ all of this due at once. This ADR reconciles the slice with the already-accepted
 3. **All other API routes migrate under `/api` now** (ADR-056), before the e2e:
    `/api/auth/provision`, `/api/auth/verify-pin`, `/api/settings`, `/api/members`. The client
    calls relative `/api` via an `apiBase()` helper. `BASE_PATH` runtime injection (ADR-056) is
-   a distribution concern and stays a tracked follow-up — not needed for slice-001.
-4. **The access gate lands in slice-001, minimally.** A single static deployment token
+   a distribution concern and stays a tracked follow-up — not required for the bootstrap.
+4. **The bootstrap includes a minimal access gate.** A single static deployment token
    (`MP_ACCESS_TOKEN` env, fail-closed: unset ⇒ the gate cannot be passed): with no gate
    cookie, any frontend request receives the minimal access-token entry form (200) — never the
    shell, never a 401. Submitting the correct token sets a dedicated httpOnly gate cookie,
    distinct from the device-key cookie; passing the gate authenticates no `/api` request.
-   Token lifecycle management (rotation etc.) remains deferred to the auth-sessions slice, per
+   Token lifecycle management (rotation etc.) remains deferred to authentication lifecycle work, per
    ADR-031's own open question. _Deferring the gate itself was considered and rejected:_
    serving the shell ungated would make it an unauthenticated surface, violating Constitution
    II ("the only unauthenticated surface is health-check endpoints" — NON-NEGOTIABLE) and
@@ -50,21 +50,21 @@ all of this due at once. This ADR reconciles the slice with the already-accepted
 
 ## Consequences
 
-- New assembly task (T041) and access-gate task (T042) are sequenced **before** T032; T032's
-  assertions are scoped to what exists: gate → provision → PIN unlock → member create → real
+- Runtime assembly and the access gate precede the critical-flow browser test. Its
+  assertions cover: gate → provision → PIN unlock → member create → real
   process restart → device key survives → member re-read via `GET /api/members` (minimal read
-  endpoint added in T041 so SC-003 is proven through the product API, not only at store level).
-- Slice-001's spec FR-001/FR-002 are reworded to the two-boundary model (this ADR); the
+  endpoint proves SC-003 through the product API, not only at store level).
+- The bootstrap requirements FR-001/FR-002 adopt the two-boundary model (this ADR); the
   boundary ledger keeps all dispositions unchanged (guarantee→spec coverage did not move) with
   `note:` annotations pointing here.
-- Full member management (list UI, etc.) still belongs to the members slice; `GET /api/members`
+- Full member management (list UI, etc.) remains separate feature work; `GET /api/members`
   is deliberately minimal.
 
-## Process lesson (recorded for _build-order.md)
+## Process lesson
 
-Every slice must front-load a **runnable skeleton** task — boots as a real process, serves the
+Every feature must start with a **runnable skeleton** — boots as a real process, serves the
 shell, one smoke path through the stack — instead of discovering assembly debt at e2e time.
-Slice-001 sequenced assembly last; the cost surfaced as this reconciliation.
+The initial bootstrap sequenced assembly last; the cost surfaced as this reconciliation.
 
 ## Acceptance Criteria
 
