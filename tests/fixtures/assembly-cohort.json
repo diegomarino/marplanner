@@ -1805,7 +1805,22 @@
           "tests/boundary/migrate-runner.test.ts": [
             "migrate runner: FK-safe table rebuild (#438) preserves child rows across a parent-table rebuild (DROP TABLE with ON DELETE CASCADE children)",
             "migrate runner: FK-safe table rebuild (#438) rolls back the whole batch (data + bookkeeping) when a migration leaves a dangling foreign key reference",
-            "schema table set (T010 \u2014 SC-006 / BACKGROUND-JOBS-SCHEDULER-INV-03) BACKGROUND-JOBS-SCHEDULER-INV-03: sqlite_master's table set is exactly ALL_SCHEMA_TABLES \u2014 slice-012 adds none"
+            "schema table set (BACKGROUND-JOBS-SCHEDULER-INV-03) BACKGROUND-JOBS-SCHEDULER-INV-03: installed table set matches ALL_SCHEMA_TABLES",
+            "pre-migration recovery points preserves committed WAL data and explicit IDs before applying SQL",
+            "pre-migration recovery points protects fresh schema and skips recovery work when no SQL is pending",
+            "pre-migration recovery points aborts backup path and active transaction failures before schema writes",
+            "pre-migration recovery points aborts before schema writes when durability step new root fails",
+            "pre-migration recovery points aborts before schema writes when durability step root parent fails",
+            "pre-migration recovery points aborts before schema writes when durability step lane fails",
+            "pre-migration recovery points aborts before schema writes when durability step lane parent fails",
+            "pre-migration recovery points aborts before schema writes when durability step attempt parent fails",
+            "pre-migration recovery points aborts before schema writes when durability step snapshot file fails",
+            "pre-migration recovery points aborts before schema writes when durability step snapshot directory fails",
+            "pre-migration recovery points rejects a redirected recovery lane and preserves operator root aliases",
+            "pre-migration recovery points aborts before schema writes on native backup or publication failure",
+            "pre-migration recovery points rejects missing migration input before creating recovery or schema",
+            "pre-migration recovery points re-syncs existing backup ancestry after an interrupted directory publication",
+            "pre-migration recovery points retains distinct recovery points when later SQL fails"
           ],
           "tests/boundary/network-devices-auth.test.ts": [
             "network-devices auth \u2014 T002 requireManagementKey (RED-first) NETWORK-DEVICES-AC-06: a device key minted through the REAL provision.ts path is rejected 403",
@@ -4130,7 +4145,8 @@
           ],
           "tests/integration/backups-lineage.test.ts": [
             "backup restore lineage integration restores a baseline backup and applies a temporary later migration",
-            "backup restore lineage integration rolls back to active data when a temporary later migration fails"
+            "backup restore lineage integration rolls back to active data when a temporary later migration fails",
+            "backup restore lineage integration rolls back active data and retains pre-restore snapshot when pre-migration recovery is blocked"
           ],
           "tests/integration/backups-quiesce-hook.test.ts": [
             "backups quiesce hook \u2014 deterministic boundary (review P3-4) 503s every /api/* request with the quiescing envelope + Retry-After while quiesced",
@@ -6748,7 +6764,7 @@
         }
       },
       "src/server/db/migrate.ts": {
-        "sha256": "eca775d4d55972c145b0f3192341a256ccf54cc44f5e633ddcbfbf7812603103",
+        "sha256": "38adfa0ef494da4c3a385731ab356de92f8c6d74fa4563af99785d697038d461",
         "layer": "server",
         "minimumTotals": {
           "lines": 60,
