@@ -1,4 +1,4 @@
-# ADR-055 — v2 Technology Stack Baseline
+# ADR-055 — Technology Stack Baseline
 
 Status: accepted
 Date: 2026-06-30
@@ -9,7 +9,7 @@ ADR-014/035 (single-instance runtime), ADR-026 (fresh store), ADR-015 (i18n), AD
 
 The runtime and build entries below reflect the current foundation. Distribution hardening and container acceptance items remain obligations until implemented and tested; this decision alone is not release evidence.
 
-The v2 technology stack, re-derived from scratch (NOT ported from v1), calibrated to a **single
+The technology stack, selected for a **single
 self-hosted instance, no HA, family-scale concurrency**, but **distributed to many independent
 self-hosters** (N users × 1 instance each):
 
@@ -34,7 +34,7 @@ self-hosters** (N users × 1 instance each):
   over Bun/Deno for "runs unattended for years" stability + library compat (better-sqlite3, Drizzle,
   Fastify); Deno's sandbox adds nothing because plugins are first-party-trusted.
 - **Single package:** Rule-B lint already enforces boundaries → package boundaries are redundant
-  machinery; nothing versions/distributes separately. Also eliminated the v1 worktree pain at its
+  machinery; nothing versions/distributes separately. Also eliminated the previous worktree failures at their
   root (pnpm `nodeLinker:isolated` + monorepo symlinks — see ADR-056 worktree-safety).
 - **SQLite:** ADR-043 (`PRAGMA foreign_keys`) + ADR-017/042 (single-file backup) already assume it;
   single-instance is the embedded-DB sweet spot. STRICT tables + busy_timeout are correctness wins.

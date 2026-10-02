@@ -11,7 +11,7 @@ function cleanupTempDir(dir: string): void {
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
-describe("boot: factory + boot sequence (T013)", () => {
+describe("boot: factory + boot sequence", () => {
   let dataDir: string;
 
   beforeEach(() => {

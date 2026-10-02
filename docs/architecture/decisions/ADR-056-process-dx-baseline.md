@@ -1,4 +1,4 @@
-# ADR-056 — v2 Engineering Process / DX Baseline
+# ADR-056 — Engineering Process / DX Baseline
 
 Status: accepted
 Date: 2026-06-30
@@ -9,7 +9,7 @@ ADR-046/054/025 (delete/archive lifecycle). Folds into [developer verification p
 
 ## Decision
 
-The v2 engineering processes, calibrated to a distributable single-instance self-hosted app built
+The engineering processes, calibrated to a distributable single-instance self-hosted app built
 substantially by AI agents. Governing meta-principle throughout: **convention → build-gate** — every
 mechanizable rule is an enforced gate (lint/typecheck/drift/test), not prose; eliminate failure
 modes by construction rather than by discipline.
@@ -32,8 +32,7 @@ modes by construction rather than by discipline.
   mechanism is an impl choice between two known patterns (placeholder + entrypoint rewrite of built
   assets, or Fastify templating `index.html` with `<base href>` + a runtime `window.__BASE_PATH__`
   for the router). [peer-review I-b]
-- **Worktree-safety = externalized config** (per-worktree `DATABASE_PATH`), NOT a tool. v1 pain root
-  cause (pnpm `nodeLinker:isolated` + monorepo + harness node_modules symlink → MODULE_NOT_FOUND +
+- **Worktree-safety = externalized config** (per-worktree `DATABASE_PATH`), NOT a tool. The cause of the previous worktree failures (pnpm `nodeLinker:isolated` + monorepo + harness node_modules symlink → MODULE_NOT_FOUND +
   cache write-through corruption) is eliminated by ADR-055 single-package + npm. Residual rules:
   each worktree runs `npm ci`; **build caches/tsbuildinfo/Vite cache live OUTSIDE `node_modules`**.
 
