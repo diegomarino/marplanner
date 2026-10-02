@@ -728,6 +728,10 @@
             "the committed example documents credentials and defaults the local UI bypass off",
             "the populated local environment remains gitignored"
           ],
+          "tools/local-runtime.test.mjs": [
+            "two live development stacks own four ports and track an API watch restart",
+            "invalid ports, early API failure, readiness timeout, and occupied listeners fail cleanly"
+          ],
           "tools/member-colors.test.mjs": [
             "palette source is exactly the approved sixteen base-500 OKLCH references",
             "generator emits a deterministic complete 100-900 scale for every key",
@@ -6765,7 +6769,7 @@
         }
       },
       "src/server/index.ts": {
-        "sha256": "afa63b28b83a4f9ac54189d767a7a6213c68a89f937f6241e7e84d4ad560f1f3",
+        "sha256": "98e6249caaea45094ec7019953b4e710190c1dc6ccf3a4bb3296df3155e22ae6",
         "layer": "server",
         "minimumTotals": {
           "lines": 84,
@@ -9088,6 +9092,7 @@
     }
   },
   "productFiles": [
+    ".dockerignore",
     ".env.example",
     ".github/dependabot.yml",
     ".github/runtime-paths.regex",
@@ -9244,6 +9249,7 @@
     "docs/quality/household-acceptance.md",
     "docs/quality/verification.md",
     "docs/quality/weather-validation.md",
+    "docs/superpowers/plans/2026-10-02-portable-container-runtime.md",
     "docs/ui/calendar-synchronization.md",
     "docs/ui/component-contract.md",
     "docs/ui/household-contract.md",
@@ -9254,6 +9260,9 @@
     "drizzle/0002_plugin_lifecycle.sql",
     "eslint.config.mjs",
     "index.html",
+    "infra/docker/.env.example",
+    "infra/docker/Dockerfile",
+    "infra/docker/compose.yaml",
     "package-lock.json",
     "package.json",
     "playwright.config.ts",
@@ -10027,6 +10036,7 @@
     "tools/check-openapi-drift.mjs",
     "tools/check-openapi-drift.test.mjs",
     "tools/check-quality-tools-negative.test.mjs",
+    "tools/container-smoke.mjs",
     "tools/count-ui-debt.test.mjs",
     "tools/dev/accessible-names-baseline.txt",
     "tools/dev/audit-accessible-names.mjs",
@@ -10038,11 +10048,13 @@
     "tools/dev/member-colors.json",
     "tools/dev/noto-overrides/emoji_u1f471_200d_2640.svg",
     "tools/dev/smoke-dist-render.mjs",
+    "tools/dev/start-local.mjs",
     "tools/e2e-data-dir.mjs",
     "tools/e2e-data-dir.test.mjs",
     "tools/gen-openapi.mjs",
     "tools/gen-openapi.test.mjs",
     "tools/local-env.test.mjs",
+    "tools/local-runtime.test.mjs",
     "tools/member-colors.test.mjs",
     "tools/noto-emojis.test.mjs",
     "tools/ui-catalog.test.mjs",

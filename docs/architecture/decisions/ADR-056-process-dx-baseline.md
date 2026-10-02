@@ -16,8 +16,8 @@ modes by construction rather than by discipline.
 
 ### Dev loop & worktree-safety (Q11)
 
-- **Inner loop:** `npm run dev` = Vite (HMR) proxying `/api` → Fastify (watch). Fixed env-overridable
-  ports. Only daily flow.
+- **Inner loop:** `npm run dev` = Vite (HMR) proxying `/api` → Fastify (watch). Distinct automatically allocated API/frontend
+  ports, with explicit `PORT`/`WEB_PORT` overrides and per-worktree `.data`. Only daily flow.
 - **Detached worktree deploy:** a free on-demand capability via the ADR-055 image —
   `docker compose -p <wt> up -d/down`; status via `docker compose ls/ps --format json` (ports
   discovered, not pre-assigned). No bespoke worktree tooling; `gtr` et al. are personal ergonomics,
@@ -119,6 +119,14 @@ ON CONFLICT(id) DO NOTHING` (idempotent vs re-run/edit/archive/partial-failure; 
 ### Contributor guardrails
 
 Document runnable commands in [onboarding](../../development/onboarding.md) and verify them against `package.json`. Enforce module boundaries through lint and tests; keep generated artifacts under drift checks. A change to a shared contract requires consumer regression checks. Historical tool choices in this decision do not establish that a command or gate exists in the current repository.
+
+## Implementation status (2026-10-02)
+
+The coordinated local launcher and portable container recipe implement bounded
+installation workflows. Runtime `BASE_PATH` injection, automatic pre-migration
+snapshots and the remaining distribution safety obligations are still open. The
+container check is an explicit command; this ADR does not prove that every release
+gate or publishing lane described above is implemented.
 
 ## Acceptance criteria
 
