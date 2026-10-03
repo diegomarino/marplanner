@@ -1,3 +1,4 @@
+import { normalizeBasePath, requestAppPath } from "../shared/base-path";
 import fs from "node:fs";
 import path from "node:path";
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
@@ -56,12 +57,27 @@ export interface BuildAppOptions {
 }
 
 export async function buildApp(opts?: BuildAppOptions): Promise<FastifyInstance> {
+  const basePath = normalizeBasePath(process.env.BASE_PATH);
   const pluginLifecycle = opts?.pluginLifecycle ?? createServerPluginLifecycle();
   // startup barrier: no Fastify instance (and therefore no injectable/listening traffic)
   // exists until every durable lifecycle operation has reached its reconciled safe outcome.
   await pluginLifecycle.reconcileAll();
-  const app = Fastify();
-
+  const server = Fastify();
+  server.addHook("onRequest", async (request, reply) => {
+    if (request.url.split("?")[0] === "/health") return;
+    if (requestAppPath(request.url, basePath) === null)
+      return reply.code(404).send({ error: "not_found" });
+    if (
+      basePath &&
+      request.url.split("?")[0] === basePath &&
+      (request.method === "GET" || request.method === "HEAD")
+    )
+      return reply.redirect(
+        `${basePath}/${request.url.includes("?") ? request.url.slice(request.url.indexOf("?")) : ""}`
+      );
+  });
+  await healthRoutes(server);
+  const app = server;
   // Keep handler completion separate from transport completion. The restore request itself
   // remains exempt, because counting it would make its own drain target unreachable.
   app.addHook("onRoute", (route) => {
@@ -79,14 +95,8 @@ export async function buildApp(opts?: BuildAppOptions): Promise<FastifyInstance>
     };
   });
   app.addHook("onRequest", async (request: FastifyRequest, reply: FastifyReply) => {
-    const rawPath = (request.url ?? "").split("?")[0];
-    let pathname: string;
-    try {
-      pathname = decodeURIComponent(rawPath);
-    } catch {
-      pathname = rawPath;
-    }
-    if (!pathname.startsWith("/api/")) return;
+    const pathname = requestAppPath(request.url, basePath);
+    if (!pathname?.startsWith("/api/")) return;
     if (request.method === "POST" && pathname === RESTORE_ROUTE_PATH) return;
 
     if (isQuiesced()) {
@@ -109,69 +119,86 @@ export async function buildApp(opts?: BuildAppOptions): Promise<FastifyInstance>
     releaseInFlightSlot(request as QuiesceCountedRequest);
   });
 
-  await authBoundary(app);
-  await accessGate(app);
-  await healthRoutes(app);
-  await provisionRoutes(app);
-  await settingsModule(app);
-  await verifyPinRoutes(app);
-  await membersRoutes(app);
-  await dayPeriodsRoutes(app);
-  await calendarRoutes(app, opts?.calendarFeed);
-  await routinesRoutes(app);
-  await telemetryRoutes(app);
-  const pluginRouteRegistrars: Record<PluginId, PluginRouteRegistrar> = {
-    "daily-briefing": dailyBriefingRoutes,
-    printing: printingRoutes,
-    weather: weatherRoutes,
-    "time-announcements": timeAnnouncementsRoutes,
-    backups: (app) => backupsRoutes(app, pluginLifecycle),
-    "network-devices": networkDevicesRoutes,
-    "meals-recipes": mealsRoutes,
-    reminders: remindersRoutes,
-    "daily-messages": dailyMessagesRoutes,
-    ...opts?.pluginRouteRegistrars,
-  };
-  for (const [pluginId, registerRoutes] of Object.entries(pluginRouteRegistrars) as Array<
-    [PluginId, PluginRouteRegistrar]
-  >) {
-    await registerPluginHttp(app, pluginLifecycle, pluginId, registerRoutes);
-  }
-  await pluginRoutes(app, pluginLifecycle);
-
-  // FR-028 / ADR-059 §5: serve the built SPA same-origin from the CLIENT build dir
-  // ONLY (dist/client/). The server bundle lives OUTSIDE this root (dist/server/) so
-  // it can never be downloaded — GET /server.js and any *.js/*.mjs server artifact
-  // MUST NOT leak backend code. Registered only when a client build
-  // exists; the boundary/integration tests build via inject with no build and must
-  // not require one, so serving is skipped under VITEST. Tests that need to exercise
-  // serving pass an explicit `staticRoot`.
-  const clientRoot = opts?.staticRoot ?? path.resolve(process.cwd(), "dist", "client");
-  const serve = opts?.staticRoot
-    ? true
-    : !process.env.VITEST && fs.existsSync(path.join(clientRoot, "index.html"));
-  if (serve) {
-    await app.register(fastifyStatic, { root: clientRoot, wildcard: false });
-    app.setNotFoundHandler((request, reply) => {
-      const pathname = new URL(request.url, "http://localhost").pathname;
-      // A path with a file extension (e.g. /server.js) is a FILE request: if it isn't
-      // present in the client root it 404s — it never falls through to the SPA shell.
-      // Extension-less non-/api, non-/health GETs are client ROUTES → serve index.html.
-      const looksLikeFile = /\.[a-zA-Z0-9]+$/.test(pathname);
-      if (
-        request.method === "GET" &&
-        !pathname.startsWith("/api/") &&
-        pathname !== "/health" &&
-        !looksLikeFile
-      ) {
-        if (!hasValidGateCookie(request.headers.cookie)) {
-          return sendGateForm(reply);
-        }
-        return reply.sendFile("index.html");
+  await authBoundary(app, basePath);
+  await accessGate(app, basePath);
+  await server.register(
+    async (app) => {
+      await provisionRoutes(app, basePath);
+      await settingsModule(app);
+      await verifyPinRoutes(app);
+      await membersRoutes(app);
+      await dayPeriodsRoutes(app);
+      await calendarRoutes(app, opts?.calendarFeed);
+      await routinesRoutes(app);
+      await telemetryRoutes(app);
+      const pluginRouteRegistrars: Record<PluginId, PluginRouteRegistrar> = {
+        "daily-briefing": dailyBriefingRoutes,
+        printing: printingRoutes,
+        weather: weatherRoutes,
+        "time-announcements": timeAnnouncementsRoutes,
+        backups: (app) => backupsRoutes(app, pluginLifecycle),
+        "network-devices": networkDevicesRoutes,
+        "meals-recipes": mealsRoutes,
+        reminders: remindersRoutes,
+        "daily-messages": dailyMessagesRoutes,
+        ...opts?.pluginRouteRegistrars,
+      };
+      for (const [pluginId, registerRoutes] of Object.entries(pluginRouteRegistrars) as Array<
+        [PluginId, PluginRouteRegistrar]
+      >) {
+        await registerPluginHttp(app, pluginLifecycle, pluginId, registerRoutes);
       }
-      return reply.code(404).send({ error: "not_found" });
-    });
-  }
+      await pluginRoutes(app, pluginLifecycle);
 
-  return app;
+      // FR-028 / ADR-059 §5: serve the built SPA same-origin from the CLIENT build dir
+      // ONLY (dist/client/). The server bundle lives OUTSIDE this root (dist/server/) so
+      // it can never be downloaded — GET /server.js and any *.js/*.mjs server artifact
+      // MUST NOT leak backend code. Registered only when a client build
+      // exists; the boundary/integration tests build via inject with no build and must
+      // not require one, so serving is skipped under VITEST. Tests that need to exercise
+      // serving pass an explicit `staticRoot`.
+      const clientRoot = opts?.staticRoot ?? path.resolve(process.cwd(), "dist", "client");
+      const serve = opts?.staticRoot
+        ? true
+        : !process.env.VITEST && fs.existsSync(path.join(clientRoot, "index.html"));
+      if (serve) {
+        const html = fs
+          .readFileSync(path.join(clientRoot, "index.html"), "utf8")
+          .replace(
+            /<head(?:\s[^>]*)?>/i,
+            (head) =>
+              `${head}<base href="${basePath}/"><meta name="mp-base-path" content="${basePath}">`
+          );
+        const sendShell = (reply: FastifyReply) =>
+          reply.type("text/html; charset=utf-8").send(html);
+        app.addHook("onRequest", async (request, reply) => {
+          const pathname = requestAppPath(request.url, basePath);
+          if (request.method !== "GET" && request.method !== "HEAD") return;
+          if (pathname === "/" || pathname === "/index.html") return sendShell(reply);
+        });
+        await app.register(fastifyStatic, { root: clientRoot, wildcard: false });
+        app.setNotFoundHandler((request, reply) => {
+          const pathname = requestAppPath(request.url, basePath) ?? "";
+          // A path with a file extension (e.g. /server.js) is a FILE request: if it isn't
+          // present in the client root it 404s — it never falls through to the SPA shell.
+          // Extension-less non-/api, non-/health GETs are client ROUTES → serve index.html.
+          const looksLikeFile = /\.[a-zA-Z0-9]+$/.test(pathname);
+          if (
+            request.method === "GET" &&
+            !pathname.startsWith("/api/") &&
+            pathname !== "/health" &&
+            !looksLikeFile
+          ) {
+            if (!hasValidGateCookie(request.headers.cookie)) {
+              return sendGateForm(reply, basePath);
+            }
+            return sendShell(reply);
+          }
+          return reply.code(404).send({ error: "not_found" });
+        });
+      }
+    },
+    { prefix: basePath }
+  );
+  return server;
 }

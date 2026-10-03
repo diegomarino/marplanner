@@ -1,3 +1,4 @@
+import { appPathname } from "@/lib/base-path";
 import { useState, useRef, useEffect } from "react";
 import { isAdminPinBypassEnabled, useAdminUnlock } from "@/lib/adminUnlock";
 import { authFetch } from "@/lib/credential";
@@ -282,9 +283,7 @@ export function AdminGate() {
 
 function AdminContent({ onLock }: { onLock: () => void }) {
   const adminPathname = () =>
-    window.location.pathname === "/admin" || window.location.pathname.startsWith("/admin/")
-      ? window.location.pathname
-      : "/admin";
+    appPathname() === "/admin" || appPathname().startsWith("/admin/") ? appPathname() : "/admin";
   const [pathname, setPathname] = useState(adminPathname);
 
   useEffect(() => {

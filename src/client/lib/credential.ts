@@ -1,3 +1,4 @@
+import { appUrl, clientBasePath } from "./base-path";
 /** Device-credential-loss recovery (FR-013).
  * The kiosk shell decides "provisioned" from the presence of the non-HttpOnly
  * `mp_provisioned` marker cookie (FR-031/ADR-059), not from an authenticated
@@ -66,7 +67,7 @@ export function bumpCredentialGeneration(): void {
 
 /** Clear the (non-HttpOnly, client-readable) `mp_provisioned` marker cookie. */
 export function clearProvisionedMarker(): void {
-  document.cookie = "mp_provisioned=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+  document.cookie = `mp_provisioned=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${clientBasePath()}/`;
 }
 
 /** Clear the stale marker and notify listeners (the Shell) that the device
@@ -100,6 +101,7 @@ export function reportCredentialLoss(): void {
  */
 export async function authFetch(...args: Parameters<typeof fetch>): Promise<Response> {
   const generation = credentialGeneration;
+  if (typeof args[0] === "string" && args[0].startsWith("/api/")) args[0] = appUrl(args[0]);
   const res = await fetch(...args);
   if (res.status === 401 || res.status === 403) {
     const credentialLoss = await isCredentialLoss(res);

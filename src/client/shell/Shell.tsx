@@ -1,3 +1,4 @@
+import { appUrl, appPathname } from "@/lib/base-path";
 import { useEffect, useState, type ComponentType, type FormEvent, type ReactNode } from "react";
 
 import { AdminUnlockProvider, useAdminUnlock } from "@/lib/adminUnlock";
@@ -121,8 +122,8 @@ export function Shell() {
   const [error, setError] = useState(false);
   const [retryAfter, setRetryAfter] = useState<number | null>();
   const [provisioning, setProvisioning] = useState(false);
-  // Determine current path for SPA routing (no router - parse window.location.pathname)
-  const [currentPath, setCurrentPath] = useState<string>(window.location.pathname);
+  // Determine current path for SPA routing (no router - parse appPathname())
+  const [currentPath, setCurrentPath] = useState<string>(appPathname());
 
   useEffect(() => {
     // FR-031 / ADR-059: provisioned state comes from the device-credential
@@ -143,7 +144,7 @@ export function Shell() {
 
   // Handle URL navigation changes for SPA routing
   useEffect(() => {
-    const handlePopState = () => setCurrentPath(window.location.pathname);
+    const handlePopState = () => setCurrentPath(appPathname());
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
@@ -159,7 +160,7 @@ export function Shell() {
     setError(false);
     setRetryAfter(undefined);
 
-    fetch("/api/auth/provision", {
+    fetch(appUrl("/api/auth/provision"), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${bootstrapKey}`,

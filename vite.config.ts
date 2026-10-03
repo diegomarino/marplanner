@@ -21,6 +21,8 @@ export default defineConfig(({ command }) => {
       },
     },
     root: ".",
+    base: command === "build" ? "./" : "/",
+    cacheDir: "dist/.vite",
     build: {
       // Client build lives under dist/client/ — the ONLY dir Fastify serves. The
       // server bundle goes to dist/server/ (outside the served root) so it can't leak.

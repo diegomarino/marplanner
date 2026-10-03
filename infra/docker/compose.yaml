@@ -17,6 +17,7 @@ services:
       - PORT=3000
       - DATA_DIR=/data
       - DATABASE_PATH=marplanner.db
+      - BASE_PATH=${BASE_PATH:-/}
       - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN:?MP_ACCESS_TOKEN is required}
       - MP_BOOTSTRAP_KEY=${MP_BOOTSTRAP_KEY:?MP_BOOTSTRAP_KEY is required}
       - ADMIN_PIN=${ADMIN_PIN:?ADMIN_PIN is required}

@@ -94,8 +94,7 @@ runner; snapshot failure aborts before migration SQL. During restore, existing r
 recovers the original active pre-restore state, distinct from the older restored
 candidate captured by the migration snapshot. Failed attempts may retain partial
 files; only completed, verified snapshots are recovery points. Recovery and retention are operator-managed, as described in
-[operations](../../operations.md#pre-migration-recovery-snapshots). Runtime `BASE_PATH`
-and the remaining migration/distribution obligations remain open. Packaging and platform-specific runtime evidence do not establish
+[operations](../../operations.md#pre-migration-recovery-snapshots). Runtime `BASE_PATH` now mounts the same portable client/server build with runtime HTML injection; root `/health` is preserved. Built-browser/container release acceptance and the remaining migration/distribution obligations remain open. Packaging and platform-specific runtime evidence do not establish
 full distribution acceptance.
 
 ## Acceptance criteria
@@ -121,7 +120,7 @@ full distribution acceptance.
   only.~~ **Resolved** by the maintained [operator contract](../../operations.md): `DATA_DIR`
   is the storage root; `DATABASE_PATH` defaults to `marplanner.db`; `BACKUPS_ROOT`
   defaults under `DATA_DIR`. Integration overrides use the explicit keys in the
-  environment examples and Compose allowlist. `BASE_PATH` implementation remains open.
+  environment examples and Compose allowlist. `BASE_PATH` is injected at runtime; see [operations](../../operations.md#runtime-subpath-hosting).
 - ~~**OPEN (parked, structural):** `BASE_PATH` × Vite — build-time `base` vs single prebuilt
   image.~~ **RESOLVED at spec level (2026-06-30):** `BASE_PATH` is a **runtime** env (build-arg
   excluded — it would break this image's pull-one-prebuilt distribution); the SPA base path is

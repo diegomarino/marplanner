@@ -24,9 +24,20 @@ adopt `__Host-`. Decision 4 (single cookie factory) still stands and is implemen
 `src/server/auth/cookies.ts` — that is the actual #100 deliverable. Decision 3 below is retained
 verbatim for the record but is **superseded by this Correction**.
 
+## Runtime mount amendment (2026-10-03)
+
+Plain cookie names and `Secure`, `HttpOnly` and `SameSite=Lax` remain the policy.
+Gate/device cookies now use the configured runtime mount plus `/` as their cookie
+Path; an unset/root mount keeps `Path=/`. The nonsecret provisioning marker and
+client-side marker deletion use the same path. This supports sibling deployment
+paths without ordinary cookie delivery across those paths. Cookie Path is not an
+origin security boundary; mutually untrusted applications require separate origins.
+The earlier root-path wording below is historical and is superseded for non-root
+mounts. No `__Host-` prefix is introduced.
+
 ## Context
 
-Slice-001 sets both the access-gate cookie (`mp_gate`) and the device-key cookie
+Initial bootstrap sets both the access-gate cookie (`mp_gate`) and the device-key cookie
 (`mp_device_key`) with a **hardcoded `Secure` attribute** (`src/server/auth/gate.ts`,
 provisioning handler). Issue #100 flagged this as a latent deploy defect: a browser silently
 drops a `Secure` cookie sent over a non-secure origin, so over plain HTTP the access gate can
@@ -110,7 +121,7 @@ decision, not previously contemplated.
 
 - Resolves / re-scopes: **issue #100** (hardcoded `Secure` cookie → the follow-up is now the
   optional `__Host-` + cookie-factory hardening, not a lockout fix).
-- Extends: `ADR-031` (two-boundary access gate), `ADR-059` (slice-001 gate assembly),
+- Extends: `ADR-031` (two-boundary access gate), `ADR-059` (initial bootstrap gate assembly),
   `ADR-055`/`ADR-056` (same-origin serving; `/api`; distribution), `ADR-037` (`mpg-`/`mpk-`
   credential format), `ADR-032` (deployment-agnostic bootstrap config).
 - Constitution: Principle II (fail-closed; health-only unauthenticated surface) — untouched;

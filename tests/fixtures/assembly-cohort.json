@@ -826,7 +826,8 @@
             "full-access authentication boundary denies a revoked integration bearer credential before the protected handler can disclose",
             "full-access authentication boundary denies a expired integration bearer credential before the protected handler can disclose",
             "full-access authentication boundary fails closed before disclosure when cookie and bearer credentials conflict",
-            "full-access authentication boundary does not accept an Admin PIN as backend authorization"
+            "full-access authentication boundary does not accept an Admin PIN as backend authorization",
+            "full-access authentication boundary preserves mounted plugin bearer authorization and conflicting credential rejection"
           ],
           "tests/boundary/auth-throttling.test.ts": [
             "authentication failure backoff public paths aggregates cookie, bearer and missing failures across routes; valid traffic survives cooldown",
@@ -2224,7 +2225,8 @@
             "provision \u2014 FR-007 (T017) POST /api/auth/provision with valid raw * bootstrap key \u2192 200, Set-Cookie sets mp_device_key, body has no raw key",
             "provision \u2014 FR-007 (T017) POST /api/auth/provision with invalid raw key \u2192 401, body is { error, message }, no raw key leaked",
             "provision \u2014 FR-007 (T017) POST /api/auth/provision without Authorization header \u2192 401, no cookie set, no raw key in body",
-            "provision \u2014 FR-007 (T017) POST /api/auth/provision with valid key but NO active bootstrap row in DB \u2192 401"
+            "provision \u2014 FR-007 (T017) POST /api/auth/provision with valid key but NO active bootstrap row in DB \u2192 401",
+            "provision \u2014 FR-007 (T017) scopes mounted device credentials and provisioning marker consistently"
           ],
           "tests/boundary/reminders-assembly.test.ts": [
             "reminders-assembly (T002 \u2014 real-process smoke, Scenario A) Scenario A: create an apply_to_all reminder, then read emissions over real HTTP"
@@ -2545,7 +2547,9 @@
             "static serving \u2014 client-only root; backend bundle never leaks GET /server.js does NOT leak the backend bundle (not 200)",
             "static serving \u2014 client-only root; backend bundle never leaks server artifacts via path traversal are blocked (not 200)",
             "static serving \u2014 client-only root; backend bundle never leaks an extension-less client route falls back to the SPA shell (200)",
-            "static serving \u2014 client-only root; backend bundle never leaks /health and /api/* are unaffected by static serving"
+            "static serving \u2014 client-only root; backend bundle never leaks /health and /api/* are unaffected by static serving",
+            "static serving \u2014 client-only root; backend bundle never leaks serves one client build under a nested runtime mount with injected assets and gated APIs",
+            "static serving \u2014 client-only root; backend bundle never leaks rejects malformed runtime mount paths before serving routes"
           ],
           "tests/boundary/telemetry-capability.test.ts": [
             "telemetry capability seam (T004) CLIENT-LOGGING-TELEMETRY-AC-05: a `*` scoped key satisfies BOTH telemetry:write and telemetry:admin",
@@ -3089,7 +3093,8 @@
             "authFetch \u2014 scope-403 vs credential-invalid (#682) STILL clears the marker on a credential-invalid 401 (invalid key, real authBoundary body shape)",
             "authFetch \u2014 scope-403 vs credential-invalid (#682) does NOT clear the marker on a domain-specific 403 code OTHER than AUTH_SCOPE_DENIED_CODE (slice-018 T007 review fold P2-1 \u2014 printing's printer_capability_missing, real body shape)",
             "authFetch \u2014 credential-generation race guard (FR-013) ignores a stale-generation 401 that resolves after a successful re-provision",
-            "authFetch \u2014 credential-generation race guard (FR-013) collapses N concurrent stale-credential denials into exactly one loss event"
+            "authFetch \u2014 credential-generation race guard (FR-013) collapses N concurrent stale-credential denials into exactly one loss event",
+            "runtime subpath credential transport prefixes canonical API strings and clears the marker at its mounted cookie path"
           ],
           "tests/client/daily-briefing-admin-mirror-fence.test.tsx": [
             "daily-briefing admin panel \u2014 server-constant mirror fence offers exactly the server's ALL_BLOCK_TYPES, in registry order",
@@ -3301,7 +3306,8 @@
             "client logger (T006) P2-2/623 review: envelope strings are clamped before buffering a normal-length message/component pass through unchanged",
             "client logger (T006) CLIENT-LOGGING-TELEMETRY-INV-01/-INV-02: unload flush never throws (P2-1/623 review) a cyclic `data` fails JSON.stringify on the unload path \u2014 the batch is dropped, no throw, no send attempt",
             "client logger (T006) CLIENT-LOGGING-TELEMETRY-INV-01/-INV-02: unload flush never throws (P2-1/623 review) a normal buffer still flushes via the unload path (sanity check around the P2-1 fix)",
-            "client logger (T006) P3-1/623 review: the periodic-flush transport does NOT set fetch keepalive (a full 50-entry batch can exceed the ~64KB keepalive body cap)"
+            "client logger (T006) P3-1/623 review: the periodic-flush transport does NOT set fetch keepalive (a full 50-entry batch can exceed the ~64KB keepalive body cap)",
+            "client logger (T006) uses the runtime mount for periodic fetch and unload beacon telemetry"
           ],
           "tests/client/meal-entry-dialog.test.tsx": [
             "MealEntryDialog keeps submit disabled with localized guidance until recipe or note content is present",
@@ -3761,7 +3767,8 @@
             "closed route resolver classifies unknown pathname /administrator without prefix leakage",
             "closed route resolver classifies unknown pathname /calendar/ without prefix leakage",
             "closed route resolver classifies unknown pathname /Calendar without prefix leakage",
-            "closed route resolver classifies unknown pathname /missing without prefix leakage"
+            "closed route resolver classifies unknown pathname /missing without prefix leakage",
+            "household shell routes keeps nested runtime mount links and navigation on the requested family route"
           ],
           "tests/client/shell-service-mount.test.tsx": [
             "Shell \u2014 US0 service mount point (slice-015 T003) mounted on the /chores branch (family) renders the registered probe with language context (household language: es)",
@@ -4154,7 +4161,8 @@
             "backups quiesce hook \u2014 deterministic boundary (review P3-4) leaves /health completely untouched while quiesced (out of scope \u2014 not /api/*)",
             "backups quiesce hook \u2014 deterministic boundary (review P3-4) does not 503 /api/* when NOT quiesced (falls through to normal auth handling)",
             "backups quiesce hook \u2014 in-flight counter release on client abort (review P2-1) a disconnected client stays counted until its handler finishes, then releases the slot",
-            "requests closed before handler execution releases the slot and does not execute a handler after transport closure"
+            "requests closed before handler execution releases the slot and does not execute a handler after transport closure",
+            "runtime mounted restore quiescing quiesces mounted APIs while exempting only the exact restore route and root health"
           ],
           "tests/integration/backups-restore.test.ts": [
             "restore engine \u2014 confirmation + validation (BACKUPS-AC-01, no side effects) empty/missing filename -> validation_error, no side effects",
@@ -4892,7 +4900,7 @@
     },
     "files": {
       "src/client/admin/AdminGate.tsx": {
-        "sha256": "d60b7796b570d9292a6319fcdc21913adb58c4a70d97807409b5c5274ee9f38a",
+        "sha256": "9870e7b0ff1fb10a50b51e0b032839d8a77e630c17869801ff02b5f5cc75ea2e",
         "layer": "client",
         "minimumTotals": {
           "lines": 68,
@@ -4908,7 +4916,7 @@
         }
       },
       "src/client/admin/AdminRoutes.tsx": {
-        "sha256": "2a72a72f1da30d1d678201b407dddd951a1de725aafc6264926c5ce0706b692f",
+        "sha256": "07ed513348b75c45a60d93884cb72c85853227e9c5b6d9372a653861853beb58",
         "layer": "client",
         "minimumTotals": {
           "lines": 19,
@@ -4924,7 +4932,7 @@
         }
       },
       "src/client/admin/BackupsManagement.tsx": {
-        "sha256": "a3010e20dbcc54b1ba1c9655329eb1dc77753203974d9712668fb4a4b1e5b4c3",
+        "sha256": "a45b285b7d0461de057997a58122c4aaf44713d6a5e6c7e7cd5a1b83ab512475",
         "layer": "client",
         "minimumTotals": {
           "lines": 125,
@@ -5692,7 +5700,7 @@
         }
       },
       "src/client/home/TodayAgenda.tsx": {
-        "sha256": "7b25f85b03840e2d60faa87558e9075e686e7e01fb620be39b48e47d80f61647",
+        "sha256": "8f678d9db5d7bcba1a18db59e5f0342fb2864f32582adb50bc47d2f4e5c366c5",
         "layer": "client",
         "minimumTotals": {
           "lines": 62,
@@ -5724,7 +5732,7 @@
         }
       },
       "src/client/home/TodayMeals.tsx": {
-        "sha256": "51f0b2066ea0c183591ebfe8dba179f629771f304c179556bd2331e32e23421d",
+        "sha256": "8388176c90310242e87e8e69abfcbffa9e3bf70622d7fb849d6b5c4b4a9fe802",
         "layer": "client",
         "minimumTotals": {
           "lines": 17,
@@ -5851,8 +5859,24 @@
           "branches": 100
         }
       },
+      "src/client/lib/base-path.ts": {
+        "sha256": "3a164b8c3c143d8bd0fdcb7a240299cfd5c9914a0d0fe8aaab2eaf759af9ccbc",
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 3,
+          "statements": 3,
+          "functions": 3,
+          "branches": 2
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/client/lib/credential.ts": {
-        "sha256": "1d9c5ac0d35c427049dfbf8b93d1f633aae8ff572598107a274d55bd5677e691",
+        "sha256": "ee534ee095bf74da3c1bafb6b299af6178a08063a860346b21392b6545b66f05",
         "layer": "client",
         "minimumTotals": {
           "lines": 20,
@@ -5916,7 +5940,7 @@
         }
       },
       "src/client/lib/logger.ts": {
-        "sha256": "623815f590417df6a72fc56f2e5d53318e46f252bcc4f68b589ed00d19b2b036",
+        "sha256": "b05f1423a5f6c03914c7ad6bc27231d1740ee300a7fb98a202d2fccb4bd0b1da",
         "layer": "client",
         "minimumTotals": {
           "lines": 73,
@@ -6140,7 +6164,7 @@
         }
       },
       "src/client/plugins/PluginHealthIndicator.tsx": {
-        "sha256": "1ff61348b57d9f67cde7dce31c4d4bcac371cb4604320e0ccdce7c705615151f",
+        "sha256": "043fcb61954438b64016b4ce90463def90ef1c8885ea274fe5aa429d3d82024a",
         "layer": "client",
         "minimumTotals": {
           "lines": 15,
@@ -6172,7 +6196,7 @@
         }
       },
       "src/client/plugins/PluginUnavailable.tsx": {
-        "sha256": "f371d11dddbeccedb0389a22830559cc83806dd91cb0b376f29f1aaa9329a9b9",
+        "sha256": "eb6c82999ed25c1f12b40b796efc50b81535a690f8821bc15907f21c0f6cacd6",
         "layer": "client",
         "minimumTotals": {
           "lines": 4,
@@ -6220,7 +6244,7 @@
         }
       },
       "src/client/printing/PrinterAttention.tsx": {
-        "sha256": "f2ccfc21fc740d2d6485a5bdc0ed9e0e9ea756af480a303cf65432047aff2215",
+        "sha256": "3cfd9a8c2ea86dab9e7c11891d40649a8cf44786ddf96281f1c9ed618e0a639d",
         "layer": "client",
         "minimumTotals": {
           "lines": 4,
@@ -6316,7 +6340,7 @@
         }
       },
       "src/client/shell/HouseholdChrome.tsx": {
-        "sha256": "5b52d9702f87f2193bd29016a7febb8fdca2c19a5ae8db2eb502f0e0ea24672c",
+        "sha256": "4bb431e7bdd93a90d7b5de2ad672c3bd376a7f006260533ce9adc5e304bea363",
         "layer": "client",
         "minimumTotals": {
           "lines": 81,
@@ -6332,7 +6356,7 @@
         }
       },
       "src/client/shell/Shell.tsx": {
-        "sha256": "3df85f2d31480b363b90a77463b38b240d9a28ca5c6a3323f6a413996032c03f",
+        "sha256": "aca4b4a4094589f466f7c72195abccad1a17b5d8af2ac4859d7049c5c9a8fc11",
         "layer": "client",
         "minimumTotals": {
           "lines": 62,
@@ -6364,7 +6388,7 @@
         }
       },
       "src/client/shell/routes.ts": {
-        "sha256": "60a3389bc68b12aaa261135b5f71540848311f2f3d39c9074b795aa2299bffdf",
+        "sha256": "273855d69c9ebc545722bcd1905ff0ea50ac61c6e2c9a080c7c3ba4446692231",
         "layer": "client",
         "minimumTotals": {
           "lines": 10,
@@ -6524,7 +6548,7 @@
         }
       },
       "src/server/app.ts": {
-        "sha256": "4d4cdfae0acd1260c130870c09319d99171822927bdae6ec06f0cfafa4c3ba5f",
+        "sha256": "f16cc1c8de18697fa996de8b0390c441a810bb006a32cfcf31ccb12013b1b57d",
         "layer": "server",
         "minimumTotals": {
           "lines": 53,
@@ -6540,7 +6564,7 @@
         }
       },
       "src/server/auth/boundary.ts": {
-        "sha256": "fa46a0278fdbd56c41d084088bc56cef5915ea6c31b681a1226a36f591681732",
+        "sha256": "467d8a8a7d24b13ec29bf7462dc98bfef6e1a4356620bf2d90b638107b37b875",
         "layer": "server",
         "minimumTotals": {
           "lines": 51,
@@ -6572,7 +6596,7 @@
         }
       },
       "src/server/auth/cookies.ts": {
-        "sha256": "92d8709209adbe286d0f75e6f7f2558bd7d9511e2a7ea61d7dc7446033556181",
+        "sha256": "d48424a08211f040c614d4f94b2bfa821250bfce35c7f0742db335f764c881cc",
         "layer": "server",
         "minimumTotals": {
           "lines": 3,
@@ -6620,7 +6644,7 @@
         }
       },
       "src/server/auth/gate.ts": {
-        "sha256": "db3de19b126e1592e4adcedb5de4431b26b74e7db935ba7597a041dbe49045de",
+        "sha256": "2a9dac82cc659ceb0ce1d3a8bfb6bbe91ed242bd8b999e318b8bf66e108ead0f",
         "layer": "server",
         "minimumTotals": {
           "lines": 35,
@@ -6652,7 +6676,7 @@
         }
       },
       "src/server/auth/provision.ts": {
-        "sha256": "0809fb44414a88e8a2f8c86c8d8cd5dd7c4d166c2abf483870ae3403f1a53a6d",
+        "sha256": "209bb7d977e189e6f3b6937aa1486fcc7f1d9810f5587ea13b4d4757904f5c64",
         "layer": "server",
         "minimumTotals": {
           "lines": 42,
@@ -8765,7 +8789,7 @@
         }
       },
       "src/server/routes/provision.ts": {
-        "sha256": "b12c3e2a7cba427c56a9e3532fc98b36075e80277c09f7c20ec5d4d7a3b7ba71",
+        "sha256": "cc4e4dcc7107409d6f63fb934c6e54b9d7394bb1d4307a4c93837d5b41920868",
         "layer": "server",
         "minimumTotals": {
           "lines": 1,
@@ -8970,6 +8994,22 @@
           "statements": 80.95,
           "functions": 100,
           "branches": 78.57
+        }
+      },
+      "src/shared/base-path.ts": {
+        "sha256": "33f8d4a8367d6cd7370299f84e2ed16a9c1ca027aac664d2e4d364df4f1d5b11",
+        "layer": "shared",
+        "minimumTotals": {
+          "lines": 13,
+          "statements": 16,
+          "functions": 4,
+          "branches": 19
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/shared/dailyBriefing.ts": {
@@ -9455,6 +9495,7 @@
     "src/client/i18n/index.tsx",
     "src/client/i18n/messages.ts",
     "src/client/lib/adminUnlock.tsx",
+    "src/client/lib/base-path.ts",
     "src/client/lib/credential.ts",
     "src/client/lib/day-period-labels.ts",
     "src/client/lib/household-date.ts",
@@ -9670,6 +9711,7 @@
     "src/server/telemetry/job.ts",
     "src/server/telemetry/redact.ts",
     "src/server/telemetry/sink.ts",
+    "src/shared/base-path.ts",
     "src/shared/dailyBriefing.ts",
     "src/shared/dayPeriods.ts",
     "src/shared/events.ts",

@@ -1,3 +1,4 @@
+import { requestAppPath } from "../../shared/base-path";
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/better-sqlite3";
@@ -43,23 +44,17 @@ function readBearerKey(authorization: string | undefined): string | undefined {
  * revoked_at IS NULL, and (expires_at IS NULL OR expires_at > now).
  * FR-005 – Credential authority lives in the database; no sessions or cached authority.
  */
-export async function authBoundary(app: FastifyInstance): Promise<void> {
+export async function authBoundary(app: FastifyInstance, basePath = ""): Promise<void> {
   const backoff = authenticationBackoff(app);
   app.addHook("onRequest", async (request: FastifyRequest, reply: FastifyReply) => {
     // FR-002: /health (GET) and /auth/provision (POST) are the only
     // unauthenticated routes — skip auth for these.
     // Strip query string, compare EXACT path (no startsWith — that would match
     // /healthx, /health-admin, /health/anything, which is fail-OPEN).
-    const rawPath = (request.url ?? "").split("?")[0];
-    let pathname;
-    try {
-      pathname = decodeURIComponent(rawPath);
-    } catch {
-      pathname = rawPath;
-    }
+    const pathname = requestAppPath(request.url, basePath);
     // ADR-059 §1/§2: the API-key boundary covers exactly /api/*. Frontend routes, the SPA
     // catch-all, and root /health are NOT subject to it.
-    if (!pathname.startsWith("/api/")) {
+    if (!pathname?.startsWith("/api/")) {
       return;
     }
     // Within /api/* provision authenticates the submitted raw key with no prior cookie.
@@ -88,7 +83,7 @@ export async function authBoundary(app: FastifyInstance): Promise<void> {
 
     const rejectCredential = (status: number, message: string) => {
       // Unknown routes still fail closed, but are not credential guesses against an installed operation.
-      const seconds = request.routeOptions.url?.startsWith("/api/")
+      const seconds = requestAppPath(request.routeOptions.url ?? "", basePath)?.startsWith("/api/")
         ? backoff.failure("api", request.ip)
         : 0;
       if (seconds) return sendAuthenticationBackoff(reply, seconds);
