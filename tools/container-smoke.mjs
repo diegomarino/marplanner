@@ -279,6 +279,28 @@ try {
     );
     await touch.context.close();
   });
+  await caseRun("same image serves a nested runtime mount", async () => {
+    const nested = await start("nested", await volume("nested"), 3000, [
+      "-e",
+      "BASE_PATH=/family/planner",
+    ]);
+    await healthy(nested);
+    assert.equal((await fetch(`${nested.base}/api/settings`)).status, 404);
+    const mounted = { ...nested, base: `${nested.base}/family/planner` };
+    const session = await provision(mounted, "nested", { width: 1280, height: 900 });
+    await session.page.goto(`${mounted.base}?bookmark=1`);
+    await expect(session.page).toHaveURL(`${mounted.base}/?bookmark=1`);
+    await expect(session.page.getByTestId("home-surface")).toBeVisible();
+    await session.page.goto(`${mounted.base}/calendar`);
+    await expect(session.page.getByTestId("calendar-period-title")).toBeVisible();
+    await session.page.reload();
+    await expect(session.page.getByTestId("calendar-period-title")).toBeVisible();
+    for (const cookie of await session.context.cookies()) {
+      if (["mp_gate", "mp_device_key", "mp_provisioned"].includes(cookie.name))
+        assert.equal(cookie.path, "/family/planner/");
+    }
+    await session.context.close();
+  });
   await caseRun("missing credentials remain locked", async () => {
     const locked = await start("locked", await volume("locked"), 3000, [], false);
     await healthy(locked);

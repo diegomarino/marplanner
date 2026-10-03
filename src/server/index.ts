@@ -26,7 +26,7 @@ async function startScheduler(publish: (scheduler: Scheduler) => void): Promise<
 
   let jobCount = 0;
 
-  // US1: the daily-briefing scheduled
+  // The daily-briefing scheduled
   // generation job, registered through the daily-briefing module's own
   // host-api-barrel-only registration function — never wired directly
   // against `./scheduler/index` here (that would bypass Rule B for the

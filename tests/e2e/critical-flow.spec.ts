@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { spawn, type ChildProcess } from "node:child_process";
 import { createServer } from "node:net";
-import { mkdtempSync, existsSync } from "node:fs";
+import { mkdtempSync, existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import Database from "better-sqlite3";
@@ -132,7 +132,11 @@ async function startServer(port: number, dataDir: string): Promise<ChildProcess>
     // Any startup failure (early exit, health timeout) must not leak the child:
     // the caller has not captured this handle yet, so its `finally` cannot reap it.
     child.off("exit", onExit);
-    if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+    if (child.exitCode === null && child.signalCode === null) {
+      const exited = new Promise<void>((done) => child.once("exit", () => done()));
+      child.kill("SIGKILL");
+      await exited;
+    }
     throw err;
   }
 }
@@ -181,104 +185,123 @@ test("critical flow: gate → provision → cold settings → admin → member �
   }
 
   const dataDir = mkdtempSync(join(tmpdir(), "mp-e2e-"));
-  const port = await getFreePort();
-  const base = `http://localhost:${port}`;
-
-  let server = await startServer(port, dataDir);
   try {
-    // 1. Fresh boot → access-gate FORM (FR-029): 200 HTML, never the shell, never 401.
-    const gateResp = await page.goto(`${base}/`);
-    expect(gateResp?.status()).toBe(200);
-    await expect(page.getByTestId("access-gate-form")).toBeVisible();
-    // The provisioning shell must NOT be reachable before the gate is passed.
-    await expect(page.getByRole("button", { name: "Provision Device" })).toHaveCount(0);
+    const port = await getFreePort();
+    const base = `http://localhost:${port}`;
 
-    // 2. Pass the gate (FR-030): submitting the correct token sets the gate cookie,
-    // after which the SPA shell is served.
-    await page.getByTestId("access-gate-form").locator('input[name="token"]').fill(ACCESS_TOKEN);
-    await page.getByRole("button", { name: "Enter" }).click();
+    let server = await startServer(port, dataDir);
+    try {
+      // 1. Fresh boot → access-gate FORM (FR-029): 200 HTML, never the shell, never 401.
+      const gateResp = await page.goto(`${base}/`);
+      expect(gateResp?.status()).toBe(200);
+      await expect(page.getByTestId("access-gate-form")).toBeVisible();
+      // The provisioning shell must NOT be reachable before the gate is passed.
+      await expect(page.getByRole("button", { name: "Provision Device" })).toHaveCount(0);
 
-    // 3. Provisioning screen renders from browser defaults (FR-031): no authed
-    // settings call gates this — it appears purely from the absent device marker.
-    await expect(page.getByRole("button", { name: "Provision Device" })).toBeVisible();
-    await page.getByLabel("Bootstrap key").fill(BOOTSTRAP_KEY);
-    await page.getByRole("button", { name: "Provision Device" }).click();
+      // 2. Pass the gate (FR-030): submitting the correct token sets the gate cookie,
+      // after which the SPA shell is served.
+      await page.getByTestId("access-gate-form").locator('input[name="token"]').fill(ACCESS_TOKEN);
+      await page.getByRole("button", { name: "Enter" }).click();
 
-    // Provision success → the family dashboard is on the provisioned shell.
-    await expect(page.getByTestId("home-surface")).toBeVisible();
+      // 3. Provisioning screen renders from browser defaults (FR-031): no authed
+      // settings call gates this — it appears purely from the absent device marker.
+      await expect(page.getByRole("button", { name: "Provision Device" })).toBeVisible();
+      await page.getByLabel("Bootstrap key").fill(BOOTSTRAP_KEY);
+      await page.getByRole("button", { name: "Provision Device" }).click();
 
-    // 4. Cold settings readable with the device key alone (FR-008..011), via the
-    // product seam — the browser context carries the httpOnly mp_device_key cookie.
-    const cold = await page.request.get(`${base}/api/settings`);
-    expect(cold.status()).toBe(200);
-    expect(JSON.stringify(await cold.json())).toContain("Europe/Madrid"); // seeded locale default
+      // Provision success → the family dashboard is on the provisioned shell.
+      await expect(page.getByTestId("home-surface")).toBeVisible();
 
-    // 5. Admin unlock (FR-017/018): hold the Options-menu Admin button for three seconds,
-    // then enter the PIN through the touch keypad and verify it server-side.
-    await unlockAdmin(page, ADMIN_PIN);
+      // 4. Cold settings readable with the device key alone (FR-008..011), via the
+      // product seam — the browser context carries the httpOnly mp_device_key cookie.
+      const cold = await page.request.get(`${base}/api/settings`);
+      expect(cold.status()).toBe(200);
+      expect(JSON.stringify(await cold.json())).toContain("Europe/Madrid"); // seeded locale default
 
-    // 6. Member create (FR-019/022/023): display name + role=parent → 201.
-    // Language-agnostic selectors: the admin Members UI localizes to the household
-    // locale (default 'es', ADR-061), so target stable ids/roles + a testid, NOT
-    // English label text (which flips to Spanish once /api/settings resolves).
-    const createSubmit = page.locator('form button[type="submit"]');
-    await expect(createSubmit).toBeVisible();
-    await page.locator("#member-display-name").fill(MEMBER_NAME);
-    await page.locator("#member-role").click(); // Radix Select trigger
-    await page.getByRole("option").first().click(); // first option = parent
-    await createSubmit.click();
-    await expect(page.getByTestId("member-create-success")).toBeVisible();
+      // 5. Admin unlock (FR-017/018): hold the Options-menu Admin button for three seconds,
+      // then enter the PIN through the touch keypad and verify it server-side.
+      await unlockAdmin(page, ADMIN_PIN);
 
-    // Pre-restart sanity: the member is readable through GET /api/members.
-    const before = await page.request.get(`${base}/api/members`);
-    expect(before.status()).toBe(200);
-    expect(await before.json()).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ displayName: MEMBER_NAME, role: "parent", lifecycle: "active" }),
-      ])
-    );
+      // 6. Member create (FR-019/022/023): display name + role=parent → 201.
+      // Language-agnostic selectors: the admin Members UI localizes to the household
+      // locale (default 'es', ADR-061), so target stable ids/roles + a testid, NOT
+      // English label text (which flips to Spanish once /api/settings resolves).
+      const createSubmit = page.locator('form button[type="submit"]');
+      await expect(createSubmit).toBeVisible();
+      await page.locator("#member-display-name").fill(MEMBER_NAME);
+      await page.locator("#member-role").click(); // Radix Select trigger
+      await page.getByRole("option").first().click(); // first option = parent
+      await createSubmit.click();
+      await expect(page.getByTestId("member-create-success")).toBeVisible();
 
-    // 7. REAL server-process restart against the SAME DATA_DIR + SAME PORT (SC-003).
-    // Same port is required: cookies are keyed per-origin (incl. port), so the
-    // already-loaded page keeps its gate/device/marker cookies on reload.
-    await stopServer(server);
-    server = await startServer(port, dataDir);
+      // Pre-restart sanity: the member is readable through GET /api/members.
+      const before = await page.request.get(`${base}/api/members`);
+      expect(before.status()).toBe(200);
+      expect(await before.json()).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            displayName: MEMBER_NAME,
+            role: "parent",
+            lifecycle: "active",
+          }),
+        ])
+      );
 
-    // 8. Device key survives — reload does NOT drop back to provisioning (FR-031/SC-003).
-    await page.reload();
-    await expect(page.getByTestId("admin-pin-keypad")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Provision Device" })).toHaveCount(0);
+      // 7. REAL server-process restart against the SAME DATA_DIR + SAME PORT (SC-003).
+      // Reuse the same port so the loaded page keeps its URL across the restart.
+      // Cookies are scoped by host and path, not port.
+      await stopServer(server);
+      server = await startServer(port, dataDir);
 
-    // 9. Member re-read via the key-authorized GET /api/members after restart (FR-032).
-    const after = await page.request.get(`${base}/api/members`);
-    expect(after.status()).toBe(200);
-    const members = (await after.json()) as Array<Record<string, unknown>>;
-    expect(members).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ displayName: MEMBER_NAME, role: "parent", lifecycle: "active" }),
-      ])
-    );
+      // 8. Device key survives — reload does NOT drop back to provisioning (FR-031/SC-003).
+      await page.reload();
+      await expect(page.getByTestId("admin-pin-keypad")).toBeVisible();
+      await expect(page.getByRole("button", { name: "Provision Device" })).toHaveCount(0);
+
+      // 9. Member re-read via the key-authorized GET /api/members after restart (FR-032).
+      const after = await page.request.get(`${base}/api/members`);
+      expect(after.status()).toBe(200);
+      const members = (await after.json()) as Array<Record<string, unknown>>;
+      expect(members).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            displayName: MEMBER_NAME,
+            role: "parent",
+            lifecycle: "active",
+          }),
+        ])
+      );
+    } finally {
+      await stopServer(server);
+    }
+
+    // 10. Store-level durability (SC-003): the member row AND the active device key
+    // survive in the on-disk SQLite file under DATA_DIR — zero committed rows lost.
+    const db = new Database(join(dataDir, "marplanner.db"), {
+      readonly: true,
+      fileMustExist: true,
+    });
+    try {
+      const memberRows = db
+        .prepare("SELECT display_name, role, lifecycle FROM members")
+        .all() as Array<{ display_name: string; role: string; lifecycle: string }>;
+      expect(memberRows).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            display_name: MEMBER_NAME,
+            role: "parent",
+            lifecycle: "active",
+          }),
+        ])
+      );
+      const activeKeys = db
+        .prepare("SELECT COUNT(*) AS n FROM api_keys WHERE revoked_at IS NULL")
+        .get() as { n: number };
+      expect(activeKeys.n).toBeGreaterThanOrEqual(1);
+    } finally {
+      db.close();
+    }
   } finally {
-    await stopServer(server);
-  }
-
-  // 10. Store-level durability (SC-003): the member row AND the active device key
-  // survive in the on-disk SQLite file under DATA_DIR — zero committed rows lost.
-  const db = new Database(join(dataDir, "marplanner.db"), { readonly: true, fileMustExist: true });
-  try {
-    const memberRows = db
-      .prepare("SELECT display_name, role, lifecycle FROM members")
-      .all() as Array<{ display_name: string; role: string; lifecycle: string }>;
-    expect(memberRows).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ display_name: MEMBER_NAME, role: "parent", lifecycle: "active" }),
-      ])
-    );
-    const activeKeys = db
-      .prepare("SELECT COUNT(*) AS n FROM api_keys WHERE revoked_at IS NULL")
-      .get() as { n: number };
-    expect(activeKeys.n).toBeGreaterThanOrEqual(1);
-  } finally {
-    db.close();
+    rmSync(dataDir, { recursive: true, force: true });
   }
 });

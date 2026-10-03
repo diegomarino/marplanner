@@ -71,6 +71,15 @@ Run acceptance in a fresh validation worktree at the reviewed local candidate wi
   build-provenance attestation** (proportionate supply-chain hygiene when third parties run the
   image; cosign optional). Deploy/rollback = N/A (self-hoster owns).
 
+### Launch scope amendment (2026-10-03)
+
+The maintainer explicitly defers release versioning policy, arbitrary historical
+upgrade compatibility and the `SKIP_MIGRATION` read-only mode until after launch.
+The SemVer/release automation and historical migration policies above/below remain
+future design requirements; they are not implemented features or launch gates.
+This deferral does not relax pre-migration recovery snapshots, fail-fast backup
+errors, safe storage ownership, request/job drain or preservation of recovery data.
+
 ### Migration policy (Q16)
 
 - Drizzle-generated → **human-reviewed** SQL → commit; **append-only / forward-only**, NO
@@ -138,7 +147,7 @@ operator-managed disk space/retention, and are recovered offline outside the Adm
 backup shelf. Failed attempts may leave partial files/directories; recovery requires
 a completed, independently verified snapshot. These are logical snapshots, not
 physical-byte copies. Explicit declared IDs survive; implicit rowids may change. See
-[operations](../../operations.md#pre-migration-recovery-snapshots). Runtime `BASE_PATH` now uses portable relative build assets and server HTML base/meta injection, with prefixed API/gate routes and client URL/navigation helpers. Root `/health` is preserved. Built-browser/container release acceptance, `SKIP_MIGRATION`, historical upgrade compatibility and remaining distribution safety obligations are still open. The
+[operations](../../operations.md#pre-migration-recovery-snapshots). Runtime `BASE_PATH` now uses portable relative build assets and server HTML base/meta injection, with prefixed API/gate routes and client URL/navigation helpers. Root `/health` is preserved. Built-browser/container acceptance and applicable storage safety checks remain required for the launch candidate. Versioning policy, `SKIP_MIGRATION` and arbitrary historical upgrade compatibility are explicitly deferred until after launch. The
 container check is an explicit command; this ADR does not prove that every release
 gate or publishing lane described above is implemented.
 
@@ -147,7 +156,8 @@ gate or publishing lane described above is implemented.
 - A PR re-implementing a primitive inline (instead of `@/ui`) fails CI; a route without a schema fails
   CI; a stale generated artifact fails CI; a documented command absent from `package.json` is a documentation finding.
 - A migration applied with a failed pre-backup aborts (no data-loss window); a migration failure
-  surfaces a human-readable message and is recoverable via `SKIP_MIGRATION`.
+  surfaces a human-readable message and retains a verified recovery point. The
+  `SKIP_MIGRATION` mode is deferred until after launch by the scope amendment above.
 - Onboarding example content survives archive but cannot be hard-deleted (trigger) and cannot be
   blocked by a user-chosen reserved-namespace ID (CHECK).
 - The app runs correctly behind a subpath reverse proxy via `BASE_PATH`.
