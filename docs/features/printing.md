@@ -7,7 +7,7 @@ it takes a printable raster from any producer, converts it to device-specific by
 (ESC/POS for the configured paper width/transport), and delivers it to a connected
 printer. It owns readiness, queueing, device conversion, delivery, attempt records,
 and success acknowledgement — but owns no producer content and holds no
-producer-specific knowledge. Daily Briefing is its only producer in v2.
+producer-specific knowledge. Daily Briefing is its only producer in this system.
 
 ## User workflows
 
@@ -105,5 +105,5 @@ can be printed again without a stale duplicate slipping through.
   (ADR-041/ADR-022); Printing reads no producer tables.
 - Settings are provided via ADR-028 (`printer` with `paperWidthDots`, plus
   `printerTransport` with Bluetooth now); there is no master/`autoPrint` key.
-- Fresh v2 data store; no legacy import (ADR-026). Uninstall drops Printing's tables
+- Fresh data store; no legacy import (ADR-026). Uninstall drops Printing's tables
   including print history (ADR-039).

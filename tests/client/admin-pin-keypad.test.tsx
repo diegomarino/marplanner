@@ -37,6 +37,29 @@ describe("AdminGate touch PIN keypad", () => {
     expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●●●●");
   });
 
+  it("accepts hardware keyboard digits, Backspace, and Enter to submit", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ match: false }));
+    vi.stubGlobal("fetch", fetchMock);
+    renderGate();
+
+    fireEvent.keyDown(window, { key: "1" });
+    fireEvent.keyDown(window, { key: "2" });
+    fireEvent.keyDown(window, { key: "3" });
+    fireEvent.keyDown(window, { key: "4" });
+    expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●●●");
+
+    fireEvent.keyDown(window, { key: "Backspace" });
+    expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●●");
+
+    fireEvent.keyDown(window, { key: "5" });
+    fireEvent.keyDown(window, { key: "Enter" });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    expect(body).toEqual({ pin: "1235" });
+    expect(await screen.findByRole("alert")).toHaveTextContent("Incorrect PIN.");
+  });
+
   it("submits only 4-6 digits and retains wrong-PIN and request-error feedback", async () => {
     const fetchMock = vi
       .fn()

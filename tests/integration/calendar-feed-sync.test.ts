@@ -12,7 +12,7 @@ const sourceId = "sync-source";
 
 function calendar(title: string): string {
   const date = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10).replaceAll("-", "");
-  return `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:sync-event\nDTSTAMP:${date}T000000Z\nDTSTART;VALUE=DATE:${date}\nSUMMARY:${title}\nEND:VEVENT\nEND:VCALENDAR`;
+ return `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:sync-event\nDTSTAMP:${date}Z\nDTSTART;VALUE=DATE:${date}\nSUMMARY:${title}\nEND:VEVENT\nEND:VCALENDAR`;
 }
 
 describe("calendar feed synchronization", () => {
@@ -110,10 +110,7 @@ describe("calendar feed synchronization", () => {
 
   it("publishes valid neighbours and records malformed-event isolation", async () => {
     insertSource();
-    const date = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10).replaceAll("-", "");
-    const body = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:valid-neighbour\nDTSTAMP:${date}T000000Z\nDTSTART;VALUE=DATE:${date}\nSUMMARY:Visible\nEND:VEVENT\nBEGIN:VEVENT\nUID:invalid-neighbour\nDTSTAMP:${date}T000000Z\nDTSTART;VALUE=DATE:${date}\nEND:VEVENT\nEND:VCALENDAR`;
-    await startExternalSourceSynchronization(sourceId, {
-      lookup: async () => [{ address: "8.8.8.8", family: 4 }],
+ const date = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10).replaceAll("-", ""); const body = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:valid-neighbour\nDTSTAMP:${date}Z\nDTSTART;VALUE=DATE:${date}\nSUMMARY:Visible\nEND:VEVENT\nBEGIN:VEVENT\nUID:invalid-neighbour\nDTSTAMP:${date}Z\nDTSTART;VALUE=DATE:${date}\nEND:VEVENT\nEND:VCALENDAR`; await startExternalSourceSynchronization(sourceId, { lookup: async => [{ address:"8.8.8.8", family: 4 }],
       transport: async () => body,
     });
     expect(getExternalSourcePhase(sourceId)).toBe("succeeded");

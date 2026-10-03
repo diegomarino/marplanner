@@ -15,7 +15,7 @@ import {
  * `component`; a secret straddling the truncation boundary; self-referential object;
  * bound-before-redact order.
  */
-describe("telemetry redact.ts corpus (T003)", () => {
+describe("telemetry redact.ts corpus", () => {
   const DENY_LIST_KEYS = [
     "token",
     "apiKey",

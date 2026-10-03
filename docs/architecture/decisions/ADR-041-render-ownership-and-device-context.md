@@ -64,7 +64,7 @@ row into the producer's namespace is consistent with the `printedAt` relocation
 
 ## Data / Setup Implications
 
-Fresh v2: the render artefact (`bitmap`, height) lives in the producer's
+Fresh deployment: the render artefact (`bitmap`, height) lives in the producer's
 namespaced tables, not on a shared row. Printing stores no producer artefacts;
 it converts and delivers. No legacy import (ADR-026).
 
@@ -88,7 +88,7 @@ it converts and delivers. No legacy import (ADR-026).
 
 ## Traceability
 
-- Pre-v2: relates to `ADR-019`, `ADR-021` (printer config), `ADR-015` (render/i18n)
+- Related prior: relates to `ADR-019`, `ADR-021` (printer config), `ADR-015` (render/i18n)
 - Related: `ADR-035` (decision/execution split, capability registration),
   `ADR-039` (namespace ownership, absence-tolerance), `ADR-022` (fetch-at-execute)
 - Domain grill: `../domain-grills/daily-briefing-printing.md` (Q4)

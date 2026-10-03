@@ -10,7 +10,7 @@ import { useIsolatedDb } from "../helpers/db";
  * create/list/get/edit/delete lifecycle. RED until wires
  * listReminders/getReminder/editReminder/deleteReminder + their routes.
  */
-describe("reminders-crud boundary tests (T004/T005)", () => {
+describe("reminders-crud boundary tests", () => {
   useIsolatedDb();
 
   // ── helpers ──────────────────────────────────────────────────────────────

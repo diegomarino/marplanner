@@ -109,7 +109,7 @@ portability seam to note).
 
 ## Traceability
 
-- Pre-v2: refines `ADR-018` and the Reminders cluster outcome.
+- Related prior: refines `ADR-018` and the Reminders cluster outcome.
 - Domain grill: `../domain-grills/calendar-reminders-routines.md` (R3) +
   `../domain-grills/daily-messages.md` (Reminders revisit)
 - Related: `ADR-002`, `ADR-005`, `ADR-006`, `ADR-020`, `ADR-022`, `ADR-040`, `ADR-043`

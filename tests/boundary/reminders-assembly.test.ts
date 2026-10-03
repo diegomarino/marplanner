@@ -14,7 +14,7 @@ import { PLUGIN_MANIFESTS } from "../../src/server/plugins/manifest";
  * task the aggregate-validity rule requires — proven before any story task.
  * RED until: /api/reminders and /api/reminders/emissions don't exist yet.
  */
-describe("reminders-assembly (T002 — real-process smoke, Scenario A)", () => {
+describe("reminders-assembly (real-process smoke, Scenario A)", () => {
   useIsolatedDb();
 
   let app: FastifyInstance;

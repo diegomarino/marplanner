@@ -8,7 +8,7 @@ import { useIsolatedDb } from "../helpers/db";
  * Drives the real route via app.inject and asserts the HTTP status, per the
  * daily-messages-crud.test.ts precedent (RED until adds the routes + module functions).
  */
-describe("daily-messages-window (T006/T007 — US2 window list + delete + missing-vs-empty)", () => {
+describe("daily-messages-window (US2 window list + delete + missing-vs-empty)", () => {
   useIsolatedDb();
 
   function seedKeys(): string {

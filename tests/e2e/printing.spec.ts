@@ -155,7 +155,7 @@ async function reopenPrintingPanel(page: Page): Promise<void> {
   await expect(page.getByTestId("printing-management")).toBeVisible();
 }
 
-test("admin test-print → claim → degrade → retry → ack → printed; re-trigger → alreadyPrinted (#T011)", async ({
+test("admin test-print → claim → degrade → retry → ack → printed; re-trigger → alreadyPrinted (#)", async ({
   page,
   printerSession,
 }) => {

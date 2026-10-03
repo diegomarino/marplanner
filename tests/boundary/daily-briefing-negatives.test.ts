@@ -15,7 +15,7 @@ import { useIsolatedDb } from "../helpers/db";
  * closed-schema convention, FR-022's settings-never-mutate-briefings guarantee at the DB level,
  * and the trigger's no-binding -> no-enqueue gate.
  */
-describe("daily-briefing negatives (T015, FR-010)", () => {
+describe("daily-briefing negatives (FR-010)", () => {
   useIsolatedDb();
 
   let app: FastifyInstance;
@@ -249,7 +249,7 @@ describe("daily-briefing negatives (T015, FR-010)", () => {
   // ── (6) No trigger binding -> no enqueue ─────────────────────────────────────────────────────
 
   it("(6) with autoPrintTrigger unbound and morning complete, the trigger evaluation enqueues nothing", () => {
-    const triggerMemberId = "member-t015-no-binding";
+ const triggerMemberId = "member-t015-no-binding";
     const NOW = Date.UTC(2026, 7, 13, 10, 0, 0); // Thursday
     seedMember(triggerMemberId);
     // Deliberately NO updateSettings({ autoPrintTrigger:... }) call — the binding stays unset

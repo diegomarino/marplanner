@@ -149,7 +149,7 @@ async function openAdminCalendar(page: Page, baseUrl: string, cookie: string): P
   await expect(page.getByTestId("calendar-management")).toBeVisible();
 }
 
-test("T003 process tracer persists, synchronizes, and merges one controlled feed", async () => {
+test("process tracer persists, synchronizes, and merges one controlled feed", async () => {
   test.setTimeout(60_000);
   const port = await getFreePort();
   const dataDir = mkdtempSync(join(tmpdir(), "mp-calendar-tracer-"));
@@ -231,7 +231,7 @@ test("T003 process tracer persists, synchronizes, and merges one controlled feed
   }
 });
 
-test("T014 Admin journey keeps source controls distinct and highlight order observable", async ({
+test("Admin journey keeps source controls distinct and highlight order observable", async ({
   page,
 }) => {
   test.setTimeout(90_000);

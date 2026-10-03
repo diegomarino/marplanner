@@ -6,7 +6,7 @@ Decision date: 2026-06-27
 
 ## Decision
 
-`locale.timezone` (the IANA timezone name stored in App Settings) is the single canonical source for all business-date computation in v2. Server timezone, browser timezone, and external API timezone inference are never used for business dates.
+`locale.timezone` (the IANA timezone name stored in App Settings) is the single canonical source for all business-date computation in this system. Server timezone, browser timezone, and external API timezone inference are never used for business dates.
 
 ### Rules
 
@@ -59,7 +59,7 @@ Key primitives: `getIsoDateInTz`, `zonedTimeToUtc`, `zonedDayBoundsUtc`, `nextOc
 
 ## Data / Setup Implications
 
-Fresh v2 setup seeds `locale.timezone` with the default `Europe/Madrid`. Any process that needs "today" must read this value from the database (server) or from `useAppSettings()` (client). Business date fields in the database are `text` `YYYY-MM-DD` columns, never integer timestamps.
+Fresh setup seeds `locale.timezone` with the default `Europe/Madrid`. Any process that needs "today" must read this value from the database (server) or from `useAppSettings()` (client). Business date fields in the database are `text` `YYYY-MM-DD` columns, never integer timestamps.
 
 ## Acceptance Criteria
 
@@ -76,5 +76,5 @@ Fresh v2 setup seeds `locale.timezone` with the default `Europe/Madrid`. Any pro
 ## Traceability
 
 - Conflicts: `CR-005`, `CR-020`
-- Pre-v2: `ADR-005`
+- Related prior: `ADR-005`
 - Implementation: `fix/timezones` branch, `packages/shared/src/datetime/zoned.ts`

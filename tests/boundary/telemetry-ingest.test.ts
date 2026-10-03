@@ -10,7 +10,7 @@ import {
 /** end-to-end ingest+read HTTP smoke (CLIENT-LOGGING-TELEMETRY-INV-03, -INV-04, -AC-01,
  * -AC-02). BLACK-BOX via buildApp + Fastify.inject (routines/reminders suite convention).
  */
-describe("telemetry ingest+read HTTP smoke (T005)", () => {
+describe("telemetry ingest+read HTTP smoke", () => {
   useIsolatedDb();
 
   beforeEach(() => {

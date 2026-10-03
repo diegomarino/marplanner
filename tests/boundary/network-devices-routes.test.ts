@@ -22,7 +22,7 @@ import type { UniFiClient } from "../../src/server/modules/network-devices/clien
  * boundary — `mp_device_key`, hashed+looked-up per request (`authBoundary`) — never by
  * hand-attaching `apiKeyId` (that would bypass the exact boundary this suite proves).
  */
-describe("network-devices routes — T009", () => {
+describe("network-devices routes", () => {
   useIsolatedDb();
 
   afterEach(() => {

@@ -32,9 +32,9 @@ This also makes downstream rules clearer: assignment/recipient creation should u
 
 ## Data / Setup Implications
 
-No legacy member rows will be imported into v2 under `ADR-026`.
+No legacy member rows will be imported into this system under `ADR-026`.
 
-Legacy inactive-member evidence supports the archive concept, but v2 starts with fresh member data. Any archived member in v2 is created by v2 lifecycle behavior, not imported from the old database.
+Legacy inactive-member evidence supports the archive concept, but the product starts with fresh member data. Any archived member in this system is created by v2 lifecycle behavior, not imported from the old database.
 
 Historical references to archived members must remain readable. New assignments, recipients, child-facing generated content, and ordinary pickers must not target archived members.
 
@@ -52,5 +52,5 @@ Historical references to archived members must remain readable. New assignments,
 ## Traceability
 
 - Conflicts: related to `CR-002-active-child-targets`
-- Pre-v2: new improvement decision from Members grill
+- Related prior: new improvement decision from Members grill
 - Domain grill: `../domain-grills/members.md`

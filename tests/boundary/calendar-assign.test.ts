@@ -21,7 +21,7 @@ import { useIsolatedDb } from "../helpers/db";
  * 11. PUT to unknown event → 404.
  */
 
-describe("calendar-assign (T009 — RED by design, T010 turns green)", () => {
+describe("calendar-assign (RED by design, turns green)", () => {
   useIsolatedDb();
 
   beforeEach(() => {

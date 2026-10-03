@@ -129,7 +129,7 @@ a bus participant. It **consumes the i18n missing-key signal as a telemetry writ
 ## Data / Setup Contract
 
 Owned: `client_log` (id, eventTime, receivedAt, level, component, message, data; indexes
-on `receivedAt` + `component`). Fresh v2 (`ADR-026`), no import. Scheduled prune registered
+on `receivedAt` + `component`). Fresh deployment (`ADR-026`), no import. Scheduled prune registered
 with `ADR-014`. External-sink config is deploy-level (env/secret), absent by default; no
 settings object. The redaction layer + shared logger library are build/impl artifacts
 against this contract.

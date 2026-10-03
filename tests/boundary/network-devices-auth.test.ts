@@ -26,7 +26,7 @@ import { AUTH_SCOPE_DENIED_CODE, AUTH_CREDENTIAL_INVALID_CODE } from "../../src/
  * `MP_MANAGEMENT_KEY`-gated boot-time seam a real deployment uses (* `src/server/auth/reconcile.ts`) — exactly mirroring how the negative test already used the
  * real provisioning path instead of a hand-inserted device row.
  */
-describe("network-devices auth — T002 requireManagementKey (RED-first)", () => {
+describe("network-devices auth — requireManagementKey (RED-first)", () => {
   useIsolatedDb();
 
   /** Bootstrap-row seeding precedent: tests/boundary/provision.test.ts `seedBootstrapKey`. */
@@ -198,7 +198,7 @@ describe("network-devices auth — T002 requireManagementKey (RED-first)", () =>
     });
   });
 
-  describe("reconcileManagement() — T014 (maintainer decision 2026-09-04)", () => {
+  describe("reconcileManagement — (maintainer decision 2026-09-04)", () => {
     it("MP_MANAGEMENT_KEY unset → creates no row (fail-closed default, mirrors reconcileBootstrap)", () => {
       delete process.env.MP_MANAGEMENT_KEY;
 

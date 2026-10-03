@@ -65,6 +65,6 @@ An inactive plugin's settings objects are **absent** from `GET /settings`. The p
 
 ## Traceability
 
-- Pre-v2: new decision, no prior PV2 ID
+- Related prior: new decision, no prior PV2 ID
 - Domain grill: `../domain-grills/app-settings-registry.md` (raised during App Settings grill; cross-cutting)
 - Impacts: `ADR-028` (settings object registry extensibility), `ADR-008` (Daily Briefing owns its settings if it is a plugin)

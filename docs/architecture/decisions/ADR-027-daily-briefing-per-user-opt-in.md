@@ -27,7 +27,7 @@ Daily Briefing is better modeled as a personalized daily packet that may be usef
 
 ## Data / Setup Implications
 
-Fresh v2 setup should not auto-generate Daily Briefings merely because a member is active. Eligibility requires an explicit per-member Daily Briefing opt-in/configuration.
+Fresh setup should not auto-generate Daily Briefings merely because a member is active. Eligibility requires an explicit per-member Daily Briefing opt-in/configuration.
 
 Legacy parent-linked Daily Briefing rows remain evidence only; no rows are imported.
 
@@ -46,5 +46,5 @@ Legacy parent-linked Daily Briefing rows remain evidence only; no rows are impor
 ## Traceability
 
 - Conflicts: narrows `CR-002-active-child-targets`; affects `CR-003-parent-briefing-history`
-- Pre-v2: modifies `ADR-002`; resolves/supersedes the migration-only part of `ADR-003` under `ADR-026`
+- Related prior: modifies `ADR-002`; resolves/supersedes the migration-only part of `ADR-003` under `ADR-026`
 - Domain grill: `../domain-grills/members.md`

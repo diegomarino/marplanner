@@ -114,7 +114,7 @@ test("colourLiterals: fires on case-variant CSS named colours", () => {
 // ── H2: a provenance comment documenting removed debt is not itself counted as debt ────────────
 test("H2: box-comment describing removed debt yields zero across all four counters", () => {
   const src = [
-    "/*  Batch T013 (Codex review #718): the following raw scale classes were  */",
+    "/* Batch (Codex review #718): the following raw scale classes were */",
     "/*  removed — bg-slate-100, bg-slate-200, text-slate-700, border-slate-300 */",
     "/*  and the inline style={{ ... }} became <Stack>. Key casts as MessageKey */",
     "export const x = 1;",

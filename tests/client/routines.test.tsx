@@ -595,7 +595,7 @@ describe("RoutinesManagement — every streak-affecting action opens a themed Co
 // file's entire suite. `RoutinesManagement.tsx` DOES render through `AdminPanel` in both its
 // `loading` and loaded branches (same title in each), so this is a missing assertion, not a
 // missing adoption.
-describe("RoutinesManagement — adopts the AdminPanel L2 frame (T012c retrofit)", () => {
+describe("RoutinesManagement — adopts the AdminPanel L2 frame (c retrofit)", () => {
   it("wraps the surface in a landmark region labelled by its own title, with a heading of the same name", async () => {
     mockBackend();
     renderSurface();

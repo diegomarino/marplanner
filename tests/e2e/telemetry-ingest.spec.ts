@@ -13,7 +13,7 @@ import { test, expect } from "@playwright/test";
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
 
-test("telemetry ingest -> admin read, real process (T005)", async ({ page }) => {
+test("telemetry ingest -> admin read, real process", async ({ page }) => {
   test.setTimeout(60_000);
 
   // --- Access gate -> provisioning (mirrors daily-messages.spec.ts) ---

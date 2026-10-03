@@ -16,7 +16,7 @@ import { useIsolatedDb } from "../helpers/db";
  * `{status:"failed"}` weather block would flip a briefing to `partial` (INV-10/12
  * violation) — the no-block-on-failure branch is the load-bearing assertion below.
  */
-describe("daily-briefing weather block (T010)", () => {
+describe("daily-briefing weather block", () => {
   useIsolatedDb();
 
   let app: FastifyInstance;

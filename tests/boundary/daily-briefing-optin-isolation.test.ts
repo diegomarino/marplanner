@@ -16,7 +16,7 @@ import { useIsolatedDb } from "../helpers/db";
  * eligibility is Daily Briefing-owned, while source failures are observable in
  * the frozen snapshot rather than escaping to the caller.
  */
-describe("daily-briefing opt-in + failure-isolation boundary (T012)", () => {
+describe("daily-briefing opt-in + failure-isolation boundary", () => {
   useIsolatedDb();
 
   let app: FastifyInstance;

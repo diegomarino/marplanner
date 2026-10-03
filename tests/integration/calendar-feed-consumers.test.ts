@@ -29,10 +29,10 @@ const activeFeed = [
   "BEGIN:VCALENDAR",
   "VERSION:2.0",
   event("assigned-day", "Alex vetcheck day", ";VALUE=DATE:20261015"),
-  event("assigned-timed", "Alex vetcheck timed", ":20261015T080000Z", "DTEND:20261015T090000Z"),
+ event("assigned-timed", "Alex vetcheck timed", ":20261015T080000Z", "DTEND:20261015T090000Z"),
   event("unassigned", "vetcheck unassigned", ";VALUE=DATE:20261015"),
   event("nonmatching", "Alex library", ";VALUE=DATE:20261015"),
-  event("next-household-day", "Alex vetcheck late", ":20261015T230000Z", "DTEND:20261016T000000Z"),
+ event("next-household-day", "Alex vetcheck late", ":20261015T230000Z", "DTEND:20261016T000000Z"),
   event("cancelled", "Alex vetcheck cancelled", ";VALUE=DATE:20261015", "STATUS:CANCELLED"),
   "END:VCALENDAR",
 ].join("\r\n");

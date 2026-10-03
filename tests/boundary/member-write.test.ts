@@ -4,7 +4,7 @@ import { hashKey } from "../../src/server/auth/credentials";
 import { getDb } from "../../src/server/db/client";
 import { useIsolatedDb } from "../helpers/db";
 
-describe("member-write (T016 — US3 birthdate write-path)", () => {
+describe("member-write (US3 birthdate write-path)", () => {
   useIsolatedDb();
 
   const seedKeys = (db: any) => {

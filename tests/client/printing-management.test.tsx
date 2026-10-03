@@ -68,7 +68,7 @@ function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status });
 }
 
-describe("PrintingManagement (T010)", () => {
+describe("PrintingManagement", () => {
   let mockFetch: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {

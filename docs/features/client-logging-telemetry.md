@@ -98,7 +98,7 @@ product database.
 
 - **FR-020**: Given a telemetry outage or failure, when it occurs, then it MUST change no product state and MUST block no user action (the acceptance surface for the never-in-control-flow invariant in FR-001/INV-01). _(Realizes: CLIENT-LOGGING-TELEMETRY-AC-06)_
 
-- **FR-021**: Given the fresh v2 store, when the deployment initializes, then `client_log` rows MUST NOT be imported from legacy data (the acceptance surface for the no-migration invariant in FR-012/INV-12). _(Realizes: CLIENT-LOGGING-TELEMETRY-AC-07)_
+- **FR-021**: Given the fresh deployment store, when the deployment initializes, then `client_log` rows MUST NOT be imported from legacy data (the acceptance surface for the no-migration invariant in FR-012/INV-12). _(Realizes: CLIENT-LOGGING-TELEMETRY-AC-07)_
 
 - **FR-022**: Given a detected missing translation key, when the signal is emitted, then it MUST land as a telemetry write (the acceptance surface for the i18n-consumer invariant in FR-013/INV-13). _(Realizes: CLIENT-LOGGING-TELEMETRY-AC-08)_
 

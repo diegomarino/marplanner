@@ -76,7 +76,7 @@ routines, printing, or briefing generation.
 ## Data / Setup Contract
 
 No owned table. App Settings `weather` object `{ lat: number|null, lon: number|null,
-label?: string|null }`, range-validated, atomic. **No env fallback.** Fresh v2
+label?: string|null }`, range-validated, atomic. **No env fallback.** Fresh deployment
 (`ADR-026`): import `weather_lat`/`weather_lon` into the object (empty → null); a partial
 pair is migration evidence, not a valid location. Historical briefing weather payloads are
 preserved as-is (never recomputed). Shared `daily_block_cache` weather rows are Daily

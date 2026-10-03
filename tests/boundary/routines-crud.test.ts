@@ -15,7 +15,7 @@ import { useIsolatedDb } from "../helpers/db";
  * Rule 3 — reorderChores is atomic with full-set validation, prior order intact on rejection
  */
 
-describe("routines-crud boundary tests (T008 — red-by-design)", () => {
+describe("routines-crud boundary tests (red-by-design)", () => {
   useIsolatedDb();
 
   // ── helpers ──────────────────────────────────────────────────────────────

@@ -24,7 +24,7 @@ import {
  * corpora, riddles EN-only (v1 policy), and corpus-availability-map correctness — the exact
  * surface `../settings.ts` and the future block generators depend on.
  */
-describe("daily-briefing corpora (T004)", () => {
+describe("daily-briefing corpora", () => {
   describe("loader shapes and counts (v1 study parity)", () => {
     it("jokes: 588 entries, each a TextEntry", () => {
       expect(dadJokesCorpus).toHaveLength(588);

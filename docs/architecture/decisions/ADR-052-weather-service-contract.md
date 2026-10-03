@@ -84,7 +84,7 @@ not security.
 ## Data / Setup Implications
 
 No owned table. App Settings `weather` object: `{ lat: number|null, lon: number|null,
-label?: string|null }`, range-validated, atomic. No env fallback. Fresh v2 (`ADR-026`):
+label?: string|null }`, range-validated, atomic. No env fallback. Fresh deployment (`ADR-026`):
 import `weather_lat`/`weather_lon` as the object's values (empty → null); a partial pair is
 migration evidence, not a valid location. Historical briefing weather payloads preserved
 as-is (not recomputed). Browser cache is client-local (coordinate-keyed), not domain state.
@@ -110,7 +110,7 @@ as-is (not recomputed). Browser cache is client-local (coordinate-keyed), not do
 
 ## Traceability
 
-- Pre-v2: resolves spec `14` open questions (`ADR-005`/`ADR-007`/`ADR-009` weather
+- Related prior: resolves spec `14` open questions (`ADR-005`/`ADR-007`/`ADR-009` weather
   applications).
 - Domain grill: `../domain-grills/weather.md`
 - Related: `ADR-005`, `ADR-007`, `ADR-015`, `ADR-016`, `ADR-022`, `ADR-026`, `ADR-028`,

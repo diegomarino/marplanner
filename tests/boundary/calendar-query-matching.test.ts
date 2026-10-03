@@ -11,7 +11,7 @@ import { useIsolatedDb } from "../helpers/db";
  * drops out of an `assignedTo` read when it carries no assignment for that
  * member.
  */
-describe("calendar-query-matching (T004/T005 — research.md D2)", () => {
+describe("calendar-query-matching (research.md D2)", () => {
   useIsolatedDb();
 
   beforeEach(() => {

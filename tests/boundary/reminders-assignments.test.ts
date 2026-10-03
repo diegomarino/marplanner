@@ -10,7 +10,7 @@ import { useIsolatedDb } from "../helpers/db";
  * FR-004/FR-005/FR-009/FR-010/FR-011, REMINDERS-INV-08, REMINDERS-AC-07, SC-002/SC-004.
  * RED until wires createReminder(specific)/replaceAssignments + the PUT route.
  */
-describe("reminders-assignments boundary tests (T007/T008)", () => {
+describe("reminders-assignments boundary tests", () => {
   useIsolatedDb();
 
   // ── helpers ──────────────────────────────────────────────────────────────

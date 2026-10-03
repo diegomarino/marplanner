@@ -9,7 +9,7 @@ Operational safety domain: an authorized admin can **snapshot** the whole databa
 **list / download (DB or SQL export) / import (.db) / restore / delete** backup
 files. Backups are operational safety data, **not** household planning content.
 Backup files live **outside** the active database, in a configured `backups/` root.
-marplanner v2 is a **single self-hosted instance**.
+marplanner is a **single self-hosted instance**.
 
 ## Vocabulary
 
@@ -105,7 +105,7 @@ not via the domain event bus.
 ## Data / Setup Contract
 
 Backup files live in a configured `backups/` root outside the active DB. No
-active-DB tables for manifests, runs, or audit. Fresh v2 setup starts with zero
+active-DB tables for manifests, runs, or audit. Fresh setup starts with zero
 backups; the scheduler's catch-up creates the first. No legacy backup files imported
 automatically (ADR-026); a legacy `.db` can re-enter only via upload, subject to the
 restore version check. Backup files may contain all household data (incl. auth/

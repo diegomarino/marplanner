@@ -13,7 +13,7 @@ import { useIsolatedDb } from "../helpers/db";
  * derived menus WITHOUT deleting the rows, reactivation restoring them (AC-05). RED until
  * wires createMealPlan/renameMealPlan/setMealPlanActive + the /api/meal-plans* routes.
  */
-describe("meals-plans boundary tests (T011/T012)", () => {
+describe("meals-plans boundary tests", () => {
   useIsolatedDb();
 
   // ── helpers ──────────────────────────────────────────────────────────────

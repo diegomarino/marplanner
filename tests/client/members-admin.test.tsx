@@ -429,7 +429,7 @@ describe("MembersManagement / MemberCreateForm — open Select popover items mee
   );
 });
 
-describe("MembersManagement / MemberCreateForm — adopt the AdminPanel L2 frame (F2, independent review on T017)", () => {
+describe("MembersManagement / MemberCreateForm — adopt the AdminPanel L2 frame (F2, independent review on)", () => {
   it("MembersManagement wraps the surface in a landmark region labelled by its own title", async () => {
     mockBackend();
     renderManagement();
@@ -733,7 +733,7 @@ describe("MemberCreateForm — the Day select submits the VALUE matching the sel
   });
 });
 
-describe("MemberCreateForm and MembersManagement — curated member colours (slice 021 T009)", () => {
+describe("MemberCreateForm and MembersManagement — curated member colours", () => {
   it("creates with the server's unused-first assignment by default, while offering exactly sixteen named keyboard choices", async () => {
     const mockFetch = mockBackend({
       create: () => json({ ...MEMBER_JANUARY, id: "new", colorKey: "blue" }, 201),

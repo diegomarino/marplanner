@@ -26,7 +26,7 @@ function currentFixture(): string {
   start.setUTCHours(9, 0, 0, 0);
   const end = new Date(start.getTime() + 60 * 60 * 1_000);
   return fixtureTemplate
-    .replace("20260928T090000Z", formatIcsInstant(start))
+ .replace("20260928T090000Z", formatIcsInstant(start))
     .replace("20260928T100000Z", formatIcsInstant(end));
 }
 

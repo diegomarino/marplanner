@@ -15,7 +15,7 @@ import {
  * `PUT /api/settings`, since `validateWeather` rejects a partial pair on write — this
  * module's raw-SQL seed below simulates a row that predates/bypasses that gate).
  */
-describe("weather location semantics (T005)", () => {
+describe("weather location semantics", () => {
   useIsolatedDb();
 
   function seedWeatherRow(data: Record<string, unknown>): void {

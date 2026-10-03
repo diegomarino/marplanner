@@ -80,7 +80,7 @@ function renderCatalog(children = <PluginManagement />) {
   return render(<PluginCatalogProvider>{children}</PluginCatalogProvider>);
 }
 
-describe("Plugin Management (Slice 026 T006)", () => {
+describe("Plugin Management", () => {
   beforeEach(() => {
     window.history.replaceState(null, "", "/admin/plugins");
     vi.stubGlobal(

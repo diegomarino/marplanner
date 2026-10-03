@@ -15,7 +15,7 @@ import {
  * Guarantees traced: DAY-PERIODS-INV-01..05, AC-01..04
  */
 
-describe("day-periods-resolver (T004 — RED first, T005 turns green)", () => {
+describe("day-periods-resolver (RED first, turns green)", () => {
   // ──────────────────────────────────────────────────────────────────
   // Test fixtures: seeded defaults (ADR-011)
   // ──────────────────────────────────────────────────────────────────

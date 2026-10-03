@@ -106,7 +106,7 @@ class FakeLockManager {
   }
 }
 
-describe("AnnouncementService (T008)", () => {
+describe("AnnouncementService", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     Object.defineProperty(Intl, "DateTimeFormat", {

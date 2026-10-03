@@ -12,7 +12,7 @@ import type { DailyMessage } from "../../src/shared";
  * a real client would send it.
  * RED until: /api/daily-messages and /api/daily-messages/current don't exist yet.
  */
-describe("daily-messages-assembly (T002 — real-process smoke, Scenario A)", () => {
+describe("daily-messages-assembly (real-process smoke, Scenario A)", () => {
   useIsolatedDb();
 
   let app: FastifyInstance;

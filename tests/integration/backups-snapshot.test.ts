@@ -543,7 +543,7 @@ describe("backups end-to-end smoke (real app: snapshot -> list)", () => {
   });
 });
 
-describe("createSnapshot reverse guard (T006, review #638 P3-6)", () => {
+describe("createSnapshot reverse guard", () => {
   useIsolatedDb();
   afterEach(() => __resetRestoreStateForTests());
 

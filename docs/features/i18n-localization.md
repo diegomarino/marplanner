@@ -104,8 +104,8 @@ namespace (no core/peer override), participate in the parity gate, and are dropp
   per-block language per ADR-044.
 - The missing-key signal is delivered as a telemetry write consumed by Client Logging (not a bus
   event); the build/CI parity gate is the sole hard guarantee.
-- Fresh v2 store; no legacy translation state imported (ADR-026); `es` is set at onboarding if desired.
-- **A members-local i18n seam exists ahead of this domain (ADR-061).** Slice-002 shipped a minimal
+- Fresh data store; no legacy translation state imported (ADR-026); `es` is set at onboarding if desired.
+- **A members-local i18n seam exists ahead of this domain (ADR-061).** work item 2 shipped a minimal
   client-only seam — a typed `en`/`es` catalog + a `t()` resolver + a local parity test, scoped
   post-auth to the admin Members subtree — to satisfy Constitution X before this domain was built.
   When this domain lands it MUST **absorb/replace** that seam: fold `src/client/i18n/messages.ts` into

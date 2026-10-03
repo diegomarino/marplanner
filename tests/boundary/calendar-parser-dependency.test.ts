@@ -49,7 +49,7 @@ describe("node-ical 0.27.2 dependency boundary", () => {
 
     expect(timezone).toMatchObject({ type: "VTIMEZONE", tzid: "Europe/Madrid" });
     expect(master).toBeDefined();
-    expect(master?.rdate).toEqual({ params: { TZID: "Europe/Madrid" }, val: "20260427T090000" });
+ expect(master?.rdate).toEqual({ params: { TZID: "Europe/Madrid" }, val: "20260427T090000" });
 
     const expanded = ical.expandRecurringEvent(master!, {
       from: new Date("2026-03-20T00:00:00.000Z"),

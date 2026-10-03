@@ -21,7 +21,7 @@ import { useIsolatedDb } from "../helpers/db";
  * block shapes) without importing anything from `render/* ` other than that pure, already-merged
  * function.
  */
-describe("daily-briefing domain blocks (T006, FR-013)", () => {
+describe("daily-briefing domain blocks (FR-013)", () => {
   useIsolatedDb();
 
   const DATE = "2026-08-21"; // Friday

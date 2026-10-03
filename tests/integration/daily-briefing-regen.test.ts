@@ -26,7 +26,7 @@ import { seedMember } from "../helpers/daily-briefing-seed";
  * real pressedslip render-def today (gap, see `daily-briefing-generation.test.ts`'s * identical precedent), so seeding a `daily_messages` row is what gives every test here a REAL
  * printable raster without needing to mock the render bridge.
  */
-describe("daily-briefing regeneration + supersede + printed-status (T010, research D4/D11, FR-002/003/004/005/007)", () => {
+describe("daily-briefing regeneration + supersede + printed-status (research D4/D11, FR-002/003/004/005/007)", () => {
   useIsolatedDb();
 
   const NOW = Date.UTC(2026, 8, 8, 6, 0, 0); // 2026-09-08 06:00 UTC — frozen, injected clock
@@ -109,20 +109,20 @@ describe("daily-briefing regeneration + supersede + printed-status (T010, resear
       // `db.inTransaction` at CALL TIME and substitutes SAVEPOINT/RELEASE/ROLLBACK TO for
       // BEGIN/COMMIT/ROLLBACK when already nested).
       const db = getDb();
-      db.exec("CREATE TABLE t010_savepoint_probe (id INTEGER PRIMARY KEY, val TEXT)");
+ db.exec("CREATE TABLE t010_savepoint_probe (id INTEGER PRIMARY KEY, val TEXT)");
 
       const inner = db.transaction((val: string) => {
-        db.prepare("INSERT INTO t010_savepoint_probe (val) VALUES (?)").run(val);
+ db.prepare("INSERT INTO t010_savepoint_probe (val) VALUES (?)").run(val);
       });
 
       // Commit-together: an outer transaction whose body calls a nested `db.transaction` — both
       // persist when the outer succeeds.
       const outerOk = db.transaction(() => {
-        db.prepare("INSERT INTO t010_savepoint_probe (val) VALUES (?)").run("outer-1");
+ db.prepare("INSERT INTO t010_savepoint_probe (val) VALUES (?)").run("outer-1");
         inner("inner-1");
       });
       outerOk();
-      expect(db.prepare("SELECT val FROM t010_savepoint_probe ORDER BY id").all()).toEqual([
+ expect(db.prepare("SELECT val FROM t010_savepoint_probe ORDER BY id").all()).toEqual([
         { val: "outer-1" },
         { val: "inner-1" },
       ]);
@@ -132,12 +132,12 @@ describe("daily-briefing regeneration + supersede + printed-status (T010, resear
       // ROLLBACK discards the already-released nested savepoint too, not just the outer's own
       // statements.
       const outerFail = db.transaction(() => {
-        db.prepare("INSERT INTO t010_savepoint_probe (val) VALUES (?)").run("outer-2");
+ db.prepare("INSERT INTO t010_savepoint_probe (val) VALUES (?)").run("outer-2");
         inner("inner-2");
         throw new Error("forced abort");
       });
       expect(() => outerFail()).toThrow("forced abort");
-      expect(db.prepare("SELECT val FROM t010_savepoint_probe ORDER BY id").all()).toEqual([
+ expect(db.prepare("SELECT val FROM t010_savepoint_probe ORDER BY id").all()).toEqual([
         { val: "outer-1" },
         { val: "inner-1" },
       ]); // unchanged — outer-2/inner-2 never persisted, either half
@@ -298,7 +298,7 @@ describe("daily-briefing regeneration + supersede + printed-status (T010, resear
 
     __setForcePostSupersedeAbortForTests(true);
     await expect(generateBriefing(memberId, date)).rejects.toThrow(
-      "T010 savepoint probe: forced abort after supersede"
+      "savepoint probe: forced abort after supersede"
     );
     __setForcePostSupersedeAbortForTests(false);
 

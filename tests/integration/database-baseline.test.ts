@@ -173,7 +173,7 @@ function generateCurrentSchemaCatalog(tempDir: string): Catalog {
   return instantiateCatalog(join(outputDir, generatedSql), join(tempDir, "generated.sqlite"));
 }
 
-describe("database lifecycle fresh current baseline (T004)", () => {
+describe("database lifecycle fresh current baseline", () => {
   useIsolatedDb({ pluginState: "inactive" });
 
   it("is semantically equivalent to a clean Drizzle generation from the current TypeScript schema", () => {

@@ -11,7 +11,7 @@ import { useIsolatedDb } from "../helpers/db";
 
 const MINUTE = 60_000;
 const date = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10).replaceAll("-", "");
-const feed = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:poll-event\nDTSTAMP:${date}T000000Z\nDTSTART;VALUE=DATE:${date}\nSUMMARY:Poll event\nEND:VEVENT\nEND:VCALENDAR`;
+const feed = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:poll-event\nDTSTAMP:${date}Z\nDTSTART;VALUE=DATE:${date}\nSUMMARY:Poll event\nEND:VEVENT\nEND:VCALENDAR`;
 
 function insertSource(
   id: string,

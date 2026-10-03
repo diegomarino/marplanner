@@ -1040,7 +1040,7 @@ export async function generateBriefing(
         // ROLLBACK discards an already-released nested savepoint too, not just the outer's own
         // statements.
         throw new ForcedPostSupersedeAbortError(
-          "T010 savepoint probe: forced abort after supersede"
+ "savepoint probe: forced abort after supersede"
         );
       }
 

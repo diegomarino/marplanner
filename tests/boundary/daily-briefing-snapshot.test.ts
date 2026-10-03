@@ -8,7 +8,7 @@ import { useIsolatedDb } from "../helpers/db";
 /** RED contract for. It drives the real registered HTTP surface so
  * snapshot lifecycle and the no-FK archived-member boundary stay observable.
  */
-describe("daily-briefing snapshot + regeneration boundary (T010)", () => {
+describe("daily-briefing snapshot + regeneration boundary", () => {
   useIsolatedDb();
 
   let app: FastifyInstance;
@@ -51,14 +51,14 @@ describe("daily-briefing snapshot + regeneration boundary (T010)", () => {
     const now = Date.now();
     getDb()
       .prepare(
-        "INSERT INTO calendar_events (id, source, title, all_day, start_date, end_date, created_at, updated_at) VALUES ('calendar-t010', 'local', ?, 1, ?, ?, ?, ?)"
+ "INSERT INTO calendar_events (id, source, title, all_day, start_date, end_date, created_at, updated_at) VALUES ('calendar-t010', 'local', ?, 1, ?, ?, ?, ?)"
       )
       .run(title, date, "2026-08-22", now, now);
     //: "today" (blocks/today.ts) queries getEvents with `assignedTo: memberId` —
     // an explicit assignment row is required for the event to surface in this member's briefing.
     getDb()
       .prepare(
-        "INSERT INTO calendar_assignments (id, event_id, member_id, created_at) VALUES ('assignment-calendar-t010', 'calendar-t010', ?, ?)"
+ "INSERT INTO calendar_assignments (id, event_id, member_id, created_at) VALUES ('assignment-calendar-t010', 'calendar-t010', ?, ?)"
       )
       .run(memberId, now);
   }
@@ -101,7 +101,7 @@ describe("daily-briefing snapshot + regeneration boundary (T010)", () => {
 
     vi.setSystemTime(new Date("2026-08-21T12:01:00.000Z"));
     getDb()
-      .prepare("UPDATE calendar_events SET title = ?, updated_at = ? WHERE id = 'calendar-t010'")
+ .prepare("UPDATE calendar_events SET title = ?, updated_at = ? WHERE id = 'calendar-t010'")
       .run("Changed after generation", Date.now());
 
     const frozen = await read();
@@ -155,7 +155,7 @@ describe("daily-briefing snapshot + regeneration boundary (T010)", () => {
 
     getDb().prepare("UPDATE members SET lifecycle = 'archived' WHERE id = ?").run(memberId);
     getDb()
-      .prepare("UPDATE calendar_events SET title = ? WHERE id = 'calendar-t010'")
+ .prepare("UPDATE calendar_events SET title = ? WHERE id = 'calendar-t010'")
       .run("Must not refresh");
 
     const regenerate = await generate();

@@ -11,7 +11,7 @@ import { useIsolatedDb } from "../helpers/db";
  * - Malformed/impossible date → 400
  * - Zero active children → 200 with empty array (not error)
  */
-describe("routines-board boundary tests (T012/T013 — US1)", () => {
+describe("routines-board boundary tests (US1)", () => {
   useIsolatedDb();
 
   afterEach(() => {

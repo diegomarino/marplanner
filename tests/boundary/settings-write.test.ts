@@ -12,7 +12,7 @@ import { useIsolatedDb } from "../helpers/db";
  * for BOTH locale and weather; PUT 200 body = the updated EFFECTIVE settings map; key-gated
  * with zero PIN evaluation (no admin_config row is ever seeded in this file).
  */
-describe("settings-write (T002)", () => {
+describe("settings-write", () => {
   useIsolatedDb({ pluginState: "inactive" });
 
   function seedDeviceKey(): string {

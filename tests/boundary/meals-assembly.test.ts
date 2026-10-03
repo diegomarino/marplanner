@@ -12,7 +12,7 @@ import type { Recipe, MealEntry, MenuItem } from "../../src/shared";
  * a real client would send it.
  * RED until: /api/recipes, /api/meal-entries, /api/menu don't exist yet.
  */
-describe("meals-assembly (T002 — real-process smoke, Scenario A)", () => {
+describe("meals-assembly (real-process smoke, Scenario A)", () => {
   useIsolatedDb();
 
   let app: FastifyInstance;

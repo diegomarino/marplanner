@@ -26,7 +26,7 @@ const PALETTE = [
 ];
 const cookies = { mp_device_key: "mpk-member-color-test" };
 
-describe("member colour public boundary (slice 021 T002)", () => {
+describe("member colour public boundary", () => {
   useIsolatedDb();
   let app: FastifyInstance;
 

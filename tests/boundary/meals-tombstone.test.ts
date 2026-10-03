@@ -22,7 +22,7 @@ import { useIsolatedDb } from "../helpers/db";
  * coverage may already be green — see the body for the honest RED
  * story.
  */
-describe("meals-tombstone boundary tests (T008/T009)", () => {
+describe("meals-tombstone boundary tests", () => {
   useIsolatedDb();
 
   // ── helpers ──────────────────────────────────────────────────────────────

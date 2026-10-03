@@ -14,7 +14,7 @@ import { useIsolatedDb } from "../helpers/db";
  * (write vs a deleted id -> 404, never recreates). RED until wires
  * editRecipe/listRecipes/getRecipe/searchRecipes + their routes.
  */
-describe("meals-recipes boundary tests (T004/T005)", () => {
+describe("meals-recipes boundary tests", () => {
   useIsolatedDb();
 
   // ── helpers ──────────────────────────────────────────────────────────────

@@ -15,7 +15,7 @@ import { useIsolatedDb } from "../helpers/db";
  * - Route surface: assert only the 5 calendar routes exist (no table-exposing routes).
  */
 
-describe("calendar-read (T006 — RED by design, T007 turns green)", () => {
+describe("calendar-read (RED by design, turns green)", () => {
   useIsolatedDb();
 
   beforeEach(() => {

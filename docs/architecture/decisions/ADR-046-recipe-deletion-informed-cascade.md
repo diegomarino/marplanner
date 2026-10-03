@@ -107,6 +107,6 @@ consistent with on-read derivation and Class 1 atomicity; no over-engineering.
 
 ## Traceability
 
-- Pre-v2: resolves the recipe-deletion open question in `ADR-009`/spec `04`.
+- Related prior: resolves the recipe-deletion open question in `ADR-009`/spec `04`.
 - Domain grill: `../domain-grills/meals-recipes.md` (Q2)
 - Related: `ADR-043`, `ADR-045`, `ADR-013`, `ADR-030`, `ADR-026`

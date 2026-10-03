@@ -12,10 +12,10 @@ import { useIsolatedDb } from "../helpers/db";
  * - No device cookie → 401
  * No behaviour is tested — only registration + auth boundary.
  */
-describe("day-periods-assembly (T003 — wiring verification)", () => {
+describe("day-periods-assembly (wiring verification)", () => {
   useIsolatedDb();
 
-  it("GET /api/day-periods is registered (T003)", async () => {
+  it("GET /api/day-periods is registered", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     const app = await buildApp();
@@ -27,7 +27,7 @@ describe("day-periods-assembly (T003 — wiring verification)", () => {
     }
   });
 
-  it("PATCH /api/day-periods/:id is registered (T003)", async () => {
+  it("PATCH /api/day-periods/:id is registered", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     const app = await buildApp();
@@ -39,7 +39,7 @@ describe("day-periods-assembly (T003 — wiring verification)", () => {
     }
   });
 
-  it("GET /api/day-periods/active is registered (T003)", async () => {
+  it("GET /api/day-periods/active is registered", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     const app = await buildApp();

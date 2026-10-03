@@ -1,7 +1,7 @@
 # ADR-066 — ESC/POS conversion placement: server-side (candidate B full)
 
 - **Status**: accepted (2026-09-05)
-- **Context**: implementation-time ADR, authored at slice-018 planning. ADR-041
+- **Context**: implementation-time ADR, authored at work item 18 planning. ADR-041
   (render ownership and device context) deliberately left one decision open: where the
   raster→ESC/POS conversion runs. The v1 predecessor performs BOTH the raster decode
   (canvas, browser-bound) and the ESC/POS wrap in the kiosk browser; the server only

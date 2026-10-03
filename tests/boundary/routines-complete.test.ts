@@ -16,7 +16,7 @@ import { useIsolatedDb } from "../helpers/db.js";
  * - Event emission happens post-commit-only (verified via in-test listener)
  */
 
-describe("routines-complete boundary tests (T015 — US2)", () => {
+describe("routines-complete boundary tests (US2)", () => {
   useIsolatedDb();
 
   // ── helpers ──────────────────────────────────────────────────────────────

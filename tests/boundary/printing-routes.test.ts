@@ -19,7 +19,7 @@ import { todayInHouseholdTz } from "../../src/server/lib/household-date.ts";
  * changed: capability wiring (FR-021), the `/fail` route, the 422 render_failure mapping, the
  * 400 target_date validity check (Constitution IV), and full-surface 401 coverage.
  */
-describe("printing routes — T007", () => {
+describe("printing routes", () => {
   useIsolatedDb();
 
   // claimFreshJob (and the FR-021 positive test) derive `targetDate` from one

@@ -7,7 +7,7 @@ import type { ClientLogEntryInput } from "../../src/shared";
  * across tests, and fake timers keep the periodic flush from firing on a real clock during the
  * test run.
  */
-describe("client logger (T006)", () => {
+describe("client logger", () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });

@@ -4,7 +4,7 @@ import { hashKey } from "../../src/server/auth/credentials";
 import { getDb } from "../../src/server/db/client";
 import { useIsolatedDb } from "../helpers/db";
 
-describe("member-archive-restore (T006 — red-by-design, T007 turns green)", () => {
+describe("member-archive-restore (red-by-design, turns green)", () => {
   useIsolatedDb();
 
   const seedKeys = (db: any) => {

@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { useIsolatedDb } from "../helpers/db";
 
-describe("calendar-assembly (T003 — wiring verification)", () => {
+describe("calendar-assembly (wiring verification)", () => {
   useIsolatedDb();
 
-  it("GET /api/calendar/events is registered (T003)", async () => {
+  it("GET /api/calendar/events is registered", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     const app = await buildApp();
@@ -16,7 +16,7 @@ describe("calendar-assembly (T003 — wiring verification)", () => {
     }
   });
 
-  it("POST /api/calendar/events is registered (T003)", async () => {
+  it("POST /api/calendar/events is registered", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     const app = await buildApp();
@@ -28,7 +28,7 @@ describe("calendar-assembly (T003 — wiring verification)", () => {
     }
   });
 
-  it("PATCH /api/calendar/events/:id is registered (T003)", async () => {
+  it("PATCH /api/calendar/events/:id is registered", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     const app = await buildApp();
@@ -40,7 +40,7 @@ describe("calendar-assembly (T003 — wiring verification)", () => {
     }
   });
 
-  it("DELETE /api/calendar/events/:id is registered (T003)", async () => {
+  it("DELETE /api/calendar/events/:id is registered", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     const app = await buildApp();
@@ -52,7 +52,7 @@ describe("calendar-assembly (T003 — wiring verification)", () => {
     }
   });
 
-  it("PUT /api/calendar/events/:id/assignments is registered (T003)", async () => {
+  it("PUT /api/calendar/events/:id/assignments is registered", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     const app = await buildApp();

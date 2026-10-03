@@ -19,7 +19,7 @@ import { useIsolatedDb } from "../helpers/db";
  * weekday, no per-date skip (AC-04); and the week view over 7 local dates
  * from `weekStartDay` + tz (FR-019).
  */
-describe("meals-menu boundary tests (T006/T007)", () => {
+describe("meals-menu boundary tests", () => {
   useIsolatedDb();
 
   // ── helpers ──────────────────────────────────────────────────────────────

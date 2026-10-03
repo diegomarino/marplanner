@@ -156,7 +156,7 @@ one household.
 
 ## Traceability
 
-- Pre-v2: refines `ADR-009` atomicity scope (plan-window create/replace/delete flows
+- Related prior: refines `ADR-009` atomicity scope (plan-window create/replace/delete flows
   disappear).
 - Domain grill: `../domain-grills/meals-recipes.md` (Q1 model)
 - Related: `ADR-002`, `ADR-005`, `ADR-006`, `ADR-015`, `ADR-020`, `ADR-022`, `ADR-026`,

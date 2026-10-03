@@ -12,7 +12,7 @@ import { useIsolatedDb } from "../helpers/db";
  * - Unknown id → 404 (both DELETE and PATCH).
  */
 
-describe("calendar-mutate (T012 — RED by design, T013 turns green)", () => {
+describe("calendar-mutate (RED by design, turns green)", () => {
   useIsolatedDb();
 
   beforeEach(() => {

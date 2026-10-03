@@ -6,7 +6,7 @@ Decision date: 2026-06-27
 
 ## Decision
 
-Marplanner v2 is a new product version with a fresh data store. v2 will not migrate any field or row from the current Marplanner production database.
+Marplanner is a new product version with a fresh data store. v2 will not migrate any field or row from the current Marplanner production database.
 
 Legacy database dumps, sanitized samples, current source behavior, and Wave 0-4 specs remain evidence for product decisions, risk discovery, terminology, and validation design. They are not a data-import contract.
 
@@ -22,7 +22,7 @@ Every persistent domain starts from new setup or seed data. The decision governs
 
 ## Data / Setup Implications
 
-There is no legacy database migration into v2.
+There is no legacy database migration into this system.
 
 Any existing "migration implications" in prior PV2 records should be read as "legacy evidence and v2 setup/data-retention implications" unless that record is updated more specifically. Future decision records should not promise preserve/transform/quarantine/import behavior for current database rows.
 
@@ -42,4 +42,4 @@ Migration-only PV2 questions should be closed as superseded when they have no re
 ## Traceability
 
 - Conflicts: affects all migration-only conflicts, especially `CR-003-parent-briefing-history`, `CR-004-orphan-routine-assignments`, `CR-016-client-telemetry`, `CR-017-backup-restore`, and `CR-025-external-calendar-migration`.
-- Pre-v2: new cross-cutting architecture decision.
+- Related prior: new cross-cutting architecture decision.

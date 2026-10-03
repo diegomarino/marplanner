@@ -132,7 +132,7 @@ async function stopServer(child: ChildProcess): Promise<void> {
   }
 }
 
-test("process-boot: real server process boots + migrates + serves the shell, daily-messages wired through the host-API barrel (T001)", async () => {
+test("process-boot: real server process boots + migrates + serves the shell, daily-messages wired through the host-API barrel", async () => {
   test.setTimeout(60_000);
 
   if (!ACCESS_TOKEN.startsWith("mpg-")) {

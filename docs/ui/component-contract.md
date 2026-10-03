@@ -37,7 +37,7 @@ opts out of the guarantee. Shared Button, Input, Textarea, Select controls and t
 surface, with no other edit. That promise is what makes a theme a decision rather than a project —
 and it is what SC-013 demonstrates.
 
-**Member identity**: slice 021 supplies closed member keys and generated colour tokens. Dynamic CSS custom-property forwarding is permitted with an exact, justified `ui-policy/debt` directive; literal colours are not.
+**Member identity**: supplies closed member keys and generated colour tokens. Dynamic CSS custom-property forwarding is permitted with an exact, justified `ui-policy/debt` directive; literal colours are not.
 
 ---
 

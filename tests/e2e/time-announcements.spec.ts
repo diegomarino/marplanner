@@ -128,7 +128,7 @@ async function mirrorEntries(page: Page): Promise<MirrorEntry[]> {
   });
 }
 
-test.describe("time-announcements audio-free e2e (slice-015 T010)", () => {
+test.describe("time-announcements audio-free e2e", () => {
   // Serial (not parallel workers): both tests seed rules against the SAME shared webServer's
   // live database (this suite has no own-server, per the task). Two workers computing
   // "N seconds from now" concurrently can land on the identical household HH:MM + weekday and
