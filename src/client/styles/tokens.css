@@ -1,0 +1,35 @@
+/* Semantic palette + comfortable density defaults.
+ * Single source for the SPA (`globals.css` imports this) and the server
+ * access-gate HTML (inlined at serve time). No Tailwind — plain custom
+ * properties only so Node can embed it without the client bundle.
+ * Kiosk ships light-only; `.dark` stays in globals.css for tooling only.
+ */
+:root {
+  color-scheme: light;
+  --radius: 1rem;
+  --member-mix-ground: #fff;
+  --member-avatar-foreground: #fff;
+  --destructive-foreground: #fff;
+  --overlay: #000;
+  --background: #f5f2ed;
+  --foreground: oklch(0.21 0.006 60);
+  --card: #fdfbf8;
+  --card-foreground: oklch(0.21 0.006 60);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.006 60);
+  --primary: #5a5a40;
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.008 60);
+  --secondary-foreground: oklch(0.37 0.01 60);
+  --muted: oklch(0.95 0.008 60);
+  --muted-foreground: oklch(0.55 0.015 60);
+  --accent: oklch(0.78 0.17 85);
+  --accent-foreground: oklch(0.28 0.17 85);
+  --destructive: oklch(0.58 0.22 25);
+  --border: oklch(0.91 0.01 60);
+  --input: oklch(0.91 0.01 60);
+  --ring: #5a5a40;
+  /* Comfortable density — kiosk overrides live in globals.css. */
+  --control-height: 36px;
+  --control-font-size: 14px;
+}

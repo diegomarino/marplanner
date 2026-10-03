@@ -18,9 +18,9 @@
  * mounts here at all — see `Shell.tsx`'s `resolveProvisioningLanguage`), and this file mocks
  * that browser setting per locale rather than mocking `/api/settings` the way every OTHER
  * surface's i18n test does.
- * * The perimeter access gate is explicitly NOT covered here* — it is a
- * hardcoded HTML string in `src/server/auth/gate.ts`, outside `src/client/* ` and every counter;
- * styling it is a separate server change.
+ * * The perimeter access gate is explicitly NOT covered here* — it is server HTML in
+ * `src/server/auth/gate.ts` (tokens from `src/client/styles/tokens.css`), outside the client
+ * control census; styling it is a separate server change.
  */
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
