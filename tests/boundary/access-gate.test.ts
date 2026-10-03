@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { FastifyInstance } from "fastify";
@@ -184,5 +184,29 @@ describe("access gate", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toContain("access-gate-form");
     expect(res.body).not.toContain(SHELL_SENTINEL);
+  });
+
+  it("form HTML inlines shared tokens.css (single palette source)", async () => {
+    // The perimeter form must not carry a parallel hex sheet: it embeds
+    // src/client/styles/tokens.css so SPA + gate cannot drift (ui-foundation).
+    const tokensCss = readFileSync(
+      join(process.cwd(), "src/client/styles/tokens.css"),
+      "utf8"
+    );
+    const background = tokensCss.match(/--background:\s*([^;]+);/)?.[1]?.trim();
+    const primary = tokensCss.match(/--primary:\s*([^;]+);/)?.[1]?.trim();
+    expect(background).toBeTruthy();
+    expect(primary).toBeTruthy();
+
+    app = await buildApp({ staticRoot: makeStaticRoot() });
+    const res = await app.inject({ method: "GET", url: "/gate" });
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain("access-gate-form");
+    expect(res.body).toContain(`--background: ${background}`);
+    expect(res.body).toContain(`--primary: ${primary}`);
+    // Contracts e2e/helpers still rely on.
+    expect(res.body).toContain('name="token"');
+    expect(res.body).toMatch(/<label[^>]*>Access token<\/label>/);
+    expect(res.body).toMatch(/<button[^>]*>Enter<\/button>/);
   });
 });
