@@ -94,7 +94,7 @@ runner; snapshot failure aborts before migration SQL. During restore, existing r
 recovers the original active pre-restore state, distinct from the older restored
 candidate captured by the migration snapshot. Failed attempts may retain partial
 files; only completed, verified snapshots are recovery points. Recovery and retention are operator-managed, as described in
-[operations](../../operations.md#pre-migration-recovery-snapshots). Runtime `BASE_PATH` now mounts the same portable client/server build with runtime HTML injection; root `/health` is preserved. Built-browser/container release acceptance and the remaining migration/distribution obligations remain open. Packaging and platform-specific runtime evidence do not establish
+[operations](../../operations.md#pre-migration-recovery-snapshots). Runtime `BASE_PATH` now mounts the same portable client/server build with runtime HTML injection; root `/health` is preserved. Built-browser/container acceptance and applicable storage safety checks remain required for the launch candidate. The maintainer explicitly defers versioning policy, arbitrary historical upgrade compatibility and `SKIP_MIGRATION` until after launch; see [ADR-056](ADR-056-process-dx-baseline.md#launch-scope-amendment-2026-10-03). These deferred features are not launch gates. Packaging and platform-specific runtime evidence do not establish
 full distribution acceptance.
 
 ## Acceptance criteria

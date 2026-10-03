@@ -753,7 +753,8 @@
           ],
           "tools/storage-runtime.test.mjs": [
             "storage ownership rejects aliases, and releases after clean exit and crash",
-            "ownership remains held while the product connection is reset and its inode replaced"
+            "ownership remains held while the product connection is reset and its inode replaced",
+            "installed native SQLite is at least 3.51.3 with an exact reviewed dependency pin"
           ],
           "tools/ui-catalog.test.mjs": [
             "UI catalog matches the real shared exports and detects a new export"
@@ -4586,7 +4587,8 @@
             "daily-briefing auto-print trigger (T005 \u2014 US1, research D3, FR-017/FR-018) a duplicate/no-op completion event is harmless \u2014 still exactly one job",
             "daily-briefing auto-print trigger (T005 \u2014 US1, research D3, FR-017/FR-018) midnight rollover: the household date is re-derived per evaluation, never cached",
             "daily-briefing auto-print trigger (T005 \u2014 US1, research D3, FR-017/FR-018) the default sweep cadence never exceeds the spec's 60-second bound",
-            "daily-briefing auto-print trigger (T005 \u2014 US1, research D3, FR-017/FR-018) registerAutoPrintTrigger arms a REAL scheduler interval job at the configured cadence, and each tick re-evaluates"
+            "daily-briefing auto-print trigger (T005 \u2014 US1, research D3, FR-017/FR-018) registerAutoPrintTrigger arms a REAL scheduler interval job at the configured cadence, and each tick re-evaluates",
+            "daily-briefing auto-print trigger (T005 \u2014 US1, research D3, FR-017/FR-018) records SQLITE_BUSY wakeup failures and recovers without duplicate print reservations"
           ],
           "tests/integration/database-baseline.test.ts": [
             "database lifecycle fresh current baseline (T004) is semantically equivalent to a clean Drizzle generation from the current TypeScript schema",
@@ -6916,7 +6918,7 @@
         }
       },
       "src/server/index.ts": {
-        "sha256": "79ab7ddecacdf23c84c88f0ec84389e13cdd2bc001c683ca92a93da5f02ddeed",
+        "sha256": "ed7d65dcd47ab016dd5878e27c80e4d978764460105eb3e1538fa0467504e9fd",
         "layer": "server",
         "minimumTotals": {
           "lines": 84,
@@ -8149,7 +8151,7 @@
         }
       },
       "src/server/modules/daily-briefing/trigger.ts": {
-        "sha256": "66f8102183ec0a85203888a0c1d544555f2bc8f42031a66804c0b6399bb3de8e",
+        "sha256": "675bd5dad62848c7a4f79269da4284eeaaf19db9edea159c2dbc1d4a19f0eb90",
         "layer": "server",
         "minimumTotals": {
           "lines": 43,

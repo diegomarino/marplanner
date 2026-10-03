@@ -216,8 +216,12 @@ reviewed runtime/migration correction before restarting.
 
 `VACUUM INTO` is a logical snapshot, not an exact physical-byte copy. It preserves
 explicit declared IDs but may change implicit SQLite rowids.
-The migration runner itself does not provide `SKIP_MIGRATION`, automatic rollback, arbitrary
-historical-version compatibility or runtime subpath hosting.
+The migration runner itself does not provide automatic rollback; restore uses the
+separate rollback procedure below. Versioning policy, arbitrary historical upgrade
+compatibility and `SKIP_MIGRATION` are explicitly deferred until after launch, not
+launch gates or available recovery features. Continue to use verified backups and
+the offline recovery procedure above. Runtime subpath hosting is configured as
+described in its own section.
 
 ## Snapshot and restore
 

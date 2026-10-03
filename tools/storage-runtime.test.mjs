@@ -161,3 +161,31 @@ test(
     }
   }
 );
+
+test("installed native SQLite is at least 3.51.3 with an exact reviewed dependency pin", async () => {
+  const pkg = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  const lock = JSON.parse(
+    fs.readFileSync(new URL("../package-lock.json", import.meta.url), "utf8")
+  );
+  assert.equal(
+    pkg.dependencies["better-sqlite3"],
+    lock.packages["node_modules/better-sqlite3"].version
+  );
+  assert.equal(
+    lock.packages[""].dependencies["better-sqlite3"],
+    pkg.dependencies["better-sqlite3"]
+  );
+  const { default: Database } = await import("better-sqlite3");
+  const db = new Database(":memory:");
+  try {
+    const version = db.prepare("SELECT sqlite_version()").pluck().get();
+    assert.match(version, /^\d+\.\d+\.\d+$/);
+    const [major, minor, patch] = version.split(".").map(Number);
+    assert.ok(
+      major > 3 || (major === 3 && (minor > 51 || (minor === 51 && patch >= 3))),
+      `Bundled SQLite ${version} must be >=3.51.3`
+    );
+  } finally {
+    db.close();
+  }
+});

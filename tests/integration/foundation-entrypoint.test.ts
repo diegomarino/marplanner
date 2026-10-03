@@ -36,8 +36,18 @@ function signal(child: ChildProcess, name: "SIGINT" | "SIGKILL") {
   try {
     process.kill(-child.pid, name);
   } catch {
-    child.kill(name);
+    if (child.exitCode === null && child.signalCode === null) child.kill(name);
   }
+}
+
+async function hardKill(child: ChildProcess): Promise<void> {
+  if (child.exitCode !== null || child.signalCode !== null) {
+    signal(child, "SIGKILL");
+    return;
+  }
+  const exited = new Promise<void>((done) => child.once("exit", () => done()));
+  signal(child, "SIGKILL");
+  await exited;
 }
 
 async function boot(dataDir: string, port: number, overrides: Record<string, string> = {}) {
@@ -87,7 +97,7 @@ async function boot(dataDir: string, port: number, overrides: Record<string, str
     }
     throw new Error(`Timed out waiting for health: ${log}`);
   } catch (error) {
-    signal(child, "SIGKILL");
+    await hardKill(child);
     throw error;
   }
 }
@@ -96,10 +106,7 @@ describe("built foundation entrypoint", () => {
   let child: ChildProcess | undefined;
   let dataDir: string | undefined;
   afterEach(async () => {
-    if (child && child.exitCode === null) {
-      signal(child, "SIGKILL");
-      await delay(50);
-    }
+    if (child) await hardKill(child);
     if (dataDir) rmSync(dataDir, { recursive: true, force: true });
     child = undefined;
     dataDir = undefined;
@@ -168,6 +175,7 @@ describe("built foundation entrypoint", () => {
     expect(running.log().indexOf("smoke job fired")).toBeLessThan(
       running.log().indexOf("scheduler drained")
     );
+    await hardKill(running.child);
     child = undefined;
   }, 30_000);
 
@@ -185,6 +193,7 @@ describe("built foundation entrypoint", () => {
     signal(running.child, "SIGINT");
     await running.waitLog("scheduler drained");
     expect(await running.exit).toEqual({ code: 0, signal: null });
+    await hardKill(running.child);
     child = undefined;
   }, 30_000);
 });
