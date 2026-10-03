@@ -146,8 +146,7 @@ test("synchronized imported occurrence appears once in the generated household-d
       "VERSION:2.0",
       "BEGIN:VEVENT",
       "UID:briefing-import",
-      `DTSTAMP:${date.replaceAll("-", "")}T000000Z`,
-      `DTSTART;VALUE=DATE:${date.replaceAll("-", "")}`,
+ `DTSTAMP:${date.replaceAll("-", "")}Z`, `DTSTART;VALUE=DATE:${date.replaceAll("-", "")}`,
       `DTEND;VALUE=DATE:${tomorrow.replaceAll("-", "")}`,
       "SUMMARY:Alex imported briefing event",
       "END:VEVENT",
@@ -659,7 +658,7 @@ async function waitForPrinted(request: APIRequestContext, jobId: string): Promis
     .toBe("printed");
 }
 
-test("T014: morning chores done through the real UI auto-prints the daily briefing; level-triggered dedup; opt-in gate; admin regenerate re-enqueues", async ({
+test(": morning chores done through the real UI auto-prints the daily briefing; level-triggered dedup; opt-in gate; admin regenerate re-enqueues", async ({
   page,
   printerSession,
   resetDailyBriefingTrigger,

@@ -2,7 +2,7 @@
 
 Behavior reference. The [owning contract](../architecture/contracts/members.md) defines invariants and extension limits.
 
-Members owns **household participant identity** in v2: who a participant is,
+Members owns **household participant identity** in this system: who a participant is,
 whether they are `active` or `archived`, their role (`parent`/`child`), and what
 profile data may be edited. It is the **referential root** other domains point at,
 governed by the cross-cutting rule of ADR-054 — **strict on write, tolerant on
@@ -27,13 +27,13 @@ or deleting any downstream configuration.
 
 An admin archives a mis-created or departed member. The archived member vanishes
 from ordinary lists and assignment pickers and cannot be chosen for new
-assignments or recipients, yet v2-created history that already references them
+assignments or recipients, yet product-created history that already references them
 still renders the member label read-only ("archived member") rather than breaking.
 
 ### User Story 3 — Admin-protected member management
 
 Member profile mutation is reachable only under admin protection; the old
-`/members` member-management surface does not exist in v2's ordinary kiosk routes,
+`/members` member-management surface does not exist in this system's ordinary kiosk routes,
 so member management cannot be reached or mutated outside admin protection.
 
 ### Edge Cases
@@ -44,7 +44,7 @@ so member management cannot be reached or mutated outside admin protection.
   rejected; only active members are valid write targets.
 - A birth date may carry month/day with no year; age-specific output runs only
   when a year exists, but birthday matching still works on month/day alone.
-- v2 starts from a fresh data store — no legacy member rows are migrated.
+- the product starts from a fresh data store — no legacy member rows are migrated.
 
 ## Requirements
 
@@ -80,7 +80,7 @@ so member management cannot be reached or mutated outside admin protection.
 
 - **FR-015**: Given an archived member, when ordinary member pickers load, then the archived member MUST be omitted. _(Realizes: MEMBERS-AC-03)_
 
-- **FR-016**: Given v2-created history referencing an archived member, when a history view renders, then the member reference MUST remain legible and read-only. _(Realizes: MEMBERS-AC-04)_
+- **FR-016**: Given product-created history referencing an archived member, when a history view renders, then the member reference MUST remain legible and read-only. _(Realizes: MEMBERS-AC-04)_
 
 - **FR-017**: Given a birth date with month/day only, when the profile is saved, then birthday matching MUST be able to work without exact age. _(Realizes: MEMBERS-AC-07)_
 
@@ -120,7 +120,7 @@ so member management cannot be reached or mutated outside admin protection.
 - Daily Briefing owns per-member opt-in, configuration, and eligibility outcomes
   (MEMBERS-AC-05/AC-06 moved there); Members only provides active member identity
   and role/profile data.
-- Fresh v2 data store; no legacy member rows, Daily Briefing rows, or routine
+- Fresh data store; no legacy member rows, Daily Briefing rows, or routine
   assignments are imported (ADR-026, ADR-054).
 - Member FK backstop is `ON DELETE RESTRICT` and is never exercised because rows
   are never deleted; plugin references are soft (ADR-039).

@@ -106,5 +106,5 @@ local failure.
   capability-based dispatch of hardware work.
 - Long-press duration, inactivity timeout, and refresh-idle threshold are configurable UI params with
   sensible defaults (Open Decision; possible future App Settings).
-- No owned server table and no offline data cache in v2; browser-local state is device-local and not
+- No owned server table and no offline data cache in this system; browser-local state is device-local and not
   migrated (ADR-026), with a clear re-provision / admin-unlock path.

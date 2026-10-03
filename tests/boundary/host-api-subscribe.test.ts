@@ -17,7 +17,7 @@ import { emit, subscribe } from "../../src/server/host-api";
  * against real files, matching every other Rule-B fixture test in this repo).
  */
 
-describe("host-api subscribe seam (T001, research D9)", () => {
+describe("host-api subscribe seam (research D9)", () => {
   it("a caller subscribing through the barrel receives a real event emitted through the same bus", async () => {
     const received: Array<{
       memberId: string;

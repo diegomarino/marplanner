@@ -33,12 +33,12 @@ const ROUTES = [
   { method: "DELETE", url: "/api/chores/:id/completions" },
 ] as const;
 
-describe("routines-chores assembly (T003 — wiring verification)", () => {
+describe("routines-chores assembly (wiring verification)", () => {
   useIsolatedDb();
 
   // Route-registration tests (one per route)
   for (const { method, url } of ROUTES) {
-    it(`${method} ${url} is registered (T003)`, async () => {
+    it(`${method} ${url}is registered`, async () => {
       const { buildApp } = await import("../../src/server/app.ts");
       const app = await buildApp();
       try {
@@ -51,7 +51,7 @@ describe("routines-chores assembly (T003 — wiring verification)", () => {
 
   // Auth-protection tests (one per route)
   for (const { method, url } of ROUTES) {
-    it(`${method} ${url} requires auth (401 without device cookie, T003)`, async () => {
+    it(`${method} ${url}requires auth (401 without device cookie)`, async () => {
       const { buildApp } = await import("../../src/server/app.ts");
       const app = await buildApp();
       try {

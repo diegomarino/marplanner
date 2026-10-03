@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { getDb } from "../../src/server/db/client";
 import { useIsolatedDb } from "../helpers/db";
 
-describe("member-referential (T010 — RED by design, T011 turns green)", () => {
+describe("member-referential (RED by design, turns green)", () => {
   useIsolatedDb();
 
   const createMember = (

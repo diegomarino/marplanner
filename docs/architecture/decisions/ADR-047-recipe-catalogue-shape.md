@@ -77,6 +77,6 @@ over-engineering.
 
 ## Traceability
 
-- Pre-v2: resolves recipe-catalogue open questions in spec `04`.
+- Related prior: resolves recipe-catalogue open questions in spec `04`.
 - Domain grill: `../domain-grills/meals-recipes.md` (Q3, Q4)
 - Related: `ADR-045`, `ADR-015`

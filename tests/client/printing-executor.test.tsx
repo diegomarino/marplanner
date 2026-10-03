@@ -133,7 +133,7 @@ function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status });
 }
 
-describe("PrintExecutor (T009)", () => {
+describe("PrintExecutor", () => {
   let mockFetch: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {

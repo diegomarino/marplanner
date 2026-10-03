@@ -80,6 +80,6 @@ Daily Briefing's block configuration stores an ordered list of block instances (
 
 ## Traceability
 
-- Pre-v2: extends `ADR-008`; driven by `ADR-015`
+- Related prior: extends `ADR-008`; driven by `ADR-015`
 - Domain grill: `../domain-grills/i18n-localization.md` (Q4)
 - Related: `ADR-022`, `ADR-027`, `ADR-028`

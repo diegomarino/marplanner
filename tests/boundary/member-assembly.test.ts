@@ -16,10 +16,10 @@ import { useIsolatedDb } from "../helpers/db";
  * 3. Routes respond to OPTIONS preflight (CORS).
  * No behaviour is tested — only registration + auth boundary.
  */
-describe("member-assembly (T003 — wiring verification)", () => {
+describe("member-assembly (wiring verification)", () => {
   useIsolatedDb();
 
-  it("PATCH /api/members/:id is registered (T003)", async () => {
+  it("PATCH /api/members/:id is registered", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     const deviceKey = `mpk-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -55,7 +55,7 @@ describe("member-assembly (T003 — wiring verification)", () => {
     }
   });
 
-  it("POST /api/members/:id/archive is registered (T003)", async () => {
+ it("POST /api/members/:id/archive is registered", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     const deviceKey = `mpk-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -96,7 +96,7 @@ describe("member-assembly (T003 — wiring verification)", () => {
     }
   });
 
-  it("POST /api/members/:id/restore is registered (T003)", async () => {
+ it("POST /api/members/:id/restore is registered", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     const deviceKey = `mpk-${Date.now()}-${Math.random().toString(36).slice(2)}`;

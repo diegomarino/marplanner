@@ -127,5 +127,5 @@ lon: number|null, label?: string|null }` — range-validated, atomic, the single
   Briefing owns snapshot freezing and the shared `daily_block_cache` rows (ADR-022).
 - Client Logging (ADR-016) is the telemetry sink for fetch failures; Weather emits and
   subscribes to no bus events (ADR-040).
-- Fresh v2 import (ADR-026) maps `weather_lat`/`weather_lon` into the object (empty →
+- Fresh deployment import (ADR-026) maps `weather_lat`/`weather_lon` into the object (empty →
   null); a partial pair is migration evidence, not a valid location.

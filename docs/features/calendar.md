@@ -114,7 +114,7 @@ assignments — leaving no orphaned rows.
 - ICS parsing/expansion (`RRULE/RDATE/EXDATE`, `VTIMEZONE`/DST → UTC instants or
   date-only) is delegated to a mature library (resolved via Context7 at impl);
   Calendar owns reconciliation, safe fetch, and merge — no hand-rolled parser.
-- Fresh v2 data store; no legacy events are imported (ADR-026); the migration
+- Fresh data store; no legacy events are imported (ADR-026); the migration
   mapping `outlook→microsoft` / unknown→`ics_generic` is documented only.
 - Recurrence is expanded in a documented `−30d/+365d` window; cancelled events are
   retained but purged once past the window.

@@ -603,7 +603,7 @@ describe("wouldViolateFloor (BACKUPS-INV-05 — explicit-delete floor reuse, res
   });
 });
 
-describe("backups upload validation + boot sweep (T006, F10 follow-up)", () => {
+describe("backups upload validation + boot sweep (F10 follow-up)", () => {
   useIsolatedDb();
 
   it("isValidSqliteFile: accepts a genuine SQLite file and rejects plain text / garbage bytes", () => {

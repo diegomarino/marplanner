@@ -14,7 +14,7 @@ import { useIsolatedDb } from "../helpers/db";
  * 5. Assert the locale object has all three fields (timezone, language, weekStartDay).
  *
  */
-describe("settings-coldread (T019 — red-by-design, T022 turns green)", () => {
+describe("settings-coldread (red-by-design, turns green)", () => {
   useIsolatedDb({ pluginState: "inactive" });
 
   it("valid key + no PIN ⇒ GET /api/settings returns locale with all three fields (FR-008/009/010/011)", async () => {

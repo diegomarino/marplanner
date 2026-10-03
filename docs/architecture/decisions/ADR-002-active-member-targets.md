@@ -35,7 +35,7 @@ Using active members for new targets prevents archived household participants fr
 
 ## Data / Setup Implications
 
-No legacy member rows or downstream target rows will be imported into v2 under `ADR-026`.
+No legacy member rows or downstream target rows will be imported into this system under `ADR-026`.
 
 Legacy inactive-member and historical-reference evidence supports the v2 archive concept and read-only-history behavior, but it is not a row preservation/import requirement.
 
@@ -51,10 +51,10 @@ New v2 writes must reject archived targets. Child-facing writes/generation must 
 ## Open Questions
 
 - The exact treatment of parent-linked historical Daily Briefing rows/settings is handled under `ADR-003`.
-- Whether orphan-like references can occur inside v2-created data remains open under `ADR-004`.
+- Whether orphan-like references can occur inside product-created data remains open under `ADR-004`.
 
 ## Traceability
 
 - Conflicts: `CR-002-active-child-targets`
-- Pre-v2: `ADR-002`
+- Related prior: `ADR-002`
 - Domain grill: `../domain-grills/members.md`

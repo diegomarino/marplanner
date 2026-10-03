@@ -55,7 +55,7 @@ Derived from the connected-session signal (`ADR-035`), discreet/near-invisible w
 A pending update applies by auto-reload as soon as nothing editable is in progress (no open form/editor with unsaved input, not in PIN entry/provisioning); quick taps and read-only viewing do not block it. A daily forced reload at ~4am household-local guarantees update pickup and a clean slate.
 
 **Offline.**
-No offline/read-through data cache in v2. API-down shows per-widget errors plus the global health indicator. A real offline mode is deferred.
+No offline/read-through data cache in this system. API-down shows per-widget errors plus the global health indicator. A real offline mode is deferred.
 
 **Plugin management.**
 Plugin lifecycle (install/uninstall/activate/deactivate) is managed only from `admin/plugins` (`ADR-038`). Activation registers settings objects (`ADR-028`/`ADR-029`), mounts runtime services (`ADR-035`), and adds nav/widgets; deactivation reverses all three. Official vs unofficial trust tiers are distinguished; the trust/permission/sandbox model is owned by the Plugin System grill (`ADR-039`).
@@ -82,7 +82,7 @@ outside the domain-event model entirely.
 
 ## Data / Setup Contract
 
-- No owned server table. Browser-local state (device cookie, ephemeral admin unlock, caches) is device-local and not migrated; v2 provides a clear re-provision/admin-unlock path.
+- No owned server table. Browser-local state (device cookie, ephemeral admin unlock, caches) is device-local and not migrated; the product provides a clear re-provision/admin-unlock path.
 - Credentials follow `ADR-037` (`mpk-` keys via CSPRNG, `mpg-` gate token, failure-based rate limiting only).
 - The dashboard tolerates partial availability of delegated domains and inactive plugins.
 

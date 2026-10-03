@@ -10,7 +10,7 @@ Builds on / refines: `ADR-016` (telemetry contract), `ADR-013` (PIN UI gate), `A
 
 ## Decision
 
-Promote the **diagnostics read view** from "deferred" (ADR-016) to **in-scope for v2**: a
+Promote the **diagnostics read view** from "deferred" (ADR-016) to **in-scope for this system**: a
 **read-only, in-app admin view of `client_log`, filterable by severity**.
 
 **Premise-driven reversal.** ADR-016 deferred the read/export UI when v2 was the maintainer's

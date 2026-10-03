@@ -77,7 +77,7 @@ function noopLog() {
   };
 }
 
-describe("scheduler core (T002 — research D1/D3/D4/D5/D7)", () => {
+describe("scheduler core (research D1/D3/D4/D5/D7)", () => {
   useIsolatedDb();
 
   it("BACKGROUND-JOBS-SCHEDULER-INV-07: registerJob throws on a duplicate job id", () => {
@@ -752,7 +752,7 @@ describe("scheduler core (T002 — research D1/D3/D4/D5/D7)", () => {
     });
   });
 
-  describe("restart() (slice-014 PR-B review P1-4 — restore-quiesce re-arm)", () => {
+  describe("restart (PR-B review P1-4 — restore-quiesce re-arm)", () => {
     it("does NOT skip the pending wall-clock occurrence stop() interrupted, regardless of time of day", async () => {
       // 2026-06-15T05:00:00Z -> 07:00 CEST, well before 10:00 local — deliberately NOT a
       // day-boundary edge case, to prove the drop happens on an ORDINARY restore at ANY time of

@@ -56,7 +56,7 @@ function assertNoImplicitRegenerate(mockFetch: ReturnType<typeof vi.fn>) {
   expect(hitGenerate).toBe(false);
 }
 
-describe("DailyBriefingManagement — admin settings-layer extensions (slice-019 T012)", () => {
+describe("DailyBriefingManagement — admin settings-layer extensions", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
   });

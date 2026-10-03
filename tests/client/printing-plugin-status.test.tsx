@@ -45,7 +45,7 @@ function entry(id: PluginId, state: PluginState): PluginCatalogEntry {
   };
 }
 
-describe("usePrintingPluginActive (Slice 026 T010)", () => {
+describe("usePrintingPluginActive", () => {
   let mockFetch: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {

@@ -9,7 +9,7 @@ Decision date: 2026-06-28
 The v2 plugin system is **first-party only now, designed so third-party plugins
 stay cheap to add later**. Governing principle: **declare-now, enforce-later** —
 build the _declaration_ surface (manifest + a defined host API plugins talk
-through) in v2; defer the _enforcement_ surface (sandbox, capability broker,
+through) in this system; defer the _enforcement_ surface (sandbox, capability broker,
 signature/install-source verification, resource isolation) until a third-party
 ecosystem is an explicit goal. Make no decision that forecloses or heavily
 complicates adding third-party plugins.
@@ -20,7 +20,7 @@ meaning attaches when the enforcement tier is built.
 ### 1. Trust tier
 
 Single tier: all plugins are first-party, trusted, run with full host
-privileges, **no sandbox**. Not built in v2: sandbox/process isolation,
+privileges, **no sandbox**. Not built in this system: sandbox/process isolation,
 capability broker, signature or install-source verification, resource quotas.
 
 ### 2. Plugin contract (the door-keeping seam)
@@ -66,7 +66,7 @@ shared schema: namespacing is free now, a data migration to retrofit later.
 
 ### 4. Activation lifecycle
 
-- **Operations:** `activate` / `deactivate` only in v2. `install` / `uninstall`
+- **Operations:** `activate` / `deactivate` only in this system. `install` / `uninstall`
   is kept as a **dormant concept** (the future dynamic-loader / third-party
   attach point) — no UI, no operation now. In-tree plugins register at
   build/boot time, shaped so a future dynamic loader is additive.
@@ -113,7 +113,7 @@ host-mediated, absence-tolerant interfaces, never hard wiring.**
 
 ### 7. Fault isolation (two-tier, honest scope)
 
-**In scope for v2 — logic-fault containment (cheap):** per-plugin error
+**In scope for this system — logic-fault containment (cheap):** per-plugin error
 boundaries at service mount, migration, job execution, and UI widget. A throwing
 plugin is marked **`errored`** and quiesced while the host and sibling plugins
 survive. `errored` is a first-class state in the activation registry /
@@ -122,7 +122,7 @@ migration rolls back only that plugin's namespace (§3). **Re-activation from
 `errored` re-runs all pending migrations before marking the plugin `active`**
 (peer-review refinement — prevents partial-schema boot).
 
-**Out of scope for v2 — resource-fault containment (documented limitation, NOT
+**Out of scope for this system — resource-fault containment (documented limitation, NOT
 silently omitted):** a plugin can still spike RAM/CPU and crash the whole
 process; error boundaries cannot catch an OOM. (Real v1 incident: daily-briefing
 generation RAM spike → host OOM-reset, mitigated operationally by raising the
@@ -158,7 +158,7 @@ limitation rather than a silently-implied guarantee.
 
 ## Data / Setup Implications
 
-Fresh v2 setup: a core-owned `active_plugins` registry table; each plugin ships
+Fresh setup: a core-owned `active_plugins` registry table; each plugin ships
 id-prefixed tables + migrations. No legacy import (ADR-026). All plugins seed
 inactive; the owner activates and configures each. No registry, signing keys, or
 loader infrastructure provisioned.
@@ -190,7 +190,7 @@ loader infrastructure provisioned.
 
 ## Traceability
 
-- Pre-v2: `ADR-029` (core/plugin split), surfaced by `ADR-038` (management
+- Related prior: `ADR-029` (core/plugin split), surfaced by `ADR-038` (management
   surface)
 - Related: `ADR-028` (settings objects), `ADR-030` (scoped keys / `*` admin
   tier), `ADR-035` (runtime services, job claims), `ADR-016` (secret/telemetry

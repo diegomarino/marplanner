@@ -12,7 +12,7 @@ v2 will not migrate legacy database rows under `ADR-026`. Daily Briefing eligibi
 
 ## Rationale
 
-The legacy parent-linked `daily_briefing` and `member_block_settings` rows no longer require a preservation, quarantine, or transformation rule because v2 starts with a fresh data store.
+The legacy parent-linked `daily_briefing` and `member_block_settings` rows no longer require a preservation, quarantine, or transformation rule because the product starts with a fresh data store.
 
 Those rows remain useful evidence that adult/parent briefings are plausible product behavior. That product question is resolved by the per-active-member opt-in model in `ADR-027`.
 
@@ -26,9 +26,9 @@ Those rows remain useful evidence that adult/parent briefings are plausible prod
 
 ## Data / Setup Implications
 
-No parent-linked legacy Daily Briefing rows or settings are imported into v2.
+No parent-linked legacy Daily Briefing rows or settings are imported into this system.
 
-Fresh v2 Daily Briefing setup should expose opt-in/configuration per active member. Role alone must not grant or deny briefing eligibility.
+Fresh deployment Daily Briefing setup should expose opt-in/configuration per active member. Role alone must not grant or deny briefing eligibility.
 
 ## Acceptance Criteria
 
@@ -44,6 +44,6 @@ Fresh v2 Daily Briefing setup should expose opt-in/configuration per active memb
 ## Traceability
 
 - Conflicts: `CR-003-parent-briefing-history`
-- Pre-v2: `ADR-003`
+- Related prior: `ADR-003`
 - Superseded by: `ADR-026`, `ADR-027`
 - Domain grill: `../domain-grills/members.md`

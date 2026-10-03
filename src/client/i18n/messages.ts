@@ -23,7 +23,7 @@ export const messages = {
     "shell.notFound.description": "Use the household navigation to open a page.",
     "members.management.title": "Members Management",
     "members.management.description":
-      "Member listing — thin UI for slice-002 assembly verification.",
+      "Member listing — thin UI for assembly verification.",
     "members.management.refresh": "Refresh Members",
     "members.management.refreshing": "Loading…",
     "members.management.updating": "Updating…",
@@ -1098,7 +1098,7 @@ export const messages = {
     "shell.notFound.description": "Usa la navegación del hogar para abrir una página.",
     "members.management.title": "Gestión de Miembros",
     "members.management.description":
-      "Lista de miembros — UI minimal para verificación de assembly slice-002.",
+      "Lista de miembros — UI minimal para verificación de assembly.",
     "members.management.refresh": "Actualizar Miembros",
     "members.management.refreshing": "Cargando…",
     "members.management.error": "Error al cargar miembros.",

@@ -10,7 +10,7 @@ import type { LiveClient } from "../../src/shared";
  * computation is exercised against an INJECTED clock (the class) — never a real
  * `Date.now` call inside this suite.
  */
-describe("network-devices cache — T007", () => {
+describe("network-devices cache", () => {
   function makeClock(initial: number) {
     let now = initial;
     return {

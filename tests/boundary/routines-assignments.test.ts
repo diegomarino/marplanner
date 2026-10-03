@@ -12,7 +12,7 @@ import { useIsolatedDb } from "../helpers/db";
  * INV-01 — assignments target active children only (via listActiveChildren reuse)
  * INV-02 — weekdays must be one of the 7 canonical codes
  */
-describe("routines-assignments boundary tests (T010/T011)", () => {
+describe("routines-assignments boundary tests", () => {
   useIsolatedDb();
 
   // ── helpers ──────────────────────────────────────────────────────────────

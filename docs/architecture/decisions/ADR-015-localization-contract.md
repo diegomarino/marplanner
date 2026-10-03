@@ -147,6 +147,6 @@ mapped.
 
 ## Traceability
 
-- Pre-v2: `ADR-015`
+- Related prior: `ADR-015`
 - Related: `ADR-005`, `ADR-010`, `ADR-020`, `ADR-022`, `ADR-027`, `ADR-028`,
   `ADR-029`, `ADR-031`, `ADR-039`, `ADR-044`

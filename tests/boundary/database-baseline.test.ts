@@ -7,7 +7,7 @@ const BASELINE_FILE = "0000_current_baseline.sql";
 const CALENDAR_FEED_SYNC_MIGRATION = "0001_calendar_feed_sync.sql";
 const PLUGIN_LIFECYCLE_MIGRATION = "0002_plugin_lifecycle.sql";
 
-describe("database lifecycle current baseline (T004)", () => {
+describe("database lifecycle current baseline", () => {
   it("keeps the current baseline plus both reviewed forward migrations", () => {
     const migrationFiles = readdirSync(DRIZZLE_DIR)
       .filter((file) => file.endsWith(".sql"))
@@ -23,7 +23,7 @@ describe("database lifecycle current baseline (T004)", () => {
     ]);
   });
 
-  it("keeps the reviewed sentinel, both Slice 022 tables, and canonical day-period rows in SQL", () => {
+  it("keeps the reviewed sentinel, both tables, and canonical day-period rows in SQL", () => {
     const sql = readFileSync(`${DRIZZLE_DIR}/${BASELINE_FILE}`, "utf8");
 
     expect(sql).toContain("CREATE TABLE `seed_profile_state`");

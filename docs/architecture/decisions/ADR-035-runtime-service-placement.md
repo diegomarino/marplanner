@@ -74,6 +74,6 @@ This decision substantially shapes `ADR-014` (background job singleton/status ow
 ## Traceability
 
 - Conflicts: `CR-014`, `CR-018`
-- Pre-v2: `ADR-014`
+- Related prior: `ADR-014`
 - Related: `ADR-029` (plugins own services), `ADR-005` (household-tz scheduling)
 - Peer review: codex-peer-review blind-debate (2026-06-28) — model validated; capability registration, atomic claim, server-side compaction, connected-definition, Bluetooth alert incorporated.

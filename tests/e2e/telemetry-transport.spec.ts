@@ -31,7 +31,7 @@ function uniqueComponent(prefix: string): string {
   return `${prefix}.${rid}`;
 }
 
-test("manual flush delivers via the real fetch/keepalive transport (T006)", async ({ page }) => {
+test("manual flush delivers via the real fetch/keepalive transport", async ({ page }) => {
   test.setTimeout(60_000);
   await provision(page);
 
@@ -71,7 +71,7 @@ test("manual flush delivers via the real fetch/keepalive transport (T006)", asyn
   expect(body.rows[0].message).toBe(message);
 });
 
-test("closing the page WITHOUT a manual flush still delivers via pagehide/sendBeacon (T006)", async ({
+test("closing the page WITHOUT a manual flush still delivers via pagehide/sendBeacon", async ({
   page,
 }) => {
   test.setTimeout(60_000);

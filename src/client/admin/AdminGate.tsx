@@ -1,5 +1,5 @@
 import { appPathname } from "@/lib/base-path";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { isAdminPinBypassEnabled, useAdminUnlock } from "@/lib/adminUnlock";
 import { authFetch } from "@/lib/credential";
 import { Button } from "@/components/ui/button";
@@ -107,7 +107,7 @@ export function AdminGate() {
 
   /* -- pin submit ----------------------------------------------- */
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     if (pin.length < 4 || pin.length > 6 || submitting) return;
 
     setSubmitting(true);
@@ -137,7 +137,56 @@ export function AdminGate() {
       .finally(() => {
         setSubmitting(false);
       });
-  };
+  }, [pin, submitting, setUnlocked]);
+
+  const addDigit = useCallback(
+    (digit: string) => {
+      if (submitting) return;
+      setPin((current) => (current.length >= 6 ? current : `${current}${digit}`));
+      setError(null);
+    },
+    [submitting]
+  );
+
+  const deleteDigit = useCallback(() => {
+    if (submitting) return;
+    setPin((current) => current.slice(0, -1));
+    setError(null);
+  }, [submitting]);
+
+  /* -- hardware keyboard while the PIN gate is showing ------------ */
+
+  useEffect(() => {
+    if (adminUnlocked) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest?.("input, textarea, select, [contenteditable='true']")) return;
+
+      if (event.key >= "0" && event.key <= "9") {
+        event.preventDefault();
+        addDigit(event.key);
+        return;
+      }
+      if (event.key === "Backspace") {
+        if (target?.closest?.("button")) return;
+        event.preventDefault();
+        deleteDigit();
+        return;
+      }
+      if (event.key === "Enter") {
+        // Focused keypad/unlock buttons activate via the control itself. Submitting here too
+        // double-fires and can unlock mid tab-then-Enter digit entry (e2e keyboard flows).
+        if (target?.closest?.("button, a, [role='button']")) return;
+        event.preventDefault();
+        handleSubmit();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [adminUnlocked, addDigit, deleteDigit, handleSubmit]);
 
   /* -- unlocked: localized admin content (LanguageProvider mounts */
   /* HERE, post-unlock, so /api/settings fires only after unlock) */
@@ -155,12 +204,6 @@ export function AdminGate() {
   }
 
   /* -- locked: PIN gate (English, pre-unlock) -------------------- */
-
-  const addDigit = (digit: string) => {
-    if (submitting || pin.length >= 6) return;
-    setPin((current) => `${current}${digit}`);
-    setError(null);
-  };
 
   const cancelPin = () => {
     setPin("");
@@ -217,10 +260,7 @@ export function AdminGate() {
               aria-label="Backspace"
               data-testid="admin-pin-backspace"
               disabled={submitting || pin.length === 0}
-              onClick={() => {
-                setPin((current) => current.slice(0, -1));
-                setError(null);
-              }}
+              onClick={deleteDigit}
             >
               ⌫
             </Button>

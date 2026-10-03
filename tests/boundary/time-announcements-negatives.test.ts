@@ -28,7 +28,7 @@ import { ALL_SCHEMA_TABLES } from "../helpers/schema-tables";
  * (Traces: TIME-ANNOUNCEMENTS-INV-06 — server half, TIME-ANNOUNCEMENTS-INV-10,
  * TIME-ANNOUNCEMENTS-AC-08)
  */
-describe("time-announcements negative proofs (T011)", () => {
+describe("time-announcements negative proofs", () => {
   useIsolatedDb();
 
   describe("1. TIME-ANNOUNCEMENTS-AC-08/INV-10: no settings surface of any kind", () => {

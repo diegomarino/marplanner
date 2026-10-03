@@ -13,7 +13,7 @@ import { healthyRawForecast } from "../helpers/weather-fixtures";
  * `settings-write.test.ts` — never an HTTP probe for route absence (`app.hasRoute`,
  * per-repo lesson: a 404 from the SPA catch-all gate would read as a false "absent").
  */
-describe("weather negative-surface sweep (T014)", () => {
+describe("weather negative-surface sweep", () => {
   useIsolatedDb();
 
   afterEach(async () => {

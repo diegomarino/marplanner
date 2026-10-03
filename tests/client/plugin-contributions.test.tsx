@@ -100,7 +100,7 @@ function CatalogProbe(): React.JSX.Element {
   );
 }
 
-describe("active plugin contribution projection (Slice 026 T010)", () => {
+describe("active plugin contribution projection", () => {
   beforeEach(() => {
     window.history.replaceState(null, "", "/admin");
   });

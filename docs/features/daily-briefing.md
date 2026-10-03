@@ -124,7 +124,7 @@ Printing when the local derived value was lost.
   querying Printing's host API.
 - Business-date and timezone primitives are provided per ADR-005; the generation job is a persisted
   scheduled job per ADR-035.
-- Fresh v2 data store; no legacy import (ADR-026).
+- Fresh data store; no legacy import (ADR-026).
 
 ## Current retry behavior
 

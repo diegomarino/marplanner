@@ -155,7 +155,7 @@ function mockRouter(handlers: {
   };
 }
 
-describe("NetworkDevicesManagement (slice-017 T010)", () => {
+describe("NetworkDevicesManagement", () => {
   beforeEach(() => {
     currentSettings.language = "en";
     vi.stubGlobal("fetch", vi.fn());

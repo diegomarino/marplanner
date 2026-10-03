@@ -240,7 +240,7 @@ function createBackupPath(filename: string): string {
   return path.join(resolveBackupsRoot(), filename);
 }
 
-describe("plugin lifecycle compatibility matrix (Slice 026 T014)", () => {
+describe("plugin lifecycle compatibility matrix", () => {
   let dataDir: string;
   let previousDataDir: string | undefined;
 

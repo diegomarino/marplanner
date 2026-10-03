@@ -14,7 +14,7 @@ import { useIsolatedDb } from "../helpers/db";
  * the assignment-omission silencing path (assignment.active gate, INV-02).
  * RED until completes the tolerant read in getReminders.
  */
-describe("reminders-member-lifecycle boundary tests (T010/T011)", () => {
+describe("reminders-member-lifecycle boundary tests", () => {
   useIsolatedDb();
 
   // ── helpers ──────────────────────────────────────────────────────────────

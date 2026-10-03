@@ -120,7 +120,7 @@ blocked device succeeds locally and the admin accepts that the block lingers ups
   cannot confirm.
 - The poller cache is single-instance, in-process, and non-persisted (deployment
   premise); it is normalized on startup and each interval, dropping IPs.
-- Fresh v2 data store (ADR-026): the 4 production device rows are not imported; the
+- Fresh data store (ADR-026): the 4 production device rows are not imported; the
   list is rebuilt through v2 picker registration only.
 - Credentials are operator env config read via the host operator-config interface
   (ADR-039), never imported into any table.

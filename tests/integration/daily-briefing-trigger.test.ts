@@ -35,7 +35,7 @@ import { FakeClock, noopLog } from "../helpers/fake-clock";
  * established for the sibling wall-clock generation job. Frozen, injected clock throughout — no
  * test here reads the real wall clock.
  */
-describe("daily-briefing auto-print trigger (T005 — US1, research D3, FR-017/FR-018)", () => {
+describe("daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018)", () => {
   useIsolatedDb();
 
   const NOW = Date.UTC(2026, 7, 13, 10, 0, 0); // 2026-08-13 12:00 Europe/Madrid (CEST) — Thursday

@@ -50,7 +50,7 @@ import { ALL_SCHEMA_TABLES } from "../helpers/schema-tables";
  * docblocks.)
  */
 
-describe("scheduler emits zero bus events (T010 US3 — BACKGROUND-JOBS-SCHEDULER-INV-08)", () => {
+describe("scheduler emits zero bus events (US3 — BACKGROUND-JOBS-SCHEDULER-INV-08)", () => {
   useIsolatedDb();
 
   afterEach(() => {
@@ -295,7 +295,7 @@ function snapshotAllTables(db: ReturnType<typeof getDb>): Record<string, number>
   return snapshot;
 }
 
-describe("reads stay pure across every GET surface (T010 US3 — BACKGROUND-JOBS-SCHEDULER-INV-05)", () => {
+describe("reads stay pure across every GET surface (US3 — BACKGROUND-JOBS-SCHEDULER-INV-05)", () => {
   useIsolatedDb();
 
   it("guard: the app's live GET route set exactly matches GET_ROUTE_TEMPLATES (fails when a new GET route lands without updating this sweep)", async () => {
@@ -570,7 +570,7 @@ function extractTestTitles(source: string): string[] {
   return titles;
 }
 
-describe("trace-tag audit (T010 US3 — SC-007)", () => {
+describe("trace-tag audit (US3 — SC-007)", () => {
   it("SC-007: all 14 traced guarantees (13 BACKGROUND-JOBS-SCHEDULER + DAILY-BRIEFING-AC-10) appear in >=1 RUNNING test name under tests/", () => {
     const testFiles = collectTestFiles(path.resolve(process.cwd(), "tests"));
     const allTitles = testFiles.flatMap((file) =>

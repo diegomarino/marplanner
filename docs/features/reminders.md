@@ -99,5 +99,5 @@ is not mistaken for a broken feature.
 
 - Calendar owns member identification, event merge, and text normalization; this spec
   consumes existing explicit `assignedTo` assignments via `Calendar.getEvents` (ADR-018).
-- Fresh v2 data store; no legacy reminder rows are imported (ADR-026).
+- Fresh data store; no legacy reminder rows are imported (ADR-026).
 - Atomicity and date/weekday derivation primitives are provided per ADR-043/ADR-005.

@@ -12,7 +12,7 @@ import { performance } from "node:perf_hooks";
 
 const outputPath = process.env.MP_ACCEPTANCE_EGRESS_LOG;
 if (!outputPath) {
-  throw new Error("MP_ACCEPTANCE_EGRESS_LOG is required for the Slice 025 egress observer");
+ throw new Error("MP_ACCEPTANCE_EGRESS_LOG is required for the egress observer");
 }
 
 const originalFetch = globalThis.fetch.bind(globalThis);

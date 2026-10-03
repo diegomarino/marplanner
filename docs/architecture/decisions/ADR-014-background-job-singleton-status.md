@@ -5,13 +5,13 @@ Owner: architecture / ops
 Decision date: 2026-06-28
 Supersedes: an earlier multi-instance draft of this decision (deployment-wide
 lease), which contradicted ADR-040's single-instance premise and over-built for a
-deployment topology marplanner v2 does not have.
+deployment topology marplanner does not have.
 
 ## Decision
 
 ### Deployment premise: single instance
 
-marplanner v2 runs as a **single server instance** (one self-hosted family
+marplanner runs as a **single server instance** (one self-hosted family
 kiosk). This is the premise the rest of the architecture already assumes —
 ADR-040's in-memory event bus, ADR-035's _browser_-side atomic claim (multiple
 browsers, one server), and the family-kiosk threat/scale model. There is no
@@ -121,6 +121,6 @@ scheduler runtime state migrated (ADR-026).
 ## Traceability
 
 - Conflicts: `CR-014`
-- Pre-v2: `ADR-014`
+- Related prior: `ADR-014`
 - Related: `ADR-005`, `ADR-009`, `ADR-017`, `ADR-020`, `ADR-024`, `ADR-029`,
   `ADR-035` (browser dispatch claim), `ADR-039`, `ADR-040` (single-instance bus)

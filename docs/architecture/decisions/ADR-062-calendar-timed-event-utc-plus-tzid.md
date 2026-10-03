@@ -6,14 +6,14 @@ Owner: architecture
 
 Decision date: 2026-07-30
 
-Peer-reviewed: yes (codex + claude blind-debate on the slice-004 seam, 2026-07-30 — the review
+Peer-reviewed: yes (codex + claude blind-debate on the work item 4 seam, 2026-07-30 — the review
 surfaced the mutable-household-timezone trap, ADR-028, that motivates this ADR). The DST
 runtime-behavior claim is **empirically probed** (below), per Constitution XIV.
 
 ## Context
 
 The `calendar` domain contract phrases a timed event as _"instants (UTC stored, household-tz
-displayed)"_ — written for a **single** timed event. Slice-004 (`004-calendar-local-feed`) puts
+displayed)"_ — written for a **single** timed event. work item 4 (`004-calendar-local-feed`) puts
 **recurring** timed local events in scope, and that exposes a gap the "UTC stored" phrasing does not
 cover: a UTC instant alone cannot correctly expand a recurring timed series across a DST transition.
 
@@ -76,7 +76,7 @@ reconstruct the true UTC instant from the returned wall-clock components and the
 UTC+TZID is the minimal information-complete representation: it stores the instant the contract asks
 for **and** the wall-clock intent recurrence needs, in one uniform shape, defeating both the
 two-storage-shapes inconsistency and the mutable-tz data-loss trap the peer review surfaced. It keeps
-one recurrence engine for local and external events, preserving the slice-004 forward-compat bet.
+one recurrence engine for local and external events, preserving the work item 4 forward-compat bet.
 
 ## Affected Specs
 

@@ -154,7 +154,7 @@ revisited.
 
 ## Traceability
 
-- Pre-v2: new cross-cutting decision (surfaced by the Daily Briefing + Printing
+- Related prior: new cross-cutting decision (surfaced by the Daily Briefing + Printing
   cluster grill).
 - Related: `ADR-029` (core/plugin split), `ADR-039` (Rule B / absence-tolerant
   interfaces / fault isolation), `ADR-035` (persisted scheduler = durability

@@ -16,7 +16,7 @@ import { useIsolatedDb } from "../helpers/db";
  * production code (trap-sweep) — it is a regression fence over the behavior; a
  * failure here means the bug is in `daily-briefing/index.ts`, not here.
  */
-describe("daily-briefing weather block snapshot freeze (T011)", () => {
+describe("daily-briefing weather block snapshot freeze", () => {
   useIsolatedDb();
 
   let app: FastifyInstance;

@@ -18,7 +18,7 @@ import { useIsolatedDb } from "../helpers/db";
  * d) ?lifecycle=all: expect both → all three members
  * e) ?lifecycle=unknown: expect 400 Bad Request
  */
-describe("member-list-lifecycle (T004 — red-by-design, T005 turns green)", () => {
+describe("member-list-lifecycle (red-by-design, turns green)", () => {
   useIsolatedDb();
 
   const seedKeys = (db: any) => {

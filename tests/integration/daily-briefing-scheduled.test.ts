@@ -84,7 +84,7 @@ const AUG21_NOON_UTC = Date.UTC(2026, 7, 21, 10, 0, 0); // 12:00 local (well pas
 const TODAY = "2026-08-21";
 const YESTERDAY = "2026-08-20";
 
-describe("daily-briefing scheduled generation + catch-up (T006 US1)", () => {
+describe("daily-briefing scheduled generation + catch-up (US1)", () => {
   useIsolatedDb();
 
   beforeEach(() => {

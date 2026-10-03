@@ -6,13 +6,12 @@ Owner: architecture
 
 Decision date: 2026-07-31
 
-Peer-reviewed: no — architect-authored convention ratification surfaced during slice-004 T001
-verification (PR #268). The convention is already established by existing code (cited below); the
+Peer-reviewed: no — architect-authored convention ratification surfaced during work item 4 verification (PR #268). The convention is already established by existing code (cited below); the
 STRICT-column encoding claim is **empirically probed** (below), per Constitution XIV.
 
 ## Context
 
-Slice-004's first calendar migration (`T001`/PR #268) declared `created_at`/`updated_at` as
+work item 4's first calendar migration (``/PR #268) declared `created_at`/`updated_at` as
 `INTEGER`, matching every existing table that carries audit timestamps (`members`, `api_keys`, `settings_objects`,
 `admin_config`). But
 the slice's `data-model.md` annotated those same columns as `text (ISO instant)`. Both descriptions
@@ -21,7 +20,7 @@ are "UTC" — they disagree only on the **storage encoding** (integer epoch-ms v
 The disagreement is not cosmetic on a STRICT table: a writer that follows the `data-model.md`
 annotation literally (`new Date().toISOString()`) inserts a TEXT value into an INTEGER column and is
 **rejected at runtime** (probed below). So spec and implementation genuinely diverge, and the divergence
-is latent until the first insert task (T007) runs.
+is latent until the first insert task () runs.
 
 The root cause is a gap in the decision record, not a new controversy:
 
@@ -96,7 +95,7 @@ Integer epoch-ms is the information-complete, minimal encoding for a value whose
 this happen": it is exactly what `Date.now()` produces (no parse/format round-trip), it is a UTC
 instant (satisfying ADR-005), and it matches every existing audit-timestamp column so a STRICT schema stays
 internally consistent. Pinning it in one citable ADR closes the doc-vs-impl divergence at its source —
-future `data-model.md` files cite `ADR-063` instead of guessing — and prevents the T007-class latent
+future `data-model.md` files cite `ADR-063` instead of guessing — and prevents the -class latent
 insert failure the probe reproduces.
 
 ## Affected Specs

@@ -47,7 +47,7 @@ export const shotgunBlock = {
   type: TYPE,
   scope: "shared" as const,
   source:
-    "../settings (resolveMemberBlockSettings, same-plugin) + ctx.listActiveMembers (host-api member-listing gap, see module doc) + ../corpora/determinism (hashSeed/fisherYates, T004)",
+ "../settings (resolveMemberBlockSettings, same-plugin) + ctx.listActiveMembers (host-api member-listing gap, see module doc) + ../corpora/determinism (hashSeed/fisherYates)",
   async generate(ctx: ShotgunBlockContext): Promise<ShotgunBlockData | null> {
     if (!ctx.listActiveMembers) return null;
     const activeMembers = ctx.listActiveMembers();

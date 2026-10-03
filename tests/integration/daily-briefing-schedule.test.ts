@@ -74,7 +74,7 @@ const AUG21_AFTER_0600_UTC = Date.UTC(2026, 7, 21, 4, 30, 0); // 06:30 local
 const AUG21_NOON_UTC = Date.UTC(2026, 7, 21, 10, 0, 0); // 12:00 local
 const TODAY = "2026-08-21";
 
-describe("daily-briefing scheduled generation (T011 US4 — research D10)", () => {
+describe("daily-briefing scheduled generation (US4 — research D10)", () => {
   useIsolatedDb();
 
   afterEach(async () => {
@@ -252,7 +252,7 @@ describe("daily-briefing scheduled generation (T011 US4 — research D10)", () =
       expect(jobLastRunAt(DAILY_BRIEFING_JOB_ID)).not.toBeNull();
     });
 
-    it("T011 Codex P2 fold (PR #713): a write that changes ONLY autoPrintTrigger still re-arms when the pre-write effective time came SOLELY from the legacy settings_objects placeholder", async () => {
+    it("Codex P2 fold (PR #713): a write that changes ONLY autoPrintTrigger still re-arms when the pre-write effective time came SOLELY from the legacy settings_objects placeholder", async () => {
       vi.useFakeTimers({ toFake: ["Date"] });
       seedMember("m1", { optedIn: true });
       // Pre-seed today's row so isMissed=false — isolates the SCHEDULING assertion below from

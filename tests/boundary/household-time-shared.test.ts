@@ -8,7 +8,7 @@ import { nextOccurrenceInTz, nextRuleOccurrence } from "../../src/shared/househo
  * `nowMs` parameters — no `Date.now`/system-clock mocking needed anywhere here
  * (Constitution IV: frozen/injected clocks).
  */
-describe("household-time-shared (slice-015 T001) — nextRuleOccurrence", () => {
+describe("household-time-shared — nextRuleOccurrence", () => {
   describe("weekday filter", () => {
     it("skips a non-listed weekday and picks the next listed one", () => {
       // 2026-08-10 is a Monday, 2026-08-12 a Wednesday (Europe/Madrid, no DST edge).

@@ -46,7 +46,7 @@ const FR014_PLUS_INV05_FIXTURE = [
   "",
 ].join("\n");
 
-describe("UI debt enforcement ratchet (T007, FR-014/FR-015/FR-017) — executable proof, not just eslint.config.mjs prose", () => {
+describe("UI debt enforcement ratchet (FR-014/FR-015/FR-017) — executable proof, not just eslint.config.mjs prose", () => {
   it("FR-014's three rules fire on a fixture at a NON-exception client path (src/client/home/WeatherPill.tsx)", async () => {
     const messages = await lint("src/client/home/WeatherPill.tsx", FR014_FIXTURE);
     const fr014 = messages.filter(
@@ -104,7 +104,7 @@ describe("UI debt enforcement ratchet (T007, FR-014/FR-015/FR-017) — executabl
   // empty and this test goes RED. Demonstrated live in this 's evidence (not re-asserted here
   // as a no-op): temporarily widening the exception list to the wildcard turns this exact test
   // red; reverting turns it green again.
-  it("terminal ratchet: UI_DEBT_EXCEPTION_FILES is EMPTY and must stay empty — re-adding an exception after slice 020 is a deliberate red, not a quiet edit", async () => {
+  it("terminal ratchet: UI_DEBT_EXCEPTION_FILES is EMPTY and must stay empty — re-adding an exception after is a deliberate red, not a quiet edit", async () => {
     const { UI_DEBT_EXCEPTION_FILES } = await import(join(repoRoot, "eslint.config.mjs"));
     // Stronger than the earlier "non-empty" sanity in both directions: a wildcard-swap attack
     // now fails on length alone, and quietly grandfathering new debt through the list

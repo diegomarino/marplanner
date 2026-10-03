@@ -20,7 +20,7 @@ import { useIsolatedDb } from "../helpers/db";
  * All probes use range:{from:date,to:date} — a single-day window (the docs'
  * `to:nextDay` is a 2-day-window bug; corrected here per, already fixed in the live gate).
  */
-describe("reminders-dry-run (T008/T009 — spec FR-008, research.md D4, issue #496 single-day window)", () => {
+describe("reminders-dry-run (spec FR-008, research.md D4, issue #496 single-day window)", () => {
   useIsolatedDb();
 
   beforeEach(() => {

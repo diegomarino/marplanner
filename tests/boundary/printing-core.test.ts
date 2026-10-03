@@ -76,7 +76,7 @@ function createMember(
   return id;
 }
 
-describe("printing core — T004/T005", () => {
+describe("printing core", () => {
   useIsolatedDb();
   afterEach(() => {
     // Module-level plugin-active flag is a process singleton (not DB state) — reset it so a
@@ -359,7 +359,7 @@ describe("printing core — T004/T005", () => {
       expect(claimed).not.toBeNull();
     });
 
-    it("omitting sessionKeyId skips the capability gate entirely (pre-T007 interim call shape)", () => {
+ it("omitting sessionKeyId skips the capability gate entirely (pre- interim call shape)", () => {
       enqueuePrintJob(
         { recordKey: "cap-omitted", targetDate: TARGET_DATE, outputRef: "x" },
         ANCHOR_MS

@@ -12,7 +12,7 @@ function flushMicrotasks(): Promise<void> {
   });
 }
 
-describe("event bus — T006 (RED-first unit tests)", () => {
+describe("event bus — (RED-first unit tests)", () => {
   let bus: ReturnType<typeof createEventBus>;
 
   beforeEach(() => {

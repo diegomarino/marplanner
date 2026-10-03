@@ -126,7 +126,7 @@ not-found, and any racing read renders a tombstone rather than erroring.
 
 ## Assumptions
 
-- Fresh v2 data store (ADR-026); the 7 `meal_plans` / 33 `meals` / 0 `recipes` and empty
+- Fresh data store (ADR-026); the 7 `meal_plans` / 33 `meals` / 0 `recipes` and empty
   meal rows from prod are evidence only, never imported.
 - Household tz, `weekStartDay`, and `weekdayOf` date derivation primitives are provided
   per ADR-005/ADR-006; atomicity per ADR-043.

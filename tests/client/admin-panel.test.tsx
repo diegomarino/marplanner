@@ -72,7 +72,7 @@ describe("AdminPanel", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders an h1 when headingLevel='h1' — for a panel that IS the page-level surface for a whole route (T014 review, PR #777, finding F6: CalendarView adopts this so /calendar has exactly one h1, matching ChoresBoard/MealsBoard/DailyBriefingView)", () => {
+ it("renders an h1 when headingLevel='h1' — for a panel that IS the page-level surface for a whole route ( review, PR #777, finding F6: CalendarView adopts this so /calendar has exactly one h1, matching ChoresBoard/MealsBoard/DailyBriefingView)", () => {
     render(
       <AdminPanel title="Calendar" headingLevel="h1">
         <p>body</p>

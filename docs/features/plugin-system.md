@@ -54,7 +54,7 @@ drains within its lease, services unmount, and the plugin's settings disappear f
 
 - **FR-007**: Given two plugins, when they relate, then they MUST relate only through host-mediated, absence-tolerant interfaces and MUST NOT be hard-wired — no dependency resolver, no activation-order locks, and no cross-namespace references. Contract: PLUGIN-SYSTEM-INV-07.
 
-- **FR-008**: Given a throwing plugin, when it faults, then it MUST be contained (marked `errored`) without bringing down the host or sibling plugins; resource exhaustion (OOM/CPU) is explicitly not contained in v2. Contract: PLUGIN-SYSTEM-INV-08.
+- **FR-008**: Given a throwing plugin, when it faults, then it MUST be contained (marked `errored`) without bringing down the host or sibling plugins; resource exhaustion (OOM/CPU) is explicitly not contained in this system. Contract: PLUGIN-SYSTEM-INV-08.
 
 - **FR-009**: Given operator/deploy secrets, when a plugin reads them, then it MUST read them only via the read-only host operator-config interface (`host.getOperatorConfig('<ns>.<key>')`), it MUST NOT read `process.env` directly or write the host environment (a lint rule bans `process.env` reads inside any plugin namespace), and operator secrets MUST never enter a plugin's namespaced tables, `GET /settings`, backups, or telemetry. Contract: PLUGIN-SYSTEM-INV-09.
 
@@ -100,4 +100,4 @@ drains within its lease, services unmount, and the plugin's settings disappear f
   drains. This spec owns the plugin↔host boundary, the registry, and the lifecycle sequence.
 - v2 is first-party only; no registry/signing/loader/sandbox/quota infrastructure (declare-now,
   enforce-later); resource-exhaustion isolation is explicitly deferred.
-- Fresh v2 store; all plugins seed `inactive`; no legacy plugin state imported (ADR-026).
+- Fresh data store; all plugins seed `inactive`; no legacy plugin state imported (ADR-026).

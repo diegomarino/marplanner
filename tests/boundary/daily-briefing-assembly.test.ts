@@ -8,7 +8,7 @@ import { hashKey } from "../../src/server/auth/credentials";
 import { getDb } from "../../src/server/db/client";
 import { useIsolatedDb } from "../helpers/db";
 
-describe("daily-briefing assembly (T004)", () => {
+describe("daily-briefing assembly", () => {
   const { dir } = useIsolatedDb();
 
   let app: FastifyInstance;

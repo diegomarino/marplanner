@@ -31,7 +31,7 @@ interface FetchInit {
   signal?: AbortSignal;
 }
 
-describe("network-devices UniFi client transport (T006)", () => {
+describe("network-devices UniFi client transport", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });

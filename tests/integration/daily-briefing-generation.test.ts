@@ -218,7 +218,7 @@ function buildValidPng(): Uint8Array {
   return new Uint8Array(PNG.sync.write(png));
 }
 
-describe("daily-briefing full generation (T009)", () => {
+describe("daily-briefing full generation", () => {
   useIsolatedDb();
 
   afterEach(() => {
@@ -282,7 +282,7 @@ describe("daily-briefing full generation (T009)", () => {
     expect(Buffer.compare(rows.raster_bits as Buffer, secondRow.raster_bits)).toBe(0);
   });
 
-  it("slice-021 T009: editing a member colour does not alter the monochrome briefing raster", async () => {
+  it(": editing a member colour does not alter the monochrome briefing raster", async () => {
     seedMember("m1", { optedIn: true });
 
     await generateBriefing("m1", DATE_FRI);

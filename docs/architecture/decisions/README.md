@@ -56,7 +56,7 @@ specified by the [contracts](../contracts/README.md) and verified implementation
 - [ADR-051 Time Announcements: Firing Model and Product Surface](ADR-051-time-announcements-firing-and-surface.md)
 - [ADR-052 Weather Service Contract (tz, single-source location, correctness fixes)](ADR-052-weather-service-contract.md)
 - [ADR-053 Network Devices Service Contract (ownership separation, external-mirror state, data minimization)](ADR-053-network-devices-service-contract.md)
-- [ADR-054 Member Referential Integrity — Archive-Only, No Hard Delete (closes ADR-004 in-v2 thread)](ADR-054-member-referential-integrity-and-discard.md)
+- [ADR-054 Member Referential Integrity — Archive-Only, No Hard Delete (closes ADR-004 in-product thread)](ADR-054-member-referential-integrity-and-discard.md)
 - [ADR-055 — Technology Stack Baseline](ADR-055-stack-baseline.md)
 - [ADR-056 — Engineering Process / DX Baseline](ADR-056-process-dx-baseline.md)
 - [ADR-057 Admin Telemetry Read View](ADR-057-admin-telemetry-read-view.md)

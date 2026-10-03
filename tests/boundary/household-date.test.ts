@@ -9,7 +9,7 @@ import {
   todayInHouseholdTz,
 } from "../../src/server/lib/household-date";
 
-describe("household-date (T004 RED tests, T005 implementation)", () => {
+describe("household-date (RED tests, implementation)", () => {
   useIsolatedDb();
 
   beforeEach(() => {
@@ -117,7 +117,7 @@ describe("household-date (T004 RED tests, T005 implementation)", () => {
     });
   });
 
-  describe("nextOccurrenceInTz (T001 — research D2 DST policy)", () => {
+  describe("nextOccurrenceInTz (research D2 DST policy)", () => {
     describe("Europe/Madrid spring-forward gap (2026-03-29)", () => {
       it("BACKGROUND-JOBS-SCHEDULER-AC-03: fires at the first instant after the gap for a nonexistent local time", () => {
         const nowMs = Date.UTC(2026, 2, 28, 12, 0, 0); // 2026-03-28T12:00:00Z, well before the transition
@@ -245,7 +245,7 @@ describe("household-date (T004 RED tests, T005 implementation)", () => {
     });
   });
 
-  describe("todayInHouseholdTz (T001)", () => {
+ describe("todayInHouseholdTz", () => {
     it("BACKGROUND-JOBS-SCHEDULER-INV-04: derives the household-local date using the default timezone (Europe/Madrid)", () => {
       const now = Date.UTC(2026, 7, 9, 23, 30, 0); // 2026-08-09T23:30:00Z -> 2026-08-10T01:30 CEST
       expect(todayInHouseholdTz(now)).toBe("2026-08-10");

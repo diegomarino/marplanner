@@ -89,7 +89,7 @@ Accepts `{ "object": OBJECT_NAME, "settings": { ... } }`. Returns the updated ef
 | ------------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `weather`          | Weather      | `lat` (number or null, **range `[-90,90]`**), `lon` (number or null, **range `[-180,180]`**), `label?` (optional place name or null). Set and cleared as a unit; range-validated (`ADR-052`). No env fallback. |
 | `printer`          | Printing     | `paperWidthDots` (positive integer). (`enabled`/`autoprint` removed: "printing available" = plugin active per ADR-038; "automatic" = an active automatic trigger bound, not a flag.)                           |
-| `printerTransport` | Printing     | `type` (transport enum; only `bluetooth` in v2), `config` (object validated against the schema for `type`).                                                                                                    |
+| `printerTransport` | Printing     | `type` (transport enum; only `bluetooth` in this system), `config` (object validated against the schema for `type`).                                                                                                    |
 
 Wi-Fi and USB transport types are not valid `printerTransport.type` values until those transports are implemented.
 
@@ -105,7 +105,7 @@ non-participation is deliberate (`ADR-040`: every contract states its Events sur
 
 ## Data / Setup Contract
 
-v2 starts with a fresh data store. No legacy `app_settings` rows are migrated. The core `locale` object is seeded with defaults (`Europe/Madrid`, `es`, `1`) on fresh setup. Plugin objects are seeded when their plugin is activated.
+the product starts with a fresh data store. No legacy `app_settings` rows are migrated. The core `locale` object is seeded with defaults (`Europe/Madrid`, `es`, `1`) on fresh setup. Plugin objects are seeded when their plugin is activated.
 
 The effective settings response always fills missing persisted values from object defaults, so the response is always complete for active objects even before any explicit write.
 
@@ -117,7 +117,7 @@ The effective settings response always fills missing persisted values from objec
 - **APP-SETTINGS-REGISTRY-AC-04** Given a storage failure after writing the first field of a `locale` write, all three `locale` fields remain at their prior values.
 - **APP-SETTINGS-REGISTRY-AC-05** Given the Printing plugin is not active, `GET /settings` does not include `printer` or `printerTransport` keys.
 - **APP-SETTINGS-REGISTRY-AC-06** Given the Printing plugin is active, `GET /settings` includes `printer` and `printerTransport` with defaults for any unpersisted fields.
-- **APP-SETTINGS-REGISTRY-AC-07** Given `PUT /settings` with `{ "object": "printerTransport", "settings": { "type": "wifi", "config": {} } }`, the server returns an unsupported transport error (wifi not implemented in v2).
+- **APP-SETTINGS-REGISTRY-AC-07** Given `PUT /settings` with `{ "object": "printerTransport", "settings": { "type": "wifi", "config": {} } }`, the server returns an unsupported transport error (wifi not implemented in this system).
 
 ## Open Decisions
 

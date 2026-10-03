@@ -33,7 +33,7 @@ function flushDeferredSinks(): Promise<void> {
   return new Promise((resolve) => setImmediate(resolve));
 }
 
-describe("telemetry sink seam (T012)", () => {
+describe("telemetry sink seam", () => {
   useIsolatedDb();
 
   const ENVELOPE_KEYS = ["level", "component", "message", "receivedAt", "eventId"].sort();

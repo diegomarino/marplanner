@@ -41,5 +41,5 @@ No legacy rows imported (ADR-026). If a future import/export ingests legacy sour
 
 ## Traceability
 
-- Pre-v2: `ADR-024`
+- Related prior: `ADR-024`
 - Domain grill: `../domain-grills/calendar-reminders-routines.md` (C1)

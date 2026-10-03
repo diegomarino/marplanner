@@ -9,7 +9,7 @@ import { describe, it, expect, beforeAll, afterEach, vi } from "vitest";
  * true UTC instant by interpreting each returned Date's UTC components as a wall-clock time in the
  * event's stored `tzid`. `.toISOString` on the raw rrule Date is the R1 hazard (wrong instant).
  */
-describe("calendar recurrence expander (T004, T005)", () => {
+describe("calendar recurrence expander", () => {
   let expand: typeof import("../../src/server/modules/calendar/recurrence").expand;
 
   beforeAll(async () => {

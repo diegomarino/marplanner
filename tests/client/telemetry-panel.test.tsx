@@ -34,7 +34,7 @@ function renderPanel() {
 const settingsUrl = "/api/settings";
 const telemetryUrl = "/api/telemetry/client-log";
 
-describe("TelemetryManagement (T010)", () => {
+describe("TelemetryManagement", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
   });

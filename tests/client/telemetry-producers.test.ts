@@ -9,7 +9,7 @@ const MISSING_KEY_PROBE = "__telemetry_test_probe__.does.not.exist" as unknown a
 
 /** — global capture + i18n producer jsdom tests .
  */
-describe("telemetry producers (T007)", () => {
+describe("telemetry producers", () => {
   describe("global error/unhandledrejection capture (FR-008)", () => {
     beforeEach(() => {
       document.body.innerHTML = '<div id="root"></div>';

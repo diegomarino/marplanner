@@ -12,7 +12,7 @@ import { useIsolatedDb } from "../helpers/db";
  * - Zero completion history and "no routine ever configured" both return 0, never
  * null/undefined/throw — and the latter proves the walk is BOUNDED (terminates).
  */
-describe("routines-streak unit tests (T018/T019 — US3)", () => {
+describe("routines-streak unit tests (US3)", () => {
   useIsolatedDb();
 
   // ── date helpers (mirror src/server/lib/household-date.ts's timezone-invariant

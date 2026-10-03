@@ -79,7 +79,7 @@ function harness(controls: Partial<Record<PluginId, AdapterControl>> = {}) {
   return { lifecycle, store, controls: allControls };
 }
 
-describe("plugin lifecycle reconciliation (Slice 026 T012)", () => {
+describe("plugin lifecycle reconciliation", () => {
   useIsolatedDb({ pluginState: "inactive" });
 
   it.each([
@@ -216,7 +216,7 @@ describe("plugin lifecycle reconciliation (Slice 026 T012)", () => {
       .prepare(
         "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
       )
-      .run("key-plugin-t012", hashKey("plugin-t012"), Date.parse(NOW));
+ .run("key-plugin-t012", hashKey("plugin-t012"), Date.parse(NOW));
     const app = Fastify();
     await authBoundary(app);
     await pluginRoutes(app, lifecycle);
@@ -225,7 +225,7 @@ describe("plugin lifecycle reconciliation (Slice 026 T012)", () => {
       const response = await app.inject({
         method: "POST",
         url: "/api/plugins/weather/activate",
-        cookies: { mp_device_key: "plugin-t012" },
+ cookies: { mp_device_key: "plugin-t012" },
       });
 
       expect(response.statusCode).toBe(503);

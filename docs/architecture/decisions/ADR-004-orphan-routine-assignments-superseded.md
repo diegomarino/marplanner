@@ -12,7 +12,7 @@ v2 will not migrate legacy database rows under `ADR-026`. The v2 product rule is
 
 ## Rationale
 
-The legacy orphaned assignment rows are evidence that the old system allowed or accumulated broken references. Since those rows are not imported, v2 does not need a delete/archive/repair/quarantine policy for them.
+The legacy orphaned assignment rows are evidence that the old system allowed or accumulated broken references. Since those rows are not imported, the product does not need a delete/archive/repair/quarantine policy for them.
 
 The useful design lesson is validation: routine assignment writes should not create references to missing, archived, or otherwise ineligible members.
 
@@ -25,9 +25,9 @@ The useful design lesson is validation: routine assignment writes should not cre
 
 ## Data / Setup Implications
 
-No orphaned legacy routine assignment rows are imported into v2.
+No orphaned legacy routine assignment rows are imported into this system.
 
-Fresh v2 setup and writes must ensure routine assignment targets are valid v2 members and satisfy the owning domain's eligibility rules.
+Fresh setup and writes must ensure routine assignment targets are valid v2 members and satisfy the owning domain's eligibility rules.
 
 ## Acceptance Criteria
 
@@ -44,6 +44,6 @@ Fresh v2 setup and writes must ensure routine assignment targets are valid v2 me
 ## Traceability
 
 - Conflicts: `CR-004-orphan-routine-assignments`
-- Pre-v2: `ADR-004`
-- Superseded by: `ADR-026` (migration thread) + `ADR-054` (in-v2 runtime thread); v2 validation rule covered by `ADR-002`
+- Related prior: `ADR-004`
+- Superseded by: `ADR-026` (migration thread) + `ADR-054` (in-product runtime thread); v2 validation rule covered by `ADR-002`
 - Domain grill: `../domain-grills/members.md`
