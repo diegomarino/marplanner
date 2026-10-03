@@ -82,47 +82,51 @@ describe("percent-encoded /api bypass is blocked — multi-variant (#99)", () =>
   // same setup, proving the encoded path is blocked by the ENCODING, not the key.
   afterEach(() => {
     delete process.env.MP_BOOTSTRAP_KEY;
+    delete process.env.BASE_PATH;
   });
 
   it("POST /%61pi/auth/provision with a VALID bootstrap key still does not provision", async () => {
     process.env.MP_BOOTSTRAP_KEY = BOOTSTRAP_KEY;
     seedBootstrapKey(BOOTSTRAP_KEY);
-    const app = await buildApp();
-    try {
-      // Control: the canonical path provisions with this exact setup.
-      const control = await app.inject({
-        method: "POST",
-        url: "/api/auth/provision",
-        headers: { Authorization: `Bearer ${BOOTSTRAP_KEY}` },
-      });
-      expect(control.statusCode).toBe(200);
-      const controlCookie = control.headers["set-cookie"];
-      expect(
-        Array.isArray(controlCookie) ? controlCookie.join(",") : (controlCookie ?? "")
-      ).toContain("mp_device_key");
+    for (const basePath of ["", "/family/planner"]) {
+      process.env.BASE_PATH = basePath;
+      const app = await buildApp();
+      try {
+        // Control: the canonical path provisions with this exact setup.
+        const control = await app.inject({
+          method: "POST",
+          url: `${basePath}/api/auth/provision`,
+          headers: { Authorization: `Bearer ${BOOTSTRAP_KEY}` },
+        });
+        expect(control.statusCode).toBe(200);
+        const controlCookie = control.headers["set-cookie"];
+        expect(
+          Array.isArray(controlCookie) ? controlCookie.join(",") : (controlCookie ?? "")
+        ).toContain("mp_device_key");
 
-      // The encoded variant, same valid key, must NOT provision.
-      const encoded = await app.inject({
-        method: "POST",
-        url: "/%61pi/auth/provision",
-        headers: { Authorization: `Bearer ${BOOTSTRAP_KEY}` },
-      });
-      expect(encoded.body).not.toContain("provisioned");
-      const encodedCookie = encoded.headers["set-cookie"];
-      expect(
-        Array.isArray(encodedCookie) ? encodedCookie.join(",") : (encodedCookie ?? "")
-      ).not.toContain("mp_device_key");
-      // CONCRETE fail-closed shape (empirically confirmed): the encoded path is
-      // NOT 404. `/api/auth/provision` is boundary-EXEMPT, so a decoded provision
-      // is never 401'd; instead the access-gate onRequest hook — which classifies
-      // the still-encoded `/%61pi/...` path as a non-API route — replies with the
-      // gate FORM (200) before routing. Pinning that exact shape makes a router-
-      // /gate-decode regression (which would instead reach the provision handler →
-      // 200 `{provisioned:true}` + cookie) unambiguous.
-      expect(encoded.statusCode).toBe(200);
-      expect(encoded.body).toContain("access-gate-form");
-    } finally {
-      await app.close();
+        // The encoded variant, same valid key, must NOT provision.
+        const encoded = await app.inject({
+          method: "POST",
+          url: `${basePath}/%61pi/auth/provision`,
+          headers: { Authorization: `Bearer ${BOOTSTRAP_KEY}` },
+        });
+        expect(encoded.body).not.toContain("provisioned");
+        const encodedCookie = encoded.headers["set-cookie"];
+        expect(
+          Array.isArray(encodedCookie) ? encodedCookie.join(",") : (encodedCookie ?? "")
+        ).not.toContain("mp_device_key");
+        // CONCRETE fail-closed shape (empirically confirmed): the encoded path is
+        // NOT 404. `/api/auth/provision` is boundary-EXEMPT, so a decoded provision
+        // is never 401'd; instead the access-gate onRequest hook — which classifies
+        // the still-encoded `/%61pi/...` path as a non-API route — replies with the
+        // gate FORM (200) before routing. Pinning that exact shape makes a router-
+        // /gate-decode regression (which would instead reach the provision handler →
+        // 200 `{provisioned:true}` + cookie) unambiguous.
+        expect(encoded.statusCode).toBe(200);
+        expect(encoded.body).toContain("access-gate-form");
+      } finally {
+        await app.close();
+      }
     }
   });
 });

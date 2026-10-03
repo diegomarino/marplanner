@@ -1,4 +1,4 @@
-import { requestAppPath } from "../../shared/base-path";
+import { stripBasePath } from "../../shared/base-path";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { GATE_COOKIE, serializeAuthCookie } from "./cookies";
@@ -99,7 +99,9 @@ export async function accessGate(app: FastifyInstance, basePath = ""): Promise<v
 
   app.addHook("onRequest", async (request: FastifyRequest, reply: FastifyReply) => {
     if (request.url.split("?")[0] === "/health") return;
-    const pathname = requestAppPath(request.url, basePath) ?? "";
+    // Gate exemptions use the raw pathname: decoding here would turn an encoded
+    // frontend path into the unauthenticated provisioning exemption.
+    const pathname = stripBasePath(request.url.split("?")[0], basePath) ?? "";
     if (isGateExempt(pathname)) return;
     if (hasValidGateCookie(request.headers.cookie)) return;
     return sendGateForm(reply, basePath);

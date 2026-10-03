@@ -159,7 +159,22 @@ describe("static serving — client-only root; backend bundle never leaks", () =
     const malformed = await app.inject("/family/planner/api/%broken");
     expect(malformed.statusCode).toBeGreaterThanOrEqual(400);
     expect(malformed.body).not.toContain("SPA shell");
+    for (const method of ["POST", "PUT"] as const) {
+      for (const url of ["/family/planner/", "/family/planner/calendar"]) {
+        const unsupported = await app.inject({
+          method,
+          url,
+          headers: { cookie: GATE_COOKIE_HEADER },
+        });
+        expect(unsupported.statusCode).toBe(404);
+        expect(unsupported.body).not.toContain("SPA shell");
+        expect(unsupported.headers["content-type"]).not.toContain("text/html");
+      }
+    }
     for (const method of ["GET", "HEAD"] as const) {
+      const withoutQuery = await app.inject({ method, url: "/family/planner" });
+      expect(withoutQuery.statusCode).toBe(302);
+      expect(withoutQuery.headers.location).toBe("/family/planner/");
       const bare = await app.inject({ method, url: "/family/planner?route=calendar" });
       expect(bare.statusCode).toBe(302);
       expect(bare.headers.location).toBe("/family/planner/?route=calendar");
