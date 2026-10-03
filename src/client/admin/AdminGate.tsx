@@ -28,23 +28,16 @@ interface VerifyPinResult {
   match: boolean;
 }
 
-/** Auto re-lock: `setUnlocked(false)` was previously called nowhere, so a kitchen kiosk stayed unlocked
- * indefinitely once a parent opened it, including for children using the kiosk
- * afterwards. Two complementary triggers, chosen TOGETHER rather than either alone:
- * 1. An inactivity timeout (below) — the common case: a parent finishes an admin
- * task and walks away without remembering to lock it back up.
- * 2. An explicit "Lock" control in the admin nav (`admin-lock-button`, in
- * `AdminContent`) — for the case a parent wants to hand the kiosk back to a
- * child immediately, without waiting out the timeout.
- * The timeout is a plain inactivity window, reset by ANY pointer or keyboard
- * interaction anywhere on the page while unlocked — this surface has no router,
- * so "activity" is the only signal available; there is no
- * route change to hook a lock-on-navigate trigger to. Five minutes is a recorded
- * product judgement call, not a derived constant: short enough that an unattended
- * kiosk doesn't stay open for the rest of the day, long enough that a parent
- * re-reading a long reminder list before saving isn't logged out mid-task. Revisit
- * this interval if real usage shows it is wrong in either
- * direction.
+/** Auto re-lock: unlock is ephemeral client state (`adminUnlock`). Complementary triggers:
+ * 1. **Leave admin** — `AdminUnlockRouteReset` in `Shell.tsx` clears unlock when the route is
+ *    no longer `kind: "admin"` (navigate to family surfaces).
+ * 2. **Inactivity** (below) — parent finishes admin and walks away without Lock; timer is scoped
+ *    to the admin panel element (capture-phase pointer/key/click), not `window`, so family-surface
+ *    activity does not keep admin unlocked while the panel is open.
+ * 3. **Explicit Lock** — `admin-lock-button` in `AdminContent` for immediate hand-back.
+ * 4. **Refresh / close** — in-memory state is gone.
+ * Five minutes is a recorded product judgement: short enough that an unattended kiosk does not
+ * stay open all day, long enough that a parent re-reading a long list is not locked mid-task.
  */
 const ADMIN_IDLE_LOCK_MS = 5 * 60 * 1000;
 

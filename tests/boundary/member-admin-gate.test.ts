@@ -4,7 +4,7 @@ import { hashKey } from "../../src/server/auth/credentials";
 import { getDb } from "../../src/server/db/client";
 import { useIsolatedDb } from "../helpers/db";
 
-describe("member-admin-gate (T018 — negative tests for US4)", () => {
+describe("member-admin-gate (negative tests for member admin authorization)", () => {
   useIsolatedDb();
 
   const seedKeys = (db: any) => {
@@ -31,12 +31,12 @@ describe("member-admin-gate (T018 — negative tests for US4)", () => {
     return id;
   };
 
-  describe("legacy v1 /members route is absent", () => {
-    it("legacy v1 /members management routes are NOT registered (specs/002-members-referential-root/spec.md FR-012/FR-013)", async () => {
+  describe("legacy /members route is absent", () => {
+    it("legacy /members management routes are NOT registered (specs/002-members-referential-root/spec.md FR-012/FR-013)", async () => {
       const { buildApp } = await import("../../src/server/app");
       const app = await buildApp();
       try {
-        // The bare (non-/api) v1 management surface must not exist as a Fastify route.
+        // The bare (non-/api) legacy management surface must not exist as a Fastify route.
         expect(app.hasRoute({ method: "GET", url: "/members" })).toBe(false);
         expect(app.hasRoute({ method: "POST", url: "/members" })).toBe(false);
         expect(app.hasRoute({ method: "GET", url: "/members/:id" })).toBe(false);

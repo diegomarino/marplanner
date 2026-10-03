@@ -6,7 +6,7 @@ Decision date: 2026-06-28
 
 ## Decision
 
-The first `*` (full-access) API key on a fresh v2 deployment — the bootstrap key — is established from a **deployment-provided configuration value**, expressed deployment-agnostically. The portable mechanism is an environment variable; v2 must not couple this to any specific hosting platform (Fly, Docker, Kubernetes, bare metal, systemd, `.env`, etc. are all valid).
+The first `*` (full-access) API key on a fresh deployment — the bootstrap key — is established from a **deployment-provided configuration value**, expressed deployment-agnostically. The portable mechanism is an environment variable; the product must not couple this to any specific hosting platform (Fly, Docker, Kubernetes, bare metal, systemd, `.env`, etc. are all valid).
 
 ### Rules
 
@@ -50,5 +50,5 @@ Reconciliation keeps the bootstrap usable across restarts and after backup resto
 ## Traceability
 
 - Conflicts: `CR-007`, `CR-013`
-- Pre-v2: `ADR-007`, `ADR-013`
+- Related prior: `ADR-007`, `ADR-013`
 - Related: `ADR-030` (key model, anti-lockout), `ADR-031` (separate access-gate token)

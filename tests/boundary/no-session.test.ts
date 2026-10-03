@@ -17,7 +17,7 @@ import { useIsolatedDb } from "../helpers/db";
  * Verifies that the settings and PIN-verification routes require the
  * appropriate key and never create server-side session state.
  */
-describe("no-server-session / PIN-agnostic-authz (T026 — FR-014/015/017/018)", () => {
+describe("no-server-session / PIN-agnostic-authz (FR-014/015/017/018)", () => {
   useIsolatedDb();
 
   it("schema contains NO session/sessions table (FR-015)", async () => {
@@ -103,7 +103,7 @@ describe("no-server-session / PIN-agnostic-authz (T026 — FR-014/015/017/018)",
     }
   });
 
-  it("verify-pin creates no session row (FR-014/FR-015/FR-016) — RED until T027", async () => {
+  it("verify-pin creates no session row (FR-014/FR-015/FR-016)", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     // Seed a device key + admin_config row.
@@ -141,7 +141,7 @@ describe("no-server-session / PIN-agnostic-authz (T026 — FR-014/015/017/018)",
         payload: { pin: correctPin },
       });
 
-      // The route implements /api/auth/verify-pin. This assertion is RED until the route is added.
+      // verify-pin is installed; match-only, no session side effects.
       expect(verifyRes.statusCode).toBe(200);
 
       const body = JSON.parse(verifyRes.body);
@@ -226,7 +226,7 @@ describe("no-server-session / PIN-agnostic-authz (T026 — FR-014/015/017/018)",
     }
   });
 
-  it("verifying an incorrect PIN creates no session row and reports no-match (FR-014/FR-015/FR-026) — RED until T027", async () => {
+  it("verifying an incorrect PIN creates no session row and reports no-match (FR-014/FR-015/FR-026)", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     // Seed a device key + admin_config row.
@@ -259,7 +259,7 @@ describe("no-server-session / PIN-agnostic-authz (T026 — FR-014/015/017/018)",
         payload: { pin: "wrong-pin" },
       });
 
-      // The route implements /api/auth/verify-pin. This assertion is RED until the route is added.
+      // verify-pin is installed; match-only, no session side effects.
       expect(verifyRes.statusCode).toBe(200);
 
       const body = JSON.parse(verifyRes.body);

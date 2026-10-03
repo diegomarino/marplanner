@@ -16,7 +16,7 @@ import { useIsolatedDb } from "../helpers/db";
  * The provisioning and settings endpoints are exercised in one process.
  * This integration test chains both in a single running process.
  */
-describe("provision→settings integration (T024 — FR-007→FR-011)", () => {
+describe("provision→settings integration (FR-007→FR-011)", () => {
   useIsolatedDb();
 
   it("POST /api/auth/provision + GET /api/settings in one process: provision with raw bootstrap key, then cold-read settings with device cookie (FR-007→FR-011)", async () => {

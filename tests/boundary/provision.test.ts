@@ -9,7 +9,7 @@ import { useIsolatedDb } from "../helpers/db";
  * Black-box: only asserts on HTTP status, Set-Cookie headers, and response body.
  * Does NOT import any server auth internals.
  */
-describe("provision — FR-007 (T017)", () => {
+describe("provision — FR-007", () => {
   useIsolatedDb();
 
   /** Seed a bootstrap key row into api_keys (mimicking startup reconciliation).
