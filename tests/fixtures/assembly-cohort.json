@@ -6569,8 +6569,8 @@
         "sha256": "467d8a8a7d24b13ec29bf7462dc98bfef6e1a4356620bf2d90b638107b37b875",
         "layer": "server",
         "minimumTotals": {
-          "lines": 51,
-          "statements": 55,
+          "lines": 48,
+          "statements": 52,
           "functions": 5,
           "branches": 46
         },
@@ -6646,7 +6646,7 @@
         }
       },
       "src/server/auth/gate.ts": {
-        "sha256": "2a9dac82cc659ceb0ce1d3a8bfb6bbe91ed242bd8b999e318b8bf66e108ead0f",
+        "sha256": "d8e01cb293ce31f338b70f35463b5095e29f0b82f86c1602a53464dccbe29789",
         "layer": "server",
         "minimumTotals": {
           "lines": 35,

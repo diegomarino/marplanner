@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { authenticationBackoff } from "../../src/server/auth/throttle";
 import { buildApp } from "../../src/server/app";
 import { hashKey } from "../../src/server/auth/credentials";
 import { getDb } from "../../src/server/db/client";
@@ -31,7 +32,10 @@ describe("authentication failure backoff public paths", () => {
     seed("live-cookie");
     seed("live-bearer", "integration");
     const app = await buildApp();
+    let independentApp: Awaited<ReturnType<typeof buildApp>> | undefined;
     try {
+      const backoff = authenticationBackoff(app);
+      expect(authenticationBackoff(app)).toBe(backoff);
       for (let i = 0; i < 19; i++) {
         const response = await app.inject(
           i % 2
@@ -42,6 +46,9 @@ describe("authentication failure backoff public paths", () => {
       }
       const limited = await app.inject({ url: "/api/settings" });
       expect(limited.statusCode).toBe(429);
+      independentApp = await buildApp();
+      expect(authenticationBackoff(independentApp)).not.toBe(backoff);
+      expect((await independentApp.inject({ url: "/api/settings" })).statusCode).toBe(401);
       expect(limited.headers["retry-after"]).toBe("1");
       expect(limited.headers["cache-control"]).toBe("no-store");
       expect(limited.json()).toEqual({
@@ -62,6 +69,7 @@ describe("authentication failure backoff public paths", () => {
       ).toBe(200);
       expect((await app.inject({ url: "/api/settings" })).statusCode).toBe(429);
     } finally {
+      await independentApp?.close();
       await app.close();
     }
   });
