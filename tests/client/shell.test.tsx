@@ -241,14 +241,12 @@ describe("Shell — unprovisioned gate", () => {
     const panel = screen.getByRole("group", { name: "Options" });
     expect(options).toHaveAttribute("aria-expanded", "true");
     expect(panel).toHaveAttribute("id", options.getAttribute("aria-controls"));
-    expect(panel).toHaveTextContent("Turn on kiosk mode");
-    const density = within(panel).getByRole("button", { name: "Kiosk mode" });
     const admin = within(panel).getByRole("button", { name: "Admin" });
     expect(admin).toHaveAttribute("data-hold-state", "idle");
     expect(within(panel).queryByText(/printer/i)).not.toBeInTheDocument();
-    // Native controls retain their DOM (and therefore Tab) order: density, then Admin.
-    expect(Array.from(panel.querySelectorAll("button, a"))).toEqual([density, admin]);
-    expect(density).not.toHaveAttribute("tabindex", "-1");
+    expect(within(panel).queryByRole("button", { name: "Kiosk mode" })).not.toBeInTheDocument();
+    // Options currently exposes Admin only (density toggle temporarily unmounted).
+    expect(Array.from(panel.querySelectorAll("button, a"))).toEqual([admin]);
     expect(admin).not.toHaveAttribute("tabindex", "-1");
 
     fireEvent.keyDown(panel, { key: "Escape" });
