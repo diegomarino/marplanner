@@ -2,6 +2,15 @@ import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import { loadEnvFile } from "node:process";
 import { resolve } from "node:path";
+import {
+  formatLocalReadyBanner,
+  formatSeedWarning,
+  inspectLocalSeedStatus,
+  resolveCdpPort,
+  resolveDatabaseFile,
+  writeLocalReady,
+} from "./chrome-dev-shared.mjs";
+
 
 try {
   loadEnvFile(".env.local");
@@ -140,7 +149,14 @@ try {
         console.log(`API: ${api}`);
         console.log(JSON.stringify({ type: "api-ready", api }));
         resolveReady();
-      } else if (line.includes("Failed to start server:") || line.includes("Failed running")) {
+      } else if (line.startsWith("Failed to start server:")) {
+        const detail = line.slice("Failed to start server:".length).trim();
+        fail(
+          detail
+            ? `API startup failed: ${detail}`
+            : "API startup failed; run npm run dev:server for diagnostics"
+        );
+      } else if (line.includes("Failed running")) {
         fail("API startup failed; run npm run dev:server for diagnostics");
       }
     });
@@ -162,6 +178,11 @@ try {
     port: webPort,
     strictPort: true,
     open: process.argv.includes("--open"),
+    // Defense in depth with vite.config.ts: Chrome profile + SQLite under DATA_DIR
+    // must not trigger full-page reloads while the CDP browser is active.
+    watch: {
+      ignored: ["**/.data/**", "**/chrome-cdp/**", "**/*.db", "**/*.db-*"],
+    },
     proxy: Object.fromEntries(
       ["/api", "/health", "/gate"].map((path) => [
         path,
@@ -189,8 +210,26 @@ try {
   options.port = address.port;
   vite.config.server.port = address.port;
   const frontend = `http://${host.includes(":") ? `[${host}]` : host}:${address.port}`;
-  console.log(`Frontend: ${frontend}`);
-  console.log(JSON.stringify({ type: "local-ready", api, frontend }));
+  let cdpPort = null;
+  try {
+    cdpPort = resolveCdpPort();
+  } catch {
+    cdpPort = null;
+  }
+  writeLocalReady({ api, frontend, cdpPort }, process.env.DATA_DIR ?? resolve(".data"));
+  for (const line of formatLocalReadyBanner({ api, frontend, cdpPort })) {
+    console.log(line);
+  }
+  const seedWarning = formatSeedWarning(
+    inspectLocalSeedStatus(
+      resolveDatabaseFile()
+    )
+  );
+  if (seedWarning) {
+    console.warn(seedWarning);
+    console.log(JSON.stringify({ type: "seed-warning", message: seedWarning }));
+  }
+  console.log(JSON.stringify({ type: "local-ready", api, frontend, cdpPort }));
 } catch (error) {
   fail(error.message);
 }

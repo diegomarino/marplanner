@@ -105,7 +105,8 @@ configuration in this image.
 ## Local development
 
 Copy root `.env.example` to `.env.local`, replace the synthetic credentials, then
-run `npm run dev`. The launcher reports distinct API and frontend loopback URLs;
+run `npm run dev`. The launcher reports distinct API and frontend loopback URLs
+and the Chrome CDP port used by optional DEV browser helpers;
 `PORT=0` and `WEB_PORT=0` request automatic allocation. Optional explicit nonzero
 ports must be distinct and available. Exported variables override `.env.local`.
 API watch restarts update the frontend proxy to the new API port while retaining
@@ -114,7 +115,11 @@ the frontend origin. `npm run dev -- --open` opens the frontend URL. Standalone
 The API's discovered port drives the frontend proxy; development data defaults
 to `.data/` in each worktree. Browser cookies are scoped to the hostname, so use
 separate browser profiles or contexts for simultaneous localhost worktrees to
-avoid replacing another worktree's cookies. `npm run dev:server` remains a standalone API
+avoid replacing another worktree's cookies. Optional DEV helpers
+`npm run dev:chrome`, `npm run dev:session-desktop`, `npm run dev:session-dense`
+and `npm run dev:session-reset` target a worktree-local Chromium profile via
+`CHROME_CDP_PORT` / `CHROME_USER_DATA_DIR` (see `.env.example`); they are not part
+of production runtime. `npm run dev:server` remains a standalone API
 diagnostic command. Keep synthetic trials separate from household data.
 
 ## Credentials and provisioning
