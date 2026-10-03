@@ -88,7 +88,7 @@ describe("B1 shell boundary", () => {
     expect(fetchMock.mock.calls.map(([input]) => String(input))).toContain("/api/plugins");
   });
 
-  it("offers density and member admin navigation when the plugin catalog is unavailable", async () => {
+  it("offers member admin navigation when the plugin catalog is unavailable", async () => {
     document.cookie = "mp_provisioned=1; Path=/";
     const fetchMock = vi.fn((input: string | URL) => {
       if (String(input).includes("/api/settings")) {
@@ -114,16 +114,7 @@ describe("B1 shell boundary", () => {
     render(<Shell />);
     expect(await screen.findByTestId("home-surface")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Options" }));
-    const density = screen.getByTestId("density-control-toggle");
-    expect(density).toHaveAttribute("aria-pressed", "false");
-    fireEvent.click(density);
-    expect(density).toHaveAttribute("aria-pressed", "true");
-    expect(document.documentElement).toHaveAttribute("data-density", "kiosk");
-    window.localStorage.setItem("marplanner:density", "comfortable");
-    fireEvent(window, new StorageEvent("storage", { key: null }));
-    fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByTestId("density-control-toggle")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Options" }));
     const affordance = screen.getByTestId("admin-affordance");
     fireEvent.pointerDown(affordance, { button: 1, pointerId: 1 });
     expect(affordance).toHaveAttribute("data-hold-state", "idle");
@@ -135,7 +126,9 @@ describe("B1 shell boundary", () => {
     expect(affordance).toHaveAttribute("data-hold-state", "holding");
     fireEvent.keyUp(affordance, { key: "Enter" });
     expect(affordance).toHaveAttribute("data-hold-state", "idle");
-    await new Promise((resolve) => setTimeout(resolve, 1));
+    const { promise: settle, resolve: settleDone } = Promise.withResolvers<void>();
+    setTimeout(settleDone, 1);
+    await settle;
     fireEvent.click(screen.getByTestId("admin-affordance"), { detail: 0 });
     expect(await screen.findByTestId("admin-pin-keypad")).toBeVisible();
     expect(window.location.pathname).toBe("/admin");

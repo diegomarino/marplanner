@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 
 import "./styles/globals.css";
 import { registerShellService, Shell } from "./shell/Shell";
-import { applyStoredDensity } from "./shell/densityAttribute";
+import { COMFORTABLE_DENSITY, setDensity } from "./shell/densityAttribute";
 import { log } from "./lib/logger";
 //: side-effect import mounts the headless time-announcements service into
 // the US0 `ShellServices` slot (registerShellService runs at THIS module's import time,
@@ -58,10 +58,11 @@ window.addEventListener("unhandledrejection", (event: PromiseRejectionEvent) => 
   });
 });
 
-// (FR-001, FR-002, FR-002a): apply this device's density choice to the
-// document root BEFORE the app renders, so the token layer in
-// src/client/styles/globals.css is never inert for the initial paint.
-applyStoredDensity();
+// TODO(density): revert — restore `applyStoredDensity()` (and drop this forced
+// comfortable lock) when `<DensityControl />` is remounted in HouseholdChrome Options.
+// DensityControl is temporarily unmounted from Options. Lock the document to the
+// comfortable default so a prior kiosk localStorage choice cannot stick without a UI exit.
+setDensity(COMFORTABLE_DENSITY);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

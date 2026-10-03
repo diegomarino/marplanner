@@ -17,7 +17,6 @@ import { useT } from "@/i18n";
 import { PrinterAttention } from "@/printing/PrinterAttention";
 import { PluginHealthIndicator } from "@/plugins/PluginHealthIndicator";
 import { PluginContribution, usePluginActive } from "@/plugins/contributions";
-import { DensityControl } from "./DensityControl";
 import { familyRoutes, navigateHousehold } from "./routes";
 
 const ADMIN_HOLD_MS = 3_000;
@@ -210,7 +209,9 @@ function HouseholdChromeContent({
                     }
                   }}
                 >
-                  <DensityControl />
+                  {/* TODO(density): revert — remount `<DensityControl />` here and flip
+                      density-control-shell-mount + shell Options assertions back to "exposed".
+                      Pair with main.tsx boot: restore `applyStoredDensity()` instead of forced comfortable. */}
                   <Button
                     type="button"
                     variant="outline"
