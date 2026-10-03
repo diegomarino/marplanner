@@ -69,7 +69,7 @@ Rate limiting applies **only to authentication failures**, never to overall requ
 
 ## Traceability
 
-- Pre-v2: `ADR-007`, `ADR-013`
+- Related prior: `ADR-007`, `ADR-013`
 - Related: `ADR-030` (key model), `ADR-032` (bootstrap), `ADR-016` (telemetry redaction), `ADR-033` (fail-closed)
 - Code reviewed: `tools/dev/set-api-key.sh` (legacy `$RANDOM` generator)
 - Peer review: codex-peer-review (2026-06-28) — confirmed `$RANDOM` as the dominant critical flaw; entropy ~46–51 bits; failure-based rate limiting and prefix detectability endorsed.

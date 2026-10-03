@@ -218,7 +218,7 @@ describe("authFetch — scope-403 vs credential-invalid (#682)", () => {
 
   it(
     "does NOT clear the marker on a domain-specific 403 code OTHER than AUTH_SCOPE_DENIED_CODE " +
-      "(slice-018 T007 review fold P2-1 — printing's printer_capability_missing, real body shape)",
+      "(printing printer_capability_missing real body shape)",
     async () => {
       // Verbatim shape of src/server/modules/printing/index.ts's PrintCapabilityMissingError,
       // mapped by src/server/routes/printing.ts's handlePrintingError. The credential is live —

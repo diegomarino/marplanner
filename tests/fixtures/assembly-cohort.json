@@ -939,13 +939,14 @@
             "boot: factory + boot sequence buildApp returns a Fastify instance, health returns 200, and /api/settings is fail-closed (401)"
           ],
           "tests/boundary/bootstrap-reconcile.test.ts": [
-            "bootstrap-reconcile \u2014 T020 / ADR-032 (idempotent seed) with MP_BOOTSTRAP_KEY set, inserts exactly one active '*' bootstrap row whose key_hash matches hashKey(MP_BOOTSTRAP_KEY)",
-            "bootstrap-reconcile \u2014 T020 / ADR-032 (idempotent seed) calling reconcileBootstrap() twice yields exactly ONE bootstrap row (idempotency)",
-            "bootstrap-reconcile \u2014 T020 / ADR-032 (idempotent seed) with MP_BOOTSTRAP_KEY unset, no bootstrap row is created",
-            "bootstrap-reconcile \u2014 T020 / ADR-032 (idempotent seed) rejects non-mpk bootstrap key (throws, no row inserted)",
-            "bootstrap-reconcile \u2014 T020 / ADR-032 (idempotent seed) re-establishes (un-revokes) a revoked bootstrap row and warns",
-            "bootstrap-reconcile \u2014 T020 / ADR-032 (idempotent seed) re-establishes an EXPIRED (past expires_at, unrevoked) bootstrap row and warns (issue #110)",
-            "bootstrap-reconcile \u2014 T020 / ADR-032 (idempotent seed) leaves an already-ACTIVE bootstrap row untouched and does not warn (no spurious re-establish)"
+            "bootstrap-reconcile \u2014 ADR-032 (idempotent seed) with MP_BOOTSTRAP_KEY set, inserts exactly one active '*' bootstrap row whose key_hash matches hashKey(MP_BOOTSTRAP_KEY)",
+            "bootstrap-reconcile \u2014 ADR-032 (idempotent seed) calling reconcileBootstrap() twice yields exactly ONE bootstrap row (idempotency)",
+            "bootstrap-reconcile \u2014 ADR-032 (idempotent seed) with MP_BOOTSTRAP_KEY unset, no bootstrap row is created",
+            "bootstrap-reconcile \u2014 ADR-032 (idempotent seed) rejects non-mpk bootstrap key (throws, no row inserted)",
+            "bootstrap-reconcile \u2014 ADR-032 (idempotent seed) re-establishes (un-revokes) a revoked bootstrap row and warns",
+            "bootstrap-reconcile \u2014 ADR-032 (idempotent seed) re-establishes an EXPIRED (past expires_at, unrevoked) bootstrap row and warns (issue #110)",
+            "bootstrap-reconcile \u2014 ADR-032 (idempotent seed) re-establishes a bootstrap row whose expires_at equals now (exact-instant inactive)",
+            "bootstrap-reconcile \u2014 ADR-032 (idempotent seed) leaves an already-ACTIVE bootstrap row untouched and does not warn (no spurious re-establish)"
           ],
           "tests/boundary/calendar-assembly.test.ts": [
             "calendar-assembly (T003 \u2014 wiring verification) GET /api/calendar/events is registered (T003)",
@@ -1672,16 +1673,16 @@
             "meals-tombstone boundary tests (T008/T009) a note-only entry (no recipe_id at all) is never mistaken for a tombstone"
           ],
           "tests/boundary/member-admin-gate.test.ts": [
-            "member-admin-gate (T018 \u2014 negative tests for US4) legacy v1 /members route is absent legacy v1 /members management routes are NOT registered (specs/002-members-referential-root/spec.md FR-012/FR-013)",
-            "member-admin-gate (T018 \u2014 negative tests for US4) legacy v1 /members route is absent POST /api/members with valid device key succeeds, PIN not consulted",
-            "member-admin-gate (T018 \u2014 negative tests for US4) legacy v1 /members route is absent PATCH /api/members/:id requires device key, 401 without",
-            "member-admin-gate (T018 \u2014 negative tests for US4) legacy v1 /members route is absent PATCH /api/members/:id with valid device key succeeds, regardless of member role",
-            "member-admin-gate (T018 \u2014 negative tests for US4) legacy v1 /members route is absent POST /api/members/:id/archive requires device key, 401 without",
-            "member-admin-gate (T018 \u2014 negative tests for US4) legacy v1 /members route is absent POST /api/members/:id/archive with valid device key succeeds, PIN not consulted",
-            "member-admin-gate (T018 \u2014 negative tests for US4) legacy v1 /members route is absent POST /api/members/:id/restore requires device key, 401 without",
-            "member-admin-gate (T018 \u2014 negative tests for US4) legacy v1 /members route is absent POST /api/members/:id/restore with valid device key succeeds, PIN not consulted",
-            "member-admin-gate (T018 \u2014 negative tests for US4) device key alone authorizes mutations (member role irrelevant) parent member cannot authorize mutation without device key",
-            "member-admin-gate (T018 \u2014 negative tests for US4) device key alone authorizes mutations (member role irrelevant) child member mutations work with device key (role does not gate)"
+            "member-admin-gate (negative tests for member admin authorization) legacy /members route is absent legacy /members management routes are NOT registered (specs/002-members-referential-root/spec.md FR-012/FR-013)",
+            "member-admin-gate (negative tests for member admin authorization) legacy /members route is absent POST /api/members with valid device key succeeds, PIN not consulted",
+            "member-admin-gate (negative tests for member admin authorization) legacy /members route is absent PATCH /api/members/:id requires device key, 401 without",
+            "member-admin-gate (negative tests for member admin authorization) legacy /members route is absent PATCH /api/members/:id with valid device key succeeds, regardless of member role",
+            "member-admin-gate (negative tests for member admin authorization) legacy /members route is absent POST /api/members/:id/archive requires device key, 401 without",
+            "member-admin-gate (negative tests for member admin authorization) legacy /members route is absent POST /api/members/:id/archive with valid device key succeeds, PIN not consulted",
+            "member-admin-gate (negative tests for member admin authorization) legacy /members route is absent POST /api/members/:id/restore requires device key, 401 without",
+            "member-admin-gate (negative tests for member admin authorization) legacy /members route is absent POST /api/members/:id/restore with valid device key succeeds, PIN not consulted",
+            "member-admin-gate (negative tests for member admin authorization) device key alone authorizes mutations (member role irrelevant) parent member cannot authorize mutation without device key",
+            "member-admin-gate (negative tests for member admin authorization) device key alone authorizes mutations (member role irrelevant) child member mutations work with device key (role does not gate)"
           ],
           "tests/boundary/member-archive-restore.test.ts": [
             "member-archive-restore (T006 \u2014 red-by-design, T007 turns green) POST /members/:id/archive sets lifecycle=archived and returns Member",
@@ -2000,11 +2001,11 @@
             "network-devices-rule-b \u2014 config-drift tripwire no-restricted-syntax (the process.env ban under src/server/modules/**) does not ban process.env OUTSIDE src/server/modules/** (e.g. host-api itself)"
           ],
           "tests/boundary/no-session.test.ts": [
-            "no-server-session / PIN-agnostic-authz (T026 \u2014 FR-014/015/017/018) schema contains NO session/sessions table (FR-015)",
-            "no-server-session / PIN-agnostic-authz (T026 \u2014 FR-014/015/017/018) no session-identifier header is issued by any endpoint (FR-015)",
-            "no-server-session / PIN-agnostic-authz (T026 \u2014 FR-014/015/017/018) verify-pin creates no session row (FR-014/FR-015/FR-016) \u2014 RED until T027",
-            "no-server-session / PIN-agnostic-authz (T026 \u2014 FR-014/015/017/018) GET /api/settings authorized by key alone regardless of PIN state (FR-014/FR-017/FR-018)",
-            "no-server-session / PIN-agnostic-authz (T026 \u2014 FR-014/015/017/018) verifying an incorrect PIN creates no session row and reports no-match (FR-014/FR-015/FR-026) \u2014 RED until T027"
+            "no-server-session / PIN-agnostic-authz (FR-014/015/017/018) schema contains NO session/sessions table (FR-015)",
+            "no-server-session / PIN-agnostic-authz (FR-014/015/017/018) no session-identifier header is issued by any endpoint (FR-015)",
+            "no-server-session / PIN-agnostic-authz (FR-014/015/017/018) verify-pin creates no session row (FR-014/FR-015/FR-016)",
+            "no-server-session / PIN-agnostic-authz (FR-014/015/017/018) GET /api/settings authorized by key alone regardless of PIN state (FR-014/FR-017/FR-018)",
+            "no-server-session / PIN-agnostic-authz (FR-014/015/017/018) verifying an incorrect PIN creates no session row and reports no-match (FR-014/FR-015/FR-026)"
           ],
           "tests/boundary/operator-config.test.ts": [
             "getOperatorConfig (T003) returns undefined when the underlying env var is unset",
@@ -2223,11 +2224,11 @@
             "printing-rule-b \u2014 config-drift tripwire no-restricted-syntax (the process.env ban under src/server/modules/**) does not ban process.env OUTSIDE src/server/modules/** (e.g. host-api itself)"
           ],
           "tests/boundary/provision.test.ts": [
-            "provision \u2014 FR-007 (T017) POST /api/auth/provision with valid raw * bootstrap key \u2192 200, Set-Cookie sets mp_device_key, body has no raw key",
-            "provision \u2014 FR-007 (T017) POST /api/auth/provision with invalid raw key \u2192 401, body is { error, message }, no raw key leaked",
-            "provision \u2014 FR-007 (T017) POST /api/auth/provision without Authorization header \u2192 401, no cookie set, no raw key in body",
-            "provision \u2014 FR-007 (T017) POST /api/auth/provision with valid key but NO active bootstrap row in DB \u2192 401",
-            "provision \u2014 FR-007 (T017) scopes mounted device credentials and provisioning marker consistently"
+            "provision \u2014 FR-007 POST /api/auth/provision with valid raw * bootstrap key \u2192 200, Set-Cookie sets mp_device_key, body has no raw key",
+            "provision \u2014 FR-007 POST /api/auth/provision with invalid raw key \u2192 401, body is { error, message }, no raw key leaked",
+            "provision \u2014 FR-007 POST /api/auth/provision without Authorization header \u2192 401, no cookie set, no raw key in body",
+            "provision \u2014 FR-007 POST /api/auth/provision with valid key but NO active bootstrap row in DB \u2192 401",
+            "provision \u2014 FR-007 scopes mounted device credentials and provisioning marker consistently"
           ],
           "tests/boundary/reminders-assembly.test.ts": [
             "reminders-assembly (T002 \u2014 real-process smoke, Scenario A) Scenario A: create an apply_to_all reminder, then read emissions over real HTTP"
@@ -2727,7 +2728,7 @@
             "rejects arbitrary-property density overrides while preserving tokens, growth and descendants"
           ],
           "tests/boundary/verify-pin.test.ts": [
-            "verify-pin: match/no-match no-session (T025 \u2014 red-by-design, T028 turns green) correct PIN \u21d2 {match:true} and incorrect PIN \u21d2 {match:false}, no session row either way (FR-016/FR-026)"
+            "verify-pin: match/no-match no-session correct PIN \u21d2 {match:true} and incorrect PIN \u21d2 {match:false}, no session row either way (FR-016/FR-026)"
           ],
           "tests/boundary/weather-briefing-block.test.ts": [
             "daily-briefing weather block (T010) selects the daily[] entry matching the briefing's household-local date",
@@ -3092,7 +3093,7 @@
             "authFetch \u2014 scope-403 vs credential-invalid (#682) does NOT clear the marker on a scope-403 (requireCapability's 'not granted' branch, real body shape)",
             "authFetch \u2014 scope-403 vs credential-invalid (#682) STILL clears the marker on a credential-invalid 403 (revoked key, real authBoundary body shape)",
             "authFetch \u2014 scope-403 vs credential-invalid (#682) STILL clears the marker on a credential-invalid 401 (invalid key, real authBoundary body shape)",
-            "authFetch \u2014 scope-403 vs credential-invalid (#682) does NOT clear the marker on a domain-specific 403 code OTHER than AUTH_SCOPE_DENIED_CODE (slice-018 T007 review fold P2-1 \u2014 printing's printer_capability_missing, real body shape)",
+            "authFetch \u2014 scope-403 vs credential-invalid (#682) does NOT clear the marker on a domain-specific 403 code OTHER than AUTH_SCOPE_DENIED_CODE (printing printer_capability_missing real body shape)",
             "authFetch \u2014 credential-generation race guard (FR-013) ignores a stale-generation 401 that resolves after a successful re-provision",
             "authFetch \u2014 credential-generation race guard (FR-013) collapses N concurrent stale-credential denials into exactly one loss event",
             "runtime subpath credential transport prefixes canonical API strings and clears the marker at its mounted cookie path"
@@ -4725,7 +4726,7 @@
             "printing skeleton \u2014 T014 (Constitution XIII runnable skeleton) full tracer path: test-print -> claim -> payload -> ack -> printed, plus 204/dedup edges"
           ],
           "tests/integration/provision-then-settings.test.ts": [
-            "provision\u2192settings integration (T024 \u2014 FR-007\u2192FR-011) POST /api/auth/provision + GET /api/settings in one process: provision with raw bootstrap key, then cold-read settings with device cookie (FR-007\u2192FR-011)"
+            "provision\u2192settings integration (FR-007\u2192FR-011) POST /api/auth/provision + GET /api/settings in one process: provision with raw bootstrap key, then cold-read settings with device cookie (FR-007\u2192FR-011)"
           ],
           "tests/integration/scheduler-lifecycle.test.ts": [
             "scheduler emits zero bus events (T010 US3 \u2014 BACKGROUND-JOBS-SCHEDULER-INV-08) BACKGROUND-JOBS-SCHEDULER-INV-08: the scheduler core module has no event-bus import at all (structural half)",

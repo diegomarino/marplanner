@@ -7,7 +7,7 @@ Depends on decisions: `ADR-001`, `ADR-007`, `ADR-013`, `ADR-030`, `ADR-031`, `AD
 
 ## Delivered interface boundary
 
-The installed API provides device provisioning and PIN verification. Key create/list/revoke, last-key anti-lockout, `set-pin`, and server-side cookie revocation are planned interfaces, not implemented routes. Their identifiers below preserve the extension contract and do not claim delivered behavior. See [operations](../../operations.md) for the current credential and PIN recovery limits.
+The installed API provides device provisioning and PIN verification. **Key create/list/revoke, last-key anti-lockout, and server-side cookie revocation are out of scope for this household release** (ops recovery only — see [operations](../../operations.md)). **`set-pin` is not planned:** replace the advisory PIN by setting `ADMIN_PIN`, restarting, and provisioning a browser again. Deferred multi-integration identifiers below do not claim delivered behavior.
 
 ## Purpose
 
@@ -17,13 +17,13 @@ It does not own member identity (Members), route structure or the admin-unlock U
 
 ## Vocabulary
 
-**API key** — a credential authorizing backend operations. Each key has capability scopes. A `*` key authorizes everything; a scoped key authorizes only its `domain:verb` capabilities.
+**API key** — a credential authorizing backend operations. Household device keys are minted with scope `*` (full household trust, `ADR-058`). For this family deployment, access to a feature means full use of that feature — not a per-user read/write split on the kiosk. Scoped `domain:verb` keys remain a valid extension shape for future non-kiosk integrations.
 
-**Scope** — `domain:verb` where `domain` is a `ADR-029` domain and `verb` is `read` | `write` | `admin`. `*` is the wildcard.
+**Scope** — `*` (household device default) or `domain:verb` where `domain` is a `ADR-029` domain and `verb` is `read` | `write` | `admin`. Where a route declares a capability, a live `*` key satisfies it.
 
 **Device key** — a `*` key minted by the UI provisioning flow, bound to a device's httpOnly cookie, never exposed as a raw value.
 
-**Integration key** — a header credential. Startup reconciles `MP_MANAGEMENT_KEY` into a management-scoped integration record; arbitrary scoped key issuance has no installed endpoint.
+**Integration / management key** — operator credential from `MP_MANAGEMENT_KEY` reconcile (`kind=integration`). **Transport:** Bearer is admitted only on `/api/plugins*`. Other API routes use the **cookie** path; management carve-outs (e.g. network-devices) expect that cookie, not a general Bearer on every route. Arbitrary scoped key issuance has no installed endpoint.
 
 **Bootstrap key** — the first `*` key on a fresh deployment, established from a deployment-provided config value.
 
@@ -39,9 +39,9 @@ It does not own member identity (Members), route structure or the admin-unlock U
 - **AUTH-SESSIONS-INV-02** The PIN never authorizes backend operations. The protected verify-pin endpoint checks its hash; admin-unlocked state exists only in the client.
 - **AUTH-SESSIONS-INV-03** There is no server-side session table, no `x-session-id`, and no server session lifecycle.
 - **AUTH-SESSIONS-INV-04** Enforcement is **fail-closed in every environment**. No code path disables or relaxes auth based on environment. A missing credential locks the deployment (only `/health` reachable), never opens it.
-- **AUTH-SESSIONS-INV-05** An endpoint that does not declare a required capability rejects all requests (fail-closed default).
-- **AUTH-SESSIONS-INV-06 (planned, not implemented)** Key management (create/list/revoke) requires a `*` key presented as a raw header value; never a cookie; never delegable to a scoped key.
-- **AUTH-SESSIONS-INV-07 (planned, not implemented)** The system refuses to revoke or expire the last active `*` key (anti-lockout).
+- **AUTH-SESSIONS-INV-05 (household calibration)** Capability checks apply where routes register them (`requireCapability` / full-access / management helpers). Household kiosk traffic uses device `*` after the live-key boundary; access to a feature ⇒ full use of that feature (`ADR-058`). An app-wide audit that every `/api/*` route declares a capability or is explicitly exempt is later quality work, not a release blocker. Registration helpers still fail closed when those helpers are used without a capability.
+- **AUTH-SESSIONS-INV-06 (deferred, not this release)** If key management (create/list/revoke) is ever added, it MUST require a `*` key as a raw header value; never a cookie; never delegable to a scoped key.
+- **AUTH-SESSIONS-INV-07 (deferred, not this release)** If revoke/expire mutations are ever added, the system MUST refuse to revoke or expire the last active `*` key (anti-lockout).
 - **AUTH-SESSIONS-INV-08** **Single household trust tier (`ADR-058`).** There is **no second server-side privilege tier** by design. A provisioned device's `*` cookie is full household trust; kiosks and parent-admin-via-PIN both operate here. The **sole** server-side kiosk/operator boundary is **key-management** (the line above — the one self-escalating catastrophic act); `ADR-053` device-block is the lone pre-existing extra carve-out. All other operations (backups, plugins, telemetry-read, settings) are household-tier (device-`*` cookie + client-side PIN), reversible/recoverable. **Anti-pattern: no ad-hoc per-endpoint "admin scope" carve-outs** — a future op that seems to need one is a signal to re-examine the threat model, not to add a tier.
 - **AUTH-SESSIONS-INV-09** Every authenticated request validates the credential AND that the referenced key record is active (not revoked, not expired). Revocation/expiry take effect on the next request.
 - **AUTH-SESSIONS-INV-10** Raw key values: device keys are never exposed; future generated integration keys must be shown exactly once at creation; current management keys are supplied through deployment configuration. Raw PINs are never persisted or returned.
@@ -54,17 +54,17 @@ It does not own member identity (Members), route structure or the admin-unlock U
 
 **Provision a device.** In connection-setup (no valid cookie), a human submits a raw `*` key. The server mints a new `*` device key (`expiresAt = null`), binds the httpOnly API cookie to it, and never returns the raw device key. The same bootstrap key may provision multiple devices.
 
-**Bootstrap retirement (not implemented).** Removing the environment value stops new provisioning, but the persisted key remains usable for authorized API requests. There is no retirement endpoint or last-key guard.
+**Bootstrap retirement (not this release).** Removing the environment value stops new provisioning, but the persisted key remains usable for authorized API requests. There is no retirement endpoint or last-key guard.
 
-**Integration setup.** Startup reconciles the operator-provided `MP_MANAGEMENT_KEY`. A create/list/revoke management endpoint is not implemented; the future issuance contract requires showing generated raw keys only once.
+**Integration setup.** Startup reconciles `MP_MANAGEMENT_KEY`. No create/list/revoke API in this release.
 
-**Authorize a request.** The middleware resolves the presented credential (cookie or raw header key) to a key record, verifies it is active, and checks it carries the capability the endpoint declares (or `*`). Otherwise 401/403, or an immediate generic 429 for repeated credential failures under ADR-037; capability denials do not consume backoff.
+**Authorize a request.** The boundary resolves the credential: **cookie** on general `/api/*`, or **Bearer** only under `/api/plugins*`. It verifies the key record is active. Routes that register capability/full-access/management preHandlers apply those next; other household routes authorize any live device `*` admitted by the boundary. Missing/invalid credentials → 401/403 or failure-only 429 (ADR-037); capability denials do not consume backoff.
 
-**Revocation enforcement and rotation limits.** Request authorization rejects records with `revokedAt` or an elapsed expiry. This enforcement exists, but there is no supported API to mutate revocation or rotate keys. Changing environment values does not revoke old records; last-key anti-lockout is not implemented.
+**Revocation enforcement.** Authorization rejects `revokedAt` or elapsed expiry (`expires_at <= now` is inactive). No API mutates revocation or rotates keys. Env changes do not revoke old rows. Clearing browser cookies does not delete database keys.
 
-**Initialize / verify the PIN.** Each successful provisioning hashes `ADMIN_PIN` (fallback `0000`) with Argon2 and updates the database PIN. `verify-pin` is API-key protected and returns match/no-match without granting authority. There is no `set-pin` endpoint. The hash is included in backups.
+**Initialize / verify the PIN.** Each successful provisioning hashes `ADMIN_PIN` (fallback `0000`) with Argon2 and updates the database PIN. `verify-pin` is API-key protected and returns match/no-match without granting authority. There is no `set-pin` endpoint and none is planned. The hash is included in backups.
 
-**Admin unlock (client-side).** On successful `verify-pin`, the frontend sets ephemeral "admin unlocked" UI state with an inactivity relock timeout. Browser refresh clears it. No server counterpart.
+**Admin unlock (client-side).** On successful `verify-pin`, the frontend sets ephemeral "admin unlocked" UI state. It clears on leaving the admin route subtree, inactivity timeout, explicit Lock, or browser refresh. No server counterpart.
 
 **Reset a forgotten PIN.** Configure `ADMIN_PIN`, restart and provision a browser with the current bootstrap key. There is no dedicated PIN-reset route or in-kiosk recovery flow.
 
@@ -106,11 +106,9 @@ without inventing one when absent/malformed, and offers manual retry without an 
 Implemented interfaces:
 
 - Provision device (connection-setup): raw `*` key → device key + bound cookie.
-- Planned: issue integration key with one-time raw output.
-- Planned: list / revoke keys with raw-header authorization.
-- Authorize request: credential + endpoint capability → allow / deny.
+- Authorize request: live key via cookie (general API) or Bearer (`/api/plugins*` only); optional capability/management preHandlers where registered.
 - Verify PIN; provisioning initializes or replaces it from configuration.
-- Provisioning sets the API cookie; server-side revocation is planned.
+- Provisioning sets the API cookie; server-side revocation API is not in this release.
 - Frontend access-gate submission.
 - Liveness/readiness probe (only unauthenticated surface).
 
@@ -132,10 +130,10 @@ authority is decided at the boundary on each call, never cached off an event.
 ## Acceptance Criteria
 
 - **AUTH-SESSIONS-AC-01** No credential configured (any environment) → every non-health endpoint returns 401/403; the deployment is locked, never open.
-- **AUTH-SESSIONS-AC-02** A scoped key calling outside its scopes, or calling key-management, or presented via cookie to key-management → rejected.
-- **AUTH-SESSIONS-AC-03** An endpoint with no declared capability → rejects all requests.
-- **AUTH-SESSIONS-AC-04** Revoking a device key → its cookie fails on the next request.
-- **AUTH-SESSIONS-AC-05 (planned, not implemented)** Only one `*` key remaining → revocation refused.
+- **AUTH-SESSIONS-AC-02** A scoped key outside its granted capabilities is rejected where capability preHandlers run. Device `*` satisfies household feature routes. Management carve-outs reject `kind=device` where `requireManagementKey` is composed.
+- **AUTH-SESSIONS-AC-03** Capability registration helpers fail closed when used without a capability. Household routes without per-route capability still require a live API key (AC-01); they are not unauthenticated.
+- **AUTH-SESSIONS-AC-04** A device key marked revoked or expired in the database fails on the next request (enforcement exists; no operator revoke API in this release).
+- **AUTH-SESSIONS-AC-05 (deferred)** Only if revoke mutations ship: last remaining `*` key → revocation refused.
 - **AUTH-SESSIONS-AC-06** First connect with a raw `*` key → a `*` device key (no expiry) is minted and cookie-bound; no raw key in the response body.
 - **AUTH-SESSIONS-AC-07** `verify-pin` with the correct PIN → match, and no session row is created anywhere.
 - **AUTH-SESSIONS-AC-08** Backend authorization never depends on PIN state.

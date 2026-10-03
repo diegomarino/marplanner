@@ -8,7 +8,7 @@ Decision date: 2026-06-28
 
 ### Frontend access gate
 
-v2 keeps the frontend access gate as a **separate deployment-level token**, distinct from the API key model. It gates whether a browser is served the application pages at all. It is a defense-in-depth outer layer.
+The product keeps the frontend access gate as a **separate deployment-level token**, distinct from the API key model. It gates whether a browser is served the application pages at all. It is a defense-in-depth outer layer.
 
 - The access gate protects serving frontend routes only. It does **not** protect `/api/*`.
 - Without a valid access-gate cookie, the server returns a minimal access-token entry form instead of the app shell.
@@ -25,7 +25,7 @@ The API surface reachable with **no credential at all** is **only liveness/readi
 
 ## Rationale
 
-The legacy system had an inconsistent unauthenticated surface (some settings were readable before credentials in some paths). v2 closes this: the only thing reachable without any credential is health.
+The legacy system had an inconsistent unauthenticated surface (some settings were readable before credentials in some paths). The product closes this: the only thing reachable without any credential is health.
 
 Keeping the frontend access gate separate is a deliberate defense-in-depth choice. Because the gate does not cover `/api/*`, exposing any "public settings subset" would make those values genuinely public regardless of the gate — so the unauthenticated API surface is kept minimal instead. The connection-setup screen does not need server settings to render, so there is no functional reason to expose them.
 
@@ -37,7 +37,7 @@ Keeping the frontend access gate separate is a deliberate defense-in-depth choic
 
 ## Data / Setup Implications
 
-- Fresh v2 setup configures a frontend access-gate token alongside the bootstrap `*` API key. These are two distinct deployment secrets.
+- Fresh setup configures a frontend access-gate token alongside the bootstrap `*` API key. These are two distinct deployment secrets.
 - The access-gate cookie and the API cookie are separate; passing the access gate does not authenticate API requests.
 
 ## Acceptance Criteria
@@ -55,4 +55,4 @@ Keeping the frontend access gate separate is a deliberate defense-in-depth choic
 ## Traceability
 
 - Conflicts: `CR-007`, `CR-022`
-- Pre-v2: `ADR-007`, `ADR-013`, `ADR-021`
+- Related prior: `ADR-007`, `ADR-013`, `ADR-021`
