@@ -363,6 +363,32 @@ describe("Shell — unprovisioned gate", () => {
     expect(screen.queryByRole("group", { name: "Options" })).not.toBeInTheDocument();
   });
 
+  it("opens admin immediately when the local PIN bypass flag is enabled", async () => {
+    document.cookie = "mp_provisioned=1; path=/";
+    vi.stubEnv("MODE", "development");
+    vi.stubEnv("VITE_DEV_BYPASS_ADMIN_PIN", "1");
+    mockFetch.mockImplementation((url: string | URL) => {
+      if (String(url) === "/api/plugins") return Promise.resolve(pluginCatalogResponse());
+      const value = String(url).includes("/api/settings")
+        ? { locale: { timezone: "UTC", language: "en", weekStartDay: 1 } }
+        : [];
+      return Promise.resolve(Response.json(value));
+    });
+    render(<Shell />);
+
+    await screen.findByTestId("plugin-health-indicator");
+    fireEvent.click(await screen.findByRole("button", { name: "Options" }));
+    const admin = screen.getByTestId("admin-affordance");
+
+    fireEvent.pointerDown(admin, { pointerId: 1 });
+
+    expect(window.location.pathname).toBe("/admin");
+    expect(await screen.findByTestId("admin-nav-member-create")).toBeInTheDocument();
+    expect(screen.queryByTestId("admin-pin-keypad")).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Options" })).not.toBeInTheDocument();
+  });
+
+
   it("rejects a quick physical tap but accepts keyboard hold and synthetic AT activation", async () => {
     document.cookie = "mp_provisioned=1; path=/";
     mockFetch.mockImplementation((url: string | URL) => {

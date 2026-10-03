@@ -1,4 +1,5 @@
 import { appUrl } from "@/lib/base-path";
+import { isAdminPinBypassEnabled } from "@/lib/adminUnlock";
 import {
   useCallback,
   useEffect,
@@ -99,6 +100,12 @@ function HouseholdChromeContent({
 
   const startAdminHold = useCallback(() => {
     if (adminHoldTimerRef.current) return;
+    // Dev-only local bypass already unlocks the PIN gate; keep the affordance path
+    // frictionless so local work does not wait the deliberate kiosk hold.
+    if (isAdminPinBypassEnabled()) {
+      openAdmin();
+      return;
+    }
     setAdminHolding(true);
     adminHoldTimerRef.current = setTimeout(openAdmin, ADMIN_HOLD_MS);
   }, [openAdmin]);
