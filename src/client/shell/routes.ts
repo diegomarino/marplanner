@@ -1,3 +1,4 @@
+import { appUrl, appPathname } from "@/lib/base-path";
 import { CalendarView } from "@/calendar/CalendarView";
 import { ChoresBoard } from "@/chores/ChoresBoard";
 import { HomeSurface } from "@/home/HomeSurface";
@@ -60,7 +61,7 @@ export function resolveHouseholdRoute(path: string): HouseholdRoute {
 
 /** Keep the shell's existing popstate seam for same-document navigation and history. */
 export function navigateHousehold(path: KnownHouseholdPath): void {
-  if (window.location.pathname === path) return;
-  window.history.pushState(null, "", path);
+  if (appPathname() === path) return;
+  window.history.pushState(null, "", appUrl(path));
   window.dispatchEvent(new PopStateEvent("popstate"));
 }

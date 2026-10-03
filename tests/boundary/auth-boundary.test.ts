@@ -34,14 +34,18 @@ function seedKey(options: {
     );
 }
 
-async function buildProbe() {
+async function buildProbe(basePath = "") {
   const app = Fastify();
   let fullAccessDisclosures = 0;
-  await authBoundary(app);
-  app.get("/api/plugins/full-access-probe", { preHandler: requireFullAccess() }, async () => {
-    fullAccessDisclosures += 1;
-    return { secretCatalog: true };
-  });
+  await authBoundary(app, basePath);
+  app.get(
+    `${basePath}/api/plugins/full-access-probe`,
+    { preHandler: requireFullAccess() },
+    async () => {
+      fullAccessDisclosures += 1;
+      return { secretCatalog: true };
+    }
+  );
   return {
     app,
     fullAccessDisclosures: () => fullAccessDisclosures,
@@ -265,6 +269,38 @@ describe("full-access authentication boundary", () => {
       });
       expect(response.statusCode).toBe(401);
       expect(fullAccessDisclosures()).toBe(0);
+    } finally {
+      await app.close();
+    }
+  });
+  it("preserves mounted plugin bearer authorization and conflicting credential rejection", async () => {
+    seedKey({ raw: "device-full" });
+    seedKey({ raw: "integration-full", kind: "integration" });
+    const { app, fullAccessDisclosures } = await buildProbe("/family/planner");
+    try {
+      expect(
+        (await app.inject({ url: "/family/planner/api/plugins/full-access-probe" })).statusCode
+      ).toBe(401);
+      expect(
+        (
+          await app.inject({
+            url: "/family/planner/api/plugins/full-access-probe",
+            headers: { authorization: "Bearer integration-full" },
+          })
+        ).statusCode
+      ).toBe(200);
+      expect(
+        (
+          await app.inject({
+            url: "/family/planner/api/plugins/full-access-probe",
+            headers: {
+              authorization: "Bearer integration-full",
+              cookie: "mp_device_key=device-full",
+            },
+          })
+        ).statusCode
+      ).toBe(401);
+      expect(fullAccessDisclosures()).toBe(1);
     } finally {
       await app.close();
     }

@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/base-path";
 import {
   useCallback,
   useEffect,
@@ -86,7 +87,7 @@ function HouseholdChromeContent({
     keyboardHoldingRef.current = false;
     setAdminHolding(false);
     setOptionsOpen(false);
-    window.history.pushState({ marplannerAdminReturnPath: currentPath }, "", "/admin");
+    window.history.pushState({ marplannerAdminReturnPath: currentPath }, "", appUrl("/admin"));
     window.dispatchEvent(new PopStateEvent("popstate"));
   }, [currentPath]);
 
@@ -139,7 +140,7 @@ function HouseholdChromeContent({
               .map((route) => (
                 <Button key={route.id} variant="ghost" size="sm" asChild>
                   <a
-                    href={route.path}
+                    href={appUrl(route.path)}
                     aria-current={currentPath === route.path ? "page" : undefined}
                     className="aria-[current=page]:bg-muted aria-[current=page]:font-semibold"
                     onClick={(event) => {

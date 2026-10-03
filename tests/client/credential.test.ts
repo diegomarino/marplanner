@@ -1,3 +1,4 @@
+import { appPathname } from "@/lib/base-path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -324,5 +325,37 @@ describe("authFetch — credential-generation race guard (FR-013)", () => {
     expect(document.cookie).not.toMatch(/mp_provisioned=1/);
 
     window.removeEventListener(CREDENTIAL_LOST_EVENT, listener);
+  });
+});
+
+describe("runtime subpath credential transport", () => {
+  it("prefixes canonical API strings and clears the marker at its mounted cookie path", async () => {
+    const meta = document.createElement("meta");
+    meta.name = "mp-base-path";
+    meta.content = "/family/planner";
+    document.head.append(meta);
+    const previous = window.location.pathname;
+    window.history.replaceState(null, "", "/family/planner/admin");
+    document.cookie = "mp_provisioned=1; path=/family/planner/";
+    const transport = vi.fn().mockResolvedValue(new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", transport);
+    try {
+      const options = { method: "POST", credentials: "include" as const, body: "payload" };
+      await authFetch("/api/settings?mode=full", options);
+      expect(transport).toHaveBeenCalledWith("/family/planner/api/settings?mode=full", options);
+      const absolute = new Request("https://example.test/api/settings", { method: "GET" });
+      await authFetch(absolute);
+      expect(transport).toHaveBeenLastCalledWith(absolute);
+      window.history.replaceState(null, "", "/outside-the-mount");
+      expect(appPathname()).toBe("/outside-the-mount");
+      window.history.replaceState(null, "", "/family/planner/admin");
+      clearProvisionedMarker();
+      expect(document.cookie).not.toContain("mp_provisioned=1");
+    } finally {
+      clearProvisionedMarker();
+      meta.remove();
+      window.history.replaceState(null, "", previous);
+      vi.unstubAllGlobals();
+    }
   });
 });

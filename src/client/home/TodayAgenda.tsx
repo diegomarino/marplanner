@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/base-path";
 import { useEffect, useId, useState } from "react";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { Button } from "@/components/ui/button";
@@ -174,7 +175,7 @@ export function TodayAgenda(): React.JSX.Element {
         </div>
         <a
           className="shrink-0 text-sm font-semibold underline-offset-4 hover:underline"
-          href="/calendar"
+          href={appUrl("/calendar")}
         >
           {t("calendar.title")}
         </a>

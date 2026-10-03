@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/base-path";
 /** Shared client telemetry logger.
  * A page-lifetime singleton. Producers call `log`; entries land in a volatile in-memory
  * buffer that is flushed periodically (every `FLUSH_INTERVAL_MS`) or immediately once
@@ -32,7 +33,7 @@ async function defaultTransport(entries: ClientLogEntryInput[]): Promise<void> {
   // large error-storm batch that exceeds it is REJECTED outright, dropping all 50 entries
   // (at-most-once, no retry — INV-02). keepalive stays on the best-effort unload path below,
   // where the browser is tearing the page down and a non-keepalive fetch would be cancelled.
-  const res = await fetch(TELEMETRY_ENDPOINT, {
+  const res = await fetch(appUrl(TELEMETRY_ENDPOINT), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ entries }),
@@ -109,7 +110,7 @@ function flushForUnload(): void {
   try {
     if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
       const blob = new Blob([body], { type: "application/json" });
-      const delivered = navigator.sendBeacon(TELEMETRY_ENDPOINT, blob);
+      const delivered = navigator.sendBeacon(appUrl(TELEMETRY_ENDPOINT), blob);
       if (delivered) return;
     }
   } catch {
@@ -117,7 +118,7 @@ function flushForUnload(): void {
   }
 
   try {
-    void fetch(TELEMETRY_ENDPOINT, {
+    void fetch(appUrl(TELEMETRY_ENDPOINT), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       keepalive: true,

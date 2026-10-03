@@ -17,7 +17,7 @@ const BOOTSTRAP_ENV = "MP_BOOTSTRAP_KEY";
  * expiry MUST be minted and cookie-bound, and the response body MUST NOT
  * contain the raw key.
  */
-export async function provisionDevice(app: FastifyInstance): Promise<void> {
+export async function provisionDevice(app: FastifyInstance, basePath = ""): Promise<void> {
   const backoff = authenticationBackoff(app);
   app.post("/api/auth/provision", async (request: FastifyRequest, reply: FastifyReply) => {
     const rejectCredential = (message: string) => {
@@ -106,11 +106,11 @@ export async function provisionDevice(app: FastifyInstance): Promise<void> {
     // The raw key is NEVER echoed in the response body (FR-007 / SC-004).
     // Fastify without @fastify/cookie: set the header as an array so
     // inject normalizes it to an array (matching test expectations).
-    const cookieValue = serializeAuthCookie(DEVICE_COOKIE, deviceKey);
+    const cookieValue = serializeAuthCookie(DEVICE_COOKIE, deviceKey, basePath);
     // Companion NON-HttpOnly marker cookie so the client can detect provisioned
     // state from its own credential's presence WITHOUT probing an authenticated
     // endpoint (FR-031 / ADR-059). Carries no secret — just a presence flag.
-    const provisionedMarker = `mp_provisioned=1; Secure; SameSite=Lax; Path=/`;
+    const provisionedMarker = `mp_provisioned=1; Secure; SameSite=Lax; Path=${basePath}/`;
     reply.header("Set-Cookie", [cookieValue, provisionedMarker]);
 
     // Return the provisioned result — body does NOT contain the raw key.

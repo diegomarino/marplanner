@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/base-path";
 import { useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/credential";
 import { useHouseholdSettings } from "@/lib/householdSettings";
@@ -378,7 +379,9 @@ export function BackupsManagement() {
                     <div className="flex flex-wrap items-center gap-2">
                       <Button asChild variant="link" size="sm">
                         <a
-                          href={`/api/backups/${encodeURIComponent(backup.filename)}/download`}
+                          href={appUrl(
+                            `/api/backups/${encodeURIComponent(backup.filename)}/download`
+                          )}
                           download={backup.filename}
                           data-testid={`backups-download-${backup.filename}`}
                         >
@@ -387,7 +390,9 @@ export function BackupsManagement() {
                       </Button>
                       <Button asChild variant="link" size="sm">
                         <a
-                          href={`/api/backups/${encodeURIComponent(backup.filename)}/download-sql`}
+                          href={appUrl(
+                            `/api/backups/${encodeURIComponent(backup.filename)}/download-sql`
+                          )}
                           download={`${backup.filename}.sql`}
                           data-testid={`backups-download-sql-${backup.filename}`}
                         >

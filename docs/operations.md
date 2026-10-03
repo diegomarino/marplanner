@@ -62,8 +62,7 @@ Database file symlinks and hardlinks are rejected. Directory aliases are support
 Product SQLite opens reject recognized Linux NFS, SMB and CIFS filesystem types.
 Other Linux filesystem types are allowed; macOS and other platforms warn that
 classification is unavailable. This check does not certify arbitrary mounts as
-safe: use local storage suitable for SQLite WAL. Runtime `BASE_PATH` support
-remains unimplemented: serve at `/`. Before pending migrations, the server creates
+safe: use local storage suitable for SQLite WAL. Runtime `BASE_PATH` mounts the built application as described below. Before pending migrations, the server creates
 a recovery snapshot as described below; this does not establish full distribution acceptance.
 
 Loopback publication supports local browser access. Remote browser access requires
@@ -146,6 +145,34 @@ configuration and a management credential; ordinary device credentials cannot
 manage it. Spoken time requires browser speech support. Printing requires pairing
 from a supported browser with an explicit user gesture. These integrations do not
 become live merely because their configuration form is available.
+
+## Runtime subpath hosting
+
+The same built application/image can serve at `/` or a nested path such as
+`BASE_PATH=/family/planner`. Set this environment value at process/container startup;
+no rebuild is needed. Unset, empty and `/` use the root. A trailing slash is normalized.
+Use plain absolute path segments; dot segments, escapes, queries, fragments and
+repeated separators are rejected before startup. The application mounts its gate,
+API, SPA routes and client assets under this path. `/health` remains at the origin
+root for infrastructure probes.
+
+A reverse proxy must preserve the configured prefix when forwarding requests.
+Publish the app at `/family/planner/`; the bare mount redirects before access gating.
+The server injects the mount into the HTML shell before loading relative client
+assets. Native navigation/download links and telemetry use the same mount. Local
+Vite development remains at `/`: leave `BASE_PATH` unset when using `npm run dev`.
+
+Gate/device cookies and the provisioning marker use the mount's trailing-slash
+cookie path; root deployments retain `Path=/`. Marker deletion uses that same path.
+Cookie Path prevents ordinary sibling-path cookie delivery; it is not a security
+boundary between applications sharing an origin. Use separate origins for mutually
+untrusted applications. After changing an installation's mount, provision at the
+new location; old-path cookies may remain until browser cleanup. TLS and existing
+credential requirements still apply.
+
+Focused source checks do not establish built-browser or container acceptance for
+a release. Verify root and nested mounts against the same unchanged artifact before
+publishing runtime subpath support.
 
 ## Pre-migration recovery snapshots
 

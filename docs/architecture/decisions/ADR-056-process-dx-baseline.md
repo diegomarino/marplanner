@@ -138,9 +138,7 @@ operator-managed disk space/retention, and are recovered offline outside the Adm
 backup shelf. Failed attempts may leave partial files/directories; recovery requires
 a completed, independently verified snapshot. These are logical snapshots, not
 physical-byte copies. Explicit declared IDs survive; implicit rowids may change. See
-[operations](../../operations.md#pre-migration-recovery-snapshots). Runtime `BASE_PATH`
-injection, `SKIP_MIGRATION`, historical upgrade compatibility and remaining
-distribution safety obligations are still open. The
+[operations](../../operations.md#pre-migration-recovery-snapshots). Runtime `BASE_PATH` now uses portable relative build assets and server HTML base/meta injection, with prefixed API/gate routes and client URL/navigation helpers. Root `/health` is preserved. Built-browser/container release acceptance, `SKIP_MIGRATION`, historical upgrade compatibility and remaining distribution safety obligations are still open. The
 container check is an explicit command; this ADR does not prove that every release
 gate or publishing lane described above is implemented.
 

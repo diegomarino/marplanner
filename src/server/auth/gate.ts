@@ -1,3 +1,4 @@
+import { requestAppPath } from "../../shared/base-path";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { GATE_COOKIE, serializeAuthCookie } from "./cookies";
@@ -58,15 +59,18 @@ export function hasValidGateCookie(cookieHeader: string | undefined): boolean {
   return safeEqual(got, expected);
 }
 
-export function sendGateForm(reply: FastifyReply): FastifyReply {
-  return reply.code(200).header("content-type", "text/html; charset=utf-8").send(FORM_HTML);
+export function sendGateForm(reply: FastifyReply, basePath = ""): FastifyReply {
+  return reply
+    .code(200)
+    .header("content-type", "text/html; charset=utf-8")
+    .send(FORM_HTML.replace('action="/gate"', `action="${basePath}/gate"`));
 }
 
 export function isGateExempt(pathname: string): boolean {
   return pathname.startsWith("/api/") || pathname === "/health" || pathname === "/gate";
 }
 
-export async function accessGate(app: FastifyInstance): Promise<void> {
+export async function accessGate(app: FastifyInstance, basePath = ""): Promise<void> {
   app.addContentTypeParser(
     "application/x-www-form-urlencoded",
     { parseAs: "string" },
@@ -75,7 +79,7 @@ export async function accessGate(app: FastifyInstance): Promise<void> {
     }
   );
 
-  app.post("/gate", async (request, reply) => {
+  app.post(`${basePath}/gate`, async (request, reply) => {
     const token = configuredToken();
     const submitted = (request.body as Record<string, string> | null)?.token;
     if (
@@ -84,19 +88,20 @@ export async function accessGate(app: FastifyInstance): Promise<void> {
       submitted.length === 0 ||
       !safeEqual(submitted, token)
     ) {
-      return sendGateForm(reply);
+      return sendGateForm(reply, basePath);
     }
     return reply
-      .header("Set-Cookie", serializeAuthCookie(GATE_COOKIE, sha256Hex(token)))
+      .header("Set-Cookie", serializeAuthCookie(GATE_COOKIE, sha256Hex(token), basePath))
       .code(303)
-      .header("location", "/")
+      .header("location", `${basePath}/`)
       .send();
   });
 
   app.addHook("onRequest", async (request: FastifyRequest, reply: FastifyReply) => {
-    const pathname = new URL(request.url, "http://localhost").pathname;
+    if (request.url.split("?")[0] === "/health") return;
+    const pathname = requestAppPath(request.url, basePath) ?? "";
     if (isGateExempt(pathname)) return;
     if (hasValidGateCookie(request.headers.cookie)) return;
-    return sendGateForm(reply);
+    return sendGateForm(reply, basePath);
   });
 }

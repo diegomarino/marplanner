@@ -1,3 +1,4 @@
+import { appUrl, appPathname } from "@/lib/base-path";
 import type { ComponentType } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -149,8 +150,8 @@ export const adminRoutes: readonly AdminRoute[] = [
 ];
 
 function navigateAdmin(path: string): void {
-  if (window.location.pathname === path) return;
-  window.history.pushState(null, "", path);
+  if (appPathname() === path) return;
+  window.history.pushState(null, "", appUrl(path));
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
@@ -167,7 +168,7 @@ export function AdminRoutes({ pathname, onLock }: { pathname: string; onLock: ()
         </div>
         <Button asChild variant="outline">
           <a
-            href="/admin"
+            href={appUrl("/admin")}
             onClick={(event) => {
               event.preventDefault();
               navigateAdmin("/admin");

@@ -131,6 +131,7 @@ describe("household shell routes", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) => {
+        url = url.replace(/^\/family\/planner(?=\/)/, "");
         if (url === "/api/settings") {
           return Response.json({
             locale: { timezone: "Europe/Madrid", language, weekStartDay: 1 },
@@ -176,6 +177,35 @@ describe("household shell routes", () => {
       ]);
     }
   );
+
+  it("keeps nested runtime mount links and navigation on the requested family route", async () => {
+    const meta = document.createElement("meta");
+    meta.name = "mp-base-path";
+    meta.content = "/family/planner";
+    document.head.append(meta);
+    window.history.replaceState({}, "", "/family/planner/calendar");
+    try {
+      render(<Shell />);
+      await waitForPluginCatalog();
+      expect(await screen.findByRole("heading", { name: "Calendar" })).toBeInTheDocument();
+      const nav = screen.getByRole("navigation", { name: "Household navigation" });
+      expect(
+        within(nav)
+          .getAllByRole("link")
+          .map((link) => link.getAttribute("href"))
+      ).toEqual([
+        "/family/planner/",
+        "/family/planner/calendar",
+        "/family/planner/chores",
+        "/family/planner/meals",
+      ]);
+      fireEvent.click(within(nav).getByRole("link", { name: "Home" }));
+      expect(window.location.pathname).toBe("/family/planner/");
+      expect(await screen.findByTestId("home-surface")).toBeInTheDocument();
+    } finally {
+      meta.remove();
+    }
+  });
 
   it("navigates from Home to the real Calendar surface without reloading the chrome", async () => {
     render(<Shell />);
