@@ -33,6 +33,11 @@ export default defineConfig(({ command }) => {
     // client's relative /api calls resolve. The launcher discovers the actual API port.
     server: {
       strictPort: true,
+      // Local DATA_DIR (SQLite, chrome CDP profile) lives under the Vite root.
+      // Watching it causes spurious full reloads when Chrome writes extensions/TTS cache.
+      watch: {
+        ignored: ["**/.data/**", "**/chrome-cdp/**", "**/*.db", "**/*.db-*"],
+      },
       proxy: {
         "/api": `http://${process.env.HOST ?? "127.0.0.1"}:${apiPort}`,
       },

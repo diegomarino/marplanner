@@ -13,6 +13,8 @@ tools/dev/.noto-emoji-cache/
 
 # Per-worktree development storage
 .data/
+.data-fresh/
+
 
 # SQLite — local data store (PV2-055), never committed
 *.db

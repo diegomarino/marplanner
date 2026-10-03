@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { SeedOwnershipError } from "../../src/server/db/seeds/ownership";
+import { SeedRunnerError } from "../../src/server/db/seeds/runner";
 import type { SeedRunReport, SeedRunRequest } from "../../src/server/db/seeds/types";
 
 type Deps = {
@@ -88,15 +90,44 @@ describe("seed CLI adapter", () => {
     expect(h.errors).toHaveLength(5);
     expect(h.errors.join(" ")).not.toContain("secret-value");
   });
-  it("contains runner failures and unknown thrown values", async () => {
+  it("surfaces ownership refusals, runner errors, locks; contains unknown throws", async () => {
     const run = await load();
     const h = harness();
     h.dependencies.runSeedProfile = async () => {
-      throw new Error("token=secret-value");
+      throw new SeedOwnershipError(
+        "Seed target has an unrelated row in admin_config during fresh baseline"
+      );
+    };
+    expect(await run(["--mode", "public"], h.dependencies)).toBe(1);
+    expect(h.errors).toEqual([
+      "Seed target has an unrelated row in admin_config during fresh baseline\n",
+    ]);
+
+    h.errors.length = 0;
+    h.dependencies.runSeedProfile = async () => {
+      throw new SeedRunnerError("Seed module failed: public:settings");
+    };
+    expect(await run(["--mode", "public"], h.dependencies)).toBe(1);
+    expect(h.errors).toEqual(["Seed module failed: public:settings\n"]);
+
+    h.errors.length = 0;
+    h.dependencies.runSeedProfile = async () => {
+      throw new Error(
+        "Database is already owned by another application instance: /tmp/marplanner.db"
+      );
+    };
+    expect(await run(["--mode", "public"], h.dependencies)).toBe(1);
+    expect(h.errors).toEqual([
+      "Database is already owned by another application instance: /tmp/marplanner.db\n",
+    ]);
+
+    h.errors.length = 0;
+    h.dependencies.runSeedProfile = async () => {
+      throw new Error("secret stack");
     };
     expect(await run(["--mode", "public"], h.dependencies)).toBe(1);
     h.dependencies.runSeedProfile = async () => {
-      throw "token=secret-value";
+      throw "x";
     };
     expect(await run(["--mode", "public"], h.dependencies)).toBe(1);
     expect(h.errors).toEqual(["Seed runner failed\n", "Seed runner failed\n"]);
