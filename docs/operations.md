@@ -116,7 +116,7 @@ The API's discovered port drives the frontend proxy; development data defaults
 to `.data/` in each worktree. Browser cookies are scoped to the hostname, so use
 separate browser profiles or contexts for simultaneous localhost worktrees to
 avoid replacing another worktree's cookies. Optional DEV helpers
-`npm run dev:chrome`, `npm run dev:session-desktop`, `npm run dev:session-dense`
+`npm run dev:chrome`, `npm run dev:session`
 and `npm run dev:session-reset` target a worktree-local Chromium profile via
 `CHROME_CDP_PORT` / `CHROME_USER_DATA_DIR` (see `.env.example`); they are not part
 of production runtime. `npm run dev:server` remains a standalone API

@@ -1,29 +1,30 @@
 #!/usr/bin/env node
 /**
- * DEV-only: drive the CDP Chrome profile through gate + provision and set density.
+ * DEV-only: drive the CDP Chrome profile through gate + provision.
  * Does not put credentials in the URL. Requires npm run dev.
  * Launches the worktree Chrome CDP profile when it is not already running.
+ * Density control is deferred (TODO(density)); forces comfortable localStorage.
  */
 import { chromium } from "playwright";
 import {
+  assertFrontendReachable,
   cdpEndpoint,
   COMFORTABLE_DENSITY,
   DENSITY_STORAGE_KEY,
   ensureDevChrome,
   loadProjectEnv,
-  resolveDensityFromArgv,
   resolveFrontendOrigin,
 } from "./chrome-dev-shared.mjs";
 
 
 function usage() {
-  return `Usage: node tools/dev/browser-session.mjs --density=comfortable|kiosk [--origin <url>]
+  return `Usage: node tools/dev/browser-session.mjs [--origin <url>]
 
-npm run dev:session-desktop  → comfortable
-npm run dev:session-dense    → kiosk
+npm run dev:session
 
 Uses MP_ACCESS_TOKEN and MP_BOOTSTRAP_KEY from the environment / .env.local.
 Connects to CHROME_CDP_PORT (default 9222), launching Chrome when needed.
+Locks density to comfortable while DensityControl is deferred.
 Never enabled in production builds.
 `;
 }
@@ -78,8 +79,9 @@ async function main() {
     return;
   }
   loadProjectEnv();
-  const density = resolveDensityFromArgv();
+  const density = COMFORTABLE_DENSITY;
   const origin = resolveFrontendOrigin();
+  await assertFrontendReachable(origin);
   const accessToken = process.env.MP_ACCESS_TOKEN?.trim();
   const bootstrapKey = process.env.MP_BOOTSTRAP_KEY?.trim();
   if (!accessToken?.startsWith("mpg-")) {

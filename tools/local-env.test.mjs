@@ -31,15 +31,10 @@ test("local server and seed scripts load the optional local environment", () => 
 
 test("chrome CDP session helper scripts are wired for local development", () => {
   assert.equal(packageJson.scripts["dev:chrome"], "node tools/dev/chrome-cdp.mjs");
-  assert.equal(
-    packageJson.scripts["dev:session-desktop"],
-    "node tools/dev/browser-session.mjs --density=comfortable"
-  );
-  assert.equal(
-    packageJson.scripts["dev:session-dense"],
-    "node tools/dev/browser-session.mjs --density=kiosk"
-  );
+  assert.equal(packageJson.scripts["dev:session"], "node tools/dev/browser-session.mjs");
   assert.equal(packageJson.scripts["dev:session-reset"], "node tools/dev/browser-reset.mjs");
+  assert.equal(packageJson.scripts["dev:session-desktop"], undefined);
+  assert.equal(packageJson.scripts["dev:session-dense"], undefined);
 });
 
 
