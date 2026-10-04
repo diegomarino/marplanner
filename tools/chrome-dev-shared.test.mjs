@@ -11,6 +11,7 @@ import {
   parseDensity,
   parsePort,
   readLocalReady,
+  resolveDensityFromArgv,
   writeLocalReady,
 } from "./dev/chrome-dev-shared.mjs";
 
@@ -28,6 +29,12 @@ test("parseDensity accepts product and script aliases", () => {
   assert.equal(parseDensity("kiosk"), "kiosk");
   assert.equal(parseDensity("dense"), "kiosk");
   assert.throws(() => parseDensity("touch"), /density must be/);
+});
+
+test("resolveDensityFromArgv defaults to comfortable when density is deferred", () => {
+  assert.equal(resolveDensityFromArgv([]), "comfortable");
+  assert.equal(resolveDensityFromArgv(["--origin", "http://127.0.0.1:1"]), "comfortable");
+  assert.equal(resolveDensityFromArgv(["--density=kiosk"]), "kiosk");
 });
 
 test("local-ready round-trips under an isolated data directory", () => {
@@ -65,9 +72,9 @@ test("local-ready banner lists API frontend CDP and session commands", () => {
   assert.deepEqual(withCdp[0], "API:      http://127.0.0.1:1");
   assert.deepEqual(withCdp[1], "Frontend: http://127.0.0.1:2");
   assert.match(withCdp[2], /CDP:\s+9333/);
-  assert.match(withCdp[3], /dev:session-desktop/);
-  assert.match(withCdp[3], /dev:session-dense/);
+  assert.match(withCdp[3], /dev:session(?!-)/);
   assert.match(withCdp[3], /dev:session-reset/);
+  assert.doesNotMatch(withCdp[3], /dev:session-desktop|dev:session-dense/);
 
   const without = formatLocalReadyBanner({
     api: "http://127.0.0.1:1",

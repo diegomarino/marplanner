@@ -297,7 +297,7 @@ export function formatLocalReadyBanner(ready) {
   if (ready.cdpPort) {
     lines.push(`CDP:      ${ready.cdpPort}  (auto-launched by session helpers if needed)`);
     lines.push(
-      "Session:  npm run dev:session-desktop | npm run dev:session-dense | npm run dev:session-reset"
+      "Session:  npm run dev:session | npm run dev:session-reset"
     );
   } else {
     lines.push("CDP:      unset (set CHROME_CDP_PORT in .env.local for dev browser tooling)");
@@ -329,6 +329,23 @@ export function resolveFrontendOrigin(argv = process.argv.slice(2), dataDir = re
 }
 
 /**
+ * Fail fast when local-ready.json / FRONTEND_URL points at a dead listener.
+ * Common after an orphaned API left behind when the Vite parent exited uncleanly.
+ * @param {string} origin
+ * @param {number} [timeoutMs]
+ */
+export async function assertFrontendReachable(origin, timeoutMs = 2000) {
+  try {
+    await fetch(origin, { method: "GET", redirect: "manual", signal: AbortSignal.timeout(timeoutMs) });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Frontend not reachable at ${origin} (${detail}). Run npm run dev first; if storage is owned, stop the orphaned API (or use npm run dev:fresh) before retrying session helpers.`
+    );
+  }
+}
+
+/**
  * @param {string} value
  * @returns {"comfortable" | "kiosk"}
  */
@@ -351,7 +368,8 @@ export function resolveDensityFromArgv(argv = process.argv.slice(2)) {
       return parseDensity(value);
     }
   }
-  throw new Error("Missing --density=comfortable|kiosk");
+  // Product density control is deferred (TODO(density)); session helpers default comfortable.
+  return COMFORTABLE_DENSITY;
 }
 
 export function cdpEndpoint(port = resolveCdpPort()) {

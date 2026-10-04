@@ -6,6 +6,7 @@
  */
 import { chromium } from "playwright";
 import {
+  assertFrontendReachable,
   cdpEndpoint,
   ensureDevChrome,
   loadProjectEnv,
@@ -29,6 +30,7 @@ async function main() {
   }
   loadProjectEnv();
   const origin = resolveFrontendOrigin();
+  await assertFrontendReachable(origin);
   const chrome = await ensureDevChrome({ url: origin });
 
   // System Chrome CDP rejects Playwright defaults (Browser.setDownloadBehavior).
