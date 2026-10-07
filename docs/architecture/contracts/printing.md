@@ -62,10 +62,14 @@ additive.
   Printing wraps it as ESC/POS (ADR-066).
 - **Acknowledge:** on successful transmission the server stamps `printedAt` and
   emits `printing.completed`. Permanent failures carry `errorCode`; recoverable
-  failures record their reason and increment `attempts`.
-- **Retry / dead-letter:** recoverable failures release the lease and increment
-  `attempts`; the current-date job is immediately claimable again, without a
-  numeric attempt limit. Jobs from earlier household dates become dead-lettered;
+  failures accepted by `/fail` record their reason and increment `attempts`.
+- **Retry / dead-letter:** a recoverable report accepted by `/fail` releases the
+  lease and increments `attempts`; the current-date job is immediately claimable
+  again, without a numeric attempt limit. A network failure while fetching the
+  payload does not call `/fail`; if a failure report cannot reach the server, it
+  cannot release the lease either. In these cases the job remains claimed until
+  its 120-second lease expires, without updating the reason or attempt count.
+  Jobs from earlier household dates become dead-lettered;
   permanent failures (`render_failure`, `unsupported_transport`,
   `secure_context`) dead-letter immediately; `attempts` increments on recoverable
   failure only. Queued jobs are **delivery work, not history** — pruned by
