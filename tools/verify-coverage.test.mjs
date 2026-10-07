@@ -212,3 +212,39 @@ test("browser preflight rejects inherited fixture and server overrides", () => {
   ])
     assert.throws(() => preflightBrowserEnvironment(env));
 });
+
+test("transferred V8 evidence maps producer paths and hashes consumer source bytes", async () => {
+  const fs = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { createHash } = await import("node:crypto");
+  const root = fs.mkdtempSync(join(tmpdir(), "coverage-transfer-"));
+  try {
+    fs.writeFileSync(join(root, "a.ts"), "consumer source");
+    const raw = {
+      "/producer/a.ts": {
+        statementMap: { 0: { start: { line: 1 } } },
+        s: { 0: 1 },
+        f: { 0: 1 },
+        b: { 0: [1] },
+      },
+    };
+    const result = fromV8Coverage(raw, { files: { "a.ts": {} } }, root, "/producer");
+    assert.equal(
+      result["a.ts"].sha256,
+      createHash("sha256").update("consumer source").digest("hex")
+    );
+    assert.throws(
+      () =>
+        fromV8Coverage(
+          { ...raw, "/producer/extra.ts": raw["/producer/a.ts"] },
+          { files: { "a.ts": {} } },
+          root,
+          "/producer"
+        ),
+      /inventory/
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});

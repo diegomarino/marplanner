@@ -71,7 +71,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     fs.mkdirSync(".quality");
     fs.writeFileSync(
       ".quality/candidate.json",
-      JSON.stringify({ candidate, startedAt: Date.now() })
+      JSON.stringify({ candidate, startedAt: Date.now(), sourceRoot: process.cwd() })
     );
   }
   console.log(candidate);

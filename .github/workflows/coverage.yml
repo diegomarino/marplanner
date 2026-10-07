@@ -1,14 +1,27 @@
 name: Product quality and coverage
-on:
-  pull_request:
+"on":
+  pull_request: null
   push:
-    branches: [main]
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      force_hosted:
+        description: Use GitHub-hosted macOS for native product checks
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
+  select:
+    uses: ./.github/workflows/mac-mini-ci.yml
+    with:
+      force_hosted: ${{ inputs.force_hosted || false }}
+    secrets:
+      RUNNER_READ_TOKEN: ${{ secrets.RUNNER_READ_TOKEN }}
   standard:
     name: standard
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.select.outputs.runner) }}
     timeout-minutes: 45
     env:
       CI: "true"
@@ -16,10 +29,30 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          path: ci-${{ github.run_id }}-${{ github.run_attempt }}-standard
+          persist-credentials: false
+      - name: Record execution machine
+        env:
+          MACHINE: ${{ runner.name }}
+          MACHINE_OS: ${{ runner.os }}
+        run: |-
+          printf 'Runner: %s; OS: %s\n' "$MACHINE" "$MACHINE_OS"
+          uname -m
       - uses: actions/setup-node@v4
         with:
           node-version: 24.21.0
-          cache: npm
+      - name: Prepare job-owned tools and caches
+        run: |-
+          tool_root="$RUNNER_TEMP/marplanner-standard-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          mkdir -p "$tool_root"
+          touch "$tool_root/npmrc"
+          {
+            echo "NPM_CONFIG_USERCONFIG=$tool_root/npmrc"
+            echo "NPM_CONFIG_PREFIX=$tool_root/npm-global"
+            echo "npm_config_cache=$tool_root/npm-cache"
+            echo "PLAYWRIGHT_BROWSERS_PATH=$tool_root/playwright"
+          } >> "$GITHUB_ENV"
+          echo "$tool_root/npm-global/bin" >> "$GITHUB_PATH"
       - run: npm install --global npm@11.19.0
       - run: test "$(node --version)" = v24.21.0 && test "$(npm --version)" = 11.19.0
       - run: npm ci
@@ -41,14 +74,20 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: standard-evidence-${{ github.run_id }}
+          name: standard-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/standard-evidence.tar.gz
           overwrite: true
           if-no-files-found: warn
-  full:
-    name: full
-    needs: standard
-    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ci-${{ github.run_id }}-${{ github.run_attempt }}-standard
+    needs: select
+  native:
+    name: native
+    needs:
+      - select
+      - standard
+    runs-on: ${{ fromJSON(needs.select.outputs.runner) }}
     timeout-minutes: 60
     env:
       CI: "true"
@@ -56,10 +95,30 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          path: ci-${{ github.run_id }}-${{ github.run_attempt }}-native
+          persist-credentials: false
+      - name: Record execution machine
+        env:
+          MACHINE: ${{ runner.name }}
+          MACHINE_OS: ${{ runner.os }}
+        run: |-
+          printf 'Runner: %s; OS: %s\n' "$MACHINE" "$MACHINE_OS"
+          uname -m
       - uses: actions/setup-node@v4
         with:
           node-version: 24.21.0
-          cache: npm
+      - name: Prepare job-owned tools and caches
+        run: |-
+          tool_root="$RUNNER_TEMP/marplanner-native-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          mkdir -p "$tool_root"
+          touch "$tool_root/npmrc"
+          {
+            echo "NPM_CONFIG_USERCONFIG=$tool_root/npmrc"
+            echo "NPM_CONFIG_PREFIX=$tool_root/npm-global"
+            echo "npm_config_cache=$tool_root/npm-cache"
+            echo "PLAYWRIGHT_BROWSERS_PATH=$tool_root/playwright"
+          } >> "$GITHUB_ENV"
+          echo "$tool_root/npm-global/bin" >> "$GITHUB_PATH"
       - run: npm install --global npm@11.19.0
       - run: test "$(node --version)" = v24.21.0 && test "$(npm --version)" = 11.19.0
       - run: npm ci
@@ -70,25 +129,110 @@ jobs:
       - name: Download standard evidence from this workflow run
         uses: actions/download-artifact@v4
         with:
-          name: standard-evidence-${{ github.run_id }}
+          name: standard-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/standard-evidence
       - name: Restore standard evidence with original timestamps
         run: tar -xzf "$RUNNER_TEMP/standard-evidence/standard-evidence.tar.gz"
       - run: npm run check:aggregate-only
-      - name: Build production container (runner architecture only)
-        run: docker build -f infra/docker/Dockerfile --label org.marplanner.candidate="$MP_CANDIDATE_ID" --label org.opencontainers.image.revision="$GITHUB_SHA" -t marplanner:review .
-      - name: Accept built container lifecycle and browser flow
-        run: npm run check:container -- --image marplanner:review
       - name: Retain raw discovery, results, V8 coverage and browser report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: full-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          name: native-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           include-hidden-files: true
-          path: |
-            .quality/
-            coverage/
-            playwright-report/
-            test-results/
+          path: |-
+            ci-${{ github.run_id }}-${{ github.run_attempt }}-native/.quality/
+            ci-${{ github.run_id }}-${{ github.run_attempt }}-native/coverage/
+            ci-${{ github.run_id }}-${{ github.run_attempt }}-native/playwright-report/
+            ci-${{ github.run_id }}-${{ github.run_attempt }}-native/test-results/
           overwrite: true
           if-no-files-found: error
+    defaults:
+      run:
+        working-directory: ci-${{ github.run_id }}-${{ github.run_attempt }}-native
+  container:
+    name: container
+    needs: standard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          path: ci-${{ github.run_id }}-${{ github.run_attempt }}-container
+          persist-credentials: false
+      - name: Record execution machine
+        env:
+          MACHINE: ${{ runner.name }}
+          MACHINE_OS: ${{ runner.os }}
+        run: |-
+          printf 'Runner: %s; OS: %s\n' "$MACHINE" "$MACHINE_OS"
+          uname -m
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - name: Prepare job-owned tools and caches
+        run: |-
+          tool_root="$RUNNER_TEMP/marplanner-container-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          mkdir -p "$tool_root"
+          touch "$tool_root/npmrc"
+          {
+            echo "NPM_CONFIG_USERCONFIG=$tool_root/npmrc"
+            echo "NPM_CONFIG_PREFIX=$tool_root/npm-global"
+            echo "npm_config_cache=$tool_root/npm-cache"
+            echo "PLAYWRIGHT_BROWSERS_PATH=$tool_root/playwright"
+          } >> "$GITHUB_ENV"
+          echo "$tool_root/npm-global/bin" >> "$GITHUB_PATH"
+      - run: npm install --global npm@11.19.0
+      - run: test "$(node --version)" = v24.21.0 && test "$(npm --version)" = 11.19.0
+      - run: npm ci
+      - run: |
+          MP_CANDIDATE_ID=$(node tools/candidate-identity.mjs)
+          echo "MP_CANDIDATE_ID=$MP_CANDIDATE_ID" >> "$GITHUB_ENV"
+      - run: npx playwright install --with-deps --only-shell chromium
+      - name: Build production container (runner architecture only)
+        run: docker build -f infra/docker/Dockerfile --label org.marplanner.candidate="$MP_CANDIDATE_ID" --label org.opencontainers.image.revision="$GITHUB_SHA" -t marplanner:review .
+      - name: Accept built container lifecycle and browser flow
+        run: npm run check:container -- --image marplanner:review
+      - name: Retain container acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: ci-${{ github.run_id }}-${{ github.run_attempt }}-container/.quality/container/
+          if-no-files-found: error
+    defaults:
+      run:
+        working-directory: ci-${{ github.run_id }}-${{ github.run_attempt }}-container
+    env:
+      CI: "true"
+  full:
+    name: full
+    needs:
+      - select
+      - standard
+      - native
+      - container
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every product constituent to succeed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |-
+          python3 - <<'PY'
+          import json
+          import os
+
+          results = json.loads(os.environ["RESULTS"])
+          required = {"select", "standard", "native", "container"}
+          assert set(results) == required, "Required product jobs missing"
+          for name, job in results.items():
+              print(f"{name}: {job['result']}")
+              assert job["result"] == "success", f"{name} did not succeed"
+          PY
+defaults:
+  run:
+    shell: bash
