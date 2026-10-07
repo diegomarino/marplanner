@@ -1,6 +1,7 @@
 import { normalizeBasePath, requestAppPath } from "../shared/base-path";
 import fs from "node:fs";
 import path from "node:path";
+import type { Socket } from "node:net";
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
 import fastifyStatic from "@fastify/static";
 import { authBoundary } from "./auth/boundary";
@@ -63,6 +64,40 @@ export async function buildApp(opts?: BuildAppOptions): Promise<FastifyInstance>
   // exists until every durable lifecycle operation has reached its reconciled safe outcome.
   await pluginLifecycle.reconcileAll();
   const server = Fastify();
+  const sockets = new Set<Socket>();
+  let closingHttp = false;
+  let idleCollector: ReturnType<typeof setInterval> | undefined;
+  function forgetSocket(this: Socket): void {
+    sockets.delete(this);
+  }
+  function trackSocket(socket: Socket): void {
+    sockets.add(socket);
+    socket.once("close", forgetSocket);
+    // No accepted HTTP operation exists on a connection that has read no bytes.
+    // This also covers a connection accepted while preClose is running.
+    if (closingHttp && socket.bytesRead === 0) socket.destroy();
+  }
+  function stopIdleCollector(): void {
+    clearInterval(idleCollector);
+    server.server.off("connection", trackSocket);
+    server.server.off("close", stopIdleCollector);
+    for (const socket of sockets) socket.off("close", forgetSocket);
+    sockets.clear();
+  }
+  server.server.on("connection", trackSocket);
+  server.addHook("preClose", async () => {
+    closingHttp = true;
+    for (const socket of sockets) {
+      if (socket.bytesRead === 0) socket.destroy();
+    }
+    // Node's initial close sweep misses responses becoming idle later. Its own
+    // idle classifier preserves active requests and incomplete HTTP headers.
+    // ponytail: poll only during shutdown; replace with a native fix when available.
+    idleCollector = setInterval(() => server.server.closeIdleConnections(), 25);
+    idleCollector.unref();
+    server.server.once("close", stopIdleCollector);
+  });
+  server.addHook("onClose", async () => stopIdleCollector());
   server.addHook("onRequest", async (request, reply) => {
     if (request.url.split("?")[0] === "/health") return;
     if (requestAppPath(request.url, basePath) === null)
