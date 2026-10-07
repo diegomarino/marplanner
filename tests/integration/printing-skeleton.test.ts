@@ -129,7 +129,7 @@ async function startEntrypoint(port: number, dataDir: string): Promise<ChildProc
   );
 }
 
-describe("printing skeleton — T014 (Constitution XIII runnable skeleton)", () => {
+describe("printing skeleton — (Constitution XIII runnable skeleton)", () => {
   let activeChild: ChildProcess | null = null;
   let activeDataDir: string | null = null;
 

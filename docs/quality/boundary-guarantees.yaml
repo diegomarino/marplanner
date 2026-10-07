@@ -465,7 +465,7 @@ guarantees:
     disposition: active
     owner: members
     spec: members
-    note: "fresh v2 data store; no production-row migration"
+    note: "fresh deployment data store; no production-row migration"
   - id: MEMBERS-AC-01
     disposition: active
     owner: members
@@ -977,7 +977,7 @@ guarantees:
     disposition: active
     owner: app-settings-registry
     spec: app-settings-registry
-    note: "PUT printerTransport type=wifi returns unsupported-transport error in v2"
+    note: "PUT printerTransport type=wifi returns unsupported-transport error in this system"
 
   # ── Client Logging / Telemetry domain — design (Tier-0 platform; active, locally owned) ──
   # 22 in-G CLIENT-LOGGING-TELEMETRY guarantees (14 INV + 8 AC) realized by docs/features/client-logging-telemetry.md.
@@ -1449,7 +1449,7 @@ guarantees:
     disposition: active
     owner: kiosk-shell-navigation
     spec: kiosk-shell-navigation
-    note: "kiosk-shell AC-01 (see kiosk-shell-navigation feature contract (deferred) FR). Slice-001 realizes the gate-then-provisioning boot flow minimally per ADR-059 (FR-029/FR-030)."
+    note: "kiosk-shell AC-01 (see kiosk-shell-navigation feature contract (deferred) FR). work item 1 realizes the gate-then-provisioning boot flow minimally per ADR-059 (FR-029/FR-030)."
   - id: KIOSK-SHELL-NAVIGATION-AC-02
     disposition: active
     owner: kiosk-shell-navigation

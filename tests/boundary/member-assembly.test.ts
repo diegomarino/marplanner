@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { describe, it, expect } from "vitest";
 import { hashKey } from "../../src/server/auth/credentials";
 import { getDb } from "../../src/server/db/client";
@@ -15,10 +16,10 @@ import { useIsolatedDb } from "../helpers/db";
  * 3. Routes respond to OPTIONS preflight (CORS).
  * No behaviour is tested — only registration + auth boundary.
  */
-describe("member-assembly (T003 — wiring verification)", () => {
+describe("member-assembly (wiring verification)", () => {
   useIsolatedDb();
 
-  it("PATCH /api/members/:id is registered (T003)", async () => {
+  it("PATCH /api/members/:id is registered", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     const deviceKey = `mpk-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -30,7 +31,7 @@ describe("member-assembly (T003 — wiring verification)", () => {
       "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
     ).run(`${Date.now()}-device`, deviceHash, now);
 
-    const memberId = `${Date.now()}-member`;
+    const memberId = randomUUID();
     db.prepare(
       "INSERT INTO members (id, display_name, role, lifecycle, created_at, updated_at) VALUES (?, ?, ?, 'active', ?, ?)"
     ).run(memberId, "Test Member", "parent", now, now);
@@ -54,7 +55,7 @@ describe("member-assembly (T003 — wiring verification)", () => {
     }
   });
 
-  it("POST /api/members/:id/archive is registered (T003)", async () => {
+  it("POST /api/members/:id/archive is registered", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     const deviceKey = `mpk-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -66,7 +67,7 @@ describe("member-assembly (T003 — wiring verification)", () => {
       "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
     ).run(`${Date.now()}-device`, deviceHash, now);
 
-    const memberId = `${Date.now()}-member`;
+    const memberId = randomUUID();
     db.prepare(
       "INSERT INTO members (id, display_name, role, lifecycle, created_at, updated_at) VALUES (?, ?, ?, 'active', ?, ?)"
     ).run(memberId, "Test Member", "parent", now, now);
@@ -95,7 +96,7 @@ describe("member-assembly (T003 — wiring verification)", () => {
     }
   });
 
-  it("POST /api/members/:id/restore is registered (T003)", async () => {
+  it("POST /api/members/:id/restore is registered", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     const deviceKey = `mpk-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -107,7 +108,7 @@ describe("member-assembly (T003 — wiring verification)", () => {
       "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
     ).run(`${Date.now()}-device`, deviceHash, now);
 
-    const memberId = `${Date.now()}-member`;
+    const memberId = randomUUID();
     db.prepare(
       "INSERT INTO members (id, display_name, role, lifecycle, created_at, updated_at) VALUES (?, ?, ?, 'archived', ?, ?)"
     ).run(memberId, "Test Member", "parent", now, now);

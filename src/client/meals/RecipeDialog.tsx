@@ -1,3 +1,4 @@
+import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -79,19 +80,19 @@ export function RecipeDialog({ open, mode, recipe, onClose, onSave }: RecipeDial
             <Input value={name} onChange={(event) => setName(event.target.value)} />
           </Field>
           <Field label={t("meals.recipes.ingredientsLabel")}>
-            <textarea
+            <Textarea
               aria-label={t("meals.recipes.ingredientsInputLabel")}
               value={ingredients}
               onChange={(event) => setIngredients(event.target.value)}
-              className="border-input min-h-24 rounded-md border bg-transparent p-3"
+              className="min-h-24"
             />
           </Field>
           <Field label={t("meals.recipes.instructionsLabel")}>
-            <textarea
+            <Textarea
               aria-label={t("meals.recipes.instructionsInputLabel")}
               value={instructions}
               onChange={(event) => setInstructions(event.target.value)}
-              className="border-input min-h-24 rounded-md border bg-transparent p-3"
+              className="min-h-24"
             />
           </Field>
           <fieldset>

@@ -118,6 +118,16 @@ describe("DailyMessagesManagement 14-day editor", () => {
     });
   });
 
+  it("preserves an existing note when its native textarea is cleared or blurred unchanged", async () => {
+    const mockFetch = renderManagement([message()]);
+    const textarea = await screen.findByTestId("daily-messages-text-2026-01-15");
+    fireEvent.blur(textarea);
+    fireEvent.change(textarea, { target: { value: "   " } });
+    fireEvent.blur(textarea);
+    await waitFor(() => expect(textarea).toHaveValue("Have a great day!"));
+    expect(mockFetch.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(0);
+  });
+
   it("keeps the loaded editor visible when the active member is selected again", async () => {
     renderManagement([message()]);
     expect(await screen.findAllByTestId(/^daily-messages-day-/)).toHaveLength(14);

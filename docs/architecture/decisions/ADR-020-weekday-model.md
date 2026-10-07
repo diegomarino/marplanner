@@ -6,7 +6,7 @@ Decision date: 2026-06-29
 
 ## Decision
 
-The canonical weekday representation for v2 (Routines assignments and Reminders
+The canonical weekday representation for this system (Routines assignments and Reminders
 rules alike) is a **set of string codes** `mon | tue | wed | thu | fri | sat | sun`.
 Reminders migrates off ISO `1..7`.
 
@@ -63,5 +63,5 @@ household-tz contract (ADR-005).
 
 ## Traceability
 
-- Pre-v2: `ADR-020`
+- Related prior: `ADR-020`
 - Related: `ADR-005`, `ADR-006`

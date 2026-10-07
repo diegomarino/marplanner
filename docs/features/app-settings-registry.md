@@ -80,7 +80,7 @@ values.
 
 - **FR-014**: Given the Printing plugin is active, when a client requests `GET /settings`, then the response MUST include `printer` and `printerTransport` with defaults for any unpersisted fields (the acceptance surface for the default-filling invariant in FR-006/INV-06 and the plugin-visibility invariant in FR-007/INV-07). _(Realizes: APP-SETTINGS-REGISTRY-AC-06)_
 
-- **FR-015**: Given `PUT /settings` for `printerTransport` with `{ "type": "wifi", "config": {} }`, when it is validated, then the server MUST return an unsupported-transport error because `wifi` is not implemented in v2 (only `bluetooth` is a valid `type`). _(Realizes: APP-SETTINGS-REGISTRY-AC-07)_
+- **FR-015**: Given `PUT /settings` for `printerTransport` with `{ "type": "wifi", "config": {} }`, when it is validated, then the server MUST return an unsupported-transport error because `wifi` is not implemented in this system (only `bluetooth` is a valid `type`). _(Realizes: APP-SETTINGS-REGISTRY-AC-07)_
 
 ### Key Entities
 
@@ -109,7 +109,7 @@ values.
 
 ## Assumptions
 
-- Fresh v2 data store; no legacy `app_settings` rows are migrated (ADR-026). On
+- Fresh data store; no legacy `app_settings` rows are migrated (ADR-026). On
   fresh setup the core `locale` object is seeded with defaults (`Europe/Madrid`,
   `es`, `1`); plugin objects are seeded when their plugin is activated, not at
   startup.

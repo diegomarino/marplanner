@@ -56,7 +56,7 @@ function assertNoImplicitRegenerate(mockFetch: ReturnType<typeof vi.fn>) {
   expect(hitGenerate).toBe(false);
 }
 
-describe("DailyBriefingManagement — admin settings-layer extensions (slice-019 T012)", () => {
+describe("DailyBriefingManagement — admin settings-layer extensions", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
   });
@@ -355,6 +355,19 @@ describe("DailyBriefingManagement — admin settings-layer extensions (slice-019
     expect(image.getAttribute("src")).toMatch(
       /^\/api\/daily-briefing\/member-ada\/2026-09-07\/preview\.png\?v=\d+$/
     );
+
+    const mount = document.createElement("meta");
+    mount.name = "mp-base-path";
+    mount.content = "/family/planner";
+    document.head.append(mount);
+    try {
+      fireEvent.click(screen.getByTestId("daily-briefing-admin-preview-show"));
+      expect(image.getAttribute("src")).toMatch(
+        /^\/family\/planner\/api\/daily-briefing\/member-ada\/2026-09-07\/preview\.png\?v=\d+$/
+      );
+    } finally {
+      mount.remove();
+    }
 
     assertNoImplicitRegenerate(mockFetch);
   });

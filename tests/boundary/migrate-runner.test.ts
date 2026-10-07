@@ -1,7 +1,8 @@
 import fs from "node:fs";
+import Database from "better-sqlite3";
 import os from "node:os";
 import path from "node:path";
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { getDb, resetDb } from "../../src/server/db/client";
 import { runMigrations } from "../../src/server/db/migrate";
 import { useIsolatedDb } from "../helpers/db";
@@ -119,30 +120,282 @@ describe("migrate runner: FK-safe table rebuild (#438)", () => {
   });
 });
 
-/** (US3) — SC-006 / BACKGROUND-JOBS-SCHEDULER-INV-03 schema
- * snapshot: the scheduler core owns "no scheduler-owned table[s]" (design/
- * contracts/background-jobs-scheduler.md INV-03) — it ships zero migrations
- * of its own (`src/server/scheduler/index.ts` has no `drizzle/000N_*.sql`
- * counterpart). This proves the REAL, current migration set (`drizzle/*.sql`,
- * run via the default `runMigrations` path — not the synthetic
- * migrationsDir fixtures above) produces EXACTLY this table set: no more, no
- * fewer, no scheduler-specific addition anywhere in the chain.
- * The table list itself lives in `tests/helpers/schema-tables.ts`
- * (`ALL_SCHEMA_TABLES`) — shared with `tests/integration/scheduler-lifecycle.
- * test.ts`the INV-05 pure-reads sweep, which reuses it to snapshot row counts
- * on the WHOLE schema rather than only the two tables the scheduler's own
- * jobs happen to write to. See that file's docblock for the re-derivation
- * recipe.
- */
-describe("schema table set (T010 — SC-006 / BACKGROUND-JOBS-SCHEDULER-INV-03)", () => {
+/** The scheduler owns no schema tables. Verify the real installed migration chain against
+ * the shared maintained table inventory (BACKGROUND-JOBS-SCHEDULER-INV-03). */
+describe("schema table set (BACKGROUND-JOBS-SCHEDULER-INV-03)", () => {
   useIsolatedDb();
 
-  it("BACKGROUND-JOBS-SCHEDULER-INV-03: sqlite_master's table set is exactly ALL_SCHEMA_TABLES — slice-012 adds none", () => {
+  it("BACKGROUND-JOBS-SCHEDULER-INV-03: installed table set matches ALL_SCHEMA_TABLES", () => {
     const db = getDb();
     const tables = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
       .all() as { name: string }[];
 
     expect(tables.map((t) => t.name)).toEqual(ALL_SCHEMA_TABLES);
+  });
+});
+
+describe("pre-migration recovery points", () => {
+  let dataDir: string;
+  let migrationsDir: string;
+  let previousDataDir: string | undefined;
+  let previousBackupsRoot: string | undefined;
+  beforeEach(() => {
+    dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "mp-migration-backup-"));
+    migrationsDir = path.join(dataDir, "sql");
+    fs.mkdirSync(migrationsDir);
+    previousDataDir = process.env.DATA_DIR;
+    previousBackupsRoot = process.env.BACKUPS_ROOT;
+    process.env.DATA_DIR = dataDir;
+    delete process.env.BACKUPS_ROOT;
+    resetDb();
+  });
+  afterEach(() => {
+    resetDb();
+    if (previousDataDir === undefined) delete process.env.DATA_DIR;
+    else process.env.DATA_DIR = previousDataDir;
+    if (previousBackupsRoot === undefined) delete process.env.BACKUPS_ROOT;
+    else process.env.BACKUPS_ROOT = previousBackupsRoot;
+    fs.rmSync(dataDir, { recursive: true, force: true });
+  });
+  const points = () => {
+    const lane = path.join(dataDir, "backups/pre-migration");
+    return fs.existsSync(lane)
+      ? fs.readdirSync(lane).map((name) => path.join(lane, name, "database.db"))
+      : [];
+  };
+  const migration = (sql: string) =>
+    fs.writeFileSync(path.join(migrationsDir, "0000_test.sql"), sql);
+
+  it("preserves committed WAL data and explicit IDs before applying SQL", () => {
+    const db = getDb();
+    db.pragma("wal_autocheckpoint = 0");
+    db.exec(
+      "CREATE TABLE sentinel (id INTEGER PRIMARY KEY, value TEXT); INSERT INTO sentinel VALUES (42, 'before'); CREATE INDEX sentinel_value ON sentinel(value);"
+    );
+    migration("UPDATE sentinel SET value = 'after';");
+    runMigrations(migrationsDir);
+    expect(points()).toHaveLength(1);
+    const backup = new Database(points()[0], { readonly: true });
+    try {
+      expect(backup.prepare("SELECT * FROM sentinel").all()).toEqual([{ id: 42, value: "before" }]);
+      expect(
+        backup.prepare("SELECT name FROM sqlite_schema WHERE name = 'sentinel_value'").get()
+      ).toEqual({ name: "sentinel_value" });
+      expect(backup.pragma("integrity_check", { simple: true })).toBe("ok");
+      expect(
+        backup
+          .prepare("SELECT name FROM sqlite_schema WHERE name = 'drizzle_universe_migrations'")
+          .get()
+      ).toBeUndefined();
+    } finally {
+      backup.close();
+    }
+    expect(db.prepare("SELECT value FROM sentinel").get()).toEqual({ value: "after" });
+    expect(fs.statSync(points()[0]).mode & 0o777).toBe(0o600);
+    expect(fs.statSync(path.dirname(points()[0])).mode & 0o777).toBe(0o700);
+  });
+
+  it("protects fresh schema and skips recovery work when no SQL is pending", () => {
+    runMigrations(migrationsDir);
+    expect(points()).toEqual([]);
+    expect(
+      getDb()
+        .prepare("SELECT name FROM sqlite_schema WHERE name = 'drizzle_universe_migrations'")
+        .get()
+    ).toBeUndefined();
+    migration("CREATE TABLE first_table (id INTEGER PRIMARY KEY);");
+    runMigrations(migrationsDir);
+    expect(points()).toHaveLength(1);
+    const backup = new Database(points()[0], { readonly: true });
+    try {
+      expect(backup.prepare("SELECT name FROM sqlite_schema WHERE type = 'table'").all()).toEqual(
+        []
+      );
+    } finally {
+      backup.close();
+    }
+    runMigrations(migrationsDir);
+    expect(points()).toHaveLength(1);
+  });
+
+  it("aborts backup path and active transaction failures before schema writes", () => {
+    migration("CREATE TABLE forbidden (id INTEGER PRIMARY KEY);");
+    const blocker = path.join(dataDir, "blocker");
+    fs.writeFileSync(blocker, "keep");
+    process.env.BACKUPS_ROOT = path.join(blocker, "backups");
+    expect(() => runMigrations(migrationsDir)).toThrow(/pre-migration backup/i);
+    expect(getDb().prepare("SELECT name FROM sqlite_schema WHERE type = 'table'").all()).toEqual(
+      []
+    );
+    delete process.env.BACKUPS_ROOT;
+    const db = getDb();
+    db.exec("BEGIN");
+    try {
+      expect(() => runMigrations(migrationsDir)).toThrow(/active transaction/i);
+    } finally {
+      db.exec("ROLLBACK");
+    }
+    expect(points()).toEqual([]);
+  });
+
+  it.each([
+    "new root",
+    "root parent",
+    "lane",
+    "lane parent",
+    "attempt parent",
+    "snapshot file",
+    "snapshot directory",
+  ])("aborts before schema writes when durability step %s fails", (step) => {
+    migration("CREATE TABLE forbidden (id INTEGER PRIMARY KEY);");
+    const canonicalDataDir = fs.realpathSync(dataDir);
+    const root = path.join(canonicalDataDir, "backups");
+    const lane = path.join(root, "pre-migration");
+    const originalOpen = fs.openSync;
+    const originalSync = fs.fsyncSync;
+    const opened = new Map<number, string>();
+    const open = vi.spyOn(fs, "openSync").mockImplementation((file, flags, mode) => {
+      const fd = originalOpen(file, flags, mode);
+      opened.set(fd, fs.realpathSync(String(file)));
+      return fd;
+    });
+    const spy = vi.spyOn(fs, "fsyncSync").mockImplementation((fd) => {
+      const file = opened.get(fd) ?? "";
+      const selected = {
+        "new root": file === root,
+        "root parent": file === canonicalDataDir && fs.existsSync(root),
+        lane: file === lane,
+        "lane parent": file === root && fs.existsSync(lane),
+        "attempt parent":
+          file === lane && fs.readdirSync(lane).some((name) => name.startsWith("snapshot-")),
+        "snapshot file": path.basename(file) === ".pending.db",
+        "snapshot directory": path.dirname(file) === lane,
+      }[step];
+      if (selected) throw new Error("injected disk sync failure");
+      originalSync(fd);
+    });
+    try {
+      expect(() => runMigrations(migrationsDir)).toThrow(/pre-migration backup/i);
+      expect(getDb().prepare("SELECT name FROM sqlite_schema WHERE type = 'table'").all()).toEqual(
+        []
+      );
+    } finally {
+      spy.mockRestore();
+      open.mockRestore();
+    }
+  });
+
+  it("rejects a redirected recovery lane and preserves operator root aliases", () => {
+    migration("CREATE TABLE first_table (id INTEGER PRIMARY KEY);");
+    const outside = path.join(dataDir, "outside");
+    const root = path.join(dataDir, "backups");
+    fs.mkdirSync(outside);
+    fs.mkdirSync(root);
+    fs.symlinkSync(outside, path.join(root, "pre-migration"));
+    expect(() => runMigrations(migrationsDir)).toThrow(/pre-migration backup/i);
+    expect(fs.readdirSync(outside)).toEqual([]);
+    expect(getDb().prepare("SELECT name FROM sqlite_schema WHERE type = 'table'").all()).toEqual(
+      []
+    );
+    fs.unlinkSync(path.join(root, "pre-migration"));
+    const alias = path.join(dataDir, "backup-alias");
+    fs.symlinkSync(root, alias);
+    process.env.BACKUPS_ROOT = alias;
+    runMigrations(migrationsDir);
+    expect(points()).toHaveLength(1);
+  });
+
+  it("aborts before schema writes on native backup or publication failure", () => {
+    migration("CREATE TABLE forbidden (id INTEGER PRIMARY KEY);");
+    const native = getDb().prepare.bind(getDb());
+    const backup = vi.spyOn(getDb(), "prepare").mockImplementation((sql) => {
+      if (sql === "VACUUM INTO ?") throw new Error("injected native backup failure");
+      return native(sql);
+    });
+    try {
+      expect(() => runMigrations(migrationsDir)).toThrow(/pre-migration backup/i);
+    } finally {
+      backup.mockRestore();
+    }
+    const rename = vi.spyOn(fs, "renameSync").mockImplementation(() => {
+      throw "injected publication failure";
+    });
+    try {
+      expect(() => runMigrations(migrationsDir)).toThrow(/pre-migration backup/i);
+      expect(getDb().prepare("SELECT name FROM sqlite_schema WHERE type = 'table'").all()).toEqual(
+        []
+      );
+    } finally {
+      rename.mockRestore();
+    }
+  });
+
+  it("rejects missing migration input before creating recovery or schema", () => {
+    expect(() => runMigrations(path.join(dataDir, "missing-sql"))).toThrow(
+      /Migration directory does not exist/
+    );
+    expect(points()).toEqual([]);
+    expect(getDb().prepare("SELECT name FROM sqlite_schema WHERE type = 'table'").all()).toEqual(
+      []
+    );
+  });
+
+  it("re-syncs existing backup ancestry after an interrupted directory publication", () => {
+    migration("CREATE TABLE first_table (id INTEGER PRIMARY KEY);");
+    const root = path.join(dataDir, "backups");
+    const originalOpen = fs.openSync;
+    const originalSync = fs.fsyncSync;
+    const opened = new Map<number, string>();
+    const open = vi.spyOn(fs, "openSync").mockImplementation((file, flags, mode) => {
+      const fd = originalOpen(file, flags, mode);
+      opened.set(fd, String(file));
+      return fd;
+    });
+    let interrupted = false;
+    let recoveredParentSync = false;
+    const sync = vi.spyOn(fs, "fsyncSync").mockImplementation((fd) => {
+      if (opened.get(fd) === dataDir && fs.existsSync(root)) {
+        if (!interrupted) {
+          interrupted = true;
+          throw new Error("interrupted root publication");
+        }
+        recoveredParentSync = true;
+      }
+      originalSync(fd);
+    });
+    try {
+      expect(() => runMigrations(migrationsDir)).toThrow(/pre-migration backup/i);
+      expect(fs.existsSync(root)).toBe(true);
+      expect(getDb().prepare("SELECT name FROM sqlite_schema WHERE type = 'table'").all()).toEqual(
+        []
+      );
+      runMigrations(migrationsDir);
+      expect(recoveredParentSync).toBe(true);
+      expect(points()).toHaveLength(1);
+    } finally {
+      sync.mockRestore();
+      open.mockRestore();
+    }
+  });
+
+  it("retains distinct recovery points when later SQL fails", () => {
+    const db = getDb();
+    db.exec("CREATE TABLE sentinel (id INTEGER PRIMARY KEY); INSERT INTO sentinel VALUES (42);");
+    migration("INSERT INTO sentinel VALUES (99); INVALID SQL;");
+    expect(() => runMigrations(migrationsDir)).toThrow();
+    expect(() => runMigrations(migrationsDir)).toThrow();
+    expect(points()).toHaveLength(2);
+    expect(db.prepare("SELECT * FROM sentinel").all()).toEqual([{ id: 42 }]);
+    expect(db.prepare("SELECT * FROM drizzle_universe_migrations").all()).toEqual([]);
+    expect(db.pragma("foreign_keys", { simple: true })).toBe(1);
+    for (const point of points()) {
+      const backup = new Database(point, { readonly: true });
+      try {
+        expect(backup.prepare("SELECT * FROM sentinel").all()).toEqual([{ id: 42 }]);
+      } finally {
+        backup.close();
+      }
+    }
   });
 });

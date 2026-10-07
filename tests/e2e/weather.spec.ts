@@ -221,7 +221,7 @@ async function saveWeatherLocation(
   expect(response.status()).toBe(200);
 }
 
-test.describe("weather e2e (slice-016 T013)", () => {
+test.describe("weather e2e", () => {
   // Serial: the kill-switch test's request-count assertion needs the FIRST test's page (and
   // its still-running WeatherPill recheck interval) fully closed before it captures its
   // "before" count — the fixture's hit counter is process-wide, so two tests running in

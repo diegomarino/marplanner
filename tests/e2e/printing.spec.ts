@@ -155,7 +155,7 @@ async function reopenPrintingPanel(page: Page): Promise<void> {
   await expect(page.getByTestId("printing-management")).toBeVisible();
 }
 
-test("admin test-print → claim → degrade → retry → ack → printed; re-trigger → alreadyPrinted (#T011)", async ({
+test("admin test-print → claim → degrade → retry → ack → printed; re-trigger → alreadyPrinted (#)", async ({
   page,
   printerSession,
 }) => {
@@ -209,6 +209,13 @@ test("admin test-print → claim → degrade → retry → ack → printed; re-t
   const management = page.getByTestId("printing-management");
   await expect(management).toBeVisible();
 
+  const firstFailureResponse = page.waitForResponse(
+    (response) =>
+      /\/api\/printing\/jobs\/[^/]+\/fail$/.test(response.url()) &&
+      response.request().method() === "POST",
+    { timeout: 15_000 }
+  );
+
   const firstTriggerResponse = page.waitForResponse(
     (response) =>
       response.url().includes("/api/printing/test-print") && response.request().method() === "POST"
@@ -235,24 +242,15 @@ test("admin test-print → claim → degrade → retry → ack → printed; re-t
     management.getByText(m["printing.management.trigger.enqueued"], { exact: true })
   ).toBeVisible();
 
-  // 6) Degradation observable: the scripted failure fires on the executor's first claim ->
-  // POST /fail (recoverable, no permanentCode) -> attempts=1, back to `pending`, immediately
-  // re-claimable. This polls the REAL API's `derivedState` (not the admin-panel DOM, which
-  // doesn't auto-refresh) — it proves the SERVER computes `retrying` at this instant, not that
-  // the admin list's label renders it distinctly from `pending`; that UI-label distinctness
-  // (SC-003's own false-green warning) is already covered at the component level by
-  // tests/client/printing-management.test.tsx's "renders dead-letter and retrying DISTINCTLY
-  // from pending" test, which STATE_LABEL_KEYS (PrintingManagement.tsx) reads verbatim off this
-  // same `derivedState` field.
-  await expect
-    .poll(async () => (await fetchJob(page.request, jobId))?.derivedState, {
-      timeout: 15_000,
-      intervals: [100],
-    })
-    .toBe("retrying");
-  const retryingJob = await fetchJob(page.request, jobId);
-  expect(retryingJob?.attempts).toBe(1);
-  expect(retryingJob?.printedAt).toBeNull();
+  // Observe the real failure response: the next executor tick can recover before a
+  // separate jobs-list read sees the transient retrying state on a slower runner.
+  const failureResponse = await firstFailureResponse;
+  expect(failureResponse.status()).toBe(200);
+  const retryingJob = (await failureResponse.json()) as PrintJobDto;
+  expect(retryingJob.id).toBe(jobId);
+  expect(retryingJob.derivedState).toBe("retrying");
+  expect(retryingJob.attempts).toBe(1);
+  expect(retryingJob.printedAt).toBeNull();
 
   // 7) Recovery WITHOUT any re-trigger (FR-009): the next poll tick claims the SAME job again
   // (no scripted failure queued this time) and this time the transmit+ack succeed.

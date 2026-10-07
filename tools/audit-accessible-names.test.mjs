@@ -319,7 +319,7 @@ test("composed component: an imported CheckboxField call site with a non-empty l
   assert.equal(hit.via, "prop:label");
 });
 
-test("composed component: an imported CheckboxField call site with an EMPTY label is a hard NONE (the exact blind-drop probe from the T014 review)", () => {
+test("composed component: an imported CheckboxField call site with an EMPTY label is a hard NONE (the exact blind-drop probe from the review)", () => {
   const src = `
     import { CheckboxField } from "@/components/CheckboxField";
     export const X = () => <CheckboxField checked={false} onChange={onChange} label="" />;

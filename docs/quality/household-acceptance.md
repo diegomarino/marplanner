@@ -74,7 +74,7 @@ Rules:
 2. Do not assign `cross-domain` as the owner; trace the failed contract to an existing owner.
 3. A repaired finding requires the same focused proof to show RED before and GREEN after the repair.
 4. A rejected finding cites the intentional contract or explicit scope exclusion.
-5. A finding involving external or hardware behavior does not authorize Slice 024 implementation.
+5. A finding involving external or hardware behavior does not authorize implementation.
 
 ## Comparison Record
 
@@ -90,7 +90,7 @@ URLs, credentials, and screenshots are not committed. Use:
 - Classification: `<same|intentional-change|regression|external-validation-pending>`
 - Approved-spec basis: `<requirement or decision id|not applicable>`
 - Rationale: `<observable structural comparison and contract basis>`
-- Follow-up: `<finding id|Slice 024|none>`
+- Follow-up: `<finding id||none>`
 - Human gate: `<accepted|changes-requested>`
 ```
 
@@ -118,7 +118,7 @@ The final accepted revision appends:
 - Result: `<exit status and concise observed summary>`
 - Required software rows remaining open/failed/deferred: `0`
 - Visible human gates remaining unaccepted: `0`
-- External/hardware deferrals: `<explicit Slice 024 rows>`
+- External/hardware deferrals: `<explicit rows>`
 ```
 
 An aggregate result from an earlier revision, a focused suite, or an unobserved command does not

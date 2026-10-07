@@ -11,7 +11,7 @@ import { useIsolatedDb } from "../helpers/db";
  * is exercised directly ONLY for the FR-013 default-resolution rule, which has no dedicated read
  * route (the generation is its only other caller).
  */
-describe("daily-briefing settings boundary (T003)", () => {
+describe("daily-briefing settings boundary", () => {
   useIsolatedDb();
 
   let app: FastifyInstance;

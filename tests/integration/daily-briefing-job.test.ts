@@ -17,7 +17,7 @@ import { seedBriefingRow, seedMember } from "../helpers/daily-briefing-seed";
  * singleton (no timers armed — `registerJob` only arms once `start` has
  * run, so `runJobNow` here never touches a real timer).
  */
-describe("daily-briefing job registration (T005 — research D8/D9)", () => {
+describe("daily-briefing job registration (research D8/D9)", () => {
   useIsolatedDb();
   const date = "2026-08-21";
   const yesterday = "2026-08-20";
@@ -112,7 +112,7 @@ describe("daily-briefing job registration (T005 — research D8/D9)", () => {
       }
     );
 
-    it("T011 Codex P2 fold (PR #713): when BOTH the new table and the legacy settings_objects row exist, the new table wins", () => {
+    it("Codex P2 fold (PR #713): when BOTH the new table and the legacy settings_objects row exist, the new table wins", () => {
       getDb()
         .prepare(
           "INSERT INTO settings_objects (object_name, data, updated_at) VALUES ('daily-briefing', ?, ?)"

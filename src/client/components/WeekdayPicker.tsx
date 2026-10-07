@@ -1,3 +1,4 @@
+import { NATIVE_SELECT_CLASSES } from "@/lib/recipes";
 import { useId } from "react";
 import { CheckboxField } from "./CheckboxField";
 import { RadioField } from "./RadioField";
@@ -116,10 +117,7 @@ export function WeekdayPicker(props: WeekdayPickerProps) {
           value={value}
           disabled={disabled}
           onChange={(event) => onChange(event.target.value as WeekdayCode)}
-          className={cn(
-            "border-input h-[var(--control-height)] rounded-md border px-2 text-[length:var(--control-font-size)]",
-            className
-          )}
+          className={cn(NATIVE_SELECT_CLASSES, className)}
           data-testid={testIdPrefix ? `${testIdPrefix}-select` : undefined}
         >
           {CANONICAL_WEEKDAY_ORDER.map((day) => (

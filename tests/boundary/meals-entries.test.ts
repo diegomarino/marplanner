@@ -18,7 +18,7 @@ import { useIsolatedDb } from "../helpers/db";
  * existence at write (a domain error, never a raw FK violation — same
  * FR-028 rationale as recipeId).
  */
-describe("meals-entries boundary tests (T006/T007)", () => {
+describe("meals-entries boundary tests", () => {
   useIsolatedDb();
 
   // ── helpers ──────────────────────────────────────────────────────────────

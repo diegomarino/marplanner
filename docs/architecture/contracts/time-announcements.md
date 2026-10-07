@@ -41,7 +41,7 @@ createdAt, updatedAt }`.
    `lang` + logged miss). Phrase wording is localized product copy (keys), not hardcoded
    Spanish.
 10. **TIME-ANNOUNCEMENTS-INV-10** **No new settings** (`ADR-051`): no master switch / quiet hours / volume·rate·pitch /
-    per-device enablement in v2. Household-wide.
+    per-device enablement in this system. Household-wide.
 11. **TIME-ANNOUNCEMENTS-INV-11** **Invalid timezone is unreachable** (`ADR-028` validates IANA at the settings
     boundary); the scheduler is defensive regardless (format failure → no fire + health
     signal, never crash).
@@ -73,7 +73,7 @@ failure may increment a local health counter (`ADR-035`), not a domain event.
 
 ## Data / Setup Contract
 
-Owned: `time_announcements` (id, time, weekDays, isActive, createdAt, updatedAt). Fresh v2
+Owned: `time_announcements` (id, time, weekDays, isActive, createdAt, updatedAt). Fresh deployment
 (`ADR-026`); 7 prod rows evidence only (validate `HH:MM`/weekday on any import, quarantine
 corrupt rows rather than failing the whole list). Dedupe state is browser-local, not
 server state. No owned settings object.

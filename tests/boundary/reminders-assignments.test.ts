@@ -10,7 +10,7 @@ import { useIsolatedDb } from "../helpers/db";
  * FR-004/FR-005/FR-009/FR-010/FR-011, REMINDERS-INV-08, REMINDERS-AC-07, SC-002/SC-004.
  * RED until wires createReminder(specific)/replaceAssignments + the PUT route.
  */
-describe("reminders-assignments boundary tests (T007/T008)", () => {
+describe("reminders-assignments boundary tests", () => {
   useIsolatedDb();
 
   // ── helpers ──────────────────────────────────────────────────────────────
@@ -57,6 +57,38 @@ describe("reminders-assignments boundary tests (T007/T008)", () => {
       },
     });
   }
+
+  it("rejects replacement for a missing reminder and invalid emission dates without writes", async () => {
+    const { deviceKey } = seedKeys();
+    const memberId = seedMember();
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    try {
+      await app.ready();
+      const before = getDb().prepare("SELECT total_changes() AS changes").get();
+      const missing = await app.inject({
+        method: "PUT",
+        url: "/api/reminders/missing/assignments",
+        cookies: { mp_device_key: deviceKey },
+        payload: { assignments: [{ memberId, weekdays: ["mon"] }] },
+      });
+      expect(missing.statusCode).toBe(404);
+      expect(missing.json()).toMatchObject({ error: "not_found", message: expect.any(String) });
+      const invalid = await app.inject({
+        method: "GET",
+        url: `/api/reminders/emissions?memberId=${memberId}&date=not-a-date`,
+        cookies: { mp_device_key: deviceKey },
+      });
+      expect(invalid.statusCode).toBe(400);
+      expect(invalid.json()).toMatchObject({
+        error: "validation_error",
+        message: expect.any(String),
+      });
+      expect(getDb().prepare("SELECT total_changes() AS changes").get()).toEqual(before);
+    } finally {
+      await app.close();
+    }
+  });
 
   // ── POST /api/reminders (specific) — atomic create (Scenario C, E) ─────────
 

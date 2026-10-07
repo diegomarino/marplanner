@@ -14,7 +14,7 @@ import { useIsolatedDb } from "../helpers/db";
  * 5. Assert zero rows on any Daily Briefing table/config (none exist this module,
  * but the contract demands the assertion: no DB-level side effects of any kind).
  */
-describe("member-no-side-effects (T031 — red-by-design, T033+T034 turn green)", () => {
+describe("member-no-side-effects (red-by-design, + turn green)", () => {
   useIsolatedDb();
 
   it("successful create writes exactly one member row and zero Daily Briefing rows/config (FR-022/023)", async () => {

@@ -1,3 +1,4 @@
+import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
 import { authFetch } from "@/lib/credential";
 import { todayInHouseholdTimezone } from "@/lib/household-date";
@@ -29,11 +30,7 @@ import { Field } from "@/components/Field";
 import { WeekdayPicker, type WeekdayLabels } from "@/components/WeekdayPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  LABEL_INLINE_CLASSES,
-  NATIVE_SELECT_CLASSES,
-  NATIVE_TEXTAREA_CLASSES,
-} from "@/lib/recipes";
+import { LABEL_INLINE_CLASSES, NATIVE_SELECT_CLASSES } from "@/lib/recipes";
 
 /** Manage recipes, one-off meals, recurring entries and retained meal plans.
  * Recipe deletion confirms dependent counts; inactive plans remain editable but leave the derived menu. */
@@ -570,21 +567,19 @@ function RecipeCreateForm({ t, onCreate }: RecipeCreateFormProps) {
         <label htmlFor="meals-recipe-create-ingredients" className="text-muted-foreground text-xs">
           {t("meals.recipes.ingredientsLabel")}
         </label>
-        <textarea
+        <Textarea
           id="meals-recipe-create-ingredients"
           value={ingredients}
           onChange={(e) => setIngredients(e.target.value)}
-          className={NATIVE_TEXTAREA_CLASSES}
           rows={3}
         />
         <label htmlFor="meals-recipe-create-instructions" className="text-muted-foreground text-xs">
           {t("meals.recipes.instructionsLabel")}
         </label>
-        <textarea
+        <Textarea
           id="meals-recipe-create-instructions"
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
-          className={NATIVE_TEXTAREA_CLASSES}
           rows={3}
         />
         <span className="text-muted-foreground text-xs">{t("meals.recipes.slotsLabel")}</span>
@@ -681,20 +676,18 @@ function RecipeCard({ recipe, t, onSave, onPrepareDelete, onConfirmDelete }: Rec
             />
           </Field>
           <Field label={t("meals.recipes.ingredientsLabel")}>
-            <textarea
+            <Textarea
               data-testid="meals-recipe-edit-ingredients"
               value={ingredientsDraft}
               onChange={(e) => setIngredientsDraft(e.target.value)}
-              className={NATIVE_TEXTAREA_CLASSES}
               rows={3}
             />
           </Field>
           <Field label={t("meals.recipes.instructionsLabel")}>
-            <textarea
+            <Textarea
               data-testid="meals-recipe-edit-instructions"
               value={instructionsDraft}
               onChange={(e) => setInstructionsDraft(e.target.value)}
-              className={NATIVE_TEXTAREA_CLASSES}
               rows={3}
             />
           </Field>

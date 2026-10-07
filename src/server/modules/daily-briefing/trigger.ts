@@ -249,7 +249,13 @@ export function registerAutoPrintTrigger(overrides?: AutoPrintTriggerOverrides):
 
   // (a) wakeup hint.
   subscribe("routines.completion_changed", () => {
-    evaluateAutoPrintTrigger(now());
+    try {
+      evaluateAutoPrintTrigger(now());
+    } catch (err) {
+      // The event bus contains subscriber failures; record this wakeup failure before
+      // containment. A later event or sweep re-evaluates current state without retries.
+      console.error("daily-briefing.trigger.wakeup-failed", err);
+    }
   });
 
   // (b)+(c) periodic sweep + startup evaluation, scheduler-routed (see doc comment above).

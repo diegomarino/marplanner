@@ -7,7 +7,7 @@ import { messages } from "@/i18n/messages";
  * agreed natural-spoken register. Pure — no clock, no I/O.
  * (Traces: TIME-ANNOUNCEMENTS-AC-05, TIME-ANNOUNCEMENTS-INV-09)
  */
-describe("time-announcements phrase builders (T005)", () => {
+describe("time-announcements phrase builders", () => {
   describe("es golden table — v1's 12-case oracle, verbatim (TIME-ANNOUNCEMENTS-AC-05)", () => {
     const cases: Array<[number, number, string]> = [
       [0, 0, "Es medianoche"],

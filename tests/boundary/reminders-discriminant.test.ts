@@ -8,7 +8,7 @@ import { useIsolatedDb } from "../helpers/db";
  * with /): each case → 400, nothing persisted (SC-001). Covers
  * FR-001/002/006/014.
  */
-describe("reminders-discriminant boundary tests — apply_to_all half (T004/T005)", () => {
+describe("reminders-discriminant boundary tests — apply_to_all half", () => {
   useIsolatedDb();
 
   function seedKeys() {
@@ -164,7 +164,7 @@ describe("reminders-discriminant boundary tests — apply_to_all half (T004/T005
  * REMINDERS-AC-04. RED until wires the specific create + assignments
  * set-replace paths.
  */
-describe("reminders-discriminant boundary tests — specific half (T007/T008)", () => {
+describe("reminders-discriminant boundary tests — specific half", () => {
   useIsolatedDb();
 
   function seedKeys() {

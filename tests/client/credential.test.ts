@@ -1,3 +1,4 @@
+import { appPathname } from "@/lib/base-path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -67,6 +68,25 @@ describe("authFetch / reportCredentialLoss (FR-013)", () => {
     expect(document.cookie).toMatch(/mp_provisioned=1/);
 
     window.removeEventListener(CREDENTIAL_LOST_EVENT, listener);
+  });
+
+  it("preserves provisioning and passes through 429 without retrying or reporting credential loss", async () => {
+    const response = new Response(JSON.stringify({ error: "too_many_requests" }), {
+      status: 429,
+      headers: { "Retry-After": "8" },
+    });
+    mockFetch.mockResolvedValueOnce(response);
+    const listener = vi.fn();
+    window.addEventListener(CREDENTIAL_LOST_EVENT, listener);
+    try {
+      expect(await authFetch("/api/settings")).toBe(response);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(document.cookie).toContain("mp_provisioned=1");
+      expect(listener).not.toHaveBeenCalled();
+      expect(await response.json()).toEqual({ error: "too_many_requests" });
+    } finally {
+      window.removeEventListener(CREDENTIAL_LOST_EVENT, listener);
+    }
   });
 
   it("reportCredentialLoss clears the marker and dispatches the event directly", () => {
@@ -198,7 +218,7 @@ describe("authFetch — scope-403 vs credential-invalid (#682)", () => {
 
   it(
     "does NOT clear the marker on a domain-specific 403 code OTHER than AUTH_SCOPE_DENIED_CODE " +
-      "(slice-018 T007 review fold P2-1 — printing's printer_capability_missing, real body shape)",
+      "(printing printer_capability_missing real body shape)",
     async () => {
       // Verbatim shape of src/server/modules/printing/index.ts's PrintCapabilityMissingError,
       // mapped by src/server/routes/printing.ts's handlePrintingError. The credential is live —
@@ -305,5 +325,37 @@ describe("authFetch — credential-generation race guard (FR-013)", () => {
     expect(document.cookie).not.toMatch(/mp_provisioned=1/);
 
     window.removeEventListener(CREDENTIAL_LOST_EVENT, listener);
+  });
+});
+
+describe("runtime subpath credential transport", () => {
+  it("prefixes canonical API strings and clears the marker at its mounted cookie path", async () => {
+    const meta = document.createElement("meta");
+    meta.name = "mp-base-path";
+    meta.content = "/family/planner";
+    document.head.append(meta);
+    const previous = window.location.pathname;
+    window.history.replaceState(null, "", "/family/planner/admin");
+    document.cookie = "mp_provisioned=1; path=/family/planner/";
+    const transport = vi.fn().mockResolvedValue(new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", transport);
+    try {
+      const options = { method: "POST", credentials: "include" as const, body: "payload" };
+      await authFetch("/api/settings?mode=full", options);
+      expect(transport).toHaveBeenCalledWith("/family/planner/api/settings?mode=full", options);
+      const absolute = new Request("https://example.test/api/settings", { method: "GET" });
+      await authFetch(absolute);
+      expect(transport).toHaveBeenLastCalledWith(absolute);
+      window.history.replaceState(null, "", "/outside-the-mount");
+      expect(appPathname()).toBe("/outside-the-mount");
+      window.history.replaceState(null, "", "/family/planner/admin");
+      clearProvisionedMarker();
+      expect(document.cookie).not.toContain("mp_provisioned=1");
+    } finally {
+      clearProvisionedMarker();
+      meta.remove();
+      window.history.replaceState(null, "", previous);
+      vi.unstubAllGlobals();
+    }
   });
 });

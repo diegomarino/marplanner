@@ -17,7 +17,7 @@ import { useIsolatedDb } from "../helpers/db";
  * 5. `reminder_assignments_unique_reminder_member` was re-created after the
  * table-rebuild rename (a raw duplicate insert still errors).
  */
-describe("fk-drop-integrity (T005/T006)", () => {
+describe("fk-drop-integrity", () => {
   useIsolatedDb();
 
   function seedKeys(): string {

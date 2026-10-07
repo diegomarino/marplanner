@@ -1,35 +1,17 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "./member-colors.generated.css";
+/* Single source for semantic palette + comfortable density defaults. Also
+ * inlined by the server access-gate HTML (`src/server/auth/gate.ts`). */
+@import "./tokens.css";
 
 /* Kiosk ships light-only (always-on kitchen display). The `dark` variant + tokens
    are registered for tooling/component compatibility but are not shipped. See
    docs/development/ui-foundation.md. */
 @custom-variant dark (&:is(.dark *));
 
-/* Household palette: beige ground, cream cards, olive primary, warm greys,
-   yellow accent and red destructive. Components use semantic roles below. */
-:root {
-  --radius: 1rem;
-  --background: #f5f2ed;
-  --foreground: oklch(0.21 0.006 60);
-  --card: #fdfbf8;
-  --card-foreground: oklch(0.21 0.006 60);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.21 0.006 60);
-  --primary: #5a5a40;
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.95 0.008 60);
-  --secondary-foreground: oklch(0.37 0.01 60);
-  --muted: oklch(0.95 0.008 60);
-  --muted-foreground: oklch(0.55 0.015 60);
-  --accent: oklch(0.78 0.17 85);
-  --accent-foreground: oklch(0.28 0.17 85);
-  --destructive: oklch(0.58 0.22 25);
-  --border: oklch(0.91 0.01 60);
-  --input: oklch(0.91 0.01 60);
-  --ring: #5a5a40;
-}
+/* Household palette values live in tokens.css. Components use semantic roles
+ * exposed via @theme below. */
 
 .dark {
   --background: oklch(0.145 0 0);
@@ -53,6 +35,9 @@
 }
 
 @theme inline {
+  --color-member-avatar-foreground: var(--member-avatar-foreground);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-overlay: var(--overlay);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -78,17 +63,12 @@
 }
 
 /*
- * Shared height and font-size tokens keep controls consistent in each density.
- * The root data-density attribute reaches portals as well as ordinary descendants.
- * Comfortable defaults are 36px/14px; kiosk uses 48px/18px. All size variants consume
- * the same tokens. Caption typography and general spacing are separate concerns.
- * Keep values literal px/rem with at most one var() indirection: the browser-test
- * resolver in tests/client/helpers/density.ts rejects nested aliases and calc().
+ * Density overrides. Comfortable defaults (`--control-height` / `--control-font-size`)
+ * live in tokens.css. The root data-density attribute reaches portals as well as
+ * ordinary descendants. Keep values literal px/rem with at most one var()
+ * indirection: the browser-test resolver in tests/client/helpers/density.ts
+ * rejects nested aliases and calc().
  */
-:root {
-  --control-height: 36px;
-  --control-font-size: 14px;
-}
 
 /* Kiosk minimums match the control-height and font-size assertions in
    tests/client/helpers/density.ts. Update both when changing the density contract. */
@@ -111,4 +91,9 @@
     background: var(--member-event-background, var(--color-muted));
     border-left-color: var(--member-event-border, transparent);
   }
+}
+
+/* Control typography follows the document density, including portals. */
+@utility text-control {
+  font-size: var(--control-font-size);
 }

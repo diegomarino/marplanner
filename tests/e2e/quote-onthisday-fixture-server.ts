@@ -12,7 +12,10 @@ import type { Server } from "node:http";
  * both `playwright.config.ts` and this module import — not one only discovered at runtime.
  * Bound ONLY to loopback (127.0.0.1) for the lifetime of the whole e2e run.
  */
-export const QUOTE_ONTHISDAY_FIXTURE_PORT = 41839;
+// Override per isolated validation lane; runner and provider import the same value.
+export const QUOTE_ONTHISDAY_FIXTURE_PORT = Number(
+  process.env.MP_E2E_QUOTE_FIXTURE_PORT ?? "41839"
+);
 export const QUOTE_ONTHISDAY_FIXTURE_ORIGIN = `http://127.0.0.1:${QUOTE_ONTHISDAY_FIXTURE_PORT}`;
 
 /** The exact quote text/author this fixture serves — `tests/e2e/daily-briefing.spec.ts` pins an

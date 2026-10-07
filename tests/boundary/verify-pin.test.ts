@@ -16,7 +16,7 @@ import { useIsolatedDb } from "../helpers/db";
  * 6. Assert NO session row exists in either outcome (there is no session table).
  *
  */
-describe("verify-pin: match/no-match no-session (T025 — red-by-design, T028 turns green)", () => {
+describe("verify-pin: match/no-match no-session", () => {
   useIsolatedDb();
 
   it("correct PIN ⇒ {match:true} and incorrect PIN ⇒ {match:false}, no session row either way (FR-016/FR-026)", async () => {

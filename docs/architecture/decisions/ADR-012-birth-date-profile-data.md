@@ -6,7 +6,7 @@ Decision date: 2026-06-27
 
 ## Decision
 
-Birth date is a first-class optional member profile field in v2.
+Birth date is a first-class optional member profile field in this system.
 
 The value supports month/day with an optional year. The product must not require an exact birth year, and the model must not invent a fake year when the user only provides month/day.
 
@@ -14,7 +14,7 @@ Member profile forms and member API endpoints must support birth-date operations
 
 ## Rationale
 
-Daily Briefing birthday content depends on member birthday data. If that behavior exists in v2, the data should be explicit, editable profile data rather than hidden seed-only state.
+Daily Briefing birthday content depends on member birthday data. If that behavior exists in this system, the data should be explicit, editable profile data rather than hidden seed-only state.
 
 Making the year optional avoids forcing collection of exact age while still supporting birthday reminders/countdowns. If a year exists, age-specific behavior can use it; otherwise birthday behavior should rely only on month/day.
 
@@ -26,9 +26,9 @@ Making the year optional avoids forcing collection of exact age while still supp
 
 ## Data / Setup Implications
 
-No legacy member birth-date rows are imported into v2 under `ADR-026`.
+No legacy member birth-date rows are imported into this system under `ADR-026`.
 
-Fresh v2 member setup should allow birth date to be omitted. If provided, the API must preserve whether the year was supplied rather than normalizing month/day-only input into a full date.
+Fresh deployment member setup should allow birth date to be omitted. If provided, the API must preserve whether the year was supplied rather than normalizing month/day-only input into a full date.
 
 ## Acceptance Criteria
 
@@ -46,5 +46,5 @@ Fresh v2 member setup should allow birth date to be omitted. If provided, the AP
 ## Traceability
 
 - Conflicts: `CR-012-birth-date-ownership`
-- Pre-v2: `ADR-012`
+- Related prior: `ADR-012`
 - Domain grill: `../domain-grills/members.md`

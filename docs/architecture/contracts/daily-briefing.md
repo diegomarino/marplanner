@@ -8,7 +8,7 @@ Depends on decisions: `ADR-005`, `ADR-008`, `ADR-019`, `ADR-022`, `ADR-027`, `AD
 Daily Briefing is a **plugin** (ADR-029) that generates a per-member/date
 **snapshot** of household content (routines, messages, reminders, meals,
 calendar, weather, etc.), renders it to a printable artefact, and exposes it for
-viewing/printing. It is the only **print producer** in v2 (Printing is a general
+viewing/printing. It is the only **print producer** in this system (Printing is a general
 pipeline; ADR-041). It owns _what_ is printed and _when its output is triggered_;
 it does not own delivery.
 
@@ -105,11 +105,11 @@ it does not own delivery.
   - `printing.completed { jobId, outputRef }` / `printing.failed { jobId,
 outputRef, errorCode }` — to update derived printed-status (ADR-019).
   - Future: a core domain event (e.g. `routines.morning_completed`) to drive an
-    event-based print trigger (subscribe-and-enqueue; ADR-040). Not built in v2.
+    event-based print trigger (subscribe-and-enqueue; ADR-040). Not built in this system.
 
 ## Data / Setup Contract
 
-Fresh v2: per-member/date rows under a stable briefing ID; payload + printable
+Fresh deployment: per-member/date rows under a stable briefing ID; payload + printable
 raster live in Daily Briefing's namespaced tables (no `printed_at` column; that
 is Printing's record per ADR-019). Shared daily cache per date. Opt-in defaults
 per ADR-027. No legacy import (ADR-026).

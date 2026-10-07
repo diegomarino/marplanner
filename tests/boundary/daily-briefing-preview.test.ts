@@ -12,7 +12,7 @@ import { useIsolatedDb } from "../helpers/db";
  * `printable_raster_missing` when the row exists but `png` is NULL (Printing inactive at
  * generation, or a catastrophic render — D5).
  */
-describe("daily-briefing admin preview.png boundary (T012)", () => {
+describe("daily-briefing admin preview.png boundary", () => {
   useIsolatedDb();
 
   let app: FastifyInstance;

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { describe, it, expect } from "vitest";
 import { hashKey } from "../../src/server/auth/credentials";
 import { getDb } from "../../src/server/db/client";
@@ -17,7 +18,7 @@ import { useIsolatedDb } from "../helpers/db";
  * d) ?lifecycle=all: expect both → all three members
  * e) ?lifecycle=unknown: expect 400 Bad Request
  */
-describe("member-list-lifecycle (T004 — red-by-design, T005 turns green)", () => {
+describe("member-list-lifecycle (red-by-design, turns green)", () => {
   useIsolatedDb();
 
   const seedKeys = (db: any) => {
@@ -36,7 +37,7 @@ describe("member-list-lifecycle (T004 — red-by-design, T005 turns green)", () 
     role: "parent" | "child",
     lifecycle: "active" | "archived"
   ) => {
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const id = randomUUID();
     const now = Date.now();
     db.prepare(
       "INSERT INTO members (id, display_name, role, lifecycle, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)"

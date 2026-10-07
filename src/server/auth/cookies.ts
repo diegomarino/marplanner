@@ -1,5 +1,5 @@
 /** Single source of truth for auth cookie names + attributes (ADR-060, amended).
- * Both auth cookies are `Secure` + `HttpOnly` + `SameSite=Lax` + `Path=/`, issued
+ * Both auth cookies are `Secure` + `HttpOnly` + `SameSite=Lax` + mount-scoped `Path` (root defaults to `/`), issued
  * from ONE factory so the two set-sites (gate + provisioning) cannot drift.
  * NOTE — `__Host-` was evaluated and REJECTED (ADR-060 Correction): browsers
  * accept `__Host-`/`__Secure-` prefixed cookies ONLY over real HTTPS, NOT over
@@ -16,8 +16,8 @@ export const GATE_COOKIE = "mp_gate";
 /** Serialize an auth cookie with the one shared attribute policy: `Secure`
  * (accepted on localhost, enforced under the TLS-required-for-non-localhost
  * posture) + `HttpOnly` + `SameSite=Lax` (so a bookmark navigation into the app
- * still sends the cookie) + `Path=/`.
+ * still sends the cookie) + the deployment mount cookie path.
  */
-export function serializeAuthCookie(name: string, value: string): string {
-  return `${name}=${value}; HttpOnly; Secure; SameSite=Lax; Path=/`;
+export function serializeAuthCookie(name: string, value: string, basePath = ""): string {
+  return `${name}=${value}; HttpOnly; Secure; SameSite=Lax; Path=${basePath}/`;
 }

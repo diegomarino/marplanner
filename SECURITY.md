@@ -2,7 +2,13 @@
 
 ## Reporting a vulnerability
 
-The maintainer's confirmed GitHub identity is `diegomarino`. Before publication, the maintainer must verify a private vulnerability-reporting channel on the actual published repository and place its exact instructions here. Do not put an undisclosed vulnerability, working exploit, credential, household data, or device identifier in a public issue or pull request. A private contact URL, email address, and response deadline have not been confirmed. Publication is gated on resolving this reporting destination.
+Use **GitHub private vulnerability reporting** on this repository: open the repo on GitHub → **Security** → **Report a vulnerability** (or the equivalent private advisory flow once enabled for the published repo). That channel is private to maintainers; do **not** open a public issue or pull request for an undisclosed vulnerability, working exploit, credential, household data, or device identifier.
+
+Maintainer GitHub identity: [`diegomarino`](https://github.com/diegomarino).
+
+**Response targets:** acknowledge receipt within **7 days**; provide a fix-or-status update within **90 days**. These are good-faith targets for a single-maintainer household project, not contractual SLAs.
+
+Before the public repository has private vulnerability reporting turned on (Settings → Code security → Private vulnerability reporting), treat publication as blocked until that setting is enabled on the live repo. The instructions above are the intended permanent channel.
 
 For a safe reproduction, use synthetic household data and redact access tokens, device keys, PINs, cookies, IP addresses, MAC addresses, database contents, and logs before sharing them.
 

@@ -16,12 +16,12 @@ Decision date: 2026-06-27
 
 ### Canonical object registry (v2 initial)
 
-| Object name        | Fields                                 | Notes                                                                                                                                                                                                                                           |
-| ------------------ | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `locale`           | `timezone`, `language`, `weekStartDay` | Grouped as household display identity. Timezone must be a valid IANA timezone name. Language constrained to supported locales. weekStartDay is 0 (Sunday) or 1 (Monday).                                                                        |
-| `weather`          | `lat`, `lon`                           | Coordinate pair written and cleared as a unit. Both must be finite numbers within valid lat/lon ranges, or both must be null/empty to clear.                                                                                                    |
-| `printer`          | `paperWidthDots`                       | Transport-independent base config. (`enabled`/`autoprint` removed by ADR-038/Printing contract: "printing available" = plugin active; "automatic" = an active automatic trigger bound, not a flag.)                                             |
-| `printerTransport` | `type`, `config`                       | Nested discriminated union. `type` selects the transport (`bluetooth` in v2). `config` is validated against the schema for that type. Only `bluetooth` is a valid type in v2; `wifi` and `usb` are added when those transports are implemented. |
+| Object name        | Fields                                 | Notes                                                                                                                                                                                                                                                             |
+| ------------------ | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `locale`           | `timezone`, `language`, `weekStartDay` | Grouped as household display identity. Timezone must be a valid IANA timezone name. Language constrained to supported locales. weekStartDay is 0 (Sunday) or 1 (Monday).                                                                                          |
+| `weather`          | `lat`, `lon`                           | Coordinate pair written and cleared as a unit. Both must be finite numbers within valid lat/lon ranges, or both must be null/empty to clear.                                                                                                                      |
+| `printer`          | `paperWidthDots`                       | Transport-independent base config. (`enabled`/`autoprint` removed by ADR-038/Printing contract: "printing available" = plugin active; "automatic" = an active automatic trigger bound, not a flag.)                                                               |
+| `printerTransport` | `type`, `config`                       | Nested discriminated union. `type` selects the transport (`bluetooth` in this system). `config` is validated against the schema for that type. Only `bluetooth` is a valid type in this system; `wifi` and `usb` are added when those transports are implemented. |
 
 ## Plugin Settings Extension
 
@@ -44,7 +44,7 @@ A single `/settings` endpoint for both core and plugin settings simplifies cold-
 
 ## Data / Setup Implications
 
-Fresh v2 setup seeds canonical default values for all object fields. The effective settings response always returns all objects with all fields, filling any missing persisted value from its default. No legacy flat key/value rows are migrated; they are evidence only under `ADR-026`.
+Fresh setup seeds canonical default values for all object fields. The effective settings response always returns all objects with all fields, filling any missing persisted value from its default. No legacy flat key/value rows are migrated; they are evidence only under `ADR-026`.
 
 ## Acceptance Criteria
 
@@ -62,4 +62,4 @@ Fresh v2 setup seeds canonical default values for all object fields. The effecti
 ## Traceability
 
 - Conflicts: `CR-007`, `CR-009`, `CR-022`
-- Pre-v2: `ADR-009` (atomicity resolved by design), `ADR-021` (validation resolved by per-object schema)
+- Related prior: `ADR-009` (atomicity resolved by design), `ADR-021` (validation resolved by per-object schema)

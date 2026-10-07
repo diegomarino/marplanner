@@ -15,7 +15,7 @@ import { useIsolatedDb } from "../helpers/db";
  * window bug (`getEvents`'s date-only `to` is inclusive, +1 day internally),
  * corrected here and already in the merged gate.
  */
-describe("reminders-calendar-gated (T004/T005 — research.md D3, issue #496 single-day window)", () => {
+describe("reminders-calendar-gated (research.md D3, issue #496 single-day window)", () => {
   useIsolatedDb();
 
   beforeEach(() => {

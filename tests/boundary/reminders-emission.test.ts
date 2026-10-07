@@ -9,7 +9,7 @@ import { useIsolatedDb } from "../helpers/db";
  * 2026-08-17 is a Monday, 2026-08-18 a Tuesday (matches reminders-assembly's
  * seeded dates).
  */
-describe("reminders-emission boundary test (T004/T005 — Scenario B)", () => {
+describe("reminders-emission boundary test (Scenario B)", () => {
   useIsolatedDb();
 
   function seedKeys() {

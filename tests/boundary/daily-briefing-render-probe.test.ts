@@ -181,7 +181,7 @@ describe("daily-briefing render — D2 probe (pngjs decode layout)", () => {
  * registry-miss — no render-def yet) is a coverage gap and lands in the separate
  * `unrenderedBlocks`, excluded from `deriveOverallStatus`'s status math (`index.ts`).
  */
-describe("daily-briefing render bridge — per-block adapter isolation (T009)", () => {
+describe("daily-briefing render bridge — per-block adapter isolation", () => {
   it("an adapter-level failure (unknown to adaptBlockData) is GENUINE: it lands in failedRenderBlocks, the render still succeeds", async () => {
     const envelope: RenderEnvelope = {
       memberId: "probe-member",

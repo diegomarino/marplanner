@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { execFileSync } from "node:child_process";
 import { requireCandidate } from "./candidate-identity.mjs";
 import { createHash } from "node:crypto";
 import path from "node:path";
@@ -18,6 +19,38 @@ function object(value, label) {
     fail(`${label} missing or invalid`);
   return value;
 }
+export function preflightCoverage(policy, pkg, runtime, root = process.cwd()) {
+  for (const [key, version] of Object.entries({ node: "24.21.0", vitest: "5.0.2" })) {
+    const actual = key === "node" ? runtime.node : pkg.devDependencies?.vitest;
+    if (policy.toolchain?.[key] !== version || actual !== version)
+      fail(`${key} toolchain mismatch`);
+  }
+  if (pkg.packageManager !== "npm@11.19.0" || runtime.npm !== "11.19.0")
+    fail("npm toolchain mismatch");
+  const files = object(policy.files, "expected files");
+  if (!Object.keys(files).length) fail("expected files empty");
+  for (const [file, review] of Object.entries(files)) {
+    if (!/^[a-f0-9]{64}$/.test(review?.sha256)) fail(`${file} expected hash invalid`);
+    if (
+      createHash("sha256")
+        .update(fs.readFileSync(path.join(root, file)))
+        .digest("hex") !== review.sha256
+    )
+      fail(`${file} source hash differs`);
+  }
+  return { files: Object.keys(files).length };
+}
+
+export function preflightBrowserEnvironment(env = process.env) {
+  if (env.SCHEDULER_DISABLED === "1")
+    fail("inherited SCHEDULER_DISABLED=1 disables private fixture polling");
+  if (env.PW_REUSE_SERVER === "1")
+    fail("browser acceptance requires an independently started server");
+  const port = env.PORT ?? "43173";
+  const url = new URL(env.BASE_URL ?? `http://localhost:${port}`);
+  if (url.port !== port) fail("BASE_URL and PORT must match");
+}
+
 export function verifyCoverage(expected, observed) {
   if (!expected?.candidate || observed?.candidate !== expected.candidate)
     fail("candidate identity missing or stale");
@@ -78,11 +111,13 @@ export function verifyCoverage(expected, observed) {
   }
   return { files: fileNames.length, sums };
 }
-export function fromV8Coverage(raw, policy, root = process.cwd()) {
+export function fromV8Coverage(raw, policy, root = process.cwd(), sourceRoot = root) {
   const files = {};
   const rawFiles = object(raw, "raw V8 report");
   const rawNames = Object.keys(rawFiles)
-    .map((file) => path.relative(root, path.resolve(root, file)).replaceAll(path.sep, "/"))
+    .map((file) =>
+      path.relative(sourceRoot, path.resolve(sourceRoot, file)).replaceAll(path.sep, "/")
+    )
     .sort();
   const declarations = Object.keys(policy.files).filter((file) => policy.files[file].declaration);
   if (declarations.some((file) => !file.endsWith(".d.ts"))) fail("invalid declaration file policy");
@@ -100,7 +135,7 @@ export function fromV8Coverage(raw, policy, root = process.cwd()) {
       };
       continue;
     }
-    const item = rawFiles[absolute] ?? rawFiles[file];
+    const item = rawFiles[path.resolve(sourceRoot, file)] ?? rawFiles[file];
     if (!item || !item.s || !item.f || !item.b || !item.statementMap)
       fail(`${file} absent from raw V8 report`);
     const values = (array) => Object.values(array).flat();
@@ -129,28 +164,50 @@ export function fromV8Coverage(raw, policy, root = process.cwd()) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     const args = process.argv.slice(2);
-    if (
-      args.length !== 6 ||
-      args[0] !== "--expected" ||
-      args[2] !== "--coverage-final" ||
-      args[4] !== "--candidate"
-    )
-      fail(
-        "usage: --expected reviewed.json --coverage-final coverage-final.json --candidate P1-ID"
+    if (["--preflight", "--preflight-browser"].includes(args[0])) {
+      if (args.length !== 5 || args[1] !== "--expected" || args[3] !== "--candidate")
+        fail("usage: --preflight[-browser] --expected reviewed.json --candidate P1-ID");
+      const candidate = requireCandidate(args[4]);
+      const policy = JSON.parse(fs.readFileSync(args[2], "utf8")).coveragePolicy;
+      const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+      const npm = execFileSync("npm", ["--version"], { encoding: "utf8" }).trim();
+      const result = preflightCoverage(policy, pkg, { node: process.versions.node, npm });
+      if (args[0] === "--preflight-browser") {
+        preflightBrowserEnvironment();
+        const stamp = JSON.parse(fs.readFileSync(".quality/candidate.json", "utf8"));
+        if (stamp.candidate !== candidate || !Number.isSafeInteger(stamp.startedAt))
+          fail("raw run candidate stamp missing or stale");
+      }
+      console.log(
+        JSON.stringify({ candidate, ...result, toolchain: { node: process.versions.node, npm } })
       );
-    const candidate = requireCandidate(args[5]);
-    const expected = { ...JSON.parse(fs.readFileSync(args[1], "utf8")).coveragePolicy, candidate };
-    const stamp = JSON.parse(fs.readFileSync(".quality/candidate.json", "utf8"));
-    if (stamp.candidate !== candidate || fs.statSync(args[3]).mtimeMs < stamp.startedAt)
-      fail("coverage artifact predates or differs from candidate run");
-    const raw = JSON.parse(fs.readFileSync(args[3], "utf8"));
-    const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
-    const observed = {
-      candidate,
-      toolchain: { node: process.versions.node, vitest: pkg.devDependencies.vitest },
-      files: fromV8Coverage(raw, expected),
-    };
-    console.log(JSON.stringify(verifyCoverage(expected, observed)));
+    } else {
+      if (
+        args.length !== 6 ||
+        args[0] !== "--expected" ||
+        args[2] !== "--coverage-final" ||
+        args[4] !== "--candidate"
+      )
+        fail(
+          "usage: --expected reviewed.json --coverage-final coverage-final.json --candidate P1-ID"
+        );
+      const candidate = requireCandidate(args[5]);
+      const expected = {
+        ...JSON.parse(fs.readFileSync(args[1], "utf8")).coveragePolicy,
+        candidate,
+      };
+      const stamp = JSON.parse(fs.readFileSync(".quality/candidate.json", "utf8"));
+      if (stamp.candidate !== candidate || fs.statSync(args[3]).mtimeMs < stamp.startedAt)
+        fail("coverage artifact predates or differs from candidate run");
+      const raw = JSON.parse(fs.readFileSync(args[3], "utf8"));
+      const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+      const observed = {
+        candidate,
+        toolchain: { node: process.versions.node, vitest: pkg.devDependencies.vitest },
+        files: fromV8Coverage(raw, expected, process.cwd(), stamp.sourceRoot ?? process.cwd()),
+      };
+      console.log(JSON.stringify(verifyCoverage(expected, observed)));
+    }
   } catch (error) {
     console.error(error.message);
     process.exitCode = 1;

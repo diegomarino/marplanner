@@ -94,7 +94,7 @@ function mockFetchFor(briefing: Briefing) {
   });
 }
 
-describe("DailyBriefingView weather block (T012)", () => {
+describe("DailyBriefingView weather block", () => {
   beforeEach(() => {
     currentSettings.timezone = "Europe/Madrid";
     currentSettings.language = "es";

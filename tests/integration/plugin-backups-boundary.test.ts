@@ -53,7 +53,7 @@ function seedMember(id: string, displayName: string): void {
     .run(id, displayName, now, now);
 }
 
-describe("Backups plugin boundary (Slice 026 T013, FR-019)", () => {
+describe("Backups plugin boundary", () => {
   useIsolatedDb({ pluginState: "inactive" });
 
   afterEach(async () => {

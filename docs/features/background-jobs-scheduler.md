@@ -5,7 +5,7 @@ Behavior reference. The [owning contract](../architecture/contracts/background-j
 Background Jobs / Scheduler is a thin **core scheduler primitive**: it owns the lifecycle of
 recurring/startup/manual server-side work — when a job fires, the concurrency guard around it, and
 the catch-up rules — but it owns **no job content**. Each feature/plugin provides its own retry-safe
-domain action; the scheduler never holds domain status or job content of its own. marplanner v2 is a
+domain action; the scheduler never holds domain status or job content of its own. marplanner is a
 single self-hosted instance, so concurrency is an in-process in-flight guard, not a deployment-wide
 lease.
 

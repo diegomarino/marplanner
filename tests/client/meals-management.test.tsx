@@ -510,7 +510,7 @@ describe("MealsManagement — RecipeCard edit-mode controls carry visible, assoc
   });
 });
 
-describe("MealsManagement — the four T012-orphaned controls carry real accessible names (#771)", () => {
+describe("MealsManagement — the four -orphaned controls carry real accessible names (#771)", () => {
   it("names the one-off, plan-rename, plan-entry and recurring recipe/name controls", async () => {
     mockBackend();
     renderSurface();
@@ -542,7 +542,7 @@ describe("MealsManagement — the four T012-orphaned controls carry real accessi
   });
 });
 
-describe("MealsManagement — adopts the AdminPanel L2 frame (M20, independent review on PR #760; heading half retrofitted by T012c)", () => {
+describe("MealsManagement — adopts the AdminPanel L2 frame (M20, independent review on PR #760; heading half retrofitted by c)", () => {
   it("wraps the surface in a landmark region labelled by its own title, with a heading of the same name", async () => {
     mockBackend();
     renderSurface();

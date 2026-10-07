@@ -33,7 +33,7 @@ describe("calendar feed synchronization migration", () => {
   });
 
   function migrateCalendarFeedSync(): void {
-    expect(fs.existsSync(CALENDAR_MIGRATION), "T002 migration must exist").toBe(true);
+    expect(fs.existsSync(CALENDAR_MIGRATION), "migration must exist").toBe(true);
     fs.copyFileSync(CALENDAR_MIGRATION, path.join(migrationsDir, "0001_calendar_feed_sync.sql"));
     runMigrations(migrationsDir);
   }

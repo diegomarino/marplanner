@@ -6,7 +6,7 @@ Decision date: 2026-06-28
 
 ## Decision
 
-v2 replaces the single deployment API key with **multiple named API keys**, each with capability scopes and a managed lifecycle. This narrows `ADR-007`: a valid API key no longer implies full access — it authorizes exactly its granted capabilities.
+The system replaces the single deployment API key with **multiple named API keys**, each with capability scopes and a managed lifecycle. This narrows `ADR-007`: a valid API key no longer implies full access — it authorizes exactly its granted capabilities.
 
 ### Capability model
 
@@ -76,7 +76,7 @@ Peer review (codex blind-debate, 2026-06-28) confirmed the per-domain `read/writ
 
 ## Data / Setup Implications
 
-- Fresh v2 setup creates one bootstrap `*` key (the deployment secret). The first kiosk connect provisions a device key from it.
+- Fresh setup creates one bootstrap `*` key (the deployment secret). The first kiosk connect provisions a device key from it.
 - No legacy keys/sessions are migrated (`ADR-026`).
 - Backup/restore must preserve key records (hashes, scopes, lifecycle). After restore, revoked keys stay revoked and the anti-lockout invariant still holds. (Detailed restore behavior continues under `ADR-017`.)
 
@@ -98,5 +98,5 @@ Peer review (codex blind-debate, 2026-06-28) confirmed the per-domain `read/writ
 ## Traceability
 
 - Conflicts: `CR-007`, `CR-013`
-- Pre-v2: `ADR-007` (narrowed), `ADR-013`
+- Related prior: `ADR-007` (narrowed), `ADR-013`
 - Peer review: codex-peer-review blind-debate (2026-06-28) — model altitude validated; XSS key-exfiltration, fail-open default, and cookie-revocation tension resolved.

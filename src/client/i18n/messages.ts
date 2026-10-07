@@ -22,8 +22,7 @@ export const messages = {
     "shell.notFound.title": "Page not found",
     "shell.notFound.description": "Use the household navigation to open a page.",
     "members.management.title": "Members Management",
-    "members.management.description":
-      "Member listing — thin UI for slice-002 assembly verification.",
+    "members.management.description": "Member listing — thin UI for assembly verification.",
     "members.management.refresh": "Refresh Members",
     "members.management.refreshing": "Loading…",
     "members.management.updating": "Updating…",
@@ -1060,6 +1059,9 @@ export const messages = {
     "provisioning.gate.submit": "Provision Device",
     "provisioning.gate.submitting": "Provisioning…",
     "provisioning.gate.error": "Provisioning failed. Check the bootstrap key and try again.",
+    "provisioning.gate.throttled": "Too many failed attempts. Wait before trying again.",
+    "provisioning.gate.retryAfter":
+      "Too many failed attempts. Wait at least {seconds} seconds before trying again.",
 
     // FR-002/FR-002a — the per-device kiosk-density control
     // (`src/client/shell/DensityControl.tsx`), shell chrome mounted alongside the printer
@@ -1095,7 +1097,7 @@ export const messages = {
     "shell.notFound.description": "Usa la navegación del hogar para abrir una página.",
     "members.management.title": "Gestión de Miembros",
     "members.management.description":
-      "Lista de miembros — UI minimal para verificación de assembly slice-002.",
+      "Lista de miembros — UI minimal para verificación de assembly.",
     "members.management.refresh": "Actualizar Miembros",
     "members.management.refreshing": "Cargando…",
     "members.management.error": "Error al cargar miembros.",
@@ -2110,6 +2112,10 @@ export const messages = {
     "provisioning.gate.submitting": "Aprovisionando…",
     "provisioning.gate.error":
       "No se pudo aprovisionar. Comprueba la clave de arranque e inténtalo de nuevo.",
+    "provisioning.gate.throttled":
+      "Demasiados intentos fallidos. Espera antes de volver a intentarlo.",
+    "provisioning.gate.retryAfter":
+      "Demasiados intentos fallidos. Espera al menos {seconds} segundos antes de volver a intentarlo.",
 
     // See the en block's comment for behavior details.
     "shell.density.accessibleName": "Modo kiosco",

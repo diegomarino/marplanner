@@ -18,7 +18,7 @@ function flushMicrotasks(): Promise<void> {
  * `printing.failed {jobId, outputRef, errorCode}`. and daily-briefing subscribe to
  * these exact names — this test pins the closed payload shape so neither drifts.
  */
-describe("printing events — T001 (RED-first)", () => {
+describe("printing events — (RED-first)", () => {
   // -----------------------------------------------------------------
   // Type-level: the payload shape is closed at compile time (tsc -b via
   // npm run typecheck — NOT a runtime assertion). If a directive below stops

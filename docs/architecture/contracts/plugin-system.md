@@ -21,7 +21,7 @@ future third-party plugins ("declare-now, enforce-later").
   active.
 - **Catalog plane** — listable plugin metadata (`GET /plugins`).
 - **Data plane** — configured settings values incl. secrets (`GET /settings`).
-- **Trust tier** — official vs unofficial; cosmetic in v2.
+- **Trust tier** — official vs unofficial; cosmetic in this system.
 - States: `active`, `inactive`, `errored`.
 
 ## Invariants
@@ -43,7 +43,7 @@ future third-party plugins ("declare-now, enforce-later").
    interfaces — never hard wiring (no dependency resolver, no activation-order
    locks, no cross-namespace references).
 8. **PLUGIN-SYSTEM-INV-08** A throwing plugin is contained (`errored`) without bringing down the host or
-   sibling plugins. Resource exhaustion (OOM/CPU) is **not** contained in v2.
+   sibling plugins. Resource exhaustion (OOM/CPU) is **not** contained in this system.
 9. **PLUGIN-SYSTEM-INV-09** A plugin reads **operator/deploy secrets only via the read-only host
    operator-config interface** (`host.getOperatorConfig('<ns>.<key>')` → reserved
    env keys); it never reads `process.env` directly or writes the host
@@ -83,7 +83,7 @@ future third-party plugins ("declare-now, enforce-later").
 ## Events
 
 (ADR-040 / ADR-050.) **The Plugin System domain** itself **emits: none, subscribes: none**
-(for v2) — but it **owns the manifest where each plugin declares the events it emits and
+(for this system) — but it **owns the manifest where each plugin declares the events it emits and
 subscribes to** (`ADR-050`): namespaced by plugin ID, build-validated, dropped on
 uninstall; emitting/subscribing an undeclared name (or under another namespace) is a build
 error. So plugins _may_ participate in the bus via declared events; the lifecycle of the
@@ -101,10 +101,10 @@ uses orchestration + registry + absence-tolerance instead (declare-now, enforce-
 
 ## Data / Setup Contract
 
-Fresh v2: a core-owned `active_plugins` registry; each plugin ships id-prefixed
+Fresh deployment: a core-owned `active_plugins` registry; each plugin ships id-prefixed
 tables + its own migrations. All plugins seed **inactive**; the owner activates
 and configures each. No legacy import (`ADR-026`). No registry/signing/loader
-infrastructure in v2. Clean uninstall = drop the plugin's namespaced tables.
+infrastructure in this system. Clean uninstall = drop the plugin's namespaced tables.
 
 ## Acceptance Criteria
 

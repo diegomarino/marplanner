@@ -75,9 +75,9 @@ accepted issues.** Confirmed: does **not** undermine `ADR-040`'s "absent subscri
 graceful degradation" (the catalog gates names/types, not subscriber count; zero-subscriber
 events stay valid); typed payload is **proportionate** for a TS monorepo (same cost as
 name-only, catches drift too); no hard-coupling from drop-on-uninstall because `ADR-039`
-keeps install/uninstall dormant in v2 (all plugins in-tree at build/boot).
+keeps install/uninstall dormant in this system (all plugins in-tree at build/boot).
 
 ## Traceability
 
-- Pre-v2: refines `ADR-040`.
+- Related prior: refines `ADR-040`.
 - Related: `ADR-039` (plugin manifest/namespacing), `ADR-015` (registry-as-gate pattern)

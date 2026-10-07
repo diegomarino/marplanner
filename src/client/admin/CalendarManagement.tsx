@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+import { NATIVE_SELECT_CLASSES } from "@/lib/recipes";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { ExternalSourceProvider, ExternalSourcePublic, HighlightRule } from "../../shared";
 import {
@@ -313,7 +315,7 @@ export function CalendarManagement() {
               <Label htmlFor="calendar-source-provider">{t("calendar.admin.provider")}</Label>
               <select
                 id="calendar-source-provider"
-                className="w-full rounded-md border bg-background p-2"
+                className={cn(NATIVE_SELECT_CLASSES, "w-full bg-background")}
                 value={provider}
                 onChange={(event) => setProvider(event.target.value as ExternalSourceProvider)}
               >

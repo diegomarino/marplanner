@@ -1,38 +1,11 @@
 #!/usr/bin/env node
-// count-ui-debt.mjs — committed counting method for the four zero-target criteria
-// (SC-004..SC-007). This is the ONLY authority for these numbers: if a count
-// disagrees with the recorded baseline on an unchanged tree, the METHOD moved — that is a defect
-// in this script, never progress, and the baseline is not to be edited to match a new output
+// Measurement and ESLint enforcement share debtFindings below. Product client TS/TSX only;
+// test files are excluded. AST nodes exclude comments and property names, understand hoisted
+// style props, and permit semantic token-only colour composition. Translation copy is exempt
+// only in src/client/i18n/messages.ts. All other named colours are case-insensitive.
+// Counts include narrowly justified style forwarding: suppression is permission, not deletion.
+// Translation casts retain their historical comment-stripped lexical counter.
 
-//
-// Scope: `src/client/* /*.{ts,tsx}` — PRODUCT CLIENT CODE ONLY. Test files (`*.test.*`,
-// `*.spec.*`, anything under a `__tests__/` directory), tooling scripts and any generated output
-// are excluded, because the same literal (a colour, a raw scale class, an inline style, a
-// `MessageKey` cast) can be legitimate there — this mirrors the client audit file set.
-//
-// Four counters, ALL measured against COMMENT-STRIPPED source:
-// A change that documents removed debt in a provenance comment (e.g. "the following raw
-// scale classes were removed — bg-slate-100,...") must not have that documentation counted as
-// live debt. Comments are stripped with the TypeScript compiler's own tokenizer (see "Comment
-// stripping" below), not a hand-rolled string-state scanner — a hand-rolled scanner that treats
-// every `"`/`'`/backtick as a string delimiter mis-parses regex literals (e.g. `/"/g`), which
-// flips string/code parity for the rest of the file and can silently DELETE real code from the
-// counted text — the false-green direction: the counter reads
-// lower than the truth).
-//
-// 1. Raw Tailwind scale classes (SC-004) — e.g. `bg-slate-500`.
-// 2. Inline `style={{` attributes (SC-005).
-// 3. Colour literals (SC-006) — hex/rgb/hsl/oklch/oklab/hwb/lab/lch/color/color-mix
-// (every modern CSS colour function, not just the original four) AND the full set of
-// CSS named colours, matched inside double-quoted, single-quoted OR backtick-delimited
-// strings (M1/M2 — the previous 17-name, double-quote-only list evaded `'teal'`,
-// `` `crimson` ``, etc.). Named-colour matching is deliberately still case-SENSITIVE — see
-// the note above `COLOUR_RE` for why case-insensitive matching was held back.
-// The naive `#[0-9a-fA-F]{3,8}` pattern also counted numbered references
-// in comments as colors. It also missed 19 real colours expressed as CSS named colours
-// (`color: "crimson"` x14, plus "white"/"green"/"transparent").
-// 4. `as MessageKey` casts (SC-007).
-//
 // Baselines — DO NOT edit these to match a disagreeing run; a disagreement means this script regressed:
 const BASELINES = {
   scaleClasses: 244,
@@ -42,6 +15,7 @@ const BASELINES = {
 };
 
 import ts from "typescript";
+import tsEslint from "typescript-eslint";
 import { readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -159,8 +133,6 @@ export function stripComments(src, fileName = "file.tsx") {
 
 const SCALE_CLASS_RE =
   /\b(bg|text|border|ring|from|to|via|fill|stroke|divide|outline|shadow|accent|caret|decoration|placeholder)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-[0-9]{2,3}\b/g;
-
-const INLINE_STYLE_RE = /style=\{\{/g;
 
 const TRANSLATION_CAST_RE = /as MessageKey/g;
 
@@ -327,58 +299,96 @@ export const NAMED_COLOURS = [
   "yellowgreen",
 ].sort((a, b) => b.length - a.length);
 
-const NAMED_COLOURS_ALTERNATION = NAMED_COLOURS.join("|");
-
-// This implementation includes the baseline-impact check because the case-insensitive option
-// would not be baseline-neutral:
-//
-// 1. Every modern CSS colour function beyond rgb/hsl/oklch — `color`, `hwb`, `lab`,
-// `lch`, `oklab` and `color-mix` are all valid, all currently unused anywhere in
-// src/client (verified: adding them alone leaves colourLiterals at 63), and all equally
-// capable of expressing the exact hardcoded colour the ratchet exists to catch. SHIPPED below.
-//
-// 2. Case-variant named keywords (`"Red"`, `"CRIMSON"`) via an `i` flag — NOT shipped.
-// The assumption that no current occurrence exists is false. Adding `i` to this regex
-// moves colourLiterals from 63 to 64, because `src/client/i18n/messages.ts:662` contains
-// `"weather.condition.snow": "Snow"` — a legitimate English translation string that is also
-// the CSS named colour "snow" once case is ignored. This is a structural hazard, not a
-// one-off: ordinary English words this list also claims as colour keywords include "Coral",
-// "Ivory", "Gold", "Silver", "Tan", "Plum", "Olive", "Wheat", "Salmon", "Turquoise" —
-// ANY of which can legitimately appear Titlecased inside a message catalogue.
-// This is left out deliberately: a count change requires inspecting and reporting the affected
-// file and line instead of silently rebaselining;
-// report the file and line evidence rather than shipping a moved baseline.
-const COLOUR_RE = new RegExp(
-  `#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(|oklab\\(|hwb\\(|(?<![\\w.-])lab\\(|(?<![\\w.-])lch\\(|(?<![\\w.-])color-mix\\(|(?<![\\w.-])color\\(|"(?:${NAMED_COLOURS_ALTERNATION})"|'(?:${NAMED_COLOURS_ALTERNATION})'|\`(?:${NAMED_COLOURS_ALTERNATION})\``,
-  "g"
-);
-
-// The four regexes above are the actual detectors. Exported so the fixture self-test
-// (tools/count-ui-debt.test.mjs) can assert directly that each one still matches its
-// known-positive case — H5: a pattern that silently stops matching (e.g. the escaped-pipe
-// alternation-collapse bug must fail loudly, not read as progress.
-export const PATTERNS = {
-  scaleClasses: SCALE_CLASS_RE,
-  inlineStyles: INLINE_STYLE_RE,
-  colourLiterals: COLOUR_RE,
-  translationCasts: TRANSLATION_CAST_RE,
-};
-
 function countMatches(re, text) {
   re.lastIndex = 0;
   const matches = text.match(re);
   return matches ? matches.length : 0;
 }
 
-// Pure core: takes source text directly (no fs), so it is unit-testable with synthetic fixtures.
+/** Walk the same ESTree nodes ESLint sees. No comments, property names or regex bodies. */
+export function debtFindings(ast, fileName = "file.tsx") {
+  const findings = [];
+  const named = new RegExp(`^(?:${NAMED_COLOURS.join("|")})$`, "i");
+  const namedInMix = new RegExp(
+    `(?:[:,_(\\s])(?:${NAMED_COLOURS.join("|")})(?=[,_)\\]\\s]|$)`,
+    "i"
+  );
+  const translations = /(?:^|\/)src\/client\/i18n\/messages\.ts$/.test(
+    fileName.replace(/\\/g, "/")
+  );
+  function report(node, kind) {
+    findings.push({ node, kind });
+  }
+  function visit(node, parent, ancestors = []) {
+    if (!node || typeof node.type !== "string") return;
+    const value =
+      (node.type === "Literal" || node.type === "JSXText") && typeof node.value === "string"
+        ? node.value
+        : node.type === "TemplateLiteral"
+          ? node.quasis.map((q) => q.value.raw).join("var(--dynamic)")
+          : null;
+    if (
+      value !== null &&
+      !(parent?.type === "Property" && parent.key === node) &&
+      !(parent?.type === "ImportDeclaration")
+    ) {
+      const withoutTokens = value.replace(/var\(--[\w-]+\)/g, "");
+      if (countMatches(SCALE_CLASS_RE, withoutTokens)) report(node, "scaleClasses");
+      const functions = /(?<![\w.-])(?:rgba?|hsla?|oklch|oklab|hwb|lab|lch|color)\(/i.test(
+        withoutTokens
+      );
+      const mix =
+        /color-mix\(/i.test(value) && (namedInMix.test(withoutTokens) || !/var\(--/.test(value));
+      const translationValue =
+        translations &&
+        parent?.type === "Property" &&
+        parent.value === node &&
+        ancestors.some((a) => a.type === "VariableDeclarator" && a.id.name === "messages");
+      if (
+        !translationValue &&
+        (/#[0-9a-f]{3,8}\b/i.test(value) ||
+          functions ||
+          mix ||
+          (/var\([^)]*,/.test(value) && namedInMix.test(value)) ||
+          (/\[[^\]]*:/.test(value) && namedInMix.test(withoutTokens)) ||
+          named.test(value) ||
+          /(?:^|[:\s])(bg|text|border|ring|fill|stroke|outline|shadow|accent|caret|decoration|placeholder|from|to|via|divide)-(white|black)(?=[/\s]|$)/i.test(
+            value
+          ))
+      )
+        report(node, "colourLiterals");
+    }
+    if (node.type === "JSXAttribute" && node.name.name === "style") report(node, "inlineStyles");
+    // A style-bearing props object is forbidden even when hoisted or spread. This also covers
+    // createElement aliases. Non-props objects named style remain a documented conservative net.
+    if (node.type === "Property" && (node.key.name ?? node.key.value) === "style")
+      report(node, "inlineStyles");
+    for (const [key, child] of Object.entries(node)) {
+      if (["parent", "loc", "range", "tokens", "comments"].includes(key)) continue;
+      if (Array.isArray(child)) child.forEach((n) => visit(n, node, [...ancestors, node]));
+      else if (child && typeof child === "object") visit(child, node, [...ancestors, node]);
+    }
+  }
+  visit(ast);
+  return findings;
+}
+
+// Pure core: lint and measurement deliberately use the same semantic AST oracle.
 export function countSource(fileName, src) {
-  const stripped = stripComments(src, fileName);
-  return {
-    scaleClasses: countMatches(SCALE_CLASS_RE, stripped),
-    inlineStyles: countMatches(INLINE_STYLE_RE, stripped),
-    colourLiterals: countMatches(COLOUR_RE, stripped),
-    translationCasts: countMatches(TRANSLATION_CAST_RE, stripped),
+  const { ast } = tsEslint.parser.parseForESLint(src, {
+    filePath: fileName,
+    jsx: true,
+    loc: true,
+    range: true,
+  });
+  const counts = {
+    scaleClasses: 0,
+    inlineStyles: 0,
+    colourLiterals: 0,
+    translationCasts: countMatches(TRANSLATION_CAST_RE, stripComments(src, fileName)),
   };
+  for (const { kind } of debtFindings(ast, fileName)) counts[kind]++;
+  return counts;
 }
 
 export function countFile(file) {

@@ -1,0 +1,87 @@
+name: Mac mini runner verification
+"on":
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      force_hosted:
+        description: Use GitHub-hosted macOS even if the Mac mini is available
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      force_hosted:
+        type: boolean
+        default: false
+      selector_only:
+        type: boolean
+        default: true
+    secrets:
+      RUNNER_READ_TOKEN:
+        required: false
+    outputs:
+      runner:
+        description: Selected native runner labels
+        value: ${{ jobs.select.outputs.runner }}
+permissions: {}
+jobs:
+  select:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      runner: ${{ steps.choose.outputs.runner }}
+    steps:
+      - id: choose
+        name: Choose an available runner
+        env:
+          RUNNER_READ_TOKEN: ${{ secrets.RUNNER_READ_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          FORCE_HOSTED: ${{ inputs.force_hosted || vars.MP_FORCE_HOSTED == 'true' }}
+          TRUSTED: ${{ !github.event.pull_request || github.event.pull_request.head.repo.full_name == github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          runner = ["macos-15"]
+          token = os.environ.get("RUNNER_READ_TOKEN", "")
+          if token and os.environ.get("TRUSTED") == "true" and os.environ.get("FORCE_HOSTED") != "true":
+              try:
+                  url = f"https://api.github.com/repos/{os.environ['REPOSITORY']}/actions/runners?name=macmini&per_page=100"
+                  request = urllib.request.Request(url, headers={
+                      "Authorization": f"Bearer {token}",
+                      "Accept": "application/vnd.github+json",
+                  })
+                  with urllib.request.urlopen(request, timeout=10) as response:
+                      runners = json.load(response)["runners"]
+                  required = {"self-hosted", "macOS", "macmini"}
+                  if any(
+                      item["name"] == "macmini"
+                      and item["status"] == "online"
+                      and item["busy"] is False
+                      and required <= {label["name"] for label in item["labels"]}
+                      for item in runners
+                  ):
+                      runner = ["self-hosted", "macOS", "macmini"]
+              except (OSError, ValueError, KeyError, TypeError):
+                  print("Runner lookup failed; using GitHub-hosted macOS.")
+          # ponytail: availability snapshot; add queue supervision if disconnect races matter.
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"runner={json.dumps(runner)}\n")
+          print(f"Selected runner: {json.dumps(runner)}")
+          PY
+  verify:
+    needs: select
+    runs-on: ${{ fromJSON(needs.select.outputs.runner) }}
+    timeout-minutes: 10
+    steps:
+      - name: Show runner environment
+        env:
+          RUNNER_NAME: ${{ runner.name }}
+        run: |
+          printf 'Runner: %s\n' "$RUNNER_NAME"
+          uname -m
+          sw_vers
+    if: ${{ !inputs.selector_only }}

@@ -33,7 +33,7 @@ import {
  * than a hand-rolled stand-in. Per the coordinator brief: if any assertion here fails, the
  * finding is reported, not silently "fixed" by editing production code from this test.
  */
-describe("network-devices negatives — T011 (assert-and-prove)", () => {
+describe("network-devices negatives — (assert-and-prove)", () => {
   useIsolatedDb();
 
   afterEach(() => {
@@ -232,7 +232,7 @@ describe("network-devices negatives — T011 (assert-and-prove)", () => {
 
   // ── 2: MAC-bearing telemetry entry through the REAL writer emerges redacted ─────────────────
 
-  it("a MAC-bearing telemetry entry through the REAL writeClientLog pipeline emerges redacted (slice-013's patterns, not rebuilt)", () => {
+  it("a MAC-bearing telemetry entry through the REAL writeClientLog pipeline emerges redacted ('s patterns, not rebuilt)", () => {
     const rawMac = "AA:BB:CC:DD:EE:01";
     const result = writeClientLog("negatives-test-key", [
       {

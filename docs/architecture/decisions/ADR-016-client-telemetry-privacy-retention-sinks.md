@@ -241,6 +241,6 @@ read-side DoS bound + the honest kiosk-`*`/PIN-is-client-side authz caveat.
 
 ## Traceability
 
-- Pre-v2: `ADR-016`.
+- Related prior: `ADR-016`.
 - Related: `ADR-014`, `ADR-015`, `ADR-019`, `ADR-026`, `ADR-030`, `ADR-032`, `ADR-035`,
   `ADR-037`, `ADR-040`

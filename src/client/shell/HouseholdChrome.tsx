@@ -1,3 +1,5 @@
+import { appUrl } from "@/lib/base-path";
+import { isAdminPinBypassEnabled } from "@/lib/adminUnlock";
 import {
   useCallback,
   useEffect,
@@ -15,7 +17,6 @@ import { useT } from "@/i18n";
 import { PrinterAttention } from "@/printing/PrinterAttention";
 import { PluginHealthIndicator } from "@/plugins/PluginHealthIndicator";
 import { PluginContribution, usePluginActive } from "@/plugins/contributions";
-import { DensityControl } from "./DensityControl";
 import { familyRoutes, navigateHousehold } from "./routes";
 
 const ADMIN_HOLD_MS = 3_000;
@@ -86,7 +87,7 @@ function HouseholdChromeContent({
     keyboardHoldingRef.current = false;
     setAdminHolding(false);
     setOptionsOpen(false);
-    window.history.pushState({ marplannerAdminReturnPath: currentPath }, "", "/admin");
+    window.history.pushState({ marplannerAdminReturnPath: currentPath }, "", appUrl("/admin"));
     window.dispatchEvent(new PopStateEvent("popstate"));
   }, [currentPath]);
 
@@ -98,6 +99,12 @@ function HouseholdChromeContent({
 
   const startAdminHold = useCallback(() => {
     if (adminHoldTimerRef.current) return;
+    // Dev-only local bypass already unlocks the PIN gate; keep the affordance path
+    // frictionless so local work does not wait the deliberate kiosk hold.
+    if (isAdminPinBypassEnabled()) {
+      openAdmin();
+      return;
+    }
     setAdminHolding(true);
     adminHoldTimerRef.current = setTimeout(openAdmin, ADMIN_HOLD_MS);
   }, [openAdmin]);
@@ -139,7 +146,7 @@ function HouseholdChromeContent({
               .map((route) => (
                 <Button key={route.id} variant="ghost" size="sm" asChild>
                   <a
-                    href={route.path}
+                    href={appUrl(route.path)}
                     aria-current={currentPath === route.path ? "page" : undefined}
                     className="aria-[current=page]:bg-muted aria-[current=page]:font-semibold"
                     onClick={(event) => {
@@ -202,7 +209,9 @@ function HouseholdChromeContent({
                     }
                   }}
                 >
-                  <DensityControl />
+                  {/* TODO(density): revert — remount `<DensityControl />` here and flip
+                      density-control-shell-mount + shell Options assertions back to "exposed".
+                      Pair with main.tsx boot: restore `applyStoredDensity()` instead of forced comfortable. */}
                   <Button
                     type="button"
                     variant="outline"

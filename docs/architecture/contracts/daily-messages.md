@@ -68,7 +68,7 @@ Daily Briefing at generation. No auto-regen signal (snapshot model, `ADR-022`).
 
 Owned: `daily_messages` (id, member_id, date, text, created_at, updated_at), unique
 `(member_id, date)`. No owned settings (block enable/order/schedule belong to Daily
-Briefing, `ADR-008`). Fresh v2 (`ADR-026`); 4 prod rows (active children, single date)
+Briefing, `ADR-008`). Fresh deployment (`ADR-026`); 4 prod rows (active children, single date)
 are evidence only.
 
 ## Acceptance Criteria

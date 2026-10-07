@@ -18,6 +18,7 @@ import { useTranslation } from "@/i18n";
 import { DAY_PERIOD_LABEL_KEYS } from "@/lib/day-period-labels";
 import { ChoreOrderControls } from "./ChoreOrderControls";
 import { EmojiPicker } from "@/chores/EmojiPicker";
+import { NotoEmoji } from "@/chores/noto-emoji";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -583,9 +584,7 @@ function RoutineCard({
                 ) : (
                   <>
                     <span className="flex items-center gap-2">
-                      <span aria-hidden="true" className="text-xl">
-                        {chore.icon ?? "📋"}
-                      </span>
+                      <NotoEmoji emoji={chore.icon ?? "📋"} size={20} className="text-xl" />
                       {chore.name}
                     </span>
                     <div className="flex gap-2">

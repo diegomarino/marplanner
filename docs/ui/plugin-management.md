@@ -84,7 +84,6 @@ Fixtures use frozen timestamps and synthetic safe codes. They contain no copied 
 ## Human visual acceptance after implementation
 
 **Owner**: maintainer, assisted by the implementing coordinator.  
-**Timing**: after automated Slice 026 checks pass and before slice closure.  
-**Evidence:** record desktop and narrow screenshots with the exact tested revision, state and outcome. Keep transient browser output out of the product tree.
+**Timing**: after automated checks pass and before slice closure. **Evidence:** record desktop and narrow screenshots with the exact tested revision, state and outcome. Keep transient browser output out of the product tree.
 
 The human review must inspect a running build at narrow and wide viewports for fresh, prior-baseline, busy drain, errored, and inactive direct-route states. It must exercise keyboard order, focus retention, live announcements, safe error text, contribution disappearance, and unrelated-plugin continuity. The evidence records viewport, fixture, build SHA, reviewer, decision, and any follow-up. Screenshot generation alone is not acceptance.

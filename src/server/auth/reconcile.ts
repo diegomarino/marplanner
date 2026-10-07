@@ -33,16 +33,12 @@ export function reconcileBootstrap(): void {
     { id: string; expires_at: number | null; revoked_at: number | null } | undefined;
 
   if (existing) {
-    // "Active" mirrors boundary.ts's FR-004 predicate: not revoked AND not expired. A row that
-    // exists but is revoked OR past its expires_at is NOT honored by the auth boundary, so treating
-    // it as "already reconciled" would leave the deployment unable to provision even with
-    // MP_BOOTSTRAP_KEY set (e.g. after a restore or a manual expiry).
+    // "Active" mirrors boundary.ts / provision.ts: not revoked AND not expired.
+    // Contract: expiry at the current instant is inactive. Boundary rejects
+    // `expires_at <= now`; active here is therefore `expires_at === null || expires_at > now`.
     const now = Date.now();
     const isActive =
-      existing.revoked_at === null &&
-      // `>= now` (not `> now`) so `expires_at === now` counts as active, textually matching
-      // boundary.ts FR-004 (rejects only `expires_at < now`) — the three predicates stay identical.
-      (existing.expires_at === null || existing.expires_at >= now);
+      existing.revoked_at === null && (existing.expires_at === null || existing.expires_at > now);
     if (!isActive) {
       // ADR-032 §2 (Rules 2 and 4): config value set + no ACTIVE matching key ⇒ re-establish.
       // Clear BOTH predicates so a revoked or expired row becomes usable again (bootstrap rows are
@@ -104,11 +100,11 @@ export function reconcileManagement(): void {
     { id: string; expires_at: number | null; revoked_at: number | null } | undefined;
 
   if (existing) {
-    // Same "active" predicate as reconcileBootstrap above (FR-004 mirrored): not revoked
-    // AND not expired.
+    // Same "active" predicate as reconcileBootstrap above: not revoked AND not expired
+    // (`expires_at === now` is inactive, matching boundary/provision).
     const now = Date.now();
     const isActive =
-      existing.revoked_at === null && (existing.expires_at === null || existing.expires_at >= now);
+      existing.revoked_at === null && (existing.expires_at === null || existing.expires_at > now);
     // DELIBERATE DIVERGENCE from reconcileBootstrap above: bootstrap re-establishes an
     // inactive row on every boot (ADR-032 §2 Rule 2/4 explicitly contemplates this — losing
     // the bootstrap key locks the whole deployment out of first-device provisioning, which

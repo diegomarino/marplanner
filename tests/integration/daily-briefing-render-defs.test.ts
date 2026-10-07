@@ -173,7 +173,7 @@ const HEIGHT_FLOORS: Record<string, number> = {
   wordOfDay: 420, // 467 * 0.9
 };
 
-describe("daily-briefing render-defs (T017) — per-type render through the real bridge", () => {
+describe("daily-briefing render-defs — per-type render through the real bridge", () => {
   it.each(ALL_TYPES)(
     'type "%s" renders: raster produced, absent from unrendered AND failed lists',
     async (type) => {
@@ -382,7 +382,7 @@ describe("daily-briefing render-defs (T017) — per-type render through the real
     });
   });
 
-  describe("T017 DoD: a full generation across all registered types drains unrendered_blocks to []", () => {
+  describe("DoD: a full generation across all registered types drains unrendered_blocks to []", () => {
     it("all 21 types in one envelope render with zero unrendered and zero failed, raster at least as tall as its tallest constituent", async () => {
       const full = await renderBriefingBitmap(envelopeFor(ALL_TYPES));
       expect(full.bitmapPng).not.toBeNull();

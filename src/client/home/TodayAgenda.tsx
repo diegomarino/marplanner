@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/base-path";
 import { useEffect, useId, useState } from "react";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { Button } from "@/components/ui/button";
@@ -163,7 +164,7 @@ export function TodayAgenda(): React.JSX.Element {
   return (
     <section
       aria-labelledby={headingId}
-      className="bg-card flex h-full min-h-0 flex-col rounded-3xl border p-5 text-[length:var(--control-font-size)] shadow-sm"
+      className="bg-card flex h-full min-h-0 flex-col rounded-3xl border p-5 text-control shadow-sm"
     >
       <header className="flex shrink-0 items-start justify-between gap-4 border-b pb-4">
         <div className="min-w-0">
@@ -174,7 +175,7 @@ export function TodayAgenda(): React.JSX.Element {
         </div>
         <a
           className="shrink-0 text-sm font-semibold underline-offset-4 hover:underline"
-          href="/calendar"
+          href={appUrl("/calendar")}
         >
           {t("calendar.title")}
         </a>
@@ -216,7 +217,7 @@ export function TodayAgenda(): React.JSX.Element {
                   (item.temporalState === "in-progress" || item.temporalState === "next") &&
                     "font-semibold ring-1 ring-foreground"
                 )}
-                // eslint-disable-next-line no-restricted-syntax -- Assigned-member identity is passed through CSS custom properties into the token-based event surface.
+                // eslint-disable-next-line ui-policy/debt -- Assigned-member identity is passed through CSS custom properties into the token-based event surface.
                 style={memberEventStyle(item.activeAssignees.map((member) => member.colorKey))}
               >
                 <div className="grid min-w-0 grid-cols-[4.25rem_minmax(0,1fr)] items-start gap-3">

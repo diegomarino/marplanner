@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { getDb } from "../../src/server/db/client";
 import { useIsolatedDb } from "../helpers/db";
 
-describe("member-label (T012 — RED unit tests)", () => {
+describe("member-label (RED unit tests)", () => {
   useIsolatedDb();
 
   const createMember = (

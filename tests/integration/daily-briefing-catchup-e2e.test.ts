@@ -212,7 +212,7 @@ async function startBuiltEntrypoint(
   }
 }
 
-describe("daily-briefing catch-up — built-bundle process boot (T006)", () => {
+describe("daily-briefing catch-up — built-bundle process boot", () => {
   let activeChild: ChildProcess | null = null;
   let activeDataDir: string | null = null;
 

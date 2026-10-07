@@ -5,7 +5,7 @@ import { getOperatorConfig } from "../../src/server/host-api";
  * PLUGIN-SYSTEM-INV-09). Set/unset env behavior, absent-safety for unrecognized keys, and
  * the never-log guarantee (a resolved value must never reach console output).
  */
-describe("getOperatorConfig (T003)", () => {
+describe("getOperatorConfig", () => {
   const ORIGINAL_ENDPOINT = process.env.WEATHER_ENDPOINT;
   const ORIGINAL_ENABLED = process.env.WEATHER_ENABLED;
 

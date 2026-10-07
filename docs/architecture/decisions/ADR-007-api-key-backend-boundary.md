@@ -6,9 +6,9 @@ Decision date: 2026-06-27
 
 ## Decision
 
-The API key boundary is the sole backend authorization boundary for all settings reads, settings writes, and all other feature operations in v2. The PIN is a UI-layer gate only — its purpose is to prevent casual or accidental access to admin UI screens. PIN state must never be evaluated by the backend as a required condition for any API endpoint.
+The API key boundary is the sole backend authorization boundary for all settings reads, settings writes, and all other feature operations. The PIN is a UI-layer gate only — its purpose is to prevent casual or accidental access to admin UI screens. PIN state must never be evaluated by the backend as a required condition for any API endpoint.
 
-> **Narrowed by `ADR-030` (2026-06-28):** "a valid API key authorizes everything" was true under the original single-key model. v2 now uses multiple scoped keys: a `*` key authorizes everything, but a scoped key authorizes only its granted `domain:verb` capabilities. The boundary is still "the API key" — what changed is that a key's authority is bounded by its scopes. PIN-is-UI-only is unaffected.
+> **Narrowed by `ADR-030` (2026-06-28):** "a valid API key authorizes everything" was true under the original single-key model. The system now uses multiple scoped keys: a `*` key authorizes everything, but a scoped key authorizes only its granted `domain:verb` capabilities. The boundary is still "the API key" — what changed is that a key's authority is bounded by its scopes. PIN-is-UI-only is unaffected.
 
 `/health` (or equivalent liveness/readiness probes) may be exempt from API key requirement, as they serve infrastructure monitoring rather than household data.
 
@@ -36,7 +36,7 @@ The PIN lifecycle (setup-pin, verify-pin endpoint existence, admin session creat
 
 ## Data / Setup Implications
 
-Fresh v2 setup defines one API key for the household deployment. No PIN rows, no PIN session rows, and no session-token tables are required by the backend API layer. The PIN and any frontend session token it produces are opaque to the backend.
+Fresh setup defines one API key for the household deployment. No PIN rows, no PIN session rows, and no session-token tables are required by the backend API layer. The PIN and any frontend session token it produces are opaque to the backend.
 
 ## Acceptance Criteria
 
@@ -53,4 +53,4 @@ Fresh v2 setup defines one API key for the household deployment. No PIN rows, no
 ## Traceability
 
 - Conflicts: `CR-007`, `CR-022`
-- Pre-v2: `ADR-007`, `ADR-013`
+- Related prior: `ADR-007`, `ADR-013`

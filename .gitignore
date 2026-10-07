@@ -1,11 +1,20 @@
 # Dependencies & build output
-node_modules/
+node_modules
 dist/
 build/
 coverage/
 test-results/
 .quality/
 *.tsbuildinfo
+
+# Noto Emoji download cache (tools/dev/generate-noto-emojis.mjs) — the vendored SVGs
+# under src/client/chores/noto/ are committed; this raw upstream cache is not.
+tools/dev/.noto-emoji-cache/
+
+# Per-worktree development storage
+.data/
+.data-fresh/
+
 
 # SQLite — local data store (PV2-055), never committed
 *.db

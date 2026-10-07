@@ -12,7 +12,7 @@ import { useIsolatedDb } from "../helpers/db";
  * - Unknown id → 404 (both DELETE and PATCH).
  */
 
-describe("calendar-mutate (T012 — RED by design, T013 turns green)", () => {
+describe("calendar-mutate (RED by design, turns green)", () => {
   useIsolatedDb();
 
   beforeEach(() => {
@@ -70,6 +70,178 @@ describe("calendar-mutate (T012 — RED by design, T013 turns green)", () => {
       )
       .run(`${eventId}-${memberId}-assign`, eventId, memberId, now);
   }
+
+  it("rejects malformed create and partial-edit fields without changing stored state", async () => {
+    const deviceKey = insertDevice();
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    const cookies = { mp_device_key: deviceKey };
+    const valid = {
+      title: "Original",
+      allDay: true,
+      startDate: "2026-07-15",
+      endDate: "2026-07-16",
+    };
+    try {
+      const created = await app.inject({
+        method: "POST",
+        url: "/api/calendar/events",
+        cookies,
+        payload: valid,
+      });
+      expect(created.statusCode).toBe(201);
+      const id = created.json().id;
+      const before = getDb().prepare("SELECT * FROM calendar_events WHERE id = ?").get(id);
+      for (const fields of [
+        { title: 42 },
+        { allDay: "true" },
+        { unexpected: true },
+        { exdates: null },
+        { startDate: "2026-02-31" },
+      ]) {
+        const create = await app.inject({
+          method: "POST",
+          url: "/api/calendar/events",
+          cookies,
+          payload: { ...valid, ...fields },
+        });
+        expect(create.statusCode).toBe(400);
+        const edit = await app.inject({
+          method: "PATCH",
+          url: `/api/calendar/events/${id}`,
+          cookies,
+          payload: fields,
+        });
+        expect(edit.statusCode).toBe(400);
+        expect(getDb().prepare("SELECT * FROM calendar_events WHERE id = ?").get(id)).toEqual(
+          before
+        );
+        expect(getDb().prepare("SELECT COUNT(*) AS count FROM calendar_events").get()).toEqual({
+          count: 1,
+        });
+      }
+      const edited = await app.inject({
+        method: "PATCH",
+        url: `/api/calendar/events/${id}`,
+        cookies,
+        payload: { title: "Changed" },
+      });
+      expect(edited.statusCode).toBe(200);
+      expect(edited.json().title).toBe("Changed");
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("PATCH updates timed instants and timezone while preserving recurrence and assignments", async () => {
+    const cookies = { mp_device_key: insertDevice() };
+    const member = insertMember("Alice");
+    const id = "rescheduled-event";
+    const exdates = '["2026-07-22T09:00:00.000Z"]';
+    insertEvent(
+      id,
+      "Appointment",
+      "2026-07-15T09:00:00.000Z",
+      "2026-07-15T10:00:00.000Z",
+      "FREQ=WEEKLY;BYDAY=WE",
+      exdates
+    );
+    insertAssignment(id, member);
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    try {
+      const res = await app.inject({
+        method: "PATCH",
+        url: `/api/calendar/events/${id}`,
+        cookies,
+        payload: {
+          startUtc: "2026-07-15T11:00:00.000Z",
+          endUtc: "2026-07-15T12:30:00.000Z",
+          tzid: "Europe/London",
+        },
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toMatchObject({
+        id,
+        title: "Appointment",
+        allDay: false,
+        occurrenceStart: "2026-07-15T11:00:00.000Z",
+        occurrenceEnd: "2026-07-15T12:30:00.000Z",
+        tzid: "Europe/London",
+        assignedTo: [member],
+      });
+      expect(
+        getDb()
+          .prepare(
+            "SELECT start_utc, end_utc, tzid, rrule, exdates FROM calendar_events WHERE id = ?"
+          )
+          .get(id)
+      ).toEqual({
+        start_utc: "2026-07-15T11:00:00.000Z",
+        end_utc: "2026-07-15T12:30:00.000Z",
+        tzid: "Europe/London",
+        rrule: "FREQ=WEEKLY;BYDAY=WE",
+        exdates,
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("PATCH validates all-day dates against merged state before rescheduling", async () => {
+    const cookies = { mp_device_key: insertDevice() };
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    try {
+      const created = await app.inject({
+        method: "POST",
+        url: "/api/calendar/events",
+        cookies,
+        payload: { title: "Holiday", allDay: true, startDate: "2026-07-15", endDate: "2026-07-16" },
+      });
+      expect(created.statusCode).toBe(201);
+      const id = created.json().id;
+      const before = getDb().prepare("SELECT * FROM calendar_events WHERE id = ?").get(id);
+      const invalid = await app.inject({
+        method: "PATCH",
+        url: `/api/calendar/events/${id}`,
+        cookies,
+        payload: { startDate: "2026-07-17" },
+      });
+      expect(invalid.statusCode).toBe(400);
+      expect(getDb().prepare("SELECT * FROM calendar_events WHERE id = ?").get(id)).toEqual(before);
+      const edited = await app.inject({
+        method: "PATCH",
+        url: `/api/calendar/events/${id}`,
+        cookies,
+        payload: { allDay: true, startDate: "2026-07-17", endDate: "2026-07-20" },
+      });
+      expect(edited.statusCode).toBe(200);
+      expect(edited.json()).toMatchObject({
+        id,
+        title: "Holiday",
+        allDay: true,
+        occurrenceStart: "2026-07-17",
+        occurrenceEnd: "2026-07-20",
+      });
+      expect(
+        getDb()
+          .prepare(
+            "SELECT all_day, start_date, end_date, start_utc, end_utc, tzid FROM calendar_events WHERE id = ?"
+          )
+          .get(id)
+      ).toEqual({
+        all_day: 1,
+        start_date: "2026-07-17",
+        end_date: "2026-07-20",
+        start_utc: null,
+        end_utc: null,
+        tzid: null,
+      });
+    } finally {
+      await app.close();
+    }
+  });
 
   // Test 1: DELETE /api/calendar/events/:id → 204, event and assignments gone
   it("DELETE /api/calendar/events/:id returns 204 and removes event + assignments", async () => {

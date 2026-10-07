@@ -16,7 +16,7 @@ import { __resetTelemetryStateForTests } from "../../src/server/telemetry/index"
  * read route's own filter/cap/cursor logic can be exercised deterministically.
  * *(Traces: CLIENT-LOGGING-TELEMETRY-INV-11 — server half)*
  */
-describe("telemetry read route deep suite (T009)", () => {
+describe("telemetry read route deep suite", () => {
   useIsolatedDb();
 
   beforeEach(() => {

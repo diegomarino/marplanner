@@ -6,7 +6,7 @@ Decision date: 2026-06-27
 
 ## Decision
 
-Creating a member in v2 creates only the member profile. It must not create, seed, or repair Daily Briefing settings as a side effect.
+Creating a member in this system creates only the member profile. It must not create, seed, or repair Daily Briefing settings as a side effect.
 
 Members and Daily Briefing are independent domains. Daily Briefing owns its own per-member opt-in and configuration lifecycle, and those settings are created or updated only through Daily Briefing behavior.
 
@@ -24,7 +24,7 @@ The v2 product model now treats Daily Briefing as explicit per-active-member opt
 
 ## Data / Setup Implications
 
-Fresh v2 member setup starts with a member profile only. A newly created member has no Daily Briefing eligibility until Daily Briefing opt-in/configuration is explicitly set.
+Fresh deployment member setup starts with a member profile only. A newly created member has no Daily Briefing eligibility until Daily Briefing opt-in/configuration is explicitly set.
 
 No legacy member or Daily Briefing rows are imported under `ADR-026`.
 
@@ -42,5 +42,5 @@ No legacy member or Daily Briefing rows are imported under `ADR-026`.
 ## Traceability
 
 - Conflicts: `CR-009-multistep-atomicity`
-- Pre-v2: `ADR-009`
+- Related prior: `ADR-009`
 - Domain grill: `../domain-grills/members.md`

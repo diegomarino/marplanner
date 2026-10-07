@@ -13,7 +13,7 @@ import {
 /** docs/features/weather.md — forecast port boundary tests (* FR-011/012/013/015/021). BLACK-BOX against `buildForecastPort`/`createOpenMeteoPort` with a
  * stubbed global `fetch` — no real egress, ever (D4).
  */
-describe("weather forecast port (T007)", () => {
+describe("weather forecast port", () => {
   useIsolatedDb();
 
   afterEach(() => {

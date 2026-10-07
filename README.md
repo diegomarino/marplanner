@@ -38,14 +38,32 @@ The app fails closed until the operator configures credentials. Put unique secre
 
 See [operations](docs/operations.md) for provisioning, storage, shutdown, and synthetic public seed guidance. See [security](SECURITY.md) before exposing the service beyond a trusted network.
 
+## Container installation
+
+Docker Engine and Docker Compose are required. From the repository root:
+
+```sh
+cp infra/docker/.env.example infra/docker/.env.local
+# Fill MP_ACCESS_TOKEN (mpg- prefix), MP_BOOTSTRAP_KEY (mpk- prefix), ADMIN_PIN.
+docker compose --env-file infra/docker/.env.local -f infra/docker/compose.yaml -p marplanner-home up --build -d
+docker compose --env-file infra/docker/.env.local -f infra/docker/compose.yaml -p marplanner-home port marplanner 3000
+```
+
+Open the reported loopback address. Compose allocates the host port automatically;
+set `PUBLISHED_PORT` for an explicit port. Use a distinct project name for each
+installation to isolate ports and persistent volumes. The image runs as the
+non-root `node` user and stores SQLite and backups in `/data`. See
+[container operations](docs/operations.md#container-installation) for ownership,
+HTTPS, shutdown, upgrades and current root-path/single-instance limits.
+
 ## Development and verification
 
 ```sh
 npm ci
-npm run dev:server
+cp .env.example .env.local
 npm run dev
 ```
 
-The last two commands run in separate terminals. The `package.json` scripts define the current check tiers: `npm run check:fast`, `npm run check:standard`, and `npm run check:full`. The full tier includes browser tests and requires their local browser dependencies. A passing focused tier is evidence for that tier only. [Verification guidance](docs/quality/verification.md) explains discovery, coverage, and cross-consumer checks.
+Replace the synthetic credentials in `.env.local`. `npm run dev` starts the API and frontend on distinct automatically assigned loopback ports and reports both URLs. Each worktree stores its development data in its own `.data/`. Set `PORT` and `WEB_PORT` to distinct nonzero values when explicit ports are needed; occupied explicit ports fail. The `package.json` scripts define the current check tiers: `npm run check:fast`, `npm run check:standard`, and `npm run check:full`. The full tier includes browser tests and requires their local browser dependencies. A passing focused tier is evidence for that tier only. [Verification guidance](docs/quality/verification.md) explains discovery, coverage, and cross-consumer checks.
 
 [Contributor guide](CONTRIBUTING.md) · [Architecture](docs/architecture/principles.md) · [API contracts](docs/api/) · [License](LICENSE)

@@ -85,7 +85,7 @@ appropriate for a family kiosk.
 
 ## Data / Setup Implications
 
-Fresh v2: print records live in Printing's namespaced tables; no `printed_at`
+Fresh deployment: print records live in Printing's namespaced tables; no `printed_at`
 column on the briefing row; no client localStorage authority. No legacy import
 (ADR-026).
 
@@ -109,7 +109,7 @@ column on the briefing row; no client localStorage authority. No legacy import
 
 ## Traceability
 
-- Pre-v2: `ADR-019`
+- Related prior: `ADR-019`
 - Related: `ADR-035` (claim/at-least-once/idempotency), `ADR-040` (outcome
   events), `ADR-039` (namespace ownership, absence-tolerance), `ADR-009`
   (atomicity), `ADR-022` (regeneration — Q3)

@@ -189,9 +189,7 @@ export function WeatherManagement() {
   if (loading) {
     return (
       <AdminPanel title={t("weather.management.title")}>
-        <p className="text-muted-foreground text-[length:var(--control-font-size)]">
-          {t("weather.management.loading")}
-        </p>
+        <p className="text-muted-foreground text-control">{t("weather.management.loading")}</p>
       </AdminPanel>
     );
   }

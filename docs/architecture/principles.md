@@ -1,4 +1,4 @@
-# Marplanner v2 Constitution
+# Marplanner Constitution
 
 Marplanner is a self-hosted household kiosk and planner. It runs as a single instance per household
 (N users × 1 instance each), with no high-availability.

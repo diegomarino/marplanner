@@ -1,4 +1,4 @@
-# ADR-056 — v2 Engineering Process / DX Baseline
+# ADR-056 — Engineering Process / DX Baseline
 
 Status: accepted
 Date: 2026-06-30
@@ -9,15 +9,15 @@ ADR-046/054/025 (delete/archive lifecycle). Folds into [developer verification p
 
 ## Decision
 
-The v2 engineering processes, calibrated to a distributable single-instance self-hosted app built
+The engineering processes, calibrated to a distributable single-instance self-hosted app built
 substantially by AI agents. Governing meta-principle throughout: **convention → build-gate** — every
 mechanizable rule is an enforced gate (lint/typecheck/drift/test), not prose; eliminate failure
 modes by construction rather than by discipline.
 
 ### Dev loop & worktree-safety (Q11)
 
-- **Inner loop:** `npm run dev` = Vite (HMR) proxying `/api` → Fastify (watch). Fixed env-overridable
-  ports. Only daily flow.
+- **Inner loop:** `npm run dev` = Vite (HMR) proxying `/api` → Fastify (watch). Distinct automatically allocated API/frontend
+  ports, with explicit `PORT`/`WEB_PORT` overrides and per-worktree `.data`. Only daily flow.
 - **Detached worktree deploy:** a free on-demand capability via the ADR-055 image —
   `docker compose -p <wt> up -d/down`; status via `docker compose ls/ps --format json` (ports
   discovered, not pre-assigned). No bespoke worktree tooling; `gtr` et al. are personal ergonomics,
@@ -32,19 +32,19 @@ modes by construction rather than by discipline.
   mechanism is an impl choice between two known patterns (placeholder + entrypoint rewrite of built
   assets, or Fastify templating `index.html` with `<base href>` + a runtime `window.__BASE_PATH__`
   for the router). [peer-review I-b]
-- **Worktree-safety = externalized config** (per-worktree `DATABASE_PATH`), NOT a tool. v1 pain root
-  cause (pnpm `nodeLinker:isolated` + monorepo + harness node_modules symlink → MODULE_NOT_FOUND +
+- **Worktree-safety = externalized config** (per-worktree `DATA_DIR`, optional `DATABASE_PATH`), NOT a tool. The cause of the previous worktree failures (pnpm `nodeLinker:isolated` + monorepo + harness node_modules symlink → MODULE_NOT_FOUND +
   cache write-through corruption) is eliminated by ADR-055 single-package + npm. Residual rules:
   each worktree runs `npm ci`; **build caches/tsbuildinfo/Vite cache live OUTSIDE `node_modules`**.
 
-### Check levels (Q12) — `tsc --noEmit` is its own gate in every level
+### Check levels (Q12)
 
-- **`check:fast`** (pre-commit): prettier --check · eslint · tsc --noEmit. No tests/build.
-- **`check:standard`** (PR/CI default): fast + unit/integration + boundary HTTP tests
-  (`fastify.inject`) + prod build + drizzle migration check + generated-artifact drift.
-- **`check:full`** (release gate): standard + Docker image build & runtime smoke + e2e of critical
-  flows + migration/data-safety on prod-like data + backup/restore verify. Full thoroughness is
-  proportional to the distributable premise (a broken release hurts N self-hosters).
+Current commands are defined by `package.json` and described in the [verification policy](../../quality/verification.md). The daily sequence is focused edit tests → broader `check:fast` checkpoint → exact `check:standard` acceptance → one `check:aggregate-only` browser milestone on unchanged bytes with retained valid standard evidence. A fresh `check:full` invocation combines both acceptance stages when no standard evidence is available.
+
+- **`check:fast`**: formatting, generated member-color/emoji freshness, types and lint, plus all top-level Node tool tests and client unit tests. This command is not static-only.
+- **`check:standard`**: early inventory/coverage-fingerprint/toolchain preflight, maintained candidate stamp, static/generated checks, production build, discovered Node and Vitest cohorts, instrumented coverage, OpenAPI checks, UI debt, exception-list and accessible-name gates, and standard evidence verification.
+- **`check:full`**: standard plus retained-evidence/browser-environment preflight, built-render smoke, full Playwright discovery/execution and aggregate evidence verification. Container smoke remains a separate explicit command.
+
+Run acceptance in a fresh validation worktree at the reviewed local candidate with its own `npm ci`. Development secrets and household data remain in the development checkout: ignored files still fail the strict candidate inventory. Preserve failed artifacts outside the validation tree before a retry; focused retries establish diagnosis, not a fabricated full pass. Historical release requirements below remain requirements until their implementation and runtime evidence exist.
 
 ### Tooling (Q13/Q14)
 
@@ -70,6 +70,15 @@ modes by construction rather than by discipline.
 - **Release evidence** on the GitHub Release: source/checks/migration/build-digest/smoke + **GitHub
   build-provenance attestation** (proportionate supply-chain hygiene when third parties run the
   image; cosign optional). Deploy/rollback = N/A (self-hoster owns).
+
+### Launch scope amendment (2026-10-03)
+
+The maintainer explicitly defers release versioning policy, arbitrary historical
+upgrade compatibility and the `SKIP_MIGRATION` read-only mode until after launch.
+The SemVer/release automation and historical migration policies above/below remain
+future design requirements; they are not implemented features or launch gates.
+This deferral does not relax pre-migration recovery snapshots, fail-fast backup
+errors, safe storage ownership, request/job drain or preservation of recovery data.
 
 ### Migration policy (Q16)
 
@@ -106,14 +115,13 @@ ON CONFLICT(id) DO NOTHING` (idempotent vs re-run/edit/archive/partial-failure; 
 ### Generated artifacts & component reuse (Q17)
 
 - **Generated (4), each generator + drift check:** Drizzle migrations · OpenAPI spec
-  (`@fastify/swagger`) · i18n key parity (ADR-015) · `COMPONENTS.md`/json (react-docgen-typescript;
-  shadcn tweaks: filter native props, surface cva variants). **API docs served LIVE at `/docs`** (not
+  (`@fastify/swagger`) · i18n key parity (ADR-015) · `COMPONENTS.md` (TypeScript export inventory; prop and cva contracts linked to maintained source). **API docs served LIVE at `/docs`** (not
   committed → can't drift). **NOT generated** (avoided by structure): API client types (shared via
   `src/shared`), route tree, ER diagram (YAGNI), design tokens (Tailwind config is source).
 - **OpenAPI schema-coverage gate:** a Fastify `ready` hook asserts every route carries a schema
   (also serves ADR-028) [peer-review S-a].
 - **Component-reuse (the agent-sprawl fear), three layers, NOT Storybook:** (1) one `@/ui` barrel;
-  (2) **lint banning raw primitives outside `src/ui/`** (`eslint-plugin-marplanner`) → inline
+  (2) **lint rejecting unsupported raw controls outside `src/client/components/ui/`** (`ui-policy` local rules; documented native recipes and exact domain exceptions) → inline
   re-invention fails CI; (3) the generated `COMPONENTS.md` catalog (agents read it before building
   UI). Storybook deferred (visual-only; weak for reuse — agents don't browse it).
 
@@ -121,12 +129,35 @@ ON CONFLICT(id) DO NOTHING` (idempotent vs re-run/edit/archive/partial-failure; 
 
 Document runnable commands in [onboarding](../../development/onboarding.md) and verify them against `package.json`. Enforce module boundaries through lint and tests; keep generated artifacts under drift checks. A change to a shared contract requires consumer regression checks. Historical tool choices in this decision do not establish that a command or gate exists in the current repository.
 
+## Implementation status (2026-10-02)
+
+The implemented check workflow runs standard once in CI, then transfers and verifies its raw artifacts in the dependent browser job. Early preflights reject stale source policy and known environment mistakes before expensive work; they do not authenticate all historical execution inputs.
+
+The coordinated local launcher and portable container recipe implement bounded
+installation workflows. The shared boot/seed/restore migration runner creates a unique private logical SQLite
+recovery snapshot through synchronous `VACUUM INTO`, including committed WAL data.
+The snapshot file and containing directory are fsynced before migration ledger or
+schema writes.
+Snapshot failure aborts boot/seed; during restore it invokes existing rollback to
+the original active pre-restore state. The migration snapshot captures the restored
+older candidate, not that original active state. No pending migrations create no snapshot.
+Fresh pending migrations also snapshot, and SQL failures retain the restore point.
+Snapshots live under `BACKUPS_ROOT/pre-migration/snapshot-<unique>/database.db`, require
+operator-managed disk space/retention, and are recovered offline outside the Admin
+backup shelf. Failed attempts may leave partial files/directories; recovery requires
+a completed, independently verified snapshot. These are logical snapshots, not
+physical-byte copies. Explicit declared IDs survive; implicit rowids may change. See
+[operations](../../operations.md#pre-migration-recovery-snapshots). Runtime `BASE_PATH` now uses portable relative build assets and server HTML base/meta injection, with prefixed API/gate routes and client URL/navigation helpers. Root `/health` is preserved. Built-browser/container acceptance and applicable storage safety checks remain required for the launch candidate. Versioning policy, `SKIP_MIGRATION` and arbitrary historical upgrade compatibility are explicitly deferred until after launch. The
+container check is an explicit command; this ADR does not prove that every release
+gate or publishing lane described above is implemented.
+
 ## Acceptance criteria
 
 - A PR re-implementing a primitive inline (instead of `@/ui`) fails CI; a route without a schema fails
   CI; a stale generated artifact fails CI; a documented command absent from `package.json` is a documentation finding.
 - A migration applied with a failed pre-backup aborts (no data-loss window); a migration failure
-  surfaces a human-readable message and is recoverable via `SKIP_MIGRATION`.
+  surfaces a human-readable message and retains a verified recovery point. The
+  `SKIP_MIGRATION` mode is deferred until after launch by the scope amendment above.
 - Onboarding example content survives archive but cannot be hard-deleted (trigger) and cannot be
   blocked by a user-chosen reserved-namespace ID (CHECK).
 - The app runs correctly behind a subpath reverse proxy via `BASE_PATH`.

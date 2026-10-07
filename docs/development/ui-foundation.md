@@ -4,13 +4,14 @@ Use shared tokens, primitives and recipes when building a client surface. The [c
 
 ## Canonical locations
 
-| Path                            | Responsibility                                                    |
-| ------------------------------- | ----------------------------------------------------------------- |
-| `components.json`               | Shared UI configuration                                           |
-| `src/client/styles/globals.css` | Tailwind entry and semantic token values                          |
-| `src/client/components/ui/`     | Shared primitive components                                       |
-| `src/client/lib/utils.ts`       | `cn()` class merge helper                                         |
-| `src/client/lib/recipes.ts`     | Reusable class-string recipes without component state or behavior |
+| Path                            | Responsibility                                                        |
+| ------------------------------- | --------------------------------------------------------------------- |
+| `components.json`               | Shared UI configuration                                               |
+| `src/client/styles/tokens.css`  | Semantic token **values** (`:root`); also inlined by access-gate HTML |
+| `src/client/styles/globals.css` | Tailwind entry, `@theme` mapping, density overrides, base layers      |
+| `src/client/components/ui/`     | Shared primitive components                                           |
+| `src/client/lib/utils.ts`       | `cn()` class merge helper                                             |
+| `src/client/lib/recipes.ts`     | Reusable class-string recipes without component state or behavior     |
 
 ## The UI stack
 
@@ -36,10 +37,11 @@ The UI uses Tailwind CSS v4, shared primitives, semantic tokens and Lucide icons
 
 Because every screen consumes `bg-primary` / `bg-background` / etc. (which resolve through the
 `@theme inline` mapping to the CSS variables), adapting the palette from provisional defaults to the
-real v2 look is a **single edit to the token _values_ in the `:root` block** (and `.dark`) of
-`globals.css` — the `@theme inline` block below it just exposes those variables to Tailwind and does
-not itself hold colour values. Zero changes to any component. That is the whole reason tokens can
-start provisional without incurring debt.
+real v2 look is a **single edit to the token _values_ in `tokens.css`** (and `.dark` in
+`globals.css` if tooling needs it) — the `@theme inline` block just exposes those variables to
+Tailwind and does not itself hold colour values. Zero changes to any component. That is the whole
+reason tokens can start provisional without incurring debt. The server access-gate HTML inlines the
+same `tokens.css` so the perimeter form cannot drift from the SPA palette.
 
 ## Design needs (inherited requirements — honour these)
 
@@ -51,10 +53,10 @@ kiosk contract + v1's product design and are **not** provisional:
 - **Landscape-primary, orientation-adaptive.** Support both, but design for landscape first. v1 uses
   real `portrait` / `landscape` Tailwind variants driving layout — reuse that pattern when a screen
   is orientation-sensitive.
-- **Large touch targets.** Controls are finger-sized: form controls ~`h-12`, primary actions up to
-  `h-14`. Do not ship default-height desktop controls.
-- **Distance-legible.** Readable from kitchen viewing distance — generous type, a display font for
-  headings, high enough contrast.
+- **Large touch targets.** Controls are finger-sized: the document-wide `--control-height` is 48px in kiosk and 36px in comfortable mode.
+  Every shared control variant consumes that token; intentionally larger layouts require review.
+- **Distance-legible.** Readable from kitchen viewing distance — density-driven control type (18px kiosk, 14px comfortable) and high enough contrast.
+  A separate display font and heading scale are not currently implemented.
 - **Per-member colour coding.** Members carry a stored colour used across avatars/badges; the palette
   must provide a named per-member colour set (v1: 16 named OKLCH hues). Relevant once members render.
 - **Fail-closed surfaces.** The shell renders nothing household-runtime until provisioned+connected
@@ -62,13 +64,13 @@ kiosk contract + v1's product design and are **not** provisional:
 
 ## What NOT to do (yet)
 
-- **No bespoke wrapper components** (`<KioskButton>`, a custom form kit, etc.). Use the shadcn
-  primitives directly. Extract a shared wrapper only when the **rule of three** fires (three real
-  consumers of the same pattern) — premature abstraction here would ossify the wrong shape before the
-  first slice reveals the real reuse.
-- **No parallel token source.** Token values live in `:root`/`.dark` and are exposed via `@theme
-inline`; that is the single source. No component-local colour
-  constants, no second CSS file of variables.
+- **Shared compositions need a contract.** Admit state, wiring or accessibility responsibility
+  under the style guide's D3 test; a consumer count alone does not justify a wrapper. Plain class
+  combinations belong in recipes. Reuse `@/ui` and consult `COMPONENTS.md` first.
+- **No parallel token source.** Token **values** live in `src/client/styles/tokens.css` (light
+  `:root`) plus `.dark` in `globals.css` for tooling; Tailwind sees them only via `@theme
+inline`. No component-local colour constants, no second ad-hoc variable sheet. The access-gate
+  HTML **inlines** `tokens.css` — it must not redefine palette hexes.
 - **No private class-string constant.** A class combination that isn't a component (research D3 —
   no state, wiring, or accessibility of its own) is a **recipe**: export it from
   `src/client/lib/recipes.ts` and document it in [`style-guide.md`](style-guide.md), don't declare

@@ -127,3 +127,82 @@ describe("B0 foundation primitives", () => {
     expect(screen.getByRole("group", { name: "Weekdays" })).toBeInTheDocument();
   });
 });
+
+it("scales the localized built-in dialog close in both densities and closes the portal", async () => {
+  const { Dialog, DialogContent, DialogTitle, DialogDescription } =
+    await import("@/components/ui/dialog");
+  const { injectDensityStyles } = await import("./helpers/densityStyles");
+  const { assertKioskDensityCompliant } = await import("./helpers/density");
+  const uninject = await injectDensityStyles({ extraCandidates: ["text-control"] });
+  try {
+    const onOpenChange = vi.fn();
+    render(
+      <Dialog defaultOpen onOpenChange={onOpenChange}>
+        <DialogContent closeLabel="Cerrar">
+          <DialogTitle>Details</DialogTitle>
+          <DialogDescription>Details description</DialogDescription>
+        </DialogContent>
+      </Dialog>
+    );
+    const close = screen.getByRole("button", { name: "Cerrar" });
+    expect(getComputedStyle(close).fontSize).toBe("var(--control-font-size)");
+    expect(getComputedStyle(close).height).toBe("var(--control-height)");
+    expect(getComputedStyle(close).getPropertyValue("--control-height").trim()).toBe("36px");
+    document.documentElement.setAttribute("data-density", "kiosk");
+    assertKioskDensityCompliant(document.body);
+    fireEvent.click(close);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  } finally {
+    uninject();
+    document.documentElement.removeAttribute("data-density");
+  }
+});
+
+it("renders every interactive primitive in the density census and exposes new omissions", async () => {
+  const { readdirSync, readFileSync } = await import("node:fs");
+  const { Input, Textarea } = await import("@/ui");
+  const { injectDensityStyles } = await import("./helpers/densityStyles");
+  const { assertKioskDensityCompliant, DensityViolationError } = await import("./helpers/density");
+  const census = {
+    "button.tsx": "foundation-primitives.test.tsx",
+    "input.tsx": "foundation-primitives.test.tsx",
+    "textarea.tsx": "foundation-primitives.test.tsx",
+    "dialog.tsx": "foundation-primitives.test.tsx",
+    "select.tsx": "select-item-density.test.tsx",
+    "card.tsx": "Noninteractive layout; covered by card composition above",
+    "label.tsx": "Noninteractive caption; native label association belongs to Field",
+  };
+  expect(
+    readdirSync("src/client/components/ui")
+      .filter((file) => file.endsWith(".tsx"))
+      .sort()
+  ).toEqual(Object.keys(census).sort());
+  expect(readFileSync("tests/client/select-item-density.test.tsx", "utf8")).toContain(
+    "assertKioskDensityCompliant"
+  );
+  const uninject = await injectDensityStyles();
+  try {
+    render(
+      <>
+        <Button>Act</Button>
+        <Input aria-label="Name" />
+        <Textarea aria-label="Notes" />
+      </>
+    );
+    document.documentElement.setAttribute("data-density", "kiosk");
+    assertKioskDensityCompliant(document.body);
+    const notes = screen.getByRole("textbox", { name: "Notes" });
+    notes.style.minHeight = "10px";
+    notes.style.height = "10px";
+    notes.style.fontSize = "8px";
+    expect(() => assertKioskDensityCompliant(document.body)).toThrow(DensityViolationError);
+    notes.removeAttribute("style");
+    document.documentElement.removeAttribute("data-density");
+    expect(getComputedStyle(notes).getPropertyValue("--control-height").trim()).toBe("36px");
+    expect(getComputedStyle(notes).getPropertyValue("--control-font-size").trim()).toBe("14px");
+  } finally {
+    uninject();
+    document.documentElement.removeAttribute("data-density");
+  }
+});

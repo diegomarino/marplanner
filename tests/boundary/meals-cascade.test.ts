@@ -18,7 +18,7 @@ import { useIsolatedDb } from "../helpers/db";
  * in main, so some of this coverage may already be green — see the body
  * for the honest RED story.
  */
-describe("meals-cascade boundary tests (T008/T009)", () => {
+describe("meals-cascade boundary tests", () => {
   useIsolatedDb();
 
   // ── helpers ──────────────────────────────────────────────────────────────

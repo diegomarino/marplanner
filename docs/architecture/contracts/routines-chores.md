@@ -95,5 +95,5 @@ tolerant-on-read (archived assignee renders read-only).
 ## Open Decisions
 
 - Whether future-dated completions are allowed (default: past+today only) — deferred to
-  UI build. (`ADR-004` in-v2 orphan handling resolved by `ADR-054`; `ADR-010`/`ADR-011`
+  UI build. (`ADR-004` in-product orphan handling resolved by `ADR-054`; `ADR-010`/`ADR-011`
   day-period vocabulary/start times accepted in the Day Periods domain.)

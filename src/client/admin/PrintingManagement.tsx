@@ -18,6 +18,7 @@
  */
 import { useEffect, useState } from "react";
 import { authFetch } from "@/lib/credential";
+import { notifyPrintIntentEnqueued } from "@/printing/queueWakeup";
 import { useT } from "@/i18n";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ErrorNotice } from "@/components/ErrorNotice";
@@ -86,6 +87,7 @@ export function PrintingManagement(): React.JSX.Element {
       }
       if (!res.ok) throw new Error(`test-print: ${res.status}`);
       const data = (await res.json()) as TestPrintResponse;
+      if (data.enqueued) notifyPrintIntentEnqueued();
       setTriggerResult(data.alreadyPrinted ? "alreadyPrinted" : "enqueued");
       await loadJobs();
     } catch {

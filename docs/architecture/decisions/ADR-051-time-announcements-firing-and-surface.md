@@ -33,7 +33,7 @@ best-effort failure _count_ may feed the health indicator, `ADR-035`, but is not
 
 **Product surface kept minimal (no new settings).**
 
-- **No master switch / quiet hours / volume·rate·pitch controls** in v2 — per-rule
+- **No master switch / quiet hours / volume·rate·pitch controls** in this system — per-rule
   `isActive` already pauses; the rest is YAGNI (noted as possible future App Settings).
 - **No per-device enablement** — household-wide (which device speaks is the Q1 model, not
   a setting).
@@ -74,7 +74,7 @@ family kiosk doesn't need an audio mixing console.
 ## Data / Setup Implications
 
 Owned: `time_announcements` (id, time `HH:MM`, weekDays `mon..sun`, isActive,
-createdAt, updatedAt). Fresh v2 (`ADR-026`); 7 prod rows evidence only. Dedupe state is
+createdAt, updatedAt). Fresh deployment (`ADR-026`); 7 prod rows evidence only. Dedupe state is
 browser-local (not server state). No new settings object.
 
 ## Acceptance Criteria
@@ -89,7 +89,7 @@ browser-local (not server state). No new settings object.
   Spanish.
 - Speech/dedupe failure changes no rule state and never crashes the scheduler.
 - Rule CRUD requires an admin write capability; listing is kiosk-visible.
-- No master switch / quiet hours / per-device / audio-control settings exist in v2.
+- No master switch / quiet hours / per-device / audio-control settings exist in this system.
 
 ## Open Questions
 
@@ -98,7 +98,7 @@ browser-local (not server state). No new settings object.
 
 ## Traceability
 
-- Pre-v2: resolves spec `09` open questions.
+- Related prior: resolves spec `09` open questions.
 - Domain grill: `../domain-grills/time-announcements.md`
 - Related: `ADR-005`, `ADR-013`, `ADR-015`, `ADR-020`, `ADR-026`, `ADR-028`, `ADR-030`,
   `ADR-035`

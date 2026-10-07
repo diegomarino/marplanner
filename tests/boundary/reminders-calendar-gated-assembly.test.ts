@@ -13,7 +13,7 @@ import type { Reminder, ReminderEmission } from "../../src/shared";
  * RED until: kind=calendar_gated is rejected by createReminder (006-only), and getEvents
  * throws on query/queryFields (004 "reserved" params).
  */
-describe("reminders-calendar-gated-assembly (T002 — real-process smoke, Quickstart Scenario A)", () => {
+describe("reminders-calendar-gated-assembly (real-process smoke, Quickstart Scenario A)", () => {
   useIsolatedDb();
 
   // ── date helpers (mirror src/server/lib/household-date.ts's timezone-invariant weekday

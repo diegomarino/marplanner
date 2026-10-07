@@ -150,7 +150,7 @@ describe("artifact.ts#buildPayload — fetch-time conversion (FR-016/FR-017)", (
   });
 });
 
-describe("printing pipeline end-to-end — the real ESC/POS bytes (T006)", () => {
+describe("printing pipeline end-to-end — the real ESC/POS bytes", () => {
   useIsolatedDb();
 
   it("the full test-print pipeline transmits bytes that begin with the ESC/POS init sequence and end with the cut command", () => {

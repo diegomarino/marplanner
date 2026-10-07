@@ -13,16 +13,16 @@ paths:
       summary: Read a briefing (family/kiosk) — 019  adds `printedStatus`.
       description: >-
         Pure read (FR-010) — never creates a row. `printedStatus` is DERIVED, never Printing's own
-        canonical state: `completed`/`failed` when Printing is active and either the local
-        event-cache (fresh) or a read-time fallback query against Printing (FR-005/AC-04
-        dropped-event recovery) resolves one; `none` when Printing is active but no printable output
-        has ever completed or dead-lettered for this member/date; `unavailable` when the Printing
-        plugin itself is inactive (FR-007/AC-11 — distinct from `none`). Regeneration (a second call
-        to `POST /api/daily-briefing/generate` for the same member/date) preserves the briefing id,
-        atomically supersedes the prior Printing record for this output (FR-002/FR-003/FR-004, one
-        transaction — research D4  fold), and enqueues no print job itself.
+        canonical state: `completed`/`failed` when Printing is active and either the local event-cache
+        (fresh) or a read-time fallback query against Printing (FR-005/AC-04 dropped-event recovery)
+        resolves one; `none` when Printing is active but no printable output has ever completed or
+        dead-lettered for this member/date; `unavailable` when the Printing plugin itself is inactive
+        (FR-007/AC-11 — distinct from `none`). Regeneration (a second call to `POST
+        /api/daily-briefing/generate` for the same member/date) preserves the briefing id, atomically
+        supersedes the prior Printing record for this output (FR-002/FR-003/FR-004, one transaction —
+        research D4  fold), and enqueues no print job itself.
         `Briefing`/`BriefingPayload`/`BlockInstance` (the envelope v2 21-block registry) are
-        unchanged from../../010-daily-briefing-manual/contracts/openapi.yaml#/components/schemas.
+        documented locally and synchronized with the daily-briefing contract.
       parameters:
         - name: memberId
           in: path
@@ -35,6 +35,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: >-
             the read result; `printedStatus` is present only when `generated: true` (a missing
@@ -43,6 +45,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BriefingReadResultV2"
+        "400":
+          description: Invalid strict calendar date.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
         "401":
           description: missing or invalid device key.
           content:
@@ -65,6 +73,8 @@ paths:
     get:
       summary: Read block order + schedule + trigger binding + per-member block settings (admin).
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: the current settings snapshot (documented defaults when no row exists yet).
           content:
@@ -102,6 +112,8 @@ paths:
             schema:
               $ref: "#/components/schemas/DailyBriefingSettingsInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: the updated settings snapshot.
           content:
@@ -150,6 +162,8 @@ paths:
               items:
                 $ref: "#/components/schemas/BlockOrderInstance"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: the validated, persisted block order.
           content:
@@ -219,6 +233,8 @@ paths:
             schema:
               $ref: "#/components/schemas/MemberBlockSettingsInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: the updated per-member per-block settings.
           content:
@@ -273,6 +289,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: the stored render, as a PNG.
           content:
@@ -319,12 +337,218 @@ paths:
               schema:
                 $ref: "#/components/schemas/InternalErrorResponse"
 components:
+  responses:
+    AuthenticationBackoff:
+      description: >
+        Repeated credential failures from this transport source. Valid active credentials remain
+        usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.
+      headers:
+        Retry-After:
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Remaining cooldown in seconds, rounded up. Retry manually.
+        Cache-Control:
+          required: true
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [error, message]
+            properties:
+              error:
+                type: string
+                const: too_many_requests
+              message:
+                type: string
+                const: Authentication retry required
   securitySchemes:
     deviceKeyCookie:
       type: apiKey
       in: cookie
       name: mp_device_key
   schemas:
+    BriefingStatus:
+      type: string
+      enum:
+        - pending
+        - ready
+        - partial
+        - failed
+        - render-failed
+    BlockScope:
+      type: string
+      enum:
+        - shared
+        - member
+    BlockType:
+      type: string
+      enum:
+        - calendar
+        - chores
+        - shotgun
+        - message
+        - streak
+        - today
+        - weather
+        - meals
+        - birthday
+        - reminders
+        - dadJoke
+        - wordOfDay
+        - animalFact
+        - numberFact
+        - onThisDay
+        - quoteOfDay
+        - trivia
+        - riddle
+        - wouldYouRather
+        - wordSearch
+        - drawingPrompt
+        - streakText
+        - weatherText
+    BlockInstance:
+      type: object
+      required:
+        - type
+        - scope
+        - status
+      properties:
+        type:
+          $ref: "#/components/schemas/BlockType"
+        scope:
+          $ref: "#/components/schemas/BlockScope"
+        status:
+          type: string
+          enum:
+            - ok
+            - failed
+        data:
+          description: Frozen block data, present for successful blocks.
+        error:
+          type: string
+        index:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+        language:
+          type: string
+        params:
+          $ref: "#/components/schemas/BlockParams"
+      additionalProperties: false
+    MemberIdentitySnapshot:
+      type: object
+      required:
+        - id
+        - displayName
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+      additionalProperties: false
+    BriefingPayload:
+      type: object
+      required:
+        - schemaVersion
+        - member
+        - date
+        - blocks
+      properties:
+        schemaVersion:
+          type: integer
+          enum:
+            - 1
+            - 2
+        member:
+          $ref: "#/components/schemas/MemberIdentitySnapshot"
+        date:
+          type: string
+          description: YYYY-MM-DD household-tz business date
+        blocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/BlockInstance"
+      allOf:
+        - if:
+            properties:
+              schemaVersion:
+                const: 1
+            required:
+              - schemaVersion
+          then:
+            properties:
+              blocks:
+                items:
+                  properties:
+                    type:
+                      enum:
+                        - calendar
+                        - reminders
+                        - chores
+                        - meals
+                        - weather
+          else:
+            properties:
+              blocks:
+                items:
+                  properties:
+                    type:
+                      enum:
+                        - shotgun
+                        - message
+                        - streak
+                        - today
+                        - weather
+                        - meals
+                        - birthday
+                        - reminders
+                        - dadJoke
+                        - wordOfDay
+                        - animalFact
+                        - numberFact
+                        - onThisDay
+                        - quoteOfDay
+                        - trivia
+                        - riddle
+                        - wouldYouRather
+                        - wordSearch
+                        - drawingPrompt
+                        - streakText
+                        - weatherText
+      additionalProperties: false
+    Briefing:
+      type: object
+      required:
+        - id
+        - memberId
+        - date
+        - status
+        - payload
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+        memberId:
+          type: string
+        date:
+          type: string
+        status:
+          $ref: "#/components/schemas/BriefingStatus"
+        payload:
+          $ref: "#/components/schemas/BriefingPayload"
+        createdAt:
+          type: integer
+        updatedAt:
+          type: integer
+      additionalProperties: false
     PrintedStatus:
       type: string
       enum:
@@ -336,7 +560,7 @@ components:
         Derived (research D11) — see this file's own `/api/daily-briefing/{memberId}/{date}` GET
         description for the full derivation. Never stored as Printing's own canonical state.
     BriefingReadResultV2:
-      description: " delta over../../010-daily-briefing-manual/contracts/openapi.yaml#/components/schemas/BriefingReadResult — adds `printedStatus` to the `generated:true` branch; the `generated:false` branch is unchanged."
+      description: Pure read result with derived printed status for generated briefings.
       oneOf:
         - type: object
           required:
@@ -358,7 +582,7 @@ components:
               enum:
                 - true
             briefing:
-              $ref: ../../010-daily-briefing-manual/contracts/openapi.yaml#/components/schemas/Briefing
+              $ref: "#/components/schemas/Briefing"
             printedStatus:
               $ref: "#/components/schemas/PrintedStatus"
           additionalProperties: false
@@ -383,8 +607,8 @@ components:
       type: object
       additionalProperties: false
       description: >-
-        Closed per-instance params (mirrors settings.ts ALLOWED_PARAM_KEYS; unknown keys are
-        rejected 400 by validateParams —  fold closed this schema to match).
+        Closed per-instance params (mirrors settings.ts ALLOWED_PARAM_KEYS; unknown keys are rejected
+        400 by validateParams —  fold closed this schema to match).
       properties:
         level:
           type: string

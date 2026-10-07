@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
@@ -43,6 +44,16 @@ import { FakeClock, noopLog } from "../helpers/fake-clock";
  * has completed, instead of assuming a fixed number of microtask ticks is
  * enough.
  */
+
+function shelfTree(root: string) {
+  return fs
+    .readdirSync(root, { recursive: true, encoding: "utf8" })
+    .sort()
+    .map((name) => {
+      const file = path.join(root, name);
+      return [name, fs.statSync(file).isFile() ? fs.readFileSync(file) : null];
+    });
+}
 
 function seedMember(id: string): void {
   const now = Date.now();
@@ -160,6 +171,7 @@ describe("backups snapshot creation (BACKUPS-INV-09, FR-002)", () => {
   it("review F5: a dir-fsync failure AFTER a landed rename removes the orphaned file — shelf state matches the reported ok:false outcome", async () => {
     const root = resolveBackupsRoot();
     seedMember("m1");
+    const before = shelfTree(root);
 
     // fs.fsyncSync is called ONLY by fsyncDir, strictly AFTER fs.renameSync has already
     // landed the file at its final path — the exact post-rename failure window review flags
@@ -177,11 +189,9 @@ describe("backups snapshot creation (BACKUPS-INV-09, FR-002)", () => {
 
     expect(outcome.ok).toBe(false);
     expect(getLastBackupError()).not.toBeNull();
-    // The shelf must be EMPTY — the rename landed a file, but the reported failure means
-    // nothing should be observably present (listBackups/hasBackupForDate must agree with
-    // the ok:false outcome, not silently disagree with it).
+    // No failed snapshot/temp file may remain; existing recovery data stays intact.
     expect(listBackups()).toHaveLength(0);
-    expect(fs.readdirSync(root)).toHaveLength(0);
+    expect(shelfTree(root)).toEqual(before);
   });
 
   it("BACKGROUND-JOBS-SCHEDULER-AC-06 / BACKUPS-AC-04: on an injected write failure, NO pruning runs even though prune-eligible backups exist, the temp file is removed, and lastBackupError is set loudly", async () => {
@@ -207,6 +217,7 @@ describe("backups snapshot creation (BACKUPS-INV-09, FR-002)", () => {
     const preListing = listBackups();
     expect(preListing).toHaveLength(RETAIN_COUNT + 2);
     expect(planPrune(preListing, Date.now())).toHaveLength(2);
+    const before = shelfTree(root);
 
     // Inject a REAL write failure without touching filesystem permissions — chmod 0o500 (the
     // original approach) ALSO blocked the later `safeUnlink(tmpPath)` cleanup call, making the
@@ -232,7 +243,7 @@ describe("backups snapshot creation (BACKUPS-INV-09, FR-002)", () => {
     expect(names.some((n) => n.startsWith(".tmp-"))).toBe(false);
     // No prune ran off the failed cycle: every one of the RETAIN_COUNT+2 prune-eligible
     // pre-seeded files survives, byte-for-byte, none deleted.
-    expect(names.sort()).toEqual([...oldFilenames].sort());
+    expect(shelfTree(root)).toEqual(before);
   });
 
   it("review C2: a prune deletion failure does not abort the plan or fail the snapshot — the failure is recorded/logged and the OTHER eligible files are still pruned", async () => {
@@ -453,7 +464,7 @@ describe("backups end-to-end smoke (real app: snapshot -> list)", () => {
   it("POST /api/backups/snapshot then GET /api/backups shows the created file, and member reads stay green", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
     const deviceKey = seedAdminKey();
-    seedMember("m1");
+    seedMember(randomUUID());
     const app = await buildApp();
     try {
       const snapshotRes = await app.inject({
@@ -532,7 +543,7 @@ describe("backups end-to-end smoke (real app: snapshot -> list)", () => {
   });
 });
 
-describe("createSnapshot reverse guard (T006, review #638 P3-6)", () => {
+describe("createSnapshot reverse guard", () => {
   useIsolatedDb();
   afterEach(() => __resetRestoreStateForTests());
 

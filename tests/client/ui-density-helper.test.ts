@@ -267,7 +267,7 @@ describe("assertKioskDensityCompliant — an unresolvable measurement fails clos
  * token change forces a deliberate update here alongside the stylesheet.
  */
 describe("assertKioskDensityCompliant — kiosk minimum constants are pinned", () => {
-  it("matches the T003 trap-sweep browser probe (32->48px height, 14->18px text)", () => {
+  it("matches the trap-sweep browser probe (32->48px height, 14->18px text)", () => {
     expect(KIOSK_MIN_CONTROL_HEIGHT_PX).toBe(48);
     expect(KIOSK_MIN_FONT_SIZE_PX).toBe(18);
   });

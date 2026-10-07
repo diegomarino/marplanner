@@ -10,18 +10,13 @@ const DAY_PERIODS = [
   { id: "night", labelKey: "dayPeriod.night", start: "21:00", sortOrder: 3 },
 ];
 
-/** — proves the density control actually reaches production through the REAL
- * `Shell`, without unlocking admin (FR-002a: a device choice, family-reachable chrome).
- * WHY THIS FILE EXISTS AS A SEPARATE PROOF: itself
- * was the task the slice-close audit caught checked-off with the control never mounted anywhere —
- * every gate green while kiosk density was unreachable by users. The isolation spec
- * (`density-control.test.tsx`) proves the control WORKS; this file proves it is WIRED. Deleting
- * the `<DensityControl />` mount from `Shell.tsx` leaves the entire gate stack green EXCEPT this
- * test (verified by mutation at review time). `Shell.tsx` is a queued shared path — future
- * writers of that file get their tripwire here. Modeled on
- * `time-announcements-shell-mount.test.tsx` (the real-Shell-mount precedent).
+/** Density toggle is intentionally unmounted from Options while we work in the
+ * comfortable default. Isolation specs (`density-control.test.tsx`) keep proving the
+ * control still works; this file proves the shell does NOT expose it. Re-mounting
+ * `<DensityControl />` in HouseholdChrome without flipping these assertions is the
+ * tripwire for an accidental product re-enable.
  */
-describe("density control — real Shell mount (T010, close-audit F1)", () => {
+describe("density control — real Shell mount intentionally hidden", () => {
   beforeEach(() => {
     document.cookie = "mp_provisioned=1; path=/";
   });
@@ -59,19 +54,19 @@ describe("density control — real Shell mount (T010, close-audit F1)", () => {
     return mockFetch;
   }
 
-  it("renders the control from the Options menu on the default route, WITHOUT any admin unlock", async () => {
+  it("does not expose the density toggle from Options on the default route", async () => {
     mockShellBackend();
 
     render(<Shell />);
 
     fireEvent.click(await screen.findByRole("button", { name: "Options" }));
 
-    // The state-invariant accessible name (StatusToggle doctrine) — found through the REAL
-    // Shell's Options path, pre-unlock. This is the assertion that fails if that mount is deleted.
-    expect(await screen.findByRole("button", { name: "Kiosk mode" })).toBeInTheDocument();
+    expect(screen.getByTestId("admin-affordance")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Kiosk mode" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("density-control-toggle")).not.toBeInTheDocument();
   });
 
-  it("renders the control on a family route too (/chores)", async () => {
+  it("does not expose the density toggle from Options on a family route either (/chores)", async () => {
     window.history.pushState({}, "", "/chores");
     const mockFetch = mockShellBackend();
     mockFetch.mockImplementation((url: string | URL) => {
@@ -100,6 +95,8 @@ describe("density control — real Shell mount (T010, close-audit F1)", () => {
     render(<Shell />);
 
     fireEvent.click(await screen.findByRole("button", { name: "Options" }));
-    expect(await screen.findByRole("button", { name: "Kiosk mode" })).toBeInTheDocument();
+    expect(screen.getByTestId("admin-affordance")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Kiosk mode" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("density-control-toggle")).not.toBeInTheDocument();
   });
 });

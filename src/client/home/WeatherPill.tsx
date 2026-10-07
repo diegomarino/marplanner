@@ -1,5 +1,5 @@
+import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
-import { XIcon } from "lucide-react";
 
 import { authFetch } from "@/lib/credential";
 import { useHouseholdSettings } from "@/lib/householdSettings";
@@ -7,14 +7,12 @@ import { useTranslation } from "@/i18n";
 import type { MessageKey } from "@/i18n/messages";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import type { ForecastResult, WeatherConditionKey, WeatherResponse } from "../../shared";
 import { createWeatherFetchGuard, readWeatherCache, writeWeatherCache } from "./weatherCache";
 import { formatDayLabel, formatHourLabel, sliceUpcomingHours } from "./weatherFormat";
@@ -162,7 +160,8 @@ export function WeatherPillView({
     <div className="inline-flex items-center gap-2">
       <Dialog>
         <DialogTrigger asChild>
-          <button
+          <Button
+            variant="ghost"
             type="button"
             data-testid="weather-pill"
             // (FR-001/FR-002, SC-001/SC-002): the two density tokens added here —
@@ -173,43 +172,14 @@ export function WeatherPillView({
             // control (`getComputedStyle(...).height` reports the literal string `"auto"`, which
             // resolves to `DensityUnresolvableStyleError` — see this module's own spec for the exact
             // finding and how the deliberate negative in `family-surfaces.test.tsx` proves it).
-            className="inline-flex items-center gap-2 rounded-full border bg-card px-4 py-2 h-[var(--control-height)] text-[length:var(--control-font-size)] shadow-xs"
+            className="inline-flex items-center gap-2 rounded-full border bg-card px-4 py-2 h-[var(--control-height)] text-control shadow-xs"
           >
             <span data-testid="weather-pill-condition">{conditionLabel}</span>
             <span data-testid="weather-pill-temp">{Math.round(forecast.current.tempC)}°</span>
             <span data-testid="weather-pill-rain">{forecast.current.rainPct}%</span>
-          </button>
+          </Button>
         </DialogTrigger>
-        <DialogContent
-          data-testid="weather-modal"
-          closeLabel={t("weather.modal.close")}
-          //: `ui/dialog.tsx`'s own default close button (an icon-only
-          // `DialogPrimitive.Close` with no density-token classes) is an L1 primitive this module
-          // must not edit ("Queued shared paths": `components/ui/*` — touched by the
-          // L0/L1 batches only). `ConfirmDialog.tsx` already established the call-site fix for
-          // exactly this: opt OUT of the primitive's own close button
-          // (`showCloseButton={false}`). NOTE: ConfirmDialog establishes the OPT-OUT only — its
-          // close affordances are the footer Cancel/Confirm buttons, and it renders no replacement
-          // icon button. Rendering one here is this module's own step, not inherited precedent —
-          // same content (a
-          // close affordance in the same corner), same behaviour, only the implementation is now
-          // the shared, density-aware `Button` (`size="icon"` carries both
-          // `h-[var(--control-height)]` and `w-[var(--control-height)]`).
-          showCloseButton={false}
-        >
-          <DialogClose asChild>
-            {/* Mirrors `ui/dialog.tsx`'s own default close button's content exactly (icon +
- visually-hidden label text) — only the element rendering it changed, from the
- primitive's bare unstyled button to the shared, density-token-compliant `Button`. */}
-            <Button type="button" variant="ghost" size="icon" className="absolute top-4 right-4">
-              {/* `size-6` is load-bearing: `Button` carries
- `[&_svg:not([class*=the ize-'])]:size-4`, so without it the glyph would render at
- 16px instead of the primitive's 24px — measured in Chromium. Doubling the HIT
- AREA to 48px is the density win; shrinking the glyph on a kiosk is the opposite. */}
-              <XIcon className="size-6" />
-              <span className="sr-only">{t("weather.modal.close")}</span>
-            </Button>
-          </DialogClose>
+        <DialogContent data-testid="weather-modal" closeLabel={t("weather.modal.close")}>
           <DialogHeader>
             <DialogTitle>{t("weather.modal.title")}</DialogTitle>
             <DialogDescription className="sr-only">

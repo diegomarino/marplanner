@@ -9,12 +9,75 @@ info:
 servers:
   - url: /
 components:
+  responses:
+    AuthenticationBackoff:
+      description: >
+        Repeated credential failures from this transport source. Valid active credentials remain
+        usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.
+      headers:
+        Retry-After:
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Remaining cooldown in seconds, rounded up. Retry manually.
+        Cache-Control:
+          required: true
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [error, message]
+            properties:
+              error:
+                type: string
+                const: too_many_requests
+              message:
+                type: string
+                const: Authentication retry required
   securitySchemes:
     deviceKeyCookie:
       type: apiKey
       in: cookie
       name: mp_device_key
   schemas:
+    PluginUnavailable:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+      properties:
+        code:
+          const: plugin_unavailable
+        message:
+          type: string
+    CalendarGatedAssignmentInput:
+      type: object
+      additionalProperties: false
+      required:
+        - memberId
+      properties:
+        memberId:
+          type: string
+          minLength: 1
+          pattern: \S
+        weekdays:
+          type: array
+          maxItems: 0
+    QueryFields:
+      type: array
+      minItems: 1
+      items:
+        type: string
+        enum:
+          - title
+          - description
+          - location
     Weekday:
       type: string
       enum:
@@ -43,7 +106,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Weekday"
-          minItems: 1
+          minItems: 0
         active:
           type: boolean
     ReminderAssignmentInput:
@@ -55,7 +118,8 @@ components:
       properties:
         memberId:
           type: string
-          description: must reference an active members.id.
+          minLength: 1
+          pattern: \S
         weekdays:
           type: array
           items:
@@ -79,6 +143,7 @@ components:
           type: string
           enum:
             - scheduled
+            - calendar_gated
           description: immutable after creation.
         targetingMode:
           type: string
@@ -92,8 +157,8 @@ components:
           description: parent-authored, stored as authored.
         weekdays:
           description: >
-            rule-level weekday set for apply_to_all; null for specific (per-member weekdays live on
-            each assignment). Cross-field discriminant (INV-09).
+            rule-level weekday set for apply_to_all; null for specific (per-member weekdays live on each
+            assignment). Cross-field discriminant (INV-09).
           oneOf:
             - type: array
               items:
@@ -105,10 +170,80 @@ components:
         assignments:
           type: array
           description: >
-            active assignments embedded in GET reads (the member x weekday matrix source); populated
-            for specific-mode rules, empty array for apply_to_all.
+            active assignments embedded in GET reads (the member x weekday matrix source); populated for
+            specific-mode rules, empty array for apply_to_all.
           items:
             $ref: "#/components/schemas/ReminderAssignment"
+        query:
+          type:
+            - string
+            - "null"
+        queryFields:
+          anyOf:
+            - $ref: "#/components/schemas/QueryFields"
+            - type: "null"
+      description: >-
+        Stored discriminated rule. Scheduled specific assignments carry non-empty weekdays;
+        calendar-gated assignments carry empty weekdays and a query. Active-member and uniqueness
+        invariants are enforced by the service.
+      allOf:
+        - if:
+            properties:
+              kind:
+                const: scheduled
+            required:
+              - kind
+          then:
+            properties:
+              query:
+                type: "null"
+              queryFields:
+                type: "null"
+              assignments:
+                items:
+                  properties:
+                    weekdays:
+                      minItems: 1
+            if:
+              properties:
+                targetingMode:
+                  const: apply_to_all
+              required:
+                - targetingMode
+            then:
+              properties:
+                weekdays:
+                  type: array
+                  minItems: 1
+            else:
+              properties:
+                weekdays:
+                  type: "null"
+          else:
+            properties:
+              weekdays:
+                type: "null"
+              query:
+                type: string
+                minLength: 1
+                pattern: \S
+              queryFields:
+                $ref: "#/components/schemas/QueryFields"
+              assignments:
+                items:
+                  properties:
+                    weekdays:
+                      maxItems: 0
+        - if:
+            properties:
+              targetingMode:
+                const: apply_to_all
+            required:
+              - targetingMode
+          then:
+            properties:
+              assignments:
+                maxItems: 0
     ReminderInput:
       type: object
       required:
@@ -116,15 +251,15 @@ components:
         - targetingMode
         - text
       additionalProperties: false
-      description: >
-        Create payload ( — both modes). apply_to_all requires weekdays and rejects assignments;
-        specific requires >=1 assignments and rejects rule-level weekdays (INV-01/INV-09, rejected
-        at the boundary).
+      description: >-
+        Scheduled rules require weekday targeting; calendar-gated rules require a query and
+        membership-only targeting. Active-member and duplicate checks are enforced by the service.
       properties:
         kind:
           type: string
           enum:
             - scheduled
+            - calendar_gated
         targetingMode:
           type: string
           enum:
@@ -133,6 +268,7 @@ components:
         text:
           type: string
           minLength: 1
+          pattern: \S
         weekdays:
           type: array
           items:
@@ -142,35 +278,107 @@ components:
         assignments:
           type: array
           items:
-            $ref: "#/components/schemas/ReminderAssignmentInput"
+            oneOf:
+              - $ref: "#/components/schemas/ReminderAssignmentInput"
+              - $ref: "#/components/schemas/CalendarGatedAssignmentInput"
           minItems: 1
           description: required iff targetingMode=specific; rejected for apply_to_all.
+        query:
+          type: string
+          minLength: 1
+          pattern: \S
+        queryFields:
+          $ref: "#/components/schemas/QueryFields"
+      allOf:
+        - if:
+            properties:
+              kind:
+                const: scheduled
+            required:
+              - kind
+          then:
+            not:
+              anyOf:
+                - required:
+                    - query
+                - required:
+                    - queryFields
+            if:
+              properties:
+                targetingMode:
+                  const: apply_to_all
+              required:
+                - targetingMode
+            then:
+              required:
+                - weekdays
+              not:
+                required:
+                  - assignments
+            else:
+              required:
+                - assignments
+              not:
+                required:
+                  - weekdays
+              properties:
+                assignments:
+                  items:
+                    $ref: "#/components/schemas/ReminderAssignmentInput"
+          else:
+            required:
+              - query
+            not:
+              required:
+                - weekdays
+            properties:
+              assignments:
+                items:
+                  $ref: "#/components/schemas/CalendarGatedAssignmentInput"
+            if:
+              properties:
+                targetingMode:
+                  const: specific
+              required:
+                - targetingMode
+            then:
+              required:
+                - assignments
+            else:
+              not:
+                required:
+                  - assignments
     ReminderAssignmentSetInput:
       type: object
       required:
         - assignments
       additionalProperties: false
-      description: >
+      description: >-
         The full desired active assignment set for a specific-mode rule. Applied atomically
-        (last-write-wins, no If-Match/409 — deferred #395): members present are upserted, members
-        absent are deactivated. MUST be non-empty (a specific rule may not drop to zero active
-        assignments — INV-02).
+        (last-write-wins, no If-Match/409 — deferred #395): members present are upserted, members absent
+        are deactivated. MUST be non-empty (a specific rule may not drop to zero active assignments —
+        INV-02).
+         The stored rule kind determines whether weekdays must be non-empty (scheduled) or absent/empty (calendar_gated).
       properties:
         assignments:
           type: array
           minItems: 1
           items:
-            $ref: "#/components/schemas/ReminderAssignmentInput"
+            oneOf:
+              - $ref: "#/components/schemas/ReminderAssignmentInput"
+              - $ref: "#/components/schemas/CalendarGatedAssignmentInput"
     ReminderEditInput:
       type: object
       additionalProperties: false
-      description: >
-        Edit payload — text, active, and (apply_to_all only) rule-level weekdays. kind and
-        targetingMode are immutable and MUST NOT appear (FR-013).
+      description: >-
+        Partial edit; kind and targetingMode are immutable. Weekdays are valid only on stored scheduled
+        apply_to_all rules; query fields only on stored calendar_gated rules. These state-dependent
+        constraints are enforced by the service.
       properties:
         text:
           type: string
           minLength: 1
+          pattern: \S
         weekdays:
           type: array
           items:
@@ -178,6 +386,22 @@ components:
           minItems: 1
         active:
           type: boolean
+        query:
+          type: string
+          minLength: 1
+          pattern: \S
+        queryFields:
+          $ref: "#/components/schemas/QueryFields"
+      minProperties: 1
+      not:
+        allOf:
+          - required:
+              - weekdays
+          - anyOf:
+              - required:
+                  - query
+              - required:
+                  - queryFields
     ReminderEmission:
       type: object
       required:
@@ -205,6 +429,8 @@ paths:
       security:
         - deviceKeyCookie: []
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: all reminders
           content:
@@ -215,6 +441,12 @@ paths:
                   $ref: "#/components/schemas/Reminder"
         "401":
           description: missing/invalid device key
+        "503":
+          description: The owning plugin is inactive or unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginUnavailable"
     post:
       summary: Create a scheduled reminder (apply_to_all, or specific + assignments), atomically.
       security:
@@ -226,6 +458,8 @@ paths:
             schema:
               $ref: "#/components/schemas/ReminderInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "201":
           description: created
           content:
@@ -234,8 +468,8 @@ paths:
                 $ref: "#/components/schemas/Reminder"
         "400":
           description: >-
-            invalid kind/targetingMode, blank text, empty/non-canonical weekdays,
-            zero/inactive-member assignments, or a query/queryFields field
+            invalid kind/targetingMode, blank text, empty/non-canonical weekdays, zero/inactive-member
+            assignments, or a query/queryFields field
           content:
             application/json:
               schema:
@@ -254,6 +488,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: reminder
           content:
@@ -283,6 +519,8 @@ paths:
             schema:
               $ref: "#/components/schemas/ReminderEditInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: updated
           content:
@@ -314,6 +552,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "204":
           description: deleted
         "404":
@@ -348,6 +588,8 @@ paths:
             schema:
               $ref: "#/components/schemas/ReminderAssignmentSetInput"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: the resulting active assignment set
           content:
@@ -388,6 +630,8 @@ paths:
             type: string
             description: strict YYYY-MM-DD
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: emitting reminders (empty if member inactive or none apply)
           content:

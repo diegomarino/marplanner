@@ -33,7 +33,7 @@ an all-day event leaking to the wrong day. Cheap to enforce; high correctness va
 
 ## Data / Setup Implications
 
-No legacy rows imported (ADR-026). The validator applies to all v2-created date
+No legacy rows imported (ADR-026). The validator applies to all product-created date
 inputs. Pairs with ADR-005 (household-tz) and ADR-020 (weekday derivation).
 
 ## Acceptance Criteria
@@ -51,6 +51,6 @@ inputs. Pairs with ADR-005 (household-tz) and ADR-020 (weekday derivation).
 
 ## Traceability
 
-- Pre-v2: `ADR-006`
+- Related prior: `ADR-006`
 - Domain grill: `../domain-grills/calendar-reminders-routines.md` (S3)
 - Related: `ADR-005`, `ADR-020`

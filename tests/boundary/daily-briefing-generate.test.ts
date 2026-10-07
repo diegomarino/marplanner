@@ -9,7 +9,7 @@ import { useIsolatedDb } from "../helpers/db";
 /** RED contract for. Every assertion is through the registered HTTP
  * surface; source data is seeded in the real isolated SQLite database.
  */
-describe("daily-briefing generate + read boundary (T006)", () => {
+describe("daily-briefing generate + read boundary", () => {
   useIsolatedDb();
 
   let app: FastifyInstance;
@@ -68,8 +68,7 @@ describe("daily-briefing generate + read boundary (T006)", () => {
       "INSERT INTO calendar_assignments (id, event_id, member_id, created_at) VALUES ('assignment-calendar-t006', 'calendar-t006', ?, ?)"
     ).run(memberId, now);
     db.prepare(
-      `INSERT INTO reminder (id, kind, targeting_mode, text, weekdays, active, created_at, updated_at)
-       VALUES ('reminder-t006', 'scheduled', 'apply_to_all', 'Pack bag', '["fri"]', 1, ?, ?)`
+      `INSERT INTO reminder (id, kind, targeting_mode, text, weekdays, active, created_at, updated_at) VALUES ('reminder-t006', 'scheduled', 'apply_to_all', 'Pack bag', '["fri"]', 1, ?, ?)`
     ).run(now, now);
     db.prepare(
       "INSERT INTO routines (id, day_period_id, name, active, created_at, updated_at) VALUES ('routine-t006', 'morning', 'Morning jobs', 1, ?, ?)"
@@ -277,7 +276,7 @@ describe("daily-briefing generate + read boundary (T006)", () => {
   });
 });
 
-describe("daily-briefing derived status (T007)", () => {
+describe("daily-briefing derived status", () => {
   const ok = (type: BlockInstance["type"]): BlockInstance => ({
     type,
     scope: type === "calendar" || type === "meals" ? "shared" : "member",

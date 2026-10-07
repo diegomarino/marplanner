@@ -12,7 +12,7 @@ import { useIsolatedDb } from "../helpers/db";
  * real route (upsert + read, active-member gate) — behavior-preserving
  * (docs/features/plugin-system.md FR-004/FR-007).
  */
-describe("host-api-skeleton — daily-messages wired through the barrel (T001)", () => {
+describe("host-api-skeleton — daily-messages wired through the barrel", () => {
   useIsolatedDb();
 
   function seedKeys(): string {

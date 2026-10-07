@@ -17,7 +17,7 @@ import { useIsolatedDb } from "../helpers/db";
  * - absent displayName + role='child' → 400
  * 4. Assert the outcomes match the contract (openapi.yaml /api/members POST).
  */
-describe("member-create (T030 — red-by-design, T033+T034 turn green)", () => {
+describe("member-create (red-by-design, + turn green)", () => {
   useIsolatedDb();
 
   it("role=parent accepted with lifecycle=active (FR-019)", async () => {

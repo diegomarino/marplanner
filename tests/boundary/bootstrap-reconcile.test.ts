@@ -5,7 +5,7 @@ import { hashKey } from "../../src/server/auth/credentials.ts";
 import { reconcileBootstrap } from "../../src/server/auth/reconcile.ts";
 import { useIsolatedDb } from "../helpers/db";
 
-describe("bootstrap-reconcile — T020 / ADR-032 (idempotent seed)", () => {
+describe("bootstrap-reconcile — ADR-032 (idempotent seed)", () => {
   useIsolatedDb();
 
   it("with MP_BOOTSTRAP_KEY set, inserts exactly one active '*' bootstrap row whose key_hash matches hashKey(MP_BOOTSTRAP_KEY)", () => {
@@ -155,6 +155,35 @@ describe("bootstrap-reconcile — T020 / ADR-032 (idempotent seed)", () => {
       .get(keyHash) as { expires_at: number | null; revoked_at: number | null };
 
     // Active again per FR-004: not revoked AND not expired (expires_at cleared to NULL).
+    expect(row.revoked_at).toBeNull();
+    expect(row.expires_at).toBeNull();
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+
+    warnSpy.mockRestore();
+  });
+
+  it("re-establishes a bootstrap row whose expires_at equals now (exact-instant inactive)", () => {
+    const bootstrapKey = "mpk-test-exact-now-expiry-key";
+    process.env.MP_BOOTSTRAP_KEY = bootstrapKey;
+
+    const db = getDb();
+    const keyHash = hashKey(bootstrapKey);
+    const now = Date.now();
+    // Boundary/provision treat expires_at <= now as expired; reconcile must match.
+    db.prepare(
+      "INSERT INTO api_keys (id, key_hash, scope, kind, created_at, expires_at, revoked_at) VALUES (?, ?, '*', 'bootstrap', ?, ?, NULL)"
+    ).run(randomUUID(), keyHash, now - 10_000, now);
+
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    reconcileBootstrap();
+
+    const row = db
+      .prepare(
+        "SELECT expires_at, revoked_at FROM api_keys WHERE key_hash = ? AND kind = 'bootstrap' LIMIT 1"
+      )
+      .get(keyHash) as { expires_at: number | null; revoked_at: number | null };
+
     expect(row.revoked_at).toBeNull();
     expect(row.expires_at).toBeNull();
     expect(warnSpy).toHaveBeenCalledTimes(1);

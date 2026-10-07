@@ -212,7 +212,7 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     expect(screen.queryByTestId("daily-briefing-generate-all-info")).not.toBeInTheDocument();
   });
 
-  it("renders an already_running Generate-all response as a non-error informational message (slice-012 T009)", async () => {
+  it("renders an already_running Generate-all response as a non-error informational message", async () => {
     const mockFetch = vi.mocked(globalThis.fetch);
     mockFetch.mockImplementation(async (...args: FetchCall) => {
       const [input] = args;

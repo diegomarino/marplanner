@@ -206,6 +206,18 @@ describe("RoutinesManagement — chore icon editing", () => {
       expect(JSON.parse(String(edit?.[1]?.body))).toEqual({ name: "Brush teeth", icon: null });
     });
   });
+
+  it("renders the chore's vendored Noto SVG instead of the literal emoji glyph", async () => {
+    mockBackend();
+    renderSurface();
+    const card = await screen.findByTestId("routine-r1");
+    fireEvent.click(within(card).getByRole("button", { name: "View Chores" }));
+
+    const row = await screen.findByTestId("chore-c1");
+    const icon = row.querySelector("img");
+    expect(icon).not.toBeNull();
+    expect(icon).toHaveAttribute("src", expect.stringContaining("emoji_u1faa5"));
+  });
 });
 
 describe("RoutinesManagement — kiosk density (SC-001, SC-002, SC-003, SC-009)", () => {
@@ -260,6 +272,28 @@ describe("RoutinesManagement — kiosk density (SC-001, SC-002, SC-003, SC-009)"
 
       expect(countInteractiveControls(document.body)).toBe(26);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
+    } finally {
+      uninject();
+    }
+  });
+
+  it("meets kiosk density with the chore emoji picker open", async () => {
+    mockBackend();
+    const uninject = await injectDensityStyles({
+      extraCandidates: ["size-[var(--control-height)]"],
+    });
+    document.documentElement.setAttribute("data-density", "kiosk");
+
+    try {
+      renderSurface();
+      const card = await screen.findByTestId("routine-r1");
+      fireEvent.click(within(card).getByRole("button", { name: "View Chores" }));
+      await screen.findByTestId("chore-c1");
+
+      fireEvent.click(within(card).getByRole("button", { name: "Select chore icon" }));
+      const picker = await screen.findByRole("dialog", { name: "Choose a chore icon" });
+      expect(within(picker).getAllByRole("button", { pressed: false }).length).toBeGreaterThan(0);
+      expect(() => assertKioskDensityCompliant(picker)).not.toThrow();
     } finally {
       uninject();
     }
@@ -561,7 +595,7 @@ describe("RoutinesManagement — every streak-affecting action opens a themed Co
 // file's entire suite. `RoutinesManagement.tsx` DOES render through `AdminPanel` in both its
 // `loading` and loaded branches (same title in each), so this is a missing assertion, not a
 // missing adoption.
-describe("RoutinesManagement — adopts the AdminPanel L2 frame (T012c retrofit)", () => {
+describe("RoutinesManagement — adopts the AdminPanel L2 frame (c retrofit)", () => {
   it("wraps the surface in a landmark region labelled by its own title, with a heading of the same name", async () => {
     mockBackend();
     renderSurface();

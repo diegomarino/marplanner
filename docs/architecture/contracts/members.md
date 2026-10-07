@@ -5,7 +5,7 @@ Depends on decisions: `ADR-001`, `ADR-002`, `ADR-003` (superseded → `ADR-027`)
 
 ## Purpose
 
-Members owns household participant identity in v2.
+Members owns household participant identity in this system.
 
 The domain defines who a household participant is, whether they are active or archived, what role they have, what profile data can be edited, and which member references other domains may use for new work.
 
@@ -50,7 +50,7 @@ Members does not own admin authorization, Daily Briefing opt-in/configuration, r
 - **MEMBERS-INV-10** Creating a member creates only the member profile and has no Daily Briefing side effects.
 - **MEMBERS-INV-11** Member profile management is admin-protected.
 - **MEMBERS-INV-12** `/members` must not exist in its old member-management form.
-- **MEMBERS-INV-13** v2 starts from a fresh data store and does not migrate current production database rows.
+- **MEMBERS-INV-13** the product starts from a fresh data store and does not migrate current production database rows.
 - **MEMBERS-INV-14** A member's on-screen identity colour is stored as a key from a closed curated palette, never as a free colour value; it is presentation identity only and does not alter monochrome printed output.
 
 ## Behaviors
@@ -71,7 +71,7 @@ Editable profile data includes role, display name, visual/profile fields, lifecy
 
 Archiving a member removes the member from ordinary lists and assignment pickers without making historical references illegible.
 
-Archived members cannot be chosen for new downstream assignments or recipients. Domains that retain v2-created history may resolve archived member labels read-only.
+Archived members cannot be chosen for new downstream assignments or recipients. Domains that retain product-created history may resolve archived member labels read-only.
 
 ### Read Members
 
@@ -106,7 +106,7 @@ Conceptual member queries:
 - List active members.
 - List active children.
 - Read member profile for admin management.
-- Resolve member label/profile snapshot for v2-created history.
+- Resolve member label/profile snapshot for this system-created history.
 
 ## Events
 
@@ -118,7 +118,7 @@ Conceptual member queries:
   consumer to create hidden side effects during member creation/update.
 - **Subscribes:** none.
 
-**Not load-bearing for v2 correctness.** Current consumers (Routines/Reminders targeting,
+**Not load-bearing for this system correctness.** Current consumers (Routines/Reminders targeting,
 Daily Briefing eligibility) enforce active/archived state by **read-time checks
 (read-tolerance)** — e.g. a reminder self-heals on member reactivation by re-reading
 active state, not by handling an event (`ADR-002`, Reminders R2). The lifecycle events
@@ -127,7 +127,7 @@ at-most-once) never corrupts state because the authoritative check is at read ti
 
 ## Data / Setup Contract
 
-v2 does not import legacy member rows, Daily Briefing rows, routine assignments, sessions, or other current production database data.
+the product does not import legacy member rows, Daily Briefing rows, routine assignments, sessions, or other current production database data.
 
 Legacy data remains evidence only:
 
@@ -137,14 +137,14 @@ Legacy data remains evidence only:
 - Old orphaned routine assignments are validation-risk evidence, not rows to repair.
 - Old `/members` route behavior is a route-design bug to avoid, not a v2 surface to preserve.
 
-Fresh v2 setup starts with clean member data created through v2 flows.
+Fresh setup starts with clean member data created through v2 flows.
 
 ## Acceptance Criteria
 
 - **MEMBERS-AC-01** Given a member create/update request with `role = admin`, when validation runs, then the request is rejected.
 - **MEMBERS-AC-02** Given a member create request, when it succeeds, then no Daily Briefing configuration is created by that operation.
 - **MEMBERS-AC-03** Given an archived member, when ordinary member pickers load, then the archived member is omitted.
-- **MEMBERS-AC-04** Given v2-created history referencing an archived member, when a history view renders, then the member reference remains legible and read-only.
+- **MEMBERS-AC-04** Given product-created history referencing an archived member, when a history view renders, then the member reference remains legible and read-only.
 - **MEMBERS-AC-07** Given birth date with month/day only, when the profile is saved, then birthday matching can work without exact age.
 
 <!-- MEMBERS-AC-05, MEMBERS-AC-06 moved to daily-briefing.md (Daily Briefing owns eligibility outcomes); see boundary-ledger.yaml. -->

@@ -33,13 +33,15 @@ export interface SeedModule {
 
 ```text
 npm run seed -- [--as-of YYYY-MM-DD]
+npm run seed:public -- [--as-of YYYY-MM-DD]
 npm run seed:private -- [--as-of YYYY-MM-DD]
 ```
 
-`seed` executes all public modules. `seed:private` executes that same list first, then all private
-overlays. Unknown arguments, invalid dates, invalid/duplicate modules, unsafe destinations, and
-module errors fail visibly. Success reports mode, `as-of`, ordered module IDs, and completion, but
-not private URLs or device identifiers.
+`seed` (`seed:all`) runs `seed:public` then `seed:private`. `seed:public` executes public
+modules only; `seed:private` executes private overlays only (after public seed on an empty
+or profile-owned store). Unknown arguments, invalid dates, invalid/duplicate modules, unsafe
+destinations, and module errors fail visibly. Success reports mode, `as-of`, ordered module
+IDs, and completion, but not private URLs or device identifiers.
 
 ## Calendar source write seam
 

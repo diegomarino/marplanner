@@ -37,7 +37,7 @@ editable, these are initial values only.
 
 ## Acceptance Criteria
 
-- Given a fresh v2 setup, when seeded, then the four periods carry the start times
+- Given a fresh deployment setup, when seeded, then the four periods carry the start times
   above in strict ascending order.
 
 ## Open Questions
@@ -46,6 +46,6 @@ editable, these are initial values only.
 
 ## Traceability
 
-- Pre-v2: `ADR-011`
+- Related prior: `ADR-011`
 - Domain grill: `../domain-grills/day-periods.md`
 - Related: `ADR-010`, `ADR-005`

@@ -193,14 +193,19 @@ export function observedFromRaw(
         fail(`${file} predates candidate run`);
     }
   }
+  const standardRoot = stamp.sourceRoot ?? root;
   const runners = {};
   if (selected.includes("node"))
     runners.node = normalizeNodeJUnit(
       fs.readFileSync(path.join(dir, "node-results.xml"), "utf8"),
-      root
+      standardRoot
     );
   if (selected.includes("vitest"))
-    runners.vitest = normalizeVitest(read("vitest-list.json"), read("vitest-results.json"), root);
+    runners.vitest = normalizeVitest(
+      read("vitest-list.json"),
+      read("vitest-results.json"),
+      standardRoot
+    );
   if (selected.includes("playwright"))
     runners.playwright = normalizePlaywright(
       read("playwright-list.json"),

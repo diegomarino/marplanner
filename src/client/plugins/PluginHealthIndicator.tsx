@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/base-path";
 import { Activity, CircleCheck, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { usePluginCatalog } from "./PluginCatalogProvider";
 
 function navigateToPlugin(pluginId?: string): void {
   const hash = pluginId ? `#plugin-${pluginId}` : "";
-  window.history.pushState(null, "", `/admin/plugins${hash}`);
+  window.history.pushState(null, "", appUrl(`/admin/plugins${hash}`));
   window.dispatchEvent(new PopStateEvent("popstate"));
   if (pluginId) {
     requestAnimationFrame(() =>

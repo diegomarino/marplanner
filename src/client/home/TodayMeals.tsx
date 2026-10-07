@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/base-path";
 import { useId } from "react";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { useTranslation } from "@/i18n";
@@ -40,7 +41,7 @@ export function TodayMeals(): React.JSX.Element {
         <h2 id={headingId} className="text-xl font-semibold">
           {t("todayMeals.title")}
         </h2>
-        <a href="/meals" className="text-sm font-medium underline underline-offset-4">
+        <a href={appUrl("/meals")} className="text-sm font-medium underline underline-offset-4">
           {t("todayMeals.viewAll")}
         </a>
       </div>

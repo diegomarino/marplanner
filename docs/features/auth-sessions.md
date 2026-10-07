@@ -13,7 +13,7 @@ each endpoint requires (each domain declares its own).
 
 ## Implementation status
 
-Provisioning, request authorization, frontend access gating and PIN verification are implemented. Key create/list/revoke, last-key anti-lockout and `set-pin` are not implemented. Requirements for those future interfaces remain labeled below; they are not operating instructions.
+Provisioning, failure-only authentication backoff, request authorization, frontend access gating and PIN verification are implemented. See the [auth contract](../architecture/contracts/auth-sessions.md). **Key create/list/revoke, last-key anti-lockout, and server cookie revocation are out of scope for this household release** (ops recovery only). **`set-pin` is not planned** — PIN replacement is `ADMIN_PIN` + restart + re-provision ([operations](../operations.md)). Deferred multi-integration requirements below are not operating instructions.
 
 ## Behavior
 
@@ -25,22 +25,22 @@ with no expiry, binds it to an httpOnly cookie, and never returns the raw key. T
 
 ### Integration credentials
 
-Startup reconciles the configured `MP_MANAGEMENT_KEY` into an integration credential. There is no API to issue, list or revoke keys. See [operations](../operations.md) before changing credentials; replacing a configured value leaves the old persisted key valid.
+Startup reconciles `MP_MANAGEMENT_KEY` into an integration credential. Bearer transport for that class is limited to `/api/plugins*`; other management carve-outs use the cookie authentication path. There is no API to issue, list or revoke keys. See [operations](../operations.md).
 
 ### User Story 3 — Unlock admin with the client-side PIN
 
 A parent enters the PIN; the frontend verifies it via an API-key-protected `verify-pin`
-that returns match/no-match only, then sets ephemeral "admin unlocked" UI state with an
-inactivity relock. No session row is created, a refresh clears the unlock, and backend
-authorization never consults PIN state.
+that returns match/no-match only, then sets ephemeral "admin unlocked" UI state. Unlock
+clears when leaving admin routes, on inactivity relock, explicit Lock, or refresh. No
+session row is created, and backend authorization never consults PIN state.
 
 ### Edge Cases
 
 - A missing credential (any environment) locks the deployment — only `/health` is
   reachable; it never opens it.
-- Last-key anti-lockout is a requirement for future key management; no installed mutation enforces it.
-- An endpoint that declares no required capability rejects every request.
-- Scoped keys are rejected outside their scopes. Key-management routes are absent.
+- Key create/list/revoke and last-key anti-lockout are **not this release**; clearing cookies does not revoke database rows.
+- Household device keys are `*`: access to a feature is full use of that feature. Capability preHandlers apply where registered (e.g. plugins, network-devices management).
+- Scoped keys outside their capabilities are rejected where those checks run. Key-management routes are absent.
 - Revocation/expiry are not pushed — they take effect on the next request because each
   request re-validates the key record.
 
@@ -56,11 +56,11 @@ authorization never consults PIN state.
 
 - **FR-004**: Given any environment, when a credential is missing, then enforcement MUST be fail-closed (the deployment is locked, only `/health` reachable, never opened), and the system MUST NOT allow any code path to disable or relax auth enforcement based on environment. _(Realizes: AUTH-SESSIONS-INV-04)_
 
-- **FR-005**: Given an endpoint that does not declare a required capability, when any request reaches it, then it MUST reject all requests (fail-closed default). _(Realizes: AUTH-SESSIONS-INV-05)_
+- **FR-005**: Given routes that register capability (or full-access/management) helpers, when a required capability is missing at registration or the key lacks it at request time, then the request MUST be rejected. Household device `*` traffic after the live-key boundary is full feature access by design (`ADR-058`); an app-wide undeclared-route audit is deferred quality work. _(Realizes: AUTH-SESSIONS-INV-05 household calibration)_
 
-- **FR-006 (planned, not implemented)**: Given a key-management operation (create/list/revoke), when it is authorized, then it MUST require a `*` key presented as a raw header value, MUST reject a cookie, and MUST NOT be delegable to a scoped key. _(Realizes: AUTH-SESSIONS-INV-06)_
+- **FR-006 (deferred, not this release)**: Given a future key-management operation (create/list/revoke), when it is authorized, then it MUST require a `*` key presented as a raw header value, MUST reject a cookie, and MUST NOT be delegable to a scoped key. _(Realizes: AUTH-SESSIONS-INV-06)_
 
-- **FR-007 (planned, not implemented)**: Given the last active `*` key, when a revoke or expire is attempted, then the system MUST refuse it (anti-lockout). _(Realizes: AUTH-SESSIONS-INV-07)_
+- **FR-007 (deferred, not this release)**: Given a future revoke/expire mutation and only one active `*` key, when revoke is attempted, then the system MUST refuse it (anti-lockout). _(Realizes: AUTH-SESSIONS-INV-07)_
 
 - **FR-008**: Given the trust model, when an operation is authorized, then there MUST be no second server-side privilege tier — a provisioned device's `*` cookie confers full household trust — and key-management MUST be the sole server-side operator boundary (with the `ADR-053` device-block as the lone pre-existing carve-out); every other operation — backups, plugins, telemetry-read, settings — MUST be household-tier (device-`*` cookie + client-side PIN), and any future operation that appears to need an ad-hoc per-endpoint "admin scope" carve-out MUST instead be treated as a signal to re-examine the threat model rather than add a tier. _(Realizes: AUTH-SESSIONS-INV-08)_
 
@@ -68,7 +68,7 @@ authorization never consults PIN state.
 
 - **FR-010**: Given raw credential values, when a key or PIN is handled, then device keys MUST never be exposed, integration keys MUST be shown exactly once at creation, and raw PINs MUST never be persisted or returned. _(Realizes: AUTH-SESSIONS-INV-10)_
 
-- **FR-011**: Given any auth state, when it is stored, then it MUST live in the database and MUST NOT be held in process memory. _(Realizes: AUTH-SESSIONS-INV-11)_
+- **FR-011**: Given any auth state, when it is stored, then credential/authorization state MUST live in the database, with no in-memory sessions or cached authority. Transient failed-attempt counters under ADR-037 are not authentication state. _(Realizes: AUTH-SESSIONS-INV-11)_
 
 - **FR-012**: Given telemetry or logs, when they are written, then they MUST never contain raw PINs, API keys, cookies, or access-gate tokens. _(Realizes: AUTH-SESSIONS-INV-12)_
 
@@ -112,7 +112,7 @@ authorization never consults PIN state.
 
 ## Assumptions
 
-- Fresh v2 data store; no legacy keys, sessions, or PINs are migrated (ADR-026). Fresh
+- Fresh data store; no legacy keys, sessions, or PINs are migrated (ADR-026). Fresh
   setup seeds one bootstrap `*` key (deployment config) + one frontend access-gate token
   (separate deployment secret).
 - Credential concrete format/generation (`mpk-` prefix, CSPRNG, rate limiting) is owned
