@@ -798,13 +798,20 @@ async function generateFullRegistryBlocks(
     // v1-faithful numbering: the position in the FULL effective order,
     // not a recount of survivors — see `titleFor`'s own doc comment.
     const position = i + 1;
-    const { enabled, weekdays, params } = resolveEffectiveParams(
-      memberId,
-      instance.type,
-      instance.params
-    );
+    const settings = resolveEffectiveParams(memberId, instance.type, instance.params);
+    const { enabled, weekdays } = settings;
+    let { params } = settings;
     if (!enabled) continue;
     if (!isActiveOnWeekday(weekdays, weekday)) continue;
+
+    // Freeze the default before dispatch so generators and snapshot metadata share it.
+    // Explicit overrides still pass through the generator validation unchanged.
+    if (isCorpusBackedBlockType(instance.type) && params?.language === undefined) {
+      params = {
+        ...params,
+        language: resolveCorpusLanguage(instance.type, params as CorpusBlockParams, language),
+      };
+    }
 
     const outcome = await generateBlockData(instance.type, memberId, date, now, params, cache);
     if (outcome === null) continue; // handoff note: null-omit, never a recorded block.
@@ -823,7 +830,7 @@ async function generateFullRegistryBlocks(
     }
     // FR-008/FR-009: `language` appears ONLY for corpus-backed types, resolved through the SAME
     // resolver `blocks/context.ts`'s generators themselves call (— single
-    // source of truth for the "default en" behavior, not a re-derived duplicate).
+    // source of truth for the frozen effective language, not a re-derived duplicate).
     if (isCorpusBackedBlockType(instance.type)) {
       try {
         block.language = resolveCorpusLanguage(instance.type, params as CorpusBlockParams);

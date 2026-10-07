@@ -1,3 +1,4 @@
+import { LocalizedApiError, responseMessage } from "@/lib/api-error";
 import { useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/credential";
 import { useT } from "@/i18n";
@@ -48,13 +49,6 @@ interface Filters {
 }
 
 const EMPTY_FILTERS: Filters = { level: "", component: "", from: "", to: "" };
-
-type ApiError = { message?: unknown };
-
-async function responseMessage(response: Response, fallback: string): Promise<string> {
-  const data = (await response.json().catch(() => null)) as ApiError | null;
-  return typeof data?.message === "string" ? data.message : fallback;
-}
 
 export function TelemetryManagement() {
   const t = useT();
@@ -122,7 +116,9 @@ export function TelemetryManagement() {
         credentials: "include",
       });
       if (!response.ok) {
-        throw new Error(await responseMessage(response, t("telemetry.management.loadError")));
+        throw new LocalizedApiError(
+          await responseMessage(response, t("telemetry.management.loadError"))
+        );
       }
 
       const page = (await response.json()) as ClientLogPage;
@@ -132,7 +128,9 @@ export function TelemetryManagement() {
       setNextCursor(page.nextCursor);
     } catch (cause) {
       if (mySeq !== requestSeqRef.current) return; // superseded by a newer request — discard
-      setError(cause instanceof Error ? cause.message : t("telemetry.management.loadError"));
+      setError(
+        cause instanceof LocalizedApiError ? cause.message : t("telemetry.management.loadError")
+      );
     } finally {
       // Only the still-current (latest) request gets to clear the in-flight flags — a stale
       // request settling after a newer one started must not touch them (the newer request's own
