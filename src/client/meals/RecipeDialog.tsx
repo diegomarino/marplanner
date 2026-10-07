@@ -69,7 +69,7 @@ export function RecipeDialog({ open, mode, recipe, onClose, onSave }: RecipeDial
         if (!next && !saving) onClose();
       }}
     >
-      <DialogContent>
+      <DialogContent closeLabel={t("meals.recipes.detailClose")}>
         <DialogHeader>
           <DialogTitle>
             {mode === "create" ? t("meals.recipes.createTitle") : t("meals.action.edit")}

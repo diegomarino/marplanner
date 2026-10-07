@@ -27,7 +27,7 @@ export function RecipeDetailDialog({
         if (!next) onClose();
       }}
     >
-      <DialogContent>
+      <DialogContent closeLabel={t("meals.recipes.detailClose")}>
         <DialogHeader>
           <DialogTitle>{recipe.name}</DialogTitle>
         </DialogHeader>

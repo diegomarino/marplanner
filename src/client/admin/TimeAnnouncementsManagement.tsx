@@ -1,3 +1,4 @@
+import { LocalizedApiError, responseMessage as readResponseMessage } from "@/lib/api-error";
 import { useEffect, useState } from "react";
 import { authFetch } from "@/lib/credential";
 import { useT } from "@/i18n";
@@ -64,13 +65,6 @@ function weekdayLabels(t: (key: MessageKey) => string): WeekdayLabels {
   };
 }
 
-type ApiError = { message?: unknown };
-
-async function responseMessage(response: Response, fallback: string): Promise<string> {
-  const data = (await response.json().catch(() => null)) as ApiError | null;
-  return typeof data?.message === "string" ? data.message : fallback;
-}
-
 interface RuleFormState {
   time: string;
   weekDays: WeekdayCode[];
@@ -81,6 +75,11 @@ const EMPTY_FORM: RuleFormState = { time: "", weekDays: [], isActive: true };
 
 export function TimeAnnouncementsManagement() {
   const t = useT();
+  const responseMessage = (response: Response, fallback: string) =>
+    readResponseMessage(response, fallback, {
+      active_overlap: t("timeAnnouncements.management.activeOverlap"),
+      validation_error: t("timeAnnouncements.management.invalidRule"),
+    });
   const { language } = useHouseholdSettings();
   const lang = resolveLang(language ?? undefined);
 
@@ -131,7 +130,7 @@ export function TimeAnnouncementsManagement() {
         body: JSON.stringify(input),
       });
       if (!response.ok) {
-        throw new Error(
+        throw new LocalizedApiError(
           await responseMessage(response, t("timeAnnouncements.management.createError"))
         );
       }
@@ -140,7 +139,9 @@ export function TimeAnnouncementsManagement() {
       window.dispatchEvent(new CustomEvent(RULES_CHANGED_EVENT));
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : t("timeAnnouncements.management.createError")
+        cause instanceof LocalizedApiError
+          ? cause.message
+          : t("timeAnnouncements.management.createError")
       );
     } finally {
       setCreating(false);
@@ -170,7 +171,7 @@ export function TimeAnnouncementsManagement() {
         body: JSON.stringify(patch),
       });
       if (!response.ok) {
-        throw new Error(
+        throw new LocalizedApiError(
           await responseMessage(response, t("timeAnnouncements.management.editError"))
         );
       }
@@ -179,7 +180,9 @@ export function TimeAnnouncementsManagement() {
       return true;
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : t("timeAnnouncements.management.editError")
+        cause instanceof LocalizedApiError
+          ? cause.message
+          : t("timeAnnouncements.management.editError")
       );
       return false;
     } finally {
@@ -210,7 +213,7 @@ export function TimeAnnouncementsManagement() {
         credentials: "include",
       });
       if (!response.ok) {
-        throw new Error(
+        throw new LocalizedApiError(
           await responseMessage(response, t("timeAnnouncements.management.deleteError"))
         );
       }
@@ -219,7 +222,9 @@ export function TimeAnnouncementsManagement() {
       window.dispatchEvent(new CustomEvent(RULES_CHANGED_EVENT));
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : t("timeAnnouncements.management.deleteError")
+        cause instanceof LocalizedApiError
+          ? cause.message
+          : t("timeAnnouncements.management.deleteError")
       );
     }
   }

@@ -1,4 +1,5 @@
 import "temporal-polyfill/global";
+import { useTranslation } from "@/i18n";
 import type { CalendarEvent } from "@schedule-x/calendar";
 import { createViewWeek } from "@schedule-x/calendar";
 import { createCurrentTimePlugin } from "@schedule-x/current-time";
@@ -80,7 +81,13 @@ function EventContent({
   );
 }
 
-export function ScheduleXWeekView({
+export function ScheduleXWeekView(props: ScheduleXWeekViewProps) {
+  const { language } = useTranslation();
+  const locale = language === "es" ? "es-ES" : "en-GB";
+  return <LocalizedWeekView key={locale} {...props} locale={locale} />;
+}
+
+function LocalizedWeekView({
   selectedDate,
   timezone,
   weekStartDay,
@@ -88,7 +95,8 @@ export function ScheduleXWeekView({
   members,
   onEventClick,
   scrollToNowKey,
-}: ScheduleXWeekViewProps) {
+  locale,
+}: ScheduleXWeekViewProps & { locale: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const eventByIdRef = useRef(new Map<string, FeedItem>());
   const projected = useMemo(
@@ -102,6 +110,7 @@ export function ScheduleXWeekView({
 
   const config = useMemo(
     () => ({
+      locale,
       selectedDate: Temporal.PlainDate.from(selectedDate),
       defaultView: "week",
       views: [createViewWeek()] as [ReturnType<typeof createViewWeek>],
@@ -116,7 +125,7 @@ export function ScheduleXWeekView({
       },
       events: initialProjectedRef.current,
     }),
-    [selectedDate, weekStartDay, timezone, onEventClick]
+    [selectedDate, weekStartDay, timezone, onEventClick, locale]
   );
   const plugins = useMemo(() => [createCurrentTimePlugin()], []);
   const calendarApp = useCalendarApp(config, plugins);
