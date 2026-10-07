@@ -80,8 +80,9 @@ output_unavailable`.
   about _why_, only that the record is superseded).
 - Provide the **device render context** to producers at render time (ADR-041).
 - Settings objects (ADR-028): `printer` (`paperWidthDots`) + `printerTransport`
-  (discriminated union: `type` = `bluetooth` now, `wifi`/`usb` future; `config`
-  per type). No master/autoPrint keys.
+  (flat Bluetooth pairing fields: `deviceId`, `name`, `serviceUuid`,
+  `characteristicUuid`; all-empty means unpaired). Nested `type`/`config`
+  payloads are rejected as `invalid_settings`. No master/autoPrint keys.
 - Admin: pair device, test print, print attempt log / history.
 
 ## Events
