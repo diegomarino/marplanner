@@ -171,5 +171,6 @@ describe("MealEntryDialog", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Nota" }));
     expect(screen.getByRole("textbox", { name: "Nota" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Eliminar" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cerrar" })).toBeInTheDocument();
   });
 });

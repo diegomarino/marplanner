@@ -1,8 +1,9 @@
+import { LocalizedApiError, responseMessage as readResponseMessage } from "@/lib/api-error";
 import { appUrl } from "@/lib/base-path";
 import { useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/credential";
 import { useHouseholdSettings } from "@/lib/householdSettings";
-import { useT } from "@/i18n";
+import { useTranslation } from "@/i18n";
 import type { MessageKey } from "@/i18n/messages";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -11,6 +12,7 @@ import { Field } from "@/components/Field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type {
+  BackupErrorCode,
   BackupListItem,
   BackupListResponse,
   BackupType,
@@ -31,11 +33,8 @@ import type {
 /* construction here — every write path goes through the server's */
 /* hardened resolver; this UI never constructs a path itself). */
 /* */
-/* Server-side error `message` text is ENGLISH BY DESIGN (FR-014 — */
-/* "English operational messages") and shown VERBATIM, never routed */
-/* through t — only the panel CHROME below (labels/buttons/ */
-/* headings) is localized, matching TelemetryManagement/ */
-/* DailyBriefingManagement's existing convention. */
+/* Action failures are translated by stable codes. Historical backup/prune */
+/* diagnostic strings remain operational log content. */
 /* */
 /* (token dialect, FR-009): migrated to the shared L2 */
 /* components — AdminPanel for the panel frame, ErrorNotice */
@@ -49,13 +48,6 @@ import type {
 /* confirmation. adds ConfirmDialog to deletion so the */
 /* destructive operation requires an explicit second action (FR-019). */
 /* ------------------------------------------------------------------ */
-
-type ApiError = { message?: unknown };
-
-async function responseMessage(response: Response, fallback: string): Promise<string> {
-  const data = (await response.json().catch(() => null)) as ApiError | null;
-  return typeof data?.message === "string" ? data.message : fallback;
-}
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -79,8 +71,33 @@ export const TYPE_KEYS: Record<BackupType, MessageKey> = {
   upload: "backups.management.type.upload",
 };
 
+export const BACKUP_ERROR_KEYS: Record<BackupErrorCode, MessageKey> = {
+  validation_error: "backups.error.validation_error",
+  confirmation_mismatch: "backups.error.confirmation_mismatch",
+  incompatible_backup: "backups.error.incompatible_backup",
+  downgrade_rejected: "backups.error.downgrade_rejected",
+  unsupported_lineage: "backups.error.unsupported_lineage",
+  restore_in_progress: "backups.error.restore_in_progress",
+  snapshot_in_progress: "backups.error.snapshot_in_progress",
+  quiesce_timeout: "backups.error.quiesce_timeout",
+  pre_restore_failed: "backups.error.pre_restore_failed",
+  swap_failed: "backups.error.swap_failed",
+  migration_failed_rolled_back: "backups.error.migration_failed_rolled_back",
+  rollback_failed: "backups.error.rollback_failed",
+  retention_floor: "backups.error.retention_floor",
+  protected_pre_restore: "backups.error.protected_pre_restore",
+  upload_too_large: "backups.error.upload_too_large",
+  backup_failed: "backups.error.backup_failed",
+  not_found: "backups.error.not_found",
+};
+
 export function BackupsManagement() {
-  const t = useT();
+  const { t, language } = useTranslation();
+  const codeMessages = Object.fromEntries(
+    Object.entries(BACKUP_ERROR_KEYS).map(([code, key]) => [code, t(key)])
+  );
+  const responseMessage = (response: Response, fallback: string) =>
+    readResponseMessage(response, fallback, codeMessages);
   // US0 hoist: the household IANA timezone comes from the shared
   // `useHouseholdSettings` context (one `/api/settings` fetch per boot) instead of an
   // ad-hoc GET here. Until the context resolves (or if it never does — the provider never
@@ -153,7 +170,9 @@ export function BackupsManagement() {
         credentials: "include",
       });
       if (!response.ok) {
-        throw new Error(await responseMessage(response, t("backups.management.snapshotError")));
+        throw new LocalizedApiError(
+          await responseMessage(response, t("backups.management.snapshotError"))
+        );
       }
       const result = (await response.json()) as SnapshotResult;
       if (result.status === "already_running") {
@@ -163,7 +182,7 @@ export function BackupsManagement() {
       }
     } catch (cause) {
       setSnapshotError(
-        cause instanceof Error ? cause.message : t("backups.management.snapshotError")
+        cause instanceof LocalizedApiError ? cause.message : t("backups.management.snapshotError")
       );
     } finally {
       setSnapshotting(false);
@@ -179,11 +198,15 @@ export function BackupsManagement() {
         credentials: "include",
       });
       if (!response.ok) {
-        throw new Error(await responseMessage(response, t("backups.management.deleteError")));
+        throw new LocalizedApiError(
+          await responseMessage(response, t("backups.management.deleteError"))
+        );
       }
       await loadBackups();
     } catch (cause) {
-      setDeleteError(cause instanceof Error ? cause.message : t("backups.management.deleteError"));
+      setDeleteError(
+        cause instanceof LocalizedApiError ? cause.message : t("backups.management.deleteError")
+      );
     } finally {
       setDeletingFilenames((previous) => {
         const next = new Set(previous);
@@ -234,8 +257,11 @@ export function BackupsManagement() {
       });
       const result = (await response.json()) as RestoreResult;
       if (!response.ok || result.status !== "restored") {
-        const message = "message" in result && result.message ? result.message : undefined;
-        setRestoreError(message ?? t("backups.management.restoreError"));
+        setRestoreError(
+          Object.hasOwn(codeMessages, result.status)
+            ? codeMessages[result.status]
+            : t("backups.management.restoreError")
+        );
         setRestoring(false);
         return;
       }
@@ -266,21 +292,25 @@ export function BackupsManagement() {
         body: uploadFile,
       });
       if (!response.ok) {
-        throw new Error(await responseMessage(response, t("backups.management.uploadError")));
+        throw new LocalizedApiError(
+          await responseMessage(response, t("backups.management.uploadError"))
+        );
       }
       (await response.json()) as UploadResult;
       setUploadFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       await loadBackups();
     } catch (cause) {
-      setUploadError(cause instanceof Error ? cause.message : t("backups.management.uploadError"));
+      setUploadError(
+        cause instanceof LocalizedApiError ? cause.message : t("backups.management.uploadError")
+      );
     } finally {
       setUploading(false);
     }
   }
 
   function formatCreatedAt(createdAt: number): string {
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(language === "es" ? "es-ES" : "en-GB", {
       timeZone: timezone,
       dateStyle: "medium",
       timeStyle: "medium",

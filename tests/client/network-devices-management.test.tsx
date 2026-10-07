@@ -166,6 +166,18 @@ describe("NetworkDevicesManagement", () => {
     cleanup();
   });
 
+  it("formats last-seen dates using the household's Spanish locale", async () => {
+    currentSettings.language = "es";
+    const lastSeenAt = Date.parse("2026-01-15T20:00:00Z");
+    vi.mocked(globalThis.fetch).mockImplementation(
+      mockRouter({ devices: [device({ liveStatus: "unknown", lastSeenAt })], members: [] })
+    );
+    renderManagement();
+    const status = await screen.findByTestId("network-devices-status-dev-1");
+    expect(status).toHaveTextContent(new Date(lastSeenAt).toLocaleString("es-ES"));
+    expect(status).not.toHaveTextContent(new Date(lastSeenAt).toLocaleString("en-GB"));
+  });
+
   it("renders aliases and NEVER a MAC-shaped string anywhere in the registry list", async () => {
     const mockFetch = vi.mocked(globalThis.fetch);
     mockFetch.mockImplementation(
