@@ -492,12 +492,7 @@
     "network-devices.poll",
     "calendar.external-sources.poll"
   ],
-  "familyRouteIds": [
-    "home",
-    "calendar",
-    "chores",
-    "meals"
-  ],
+  "familyRouteIds": ["home", "calendar", "chores", "meals"],
   "adminRouteIds": [
     "calendar",
     "member-create",
@@ -1480,9 +1475,7 @@
           "tests/boundary/foundation-telemetry-outage.test.ts": [
             "foundation telemetry outage isolation serves authenticated settings writes and reads when client_log is unavailable"
           ],
-          "tests/boundary/health.test.ts": [
-            "health route returns 200 with { status: 'ok' }"
-          ],
+          "tests/boundary/health.test.ts": ["health route returns 200 with { status: 'ok' }"],
           "tests/boundary/host-api-mediation.test.ts": [
             "host-api-mediation — plugin roots lint clean (ESLint Node API) reminders/daily-messages/meals module roots have 0 import-x/no-restricted-paths violations",
             "host-api-mediation — barrel re-exports behavioral smoke (useIsolatedDb) isActiveMember: true for an active member, false for an archived one",
@@ -4844,63 +4837,39 @@
             "ad4a985f07a45a65109d-c212ebd4871ad7d4aebd",
             "ad4a985f07a45a65109d-cf50ca17c6ca83ed5e60"
           ],
-          "tests/e2e/calendar.spec.ts": [
-            "fd11a3d0e6100edc747e-74db3b02bb030c6999ab"
-          ],
+          "tests/e2e/calendar.spec.ts": ["fd11a3d0e6100edc747e-74db3b02bb030c6999ab"],
           "tests/e2e/chores-board.spec.ts": [
             "b8135b54a0320e142813-e9bd8d6d75365c6d27bf",
             "b8135b54a0320e142813-efb78496d4d3491d9ea5"
           ],
-          "tests/e2e/critical-flow.spec.ts": [
-            "e621337e095a26e8c527-1904dc1d69bc6003d74c"
-          ],
+          "tests/e2e/critical-flow.spec.ts": ["e621337e095a26e8c527-1904dc1d69bc6003d74c"],
           "tests/e2e/daily-briefing.spec.ts": [
             "86839c4e71e65f7dc2a3-aa86899c234dd598acdd",
             "86839c4e71e65f7dc2a3-e4393fb7a8648d313a5e",
             "86839c4e71e65f7dc2a3-3c584cb45565dfe5cdec"
           ],
-          "tests/e2e/daily-messages.spec.ts": [
-            "84aeea7f0cfc163093f1-f7a8bf8818add9ed3690"
-          ],
+          "tests/e2e/daily-messages.spec.ts": ["84aeea7f0cfc163093f1-f7a8bf8818add9ed3690"],
           "tests/e2e/database-lifecycle-recovery.spec.ts": [
             "844f34358a7b61543f01-c5b8676a2aa6aae67b03"
           ],
           "tests/e2e/database-lifecycle-skeleton.spec.ts": [
             "0e840670f8f1dcc0c344-b5254dbf49af390c39ab"
           ],
-          "tests/e2e/day-periods.spec.ts": [
-            "c59a86f37d87b572ead5-83c2b42dae848f1e2e1d"
-          ],
-          "tests/e2e/foundation.spec.ts": [
-            "6b60d0cacd30be8ae473-2c7248f78da8d9a829a9"
-          ],
-          "tests/e2e/host-api-skeleton.spec.ts": [
-            "f0b208043a5751e043b8-9dc1a15b02d98e57986d"
-          ],
-          "tests/e2e/household-dashboard.spec.ts": [
-            "eb78110fe65c730c199a-43307ac1bcc6bb344601"
-          ],
+          "tests/e2e/day-periods.spec.ts": ["c59a86f37d87b572ead5-83c2b42dae848f1e2e1d"],
+          "tests/e2e/foundation.spec.ts": ["6b60d0cacd30be8ae473-2c7248f78da8d9a829a9"],
+          "tests/e2e/host-api-skeleton.spec.ts": ["f0b208043a5751e043b8-9dc1a15b02d98e57986d"],
+          "tests/e2e/household-dashboard.spec.ts": ["eb78110fe65c730c199a-43307ac1bcc6bb344601"],
           "tests/e2e/household-shell-skeleton.spec.ts": [
             "d9d6d5f7b5326a65c25a-27293a825cd7de2a689f"
           ],
-          "tests/e2e/meals.spec.ts": [
-            "ec8eabeeaf87d344ec9c-e0e395b44f2a7a7fb88a"
-          ],
-          "tests/e2e/member-lifecycle.spec.ts": [
-            "cb0261c338a4acc9123a-5070457c32bb9bbf1935"
-          ],
-          "tests/e2e/member-management.spec.ts": [
-            "91e6cc9b81fa453591af-b2846b44cc3122282dbe"
-          ],
-          "tests/e2e/network-devices.spec.ts": [
-            "98e23c442f886f90270a-074bdc81919515c93307"
-          ],
+          "tests/e2e/meals.spec.ts": ["ec8eabeeaf87d344ec9c-e0e395b44f2a7a7fb88a"],
+          "tests/e2e/member-lifecycle.spec.ts": ["cb0261c338a4acc9123a-5070457c32bb9bbf1935"],
+          "tests/e2e/member-management.spec.ts": ["91e6cc9b81fa453591af-b2846b44cc3122282dbe"],
+          "tests/e2e/network-devices.spec.ts": ["98e23c442f886f90270a-074bdc81919515c93307"],
           "tests/e2e/plugin-lifecycle-visual.spec.ts": [
             "e0ce886952a53e3072cd-f8bd757606cf43c9ff99"
           ],
-          "tests/e2e/plugin-lifecycle.spec.ts": [
-            "890958b0bb7f57610ba1-ea2aeda258f94bf710a3"
-          ],
+          "tests/e2e/plugin-lifecycle.spec.ts": ["890958b0bb7f57610ba1-ea2aeda258f94bf710a3"],
           "tests/e2e/printing.spec.ts": [
             "64adef587d995e42b8f9-7aa22fbf2718606ba7d2",
             "64adef587d995e42b8f9-5a07534a8a7a882aeda5"
@@ -4909,12 +4878,8 @@
             "bad9dac693639b46b647-24ac887a4a592482faee",
             "bad9dac693639b46b647-cf3cfae8b2bd5775ab9f"
           ],
-          "tests/e2e/reminders.spec.ts": [
-            "aa75b1db4695422e71e4-7394a10a06ed8a12b624"
-          ],
-          "tests/e2e/telemetry-ingest.spec.ts": [
-            "389399d288f3206225fc-d578221d3cd219c9e517"
-          ],
+          "tests/e2e/reminders.spec.ts": ["aa75b1db4695422e71e4-7394a10a06ed8a12b624"],
+          "tests/e2e/telemetry-ingest.spec.ts": ["389399d288f3206225fc-d578221d3cd219c9e517"],
           "tests/e2e/telemetry-transport.spec.ts": [
             "d52575aebaf5180e5f75-f1c7371e66f767dd5c41",
             "d52575aebaf5180e5f75-5eba3c520d032bf45c35"
@@ -9219,6 +9184,7 @@
     ".github/dependabot.yml",
     ".github/runtime-paths.regex",
     ".github/workflows/coverage.yml",
+    ".github/workflows/mac-mini-ci.yml",
     ".gitignore",
     ".nvmrc",
     ".prettierignore",
@@ -9571,6 +9537,7 @@
     "src/client/shell/usePresentationMode.ts",
     "src/client/styles/globals.css",
     "src/client/styles/member-colors.generated.css",
+    "src/client/styles/tokens.css",
     "src/client/time-announcements/engine.ts",
     "src/client/time-announcements/events.ts",
     "src/client/time-announcements/leader.ts",
@@ -10160,12 +10127,18 @@
     "tools/check-openapi-drift.mjs",
     "tools/check-openapi-drift.test.mjs",
     "tools/check-quality-tools-negative.test.mjs",
+    "tools/chrome-dev-shared.test.mjs",
     "tools/container-smoke.mjs",
     "tools/count-ui-debt.test.mjs",
     "tools/dev/accessible-names-baseline.txt",
     "tools/dev/audit-accessible-names.mjs",
+    "tools/dev/browser-reset.mjs",
+    "tools/dev/browser-session.mjs",
     "tools/dev/check-exception-list.mjs",
+    "tools/dev/chrome-cdp.mjs",
+    "tools/dev/chrome-dev-shared.mjs",
     "tools/dev/count-ui-debt.mjs",
+    "tools/dev/fresh-local.mjs",
     "tools/dev/generate-member-colors.mjs",
     "tools/dev/generate-noto-emojis.mjs",
     "tools/dev/generate-ui-catalog.mjs",
@@ -10173,8 +10146,10 @@
     "tools/dev/noto-overrides/emoji_u1f471_200d_2640.svg",
     "tools/dev/smoke-dist-render.mjs",
     "tools/dev/start-local.mjs",
+    "tools/dev/sync-private-seeds.mjs",
     "tools/e2e-data-dir.mjs",
     "tools/e2e-data-dir.test.mjs",
+    "tools/fresh-local.test.mjs",
     "tools/gen-openapi.mjs",
     "tools/gen-openapi.test.mjs",
     "tools/local-env.test.mjs",
@@ -10182,6 +10157,7 @@
     "tools/member-colors.test.mjs",
     "tools/noto-emojis.test.mjs",
     "tools/storage-runtime.test.mjs",
+    "tools/sync-private-seeds.test.mjs",
     "tools/ui-catalog.test.mjs",
     "tools/validation/provider-egress-observer.mjs",
     "tools/verify-coverage.mjs",

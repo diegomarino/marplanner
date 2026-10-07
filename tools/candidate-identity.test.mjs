@@ -1,8 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync, chmodSync } from "node:fs";
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync, chmodSync, copyFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 
 test("candidate identity binds bytes, modes and exact maintained inventory", async () => {
   const { candidateIdentity, requireCandidate } = await import("./candidate-identity.mjs");
@@ -31,7 +32,7 @@ test("candidate identity binds bytes, modes and exact maintained inventory", asy
 });
 
 test("CI binds the checked-out tree instead of a stale embedded candidate hash", async () => {
-  const { readFileSync } = await import("node:fs");
+  const { readFileSync, existsSync } = await import("node:fs");
   const { load } = await import("js-yaml");
   const workflow = readFileSync(".github/workflows/coverage.yml", "utf8");
   assert.doesNotMatch(workflow, /MP_CANDIDATE_ID:\s*[a-f0-9]{64}/);
@@ -45,8 +46,31 @@ test("CI binds the checked-out tree instead of a stale embedded candidate hash",
     steps(job)
       .filter((step) => step.run)
       .map((step) => step.run);
-  for (const job of ["standard", "full"])
-    assert.ok(commands(job).some((run) => run.includes("node tools/candidate-identity.mjs")));
+  const root = mkdtempSync(join(tmpdir(), "candidate-ci-"));
+  try {
+    mkdirSync(join(root, "tools"));
+    mkdirSync(join(root, "tests/fixtures"), { recursive: true });
+    copyFileSync("tools/candidate-identity.mjs", join(root, "tools/candidate-identity.mjs"));
+    writeFileSync(
+      join(root, "tests/fixtures/assembly-cohort.json"),
+      JSON.stringify({ productFiles: ["missing.txt"] })
+    );
+    for (const job of ["standard", "full"]) {
+      const run = commands(job).find((run) => run.includes("node tools/candidate-identity.mjs"));
+      assert.ok(run);
+      const envFile = join(root, `${job}-env`);
+      const result = spawnSync("bash", ["-e", "-c", run], {
+        cwd: root,
+        env: { ...process.env, GITHUB_ENV: envFile },
+        encoding: "utf8",
+      });
+      assert.match(result.stderr, /Candidate inventory differs/);
+      assert.notEqual(result.status, 0, `${job} must stop when candidate identity fails`);
+      assert.equal(existsSync(envFile) ? readFileSync(envFile, "utf8") : "", "");
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
   assert.equal(commands("standard").filter((run) => run === "npm run check:standard").length, 1);
   assert.ok(commands("full").includes("npm run check:aggregate-only"));
   assert.ok(!commands("full").some((run) => /check:(standard|full)|cohorts:stamp/.test(run)));
@@ -70,6 +94,5 @@ test("CI binds the checked-out tree instead of a stale embedded candidate hash",
       (run) => run === 'tar -xzf "$RUNNER_TEMP/standard-evidence/standard-evidence.tar.gz"'
     )
   );
-  const { existsSync } = await import("node:fs");
   assert.equal(existsSync(".github/workflows/full-gate.yml"), false);
 });
