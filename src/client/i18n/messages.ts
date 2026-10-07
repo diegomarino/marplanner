@@ -22,8 +22,7 @@ export const messages = {
     "shell.notFound.title": "Page not found",
     "shell.notFound.description": "Use the household navigation to open a page.",
     "members.management.title": "Members Management",
-    "members.management.description":
-      "Member listing — thin UI for assembly verification.",
+    "members.management.description": "Member listing — thin UI for assembly verification.",
     "members.management.refresh": "Refresh Members",
     "members.management.refreshing": "Loading…",
     "members.management.updating": "Updating…",

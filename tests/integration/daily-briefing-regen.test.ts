@@ -109,20 +109,20 @@ describe("daily-briefing regeneration + supersede + printed-status (research D4/
       // `db.inTransaction` at CALL TIME and substitutes SAVEPOINT/RELEASE/ROLLBACK TO for
       // BEGIN/COMMIT/ROLLBACK when already nested).
       const db = getDb();
- db.exec("CREATE TABLE t010_savepoint_probe (id INTEGER PRIMARY KEY, val TEXT)");
+      db.exec("CREATE TABLE t010_savepoint_probe (id INTEGER PRIMARY KEY, val TEXT)");
 
       const inner = db.transaction((val: string) => {
- db.prepare("INSERT INTO t010_savepoint_probe (val) VALUES (?)").run(val);
+        db.prepare("INSERT INTO t010_savepoint_probe (val) VALUES (?)").run(val);
       });
 
       // Commit-together: an outer transaction whose body calls a nested `db.transaction` — both
       // persist when the outer succeeds.
       const outerOk = db.transaction(() => {
- db.prepare("INSERT INTO t010_savepoint_probe (val) VALUES (?)").run("outer-1");
+        db.prepare("INSERT INTO t010_savepoint_probe (val) VALUES (?)").run("outer-1");
         inner("inner-1");
       });
       outerOk();
- expect(db.prepare("SELECT val FROM t010_savepoint_probe ORDER BY id").all()).toEqual([
+      expect(db.prepare("SELECT val FROM t010_savepoint_probe ORDER BY id").all()).toEqual([
         { val: "outer-1" },
         { val: "inner-1" },
       ]);
@@ -132,12 +132,12 @@ describe("daily-briefing regeneration + supersede + printed-status (research D4/
       // ROLLBACK discards the already-released nested savepoint too, not just the outer's own
       // statements.
       const outerFail = db.transaction(() => {
- db.prepare("INSERT INTO t010_savepoint_probe (val) VALUES (?)").run("outer-2");
+        db.prepare("INSERT INTO t010_savepoint_probe (val) VALUES (?)").run("outer-2");
         inner("inner-2");
         throw new Error("forced abort");
       });
       expect(() => outerFail()).toThrow("forced abort");
- expect(db.prepare("SELECT val FROM t010_savepoint_probe ORDER BY id").all()).toEqual([
+      expect(db.prepare("SELECT val FROM t010_savepoint_probe ORDER BY id").all()).toEqual([
         { val: "outer-1" },
         { val: "inner-1" },
       ]); // unchanged — outer-2/inner-2 never persisted, either half

@@ -55,8 +55,55 @@ describe("AdminGate touch PIN keypad", () => {
     fireEvent.keyDown(window, { key: "Enter" });
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
-    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as NonNullable<Parameters<typeof fetch>[1]>).body as string
+    );
     expect(body).toEqual({ pin: "1235" });
+    expect(await screen.findByRole("alert")).toHaveTextContent("Incorrect PIN.");
+  });
+
+  it("keeps modified keys, editing fields, and focused control activation out of global PIN entry", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <AdminUnlockProvider>
+        <input aria-label="External field" />
+        <AdminGate />
+      </AdminUnlockProvider>
+    );
+    fireEvent.keyDown(window, { key: "Enter" });
+    for (const modifier of ["ctrlKey", "metaKey", "altKey"])
+      fireEvent.keyDown(window, { key: "1", [modifier]: true });
+    fireEvent.keyDown(screen.getByLabelText("External field"), { key: "2" });
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.getByTestId("admin-pin-display")).not.toHaveTextContent("●");
+    for (const digit of "1234") fireEvent.keyDown(window, { key: digit });
+    const digitButton = screen.getByTestId("admin-pin-digit-5");
+    fireEvent.keyDown(digitButton, { key: "Backspace" });
+    fireEvent.keyDown(digitButton, { key: "Enter" });
+    expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●●●");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("caps keyboard entry and freezes it while a PIN verification is pending", async () => {
+    let finish!: (response: Response) => void;
+    const fetchMock = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          finish = resolve;
+        })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    renderGate();
+    for (const digit of "1234567") fireEvent.keyDown(window, { key: digit });
+    expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●●●●●");
+    fireEvent.keyDown(window, { key: "Enter" });
+    fireEvent.keyDown(window, { key: "8" });
+    fireEvent.keyDown(window, { key: "Backspace" });
+    fireEvent.keyDown(window, { key: "Enter" });
+    expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●●●●●");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    finish(Response.json({ match: false }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Incorrect PIN.");
   });
 

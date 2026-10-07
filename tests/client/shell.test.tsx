@@ -386,7 +386,6 @@ describe("Shell — unprovisioned gate", () => {
     expect(screen.queryByRole("group", { name: "Options" })).not.toBeInTheDocument();
   });
 
-
   it("rejects a quick physical tap but accepts keyboard hold and synthetic AT activation", async () => {
     document.cookie = "mp_provisioned=1; path=/";
     mockFetch.mockImplementation((url: string | URL) => {

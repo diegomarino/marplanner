@@ -115,7 +115,7 @@ describe("telemetry negative proofs", () => {
       // Markers that would indicate a legacy (v1) import path: the former module paths
       // (`apps/api/src/routes/telemetry-client-log.ts` /
       // `apps/web/src/lib/logger-browser-sink.ts`), or a generically-named import/migration
- // helper for pulling v1 client-log rows into the fresh deployment store.
+      // helper for pulling v1 client-log rows into the fresh deployment store.
       const legacyMarkers = [
         /apps\/api\/src\/routes\/telemetry-client-log/i,
         /apps\/web\/src\/lib\/logger-browser-sink/i,
@@ -134,7 +134,7 @@ describe("telemetry negative proofs", () => {
       expect(offenders).toEqual([]);
     });
 
- it("zero client_log rows exist in a freshly-migrated database (fresh deployment store, Constitution I)", () => {
+    it("zero client_log rows exist in a freshly-migrated database (fresh deployment store, Constitution I)", () => {
       const db = getDb();
       const row = db.prepare("SELECT COUNT(*) as n FROM client_log").get() as { n: number };
       expect(row.n).toBe(0);

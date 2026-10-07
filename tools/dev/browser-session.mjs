@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global window, document */
 /**
  * DEV-only: drive the CDP Chrome profile through gate + provision.
  * Does not put credentials in the URL. Requires npm run dev.
@@ -15,7 +16,6 @@ import {
   loadProjectEnv,
   resolveFrontendOrigin,
 } from "./chrome-dev-shared.mjs";
-
 
 function usage() {
   return `Usage: node tools/dev/browser-session.mjs [--origin <url>]

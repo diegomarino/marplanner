@@ -359,7 +359,7 @@ describe("printing core", () => {
       expect(claimed).not.toBeNull();
     });
 
- it("omitting sessionKeyId skips the capability gate entirely (pre- interim call shape)", () => {
+    it("omitting sessionKeyId skips the capability gate entirely (pre- interim call shape)", () => {
       enqueuePrintJob(
         { recordKey: "cap-omitted", targetDate: TARGET_DATE, outputRef: "x" },
         ANCHOR_MS

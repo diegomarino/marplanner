@@ -4,7 +4,6 @@ import { readFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import test from "node:test";
 
-
 const root = resolve(import.meta.dirname, "..");
 const freshScript = join(root, "tools/dev/fresh-local.mjs");
 
@@ -39,11 +38,8 @@ test("package scripts expose seed as seed:all of public and private", () => {
   const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
   assert.equal(packageJson.scripts["seed:public"]?.includes("--mode public"), true);
   assert.equal(packageJson.scripts["seed:private"]?.includes("--mode private"), true);
-  assert.equal(packageJson.scripts["seed:all"], "npm run seed:public && npm run seed:private");
-  assert.equal(packageJson.scripts.seed, "npm run seed:all");
+  assert.equal(packageJson.scripts["seed:all"], "node tools/dev/seed-all.mjs");
+  assert.equal(packageJson.scripts.seed, "node tools/dev/seed-all.mjs");
   assert.equal(packageJson.scripts["dev:fresh"], "node tools/dev/fresh-local.mjs");
   assert.equal(existsSync(freshScript), true);
 });
-
-
-

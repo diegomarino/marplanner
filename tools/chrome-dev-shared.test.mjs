@@ -15,7 +15,6 @@ import {
   writeLocalReady,
 } from "./dev/chrome-dev-shared.mjs";
 
-
 test("parsePort accepts only usable TCP ports", () => {
   assert.equal(parsePort("9222", "CHROME_CDP_PORT"), 9222);
   assert.equal(parsePort(undefined, "CHROME_CDP_PORT"), null);
@@ -116,4 +115,3 @@ test("inspectLocalSeedStatus distinguishes missing unseeded incomplete and compl
   db.close();
   rmSync(dir, { recursive: true, force: true });
 });
-

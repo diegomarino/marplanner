@@ -13,16 +13,9 @@
  * 4. This worktree seeds/ if it already has private files (no-op copy)
  */
 import { spawnSync } from "node:child_process";
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  statSync,
-  unlinkSync,
-} from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from "node:fs";
 import { loadEnvFile } from "node:process";
-import { basename, isAbsolute, join, resolve } from "node:path";
+import { isAbsolute, join, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "../..");
 const PRIVATE_NAME = /^seed[a-z0-9_-]*-PRIVATE\.(?:[cm]?[jt]s?)$/;

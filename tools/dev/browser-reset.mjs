@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global window */
 /**
  * DEV-only: clear cookies + web storage for the Marplanner origin in the CDP Chrome profile
  * so gate/provision/density can be exercised again from a clean browser state.

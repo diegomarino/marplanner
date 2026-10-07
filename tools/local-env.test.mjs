@@ -21,13 +21,11 @@ test("local server and seed scripts load the optional local environment", () => 
     packageJson.scripts["seed:private"],
     "node --env-file-if-exists=.env.local --import tsx src/server/db/seeds/cli.ts --mode private"
   );
-  assert.equal(packageJson.scripts["seed:all"], "npm run seed:public && npm run seed:private");
-  assert.equal(packageJson.scripts.seed, "npm run seed:all");
+  assert.equal(packageJson.scripts["seed:all"], "node tools/dev/seed-all.mjs");
+  assert.equal(packageJson.scripts.seed, "node tools/dev/seed-all.mjs");
   assert.equal(packageJson.scripts["seed:sync-private"], "node tools/dev/sync-private-seeds.mjs");
   assert.equal(packageJson.scripts["dev:fresh"], "node tools/dev/fresh-local.mjs");
 });
-
-
 
 test("chrome CDP session helper scripts are wired for local development", () => {
   assert.equal(packageJson.scripts["dev:chrome"], "node tools/dev/chrome-cdp.mjs");
@@ -36,7 +34,6 @@ test("chrome CDP session helper scripts are wired for local development", () => 
   assert.equal(packageJson.scripts["dev:session-desktop"], undefined);
   assert.equal(packageJson.scripts["dev:session-dense"], undefined);
 });
-
 
 test("the committed example documents credentials and defaults the local UI bypass off", () => {
   const example = readFileSync(new URL("../.env.example", import.meta.url), "utf8");
@@ -84,4 +81,3 @@ test("vite dev server ignores local data and chrome profile paths", () => {
   assert.match(launcher, /\*\*\/\.data\/\*\*/);
   assert.match(launcher, /chrome-cdp/);
 });
-
