@@ -8,7 +8,7 @@ import { healthyRawForecast } from "../helpers/weather-fixtures";
  * WEATHER-INV-12). BLACK-BOX: buildApp + Fastify.inject only, exactly like
  * `settings-write.test.ts`. Absence is ALWAYS 200 `{forecast: null}` — never a 5xx.
  */
-describe("weather-read (T008)", () => {
+describe("weather-read", () => {
   useIsolatedDb();
 
   afterEach(async () => {

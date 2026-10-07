@@ -10,7 +10,7 @@ delivery pipeline**: it takes a printable raster from any producer, converts it
 to device-specific bytes, and delivers it to a connected printer. It owns
 readiness, queueing, device conversion, delivery, attempt records, and success
 acknowledgement. It owns **no producer content** and holds no producer-specific
-knowledge. Daily Briefing is its only producer in v2; others (e.g. Calendar) are
+knowledge. Daily Briefing is its only producer in this system; others (e.g. Calendar) are
 additive.
 
 ## Vocabulary
@@ -92,12 +92,12 @@ output_unavailable`.
   - `printing.completed { jobId, outputRef, printedAt }`.
   - `printing.failed { jobId, outputRef, errorCode }`.
 - **Subscribes:**
-  - None required in v2 (triggers call `enqueue` directly; a future event-based
+  - None required in this system (triggers call `enqueue` directly; a future event-based
     trigger has the _producer_ subscribe and enqueue, not Printing — ADR-040).
 
 ## Data / Setup Contract
 
-Fresh v2: print job/attempt records (job id, output ref, status, attempts,
+Fresh deployment: print job/attempt records (job id, output ref, status, attempts,
 errorCode, byteCount, printedAt) in Printing's namespaced tables. `printer`
 settings object via ADR-028 with Bluetooth transport. No `printed_at` on producer
 rows. Inactive plugin → no settings object, no services (ADR-029/038). Uninstall

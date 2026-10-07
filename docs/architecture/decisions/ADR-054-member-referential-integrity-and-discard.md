@@ -1,4 +1,4 @@
-# ADR-054 Member Referential Integrity — Archive-Only, No Hard Delete (closes ADR-004 in-v2 thread)
+# ADR-054 Member Referential Integrity — Archive-Only, No Hard Delete (closes ADR-004 in-product thread)
 
 Status: accepted
 Owner: product + architecture
@@ -6,7 +6,7 @@ Decision date: 2026-06-29
 
 ## Decision
 
-This decision formally closes the lingering in-v2 thread of `ADR-004` (orphaned member
+This decision formally closes the lingering in-product thread of `ADR-004` (orphaned member
 references). The migration question was already dead under `ADR-026` (no legacy import); what
 remained was the **runtime** question: what happens to references when a member goes away.
 
@@ -99,7 +99,7 @@ rows are imported (`ADR-026`).
 
 ## Traceability
 
-- Closes: `ADR-004` (in-v2 thread); migration thread already superseded by `ADR-026`.
+- Closes: `ADR-004` (in-product thread); migration thread already superseded by `ADR-026`.
 - Consolidates the emergent rule from `ADR-002`, `ADR-025`, `ADR-048`, `ADR-049`, `ADR-053`.
 - Peer-reviewed: rejected the zero-reference-discard carve-out (issue-1 plugin-orphan +
   issue-2 missing-row vs archived-row); folded issue-4 (invariant covers INSERT+UPDATE).

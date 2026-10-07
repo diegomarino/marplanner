@@ -1,3 +1,4 @@
+import { NATIVE_SELECT_CLASSES } from "@/lib/recipes";
 import { useEffect, useMemo, useState } from "react";
 
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -150,7 +151,7 @@ export function MealEntryDialog({
                     value={recipeId}
                     onChange={(event) => setRecipeId(event.target.value)}
                     aria-label={t("meals.entries.recipeSelectLabel")}
-                    className="border-input h-[var(--control-height)] rounded-md border bg-transparent px-3"
+                    className={NATIVE_SELECT_CLASSES}
                   >
                     <option value="">{t("meals.entries.recipeSelectPlaceholder")}</option>
                     {availableRecipes.map((recipe) => (

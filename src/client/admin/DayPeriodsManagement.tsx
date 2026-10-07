@@ -260,7 +260,7 @@ function DayPeriodsManagementContent() {
                       </span>
                     )}
                     {!isEditing && (
-                      <span className="text-muted-foreground text-[length:var(--control-font-size)]">
+                      <span className="text-muted-foreground text-control">
                         {period.start} – {derivedEndTimeStr}
                       </span>
                     )}

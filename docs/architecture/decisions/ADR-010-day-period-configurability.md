@@ -65,6 +65,6 @@ period IDs unchanged; `night` is available as a new target.
 
 ## Traceability
 
-- Pre-v2: `ADR-010`
+- Related prior: `ADR-010`
 - Domain grill: `../domain-grills/day-periods.md`
 - Related: `ADR-011` (default start times), `ADR-005`, `ADR-029`, `ADR-020`

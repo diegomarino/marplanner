@@ -20,7 +20,7 @@ function flushMicrotasks(): Promise<void> {
  * matches MAC/IP *patterns*, not names), so the closed shape is the only
  * real defense.
  */
-describe("network-devices events — T001 (RED-first)", () => {
+describe("network-devices events — (RED-first)", () => {
   // -----------------------------------------------------------------
   // Type-level: the payload shape is closed at compile time (tsc -b via
   // npm run typecheck — NOT a runtime assertion). If a directive below stops

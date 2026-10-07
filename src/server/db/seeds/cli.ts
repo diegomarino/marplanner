@@ -1,5 +1,7 @@
 import { runSeedProfile, SeedRunnerError } from "./runner";
+import { SeedOwnershipError } from "./ownership";
 import type { SeedMode, SeedRunReport } from "./types";
+
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -69,17 +71,44 @@ export async function runSeedCli(
     dependencies.stdout(`${formatReport(report)}\n`);
     return 0;
   } catch (error) {
-    const safePublicModuleFailure =
-      error instanceof SeedRunnerError &&
-      /^Seed module failed: public:[a-z0-9-]+$/.test(error.message);
-    dependencies.stderr(`${safePublicModuleFailure ? error.message : "Seed runner failed"}\n`);
+    // Operator-safe diagnostics only. Unknown throws stay generic (no stacks/secrets).
+    // SeedRunnerError already sanitizes private module labels.
+    if (error instanceof SeedOwnershipError || error instanceof SeedRunnerError) {
+      dependencies.stderr(`${error.message}\n`);
+      return 1;
+    }
+    if (error instanceof Error) {
+      const message = error.message;
+      if (
+        message.startsWith("Database is already owned by another application instance:") ||
+        message.startsWith("Cannot acquire database storage ownership:") ||
+        message.startsWith("SQLite storage requires a local filesystem;") ||
+        message.startsWith("Storage path must not be a symbolic link:") ||
+        message.startsWith("Storage path must be a regular file:") ||
+        message.startsWith("Storage path must not have hard links:")
+      ) {
+        dependencies.stderr(`${message}\n`);
+        return 1;
+      }
+    }
+    dependencies.stderr("Seed runner failed\n");
     return 1;
   }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  const { acquireStorageOwnership } = await import("../runtime-storage");
+  const { resetDb, resolveDbPath } = await import("../client");
   void runSeedCli(process.argv.slice(2), {
-    runSeedProfile,
+    runSeedProfile: async (options) => {
+      const releaseOwnership = acquireStorageOwnership(resolveDbPath());
+      try {
+        return await runSeedProfile(options);
+      } finally {
+        resetDb();
+        releaseOwnership();
+      }
+    },
     seedsDirectory: process.env.SEED_DIRECTORY,
     stdout: (line) => process.stdout.write(line),
     stderr: (line) => process.stderr.write(line),

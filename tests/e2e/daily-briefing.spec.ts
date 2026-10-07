@@ -659,7 +659,7 @@ async function waitForPrinted(request: APIRequestContext, jobId: string): Promis
     .toBe("printed");
 }
 
-test("T014: morning chores done through the real UI auto-prints the daily briefing; level-triggered dedup; opt-in gate; admin regenerate re-enqueues", async ({
+test(": morning chores done through the real UI auto-prints the daily briefing; level-triggered dedup; opt-in gate; admin regenerate re-enqueues", async ({
   page,
   printerSession,
   resetDailyBriefingTrigger,

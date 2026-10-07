@@ -12,14 +12,22 @@ describe("member colour current baseline", () => {
     const now = 1_757_000_000_000;
     db.prepare(
       "INSERT INTO members (id, display_name, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?)"
-    ).run("active-member", "Active Member", "parent", now, now);
+    ).run("10000000-0000-4000-8000-000000000001", "Active Member", "parent", now, now);
     db.prepare(
       "INSERT INTO members (id, display_name, color_key, role, lifecycle, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-    ).run("archived-member", "Archived Member", "violet", "child", "archived", now + 1, now + 1);
+    ).run(
+      "10000000-0000-4000-8000-000000000002",
+      "Archived Member",
+      "violet",
+      "child",
+      "archived",
+      now + 1,
+      now + 1
+    );
 
     expect(db.prepare("SELECT id, color_key FROM members ORDER BY id").all()).toEqual([
-      { id: "active-member", color_key: "blue" },
-      { id: "archived-member", color_key: "violet" },
+      { id: "10000000-0000-4000-8000-000000000001", color_key: "blue" },
+      { id: "10000000-0000-4000-8000-000000000002", color_key: "violet" },
     ]);
     expect(() =>
       db
@@ -43,7 +51,7 @@ describe("member colour current baseline", () => {
       expect(active.statusCode).toBe(200);
       expect(active.json()).toEqual([
         {
-          id: "active-member",
+          id: "10000000-0000-4000-8000-000000000001",
           displayName: "Active Member",
           colorKey: "blue",
           role: "parent",
@@ -62,7 +70,7 @@ describe("member colour current baseline", () => {
       expect(archived.statusCode).toBe(200);
       expect(archived.json()).toEqual([
         {
-          id: "archived-member",
+          id: "10000000-0000-4000-8000-000000000002",
           displayName: "Archived Member",
           colorKey: "violet",
           role: "child",

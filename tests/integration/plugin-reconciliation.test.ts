@@ -79,7 +79,7 @@ function harness(controls: Partial<Record<PluginId, AdapterControl>> = {}) {
   return { lifecycle, store, controls: allControls };
 }
 
-describe("plugin lifecycle reconciliation (Slice 026 T012)", () => {
+describe("plugin lifecycle reconciliation", () => {
   useIsolatedDb({ pluginState: "inactive" });
 
   it.each([

@@ -274,7 +274,7 @@ export function MemberCreateForm({ onSuccess }: MemberCreateFormProps) {
                   <span
                     aria-hidden="true"
                     className="size-3 rounded-full"
-                    // eslint-disable-next-line no-restricted-syntax -- Closed keys select generated token custom properties only.
+                    // eslint-disable-next-line ui-policy/debt -- Closed keys select generated token custom properties only.
                     style={{
                       backgroundColor: `var(--color-member-${key}-500)`,
                       color: `var(--color-member-${key}-foreground)`,
@@ -364,7 +364,7 @@ export function MemberCreateForm({ onSuccess }: MemberCreateFormProps) {
               data-testid="member-create-success"
               role="status"
               aria-live="polite"
-              className="text-primary text-[length:var(--control-font-size)]"
+              className="text-primary text-control"
             >
               {statusMessage}
             </p>

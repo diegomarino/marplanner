@@ -508,32 +508,34 @@ export function CalendarView() {
           </h2>
           <div className="flex flex-wrap items-center gap-2">
             <div className="border-input flex overflow-hidden rounded-lg border">
-              <button
+              <Button
+                variant="ghost"
                 type="button"
                 aria-pressed={mode === "month"}
                 onClick={() => setMode("month")}
                 className={cn(
-                  "h-[var(--control-height)] px-4 text-[length:var(--control-font-size)] font-medium",
+                  "rounded-none px-4 font-medium",
                   mode === "month"
                     ? "bg-primary text-primary-foreground"
                     : "bg-background text-muted-foreground hover:bg-muted"
                 )}
               >
                 {t("calendar.month")}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
                 type="button"
                 aria-pressed={mode === "week"}
                 onClick={() => setMode("week")}
                 className={cn(
-                  "h-[var(--control-height)] px-4 text-[length:var(--control-font-size)] font-medium",
+                  "rounded-none px-4 font-medium",
                   mode === "week"
                     ? "bg-primary text-primary-foreground"
                     : "bg-background text-muted-foreground hover:bg-muted"
                 )}
               >
                 {t("calendar.week")}
-              </button>
+              </Button>
             </div>
             <Button
               type="button"
@@ -576,11 +578,12 @@ export function CalendarView() {
               showAllDay ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
             )}
           >
+            {/* eslint-disable-next-line ui-policy/raw-controls -- Native checkbox is nested in the token-sized all-day filter label. */}
             <input
               type="checkbox"
               checked={showAllDay}
               onChange={(event) => setShowAllDay(event.target.checked)}
-              className="size-[var(--control-height)] text-[length:var(--control-font-size)] accent-current"
+              className="size-[var(--control-height)] text-control accent-current"
             />
             {t("calendar.allDayFilter")}
           </label>
@@ -593,14 +596,15 @@ export function CalendarView() {
                   "border-input inline-flex min-h-[var(--control-height)] cursor-pointer items-center gap-2 rounded-full border px-3 font-medium",
                   !checked && "bg-muted text-muted-foreground"
                 )}
-                // eslint-disable-next-line no-restricted-syntax -- Selected member identity is rendered through the generated semantic colour token.
+                // eslint-disable-next-line ui-policy/debt -- Selected member identity is rendered through the generated semantic colour token.
                 style={checked ? memberFilterStyle(member.colorKey) : undefined}
               >
+                {/* eslint-disable-next-line ui-policy/raw-controls -- Native checkbox is nested in the token-sized all-day filter label. */}
                 <input
                   type="checkbox"
                   checked={checked}
                   onChange={() => toggleFilterMember(member.id)}
-                  className="size-[var(--control-height)] text-[length:var(--control-font-size)]"
+                  className="size-[var(--control-height)] text-control"
                 />
                 {member.displayName}
               </label>

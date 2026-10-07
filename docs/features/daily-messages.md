@@ -92,5 +92,5 @@ requires an explicit Daily Briefing regeneration.
   settings and is read by Daily Briefing at generation as a pull-time content source.
 - Member active-state and identification are owned upstream (ADR-002/ADR-048); this spec
   validates recipient existence and active-state at the write boundary only.
-- Fresh v2 data store (ADR-026); the 4 prod rows are evidence only, not imported.
+- Fresh data store (ADR-026); the 4 prod rows are evidence only, not imported.
 - Date and household-timezone derivation primitives are provided per ADR-005/ADR-006.

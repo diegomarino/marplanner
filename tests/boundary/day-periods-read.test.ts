@@ -11,7 +11,7 @@ import { resetDb } from "../../src/server/db/client";
  * 3. NO add/delete route is registered (app.hasRoute === false)
  * 4. Re-read after simulated restart returns identical data
  */
-describe("day-periods-read (T006 — RED boundary test)", () => {
+describe("day-periods-read (RED boundary test)", () => {
   useIsolatedDb();
 
   async function insertActiveKey(): Promise<string> {

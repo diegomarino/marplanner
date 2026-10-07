@@ -23,7 +23,7 @@ Block order is a presentation preference for Daily Briefing, not a household-wid
 
 ## Data / Setup Implications
 
-v2 does not migrate any legacy `app_settings` rows, including any `daily_briefing_block_order` row that may exist in the current database. Legacy data is evidence only under `ADR-026`. Daily Briefing defines its own fresh v2 storage for block configuration.
+the product does not migrate any legacy `app_settings` rows, including any `daily_briefing_block_order` row that may exist in the current database. Legacy data is evidence only under `ADR-026`. Daily Briefing defines its own fresh deployment storage for block configuration.
 
 ## Acceptance Criteria
 
@@ -38,5 +38,5 @@ v2 does not migrate any legacy `app_settings` rows, including any `daily_briefin
 ## Traceability
 
 - Conflicts: `CR-008`
-- Pre-v2: `ADR-008`
+- Related prior: `ADR-008`
 - Domain grill: `../domain-grills/app-settings-registry.md`

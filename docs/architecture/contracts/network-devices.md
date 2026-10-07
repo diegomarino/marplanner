@@ -116,7 +116,7 @@ member event subscription.
 
 Owned table `network_devices` in the plugin namespace (ADR-039): `id`, `mac` (canonical,
 unique), `alias`, `memberId?`, `unifiClientId?`, `isBlocked`, `lastSeenAt?`, `createdAt`,
-`updatedAt`. **No IP column.** `isOnline`/`notDetected` derived at read time. Fresh v2
+`updatedAt`. **No IP column.** `isOnline`/`notDetected` derived at read time. Fresh deployment
 (ADR-026): the 4 production device rows are **NOT imported** — they are evidence only that
 MAC/alias/blocked/last-seen are the right fields. The list is **rebuilt through v2 picker
 registration** (a row import is impossible by construction anyway, since registration requires
@@ -146,4 +146,4 @@ artifacts: real MACs in the backup `.db` only; sanitized everywhere human-facing
 
 - Block mechanism (`block-sta` vs `acl_rule_id`) is constrained (must keep blocked-state
   poll-readable) but the concrete choice is deferred to implementation.
-- Optional grace window for the picker cache-rotation edge (not required for v2).
+- Optional grace window for the picker cache-rotation edge (not required for this system).

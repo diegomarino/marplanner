@@ -99,7 +99,7 @@ snapshots.
   (ADR-010/ADR-011); this spec attaches routines to those periods.
 - Atomicity and date/weekday derivation primitives are provided per ADR-043/ADR-005/
   ADR-006/ADR-020.
-- Fresh v2 data store; no legacy import (ADR-026) — the orphaned `routine_assignments`
+- Fresh data store; no legacy import (ADR-026) — the orphaned `routine_assignments`
   are evidence only, never imported as active rules (ADR-054).
 - Members are archive-only (never hard-deleted, ADR-054), so a dangling assignment is
   unrepresentable: strict-on-write (assign only active members), tolerant-on-read

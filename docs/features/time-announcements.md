@@ -5,7 +5,7 @@ Behavior reference. The [owning contract](../architecture/contracts/time-announc
 Time announcements are admin-authored wall-clock rules (`HH:MM` + weekdays) that each
 connected kiosk browser speaks aloud at the matching local minute. The server owns the
 rule data only; speech is a client-side runtime behavior. There is no master switch,
-quiet hours, or per-device audio control in v2 — announcements are household-wide.
+quiet hours, or per-device audio control in this system — announcements are household-wide.
 
 ## User workflows
 
@@ -100,5 +100,5 @@ weekDays (mon..sun), isActive, createdAt, updatedAt }`. The server owns the row;
   (`ADR-005`/`ADR-015`), with IANA timezone validated there (`ADR-028`).
 - The shell-mounted scheduler, connection state, and best-effort speech placement are
   provided per `ADR-035`/`ADR-051`; firing and dedupe are browser-local.
-- Fresh v2 data store (`ADR-026`); legacy prod rows are evidence only and are
+- Fresh data store (`ADR-026`); legacy prod rows are evidence only and are
   validated/quarantined on import rather than failing the whole list.

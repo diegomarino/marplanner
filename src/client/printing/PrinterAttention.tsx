@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/base-path";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -44,7 +45,7 @@ export function PrinterAttention(): React.JSX.Element | null {
             </Button>
           )}
           <Button variant="outline" asChild>
-            <a href="/admin/printing">{t("printing.attention.admin")}</a>
+            <a href={appUrl("/admin/printing")}>{t("printing.attention.admin")}</a>
           </Button>
           <DialogClose asChild>
             <Button type="button" variant="outline">

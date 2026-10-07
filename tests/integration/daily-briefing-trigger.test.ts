@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getDb } from "../../src/server/db/client";
+import Database from "better-sqlite3";
+import { getDb, resolveDbPath } from "../../src/server/db/client";
 import { getScheduler, initScheduler } from "../../src/server/scheduler/index";
 import { emit, todayInHouseholdTz } from "../../src/server/host-api";
 import { completeChore } from "../../src/server/modules/routines/index";
@@ -13,6 +14,7 @@ import {
 } from "../../src/server/modules/printing/index";
 import { updateSettings } from "../../src/server/modules/daily-briefing/settings";
 import {
+  AUTO_PRINT_SWEEP_JOB_ID,
   DEFAULT_SWEEP_INTERVAL_MS,
   evaluateAutoPrintTrigger,
   registerAutoPrintTrigger,
@@ -33,7 +35,7 @@ import { FakeClock, noopLog } from "../helpers/fake-clock";
  * established for the sibling wall-clock generation job. Frozen, injected clock throughout — no
  * test here reads the real wall clock.
  */
-describe("daily-briefing auto-print trigger (T005 — US1, research D3, FR-017/FR-018)", () => {
+describe("daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018)", () => {
   useIsolatedDb();
 
   const NOW = Date.UTC(2026, 7, 13, 10, 0, 0); // 2026-08-13 12:00 Europe/Madrid (CEST) — Thursday
@@ -547,6 +549,57 @@ describe("daily-briefing auto-print trigger (T005 — US1, research D3, FR-017/F
   });
 
   // ── Wakeup-hint semantics ────────────────────────────────────────────────────────────────────
+
+  it("records SQLITE_BUSY wakeup failures and recovers without duplicate print reservations", async () => {
+    const memberId = "member-busy-wakeup";
+    seedMember(memberId);
+    enableAutoPrint();
+    seedBriefingRowWithRaster(memberId, DATE);
+    const [choreId] = seedMorningRoutine(memberId, 1, WEEKDAY);
+    completeChoreDirect(choreId, memberId, DATE);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    initScheduler({ now: () => NOW, log: { ...noopLog(), error: errorSpy } });
+    registerAutoPrintTrigger({ now: () => NOW });
+    const locker = new Database(resolveDbPath());
+    const db = getDb();
+    const previousTimeout = db.pragma("busy_timeout", { simple: true }) as number;
+    db.pragma("busy_timeout = 0");
+    const wakeup = () =>
+      emit("routines.completion_changed", {
+        memberId,
+        choreId,
+        routineId: "routine-busy",
+        date: DATE,
+        completed: true,
+        timestamp: NOW,
+      });
+    try {
+      locker.exec("BEGIN IMMEDIATE");
+      const scheduled = await getScheduler().runJobNow(AUTO_PRINT_SWEEP_JOB_ID);
+      expect(scheduled.status).toBe("failed");
+      expect(getScheduler().getJobState(AUTO_PRINT_SWEEP_JOB_ID)?.lastError).toMatch(/locked/);
+      errorSpy.mockClear();
+      expect(() => wakeup()).not.toThrow();
+      await Promise.resolve();
+      expect(countJobsForOutputRef(outputRefFor(memberId))).toBe(0);
+      expect(db.prepare("SELECT COUNT(*) AS n FROM print_records").get()).toEqual({ n: 0 });
+      expect(errorSpy).toHaveBeenCalledWith(
+        "daily-briefing.trigger.wakeup-failed",
+        expect.objectContaining({ code: "SQLITE_BUSY" })
+      );
+      locker.exec("ROLLBACK");
+      wakeup();
+      wakeup();
+      await Promise.resolve();
+      expect(countJobsForOutputRef(outputRefFor(memberId))).toBe(1);
+      expect(db.prepare("SELECT COUNT(*) AS n FROM print_records").get()).toEqual({ n: 1 });
+    } finally {
+      if (locker.inTransaction) locker.exec("ROLLBACK");
+      locker.close();
+      db.pragma(`busy_timeout = ${previousTimeout}`);
+      errorSpy.mockRestore();
+    }
+  });
 
   it("wakeup-hint re-reads state — a LYING event payload never substitutes for the real predicate", async () => {
     const memberId = "member-wakeup-lying";

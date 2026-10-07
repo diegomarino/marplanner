@@ -230,7 +230,7 @@ export function TimeAnnouncementsManagement() {
         title={t("timeAnnouncements.management.title")}
         data-testid="time-announcements-management"
       >
-        <p className="text-muted-foreground text-[length:var(--control-font-size)]">
+        <p className="text-muted-foreground text-control">
           {t("timeAnnouncements.management.loading")}
         </p>
       </AdminPanel>
@@ -366,7 +366,7 @@ export function TimeAnnouncementsManagement() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="text-md font-semibold">{rule.time}</h4>
-                      <p className="text-muted-foreground text-[length:var(--control-font-size)]">
+                      <p className="text-muted-foreground text-control">
                         {rule.weekDays.map((day) => t(WEEKDAY_LABEL_KEYS[day])).join(", ")}
                       </p>
                       <p className="text-muted-foreground text-xs">

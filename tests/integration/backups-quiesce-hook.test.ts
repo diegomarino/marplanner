@@ -88,6 +88,44 @@ describe("backups quiesce hook — deterministic boundary (review P3-4)", () => 
   });
 });
 
+describe("runtime mounted restore quiescing", () => {
+  useIsolatedDb();
+  it("quiesces mounted APIs while exempting only the exact restore route and root health", async () => {
+    const previous = process.env.BASE_PATH;
+    process.env.BASE_PATH = "/family/planner";
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    try {
+      __setQuiescedForTests(true);
+      expect((await app.inject("/family/planner/api/backups")).statusCode).toBe(503);
+      expect(
+        (
+          await app.inject({
+            method: "POST",
+            url: "/family/planner/api/backups/restore",
+            payload: {},
+          })
+        ).statusCode
+      ).toBe(401);
+      expect(
+        (
+          await app.inject({
+            method: "POST",
+            url: "/family/planner/api/backups/restore-extra",
+            payload: {},
+          })
+        ).statusCode
+      ).toBe(503);
+      expect((await app.inject("/health")).statusCode).toBe(200);
+    } finally {
+      __setQuiescedForTests(false);
+      await app.close();
+      if (previous === undefined) delete process.env.BASE_PATH;
+      else process.env.BASE_PATH = previous;
+    }
+  });
+});
+
 describe("backups quiesce hook — in-flight counter release on client abort (review P2-1)", () => {
   useIsolatedDb();
 

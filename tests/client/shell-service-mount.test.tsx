@@ -175,7 +175,7 @@ function genericOkResponse(url: string) {
   return new Response(JSON.stringify(isListEndpoint ? [] : {}), { status: 200 });
 }
 
-describe("Shell — US0 service mount point (slice-015 T003)", () => {
+describe("Shell — US0 service mount point", () => {
   let mockFetch: ReturnType<typeof vi.fn>;
   let unregister: (() => void) | null = null;
 

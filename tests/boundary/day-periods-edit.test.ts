@@ -11,7 +11,7 @@ import { useIsolatedDb } from "../helpers/db";
  * 4. PATCH /api/day-periods/teatime → 404 unknown id
  * 5. malformed body → 400; re-GET after each 400 asserts stored value intact
  */
-describe("day-periods-edit (T008 — RED boundary test)", () => {
+describe("day-periods-edit (RED boundary test)", () => {
   useIsolatedDb();
 
   async function insertActiveKey(): Promise<string> {

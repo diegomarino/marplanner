@@ -43,7 +43,7 @@ function renderManagement() {
   );
 }
 
-describe("WeatherManagement (slice-016 T006)", () => {
+describe("WeatherManagement", () => {
   beforeEach(() => {
     currentSettings.language = "en";
     vi.stubGlobal("fetch", vi.fn());

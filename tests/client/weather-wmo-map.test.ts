@@ -36,7 +36,7 @@ const EXPECTED_WMO_CODES = [
   95, 96, 99,
 ];
 
-describe("WMO_CONDITION_MAP (T001)", () => {
+describe("WMO_CONDITION_MAP", () => {
   it("every mapped WMO code resolves to a WeatherConditionKey union member", () => {
     for (const [code, key] of Object.entries(WMO_CONDITION_MAP)) {
       expect(VALID_KEYS).toContain(key);

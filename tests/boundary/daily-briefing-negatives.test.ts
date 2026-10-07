@@ -15,7 +15,7 @@ import { useIsolatedDb } from "../helpers/db";
  * closed-schema convention, FR-022's settings-never-mutate-briefings guarantee at the DB level,
  * and the trigger's no-binding -> no-enqueue gate.
  */
-describe("daily-briefing negatives (T015, FR-010)", () => {
+describe("daily-briefing negatives (FR-010)", () => {
   useIsolatedDb();
 
   let app: FastifyInstance;
@@ -183,7 +183,9 @@ describe("daily-briefing negatives (T015, FR-010)", () => {
         }
         if (node && typeof node === "object") {
           const record = node as Record<string, unknown>;
-          if (record.type === "object" || record.properties !== undefined) {
+          // Conditional properties-only fragments constrain an enclosing object; they
+          // are not independent object boundaries and must not close its other fields.
+          if (record.type === "object") {
             checked += 1;
             expect(record.additionalProperties, nodePath).toBe(false);
           }

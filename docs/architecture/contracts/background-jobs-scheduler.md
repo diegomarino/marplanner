@@ -8,7 +8,7 @@ Depends on decisions: `ADR-014`, `ADR-005`, `ADR-009`, `ADR-029`, `ADR-035`, `AD
 A thin **core scheduler primitive** owning the lifecycle contract for recurring
 server-side work (spec §1). It fires jobs on a cadence/trigger and provides
 concurrency + catch-up rules; it does **not** own job content — each feature/plugin
-owns its retry-safe domain action (ADR-029). marplanner v2 is a **single
+owns its retry-safe domain action (ADR-029). marplanner is a **single
 self-hosted instance**.
 
 ## Vocabulary

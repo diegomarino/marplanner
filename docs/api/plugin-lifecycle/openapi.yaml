@@ -17,6 +17,8 @@ paths:
       operationId: listPlugins
       summary: List the exact delivered first-party plugin catalog
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Authenticated catalog in manifest order
           content:
@@ -46,6 +48,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PluginId"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Current terminal plugin representation
           content:
@@ -69,6 +73,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PluginId"
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: Current terminal plugin representation
           content:
@@ -107,6 +113,8 @@ paths:
                     - contribution_render_failed
                     - contribution_start_failed
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "204":
           description: Fault contained or already contained
         "400":
@@ -405,6 +413,35 @@ components:
         plugin:
           $ref: "#/components/schemas/PluginCatalogEntry"
   responses:
+    AuthenticationBackoff:
+      description: >
+        Repeated credential failures from this transport source. Valid active credentials remain
+        usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.
+      headers:
+        Retry-After:
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Remaining cooldown in seconds, rounded up. Retry manually.
+        Cache-Control:
+          required: true
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [error, message]
+            properties:
+              error:
+                type: string
+                const: too_many_requests
+              message:
+                type: string
+                const: Authentication retry required
     Unauthorized:
       description: No single valid established credential was presented
       content:

@@ -73,6 +73,6 @@ changes. No legacy import (ADR-026).
 
 ## Traceability
 
-- Pre-v2: `ADR-018`
+- Related prior: `ADR-018`
 - Domain grill: `../domain-grills/calendar-reminders-routines.md` (S1, R3)
 - Related: `ADR-040` (Rule B), `ADR-002`, `ADR-005`

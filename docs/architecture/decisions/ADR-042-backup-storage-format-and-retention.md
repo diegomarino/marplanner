@@ -91,7 +91,7 @@ Backup files live in a configured `backups/` root outside the active DB. **The
 "configured backups root" is `BACKUPS_ROOT`, defaulting to `${DATA_DIR}/backups`**
 (host-coupling re-scan 2026-06-30; canonical env-var scheme in
 `../target-dx-contract-v2.md` § _Operator Configuration & Runtime Environment_). No new
-active-DB tables. Fresh v2 setup starts with zero backups; the scheduler's
+active-DB tables. Fresh setup starts with zero backups; the scheduler's
 domain-state catch-up (ADR-014) creates the first one. No legacy backup files
 imported automatically (ADR-026).
 
@@ -120,6 +120,6 @@ imported automatically (ADR-026).
 ## Traceability
 
 - Conflicts: backup format/retention/manifest open questions in `../../18-backups.md` §12
-- Pre-v2: extends `ADR-017` scope; relates to `ADR-009` (atomicity), `ADR-026`
+- Related prior: extends `ADR-017` scope; relates to `ADR-009` (atomicity), `ADR-026`
 - Domain grill: `../domain-grills/backups.md`
 - Related: `ADR-014`, `ADR-030`, `ADR-031`, `ADR-033`, `ADR-039`

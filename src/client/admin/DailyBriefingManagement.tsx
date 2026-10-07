@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/credential";
+import { appUrl } from "@/lib/base-path";
 import { useT } from "@/i18n";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ErrorNotice } from "@/components/ErrorNotice";
@@ -724,7 +725,9 @@ export function DailyBriefingManagement() {
   const optedInMembers = activeMembers.filter((member) => optIns[member.id]);
   const hasPendingOptInUpdates = pendingOptInMemberIds.size > 0;
   const previewSrc = previewRequest
-    ? `/api/daily-briefing/${previewRequest.memberId}/${previewRequest.date}/preview.png?v=${previewRequest.cacheBust}`
+    ? appUrl(
+        `/api/daily-briefing/${previewRequest.memberId}/${previewRequest.date}/preview.png?v=${previewRequest.cacheBust}`
+      )
     : null;
 
   if (loading) {
@@ -733,7 +736,7 @@ export function DailyBriefingManagement() {
         title={t("dailyBriefing.management.title")}
         data-testid="daily-briefing-management"
       >
-        <p className="text-muted-foreground text-[length:var(--control-font-size)]">
+        <p className="text-muted-foreground text-control">
           {t("dailyBriefing.management.loading")}
         </p>
       </AdminPanel>
@@ -781,7 +784,7 @@ export function DailyBriefingManagement() {
         className="space-y-6"
       >
         {activeMembers.length === 0 ? (
-          <p className="text-muted-foreground text-[length:var(--control-font-size)]">
+          <p className="text-muted-foreground text-control">
             {t("dailyBriefing.management.noActiveMembers")}
           </p>
         ) : (
@@ -798,7 +801,7 @@ export function DailyBriefingManagement() {
                   return (
                     <div
                       key={member.id}
-                      className="flex items-center gap-2 rounded-full border bg-background p-1 pr-3 text-[length:var(--control-font-size)]"
+                      className="flex items-center gap-2 rounded-full border bg-background p-1 pr-3 text-control"
                     >
                       <Button
                         type="button"
@@ -846,7 +849,7 @@ export function DailyBriefingManagement() {
                 {t("dailyBriefing.management.generateTitle")}
               </h3>
               {optedInMembers.length === 0 ? (
-                <p className="text-muted-foreground text-[length:var(--control-font-size)]">
+                <p className="text-muted-foreground text-control">
                   {t("dailyBriefing.management.noOptedInMembers")}
                 </p>
               ) : (
@@ -912,7 +915,7 @@ export function DailyBriefingManagement() {
 
               {generateAllInfo && (
                 <p
-                  className="mt-4 text-muted-foreground text-[length:var(--control-font-size)]"
+                  className="mt-4 text-muted-foreground text-control"
                   data-testid="daily-briefing-generate-all-info"
                   role="status"
                   aria-live="polite"

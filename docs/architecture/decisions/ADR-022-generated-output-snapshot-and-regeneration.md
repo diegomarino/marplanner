@@ -82,7 +82,7 @@ family kiosk where the admin is present to reprint when they regenerate.
 
 ## Data / Setup Implications
 
-Fresh v2: one current row per subject/date (stable ID, replaced in place); no
+Fresh deployment: one current row per subject/date (stable ID, replaced in place); no
 payload version table; no staleness metadata. No legacy import (ADR-026).
 
 ## Acceptance Criteria
@@ -102,7 +102,7 @@ payload version table; no staleness metadata. No legacy import (ADR-026).
 
 ## Traceability
 
-- Pre-v2: `ADR-022`
+- Related prior: `ADR-022`
 - Related: `ADR-019` (printedAt/idempotency), `ADR-035` (job claim/cancel),
   `ADR-008` (block order applies to future generation), `ADR-027` (per-user
   opt-in), `ADR-040` (outcome events)

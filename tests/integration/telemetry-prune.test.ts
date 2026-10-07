@@ -33,7 +33,7 @@ function countClientLogRows(): number {
   return row.count;
 }
 
-describe("telemetry retention prune (T011 — research D7)", () => {
+describe("telemetry retention prune (research D7)", () => {
   useIsolatedDb();
 
   afterEach(async () => {

@@ -24,9 +24,20 @@ adopt `__Host-`. Decision 4 (single cookie factory) still stands and is implemen
 `src/server/auth/cookies.ts` — that is the actual #100 deliverable. Decision 3 below is retained
 verbatim for the record but is **superseded by this Correction**.
 
+## Runtime mount amendment (2026-10-03)
+
+Plain cookie names and `Secure`, `HttpOnly` and `SameSite=Lax` remain the policy.
+Gate/device cookies now use the configured runtime mount plus `/` as their cookie
+Path; an unset/root mount keeps `Path=/`. The nonsecret provisioning marker and
+client-side marker deletion use the same path. This supports sibling deployment
+paths without ordinary cookie delivery across those paths. Cookie Path is not an
+origin security boundary; mutually untrusted applications require separate origins.
+The earlier root-path wording below is historical and is superseded for non-root
+mounts. No `__Host-` prefix is introduced.
+
 ## Context
 
-Slice-001 sets both the access-gate cookie (`mp_gate`) and the device-key cookie
+Initial bootstrap sets both the access-gate cookie (`mp_gate`) and the device-key cookie
 (`mp_device_key`) with a **hardcoded `Secure` attribute** (`src/server/auth/gate.ts`,
 provisioning handler). Issue #100 flagged this as a latent deploy defect: a browser silently
 drops a `Secure` cookie sent over a non-secure origin, so over plain HTTP the access gate can
@@ -70,9 +81,10 @@ decision, not previously contemplated.
    follow-up** (issue #100, re-scoped): rename + issue via the cookie factory below.
 
 4. **Centralize cookie attributes in a single cookie-factory helper** used by BOTH the gate and
-   provisioning, enforcing `__Host-` prefix + `Secure` + `HttpOnly` + `SameSite=Lax` + `Path=/`
-   from **one** call site. Two independent `Set-Cookie` sites drift over time; a factory makes
-   "same policy for both cookies" a code-level guarantee, not a prose intention.
+   provisioning, enforcing `Secure` + `HttpOnly` + `SameSite=Lax` + mount-scoped `Path` (root →
+   `/`) from **one** call site. Two independent `Set-Cookie` sites drift over time; a factory makes
+   "same policy for both cookies" a code-level guarantee, not a prose intention. Implemented in
+   `src/server/auth/cookies.ts`. **No `__Host-` prefix** (Correction above).
 
 5. **`SameSite=Lax` is the explicit default** for both cookies (`gate.ts` already uses `Lax` —
    pin it). `Strict` would drop the cookie on a cross-site navigation _into_ the app (e.g. a
@@ -82,10 +94,10 @@ decision, not previously contemplated.
 ## Consequences
 
 - **#100 downgrades** from a deploy-blocker code fix to: (a) **this ADR + deployment docs**
-  (TLS-required-for-non-localhost, plus the localhost-dev and reverse-proxy recipe) — done now;
-  (b) an **optional small hardening follow-up** (`__Host-` prefix + the cookie factory), tracked
-  on the re-scoped #100. It is **not** a merge-blocker for feat/001 → main, and under this
-  posture it is not a code bug.
+  (TLS-required-for-non-localhost, plus the localhost-dev and reverse-proxy recipe) — done;
+  (b) the **cookie factory without `__Host-`** (Correction + runtime Path amendment) — done in
+  `cookies.ts`. It is **not** a merge-blocker, and under this posture hardcoded `Secure` is not a
+  code bug.
 - **Deployment documentation must state** the TLS-required posture and give a reverse-proxy
   recipe. A self-hoster who wants LAN access from other devices without a public domain uses a
   **TLS terminator on the LAN** (Caddy local CA / Tailscale), **never** a weakened cookie.
@@ -97,23 +109,25 @@ decision, not previously contemplated.
 ## Acceptance Criteria
 
 - Given the app served over `http://localhost`, when a browser passes the gate, then the
-  `Secure` gate cookie is accepted and the SPA loads — no TLS required for local dev.
+  plain `Secure` gate cookie is accepted and the SPA loads — no TLS required for local dev.
 - Given the app served over a **non-localhost plain-HTTP** origin, then this is a **documented
   UNSUPPORTED** configuration; the deployment docs direct the operator to front it with TLS.
 - Given the app behind a **TLS-terminating reverse proxy**, when a browser (HTTPS) passes the
-  gate, then the `Secure`/`__Host-` cookie is accepted even though the app's upstream hop is HTTP.
-- Given the `__Host-` hardening follow-up lands, then both the gate and device-key cookies are
-  issued via a **single cookie factory** with `__Host-` prefix + `Secure` + `HttpOnly` +
-  `SameSite=Lax` + `Path=/`.
+  gate, then the plain `Secure` cookie is accepted even though the app's upstream hop is HTTP.
+- Given gate or device provisioning issues a cookie, then both use the **single cookie factory**
+  with plain names (no `__Host-` / `__Secure-`), `Secure`, `HttpOnly`, `SameSite=Lax`, and
+  `Path={basePath}/` (root mount → `Path=/`).
+- Given a non-root runtime mount, when cookies are set or the client clears `mp_provisioned`, then
+  Path matches that mount; cookie Path is not treated as an origin security boundary.
 
 ## Traceability
 
-- Resolves / re-scopes: **issue #100** (hardcoded `Secure` cookie → the follow-up is now the
-  optional `__Host-` + cookie-factory hardening, not a lockout fix).
-- Extends: `ADR-031` (two-boundary access gate), `ADR-059` (slice-001 gate assembly),
+- Resolves / re-scopes: **issue #100** (hardcoded `Secure` → documented TLS posture + cookie
+  factory; `__Host-` attempted then **reversed** 2026-07-07 as incompatible with localhost HTTP).
+- Extends: `ADR-031` (two-boundary access gate), `ADR-059` (initial bootstrap gate assembly),
   `ADR-055`/`ADR-056` (same-origin serving; `/api`; distribution), `ADR-037` (`mpg-`/`mpk-`
   credential format), `ADR-032` (deployment-agnostic bootstrap config).
 - Constitution: Principle II (fail-closed; health-only unauthenticated surface) — untouched;
   this ADR is about cookie transport, not the authorization decision.
-- The decision index in this repository lists this record alongside `ADR-059`
-  precedent for architect-authored slice/reconciliation ADRs.
+- Amendment 2026-10-03 (step 02): acceptance criteria match Correction + mount Path policy; drop
+  pending-`__Host-` AC.

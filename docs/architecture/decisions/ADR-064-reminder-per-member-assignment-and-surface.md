@@ -66,7 +66,7 @@ domain does not have and pre-empt Daily Briefing's block-render ownership (`ADR-
 
 The first implementation slice builds `kind: scheduled` (both targeting modes), the
 `admin/reminders` surface, and the outbound read. `kind: calendar_gated` — with the
-`Calendar.getEvents` `query`/`queryFields` text-matching that slice-004 `FR-010`
+`Calendar.getEvents` `query`/`queryFields` text-matching that work item 4 `FR-010`
 deliberately deferred to "the first consumer (Reminders)", and the dry-run/explain path
 (`REMINDERS-AC-10`) for its opaque non-emission — lands in a **later** slice. `scheduled`
 carries no Calendar dependency, so the first slice stays additive on the proven spine.
@@ -77,7 +77,7 @@ Per-member assignment captures the household's real usage without inventing a gr
 ("named set") entity — which was considered and **rejected** (informational reminders do
 not benefit from being bundled; each is independently authored and targeted). It reuses a
 model the team built and validated one slice ago (Routines/Chores assignments,
-slice-005), so the schema, atomic-write, and archive-self-heal patterns transfer
+work item 5), so the schema, atomic-write, and archive-self-heal patterns transfer
 directly. The flat model's alternative — duplicating the same text across one row per
 (member, day-pattern) — is redundant authoring the maintainer explicitly wanted to avoid.
 
@@ -165,7 +165,7 @@ mechanism above.
 
 - Refines `ADR-049` (reminder kind split) — which refined `ADR-018` (calendar read
   interface). Lineage: `ADR-018 → ADR-049 → ADR-064`.
-- Assignment parallel: `routines-chores.md` (slice-005 Assignment model).
+- Assignment parallel: `routines-chores.md` (work item 5 Assignment model).
 - Related: `ADR-002` / `ADR-054` (member targeting + referential integrity), `ADR-020`
   (weekday model), `ADR-005` / `ADR-006` (household tz + strict dates), `ADR-043`
   (atomic writes), `ADR-008` (Daily Briefing render ownership — deferred user render),

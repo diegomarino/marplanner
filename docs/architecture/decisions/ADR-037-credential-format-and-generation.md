@@ -30,8 +30,12 @@ Rationale recorded for posterity: the legacy `tools/dev/set-api-key.sh` used `$R
 Rate limiting applies **only to authentication failures**, never to overall request volume.
 
 - **Do not** limit by total request rate. The kiosk legitimately makes many requests; a global volume cap broke production before (a 100 requests/minute API limit throttled legitimate high-frequency kiosk traffic).
-- **Do** throttle repeated **failed** key validations: count consecutive missing/invalid-key attempts per source and apply backoff/temporary block to that source after a threshold, with exponential backoff. Successful, authenticated requests are never throttled.
-- This targets exactly the brute-force vector (repeated wrong guesses) without touching legitimate traffic.
+- **Do** throttle repeated **failed** key validations: count repeated missing/invalid-key attempts per source and apply backoff/temporary block to that source after a threshold, with exponential backoff. Successful, authenticated requests are never throttled.
+- Failure episodes reset after 15 minutes without credential failures, not on successful requests. A valid kiosk behind the same NAT must not erase another client's failures. This explicitly refines the original consecutive-failure wording (policy approved 2026-10-01).
+- Validate credentials first: valid active API and bootstrap credentials remain usable during a source cooldown. Failure-only backoff is cooperative retry backpressure, not a hard brute-force ceiling: ignored 429s still incur verification work and a correct guess succeeds.
+- Transient attempt counters are process-local and bounded; they are not sessions or cached authorization state. Credential records and per-request authority remain in the database.
+- Starting implementation defaults: bootstrap 5 failures in 10 minutes, API 20 in 1 minute; fixed observation windows; cooldowns 1, 2, 4, 8, 16, 32, 60 seconds; 5000 source/flow entries. These are provisional calibration values, not measured security guarantees. Restart or eviction resets counters.
+- Sources are direct transport peers (`request.ip`), with IPv4-mapped IPv6 normalized. No forwarded-header trust or proxy configuration change is implied. NAT/proxy pooling, IPv6 rotation and distributed sources limit this control.
 
 ### Hygiene
 
@@ -65,7 +69,7 @@ Rate limiting applies **only to authentication failures**, never to overall requ
 
 ## Traceability
 
-- Pre-v2: `ADR-007`, `ADR-013`
+- Related prior: `ADR-007`, `ADR-013`
 - Related: `ADR-030` (key model), `ADR-032` (bootstrap), `ADR-016` (telemetry redaction), `ADR-033` (fail-closed)
 - Code reviewed: `tools/dev/set-api-key.sh` (legacy `$RANDOM` generator)
 - Peer review: codex-peer-review (2026-06-28) — confirmed `$RANDOM` as the dominant critical flaw; entropy ~46–51 bits; failure-based rate limiting and prefix detectability endorsed.

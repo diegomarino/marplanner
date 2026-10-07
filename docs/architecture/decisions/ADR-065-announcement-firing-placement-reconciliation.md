@@ -26,7 +26,7 @@ model (`docs/architecture/contracts/time-announcements.md` INV-06 :31, INV-07 :3
 guarantees `active`), while one kiosk-shell guarantee still encodes ADR-035's
 (`docs/architecture/contracts/kiosk-shell-navigation.md` AC-07 :96 — and the untagged Behaviors prose at
 :45 repeats the same model: announcement work "dispatched only to capability-registered
-browsers and executed once"). The contradiction surfaced while preparing slice 015.
+browsers and executed once"). The contradiction surfaced while preparing .
 
 ## Decision
 
@@ -38,7 +38,7 @@ browsers and executed once"). The contradiction surfaced while preparing slice 0
    run per connected browser; announcements are not paused on admin routes — P5 is precisely
    what keeps AC-07's surviving clause alive). Principles 2, 3 and 4 — the decision/execution split, capability
    registration, and the atomic-claim queue with staleness compaction — are hereby **scoped to
-   hardware behaviors whose duplicate execution is costly or irreversible**, which in v2 is
+   hardware behaviors whose duplicate execution is costly or irreversible**, which in this system is
    **Printing alone** (`docs/architecture/contracts/printing.md` INV-05, AC-04). The clause at
    `ADR-035:20` ("replaces the legacy browser leader-election") and the announcement examples
    at :29–31, :54 and :67–68 do **not** apply to Time Announcements.
@@ -49,7 +49,7 @@ browsers and executed once"). The contradiction surfaced while preparing slice 0
 4. **`KIOSK-SHELL-NAVIGATION-AC-07`'s announcement half is narrowed.** The "dispatched only to
    capability-registered browsers and executed once" clause applies to print/hardware-claim
    work only; the "time announcements continue on admin routes" clause stands unchanged and
-   binds slice 015. `docs/features/kiosk-shell-navigation.md` FR-014 is narrowed accordingly and
+   binds . `docs/features/kiosk-shell-navigation.md` FR-014 is narrowed accordingly and
    the boundary ledger entry carries a note citing this ADR (disposition stays `active` — a
    `superseded` disposition would wrongly drop the still-valid printing half).
 5. **Dependency correction**: Time Announcements depends on neither Day Periods

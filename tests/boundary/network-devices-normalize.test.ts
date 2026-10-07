@@ -20,7 +20,7 @@ import {
  * fields (`ip`, `last_ip`, `fixed_ip`) — this suite proves the drop against realistic input,
  * not a pre-cleaned stub.
  */
-describe("network-devices normalize — T006", () => {
+describe("network-devices normalize", () => {
   it("drops every IP-shaped field structurally: no output entry ever carries ip/last_ip/fixed_ip", () => {
     const entries = normalizeLiveClients(unifiFixtureRawClients());
 

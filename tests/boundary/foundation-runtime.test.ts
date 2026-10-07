@@ -235,10 +235,12 @@ describe("foundation runtime persistence", () => {
       disabled: process.env.SCHEDULER_DISABLED,
       bootstrap: process.env.MP_BOOTSTRAP_KEY,
       management: process.env.MP_MANAGEMENT_KEY,
+      readiness: process.env.MP_LOCAL_READINESS,
     };
     process.env.PORT = "0";
     process.env.HOST = "127.0.0.1";
     process.env.SCHEDULER_DISABLED = "1";
+    process.env.MP_LOCAL_READINESS = "1";
     delete process.env.MP_BOOTSTRAP_KEY;
     delete process.env.MP_MANAGEMENT_KEY;
     const before = {
@@ -250,11 +252,31 @@ describe("foundation runtime persistence", () => {
     try {
       await main();
       expect(log).toHaveBeenCalledWith("scheduler disabled");
+      const readyLine = log.mock.calls
+        .map(([message]) => message)
+        .find((message) => typeof message === "string" && message.startsWith("MP_LOCAL_READY "));
+      expect(readyLine).toBeDefined();
+      const ready = JSON.parse(String(readyLine).slice("MP_LOCAL_READY ".length)) as {
+        type: string;
+        port: number;
+      };
+      expect(ready.type).toBe("ready");
+      expect(ready.port).toBeGreaterThan(0);
+      const origin = `http://127.0.0.1:${ready.port}`;
+      const health = await fetch(`${origin}/health`);
+      expect(health.status).toBe(200);
+      expect(await health.json()).toEqual({ status: "ok" });
+      expect((await fetch(`${origin}/api/members`)).status).toBe(401);
       const shutdown = process.listeners("SIGINT").find((listener) => !before.SIGINT.has(listener));
       expect(shutdown).toBeDefined();
       shutdown?.("SIGINT");
       await vi.waitFor(() => expect(exit).toHaveBeenCalledWith(0));
       expect(log).toHaveBeenCalledWith("scheduler drained");
+      const messages = log.mock.calls.map(([message]) => message);
+      const stopping = messages.indexOf('MP_LOCAL_READY {"type":"stopping"}');
+      expect(stopping).toBeGreaterThan(-1);
+      expect(stopping).toBeLessThan(messages.indexOf("scheduler drained"));
+      await expect(fetch(`${origin}/health`)).rejects.toThrow();
     } finally {
       for (const signal of ["SIGINT", "SIGTERM"] as const) {
         for (const listener of process.listeners(signal)) {
@@ -267,6 +289,7 @@ describe("foundation runtime persistence", () => {
         SCHEDULER_DISABLED: previous.disabled,
         MP_BOOTSTRAP_KEY: previous.bootstrap,
         MP_MANAGEMENT_KEY: previous.management,
+        MP_LOCAL_READINESS: previous.readiness,
       })) {
         if (value === undefined) delete process.env[key];
         else process.env[key] = value;

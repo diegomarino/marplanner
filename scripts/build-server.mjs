@@ -31,8 +31,10 @@ cpSync(
   "dist/server/fonts/jetbrains-mono",
   { recursive: true }
 );
+// Access-gate HTML inlines the same semantic tokens the SPA imports.
+cpSync("src/client/styles/tokens.css", "dist/server/ui-tokens.css");
 
-console.log("server bundled → dist/server/index.js (+ fonts/jetbrains-mono)");
+console.log("server bundled → dist/server/index.js (+ fonts/jetbrains-mono, ui-tokens.css)");
 
 // Separate entry for the built renderer smoke.
 await build({

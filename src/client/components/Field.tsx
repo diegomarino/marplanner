@@ -50,7 +50,7 @@ export function Field({ label, hint, error, children, id, className }: FieldProp
     <div className={cn("flex flex-col gap-1.5", className)}>
       <Label htmlFor={fieldId}>{label}</Label>
       {hint && (
-        <p id={hintId} className="text-muted-foreground text-[length:var(--control-font-size)]">
+        <p id={hintId} className="text-muted-foreground text-control">
           {hint}
         </p>
       )}

@@ -7,7 +7,7 @@ snapshot the whole database, list / download (`.db` or read-only SQL export) /
 import (`.db`) / restore / delete backup files. Backups are operational safety
 data, **not** household planning content; backup files live **outside** the active
 database in a configured `backups/` root, so their list, version, and source are
-derived from files rather than any active-DB row. marplanner v2 is a single
+derived from files rather than any active-DB row. marplanner is a single
 self-hosted instance, and restore is whole-database replacement — never a
 per-domain merge — gated on the migration-version number and made reversible by an
 automatic pre-restore snapshot.
@@ -124,7 +124,7 @@ backups root.
 - The scheduler (ADR-014) owns the scheduled backup cycle, household-tz cadence,
   startup catch-up, and the in-flight guard that prevents overlapping runs; it
   invokes the same snapshot + prune actions this spec defines.
-- Fresh v2 setup starts with zero backups; the scheduler's catch-up creates the
+- Fresh setup starts with zero backups; the scheduler's catch-up creates the
   first, and no legacy backup files are imported automatically (ADR-026) — a legacy
   `.db` re-enters only via upload, subject to the restore version check.
 - Backup files may contain all household data (including auth/session rows) and are

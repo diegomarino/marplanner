@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This contract defines the versioned, privacy-safe evidence record for Slice 025. It is a development
+This contract defines the versioned, privacy-safe evidence record for . It is a development
 artifact, not a runtime API, database schema, telemetry stream, provider monitor, or production
 health report.
 

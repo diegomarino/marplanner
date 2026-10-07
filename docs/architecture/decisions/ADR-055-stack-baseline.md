@@ -1,4 +1,4 @@
-# ADR-055 — v2 Technology Stack Baseline
+# ADR-055 — Technology Stack Baseline
 
 Status: accepted
 Date: 2026-06-30
@@ -9,7 +9,7 @@ ADR-014/035 (single-instance runtime), ADR-026 (fresh store), ADR-015 (i18n), AD
 
 The runtime and build entries below reflect the current foundation. Distribution hardening and container acceptance items remain obligations until implemented and tested; this decision alone is not release evidence.
 
-The v2 technology stack, re-derived from scratch (NOT ported from v1), calibrated to a **single
+The technology stack, selected for a **single
 self-hosted instance, no HA, family-scale concurrency**, but **distributed to many independent
 self-hosters** (N users × 1 instance each):
 
@@ -34,7 +34,7 @@ self-hosters** (N users × 1 instance each):
   over Bun/Deno for "runs unattended for years" stability + library compat (better-sqlite3, Drizzle,
   Fastify); Deno's sandbox adds nothing because plugins are first-party-trusted.
 - **Single package:** Rule-B lint already enforces boundaries → package boundaries are redundant
-  machinery; nothing versions/distributes separately. Also eliminated the v1 worktree pain at its
+  machinery; nothing versions/distributes separately. Also eliminated the previous worktree failures at their
   root (pnpm `nodeLinker:isolated` + monorepo symlinks — see ADR-056 worktree-safety).
 - **SQLite:** ADR-043 (`PRAGMA foreign_keys`) + ADR-017/042 (single-file backup) already assume it;
   single-instance is the embedded-DB sweet spot. STRICT tables + busy_timeout are correctness wins.
@@ -53,7 +53,7 @@ self-hosters** (N users × 1 instance each):
   templates); **the image NEVER** — leaking platform specifics into the image forks the artifact.
 - **Phase 1 (committed):** one platform-agnostic Docker image as source-of-truth runtime; config
   100% via env + mounted volume (no baked secrets/paths/host assumptions); SQLite on a persistent
-  named volume (ADR-017/042 backups copy the volume file); a reference `docker-compose.yml`.
+  named volume (ADR-017/042 backups copy the volume file); a reference `infra/docker/compose.yaml`.
 - **Phase 2 (additive, on-demand):** per-platform recipes over the SAME image; Fly.io demoted from
   assumed target to one optional recipe. For a SQLite app the only substantial per-PaaS variance is
   **persistent storage for the `.db`** + backup wiring.
@@ -63,17 +63,39 @@ self-hosters** (N users × 1 instance each):
 
 ## Peer-review hardening (folded, all from the distributable surface)
 
-1. **Single-writer guard (Critical):** at boot, advisory lock (`flock`) on a sentinel file → refuse
+1. **Single-writer guard (Critical):** at boot, an OS-backed exclusive lock on a stable sentinel SQLite file → refuse
    to start if another instance already holds the DB, with a clear error; Fly recipe sets
    `max_machines_running = 1`. Prevents two VMs sharing one volume opening one WAL → corruption.
-   Generalizes to every platform, not just Fly.
-2. **Network-filesystem guard:** at boot, `statfs(2)` `f_type` check → refuse/warn on NFS/SMB/CIFS
-   (WAL is unsafe on network FS; Synology/TrueNAS self-hosters); prominent compose warning.
+   Generalizes to every platform, not just Fly. The installed SQLite dependency
+   acquires the sentinel in rollback-journal EXCLUSIVE locking mode with a committed
+   write. Its dedicated connection survives product connection resets and restore;
+   OS process termination releases ownership. The seed CLI uses the same guard.
+   The sentinel is never deleted or replaced while an instance runs.
+2. **Network-filesystem guard:** before SQLite opens, `statfs(2)` `f_type` check → refuse recognized Linux NFS/SMB/CIFS
+   (WAL is unsafe on network FS; Synology/TrueNAS self-hosters). Other Linux
+   filesystem types remain allowed; macOS and other platforms warn that classification
+   is unavailable. This is a known-type denylist, not proof every allowed mount is local.
 3. **Write serialization:** `busy_timeout` is a retry loop, not a queue → with deliberate multiple
    writers (scheduler/reconciler/briefing, ADR-014/035/053) add **in-process write serialization**
    (single-process makes this trivial) + explicit `SQLITE_BUSY` handling so writes are never silently
    lost. **Pin `better-sqlite3` to a build bundling SQLite ≥ 3.51.3** (pre-3.51.3 WAL-reset
    multi-writer corruption bug); assert the bundled version in `check:standard`.
+
+## Implementation status (2026-10-02)
+
+The portable container recipe supports root-path hosting with one application
+instance and a local persistent volume. The server and seed CLI enforce exclusive
+storage ownership, and all shared product SQLite opens reject recognized Linux
+network filesystem types. Database file symlinks and hardlinks are rejected; parent
+directory aliases are canonicalized. Direct external SQLite writers and individual
+file bind-mount aliases bypass this cooperative boundary. Pending migrations now
+require a flushed logical pre-migration recovery snapshot in the shared boot/seed/restore
+runner; snapshot failure aborts before migration SQL. During restore, existing rollback
+recovers the original active pre-restore state, distinct from the older restored
+candidate captured by the migration snapshot. Failed attempts may retain partial
+files; only completed, verified snapshots are recovery points. Recovery and retention are operator-managed, as described in
+[operations](../../operations.md#pre-migration-recovery-snapshots). Runtime `BASE_PATH` now mounts the same portable client/server build with runtime HTML injection; root `/health` is preserved. Built-browser/container acceptance and applicable storage safety checks remain required for the launch candidate. The maintainer explicitly defers versioning policy, arbitrary historical upgrade compatibility and `SKIP_MIGRATION` until after launch; see [ADR-056](ADR-056-process-dx-baseline.md#launch-scope-amendment-2026-10-03). These deferred features are not launch gates. Packaging and platform-specific runtime evidence do not establish
+full distribution acceptance.
 
 ## Acceptance criteria
 
@@ -90,13 +112,15 @@ self-hosters** (N users × 1 instance each):
 - ~~Host-coupling re-scan of ADR-001..054 (config-externalization audit) — tracked, not yet
   executed.~~ **DONE 2026-06-30 (peer-reviewed).** Verdict: ADR-001..036 structurally clean
   (ADR-032/033 over-deliver on portability); no destructive backward ripple. Findings folded into
-  [developer verification policy](../../quality/verification.md) § _Operator Configuration & Runtime Environment_: canonical env-var
-  scheme (resolves "reserved names" below + ADR-042 backups root + ADR-053 UniFi key); operator-only
+  [operations](../../operations.md): current operator configuration and storage
+  contract (resolves "reserved names" below + ADR-042 backups root + ADR-053 UniFi key); operator-only
   `WEATHER_ENDPOINT`/`WEATHER_ENABLED` (ADR-052); volume UID/GID writability + boot preflight; host
   clock (NTP) precondition.
 - ~~Exact reserved data dir / env var names (`DATABASE_PATH`, `DATA_DIR`, `BASE_PATH`) — naming
-  only.~~ **Resolved** in the DX contract env-var registry (`DATA_DIR` root; `DATABASE_PATH` /
-  `BACKUPS_ROOT` derive from it; plugin keys `MARPLANNER_PLUGIN_<ID>_<KEY>`).
+  only.~~ **Resolved** by the maintained [operator contract](../../operations.md): `DATA_DIR`
+  is the storage root; `DATABASE_PATH` defaults to `marplanner.db`; `BACKUPS_ROOT`
+  defaults under `DATA_DIR`. Integration overrides use the explicit keys in the
+  environment examples and Compose allowlist. `BASE_PATH` is injected at runtime; see [operations](../../operations.md#runtime-subpath-hosting).
 - ~~**OPEN (parked, structural):** `BASE_PATH` × Vite — build-time `base` vs single prebuilt
   image.~~ **RESOLVED at spec level (2026-06-30):** `BASE_PATH` is a **runtime** env (build-arg
   excluded — it would break this image's pull-one-prebuilt distribution); the SPA base path is

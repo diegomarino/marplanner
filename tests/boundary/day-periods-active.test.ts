@@ -11,7 +11,7 @@ import { useIsolatedDb } from "../helpers/db";
  * 3. Fix clock to 02:00 (household tz) → activeId='night' (before first start, wraps).
  * 4. No device cookie → 401.
  */
-describe("day-periods-active (T011 — RED boundary test)", () => {
+describe("day-periods-active (RED boundary test)", () => {
   useIsolatedDb();
 
   // ──────────────────────────────────────────────────────────────────

@@ -37,5 +37,5 @@ For a self-hosted household kiosk, self-contained provisioning is the pragmatic 
 ## Traceability
 
 - Conflicts: `CR-024`
-- Pre-v2: `ADR-013`, `ADR-023`
+- Related prior: `ADR-013`, `ADR-023`
 - Related: `ADR-030` (device provisioning), `ADR-031` (access gate precedes this), `ADR-032` (bootstrap)

@@ -26,7 +26,7 @@ import { seedMember } from "../helpers/daily-briefing-seed";
  * real pressedslip render-def today (gap, see `daily-briefing-generation.test.ts`'s * identical precedent), so seeding a `daily_messages` row is what gives every test here a REAL
  * printable raster without needing to mock the render bridge.
  */
-describe("daily-briefing regeneration + supersede + printed-status (T010, research D4/D11, FR-002/003/004/005/007)", () => {
+describe("daily-briefing regeneration + supersede + printed-status (research D4/D11, FR-002/003/004/005/007)", () => {
   useIsolatedDb();
 
   const NOW = Date.UTC(2026, 8, 8, 6, 0, 0); // 2026-09-08 06:00 UTC — frozen, injected clock
@@ -298,7 +298,7 @@ describe("daily-briefing regeneration + supersede + printed-status (T010, resear
 
     __setForcePostSupersedeAbortForTests(true);
     await expect(generateBriefing(memberId, date)).rejects.toThrow(
-      "T010 savepoint probe: forced abort after supersede"
+      "savepoint probe: forced abort after supersede"
     );
     __setForcePostSupersedeAbortForTests(false);
 

@@ -5,7 +5,7 @@ Owner: architecture
 Decision date: 2026-07-27
 Peer-reviewed: yes (codex + claude blind round, 2026-07-27 — 7 findings folded: authority reframed to
 Principle X, post-auth/members-only scope made explicit, supported-locale normalization guard added,
-parity test relocated to `tests/client/`, T021 given a runnable command, the plan's Constitution-Check
+parity test relocated to `tests/client/`, given a runnable command, the plan's Constitution-Check
 self-cert corrected, and the divergent-seam residual risk named).
 
 ## Context
@@ -22,7 +22,7 @@ so an `es` household already sees an English kiosk. The canonical i18n runtime a
 guarantees **owned by the `i18n-localization` domain** (`I18N-LOCALIZATION-INV-04/05`, `AC-04/05`,
 `active` in `boundary-ledger.yaml`), a much later slice not yet built.
 
-This surfaced mechanically: `tools/check-issues.mjs` rejected slice-002's task T021 ("the i18n parity
+This surfaced mechanically: `tools/check-issues.mjs` rejected work item 2's task ("the i18n parity
 gate must pass") because its DoD named a gate that does not exist — no runnable per-task criterion.
 
 ## Decision
@@ -41,7 +41,7 @@ this slice's UI **now**, shaped so the `i18n-localization` domain **absorbs** (n
    domain's FR-004: never render the raw key). `en` is the base/reference locale and the universal
    safety net for both an unresolved language and a missing key.
 3. **Retrofit + new strings** — the existing members-domain literals (`MemberCreateForm.tsx`, the admin
-   `MembersManagement.tsx`) **and** slice-002's new strings all route through `t()`, so the Members
+   `MembersManagement.tsx`) **and** work item 2's new strings all route through `t()`, so the Members
    screen is coherently localized rather than half-and-half.
 4. **Local parity test** — `tests/client/member-i18n-parity.test.ts` (Vitest, run by `test:unit`)
    asserts `keys(en) === keys(es)` both directions, so a missing translation fails CI now. It is an
@@ -52,7 +52,7 @@ this slice's UI **now**, shaped so the `i18n-localization` domain **absorbs** (n
 
 The seam's authority is **Constitution Principle X**, not any `I18N-LOCALIZATION-*` guarantee. Every
 slice that ships family-facing UI must comply with X today; absent the shared i18n infrastructure, it
-complies with a minimal local seam. The seam **realizes no `I18N-*` guarantee** — slice-002 continues
+complies with a minimal local seam. The seam **realizes no `I18N-*` guarantee** — work item 2 continues
 to _trace_ only its own `MEMBERS` FRs (Option B). `boundary-ledger.yaml` is **not modified** (no
 guarantee is re-homed or deferred; the i18n guarantees stay `active` under their domain, and the
 slice's own out-of-scope forbids touching the ledger).
@@ -63,14 +63,14 @@ slice's own out-of-scope forbids touching the ledger).
   performs no boot-time `/api` probe, so the `LanguageProvider` mounts **inside** the admin-unlock
   Members subtree and can only ever localize already-authenticated UI. Pre-provision / credential-loss /
   ordinary-kiosk surfaces are **out of scope** and remain the `i18n-localization` domain's job. Every
-  slice-002 string is admin-gated, so this scoping costs no functionality.
+  work item 2 string is admin-gated, so this scoping costs no functionality.
 - **Client/family-facing only.** Server/dev/diagnostic text stays English always (Principle X / INV-12);
   the seam never touches `src/server` or `src/shared`.
 
 ## Consequences
 
-- slice-002's tasks gain one foundational task (the seam) and reword the two UI tasks (T008/T017) to
-  route strings through `t()` and T021 to run the local parity test — closing the `check-issues` block.
+- work item 2's tasks gain one foundational task (the seam) and reword the two UI tasks (/) to
+  route strings through `t()` and to run the local parity test — closing the `check-issues` block.
 - `plan.md`'s Constitution-Check row X, which self-certified PASS on the false premise "localized via
   i18n" at merge time, is corrected to "PASS via the local seam introduced here."
 - The Members admin UI becomes the first localized surface in the app, honoring the `language: "es"`
@@ -98,4 +98,4 @@ build/CI parity gate (INV-05). A reconciliation note is recorded in `docs/featur
 - `docs/features/i18n-localization.md` FR-004 (missing key → English base), FR-005 (parity gate),
   FR-013 (out-of-range persisted `language` normalized on read).
 - ADR-028 (App Settings owns the `language` value + write-validation).
-- Slice-002 tasks T023 (seam), T008/T017 (localized UI), T021 (local parity verification).
+- work item 2 tasks (seam), / (localized UI), (local parity verification).

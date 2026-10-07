@@ -58,7 +58,7 @@ windows) as cheap correctness wins without new machinery.
 ## Data / Setup Implications
 
 Owned: `daily_messages` (id, member_id, date, text, created_at, updated_at), unique on
-`(member_id, date)`. Fresh v2 (`ADR-026`); 4 prod rows (active children, 1 date) are
+`(member_id, date)`. Fresh deployment (`ADR-026`); 4 prod rows (active children, 1 date) are
 evidence only.
 
 ## Acceptance Criteria
@@ -79,7 +79,7 @@ evidence only.
 
 ## Traceability
 
-- Pre-v2: extends `ADR-002` with Daily Messages targeting evidence; resolves spec `08`
+- Related prior: extends `ADR-002` with Daily Messages targeting evidence; resolves spec `08`
   open questions.
 - Domain grill: `../domain-grills/daily-messages.md`
 - Related: `ADR-005`, `ADR-006`, `ADR-013`, `ADR-015`, `ADR-022`, `ADR-026`, `ADR-027`,

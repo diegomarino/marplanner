@@ -2,6 +2,7 @@
 import { appendFileSync } from "node:fs";
 import { channel } from "node:diagnostics_channel";
 import { afterAll, expect } from "vitest";
+import { captureRoute } from "./capture-route.mjs";
 
 const initialization = channel("fastify.initialization");
 function capture({ fastify }) {
@@ -18,12 +19,21 @@ function capture({ fastify }) {
         process.env.MP_CONTRACT_OBSERVATIONS,
         JSON.stringify({
           method: request.method,
-          route: request.routeOptions.url,
+          route: captureRoute({
+            method: request.method,
+            route: request.routeOptions.url,
+            url: request.url,
+            status: reply.statusCode,
+            contentType: type,
+            payload,
+          }),
           status: reply.statusCode,
           test: expect.getState().currentTestName,
           contentType: type,
           requestContentType: request.headers["content-type"],
-          requestBody: requests.get(request),
+          requestBody: request.headers["content-type"]?.includes("application/json")
+            ? requests.get(request)
+            : undefined,
           body:
             type.includes("application/json") && payload ? JSON.parse(payload) : (payload ?? ""),
         }) + "\n"

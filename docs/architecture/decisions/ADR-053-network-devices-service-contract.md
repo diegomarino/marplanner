@@ -80,7 +80,7 @@ poll, a device shown at T=0 and submitted at T=30+ (slow alias entry, device sle
 can be rejected as "not in cache" despite a valid observation. Calibrated resolution for a
 family kiosk: **surface a friendly retry error** ("this device is no longer online — go back
 and reselect"), not a generic failure. A short grace window (accept a MAC seen in any cache
-snapshot within the last few minutes) is an optional softening; not required for v2.
+snapshot within the last few minutes) is an optional softening; not required for this system.
 
 ### 4. Ownership separation — three orthogonal operations
 
@@ -123,7 +123,7 @@ Ask "do I need it?" before "how do I protect it?":
   because a `*` device key would otherwise pass ordinary capability middleware and reach the
   destructive block/unblock action (peer-review Critical). Reads are treated as sensitive
   (topology), same gate as writes. _Seam:_ a finer-grained `network:admin` capability can be
-  introduced later, but is not required for v2 correctness.
+  introduced later, but is not required for this system correctness.
 - **Audit = ordinary logging** (`ADR-016`): block/unblock emit normal log/telemetry (action +
   timestamp + source key). **No "who" attribution** — there is no server-side user identity
   (`ADR-013` PIN is a client gate; an API key = device/scope, not a person); a `blockedBy`
@@ -160,7 +160,7 @@ family-kiosk threat model: no capability tiers, no audit subsystem, no replace-M
 Owned table `network_devices` (plugin namespace per `ADR-039`): `id`, `mac` (canonical key,
 unique), `alias`, `memberId?`, `unifiClientId?`, `isBlocked`, `lastSeenAt?`, `createdAt`,
 `updatedAt`. **No IP column.** `isOnline`/`notDetected` are read-time derived, never persisted.
-Fresh v2 (`ADR-026`): the 4 production device rows are **NOT imported** (no legacy migration) —
+Fresh deployment (`ADR-026`): the 4 production device rows are **NOT imported** (no legacy migration) —
 they are evidence only that MAC/alias/blocked/last-seen are the right fields. The list is
 rebuilt via v2 picker registration (a row import is impossible by construction, since
 registration requires selecting a live client). Credentials are never in this table or
@@ -195,7 +195,7 @@ premise), local, non-persisted.
 
 ## Traceability
 
-- Pre-v2: resolves spec `10` open questions (§12).
+- Related prior: resolves spec `10` open questions (§12).
 - Domain grill: `../domain-grills/network-devices.md`
 - Refines: `ADR-039` (host operator-config interface), `ADR-016` (deny-list MAC/IP).
 - Related: `ADR-002`, `ADR-005`, `ADR-007`, `ADR-013`, `ADR-014`, `ADR-017`, `ADR-026`,

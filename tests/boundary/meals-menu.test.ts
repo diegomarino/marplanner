@@ -19,7 +19,7 @@ import { useIsolatedDb } from "../helpers/db";
  * weekday, no per-date skip (AC-04); and the week view over 7 local dates
  * from `weekStartDay` + tz (FR-019).
  */
-describe("meals-menu boundary tests (T006/T007)", () => {
+describe("meals-menu boundary tests", () => {
   useIsolatedDb();
 
   // ── helpers ──────────────────────────────────────────────────────────────
@@ -111,6 +111,31 @@ describe("meals-menu boundary tests (T006/T007)", () => {
     const url = slot ? `/api/menu?date=${date}&slot=${slot}` : `/api/menu?date=${date}`;
     return app.inject({ method: "GET", url, cookies: { mp_device_key: deviceKey } });
   }
+
+  it("rejects invalid dates on both menu HTTP reads without writes", async () => {
+    const { deviceKey } = seedKeys();
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    try {
+      await app.ready();
+      const before = getDb().prepare("SELECT total_changes() AS changes").get();
+      for (const url of ["/api/menu?date=not-a-date", "/api/menu/week?date=not-a-date"]) {
+        const response = await app.inject({
+          method: "GET",
+          url,
+          cookies: { mp_device_key: deviceKey },
+        });
+        expect(response.statusCode, url).toBe(400);
+        expect(response.json()).toMatchObject({
+          error: "validation_error",
+          message: expect.any(String),
+        });
+      }
+      expect(getDb().prepare("SELECT total_changes() AS changes").get()).toEqual(before);
+    } finally {
+      await app.close();
+    }
+  });
 
   // ── one-off derived union ───────────────────────────────────────────────
 

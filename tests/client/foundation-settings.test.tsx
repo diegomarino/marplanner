@@ -261,7 +261,8 @@ describe("B0 device presentation state", () => {
         expect.objectContaining({ method: "POST" })
       );
       expect(root.querySelector("main h1")?.textContent).toBe("Marplanner");
-      expect(document.documentElement).toHaveAttribute(DENSITY_ATTRIBUTE, "kiosk");
+      expect(document.documentElement).not.toHaveAttribute(DENSITY_ATTRIBUTE);
+      expect(window.localStorage.getItem(DENSITY_STORAGE_KEY)).toBe("comfortable");
       window.dispatchEvent(
         new ErrorEvent("error", { error: new Error("synthetic script failure") })
       );

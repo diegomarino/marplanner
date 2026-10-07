@@ -510,7 +510,7 @@ describe("CalendarView — adopts the AdminPanel L2 frame", () => {
     expect(await screen.findByRole("region", { name: "Calendar" })).toBeInTheDocument();
   });
 
-  it("renders an h1, not h2 — the page-level heading for the whole /calendar route (T014 review, PR #777, finding F6)", async () => {
+  it("renders an h1, not h2 — the page-level heading for the whole /calendar route (review, PR #777, finding F6)", async () => {
     mockBackend();
     renderSurface();
 
@@ -624,7 +624,7 @@ describe("CalendarView — assignment save round-trips the selected members (reg
     });
   });
 
-  it("gives the assign row's label a full-width, pointer-cursor hit area (T014 review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)", async () => {
+  it("gives the assign row's label a full-width, pointer-cursor hit area ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)", async () => {
     mockBackend();
     renderSurface();
 

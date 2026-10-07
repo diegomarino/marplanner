@@ -9,11 +9,11 @@ import { useIsolatedDb } from "../helpers/db";
  * 1. A broken telemetry pipeline blocks NO unrelated product write (INV-01, AC-06).
  * 2. Zero telemetry entries exist in the shared event-bus catalog (INV-14 — telemetry never
  * participates in the event bus).
- * 3. No legacy (v1) client-log import path exists anywhere under `src/` (AC-07 — the fresh v2
+ * 3. No legacy (v1) client-log import path exists anywhere under `src/` (AC-07 — the fresh deployment
  * store never imports the 119 legacy rows; they are evidence only, as migration evidence only).
  * 4. Telemetry is always-on with no household setting able to gate it (INV-12).
  */
-describe("telemetry negative proofs (T008)", () => {
+describe("telemetry negative proofs", () => {
   useIsolatedDb();
 
   describe("1. CLIENT-LOGGING-TELEMETRY-AC-06: telemetry outage blocks no unrelated product write (FR-001)", () => {
@@ -115,7 +115,7 @@ describe("telemetry negative proofs (T008)", () => {
       // Markers that would indicate a legacy (v1) import path: the former module paths
       // (`apps/api/src/routes/telemetry-client-log.ts` /
       // `apps/web/src/lib/logger-browser-sink.ts`), or a generically-named import/migration
-      // helper for pulling v1 client-log rows into the fresh v2 store.
+      // helper for pulling v1 client-log rows into the fresh deployment store.
       const legacyMarkers = [
         /apps\/api\/src\/routes\/telemetry-client-log/i,
         /apps\/web\/src\/lib\/logger-browser-sink/i,
@@ -134,7 +134,7 @@ describe("telemetry negative proofs (T008)", () => {
       expect(offenders).toEqual([]);
     });
 
-    it("zero client_log rows exist in a freshly-migrated database (fresh v2 store, Constitution I)", () => {
+    it("zero client_log rows exist in a freshly-migrated database (fresh deployment store, Constitution I)", () => {
       const db = getDb();
       const row = db.prepare("SELECT COUNT(*) as n FROM client_log").get() as { n: number };
       expect(row.n).toBe(0);

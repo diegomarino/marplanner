@@ -369,9 +369,8 @@ function ChoreColumn({
   return (
     <div
       data-testid={`${layout === "fit" ? "today-chores" : "chores-board"}-column-${column.memberId}`}
-      // eslint-disable-next-line no-restricted-syntax -- This gradient is derived from the runtime semantic member-colour token.
-      className="h-full min-w-[220px] flex-1 basis-[220px] overflow-y-auto rounded-2xl border p-3 shadow-sm [background:linear-gradient(180deg,color-mix(in_oklch,var(--member-color)_16%,white),color-mix(in_oklch,var(--member-color)_8%,white))] [border-color:color-mix(in_oklch,var(--member-color)_28%,white)]"
-      // eslint-disable-next-line no-restricted-syntax -- The configured member identity is passed through one CSS custom property into the token layer.
+      className="h-full min-w-[220px] flex-1 basis-[220px] overflow-y-auto rounded-2xl border p-3 shadow-sm [background:linear-gradient(180deg,color-mix(in_oklch,var(--member-color)_16%,var(--member-mix-ground)),color-mix(in_oklch,var(--member-color)_8%,var(--member-mix-ground)))] [border-color:color-mix(in_oklch,var(--member-color)_28%,var(--member-mix-ground))]"
+      // eslint-disable-next-line ui-policy/debt -- The configured member identity is passed through one CSS custom property into the token layer.
       style={{ "--member-color": scale.colorVar } as CSSProperties}
     >
       <div className="mb-3 flex items-start justify-between gap-2">
@@ -399,7 +398,7 @@ function ChoreColumn({
         <div className="mb-3 h-2 overflow-hidden rounded-full bg-background" aria-hidden="true">
           <div
             className={cn("h-full w-[var(--today-chores-progress)] rounded-full", scale.progress)}
-            // eslint-disable-next-line no-restricted-syntax -- Dynamic progress is passed through a CSS custom property into the token layer.
+            // eslint-disable-next-line ui-policy/debt -- Dynamic progress is passed through a CSS custom property into the token layer.
             style={
               {
                 "--today-chores-progress": `${Math.min(
@@ -429,15 +428,11 @@ function ChoreColumn({
           <section
             data-testid="today-chores-active-period"
             data-period-id={period.id}
-            // eslint-disable-next-line no-restricted-syntax -- This surface is derived from the runtime semantic member-colour token.
-            className="rounded-xl border p-2 [background:color-mix(in_oklch,var(--member-color)_10%,white)] [border-color:color-mix(in_oklch,var(--member-color)_25%,white)]"
+            className="rounded-xl border p-2 [background:color-mix(in_oklch,var(--member-color)_10%,var(--member-mix-ground))] [border-color:color-mix(in_oklch,var(--member-color)_25%,var(--member-mix-ground))]"
           >
             <header className="mb-2 flex items-center gap-2">
               <h3 className="font-semibold">{t(DAY_PERIOD_LABEL_KEYS[period.id])}</h3>
-              <span
-                // eslint-disable-next-line no-restricted-syntax -- This badge is derived from the runtime semantic member-colour token.
-                className="rounded-full px-2 py-0.5 text-sm [background:color-mix(in_oklch,var(--member-color)_18%,white)]"
-              >
+              <span className="rounded-full px-2 py-0.5 text-sm [background:color-mix(in_oklch,var(--member-color)_18%,var(--member-mix-ground))]">
                 {period.chores.filter((chore) => chore.completed).length}/{period.chores.length}
               </span>
             </header>
@@ -477,8 +472,7 @@ function ChoreColumn({
                             className={cn(
                               "flex size-8 items-center justify-center rounded-full border-2",
                               chore.completed &&
-                                // eslint-disable-next-line no-restricted-syntax -- Completion fill is derived from the runtime semantic member-colour token.
-                                "[background:color-mix(in_oklch,var(--member-color)_58%,white)]"
+                                "[background:color-mix(in_oklch,var(--member-color)_58%,var(--member-mix-ground))]"
                             )}
                           >
                             {chore.completed && <Check />}
@@ -492,10 +486,8 @@ function ChoreColumn({
                       className={cn(
                         "min-h-[80px] w-full rounded-2xl border-2 px-3",
                         chore.completed
-                          ? // eslint-disable-next-line no-restricted-syntax -- Completed tasks use stronger shades of the runtime semantic member-colour token.
-                            "[background:color-mix(in_oklch,var(--member-color)_46%,white)] [border-color:color-mix(in_oklch,var(--member-color)_58%,white)]"
-                          : // eslint-disable-next-line no-restricted-syntax -- Open tasks use softer shades of the runtime semantic member-colour token.
-                            "[background:color-mix(in_oklch,var(--member-color)_16%,white)] [border-color:color-mix(in_oklch,var(--member-color)_24%,white)]"
+                          ? "[background:color-mix(in_oklch,var(--member-color)_46%,var(--member-mix-ground))] [border-color:color-mix(in_oklch,var(--member-color)_58%,var(--member-mix-ground))]"
+                          : "[background:color-mix(in_oklch,var(--member-color)_16%,var(--member-mix-ground))] [border-color:color-mix(in_oklch,var(--member-color)_24%,var(--member-mix-ground))]"
                       )}
                     />
                   </li>

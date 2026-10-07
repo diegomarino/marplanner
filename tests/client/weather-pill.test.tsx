@@ -165,7 +165,7 @@ function genericOkResponse(url: string): Response {
   return new Response(JSON.stringify(isListEndpoint ? [] : {}), { status: 200 });
 }
 
-describe("WeatherPill (T009)", () => {
+describe("WeatherPill", () => {
   let mockFetch: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -345,7 +345,7 @@ describe("WeatherPill (T009)", () => {
   });
 });
 
-describe("WeatherPill — shared family chrome (T007)", () => {
+describe("WeatherPill — shared family chrome", () => {
   let mockFetch: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {

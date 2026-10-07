@@ -42,7 +42,7 @@ import { adaptBlockData } from "../../src/server/modules/daily-briefing/render/a
  */
 const DATE = "2026-09-08";
 
-describe("daily-briefing corpus block generators (T007)", () => {
+describe("daily-briefing corpus block generators", () => {
   describe("per-block determinism (same date/member/params -> identical output twice)", () => {
     it("dadJoke", () => {
       const a = generateDadJoke({ date: DATE, memberId: "m1" });

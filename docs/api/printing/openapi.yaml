@@ -9,6 +9,36 @@ info:
 security:
   - deviceKeyCookie: []
 components:
+  responses:
+    AuthenticationBackoff:
+      description: >
+        Repeated credential failures from this transport source. Valid active credentials remain
+        usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.
+      headers:
+        Retry-After:
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Remaining cooldown in seconds, rounded up. Retry manually.
+        Cache-Control:
+          required: true
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [error, message]
+            properties:
+              error:
+                type: string
+                const: too_many_requests
+              message:
+                type: string
+                const: Authentication retry required
   securitySchemes:
     deviceKeyCookie:
       type: apiKey
@@ -18,6 +48,33 @@ components:
         the standard device-key cookie boundary (auth/boundary.ts); no management gate on this
         surface (research D8)
   schemas:
+    PluginUnavailable:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+      properties:
+        code:
+          const: plugin_unavailable
+        message:
+          type: string
+    AuthUnauthorized:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+        - code
+      properties:
+        error:
+          const: unauthorized
+        message:
+          type: string
+        code:
+          type: string
+          enum:
+            - credential_invalid
     ErrorResponse:
       type: object
       required:
@@ -183,6 +240,8 @@ paths:
                     YYYY-MM-DD (Constitution IV); the one HTTP-reachable seam for this slice's
                     target_date validity check
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: trigger evaluated — enqueued, or dedup-suppressed
           content:
@@ -195,6 +254,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing, ambiguous or invalid API credential (shared authentication boundary).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUnauthorized"
         "409":
           description: printing plugin inactive (FR-013)
           content:
@@ -205,34 +270,64 @@ paths:
     get:
       summary: admin list with derived states (SC-003 visibility)
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: all jobs with derived states
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/JobsListResponse"
+        "401":
+          description: Missing, ambiguous or invalid API credential (shared authentication boundary).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUnauthorized"
+        "503":
+          description: The owning plugin is inactive or unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginUnavailable"
   /api/printing/status:
     get:
       summary: >-
-        client-side plugin-state read (FR-013, issue 691) — no capability gate (a plain read,
-        matching /jobs GET's own posture, not a printer-session action)
+        client-side plugin-state read (FR-013, issue 691) — no capability gate (a plain read, matching
+        /jobs GET's own posture, not a printer-session action)
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: current plugin-active state
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/PrintingStatusResponse"
+        "401":
+          description: Missing, ambiguous or invalid API credential (shared authentication boundary).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUnauthorized"
   /api/printing/capability:
     post:
       summary: register this session as print-capable on pairing (ADR-035, FR-021 — `/claim` requires it)
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: capability registered for the session's key (idempotent)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CapabilityResponse"
+        "401":
+          description: Missing, ambiguous or invalid API credential (shared authentication boundary).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUnauthorized"
         "403":
           description: >-
             defensive only, `code: "credential_invalid"` — no authenticated API key on the request
@@ -254,6 +349,8 @@ paths:
         executor claim — atomic, day-scoped (research D1); requires the session's registered printer
         capability (FR-021, ADR-035)
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: one job claimed with a fresh lease
           content:
@@ -262,6 +359,12 @@ paths:
                 $ref: "#/components/schemas/ClaimResponse"
         "204":
           description: nothing claimable
+        "401":
+          description: Missing, ambiguous or invalid API credential (shared authentication boundary).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUnauthorized"
         "403":
           description: >-
             TWO causes, both `ErrorResponse`: session has no registered printer capability, `code:
@@ -281,8 +384,8 @@ paths:
   /api/printing/jobs/{id}/payload:
     get:
       summary: >-
-        fetch final ESC/POS bytes — raster pulled from the producer's provider and converted at
-        fetch time (FR-017, ADR-066)
+        fetch final ESC/POS bytes — raster pulled from the producer's provider and converted at fetch
+        time (FR-017, ADR-066)
       parameters:
         - name: id
           in: path
@@ -295,6 +398,8 @@ paths:
           schema:
             type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: the job's final printer-ready ESC/POS byte stream
           content:
@@ -302,6 +407,12 @@ paths:
               schema:
                 type: string
                 format: binary
+        "401":
+          description: Missing, ambiguous or invalid API credential (shared authentication boundary).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUnauthorized"
         "404":
           description: unknown job id
           content:
@@ -344,12 +455,20 @@ paths:
                 leaseToken:
                   type: string
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: printedAt stamped, `printing.completed` emitted (idempotent per lease)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/PrintJob"
+        "401":
+          description: Missing, ambiguous or invalid API credential (shared authentication boundary).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUnauthorized"
         "404":
           description: unknown job id
           content:
@@ -401,6 +520,8 @@ paths:
                     present only when the executor knows the failure is permanent (contract
                     vocabulary)
       responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
         "200":
           description: failure recorded; lease released or job dead-lettered
           content:
@@ -413,6 +534,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing, ambiguous or invalid API credential (shared authentication boundary).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUnauthorized"
         "404":
           description: unknown job id
           content:

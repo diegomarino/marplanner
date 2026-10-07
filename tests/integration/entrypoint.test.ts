@@ -200,7 +200,7 @@ function signalGroup(child: ChildProcess, signal: "SIGKILL" | "SIGINT" | "SIGTER
     process.kill(-child.pid, signal);
   } catch {
     try {
-      child.kill(signal);
+      if (child.exitCode === null && child.signalCode === null) child.kill(signal);
     } catch {
       // already gone — nothing to signal
     }
@@ -309,20 +309,23 @@ async function startEntrypoint(
       `entrypoint on :${port} never became healthy within ${HEALTH_TIMEOUT_MS}ms. output:\n${buffer}`
     );
   } catch (err) {
-    signalGroup(child, "SIGKILL");
+    await hardKill(child);
     throw err;
   }
 }
 
 /** Force-kill helper for cleanup — never leaves a (grand)child process leaked. */
 async function hardKill(child: ChildProcess): Promise<void> {
-  if (child.exitCode !== null || child.signalCode !== null) return;
+  if (child.exitCode !== null || child.signalCode !== null) {
+    signalGroup(child, "SIGKILL");
+    return;
+  }
   const exited = new Promise<void>((res) => child.once("exit", () => res()));
   signalGroup(child, "SIGKILL");
-  await Promise.race([exited, new Promise<void>((res) => setTimeout(res, 5_000))]);
+  await exited;
 }
 
-describe("entrypoint — scheduler runnable skeleton (T004)", () => {
+describe("entrypoint — scheduler runnable skeleton", () => {
   let activeChild: ChildProcess | null = null;
   let activeDataDir: string | null = null;
 
@@ -461,6 +464,7 @@ describe("entrypoint — scheduler runnable skeleton (T004)", () => {
     expect(code).toBe(0);
     expect(signal).toBeNull();
 
+    await hardKill(booted.child);
     activeChild = null;
   }, 30_000);
 

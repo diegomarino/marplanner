@@ -52,7 +52,7 @@ function plugin(id: PluginId, state: PluginState): PluginCatalogEntry {
  * is exercised here.
  * (Traces: KIOSK-SHELL-NAVIGATION-AC-07 — announcements half, TIME-ANNOUNCEMENTS-AC-03)
  */
-describe("time-announcements service — real Shell mount (T008)", () => {
+describe("time-announcements service — real Shell mount", () => {
   let mockFetch: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {

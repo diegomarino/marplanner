@@ -106,13 +106,13 @@ on the kiosk dashboard and the Daily Briefing. Replaces the v1 weekly-window pla
 ## Events
 
 (`ADR-040`; in-memory, at-most-once, post-commit.) **Emits: none** — no domain state
-events are required for v2 (consumers read on demand; the briefing snapshots at
+events are required for this system (consumers read on demand; the briefing snapshots at
 generation). May emit a change signal later if a consumer needs cache invalidation; none
 needed now. **Subscribes: none.**
 
 ## Data / Setup Contract
 
-Fresh v2 (`ADR-026`). Owned (logical): `recipes` (name non-null; ingredients,
+Fresh deployment (`ADR-026`). Owned (logical): `recipes` (name non-null; ingredients,
 instructions, slots nullable/optional; timestamps); `meal_plans` (id, name, active,
 timestamps — **no** week window); entries (`mealPlanId?`, `weekday?` for recurring;
 `date` for one-off; `slot`; recipe ref or note; `createdAt`). Recipe→entry FK is

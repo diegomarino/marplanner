@@ -208,6 +208,26 @@ describe("MembersManagement — v1-like member workspace", () => {
     const palette = within(editDialog).getByTestId("member-edit-color-palette");
     expect(palette).toHaveClass("sm:grid-cols-8");
     expect(within(palette).getAllByRole("radio")).toHaveLength(16);
+    const radios = within(palette).getAllByRole("radio");
+    expect(radios.filter((radio) => radio.tabIndex === 0)).toHaveLength(1);
+    radios[0].focus();
+    fireEvent.keyDown(radios[0], { key: "ArrowLeft" });
+    expect(radios.at(-1)).toHaveFocus();
+    expect(radios.at(-1)).toHaveAttribute("aria-checked", "true");
+    fireEvent.keyDown(radios.at(-1)!, { key: "Home" });
+    expect(radios[0]).toHaveFocus();
+    expect(radios[0]).toHaveAttribute("aria-checked", "true");
+    fireEvent.keyDown(radios[0], { key: "ArrowDown" });
+    expect(radios[1]).toHaveFocus();
+    fireEvent.keyDown(radios[1], { key: "ArrowUp" });
+    expect(radios[0]).toHaveFocus();
+    fireEvent.keyDown(radios[0], { key: "End" });
+    expect(radios.at(-1)).toHaveFocus();
+    fireEvent.keyDown(radios.at(-1)!, { key: "ArrowRight" });
+    expect(radios[0]).toHaveFocus();
+    fireEvent.keyDown(radios[0], { key: "Tab" });
+    expect(radios[0]).toHaveAttribute("aria-checked", "true");
+
     expect(within(palette).getByRole("radio", { name: "Blue" })).toHaveAttribute(
       "aria-checked",
       "true"
@@ -409,7 +429,7 @@ describe("MembersManagement / MemberCreateForm — open Select popover items mee
   );
 });
 
-describe("MembersManagement / MemberCreateForm — adopt the AdminPanel L2 frame (F2, independent review on T017)", () => {
+describe("MembersManagement / MemberCreateForm — adopt the AdminPanel L2 frame (F2, independent review on)", () => {
   it("MembersManagement wraps the surface in a landmark region labelled by its own title", async () => {
     mockBackend();
     renderManagement();
@@ -713,7 +733,7 @@ describe("MemberCreateForm — the Day select submits the VALUE matching the sel
   });
 });
 
-describe("MemberCreateForm and MembersManagement — curated member colours (slice 021 T009)", () => {
+describe("MemberCreateForm and MembersManagement — curated member colours", () => {
   it("creates with the server's unused-first assignment by default, while offering exactly sixteen named keyboard choices", async () => {
     const mockFetch = mockBackend({
       create: () => json({ ...MEMBER_JANUARY, id: "new", colorKey: "blue" }, 201),

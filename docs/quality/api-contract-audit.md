@@ -40,3 +40,38 @@ Use the [auditor instructions](../../tools/api-contract-audit/README.md). Genera
 reports belong under `.quality`, not in maintained source. Each finding records
 its test name and observation line for reproduction. No original product behavior,
 contract or BFULL tag was changed while adding this diagnostic.
+
+## Maintained repair model
+
+The repair preserves the original baseline above as historical evidence. Current
+contracts describe the versioned briefing envelope (including retired v1 names),
+nullable chore icons, kind-aware reminder targeting, strict calendar creation and
+partial edits, asynchronous external-source configuration, and per-entry telemetry
+drops. Routine edits continue to accept and ignore an immutable dayPeriodId.
+Public member creation still generates UUIDs; the contract also recognizes the
+stable `demo:member:` namespace used by maintained public seeds. Ordinary member
+fixtures use UUIDs rather than relaxing the contract to arbitrary strings.
+
+Authentication and availability responses are local component references on the
+operations proven by boundary tests and middleware. Plugin unavailability,
+quiescent restore and handler errors retain their distinct envelopes. Binary
+transports remain coverage gaps; the deliberate encoded provisioning access form
+is recorded as a middleware observation, not added to the JSON API contract.
+
+Fresh captures, per-finding classification, RED/GREEN logs and validation receipts
+remain ignored in the implementation worktree. A replay is useful for diagnosis
+but cannot establish runtime provenance. Zero observed conflicts does not close
+unobserved body variants, state-dependent invariants or transport exclusions.
+Coverage-policy source hashes and inventory are reconciled separately against the
+current maintained files and real V8 measurements. Existing per-file minima and
+layer floors remain unchanged; newly maintained modules receive explicit measured
+policies. Calendar edit regressions cover successful rescheduling and merged-state
+rejection instead of lowering its retained minima. Historical baseline measurements
+above remain historical evidence.
+
+Unobserved variants require a risk-based disposition, not one bespoke test each.
+Successful printing acknowledgement and transport bytes, authorization matrices,
+and restore rejection safety have focused HTTP checks. Binary observations remain
+auditor gaps even when external transport checks pass. Shared or defensive errors
+can be justified with exact handler/test evidence; they are not silently excluded
+from future reports. See the auditor's prioritization guidance.

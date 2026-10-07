@@ -7,7 +7,7 @@ import type { ClientLogEntryInput } from "../../src/shared";
  * across tests, and fake timers keep the periodic flush from firing on a real clock during the
  * test run.
  */
-describe("client logger (T006)", () => {
+describe("client logger", () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -267,5 +267,29 @@ describe("client logger (T006)", () => {
     const options = fetchSpy.mock.calls[0][1] as { keepalive?: boolean };
     expect(options.keepalive).toBeUndefined();
     vi.unstubAllGlobals();
+  });
+  it("uses the runtime mount for periodic fetch and unload beacon telemetry", async () => {
+    const meta = document.createElement("meta");
+    meta.name = "mp-base-path";
+    meta.content = "/family/planner";
+    document.head.append(meta);
+    const transport = vi.fn().mockResolvedValue({ ok: true });
+    const beacon = vi.fn().mockReturnValue(true);
+    vi.stubGlobal("fetch", transport);
+    const originalBeacon = navigator.sendBeacon;
+    Object.defineProperty(navigator, "sendBeacon", { configurable: true, value: beacon });
+    try {
+      const { log, __flushNowForTests, __flushForUnloadNowForTests } = await freshLogger();
+      log("info", "mount", "periodic");
+      await __flushNowForTests();
+      expect(transport.mock.calls[0][0]).toBe("/family/planner/api/telemetry/client-log");
+      log("info", "mount", "unload");
+      __flushForUnloadNowForTests();
+      expect(beacon.mock.calls[0][0]).toBe("/family/planner/api/telemetry/client-log");
+    } finally {
+      meta.remove();
+      Object.defineProperty(navigator, "sendBeacon", { configurable: true, value: originalBeacon });
+      vi.unstubAllGlobals();
+    }
   });
 });

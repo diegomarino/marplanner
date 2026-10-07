@@ -104,12 +104,152 @@ const AUTHORIZATIONS = [
   },
 ] as const;
 
+const AUTH_ROUTE_MATRIX = [
+  ["GET", "/api/daily-briefing/:memberId/:date"],
+  ["GET", "/api/daily-briefing/settings"],
+  ["PUT", "/api/daily-briefing/settings"],
+  ["PUT", "/api/daily-briefing/block-order"],
+  ["PUT", "/api/daily-briefing/block-settings/:memberId/:blockType"],
+  ["GET", "/api/daily-briefing/:memberId/:date/preview.png"],
+  ["POST", "/api/daily-briefing/generate"],
+  ["POST", "/api/daily-briefing/generate-all"],
+  ["GET", "/api/daily-briefing/opt-in"],
+  ["PUT", "/api/daily-briefing/opt-in/:memberId"],
+  ["GET", "/api/recipes"],
+  ["POST", "/api/recipes"],
+  ["GET", "/api/recipes/:id"],
+  ["PATCH", "/api/recipes/:id"],
+  ["DELETE", "/api/recipes/:id"],
+  ["GET", "/api/recipes/:id/dependents"],
+  ["GET", "/api/meal-plans"],
+  ["POST", "/api/meal-plans"],
+  ["GET", "/api/meal-plans/:id"],
+  ["PATCH", "/api/meal-plans/:id"],
+  ["GET", "/api/meal-plans/:id/entries"],
+  ["POST", "/api/meal-entries"],
+  ["PATCH", "/api/meal-entries/:id"],
+  ["DELETE", "/api/meal-entries/:id"],
+  ["GET", "/api/menu"],
+  ["GET", "/api/menu/week"],
+  ["GET", "/api/plugins"],
+  ["POST", "/api/plugins/:pluginId/activate"],
+  ["POST", "/api/plugins/:pluginId/deactivate"],
+  ["POST", "/api/plugins/:pluginId/fault"],
+] as const;
+
+function requestUrl(pattern: string): string {
+  return pattern
+    .replace(/:date/g, "2026-10-01")
+    .replace(/:blockType/g, "weather")
+    .replace(/:pluginId/g, "weather")
+    .replace(/:(memberId|id)/g, "missing");
+}
+
 describe("plugin lifecycle routes", () => {
   useIsolatedDb();
   let lifecycle: PluginLifecycle;
 
   beforeEach(() => {
     lifecycle = fakeLifecycle();
+  });
+
+  it("rejects unauthenticated assembled briefing, meals and lifecycle requests without writes", async () => {
+    const app = await buildApp({ pluginLifecycle: lifecycle });
+
+    try {
+      await app.ready();
+      const before = getDb().prepare("SELECT total_changes() AS changes").get();
+      for (const [index, [method, pattern]] of AUTH_ROUTE_MATRIX.entries()) {
+        const url = requestUrl(pattern);
+        expect(app.hasRoute({ method, url: pattern }), pattern).toBe(true);
+        const response = await app.inject({
+          method,
+          url,
+          // Each route checks a first failure; repeated-source backoff has its own suite.
+          remoteAddress: `127.0.0.${index + 1}`,
+          ...(method === "GET" || method === "DELETE" ? {} : { payload: {} }),
+        });
+        expect(response.statusCode, `${method} ${url}`).toBe(401);
+        expect(response.json()).toEqual({
+          error: "unauthorized",
+          message: "API key is required",
+          code: "credential_invalid",
+        });
+      }
+      expect(getDb().prepare("SELECT total_changes() AS changes").get()).toEqual(before);
+      expect(lifecycle.listCatalog).not.toHaveBeenCalled();
+      expect(lifecycle.activate).not.toHaveBeenCalled();
+      expect(lifecycle.deactivate).not.toHaveBeenCalled();
+      expect(lifecycle.reportFault).not.toHaveBeenCalled();
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("rejects revoked credentials on every assembled briefing route before writes or rendering", async () => {
+    seedKey("revoked-device", "device");
+    getDb().prepare("UPDATE api_keys SET revoked_at = ?").run(Date.now());
+    const app = await buildApp({ pluginLifecycle: lifecycle });
+    try {
+      await app.ready();
+      const before = getDb().prepare("SELECT total_changes() AS changes").get();
+      for (const [method, pattern] of AUTH_ROUTE_MATRIX.filter(([, path]) =>
+        path.startsWith("/api/daily-briefing")
+      )) {
+        const url = requestUrl(pattern);
+        expect(app.hasRoute({ method, url: pattern }), pattern).toBe(true);
+        const response = await app.inject({
+          method,
+          url,
+          cookies: { mp_device_key: "revoked-device" },
+          ...(method === "GET" ? {} : { payload: {} }),
+        });
+        expect(response.statusCode, `${method} ${url}`).toBe(403);
+        expect(response.json()).toEqual({
+          error: "forbidden",
+          message: "API key has been revoked",
+          code: "credential_invalid",
+        });
+      }
+      expect(getDb().prepare("SELECT total_changes() AS changes").get()).toEqual(before);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("denies a live scoped credential on every assembled lifecycle operation without invoking work", async () => {
+    seedKey("scoped-device", "device");
+    getDb().prepare("UPDATE api_keys SET scope = 'plugins:read'").run();
+    const app = await buildApp({ pluginLifecycle: lifecycle });
+    try {
+      await app.ready();
+      const before = getDb().prepare("SELECT total_changes() AS changes").get();
+      for (const [method, pattern] of AUTH_ROUTE_MATRIX.filter(([, path]) =>
+        path.startsWith("/api/plugins")
+      )) {
+        const url = requestUrl(pattern);
+        expect(app.hasRoute({ method, url: pattern }), pattern).toBe(true);
+        const response = await app.inject({
+          method,
+          url,
+          cookies: { mp_device_key: "scoped-device" },
+          ...(method === "GET" ? {} : { payload: { code: "contribution_render_failed" } }),
+        });
+        expect(response.statusCode, url).toBe(403);
+        expect(response.json()).toEqual({
+          error: "forbidden",
+          message: 'Full-access capability "*" not granted',
+          code: "scope_denied",
+        });
+      }
+      expect(getDb().prepare("SELECT total_changes() AS changes").get()).toEqual(before);
+      expect(lifecycle.listCatalog).not.toHaveBeenCalled();
+      expect(lifecycle.activate).not.toHaveBeenCalled();
+      expect(lifecycle.deactivate).not.toHaveBeenCalled();
+      expect(lifecycle.reportFault).not.toHaveBeenCalled();
+    } finally {
+      await app.close();
+    }
   });
 
   it("mounts the lifecycle API in the application when the lifecycle dependency is supplied", async () => {
@@ -199,25 +339,30 @@ describe("plugin lifecycle routes", () => {
     });
   }
 
-  it("rejects unknown plugin IDs before invoking lifecycle work", async () => {
-    seedKey("device-full", "device");
-    const app = await buildRoutes(lifecycle);
-    try {
-      const response = await app.inject({
-        method: "POST",
-        url: "/api/plugins/external-calendar-sync/activate",
-        cookies: { mp_device_key: "device-full" },
-      });
-      expect(response.statusCode).toBe(404);
-      expect(response.json()).toEqual({
-        code: "plugin_not_found",
-        message: "Plugin not found.",
-      });
-      expect(lifecycle.activate).not.toHaveBeenCalled();
-    } finally {
-      await app.close();
+  it.each(["activate", "deactivate", "fault"] as const)(
+    "rejects unknown plugin IDs before invoking %s lifecycle work",
+    async (operation) => {
+      seedKey("device-full", "device");
+      const app = await buildRoutes(lifecycle);
+      try {
+        const response = await app.inject({
+          method: "POST",
+          url: `/api/plugins/external-calendar-sync/${operation}`,
+          cookies: { mp_device_key: "device-full" },
+        });
+        expect(response.statusCode).toBe(404);
+        expect(response.json()).toEqual({
+          code: "plugin_not_found",
+          message: "Plugin not found.",
+        });
+        expect(lifecycle.activate).not.toHaveBeenCalled();
+        expect(lifecycle.deactivate).not.toHaveBeenCalled();
+        expect(lifecycle.reportFault).not.toHaveBeenCalled();
+      } finally {
+        await app.close();
+      }
     }
-  });
+  );
 
   it.each([
     { code: "raw adapter exploded" },
@@ -246,26 +391,32 @@ describe("plugin lifecycle routes", () => {
     }
   );
 
-  it("maps opposite-target contention to the stable safe 409 shape", async () => {
-    seedKey("device-full", "device");
-    vi.mocked(lifecycle.activate).mockRejectedValueOnce(new PluginLifecycleBusyError());
-    const app = await buildRoutes(lifecycle);
-    try {
-      const response = await app.inject({
-        method: "POST",
-        url: "/api/plugins/weather/activate",
-        cookies: { mp_device_key: "device-full" },
-      });
-      expect(response.statusCode).toBe(409);
-      expect(response.json()).toEqual({
-        code: "plugin_lifecycle_busy",
-        message: "A lifecycle operation is already in progress for this plugin.",
-        plugin: ENTRY,
-      });
-    } finally {
-      await app.close();
+  it.each(["activate", "deactivate", "fault"] as const)(
+    "maps %s contention to the stable safe 409 shape",
+    async (operation) => {
+      seedKey("device-full", "device");
+      vi.mocked(lifecycle[operation === "fault" ? "reportFault" : operation]).mockRejectedValueOnce(
+        new PluginLifecycleBusyError()
+      );
+      const app = await buildRoutes(lifecycle);
+      try {
+        const response = await app.inject({
+          method: "POST",
+          url: `/api/plugins/weather/${operation}`,
+          ...(operation === "fault" ? { payload: { code: "contribution_render_failed" } } : {}),
+          cookies: { mp_device_key: "device-full" },
+        });
+        expect(response.statusCode).toBe(409);
+        expect(response.json()).toEqual({
+          code: "plugin_lifecycle_busy",
+          message: "A lifecycle operation is already in progress for this plugin.",
+          plugin: ENTRY,
+        });
+      } finally {
+        await app.close();
+      }
     }
-  });
+  );
 
   it("retains the pre-operation catalog snapshot when busy handling cannot reread it", async () => {
     seedKey("device-full", "device");

@@ -9,7 +9,7 @@ import { useIsolatedDb } from "../helpers/db";
  * Black-box: only asserts on HTTP status, Set-Cookie headers, and response body.
  * Does NOT import any server auth internals.
  */
-describe("provision — FR-007 (T017)", () => {
+describe("provision — FR-007", () => {
   useIsolatedDb();
 
   /** Seed a bootstrap key row into api_keys (mimicking startup reconciliation).
@@ -23,6 +23,36 @@ describe("provision — FR-007 (T017)", () => {
       "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'bootstrap', ?)"
     ).run(`${now}-bootstrap`, bootstrapHash, now);
   }
+
+  it("scopes mounted device credentials and provisioning marker consistently", async () => {
+    const previous = process.env.BASE_PATH;
+    process.env.BASE_PATH = "/family/planner";
+    const previousBootstrap = process.env.MP_BOOTSTRAP_KEY;
+    const raw = "mpk-mounted-bootstrap";
+    process.env.MP_BOOTSTRAP_KEY = raw;
+    seedBootstrapKey(raw);
+    const app = await buildApp();
+    try {
+      const response = await app.inject({
+        method: "POST",
+        url: "/family/planner/api/auth/provision",
+        headers: { authorization: `Bearer ${raw}` },
+      });
+      expect(response.statusCode).toBe(200);
+      const cookies = response.headers["set-cookie"] as string[];
+      expect(cookies).toHaveLength(2);
+      expect(cookies.every((cookie) => cookie.includes("Path=/family/planner/"))).toBe(true);
+      expect(cookies.find((cookie) => cookie.startsWith("mp_device_key="))).toContain(
+        "HttpOnly; Secure; SameSite=Lax"
+      );
+    } finally {
+      await app.close();
+      if (previousBootstrap === undefined) delete process.env.MP_BOOTSTRAP_KEY;
+      else process.env.MP_BOOTSTRAP_KEY = previousBootstrap;
+      if (previous === undefined) delete process.env.BASE_PATH;
+      else process.env.BASE_PATH = previous;
+    }
+  });
 
   it("POST /api/auth/provision with valid raw * bootstrap key → 200, Set-Cookie sets mp_device_key, body has no raw key", async () => {
     // The bootstrap key is provided out-of-band via env var MP_BOOTSTRAP_KEY.

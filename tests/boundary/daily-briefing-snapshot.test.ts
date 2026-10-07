@@ -8,7 +8,7 @@ import { useIsolatedDb } from "../helpers/db";
 /** RED contract for. It drives the real registered HTTP surface so
  * snapshot lifecycle and the no-FK archived-member boundary stay observable.
  */
-describe("daily-briefing snapshot + regeneration boundary (T010)", () => {
+describe("daily-briefing snapshot + regeneration boundary", () => {
   useIsolatedDb();
 
   let app: FastifyInstance;

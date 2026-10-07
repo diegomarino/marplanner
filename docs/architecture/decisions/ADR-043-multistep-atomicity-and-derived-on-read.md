@@ -86,5 +86,5 @@ authoritative state; they become a Routines read interface
 
 ## Traceability
 
-- Pre-v2: `ADR-009` (this refines/extends it for the cluster)
+- Related prior: `ADR-009` (this refines/extends it for the cluster)
 - Related: `ADR-022`, `ADR-040`, `ADR-039`

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FastifyInstance } from "fastify";
 import type { Briefing, ForecastResult } from "../../src/shared";
 import { hashKey } from "../../src/server/auth/credentials";
@@ -15,12 +15,21 @@ import { useIsolatedDb } from "../helpers/db";
  * BEFORE `db.transaction` opens (better-sqlite3 transactions are synchronous); a
  * `{status:"failed"}` weather block would flip a briefing to `partial` (INV-10/12
  * violation) — the no-block-on-failure branch is the load-bearing assertion below.
+ * Clock PINNED (Date only) so fixed fixture dates stay inside the calendar module's
+ * sliding -30d/+365d window used by the `today` block — same de-time-bomb pattern as
+ * `daily-briefing-generate.test.ts` / `calendar-read.test.ts`.
  */
-describe("daily-briefing weather block (T010)", () => {
+describe("daily-briefing weather block", () => {
   useIsolatedDb();
 
   let app: FastifyInstance;
   let deviceKey: string;
+
+  // Keep fixture dates (2026-09-04..2026-10-25) inside calendar getEvents window forever.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-10T12:00:00.000Z"));
+  });
 
   afterEach(async () => {
     await app?.close();
@@ -31,6 +40,7 @@ describe("daily-briefing weather block (T010)", () => {
     }
     const { __setForecastPortForTests } = await import("../../src/server/modules/weather/port");
     __setForecastPortForTests(undefined);
+    vi.useRealTimers();
   });
 
   function seedDeviceKey(): string {

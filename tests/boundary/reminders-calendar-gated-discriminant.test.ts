@@ -15,7 +15,7 @@ import { useIsolatedDb } from "../helpers/db";
  * the stored queryFields UNCHANGED (finding ′); PATCH weekdays on a calendar_gated rule → 400,
  * not 500 (the carry-in). Nothing persists on any 400.
  */
-describe("reminders-calendar-gated-discriminant boundary tests (T006/T007)", () => {
+describe("reminders-calendar-gated-discriminant boundary tests", () => {
   useIsolatedDb();
 
   beforeEach(() => {

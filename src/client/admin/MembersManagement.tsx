@@ -392,13 +392,11 @@ function MembersManagementContent() {
         <ErrorNotice message={error} />
 
         {tab === "active" && members.length === 0 && !loading && (
-          <p className="text-muted-foreground text-[length:var(--control-font-size)]">
-            {t("members.management.noMembers")}
-          </p>
+          <p className="text-muted-foreground text-control">{t("members.management.noMembers")}</p>
         )}
 
         {tab === "archived" && archivedMembers.length === 0 && !loading && (
-          <p className="text-muted-foreground text-[length:var(--control-font-size)]">
+          <p className="text-muted-foreground text-control">
             {t("members.management.archived.noMembers")}
           </p>
         )}
@@ -413,7 +411,7 @@ function MembersManagementContent() {
                 key={member.id}
                 data-testid={`member-card-${member.id}`}
                 className="bg-card flex min-h-48 flex-col justify-between gap-5 rounded-3xl border border-[var(--member-color)] p-5 shadow-sm"
-                // eslint-disable-next-line no-restricted-syntax -- Closed member keys select generated semantic token custom properties only.
+                // eslint-disable-next-line ui-policy/debt -- Closed member keys select generated semantic token custom properties only.
                 style={
                   {
                     "--member-color": `var(--color-member-${member.colorKey}-500)`,
@@ -423,7 +421,7 @@ function MembersManagementContent() {
                 <div className="flex items-start gap-4">
                   <div
                     aria-hidden="true"
-                    className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[var(--member-color)] text-lg font-bold text-white shadow-sm"
+                    className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[var(--member-color)] text-lg font-bold text-member-avatar-foreground shadow-sm"
                   >
                     {member.displayName.trim().slice(0, 2).toUpperCase()}
                   </div>
@@ -543,17 +541,50 @@ function MembersManagementContent() {
                 {MEMBER_COLOR_KEYS.map((key) => {
                   const selected = editColorKey === key;
                   return (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       key={key}
                       type="button"
                       role="radio"
                       aria-checked={selected}
+                      tabIndex={selected ? 0 : -1}
+                      onKeyDown={(event) => {
+                        if (
+                          ![
+                            "ArrowLeft",
+                            "ArrowRight",
+                            "ArrowUp",
+                            "ArrowDown",
+                            "Home",
+                            "End",
+                          ].includes(event.key)
+                        )
+                          return;
+                        event.preventDefault();
+                        const index = MEMBER_COLOR_KEYS.indexOf(key);
+                        const next =
+                          event.key === "Home"
+                            ? 0
+                            : event.key === "End"
+                              ? MEMBER_COLOR_KEYS.length - 1
+                              : (index +
+                                  (["ArrowLeft", "ArrowUp"].includes(event.key) ? -1 : 1) +
+                                  MEMBER_COLOR_KEYS.length) %
+                                MEMBER_COLOR_KEYS.length;
+                        setEditColorKey(MEMBER_COLOR_KEYS[next]);
+                        const radios =
+                          event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
+                            '[role="radio"]'
+                          );
+                        radios?.[next]?.focus();
+                      }}
                       aria-label={t(MEMBER_COLOR_LABEL_KEYS[key])}
                       data-state={selected ? "checked" : "unchecked"}
                       disabled={savingEdit}
                       onClick={() => setEditColorKey(key)}
-                      className="h-[var(--control-height)] w-[var(--control-height)] rounded-full border-4 border-background text-[length:var(--control-font-size)] shadow-sm transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=checked]:ring-2 data-[state=checked]:ring-[var(--member-color)] data-[state=checked]:ring-offset-2"
-                      // eslint-disable-next-line no-restricted-syntax -- Closed keys select generated semantic token custom properties only.
+                      className="h-[var(--control-height)] w-[var(--control-height)] rounded-full border-4 border-background text-control shadow-sm transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=checked]:ring-2 data-[state=checked]:ring-[var(--member-color)] data-[state=checked]:ring-offset-2"
+                      // eslint-disable-next-line ui-policy/debt -- Closed keys select generated semantic token custom properties only.
                       style={
                         {
                           "--member-color": `var(--color-member-${key}-500)`,
@@ -639,7 +670,7 @@ export function MembersManagement() {
 
   if (!unlocked) {
     return (
-      <div className="text-muted-foreground p-4 text-[length:var(--control-font-size)]">
+      <div className="text-muted-foreground p-4 text-control">
         Admin unlock required to access member management.
       </div>
     );

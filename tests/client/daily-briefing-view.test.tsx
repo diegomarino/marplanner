@@ -326,7 +326,7 @@ function renderView() {
   );
 }
 
-describe("DailyBriefingView — full block registry (T013)", () => {
+describe("DailyBriefingView — full block registry", () => {
   beforeEach(() => {
     currentSettings.timezone = "UTC";
     currentSettings.language = "en";

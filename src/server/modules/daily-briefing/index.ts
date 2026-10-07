@@ -1039,9 +1039,7 @@ export async function generateBriefing(
         // nothing about savepoint-nesting rollback; firing it here is what proves the outer
         // ROLLBACK discards an already-released nested savepoint too, not just the outer's own
         // statements.
-        throw new ForcedPostSupersedeAbortError(
-          "T010 savepoint probe: forced abort after supersede"
-        );
+        throw new ForcedPostSupersedeAbortError("savepoint probe: forced abort after supersede");
       }
 
       return settled;

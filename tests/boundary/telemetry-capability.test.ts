@@ -9,7 +9,7 @@ import { useIsolatedDb } from "../helpers/db";
 
 /** capability seam boundary tests (CLIENT-LOGGING-TELEMETRY-INV-10 / -AC-05).
  */
-describe("telemetry capability seam (T004)", () => {
+describe("telemetry capability seam", () => {
   useIsolatedDb();
 
   function seedApiKey(scope: string): { rawKey: string; id: string } {

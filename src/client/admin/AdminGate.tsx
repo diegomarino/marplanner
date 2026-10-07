@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { appPathname } from "@/lib/base-path";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { isAdminPinBypassEnabled, useAdminUnlock } from "@/lib/adminUnlock";
 import { authFetch } from "@/lib/credential";
 import { Button } from "@/components/ui/button";
@@ -27,23 +28,16 @@ interface VerifyPinResult {
   match: boolean;
 }
 
-/** Auto re-lock: `setUnlocked(false)` was previously called nowhere, so a kitchen kiosk stayed unlocked
- * indefinitely once a parent opened it, including for children using the kiosk
- * afterwards. Two complementary triggers, chosen TOGETHER rather than either alone:
- * 1. An inactivity timeout (below) — the common case: a parent finishes an admin
- * task and walks away without remembering to lock it back up.
- * 2. An explicit "Lock" control in the admin nav (`admin-lock-button`, in
- * `AdminContent`) — for the case a parent wants to hand the kiosk back to a
- * child immediately, without waiting out the timeout.
- * The timeout is a plain inactivity window, reset by ANY pointer or keyboard
- * interaction anywhere on the page while unlocked — this surface has no router,
- * so "activity" is the only signal available; there is no
- * route change to hook a lock-on-navigate trigger to. Five minutes is a recorded
- * product judgement call, not a derived constant: short enough that an unattended
- * kiosk doesn't stay open for the rest of the day, long enough that a parent
- * re-reading a long reminder list before saving isn't logged out mid-task. Revisit
- * this interval if real usage shows it is wrong in either
- * direction.
+/** Auto re-lock: unlock is ephemeral client state (`adminUnlock`). Complementary triggers:
+ * 1. **Leave admin** — `AdminUnlockRouteReset` in `Shell.tsx` clears unlock when the route is
+ *    no longer `kind: "admin"` (navigate to family surfaces).
+ * 2. **Inactivity** (below) — parent finishes admin and walks away without Lock; timer is scoped
+ *    to the admin panel element (capture-phase pointer/key/click), not `window`, so family-surface
+ *    activity does not keep admin unlocked while the panel is open.
+ * 3. **Explicit Lock** — `admin-lock-button` in `AdminContent` for immediate hand-back.
+ * 4. **Refresh / close** — in-memory state is gone.
+ * Five minutes is a recorded product judgement: short enough that an unattended kiosk does not
+ * stay open all day, long enough that a parent re-reading a long list is not locked mid-task.
  */
 const ADMIN_IDLE_LOCK_MS = 5 * 60 * 1000;
 
@@ -113,7 +107,7 @@ export function AdminGate() {
 
   /* -- pin submit ----------------------------------------------- */
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     if (pin.length < 4 || pin.length > 6 || submitting) return;
 
     setSubmitting(true);
@@ -143,7 +137,56 @@ export function AdminGate() {
       .finally(() => {
         setSubmitting(false);
       });
-  };
+  }, [pin, submitting, setUnlocked]);
+
+  const addDigit = useCallback(
+    (digit: string) => {
+      if (submitting) return;
+      setPin((current) => (current.length >= 6 ? current : `${current}${digit}`));
+      setError(null);
+    },
+    [submitting]
+  );
+
+  const deleteDigit = useCallback(() => {
+    if (submitting) return;
+    setPin((current) => current.slice(0, -1));
+    setError(null);
+  }, [submitting]);
+
+  /* -- hardware keyboard while the PIN gate is showing ------------ */
+
+  useEffect(() => {
+    if (adminUnlocked) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest?.("input, textarea, select, [contenteditable='true']")) return;
+
+      if (event.key >= "0" && event.key <= "9") {
+        event.preventDefault();
+        addDigit(event.key);
+        return;
+      }
+      if (event.key === "Backspace") {
+        if (target?.closest?.("button")) return;
+        event.preventDefault();
+        deleteDigit();
+        return;
+      }
+      if (event.key === "Enter") {
+        // Focused keypad/unlock buttons activate via the control itself. Submitting here too
+        // double-fires and can unlock mid tab-then-Enter digit entry (e2e keyboard flows).
+        if (target?.closest?.("button, a, [role='button']")) return;
+        event.preventDefault();
+        handleSubmit();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [adminUnlocked, addDigit, deleteDigit, handleSubmit]);
 
   /* -- unlocked: localized admin content (LanguageProvider mounts */
   /* HERE, post-unlock, so /api/settings fires only after unlock) */
@@ -161,12 +204,6 @@ export function AdminGate() {
   }
 
   /* -- locked: PIN gate (English, pre-unlock) -------------------- */
-
-  const addDigit = (digit: string) => {
-    if (submitting || pin.length >= 6) return;
-    setPin((current) => `${current}${digit}`);
-    setError(null);
-  };
 
   const cancelPin = () => {
     setPin("");
@@ -204,6 +241,7 @@ export function AdminGate() {
                 type="button"
                 variant="outline"
                 size="lg"
+                // eslint-disable-next-line ui-policy/sizing -- PIN keypad intentionally exceeds both density minima (64px target, 24px glyph); preserve accessible kiosk layout.
                 className="h-[64px] w-[64px] rounded-full text-[24px] font-semibold"
                 aria-label={`Digit ${digit}`}
                 data-testid={`admin-pin-digit-${digit}`}
@@ -217,14 +255,12 @@ export function AdminGate() {
               type="button"
               variant="ghost"
               size="lg"
+              // eslint-disable-next-line ui-policy/sizing -- PIN keypad intentionally exceeds both density minima (64px target, 24px glyph); preserve accessible kiosk layout.
               className="h-[64px] w-[64px] rounded-full text-[24px]"
               aria-label="Backspace"
               data-testid="admin-pin-backspace"
               disabled={submitting || pin.length === 0}
-              onClick={() => {
-                setPin((current) => current.slice(0, -1));
-                setError(null);
-              }}
+              onClick={deleteDigit}
             >
               ⌫
             </Button>
@@ -232,6 +268,7 @@ export function AdminGate() {
               type="button"
               variant="outline"
               size="lg"
+              // eslint-disable-next-line ui-policy/sizing -- PIN keypad intentionally exceeds both density minima (64px target, 24px glyph); preserve accessible kiosk layout.
               className="h-[64px] w-[64px] rounded-full text-[24px] font-semibold"
               aria-label="Digit 0"
               data-testid="admin-pin-digit-0"
@@ -243,6 +280,7 @@ export function AdminGate() {
             <Button
               type="button"
               size="lg"
+              // eslint-disable-next-line ui-policy/sizing -- PIN keypad intentionally exceeds both density minima (64px target, 24px glyph); preserve accessible kiosk layout.
               className="h-[64px] w-[64px] rounded-full text-[24px]"
               aria-label="Unlock Admin"
               data-testid="admin-pin-unlock"
@@ -278,9 +316,7 @@ export function AdminGate() {
 
 function AdminContent({ onLock }: { onLock: () => void }) {
   const adminPathname = () =>
-    window.location.pathname === "/admin" || window.location.pathname.startsWith("/admin/")
-      ? window.location.pathname
-      : "/admin";
+    appPathname() === "/admin" || appPathname().startsWith("/admin/") ? appPathname() : "/admin";
   const [pathname, setPathname] = useState(adminPathname);
 
   useEffect(() => {

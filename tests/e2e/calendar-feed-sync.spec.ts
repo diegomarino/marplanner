@@ -149,7 +149,7 @@ async function openAdminCalendar(page: Page, baseUrl: string, cookie: string): P
   await expect(page.getByTestId("calendar-management")).toBeVisible();
 }
 
-test("T003 process tracer persists, synchronizes, and merges one controlled feed", async () => {
+test("process tracer persists, synchronizes, and merges one controlled feed", async () => {
   test.setTimeout(60_000);
   const port = await getFreePort();
   const dataDir = mkdtempSync(join(tmpdir(), "mp-calendar-tracer-"));
@@ -231,7 +231,7 @@ test("T003 process tracer persists, synchronizes, and merges one controlled feed
   }
 });
 
-test("T014 Admin journey keeps source controls distinct and highlight order observable", async ({
+test("Admin journey keeps source controls distinct and highlight order observable", async ({
   page,
 }) => {
   test.setTimeout(90_000);
@@ -417,7 +417,12 @@ test("T014 Admin journey keeps source controls distinct and highlight order obse
     const firstRuleCard = page.getByTestId(`highlight-rule-${initialRules[1].id}`);
     const enabledCheckbox = firstRuleCard.getByRole("checkbox", { name: "Enabled" });
     await expect(enabledCheckbox).toBeEnabled();
-    await enabledCheckbox.click();
+    // @dnd-kit PointerSensor retains its document click suppression for 50ms after
+    // detach, including checkbox clicks synthesized by Space. Wait for that known
+    // sensor cleanup boundary, then exercise native checkbox keyboard activation.
+    await page.waitForTimeout(50);
+    await enabledCheckbox.focus();
+    await page.keyboard.press("Space");
     await expect
       .poll(async () => (await readRules()).find((rule) => rule.id === initialRules[1].id)?.enabled)
       .toBe(false);

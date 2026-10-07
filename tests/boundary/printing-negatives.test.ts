@@ -40,7 +40,7 @@ import { todayInHouseholdTz } from "../../src/server/host-api";
  * errorCode}`. This file fences THAT shape (the real catalog, the coverage oracle for this
  * guarantee) and leaves the paraphrase uncorrected per implementation scope.
  */
-describe("printing negatives — T012 (FR-005, FR-020)", () => {
+describe("printing negatives — (FR-005, FR-020)", () => {
   useIsolatedDb();
 
   function flushMicrotasks(): Promise<void> {

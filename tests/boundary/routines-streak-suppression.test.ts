@@ -11,7 +11,7 @@ import { useIsolatedDb } from "../helpers/db";
  * - GET.../board?date=<any OTHER date> returns streak:null AND todayProgress:null
  * for EVERY column, even one with rich history — suppression is server-side.
  */
-describe("routines-streak-suppression boundary tests (T018/T019 — US3)", () => {
+describe("routines-streak-suppression boundary tests (US3)", () => {
   useIsolatedDb();
 
   afterEach(() => {

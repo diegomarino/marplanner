@@ -1,6 +1,6 @@
 # Plugin Manifest Matrix
 
-This document is the canonical T002 mapping from the closed ADR-029 plugin cohort to the
+This document is the canonical mapping from the closed ADR-029 plugin cohort to the
 contributions that exist in the current application. The catalog IDs below are stable manifest IDs;
 each maps to an existing owner symbol, destination, or block type. Scheduler job IDs are the exact
 runtime IDs registered with the scheduler, not catalog aliases.

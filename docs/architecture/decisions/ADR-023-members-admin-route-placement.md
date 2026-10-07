@@ -6,7 +6,7 @@ Decision date: 2026-06-27
 
 ## Decision
 
-Member profile management is an admin-protected feature in v2.
+Member profile management is an admin-protected feature in this system.
 
 Creating, editing, archiving, restoring, or otherwise mutating family/member profiles must live behind the admin access boundary. A child-facing or ordinary kiosk route such as `/members` must not mount the member-management UI or allow profile mutation. `/members` must not exist in its old form.
 
@@ -28,7 +28,7 @@ This decision defines the product boundary. The exact admin authorization mechan
 
 ## Data / Setup Implications
 
-Fresh v2 routing/navigation should place member management under admin-only surfaces.
+Fresh deployment routing/navigation should place member management under admin-only surfaces.
 
 No legacy route behavior should be copied as a v2 permission model. The old `/members` route is evidence of an ambiguity to avoid.
 
@@ -42,10 +42,10 @@ No legacy route behavior should be copied as a v2 permission model. The old `/me
 ## Open Questions
 
 - The exact admin credential/session enforcement model remains open under Auth & Sessions.
-- Whether a read-only members route is useful in v2 remains a Kiosk/navigation design question.
+- Whether a read-only members route is useful in this system remains a Kiosk/navigation design question.
 
 ## Traceability
 
 - Conflicts: `CR-024-kiosk-admin-entry`
-- Pre-v2: `ADR-023`
+- Related prior: `ADR-023`
 - Domain grill: `../domain-grills/members.md`

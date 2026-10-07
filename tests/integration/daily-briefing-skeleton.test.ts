@@ -22,7 +22,7 @@ import { useIsolatedDb } from "../helpers/db";
  * clock throughout (`now` is a fixed constant passed to every printing call) — no wall-clock read
  * anywhere in this test.
  */
-describe("daily-briefing skeleton — render -> store -> enqueue -> claim -> payload (T002)", () => {
+describe("daily-briefing skeleton — render -> store -> enqueue -> claim -> payload", () => {
   useIsolatedDb();
 
   const NOW = Date.UTC(2026, 8, 8, 6, 0, 0); // 2026-09-08 06:00 UTC — frozen, injected clock

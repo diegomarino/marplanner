@@ -36,7 +36,7 @@ import {
  * registration-mechanics test, an injected `UniFiClient` (never real egress), and
  * an injected clock for the cache (`createLiveCache`) where the cache's own state matters.
  */
-describe("network-devices poller + block honesty — T007/T008", () => {
+describe("network-devices poller + block honesty", () => {
   useIsolatedDb();
 
   afterEach(async () => {

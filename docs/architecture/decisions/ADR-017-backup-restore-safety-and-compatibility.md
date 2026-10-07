@@ -117,6 +117,6 @@ upload path and is subject to the same version check.
 ## Traceability
 
 - Conflicts: restore-safety open questions in `../../18-backups.md` §12
-- Pre-v2: `ADR-017`
+- Related prior: `ADR-017`
 - Domain grill: `../domain-grills/backups.md`
 - Related: `ADR-042` (backup storage/format/retention), `ADR-014`, `ADR-026`

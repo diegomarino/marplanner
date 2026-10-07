@@ -24,7 +24,7 @@ Separating household identity from admin authority keeps Members responsible for
 
 ## Data / Setup Implications
 
-No legacy member rows will be imported into v2 under `ADR-026`.
+No legacy member rows will be imported into this system under `ADR-026`.
 
 Legacy evidence still supports the rule: current production member roles are `parent` / `child`, and legacy schema/API allowance for `admin` as `member.role` should not be copied into the v2 member model.
 
@@ -43,5 +43,5 @@ Existing nullable `pin_codes.member_id` and `sessions.member_id` links are evide
 ## Traceability
 
 - Conflicts: `CR-001-member-role-admin`
-- Pre-v2: `ADR-001`
+- Related prior: `ADR-001`
 - Domain grill: `../domain-grills/members.md`

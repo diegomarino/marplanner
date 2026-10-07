@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/base-path";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n";
 import { navigateHousehold } from "@/shell/routes";
@@ -11,7 +12,7 @@ export function PluginUnavailable(): React.JSX.Element {
       <p className="text-muted-foreground">{t("plugins.unavailable.description")}</p>
       <Button asChild variant="outline" className="w-fit">
         <a
-          href="/admin/plugins"
+          href={appUrl("/admin/plugins")}
           onClick={(event) => {
             event.preventDefault();
             navigateHousehold("/admin/plugins");

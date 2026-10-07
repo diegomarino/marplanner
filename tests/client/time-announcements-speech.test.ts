@@ -66,7 +66,7 @@ async function freshSpeech() {
   return import("@/time-announcements/speech");
 }
 
-describe("time-announcements speech (T006)", () => {
+describe("time-announcements speech", () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ["setInterval", "setTimeout"] });
   });

@@ -20,6 +20,7 @@ import {
 import { authFetch } from "@/lib/credential";
 import type { AckRequest, ClaimResponse, FailRequest, PrintFailureErrorCode } from "../../shared";
 import { createPrintTransport, PrintTransportError, type PrintTransport } from "./transport";
+import { PRINT_INTENT_ENQUEUED_EVENT } from "./queueWakeup";
 import { usePrintingPluginActive } from "./pluginStatus";
 
 export const DEFAULT_POLL_INTERVAL_MS = 15_000;
@@ -160,6 +161,7 @@ export function PrintExecutor({
   const [activity, setActivity] = useState<Activity>("idle");
   const [lastError, setLastError] = useState<string | null>(null);
   const busyRef = useRef(false); // guards overlapping poll ticks
+  const wakePendingRef = useRef(false);
   const pendingAckRef = useRef<PendingAck | null>(null); //
 
   const applyAckOutcome = useCallback(
@@ -329,6 +331,10 @@ export function PrintExecutor({
       // network-level claim failure — stay paired, next tick tries again
     } finally {
       busyRef.current = false;
+      if (wakePendingRef.current) {
+        wakePendingRef.current = false;
+        window.dispatchEvent(new Event(PRINT_INTENT_ENQUEUED_EVENT));
+      }
     }
   }, [applyAckOutcome, connection, executeJob, registerCapability, transport]);
 
@@ -338,9 +344,18 @@ export function PrintExecutor({
     // "disconnected" so a pendingAck retry keeps running; pollTick itself still
     // refuses to claim while disconnected/not-ready.
     if (connection === "unpaired" || connection === "pairing") return;
-    void pollTick();
-    const interval = setInterval(() => void pollTick(), pollIntervalMs);
-    return () => clearInterval(interval);
+    const deliver = () => void pollTick();
+    const wake = () => {
+      if (busyRef.current) wakePendingRef.current = true;
+      else deliver();
+    };
+    window.addEventListener(PRINT_INTENT_ENQUEUED_EVENT, wake);
+    deliver();
+    const interval = setInterval(deliver, pollIntervalMs);
+    return () => {
+      window.removeEventListener(PRINT_INTENT_ENQUEUED_EVENT, wake);
+      clearInterval(interval);
+    };
   }, [connection, pollIntervalMs, pollTick]);
 
   const displayState: DisplayState =

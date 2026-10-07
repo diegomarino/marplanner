@@ -19,6 +19,53 @@ interface LifecycleMigrationContext {
   capturedAt: string;
 }
 
+function syncPath(file: string): void {
+  const fd = fs.openSync(file, "r");
+  try {
+    fs.fsyncSync(fd);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+function createBackupDirectory(directory: string): void {
+  const parent = path.dirname(directory);
+  if (parent !== directory) createBackupDirectory(parent);
+  if (!fs.existsSync(directory)) fs.mkdirSync(directory, { mode: 0o700 });
+  // Re-sync existing ancestors too: an earlier attempt may have created them before fsync failed.
+  syncPath(directory);
+  if (parent !== directory) syncPath(parent);
+}
+
+function createPreMigrationBackup(db: ReturnType<typeof getDb>): string {
+  try {
+    const configuredRoot = path.resolve(
+      process.env.BACKUPS_ROOT || path.join(process.env.DATA_DIR ?? process.cwd(), "backups")
+    );
+    createBackupDirectory(configuredRoot);
+    const root = fs.realpathSync(configuredRoot);
+    const lane = path.join(root, "pre-migration");
+    if (fs.existsSync(lane) && !fs.lstatSync(lane).isDirectory())
+      throw new Error("Pre-migration recovery directory must be a real directory");
+    createBackupDirectory(lane);
+    fs.chmodSync(lane, 0o700);
+    const directory = fs.mkdtempSync(path.join(lane, "snapshot-"));
+    syncPath(lane);
+    const pending = path.join(directory, ".pending.db");
+    const snapshot = path.join(directory, "database.db");
+    // VACUUM INTO copies committed WAL data without allocating the whole DB in Node memory.
+    // It preserves explicit keys; this is a logical snapshot, not a byte-identical copy.
+    db.prepare("VACUUM INTO ?").run(pending);
+    fs.chmodSync(pending, 0o600);
+    syncPath(pending);
+    fs.renameSync(pending, snapshot);
+    syncPath(directory);
+    return snapshot;
+  } catch (cause) {
+    throw new Error("Pre-migration backup failed; no migration was applied", { cause });
+  }
+}
+
 function ensureMigrationsTable(db: ReturnType<typeof import("better-sqlite3")>): void {
   db.exec(
     `CREATE TABLE IF NOT EXISTS \`${MIGRATIONS_TABLE}\` (\`fileName\` TEXT PRIMARY KEY NOT NULL, \`appliedAt\` INTEGER NOT NULL)`
@@ -123,9 +170,10 @@ export function runMigrations(
     );
   }
 
-  ensureMigrationsTable(db);
-
-  const applied = getAppliedMigrations(db);
+  const hasLedger = db
+    .prepare("SELECT name FROM sqlite_schema WHERE type = 'table' AND name = ?")
+    .get(MIGRATIONS_TABLE);
+  const applied = hasLedger ? getAppliedMigrations(db) : new Set<string>();
   if (applied.has(LIFECYCLE_MIGRATION)) {
     assertCompleteLifecycleMetadata(db);
   }
@@ -136,10 +184,14 @@ export function runMigrations(
     return;
   }
 
+  if (db.inTransaction) throw new Error("Cannot migrate within an active transaction");
+
   const lifecycleContext = pending.includes(LIFECYCLE_MIGRATION)
     ? classifyLifecycleHistory(applied, new Date(now()).toISOString())
     : undefined;
 
+  const recoveryPath = createPreMigrationBackup(db);
+  ensureMigrationsTable(db);
   if (lifecycleContext) {
     createLifecycleContext(db, lifecycleContext);
   }
@@ -174,6 +226,11 @@ export function runMigrations(
   db.pragma("foreign_keys = OFF");
   try {
     applyAll(pending);
+  } catch (cause) {
+    throw new Error(
+      `Migration failed: ${cause instanceof Error ? cause.message : String(cause)}; pre-migration recovery point retained at ${recoveryPath}`,
+      { cause }
+    );
   } finally {
     db.pragma("foreign_keys = ON");
     if (lifecycleContext) {

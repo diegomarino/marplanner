@@ -19,7 +19,7 @@ import { todayInHouseholdTz } from "../../src/server/lib/household-date.ts";
  * changed: capability wiring (FR-021), the `/fail` route, the 422 render_failure mapping, the
  * 400 target_date validity check (Constitution IV), and full-surface 401 coverage.
  */
-describe("printing routes — T007", () => {
+describe("printing routes", () => {
   useIsolatedDb();
 
   // claimFreshJob (and the FR-021 positive test) derive `targetDate` from one
@@ -251,6 +251,74 @@ describe("printing routes — T007", () => {
     const body = JSON.parse(claimRes.body);
     return { jobId: body.job.id, leaseToken: body.leaseToken };
   }
+
+  it("serves exact binary payload bytes and acknowledges the same lease idempotently", async () => {
+    const deviceKey = await provisionRealDeviceKey();
+    const app = await buildApp();
+    try {
+      const bits = Uint8Array.from({ length: 72 }, (_, i) => (i % 2 ? 0xff : 0x00));
+      registerPrintableProvider("transport-check", () => ({ bits, width: 576, height: 1 }));
+      const { jobId, leaseToken } = await claimFreshJob(app, deviceKey, "transport-check");
+      const payload = await app.inject({
+        method: "GET",
+        url: `/api/printing/jobs/${jobId}/payload?leaseToken=${encodeURIComponent(leaseToken)}`,
+        cookies: { mp_device_key: deviceKey },
+      });
+      expect(payload.statusCode).toBe(200);
+      expect(payload.headers["content-type"]).toBe("application/octet-stream");
+      expect(payload.rawPayload).toEqual(
+        Buffer.from([
+          0x1b,
+          0x40,
+          0x1b,
+          0x32,
+          0x1d,
+          0x76,
+          0x30,
+          0,
+          72,
+          0,
+          1,
+          0,
+          ...bits,
+          0x1b,
+          0x64,
+          3,
+          0x1d,
+          0x56,
+          0,
+        ])
+      );
+      const acknowledge = () =>
+        app.inject({
+          method: "POST",
+          url: `/api/printing/jobs/${jobId}/ack`,
+          cookies: { mp_device_key: deviceKey },
+          payload: { leaseToken },
+        });
+      const ack = await acknowledge();
+      expect(ack.statusCode).toBe(200);
+      expect(ack.json()).toMatchObject({ id: jobId, state: "printed", printedAt: Date.now() });
+      const repeatedAck = await acknowledge();
+      expect(repeatedAck.statusCode).toBe(200);
+      expect(repeatedAck.json()).toEqual(ack.json());
+      for (const method of ["GET", "POST"] as const) {
+        const response = await app.inject({
+          method,
+          url:
+            method === "GET"
+              ? "/api/printing/jobs/does-not-exist/payload?leaseToken=x"
+              : "/api/printing/jobs/does-not-exist/ack",
+          cookies: { mp_device_key: deviceKey },
+          ...(method === "POST" ? { payload: { leaseToken: "x" } } : {}),
+        });
+        expect(response.statusCode).toBe(404);
+        expect(response.json()).toMatchObject({ error: "not_found", message: expect.any(String) });
+      }
+    } finally {
+      await app.close();
+    }
+  });
 
   // ── /ack route ────────────────────────────────────────────────────────────
 

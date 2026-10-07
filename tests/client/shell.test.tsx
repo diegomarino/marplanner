@@ -169,6 +169,39 @@ describe("Shell — unprovisioned gate", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
+  it("shows the server retry delay for provisioning 429 without automatic retries", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(null, { status: 429, headers: { "Retry-After": "2" } })
+    );
+    render(<Shell />);
+    fireEvent.change(screen.getByLabelText("Bootstrap key"), { target: { value: "wrong" } });
+    fireEvent.click(screen.getByRole("button", { name: "Provision Device" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Too many failed attempts. Wait at least 2 seconds before trying again."
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: "Provision Device" })).not.toBeDisabled();
+  });
+
+  it.each([null, "garbage", "0", "-1", "1.5", "9007199254740993"])(
+    "shows no invented retry duration for unusable Retry-After %s",
+    async (header) => {
+      mockFetch.mockResolvedValue(
+        new Response(null, {
+          status: 429,
+          headers: header === null ? {} : { "Retry-After": header },
+        })
+      );
+      render(<Shell />);
+      fireEvent.change(screen.getByLabelText("Bootstrap key"), { target: { value: "wrong" } });
+      fireEvent.click(screen.getByRole("button", { name: "Provision Device" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Too many failed attempts. Wait before trying again."
+      );
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    }
+  );
+
   it("renders the household shell when the provisioned marker is present (FR-031)", async () => {
     document.cookie = "mp_provisioned=1; path=/";
     mockFetch.mockImplementation((url: string | URL) => {
@@ -208,14 +241,12 @@ describe("Shell — unprovisioned gate", () => {
     const panel = screen.getByRole("group", { name: "Options" });
     expect(options).toHaveAttribute("aria-expanded", "true");
     expect(panel).toHaveAttribute("id", options.getAttribute("aria-controls"));
-    expect(panel).toHaveTextContent("Turn on kiosk mode");
-    const density = within(panel).getByRole("button", { name: "Kiosk mode" });
     const admin = within(panel).getByRole("button", { name: "Admin" });
     expect(admin).toHaveAttribute("data-hold-state", "idle");
     expect(within(panel).queryByText(/printer/i)).not.toBeInTheDocument();
-    // Native controls retain their DOM (and therefore Tab) order: density, then Admin.
-    expect(Array.from(panel.querySelectorAll("button, a"))).toEqual([density, admin]);
-    expect(density).not.toHaveAttribute("tabindex", "-1");
+    expect(within(panel).queryByRole("button", { name: "Kiosk mode" })).not.toBeInTheDocument();
+    // Options currently exposes Admin only (density toggle temporarily unmounted).
+    expect(Array.from(panel.querySelectorAll("button, a"))).toEqual([admin]);
     expect(admin).not.toHaveAttribute("tabindex", "-1");
 
     fireEvent.keyDown(panel, { key: "Escape" });
@@ -327,6 +358,31 @@ describe("Shell — unprovisioned gate", () => {
 
     expect(window.location.pathname).toBe("/admin");
     expect(await screen.findByTestId("admin-pin-keypad")).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Options" })).not.toBeInTheDocument();
+  });
+
+  it("opens admin immediately when the local PIN bypass flag is enabled", async () => {
+    document.cookie = "mp_provisioned=1; path=/";
+    vi.stubEnv("MODE", "development");
+    vi.stubEnv("VITE_DEV_BYPASS_ADMIN_PIN", "1");
+    mockFetch.mockImplementation((url: string | URL) => {
+      if (String(url) === "/api/plugins") return Promise.resolve(pluginCatalogResponse());
+      const value = String(url).includes("/api/settings")
+        ? { locale: { timezone: "UTC", language: "en", weekStartDay: 1 } }
+        : [];
+      return Promise.resolve(Response.json(value));
+    });
+    render(<Shell />);
+
+    await screen.findByTestId("plugin-health-indicator");
+    fireEvent.click(await screen.findByRole("button", { name: "Options" }));
+    const admin = screen.getByTestId("admin-affordance");
+
+    fireEvent.pointerDown(admin, { pointerId: 1 });
+
+    expect(window.location.pathname).toBe("/admin");
+    expect(await screen.findByTestId("admin-nav-member-create")).toBeInTheDocument();
+    expect(screen.queryByTestId("admin-pin-keypad")).not.toBeInTheDocument();
     expect(screen.queryByRole("group", { name: "Options" })).not.toBeInTheDocument();
   });
 

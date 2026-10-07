@@ -24,7 +24,7 @@ import { MemberReferenceError } from "../../src/server/modules/members/referenti
  * suite exercises the OWN injectable live-cache accessor seam (`__setLiveCacheAccessorForTests`)
  * as its stand-in, per the module's own docblock.
  */
-describe("network-devices registry — T005", () => {
+describe("network-devices registry", () => {
   useIsolatedDb();
 
   afterEach(() => {

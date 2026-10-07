@@ -67,7 +67,7 @@ function renderManagement() {
   );
 }
 
-describe("TimeAnnouncementsManagement (slice-015 T009)", () => {
+describe("TimeAnnouncementsManagement", () => {
   beforeEach(() => {
     currentSettings = { timezone: "Europe/Madrid", language: "en", weekStartDay: 1 };
     vi.stubGlobal("fetch", vi.fn());

@@ -12,7 +12,7 @@ import { useIsolatedDb } from "../helpers/db";
  * same-ms carry-in stays module-level (it exercises DB timing, not the
  * HTTP boundary).
  */
-describe("daily-messages-crud (T004/T005 — US1 upsert + validation)", () => {
+describe("daily-messages-crud (US1 upsert + validation)", () => {
   useIsolatedDb();
 
   function seedKeys(): string {

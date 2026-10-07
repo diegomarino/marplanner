@@ -14,7 +14,7 @@ import { useIsolatedDb } from "../helpers/db";
  * below drives the real /api/time-announcements routes instead, to also prove the seam is
  * actually WIRED there).
  */
-describe("time-announcements-crud (T004 — US1 rule authoring)", () => {
+describe("time-announcements-crud (US1 rule authoring)", () => {
   useIsolatedDb();
 
   // ── helpers ──────────────────────────────────────────────────────────────
@@ -616,7 +616,7 @@ describe("time-announcements-crud (T004 — US1 rule authoring)", () => {
   // ── TIME-ANNOUNCEMENTS-INV-06 (server half): no server-side firing state ─
 
   describe("TIME-ANNOUNCEMENTS-INV-06 (server half): no scheduler job/queue/claim exists for announcements", () => {
-    it("TIME-ANNOUNCEMENTS-INV-06: the entrypoint registers no time-announcements job, and the module never imports the scheduler seam (structural — T011 owns the fuller schema/queue negative-proof sweep)", () => {
+    it("TIME-ANNOUNCEMENTS-INV-06: the entrypoint registers no time-announcements job, and the module never imports the scheduler seam (structural — owns the fuller schema/queue negative-proof sweep)", () => {
       const entrypointSrc = readFileSync(resolve(process.cwd(), "src/server/index.ts"), "utf8");
       expect(entrypointSrc).not.toMatch(/time-announcements/i);
 

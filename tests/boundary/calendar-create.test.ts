@@ -11,7 +11,7 @@ import { useIsolatedDb } from "../helpers/db";
  * - Route surface: assert only the 5 calendar routes exist (no table-exposing routes).
  */
 
-describe("calendar-create (T006 — RED by design, T007 turns green)", () => {
+describe("calendar-create (RED by design, turns green)", () => {
   useIsolatedDb();
 
   it("POST /api/calendar/events creates timed event with tzid (201)", async () => {

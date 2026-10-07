@@ -11,7 +11,7 @@ import type { ForecastResult } from "../../src/shared";
 /** docs/features/weather.md — weather browser cache unit tests (* FR-017/WEATHER-INV-11/AC-06). Key change on A->B, TTL expiry (injected clock), in-flight
  * discard (generation guard), schema-version orphan.
  */
-describe("weatherCache (T009)", () => {
+describe("weatherCache", () => {
   const forecast: ForecastResult = {
     current: { conditionKey: "clear", tempC: 20, rainPct: 5 },
     hourly: [],

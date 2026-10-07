@@ -26,7 +26,7 @@ import { useIsolatedDb } from "../helpers/db";
  * shared daily block cache they run through. Fake ports only — workers have no network egress,
  * so every fetch is a scriptable in-memory function, never a real `fetch` call.
  */
-describe("daily-briefing EXTERNAL blocks + shared cache (T008)", () => {
+describe("daily-briefing EXTERNAL blocks + shared cache", () => {
   useIsolatedDb();
 
   const DATE = "2026-09-08";

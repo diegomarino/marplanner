@@ -6,7 +6,7 @@ Decision date: 2026-06-28
 
 ## Decision
 
-API authorization enforcement in v2 is **fail-closed in every environment**. There is **no code path that disables or relaxes API-key validation based on the runtime environment** (`NODE_ENV`, a "dev mode" flag, the presence/absence of a configured key, or any equivalent).
+API authorization enforcement is **fail-closed in every environment**. There is **no code path that disables or relaxes API-key validation based on the runtime environment** (`NODE_ENV`, a "dev mode" flag, the presence/absence of a configured key, or any equivalent).
 
 ### Rules
 
@@ -44,6 +44,6 @@ Discovered during the Auth & Sessions grill (2026-06-28) while reasoning about "
 
 ## Traceability
 
-- Pre-v2: `ADR-007`, `ADR-013`
+- Related prior: `ADR-007`, `ADR-013`
 - Related: `ADR-030` (enforcement model, fail-closed capability default), `ADR-031` (access gate), `ADR-032` (bootstrap)
 - Discovered: Auth & Sessions grill, 2026-06-28 — "what if the bootstrap key is not sent — are you exposed to the internet?"
