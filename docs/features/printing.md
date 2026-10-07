@@ -21,9 +21,12 @@ emits `printing.completed`, so "did this print" has a single server-side answer.
 
 ### User Story 2 — Tolerate an absent or unready printer
 
-With no connected/ready printer, recoverable failure releases the lease and
-increments `attempts`. The current-date job can retry without a numeric attempt
-limit; earlier household dates and permanent failures are dead-lettered. No
+With no connected/ready printer, a recoverable report accepted by `/fail` releases
+the lease and increments `attempts`. Network failures during payload fetch, or
+failure reports that cannot reach the server, instead wait for the 120-second
+lease to expire without updating the reason or incrementing `attempts`. The
+current-date job can retry without a numeric attempt limit; earlier household
+dates and permanent failures are dead-lettered. No
 `printedAt` is stamped. Physical paper outcomes (jam / out) are out of scope and recovered by a
 human manual reprint, which re-enqueues the current output.
 
