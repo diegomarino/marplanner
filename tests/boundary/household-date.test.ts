@@ -245,7 +245,7 @@ describe("household-date (RED tests, implementation)", () => {
     });
   });
 
- describe("todayInHouseholdTz", () => {
+  describe("todayInHouseholdTz", () => {
     it("BACKGROUND-JOBS-SCHEDULER-INV-04: derives the household-local date using the default timezone (Europe/Madrid)", () => {
       const now = Date.UTC(2026, 7, 9, 23, 30, 0); // 2026-08-09T23:30:00Z -> 2026-08-10T01:30 CEST
       expect(todayInHouseholdTz(now)).toBe("2026-08-10");

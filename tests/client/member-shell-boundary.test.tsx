@@ -126,9 +126,7 @@ describe("B1 shell boundary", () => {
     expect(affordance).toHaveAttribute("data-hold-state", "holding");
     fireEvent.keyUp(affordance, { key: "Enter" });
     expect(affordance).toHaveAttribute("data-hold-state", "idle");
-    const { promise: settle, resolve: settleDone } = Promise.withResolvers<void>();
-    setTimeout(settleDone, 1);
-    await settle;
+    await new Promise((resolve) => setTimeout(resolve, 1));
     fireEvent.click(screen.getByTestId("admin-affordance"), { detail: 0 });
     expect(await screen.findByTestId("admin-pin-keypad")).toBeVisible();
     expect(window.location.pathname).toBe("/admin");

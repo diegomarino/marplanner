@@ -73,3 +73,20 @@ reported as executed cases.
 Concurrent isolated browser lanes may set `PORT` (matching `BASE_URL`), `MP_E2E_WEATHER_FIXTURE_PORT` and `MP_E2E_QUOTE_FIXTURE_PORT` to free loopback ports. The fixture providers and runner import the same values; defaults remain 41837/41839. Never reuse or terminate another lane’s listeners.
 
 The exception-list command defaults to the reviewed main predecessor `f8db1b6fc51d6952d06e224dba03b8e62f22d56c` (empty terminal list), replacing the absent historical `B0` ref. `MP_ACCEPTED_PREDECESSOR` can name an explicitly reviewed alternative; no synthetic tag or enlarged exception baseline is created.
+
+## Imported history reconciliation
+
+The initial GitHub import includes changes after the previously reviewed runtime
+candidate. Its product inventory and coverage fingerprints are reconciled with
+those maintained bytes, including shared gate tokens and local seed/browser tools.
+The original production coverage cohort, file minimum totals, file minimum rates,
+and aggregate floors remain unchanged. Keyboard and module-relative gate-token
+regressions exercise new branches instead of lowering coverage requirements.
+
+Runner expectations retain existing tests and include added local-tool and gate
+cases. Renamed Vitest titles and Playwright IDs reflect the imported planning-label
+cleanup; they do not remove tests. Fixed weather dates use a Date-only pinned clock
+so calendar-window validation remains meaningful as wall time advances. ICS fixture
+timestamps retain their UTC time component. The seed wrapper forwards operator
+arguments to both existing profile entrypoints and preserves duplicate-mode
+rejection before private effects.

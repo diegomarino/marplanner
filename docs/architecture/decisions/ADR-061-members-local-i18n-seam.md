@@ -70,7 +70,7 @@ slice's own out-of-scope forbids touching the ledger).
 ## Consequences
 
 - work item 2's tasks gain one foundational task (the seam) and reword the two UI tasks (/) to
- route strings through `t()` and to run the local parity test — closing the `check-issues` block.
+  route strings through `t()` and to run the local parity test — closing the `check-issues` block.
 - `plan.md`'s Constitution-Check row X, which self-certified PASS on the false premise "localized via
   i18n" at merge time, is corrected to "PASS via the local seam introduced here."
 - The Members admin UI becomes the first localized surface in the app, honoring the `language: "es"`

@@ -49,7 +49,7 @@ browsers and executed once"). The contradiction surfaced while preparing .
 4. **`KIOSK-SHELL-NAVIGATION-AC-07`'s announcement half is narrowed.** The "dispatched only to
    capability-registered browsers and executed once" clause applies to print/hardware-claim
    work only; the "time announcements continue on admin routes" clause stands unchanged and
- binds . `docs/features/kiosk-shell-navigation.md` FR-014 is narrowed accordingly and
+   binds . `docs/features/kiosk-shell-navigation.md` FR-014 is narrowed accordingly and
    the boundary ledger entry carries a note citing this ADR (disposition stays `active` — a
    `superseded` disposition would wrongly drop the still-valid printing half).
 5. **Dependency correction**: Time Announcements depends on neither Day Periods

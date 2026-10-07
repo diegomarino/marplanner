@@ -55,7 +55,7 @@ describe("member-assembly (wiring verification)", () => {
     }
   });
 
- it("POST /api/members/:id/archive is registered", async () => {
+  it("POST /api/members/:id/archive is registered", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     const deviceKey = `mpk-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -96,7 +96,7 @@ describe("member-assembly (wiring verification)", () => {
     }
   });
 
- it("POST /api/members/:id/restore is registered", async () => {
+  it("POST /api/members/:id/restore is registered", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
 
     const deviceKey = `mpk-${Date.now()}-${Math.random().toString(36).slice(2)}`;

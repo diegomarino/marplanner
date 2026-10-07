@@ -687,6 +687,14 @@
             "check-exception-list.mjs — synthetic violation → NON-ZERO exit (not false-green)",
             "check-exception-list.mjs — clean fixture → exit 0 (not always-red)"
           ],
+          "tools/chrome-dev-shared.test.mjs": [
+            "parsePort accepts only usable TCP ports",
+            "parseDensity accepts product and script aliases",
+            "resolveDensityFromArgv defaults to comfortable when density is deferred",
+            "local-ready round-trips under an isolated data directory",
+            "local-ready banner lists API frontend CDP and session commands",
+            "inspectLocalSeedStatus distinguishes missing unseeded incomplete and complete"
+          ],
           "tools/count-ui-debt.test.mjs": [
             "scaleClasses: fires on a raw Tailwind scale class",
             "inlineStyles: fires on style={{ ",
@@ -719,14 +727,21 @@
             "preserves an explicitly supplied data directory",
             "rejects server reuse without an explicit matching data directory"
           ],
+          "tools/fresh-local.test.mjs": [
+            "dev:fresh refuses wiping the default .data playground without force",
+            "dev:fresh --help documents public and private seed then dev",
+            "package scripts expose seed as seed:all of public and private"
+          ],
           "tools/gen-openapi.test.mjs": [
             "parseRouteTree joins radix suffixes while preserving slash children and parameters",
             "route discovery preserves caller database bytes and creates no adjacent state"
           ],
           "tools/local-env.test.mjs": [
             "local server and seed scripts load the optional local environment",
+            "chrome CDP session helper scripts are wired for local development",
             "the committed example documents credentials and defaults the local UI bypass off",
-            "the populated local environment remains gitignored"
+            "the populated local environment remains gitignored",
+            "vite dev server ignores local data and chrome profile paths"
           ],
           "tools/local-runtime.test.mjs": [
             "two live development stacks own four ports and track an API watch restart",
@@ -755,6 +770,11 @@
             "storage ownership rejects aliases, and releases after clean exit and crash",
             "ownership remains held while the product connection is reset and its inode replaced",
             "installed native SQLite is at least 3.51.3 with an exact reviewed dependency pin"
+          ],
+          "tools/sync-private-seeds.test.mjs": [
+            "seed:sync-private is wired",
+            "sync-private-seeds copies PRIVATE modules from --from into seeds/",
+            "sync-private-seeds --dry-run does not write"
           ],
           "tools/ui-catalog.test.mjs": [
             "UI catalog matches the real shared exports and detects a new export"
@@ -808,7 +828,9 @@
             "access gate gated browser gets shell: valid gate cookie → SPA shell",
             "access gate gate never authenticates /api: valid gate cookie + no API key → 401",
             "access gate health untouched: GET /health with no cookie → 200",
-            "access gate GET /gate with no cookie returns form (not shell sentinel)"
+            "access gate GET /gate with no cookie returns form (not shell sentinel)",
+            "access gate form HTML inlines shared tokens.css (single palette source)",
+            "access gate loads shared tokens relative to its module when started outside the project directory"
           ],
           "tests/boundary/auth-boundary.test.ts": [
             "full-access authentication boundary authorizes a live provisioned-device cookie with scope '*'",
@@ -1103,7 +1125,6 @@
             "calendar recurrence expander DST transition (research R2 - the core hazard) expands weekly 09:00 Europe/Madrid across spring-forward (2026-03-29) with correct UTC instants",
             "calendar recurrence expander EXDATE across a DST boundary removes the post-transition (CEST) occurrence given its true-UTC exdate",
             "calendar recurrence expander unbounded rule expands a rule with no COUNT/UNTIL within the range without materializing the infinite series",
-            "calendar recurrence expander deterministic anchoring (independent of server clock) bare FREQ=WEEKLY anchors weekday+time on the event start, not new Date",
             "calendar recurrence expander range filtering on the true instant excludes an occurrence whose true instant is below range.start even though its wall-clock is above",
             "calendar recurrence expander near-midnight start (local date != UTC date) anchors the weekly series on the local weekday, not the UTC weekday",
             "calendar recurrence expander non-recurring event returns exactly one occurrence for an event with no RRULE",
@@ -1115,7 +1136,8 @@
             "calendar recurrence expander millisecond precision preserves the startUtc milliseconds on a recurring occurrence",
             "calendar recurrence expander all-day recurrence expands all-day events as dates with no timezone conversion",
             "calendar recurrence expander pure-occurrence shape returns only { occurrenceStart, allDay } — no fabricated FeedItem fields",
-            "calendar recurrence expander range filtering returns only occurrences within the passed range"
+            "calendar recurrence expander range filtering returns only occurrences within the passed range",
+            "calendar recurrence expander deterministic anchoring (independent of server clock) bare FREQ=WEEKLY anchors weekday+time on the event start, not new Date()"
           ],
           "tests/boundary/calendar-source-lifecycle.test.ts": [
             "calendar external-source lifecycle hides retained rows on disable and immediately restores them on enable",
@@ -1216,10 +1238,10 @@
             "daily-briefing render — D2 probe (pngjs decode layout) packs a hand-built golden pattern into the EXACT expected bytes (MSB-first order + luma polarity)",
             "daily-briefing render bridge — per-block adapter isolation an adapter-level failure (unknown to adaptBlockData) is GENUINE: it lands in failedRenderBlocks, the render still succeeds",
             "daily-briefing render bridge — per-block adapter isolation a registry-miss (adapter knows the type, pressedslip's registry does not) is UNRENDERED, never genuine",
-            "daily-briefing render bridge — per-block adapter isolation still degrades to a null bitmap for a GENUINE catastrophic failure (render itself throws)",
             "daily-briefing render bridge — timeout timer cleanup (Codex #698) clears the race's timeout timer once the render settles first (render wins)",
             "daily-briefing render theme — font load-from-disk throw path throws a diagnostic error naming the missing file and directory",
-            "daily-briefing render theme — font load-from-disk throw path successfully loads a real shipped font file"
+            "daily-briefing render theme — font load-from-disk throw path successfully loads a real shipped font file",
+            "daily-briefing render bridge — per-block adapter isolation still degrades to a null bitmap for a GENUINE catastrophic failure (render() itself throws)"
           ],
           "tests/boundary/daily-briefing-settings.test.ts": [
             "daily-briefing settings boundary GET settings returns documented defaults when no row exists",
@@ -1425,12 +1447,12 @@
             "percent-encoded /api bypass is blocked — multi-variant (#99) POST /%61pi/auth/provision with a VALID bootstrap key still does not provision"
           ],
           "tests/boundary/event-bus.test.ts": [
-            "event bus — (RED-first unit tests) emit returns BEFORE any handler has run (async dispatch via queueMicrotask)",
             "event bus — (RED-first unit tests) delivered payloads are frozen and independent per subscriber (mutation on one copy does not leak to another)",
             "event bus — (RED-first unit tests) a rejecting async subscriber is contained (does not crash the bus or affect other subscribers)",
             "event bus — (RED-first unit tests) a rejecting async subscriber never produces an unhandled promise rejection",
             "event bus — (RED-first unit tests) emitting an event with no registered subscribers does not throw",
-            "event bus — (RED-first unit tests) top-level emit/subscribe work with correct CoreEventCatalog types"
+            "event bus — (RED-first unit tests) top-level emit/subscribe work with correct CoreEventCatalog types",
+            "event bus — (RED-first unit tests) emit() returns BEFORE any handler has run (async dispatch via queueMicrotask)"
           ],
           "tests/boundary/fail-closed.test.ts": [
             "fail-closed (FR-002 / FR-003) — black-box FR-002: fail-closed enforcement — /health is the only reachable route GET /health returns 200 with no credential (FR-002)",
@@ -1778,11 +1800,11 @@
             "member-referential (RED by design, turns green) isActiveMember(activeId) returns true for an active member",
             "member-referential (RED by design, turns green) isActiveMember(archivedId) returns false for an archived member",
             "member-referential (RED by design, turns green) isActiveMember(nonexistentId) returns false for a non-existent id",
-            "member-referential (RED by design, turns green) listActiveMembers excludes archived members",
-            "member-referential (RED by design, turns green) listActiveChildren returns only active children",
             "member-referential (RED by design, turns green) assertActiveMember(activeId) does not throw",
             "member-referential (RED by design, turns green) assertActiveMember(archivedId) throws MemberReferenceError",
-            "member-referential (RED by design, turns green) assertActiveMember(nonexistentId) throws MemberReferenceError"
+            "member-referential (RED by design, turns green) assertActiveMember(nonexistentId) throws MemberReferenceError",
+            "member-referential (RED by design, turns green) listActiveMembers() excludes archived members",
+            "member-referential (RED by design, turns green) listActiveChildren() returns only active children"
           ],
           "tests/boundary/member-write.test.ts": [
             "member-write (US3 birthdate write-path) POST /api/members with birthDate accepts {displayName, role='parent', birthDate:null} (no birthdate)",
@@ -1827,28 +1849,28 @@
           ],
           "tests/boundary/network-devices-auth.test.ts": [
             "network-devices auth — requireManagementKey (RED-first) NETWORK-DEVICES-AC-06: a device key minted through the REAL provision.ts path is rejected 403",
-            "network-devices auth — requireManagementKey (RED-first) a management key minted through the REAL reconcileManagement path passes requireManagementKey",
             "network-devices auth — requireManagementKey (RED-first) no authenticated apiKeyId attached → 403 (fail-closed)",
             "network-devices auth — requireManagementKey (RED-first) an unknown apiKeyId (no matching row) → 403",
-            "network-devices auth — requireManagementKey (RED-first) composes with requireCapability (research D1's false-green matrix) a management key minted through the REAL reconcileManagement path passes BOTH requireManagementKey and requireCapability",
             "network-devices auth — requireManagementKey (RED-first) composes with requireCapability (research D1's false-green matrix) THE FALSE GREEN D1 KILLS: a REAL provisioned device key (scope='*') is rejected even composed with requireCapability, despite '*' satisfying ANY capability alone",
             "network-devices auth — requireManagementKey (RED-first) reconcileManagement — (maintainer decision 2026-09-04) MP_MANAGEMENT_KEY unset → creates no row (fail-closed default, mirrors reconcileBootstrap)",
             "network-devices auth — requireManagementKey (RED-first) reconcileManagement — (maintainer decision 2026-09-04) is idempotent — running twice with the same MP_MANAGEMENT_KEY mints exactly one row",
             "network-devices auth — requireManagementKey (RED-first) reconcileManagement — (maintainer decision 2026-09-04) Codex P1-b: a REVOKED management row is NOT resurrected by a later reconcile — stays revoked, guard still rejects it",
-            "network-devices auth — requireManagementKey (RED-first) authBoundary — unknown/missing key (#682 review fold, P1) an UNRECOGNIZED key presented as the device cookie → 401 'Invalid API key', code credential_invalid"
+            "network-devices auth — requireManagementKey (RED-first) authBoundary — unknown/missing key (#682 review fold, P1) an UNRECOGNIZED key presented as the device cookie → 401 'Invalid API key', code credential_invalid",
+            "network-devices auth — requireManagementKey (RED-first) a management key minted through the REAL reconcileManagement() path passes requireManagementKey",
+            "network-devices auth — requireManagementKey (RED-first) composes with requireCapability (research D1's false-green matrix) a management key minted through the REAL reconcileManagement() path passes BOTH requireManagementKey and requireCapability"
           ],
           "tests/boundary/network-devices-cache.test.ts": [
-            "network-devices cache — starts cold before any fetch (never fetched, no error)",
-            "network-devices cache — unconfigured is a distinct NORMAL state — never conflated with cold, rejected, or unreachable",
-            "network-devices cache — rejected before any success also reads as cold, but lastError distinguishes 'rejected' from 'unreachable' (P1-2)",
-            "network-devices cache — unreachable before any success also reads as cold, with lastError distinctly 'unreachable' (never 'rejected')",
-            "network-devices cache — a successful fetch with entries is fresh; with zero entries is freshEmpty; lastError resets to 'none'",
-            "network-devices cache — ages past the freshness threshold into stale — the WHOLE-cache gate, computed from the injected clock",
-            "network-devices cache — a device cannot stay 'fresh online' through an outage — the gate is cache-level, not per-entry",
-            "network-devices cache — poll failure retains the last-good entries and fetchedAt — only lastError changes",
-            "network-devices cache — a later successful fetch overwrites stale last-good data wholesale",
-            "network-devices cache — unconfigured wins over stale last-good data once the operator actually unconfigures the controller",
-            "network-devices cache — independent cache instances never share state"
+            "network-devices cache starts cold before any fetch (never fetched, no error)",
+            "network-devices cache unconfigured is a distinct NORMAL state — never conflated with cold, rejected, or unreachable",
+            "network-devices cache rejected before any success also reads as cold, but lastError distinguishes 'rejected' from 'unreachable' (P1-2)",
+            "network-devices cache unreachable before any success also reads as cold, with lastError distinctly 'unreachable' (never 'rejected')",
+            "network-devices cache a successful fetch with entries is fresh; with zero entries is freshEmpty; lastError resets to 'none'",
+            "network-devices cache ages past the freshness threshold into stale — the WHOLE-cache gate, computed from the injected clock",
+            "network-devices cache a device cannot stay 'fresh online' through an outage — the gate is cache-level, not per-entry",
+            "network-devices cache poll failure retains the last-good entries and fetchedAt — only lastError changes",
+            "network-devices cache a later successful fetch overwrites stale last-good data wholesale",
+            "network-devices cache unconfigured wins over stale last-good data once the operator actually unconfigures the controller",
+            "network-devices cache independent cache instances never share state"
           ],
           "tests/boundary/network-devices-client.test.ts": [
             "network-devices UniFi client transport createUniFiClient all-unset operator config -> returns null (unconfigured, a NORMAL state)",
@@ -1895,98 +1917,98 @@
             "network-devices UniFi client transport LEGACY_SITE — unifi.siteId never appears in any legacy URL (issue #671) LOCAL Integration v1 client-list path DOES use unifi.siteId, same as CLOUD"
           ],
           "tests/boundary/network-devices-events.test.ts": [
-            "network-devices events — (RED-first) type-level: emit/subscribe reject a payload carrying more than {deviceId, timestamp}",
             "network-devices events — (RED-first) runtime: network.device_blocked delivers a payload closed to exactly {deviceId, timestamp} via the host-api emit",
             "network-devices events — (RED-first) runtime: network.device_unblocked delivers a payload closed to exactly {deviceId, timestamp} via the host-api emit",
             "network-devices events — (RED-first) network.device_blocked: emitting via the host-api barrel with NO subscriber never throws (ADR-040)",
-            "network-devices events — (RED-first) network.device_unblocked: emitting via the host-api barrel with NO subscriber never throws (ADR-040)"
+            "network-devices events — (RED-first) network.device_unblocked: emitting via the host-api barrel with NO subscriber never throws (ADR-040)",
+            "network-devices events — (RED-first) type-level: emit()/subscribe() reject a payload carrying more than {deviceId, timestamp}"
           ],
           "tests/boundary/network-devices-negatives.test.ts": [
             "network-devices negatives — (assert-and-prove) schema-level: contracts/openapi.yaml admits no IP property anywhere the contract file actually has schemas to scan (sanity — a vacuous scan proves nothing)",
             "network-devices negatives — (assert-and-prove) schema-level: contracts/openapi.yaml admits no IP property anywhere no schema property name is 'ip'/'ipAddress' (case-insensitive) anywhere in the contract",
             "network-devices negatives — (assert-and-prove) schema-level: contracts/openapi.yaml admits no IP property anywhere every OBJECT-typed schema anywhere in the contract is closed (additionalProperties: false)",
             "network-devices negatives — (assert-and-prove) payload-level: the IP-rich fixture never surfaces an IP anywhere list / live-clients / register / edit / block / unblock responses are all IP-free",
-            "network-devices negatives — (assert-and-prove) a MAC-bearing telemetry entry through the REAL writeClientLog pipeline emerges redacted (prior patterns, not rebuilt)",
             "network-devices negatives — (assert-and-prove) unifi.* operator-config credential values never leak a genuinely-configured operator credential never appears in device rows, settings reads, or telemetry",
-            "network-devices negatives — (assert-and-prove) network.device_blocked emitted via the REAL block call carries ONLY {deviceId, timestamp} — no MAC, no alias",
-            "network-devices negatives — (assert-and-prove) backup asymmetry: a REAL snapshot's .db file retains the canonical MAC (restore fidelity)"
+            "network-devices negatives — (assert-and-prove) backup asymmetry: a REAL snapshot's .db file retains the canonical MAC (restore fidelity)",
+            "network-devices negatives — (assert-and-prove) a MAC-bearing telemetry entry through the REAL writeClientLog pipeline emerges redacted ('s patterns, not rebuilt)",
+            "network-devices negatives — (assert-and-prove) network.device_blocked emitted via the REAL block() call carries ONLY {deviceId, timestamp} — no MAC, no alias"
           ],
           "tests/boundary/network-devices-normalize.test.ts": [
-            "network-devices normalize — drops every IP-shaped field structurally: no output entry ever carries ip/last_ip/fixed_ip",
-            "network-devices normalize — skips MAC-less entries entirely (never throws, never appears in output)",
-            "network-devices normalize — skips malformed-MAC entries (not a throw)",
-            "network-devices normalize — canonicalizes MAC casing (uppercase raw -> lowercase output)",
-            "network-devices normalize — carries the controller's blocked flag through (block-sta stay-visible shape, research D3)",
-            "network-devices normalize — prefers `name` over `hostname` for displayName, falling back to null when neither is present",
-            "network-devices normalize — null/absent mac -> null (never throws)",
-            "network-devices normalize — Integration v1 camelCase fields (macAddress/isBlocked, LOCAL PROVEN path) drops ipAddress structurally too — the same IP-rich fixture, camelCase form",
-            "network-devices normalize — Integration v1 camelCase fields (macAddress/isBlocked, LOCAL PROVEN path) skips MAC-less and malformed-macAddress entries the same way as the legacy shape",
-            "network-devices normalize — Integration v1 camelCase fields (macAddress/isBlocked, LOCAL PROVEN path) canonicalizes macAddress casing (uppercase raw -> lowercase output)",
-            "network-devices normalize — Integration v1 camelCase fields (macAddress/isBlocked, LOCAL PROVEN path) reads isBlocked (camelCase boolean) as the blocked flag",
-            "network-devices normalize — Integration v1 camelCase fields (macAddress/isBlocked, LOCAL PROVEN path) macAddress (camelCase) is preferred over a coincidentally-present legacy mac field",
-            "network-devices normalize — Integration v1 camelCase fields (macAddress/isBlocked, LOCAL PROVEN path) falls back to legacy `mac` when macAddress is absent",
-            "network-devices normalize — CLOUD Integration v1 projection fields (access.type, live finding 2026-09-05) drops ipAddress structurally too — the same IP-rich fixture, reduced-projection form",
-            "network-devices normalize — CLOUD Integration v1 projection fields (access.type, live finding 2026-09-05) skips MAC-less and malformed-macAddress entries the same way as the other two shapes",
-            "network-devices normalize — CLOUD Integration v1 projection fields (access.type, live finding 2026-09-05) access.type \"BLOCKED\" -> isBlocked=true (the field this fix adds — RED without it)",
-            "network-devices normalize — CLOUD Integration v1 projection fields (access.type, live finding 2026-09-05) access.type \"DEFAULT\" -> isBlocked=false, never a false positive",
-            "network-devices normalize — CLOUD Integration v1 projection fields (access.type, live finding 2026-09-05) no display name (no name, no hostname — the cloud projection has neither) -> displayName null",
-            "network-devices normalize — CLOUD Integration v1 projection fields (access.type, live finding 2026-09-05) isBlocked (when present) is still preferred over access.type — LOCAL priority unaffected",
-            "network-devices normalize — CLOUD Integration v1 projection fields (access.type, live finding 2026-09-05) a non-object access value is ignored, falling through to the legacy `blocked` field"
+            "network-devices normalize drops every IP-shaped field structurally: no output entry ever carries ip/last_ip/fixed_ip",
+            "network-devices normalize skips MAC-less entries entirely (never throws, never appears in output)",
+            "network-devices normalize skips malformed-MAC entries (not a throw)",
+            "network-devices normalize canonicalizes MAC casing (uppercase raw -> lowercase output)",
+            "network-devices normalize carries the controller's blocked flag through (block-sta stay-visible shape, research D3)",
+            "network-devices normalize prefers `name` over `hostname` for displayName, falling back to null when neither is present",
+            "network-devices normalize null/absent mac -> null (never throws)",
+            "network-devices normalize Integration v1 camelCase fields (macAddress/isBlocked, LOCAL PROVEN path) drops ipAddress structurally too — the same IP-rich fixture, camelCase form",
+            "network-devices normalize Integration v1 camelCase fields (macAddress/isBlocked, LOCAL PROVEN path) skips MAC-less and malformed-macAddress entries the same way as the legacy shape",
+            "network-devices normalize Integration v1 camelCase fields (macAddress/isBlocked, LOCAL PROVEN path) canonicalizes macAddress casing (uppercase raw -> lowercase output)",
+            "network-devices normalize Integration v1 camelCase fields (macAddress/isBlocked, LOCAL PROVEN path) reads isBlocked (camelCase boolean) as the blocked flag",
+            "network-devices normalize Integration v1 camelCase fields (macAddress/isBlocked, LOCAL PROVEN path) macAddress (camelCase) is preferred over a coincidentally-present legacy mac field",
+            "network-devices normalize Integration v1 camelCase fields (macAddress/isBlocked, LOCAL PROVEN path) falls back to legacy `mac` when macAddress is absent",
+            "network-devices normalize CLOUD Integration v1 projection fields (access.type, live finding 2026-09-05) drops ipAddress structurally too — the same IP-rich fixture, reduced-projection form",
+            "network-devices normalize CLOUD Integration v1 projection fields (access.type, live finding 2026-09-05) skips MAC-less and malformed-macAddress entries the same way as the other two shapes",
+            "network-devices normalize CLOUD Integration v1 projection fields (access.type, live finding 2026-09-05) access.type \"BLOCKED\" -> isBlocked=true (the field this fix adds — RED without it)",
+            "network-devices normalize CLOUD Integration v1 projection fields (access.type, live finding 2026-09-05) access.type \"DEFAULT\" -> isBlocked=false, never a false positive",
+            "network-devices normalize CLOUD Integration v1 projection fields (access.type, live finding 2026-09-05) no display name (no name, no hostname — the cloud projection has neither) -> displayName null",
+            "network-devices normalize CLOUD Integration v1 projection fields (access.type, live finding 2026-09-05) isBlocked (when present) is still preferred over access.type — LOCAL priority unaffected",
+            "network-devices normalize CLOUD Integration v1 projection fields (access.type, live finding 2026-09-05) a non-object access value is ignored, falling through to the legacy `blocked` field"
           ],
           "tests/boundary/network-devices-registry.test.ts": [
-            "network-devices registry — canonicalizeMac lowercases and requires 6 colon-separated hex octets",
-            "network-devices registry — racing duplicate registrations (mixed casing) resolve to exactly one row via the DB's own UNIQUE index",
-            "network-devices registry — NetworkDeviceDuplicateError carries code=duplicate_mac and NO MAC-shaped substring in its message (FR-013/INV-07)",
-            "network-devices registry — register trims the alias and rejects >80 chars (post-trim) with NetworkDeviceValidationError (contract maxLength: 80)",
-            "network-devices registry — edit rejects an alias >80 chars (post-trim) with NetworkDeviceValidationError, leaving the stored alias unchanged",
-            "network-devices registry — refuses registration with reselect_required when the MAC is absent from the fresh cache",
-            "network-devices registry — refuses registration with reselect_required when the cache is not currently fresh (stale/cold/unconfigured)",
-            "network-devices registry — stamps lastSeenAt from the cache snapshot's fetchedAt observation, never a wall-clock default",
-            "network-devices registry — registration with a NEW non-null memberId requires an active member",
-            "network-devices registry — edit never mutates the MAC, regardless of which fields are patched",
-            "network-devices registry — edit on an unknown id throws NetworkDeviceNotFoundError",
-            "network-devices registry — edit rejects a NEW non-null memberId that resolves to an inactive member (strict-write)",
-            "network-devices registry — an existing inactive member link renders labeled (tolerant-read) and the device stays editable",
-            "network-devices registry — edit derives liveStatus from the REAL live-cache accessor — a fresh cache confirming the MAC returns online even over a stale stored lastSeenAt",
-            "network-devices registry — edit write succeeds even when the live-cache accessor throws, falling back to a LITERAL unknown (no horizon math)",
-            "network-devices registry — remove succeeds even with a throwing cache accessor — it never consults it",
-            "network-devices registry — remove on an unknown id is a no-op success (idempotent), not a throw",
-            "network-devices registry — list performs ZERO writes, asserted at the storage boundary (total_changes unchanged)",
-            "network-devices registry — list issues ZERO write-verb SQL statements — a genuine DB-layer spy (Codex P2, PR #658: total_changes alone stays green for a zero-row-affecting write)",
-            "network-devices registry — liveStatus derivation matrix online: MAC present in a fresh cache",
-            "network-devices registry — liveStatus derivation matrix notDetected: absent from a fresh cache",
-            "network-devices registry — liveStatus derivation matrix unknown: cache not fresh (stale/cold/unconfigured) and within the not-detected horizon",
-            "network-devices registry — liveStatus derivation matrix notDetected: lastSeenAt beyond the 7-day horizon even while the cache is not currently fresh",
-            "network-devices registry — liveStatus derivation matrix online wins over a stale stored lastSeenAt when the MAC is directly confirmed in a CURRENT fresh cache",
-            "network-devices registry — liveStatus derivation matrix notDetected: never seen (lastSeenAt NULL) — the column is nullable in the schema even though register never inserts NULL (INV-10)"
+            "network-devices registry canonicalizeMac lowercases and requires 6 colon-separated hex octets",
+            "network-devices registry racing duplicate registrations (mixed casing) resolve to exactly one row via the DB's own UNIQUE index",
+            "network-devices registry NetworkDeviceDuplicateError carries code=duplicate_mac and NO MAC-shaped substring in its message (FR-013/INV-07)",
+            "network-devices registry register() trims the alias and rejects >80 chars (post-trim) with NetworkDeviceValidationError (contract maxLength: 80)",
+            "network-devices registry edit() rejects an alias >80 chars (post-trim) with NetworkDeviceValidationError, leaving the stored alias unchanged",
+            "network-devices registry refuses registration with reselect_required when the MAC is absent from the fresh cache",
+            "network-devices registry refuses registration with reselect_required when the cache is not currently fresh (stale/cold/unconfigured)",
+            "network-devices registry stamps lastSeenAt from the cache snapshot's fetchedAt observation, never a wall-clock default",
+            "network-devices registry registration with a NEW non-null memberId requires an active member",
+            "network-devices registry edit never mutates the MAC, regardless of which fields are patched",
+            "network-devices registry edit on an unknown id throws NetworkDeviceNotFoundError",
+            "network-devices registry edit rejects a NEW non-null memberId that resolves to an inactive member (strict-write)",
+            "network-devices registry an existing inactive member link renders labeled (tolerant-read) and the device stays editable",
+            "network-devices registry edit() derives liveStatus from the REAL live-cache accessor — a fresh cache confirming the MAC returns online even over a stale stored lastSeenAt",
+            "network-devices registry edit() write succeeds even when the live-cache accessor throws, falling back to a LITERAL unknown (no horizon math)",
+            "network-devices registry remove succeeds even with a throwing cache accessor — it never consults it",
+            "network-devices registry remove on an unknown id is a no-op success (idempotent), not a throw",
+            "network-devices registry list() performs ZERO writes, asserted at the storage boundary (total_changes unchanged)",
+            "network-devices registry list() issues ZERO write-verb SQL statements — a genuine DB-layer spy (Codex P2, PR #658: total_changes() alone stays green for a zero-row-affecting write)",
+            "network-devices registry liveStatus derivation matrix online: MAC present in a fresh cache",
+            "network-devices registry liveStatus derivation matrix notDetected: absent from a fresh cache",
+            "network-devices registry liveStatus derivation matrix unknown: cache not fresh (stale/cold/unconfigured) and within the not-detected horizon",
+            "network-devices registry liveStatus derivation matrix notDetected: lastSeenAt beyond the 7-day horizon even while the cache is not currently fresh",
+            "network-devices registry liveStatus derivation matrix online wins over a stale stored lastSeenAt when the MAC is directly confirmed in a CURRENT fresh cache",
+            "network-devices registry liveStatus derivation matrix notDetected: never seen (lastSeenAt NULL) — the column is nullable in the schema even though register() never inserts NULL (INV-10)"
           ],
           "tests/boundary/network-devices-routes.test.ts": [
-            "network-devices routes — NETWORK-DEVICES-AC-06: a REAL device key (kind='device', scope='*') is rejected 403 on EVERY endpoint x method",
-            "network-devices routes — a REAL management key (kind='integration', via reconcileManagement) passes the auth gate on EVERY endpoint x method (never 403)",
-            "network-devices routes — GET /api/network-devices/live-clients — cache state 'unconfigured' surfaces verbatim",
-            "network-devices routes — GET /api/network-devices/live-clients — cache state 'cold' surfaces verbatim",
-            "network-devices routes — GET /api/network-devices/live-clients — cache state 'stale' surfaces verbatim",
-            "network-devices routes — GET /api/network-devices/live-clients — cache state 'freshEmpty' surfaces verbatim",
-            "network-devices routes — GET /api/network-devices/live-clients — cache state 'fresh' surfaces verbatim",
-            "network-devices routes — GET /api/network-devices — 200, zero-write list reflects a registered device",
-            "network-devices routes — POST /api/network-devices — 201 with the closed RegisteredDevice shape",
-            "network-devices routes — POST /api/network-devices — 409 reselect_required when the MAC is absent from the current fresh cache",
-            "network-devices routes — POST /api/network-devices — 409 duplicate_mac on a second registration of the same MAC",
-            "network-devices routes — POST /api/network-devices — 400 on an unsupported top-level field (additionalProperties: false)",
-            "network-devices routes — POST /api/network-devices — alias length bound: 80 chars accepted, 81 chars rejected 400 (Codex P2 on #663)",
-            "network-devices routes — PATCH /api/network-devices/:id — 200, alias updated",
-            "network-devices routes — PATCH /api/network-devices/:id — alias length bound: 80 chars accepted, 81 chars rejected 400 (Codex P2 on #663)",
-            "network-devices routes — PATCH /api/network-devices/:id — 400 when assigning a NEW inactive (archived) member",
-            "network-devices routes — PATCH /api/network-devices/:id — 404 for an unknown id",
-            "network-devices routes — DELETE /api/network-devices/:id — 204, then a re-GET no longer lists it",
-            "network-devices routes — DELETE /api/network-devices/:id — 404 for an unknown id (route's OWN existence read, not remove's idempotency)",
-            "network-devices routes — POST /api/network-devices/:id/block — 200, controller called, belief mirror written",
-            "network-devices routes — POST /api/network-devices/:id/unblock — 200, controller called, belief mirror written",
-            "network-devices routes — POST /api/network-devices/:id/block — 404 for an unknown id (checked before any controller call)",
-            "network-devices routes — POST /api/network-devices/:id/block and unblock — 502 on controller unconfigured (null), NOTHING mirrored (row unchanged)",
-            "network-devices routes — POST /api/network-devices/:id/block and unblock — 502 on controller rejected (401/403), NOTHING mirrored (row unchanged)",
-            "network-devices routes — POST /api/network-devices/:id/block and unblock — 502 on controller unreachable (timeout/network), NOTHING mirrored (row unchanged)",
-            "network-devices routes — NetworkDeviceControllerUnavailableError carries no MAC in its message (sanity on the 502 body itself)"
+            "network-devices routes NETWORK-DEVICES-AC-06: a REAL device key (kind='device', scope='*') is rejected 403 on EVERY endpoint x method",
+            "network-devices routes a REAL management key (kind='integration', via reconcileManagement) passes the auth gate on EVERY endpoint x method (never 403)",
+            "network-devices routes GET /api/network-devices/live-clients — cache state 'unconfigured' surfaces verbatim",
+            "network-devices routes GET /api/network-devices/live-clients — cache state 'cold' surfaces verbatim",
+            "network-devices routes GET /api/network-devices/live-clients — cache state 'stale' surfaces verbatim",
+            "network-devices routes GET /api/network-devices/live-clients — cache state 'freshEmpty' surfaces verbatim",
+            "network-devices routes GET /api/network-devices/live-clients — cache state 'fresh' surfaces verbatim",
+            "network-devices routes GET /api/network-devices — 200, zero-write list reflects a registered device",
+            "network-devices routes POST /api/network-devices — 201 with the closed RegisteredDevice shape",
+            "network-devices routes POST /api/network-devices — 409 reselect_required when the MAC is absent from the current fresh cache",
+            "network-devices routes POST /api/network-devices — 409 duplicate_mac on a second registration of the same MAC",
+            "network-devices routes POST /api/network-devices — 400 on an unsupported top-level field (additionalProperties: false)",
+            "network-devices routes POST /api/network-devices — alias length bound: 80 chars accepted, 81 chars rejected 400 (Codex P2 on #663)",
+            "network-devices routes PATCH /api/network-devices/:id — 200, alias updated",
+            "network-devices routes PATCH /api/network-devices/:id — alias length bound: 80 chars accepted, 81 chars rejected 400 (Codex P2 on #663)",
+            "network-devices routes PATCH /api/network-devices/:id — 400 when assigning a NEW inactive (archived) member",
+            "network-devices routes PATCH /api/network-devices/:id — 404 for an unknown id",
+            "network-devices routes DELETE /api/network-devices/:id — 204, then a re-GET no longer lists it",
+            "network-devices routes DELETE /api/network-devices/:id — 404 for an unknown id (route's OWN existence read, not remove()'s idempotency)",
+            "network-devices routes POST /api/network-devices/:id/block — 200, controller called, belief mirror written",
+            "network-devices routes POST /api/network-devices/:id/unblock — 200, controller called, belief mirror written",
+            "network-devices routes POST /api/network-devices/:id/block — 404 for an unknown id (checked before any controller call)",
+            "network-devices routes POST /api/network-devices/:id/block and unblock — 502 on controller unconfigured (null), NOTHING mirrored (row unchanged)",
+            "network-devices routes POST /api/network-devices/:id/block and unblock — 502 on controller rejected (401/403), NOTHING mirrored (row unchanged)",
+            "network-devices routes POST /api/network-devices/:id/block and unblock — 502 on controller unreachable (timeout/network), NOTHING mirrored (row unchanged)",
+            "network-devices routes NetworkDeviceControllerUnavailableError carries no MAC in its message (sanity on the 502 body itself)"
           ],
           "tests/boundary/network-devices-rule-b.test.ts": [
             "network-devices-rule-b — config-drift tripwire import-x/no-restricted-paths (the network-devices zone) rejects a core-internal import from src/server/modules/network-devices (e.g. ../../db/client)",
@@ -2118,60 +2140,60 @@
             "printing pipeline end-to-end — the real ESC/POS bytes a provider returning a FRACTIONAL height dead-letters the job — Codex P2 on #688 — never transmits a malformed stream"
           ],
           "tests/boundary/printing-core.test.ts": [
-            "printing core — enqueuePrintJob — FR-012 dedup matrix fresh: no existing record -> a new job is created",
-            "printing core — enqueuePrintJob — FR-012 dedup matrix in-flight (INV-05 transient closed): a second enqueue against a still-pending job returns THAT job, never a duplicate",
-            "printing core — enqueuePrintJob — FR-012 dedup matrix in-flight also holds for a CLAIMED (not yet printed) job",
-            "printing core — enqueuePrintJob — FR-012 dedup matrix printed: a record already printed and NOT superseded is reported, no new job",
-            "printing core — enqueuePrintJob — FR-012 dedup matrix superseded: a re-printable record accepts a NEW job on the next enqueue",
-            "printing core — enqueuePrintJob — FR-012 dedup matrix member strict-on-write: an active member is accepted",
-            "printing core — enqueuePrintJob — FR-012 dedup matrix member strict-on-write: an archived/non-existent member is rejected (MemberReferenceError)",
-            "printing core — enqueuePrintJob — target_date calendar validity (Constitution IV) rejects an impossible calendar date (Feb 30) with PrintValidationError, unmediated by HTTP",
-            "printing core — enqueuePrintJob — target_date calendar validity (Constitution IV) rejects a malformed (non-YYYY-MM-DD-shaped) targetDate",
-            "printing core — enqueuePrintJob — target_date calendar validity (Constitution IV) rejects an invalid targetDate BEFORE any row is written (no half-created record/job)",
-            "printing core — enqueuePrintJob — target_date calendar validity (Constitution IV) accepts a strictly calendar-valid targetDate (control)",
-            "printing core — failJob — RECOVERABLE vs PERMANENT (data-model.md Failure taxonomy) RECOVERABLE: attempts+1, lease released, back to pending, IMMEDIATELY re-claimable (printer-off->on recovery, no re-trigger)",
-            "printing core — failJob — RECOVERABLE vs PERMANENT (data-model.md Failure taxonomy) PERMANENT: terminal failed, dead-letter, attempts untouched, printing.failed emitted",
-            "printing core — failJob — RECOVERABLE vs PERMANENT (data-model.md Failure taxonomy) a stale/mismatched lease token is rejected — 409-mapped, no state change",
-            "printing core — failJob — RECOVERABLE vs PERMANENT (data-model.md Failure taxonomy) failing an unknown job id 404s (PrintJobNotFoundError)",
-            "printing core — FR-021 — claim requires a server-registered printer capability negative: claim is refused for a session with no registered capability",
-            "printing core — FR-021 — claim requires a server-registered printer capability positive: claim succeeds once the session's key registers capability",
-            "printing core — FR-021 — claim requires a server-registered printer capability omitting sessionKeyId skips the capability gate entirely (interim interim call shape)",
-            "printing core — FR-021 — claim requires a server-registered printer capability re-registering the same key is idempotent (upserts registered_at, never errors)",
-            "printing core — CORE plugin-active gating (INV-06) binds enqueue AND claim for ANY caller defaults to active",
-            "printing core — CORE plugin-active gating (INV-06) binds enqueue AND claim for ANY caller enqueuePrintJob refuses while inactive",
-            "printing core — CORE plugin-active gating (INV-06) binds enqueue AND claim for ANY caller enqueueTestPrint (the barrel-adjacent trigger) refuses while inactive too — the gate is in the CORE, not a route",
-            "printing core — CORE plugin-active gating (INV-06) binds enqueue AND claim for ANY caller claimJob refuses while inactive",
-            "printing core — CORE plugin-active gating (INV-06) binds enqueue AND claim for ANY caller AC-06 nuance: a lease claimed while ACTIVE still completes its ack flow after the plugin goes inactive",
-            "printing core — CORE plugin-active gating (INV-06) binds enqueue AND claim for ANY caller AC-06 nuance: a lease claimed while ACTIVE also completes its fail flow after the plugin goes inactive",
-            "printing core — CORE plugin-active gating (INV-06) binds enqueue AND claim for ANY caller resets back to active by default (no leakage across calls)",
-            "printing core — FR-010 by construction: ackJob's signature admits no paper-state input anywhere — (jobId, leaseToken, now) is the entire surface",
-            "printing core — (Constitution V) listJobs's derived-state computation never writes to the database — write-spy",
-            "printing core — review-mandated pins (pin a) printing.completed emission on ack is observed via the REAL event-bus singleton subscribe (mutant: delete the emit -> red)",
-            "printing core — review-mandated pins (pin b) print_records.UNIQUE(record_key, target_date) rejects a duplicate insert at the DB layer (mutant: drop the UNIQUE -> red)",
-            "printing core — review-mandated pins (pin c) two RACING claims through the real db -> exactly one winner (mutant: SELECT-then-UPDATE claim -> red)",
-            "printing core — review-mandated pins (pin c, structural) claim is ONE atomic UPDATE...RETURNING statement against print_jobs — a SELECT-then-UPDATE refactor reds this",
-            "printing core — review-mandated pins (P2-3) claim is day-scoped structurally — a job dated for a DIFFERENT day is never claimable, even with nothing else pending (mutant: drop the WHERE's day predicate -> red)",
-            "printing core — review fold — per-lease payload_served_at reset (P2-1) + superseded_at pin (P2-2) (P2-1) printer-off -> recoverable fail -> re-claim -> supersede MUST cancel the re-claimed job (mutant: drop either payload_served_at reset -> red)",
-            "printing core — review fold — per-lease payload_served_at reset (P2-1) + superseded_at pin (P2-2) (P2-2) ackJob's superseded_at reset: supersede -> re-enqueue -> claim -> ack -> a THIRD trigger reports alreadyPrinted, never a third job (mutant: drop the reset -> red)",
-            "printing core — review fold — generation-scoped dedup and ack (Codex P1s on #687) (P1-a) supersede-after-FETCH -> an immediate re-enqueue creates a NEW job, not the stale fetched-in-flight one (mutant: drop the in-flight dedup's generation scope -> red)",
-            "printing core — review fold — generation-scoped dedup and ack (Codex P1s on #687) (P1-b) the STALE job's ack leaves the record re-printable; the NEW-generation job's ack DOES settle it (mutant: drop ackJob's generation gate -> red)",
-            "printing core — supersedePrintRecord — the matrix across job states (H2/ADR-022) cancels a PENDING job and marks the record re-printable",
-            "printing core — supersedePrintRecord — the matrix across job states (H2/ADR-022) cancels a CLAIMED-but-NOT-YET-FETCHED job",
-            "printing core — supersedePrintRecord — the matrix across job states (H2/ADR-022) does NOT cancel a claimed job whose payload was already fetched (fetched-in-flight continues, H2 accepted)",
-            "printing core — supersedePrintRecord — the matrix across job states (H2/ADR-022) does not disturb an already-printed job, but the record becomes re-printable",
-            "printing core — supersedePrintRecord — the matrix across job states (H2/ADR-022) is a no-op (never throws) against a record that was never enqueued",
-            "printing core — supersedePrintRecord — the matrix across job states (H2/ADR-022) re-enqueuing after supersede creates a genuinely NEW job row",
-            "printing core — registerPrintableProvider — fetch-at-execute resolution (research D4) a fetch AFTER regeneration serves the CURRENT provider output, not a stale enqueue-time snapshot",
-            "printing core — registerPrintableProvider — fetch-at-execute resolution (research D4) a MISSING provider dead-letters the job as render_failure and emits printing.failed",
-            "printing core — registerPrintableProvider — fetch-at-execute resolution (research D4) an ERRORING provider dead-letters the job as render_failure too",
-            "printing core — registerPrintableProvider — fetch-at-execute resolution (research D4) the seam carries only outputRef + metadata — the provider receives outputRef and NOTHING else (producer-agnostic, FR-014)"
+            "printing core enqueuePrintJob — FR-012 dedup matrix fresh: no existing record -> a new job is created",
+            "printing core enqueuePrintJob — FR-012 dedup matrix in-flight (INV-05 transient closed): a second enqueue against a still-pending job returns THAT job, never a duplicate",
+            "printing core enqueuePrintJob — FR-012 dedup matrix in-flight also holds for a CLAIMED (not yet printed) job",
+            "printing core enqueuePrintJob — FR-012 dedup matrix printed: a record already printed and NOT superseded is reported, no new job",
+            "printing core enqueuePrintJob — FR-012 dedup matrix superseded: a re-printable record accepts a NEW job on the next enqueue",
+            "printing core enqueuePrintJob — FR-012 dedup matrix member strict-on-write: an active member is accepted",
+            "printing core enqueuePrintJob — FR-012 dedup matrix member strict-on-write: an archived/non-existent member is rejected (MemberReferenceError)",
+            "printing core enqueuePrintJob — target_date calendar validity (Constitution IV) rejects an impossible calendar date (Feb 30) with PrintValidationError, unmediated by HTTP",
+            "printing core enqueuePrintJob — target_date calendar validity (Constitution IV) rejects a malformed (non-YYYY-MM-DD-shaped) targetDate",
+            "printing core enqueuePrintJob — target_date calendar validity (Constitution IV) rejects an invalid targetDate BEFORE any row is written (no half-created record/job)",
+            "printing core enqueuePrintJob — target_date calendar validity (Constitution IV) accepts a strictly calendar-valid targetDate (control)",
+            "printing core failJob — RECOVERABLE vs PERMANENT (data-model.md Failure taxonomy) RECOVERABLE: attempts+1, lease released, back to pending, IMMEDIATELY re-claimable (printer-off->on recovery, no re-trigger)",
+            "printing core failJob — RECOVERABLE vs PERMANENT (data-model.md Failure taxonomy) PERMANENT: terminal failed, dead-letter, attempts untouched, printing.failed emitted",
+            "printing core failJob — RECOVERABLE vs PERMANENT (data-model.md Failure taxonomy) a stale/mismatched lease token is rejected — 409-mapped, no state change",
+            "printing core failJob — RECOVERABLE vs PERMANENT (data-model.md Failure taxonomy) failing an unknown job id 404s (PrintJobNotFoundError)",
+            "printing core FR-021 — claim requires a server-registered printer capability negative: claim is refused for a session with no registered capability",
+            "printing core FR-021 — claim requires a server-registered printer capability positive: claim succeeds once the session's key registers capability",
+            "printing core FR-021 — claim requires a server-registered printer capability omitting sessionKeyId skips the capability gate entirely (pre- interim call shape)",
+            "printing core FR-021 — claim requires a server-registered printer capability re-registering the same key is idempotent (upserts registered_at, never errors)",
+            "printing core CORE plugin-active gating (INV-06) binds enqueue AND claim for ANY caller defaults to active",
+            "printing core CORE plugin-active gating (INV-06) binds enqueue AND claim for ANY caller enqueuePrintJob refuses while inactive",
+            "printing core CORE plugin-active gating (INV-06) binds enqueue AND claim for ANY caller enqueueTestPrint (the barrel-adjacent trigger) refuses while inactive too — the gate is in the CORE, not a route",
+            "printing core CORE plugin-active gating (INV-06) binds enqueue AND claim for ANY caller claimJob refuses while inactive",
+            "printing core CORE plugin-active gating (INV-06) binds enqueue AND claim for ANY caller AC-06 nuance: a lease claimed while ACTIVE still completes its ack flow after the plugin goes inactive",
+            "printing core CORE plugin-active gating (INV-06) binds enqueue AND claim for ANY caller AC-06 nuance: a lease claimed while ACTIVE also completes its fail flow after the plugin goes inactive",
+            "printing core CORE plugin-active gating (INV-06) binds enqueue AND claim for ANY caller resets back to active by default (no leakage across calls)",
+            "printing core FR-010 by construction: ackJob's signature admits no paper-state input anywhere — (jobId, leaseToken, now) is the entire surface",
+            "printing core (Constitution V) listJobs's derived-state computation never writes to the database — write-spy",
+            "printing core review-mandated pins (pin a) printing.completed emission on ack is observed via the REAL event-bus singleton subscribe (mutant: delete the emit -> red)",
+            "printing core review-mandated pins (pin b) print_records.UNIQUE(record_key, target_date) rejects a duplicate insert at the DB layer (mutant: drop the UNIQUE -> red)",
+            "printing core review-mandated pins (pin c) two RACING claims through the real db -> exactly one winner (mutant: SELECT-then-UPDATE claim -> red)",
+            "printing core review-mandated pins (pin c, structural) claim is ONE atomic UPDATE...RETURNING statement against print_jobs — a SELECT-then-UPDATE refactor reds this",
+            "printing core review-mandated pins (P2-3) claim is day-scoped structurally — a job dated for a DIFFERENT day is never claimable, even with nothing else pending (mutant: drop the WHERE's day predicate -> red)",
+            "printing core review fold — per-lease payload_served_at reset (P2-1) + superseded_at pin (P2-2) (P2-1) printer-off -> recoverable fail -> re-claim -> supersede MUST cancel the re-claimed job (mutant: drop either payload_served_at reset -> red)",
+            "printing core review fold — per-lease payload_served_at reset (P2-1) + superseded_at pin (P2-2) (P2-2) ackJob's superseded_at reset: supersede -> re-enqueue -> claim -> ack -> a THIRD trigger reports alreadyPrinted, never a third job (mutant: drop the reset -> red)",
+            "printing core review fold — generation-scoped dedup and ack (Codex P1s on #687) (P1-a) supersede-after-FETCH -> an immediate re-enqueue creates a NEW job, not the stale fetched-in-flight one (mutant: drop the in-flight dedup's generation scope -> red)",
+            "printing core review fold — generation-scoped dedup and ack (Codex P1s on #687) (P1-b) the STALE job's ack leaves the record re-printable; the NEW-generation job's ack DOES settle it (mutant: drop ackJob's generation gate -> red)",
+            "printing core supersedePrintRecord — the matrix across job states (H2/ADR-022) cancels a PENDING job and marks the record re-printable",
+            "printing core supersedePrintRecord — the matrix across job states (H2/ADR-022) cancels a CLAIMED-but-NOT-YET-FETCHED job",
+            "printing core supersedePrintRecord — the matrix across job states (H2/ADR-022) does NOT cancel a claimed job whose payload was already fetched (fetched-in-flight continues, H2 accepted)",
+            "printing core supersedePrintRecord — the matrix across job states (H2/ADR-022) does not disturb an already-printed job, but the record becomes re-printable",
+            "printing core supersedePrintRecord — the matrix across job states (H2/ADR-022) is a no-op (never throws) against a record that was never enqueued",
+            "printing core supersedePrintRecord — the matrix across job states (H2/ADR-022) re-enqueuing after supersede creates a genuinely NEW job row",
+            "printing core registerPrintableProvider — fetch-at-execute resolution (research D4) a fetch AFTER regeneration serves the CURRENT provider output, not a stale enqueue-time snapshot",
+            "printing core registerPrintableProvider — fetch-at-execute resolution (research D4) a MISSING provider dead-letters the job as render_failure and emits printing.failed",
+            "printing core registerPrintableProvider — fetch-at-execute resolution (research D4) an ERRORING provider dead-letters the job as render_failure too",
+            "printing core registerPrintableProvider — fetch-at-execute resolution (research D4) the seam carries only outputRef + metadata — the provider receives outputRef and NOTHING else (producer-agnostic, FR-014)"
           ],
           "tests/boundary/printing-events.test.ts": [
-            "printing events — (RED-first) type-level: emit/subscribe reject a payload carrying more than the contract's closed shape",
             "printing events — (RED-first) runtime: printing.completed delivers a payload closed to exactly {jobId, outputRef, printedAt} via the host-api emit",
             "printing events — (RED-first) runtime: printing.failed delivers a payload closed to exactly {jobId, outputRef, errorCode} via the host-api emit",
             "printing events — (RED-first) printing.completed: emitting via the host-api barrel with NO subscriber never throws (ADR-040)",
-            "printing events — (RED-first) printing.failed: emitting via the host-api barrel with NO subscriber never throws (ADR-040)"
+            "printing events — (RED-first) printing.failed: emitting via the host-api barrel with NO subscriber never throws (ADR-040)",
+            "printing events — (RED-first) type-level: emit()/subscribe() reject a payload carrying more than the contract's closed shape"
           ],
           "tests/boundary/printing-lease-fencing.test.ts": [
             "printing lease-expiry fencing (Codex P2 on #685) (a) an expired-lease payload fetch is rejected (409-mapped) and does NOT extend the lease",
@@ -2191,26 +2213,26 @@
             "printing negatives — (FR-005, FR-020) (d) DTOs carry no raster/payload blobs (FR-020, ADR-066 — the server owns bytes, the DTO never does) the claim response and the jobs list expose no bits/raster/blob/byte/payload-named field"
           ],
           "tests/boundary/printing-routes.test.ts": [
-            "printing routes — unauthenticated — 401 on EVERY endpoint x method",
-            "printing routes — GET /status — 200 { active: true } by default (no lifecycle registry yet, module-level flag defaults active)",
-            "printing routes — GET /status — 200 { active: false } once the plugin is set inactive",
-            "printing routes — FR-021 negative: a bare provisioned session's claim is refused 403 printer_capability_missing",
-            "printing routes — FR-021 positive: after POST /capability the SAME session claims fine",
-            "printing routes — POST /capability — 409 while the printing plugin is inactive (FR-013)",
-            "printing routes — serves exact binary payload bytes and acknowledges the same lease idempotently",
-            "printing routes — POST /jobs/:id/ack — 409 stale lease token, no state change (INV-05 fencing, HTTP-level)",
-            "printing routes — POST /jobs/:id/fail — recoverable (no permanentCode): pending, attempts+1, immediately re-claimable",
-            "printing routes — POST /jobs/:id/fail — permanent (permanentCode set): terminal failed, dead-lettered immediately",
-            "printing routes — POST /jobs/:id/fail — 409 stale lease token, no state change",
-            "printing routes — POST /jobs/:id/fail — 404 for an unknown job id",
-            "printing routes — POST /jobs/:id/fail — 400 on a missing/invalid reason",
-            "printing routes — POST /jobs/:id/fail — 400 on an unknown permanentCode (closed vocabulary — 019's errorCode taxonomy)",
-            "printing routes — GET /jobs/:id/payload — 422 render_failure with code when no provider is registered for the record key",
-            "printing routes — GET /jobs/:id/payload — 422 render_failure when the raster violates the packed invariant",
-            "printing routes — POST /test-print — 400 when targetDate is not strictly calendar-valid",
-            "printing routes — POST /test-print — 400 on a malformed (non-calendar-shaped) targetDate",
-            "printing routes — POST /test-print — a valid targetDate override enqueues against THAT date",
-            "printing routes — 409 plugin-inactive on test-print and claim while the printing plugin is inactive (FR-013)"
+            "printing routes unauthenticated — 401 on EVERY endpoint x method",
+            "printing routes GET /status — 200 { active: true } by default (no lifecycle registry yet, module-level flag defaults active)",
+            "printing routes GET /status — 200 { active: false } once the plugin is set inactive",
+            "printing routes FR-021 negative: a bare provisioned session's claim is refused 403 printer_capability_missing",
+            "printing routes FR-021 positive: after POST /capability the SAME session claims fine",
+            "printing routes POST /capability — 409 while the printing plugin is inactive (FR-013)",
+            "printing routes serves exact binary payload bytes and acknowledges the same lease idempotently",
+            "printing routes POST /jobs/:id/ack — 409 stale lease token, no state change (INV-05 fencing, HTTP-level)",
+            "printing routes POST /jobs/:id/fail — recoverable (no permanentCode): pending, attempts+1, immediately re-claimable",
+            "printing routes POST /jobs/:id/fail — permanent (permanentCode set): terminal failed, dead-lettered immediately",
+            "printing routes POST /jobs/:id/fail — 409 stale lease token, no state change",
+            "printing routes POST /jobs/:id/fail — 404 for an unknown job id",
+            "printing routes POST /jobs/:id/fail — 400 on a missing/invalid reason",
+            "printing routes POST /jobs/:id/fail — 400 on an unknown permanentCode (closed vocabulary — 019's errorCode taxonomy)",
+            "printing routes GET /jobs/:id/payload — 422 render_failure with code when no provider is registered for the record key",
+            "printing routes GET /jobs/:id/payload — 422 render_failure when the raster violates the packed invariant",
+            "printing routes POST /test-print — 400 when targetDate is not strictly calendar-valid",
+            "printing routes POST /test-print — 400 on a malformed (non-calendar-shaped) targetDate",
+            "printing routes POST /test-print — a valid targetDate override enqueues against THAT date",
+            "printing routes 409 plugin-inactive on test-print and claim while the printing plugin is inactive (FR-013)"
           ],
           "tests/boundary/printing-rule-b.test.ts": [
             "printing-rule-b — config-drift tripwire import-x/no-restricted-paths (the printing zone) rejects a core-internal import from src/server/modules/printing (e.g. ../../db/client)",
@@ -2335,41 +2357,41 @@
             "reminders-member-lifecycle boundary tests PATCH active:false on a specific rule silences emission for every assigned member with no regenerate step; reactivating resumes it (SC-006, REMINDERS-AC-04)"
           ],
           "tests/boundary/routines-assembly.test.ts": [
-            "routines-chores assembly (wiring verification) GET /api/routines is registered",
-            "routines-chores assembly (wiring verification) POST /api/routines is registered",
-            "routines-chores assembly (wiring verification) GET /api/routines/:id is registered",
-            "routines-chores assembly (wiring verification) PATCH /api/routines/:id is registered",
-            "routines-chores assembly (wiring verification) DELETE /api/routines/:id is registered",
-            "routines-chores assembly (wiring verification) GET /api/routines/:id/chores is registered",
-            "routines-chores assembly (wiring verification) POST /api/routines/:id/chores is registered",
-            "routines-chores assembly (wiring verification) PUT /api/routines/:id/chores/order is registered",
-            "routines-chores assembly (wiring verification) GET /api/chores/:id is registered",
-            "routines-chores assembly (wiring verification) PATCH /api/chores/:id is registered",
-            "routines-chores assembly (wiring verification) DELETE /api/chores/:id is registered",
-            "routines-chores assembly (wiring verification) GET /api/routines/:id/assignments is registered",
-            "routines-chores assembly (wiring verification) PUT /api/routines/:id/assignments/:memberId is registered",
-            "routines-chores assembly (wiring verification) DELETE /api/routines/:id/assignments/:memberId is registered",
-            "routines-chores assembly (wiring verification) GET /api/chores/board is registered",
-            "routines-chores assembly (wiring verification) POST /api/chores/:id/completions is registered",
-            "routines-chores assembly (wiring verification) DELETE /api/chores/:id/completions is registered",
-            "routines-chores assembly (wiring verification) GET /api/routines requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) POST /api/routines requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) GET /api/routines/:id requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) PATCH /api/routines/:id requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) DELETE /api/routines/:id requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) GET /api/routines/:id/chores requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) POST /api/routines/:id/chores requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) PUT /api/routines/:id/chores/order requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) GET /api/chores/:id requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) PATCH /api/chores/:id requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) DELETE /api/chores/:id requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) GET /api/routines/:id/assignments requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) PUT /api/routines/:id/assignments/:memberId requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) DELETE /api/routines/:id/assignments/:memberId requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) GET /api/chores/board requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) POST /api/chores/:id/completions requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) DELETE /api/chores/:id/completions requires auth (401 without device cookie)",
-            "routines-chores assembly (wiring verification) No table-exposing routes exist (e.g., /api/routines/transactions)"
+            "routines-chores assembly (wiring verification) No table-exposing routes exist (e.g., /api/routines/transactions)",
+            "routines-chores assembly (wiring verification) GET /api/routinesis registered",
+            "routines-chores assembly (wiring verification) POST /api/routinesis registered",
+            "routines-chores assembly (wiring verification) GET /api/routines/:idis registered",
+            "routines-chores assembly (wiring verification) PATCH /api/routines/:idis registered",
+            "routines-chores assembly (wiring verification) DELETE /api/routines/:idis registered",
+            "routines-chores assembly (wiring verification) GET /api/routines/:id/choresis registered",
+            "routines-chores assembly (wiring verification) POST /api/routines/:id/choresis registered",
+            "routines-chores assembly (wiring verification) PUT /api/routines/:id/chores/orderis registered",
+            "routines-chores assembly (wiring verification) GET /api/chores/:idis registered",
+            "routines-chores assembly (wiring verification) PATCH /api/chores/:idis registered",
+            "routines-chores assembly (wiring verification) DELETE /api/chores/:idis registered",
+            "routines-chores assembly (wiring verification) GET /api/routines/:id/assignmentsis registered",
+            "routines-chores assembly (wiring verification) PUT /api/routines/:id/assignments/:memberIdis registered",
+            "routines-chores assembly (wiring verification) DELETE /api/routines/:id/assignments/:memberIdis registered",
+            "routines-chores assembly (wiring verification) GET /api/chores/boardis registered",
+            "routines-chores assembly (wiring verification) POST /api/chores/:id/completionsis registered",
+            "routines-chores assembly (wiring verification) DELETE /api/chores/:id/completionsis registered",
+            "routines-chores assembly (wiring verification) GET /api/routinesrequires auth (401 without device cookie)",
+            "routines-chores assembly (wiring verification) POST /api/routinesrequires auth (401 without device cookie)",
+            "routines-chores assembly (wiring verification) GET /api/routines/:idrequires auth (401 without device cookie)",
+            "routines-chores assembly (wiring verification) PATCH /api/routines/:idrequires auth (401 without device cookie)",
+            "routines-chores assembly (wiring verification) DELETE /api/routines/:idrequires auth (401 without device cookie)",
+            "routines-chores assembly (wiring verification) GET /api/routines/:id/choresrequires auth (401 without device cookie)",
+            "routines-chores assembly (wiring verification) POST /api/routines/:id/choresrequires auth (401 without device cookie)",
+            "routines-chores assembly (wiring verification) PUT /api/routines/:id/chores/orderrequires auth (401 without device cookie)",
+            "routines-chores assembly (wiring verification) GET /api/chores/:idrequires auth (401 without device cookie)",
+            "routines-chores assembly (wiring verification) PATCH /api/chores/:idrequires auth (401 without device cookie)",
+            "routines-chores assembly (wiring verification) DELETE /api/chores/:idrequires auth (401 without device cookie)",
+            "routines-chores assembly (wiring verification) GET /api/routines/:id/assignmentsrequires auth (401 without device cookie)",
+            "routines-chores assembly (wiring verification) PUT /api/routines/:id/assignments/:memberIdrequires auth (401 without device cookie)",
+            "routines-chores assembly (wiring verification) DELETE /api/routines/:id/assignments/:memberIdrequires auth (401 without device cookie)",
+            "routines-chores assembly (wiring verification) GET /api/chores/boardrequires auth (401 without device cookie)",
+            "routines-chores assembly (wiring verification) POST /api/chores/:id/completionsrequires auth (401 without device cookie)",
+            "routines-chores assembly (wiring verification) DELETE /api/chores/:id/completionsrequires auth (401 without device cookie)"
           ],
           "tests/boundary/routines-assignments.test.ts": [
             "routines-assignments boundary tests PUT /api/routines/:id/assignments/:memberId with valid active child → 200 (FR-005)",
@@ -2466,8 +2488,8 @@
             "seed CLI adapter imports without running seeds, writing streams or changing exit status",
             "seed CLI adapter runs the public profile with an injected directory and formats its report",
             "seed CLI adapter accepts private mode and rejects invalid arguments before effects",
-            "seed CLI adapter contains runner failures and unknown thrown values",
-            "executes the real CLI entrypoint with storage ownership and releases it after seeding"
+            "executes the real CLI entrypoint with storage ownership and releases it after seeding",
+            "seed CLI adapter surfaces ownership refusals, runner errors, locks; contains unknown throws"
           ],
           "tests/boundary/seed-daily-content.test.ts": [
             "daily content demo seed boundary seeds fictional messages and briefing preferences through authoritative reads",
@@ -2573,14 +2595,14 @@
           "tests/boundary/telemetry-negatives.test.ts": [
             "telemetry negative proofs 1. CLIENT-LOGGING-TELEMETRY-AC-06: telemetry outage blocks no unrelated product write (FR-001) a member write succeeds unchanged when the client_log table is gone entirely",
             "telemetry negative proofs 1. CLIENT-LOGGING-TELEMETRY-AC-06: telemetry outage blocks no unrelated product write (FR-001) a member read succeeds unchanged when the client_log table is gone entirely",
-            "telemetry negative proofs 1. CLIENT-LOGGING-TELEMETRY-AC-06: telemetry outage blocks no unrelated product write (FR-001) writeClientLog itself never throws when its own table is missing — it drops the entry instead",
             "telemetry negative proofs 2. CLIENT-LOGGING-TELEMETRY-INV-14: zero telemetry entries in src/shared/events.ts the CoreEventCatalog source contains no telemetry-shaped event names",
             "telemetry negative proofs 3. CLIENT-LOGGING-TELEMETRY-AC-07: no legacy (v1) client-log import path exists under src/ no source file under src/ imports a legacy v1 telemetry/client-log module or path",
             "telemetry negative proofs 3. CLIENT-LOGGING-TELEMETRY-AC-07: no legacy (v1) client-log import path exists under src/ zero client_log rows exist in a freshly-migrated database (fresh deployment store, Constitution I)",
             "telemetry negative proofs 4. CLIENT-LOGGING-TELEMETRY-INV-12: telemetry is always-on — no household setting can gate it no `settings_objects` row references telemetry, and ingest works with zero settings rows present",
             "telemetry negative proofs 4. CLIENT-LOGGING-TELEMETRY-INV-12: telemetry is always-on — no household setting can gate it no source file under src/server/telemetry or src/server/routes/telemetry.ts reads settings_objects (no gate to bypass)",
             "telemetry negative proofs 5. CLIENT-LOGGING-TELEMETRY-INV-05/CLIENT-LOGGING-TELEMETRY-INV-06: the client lint net fires (P2-3/623 review — executable proof, not just eslint.config.mjs prose) a fixture with a raw console call and a template-literal `data` argument trips both rules",
-            "telemetry negative proofs 5. CLIENT-LOGGING-TELEMETRY-INV-05/CLIENT-LOGGING-TELEMETRY-INV-06: the client lint net fires (P2-3/623 review — executable proof, not just eslint.config.mjs prose) the SAME template-literal `data` argument does NOT trip no-restricted-syntax inside src/client/lib/logger.ts's own no-console exemption zone (sanity: the exemption is console-only, not a blanket opt-out)"
+            "telemetry negative proofs 5. CLIENT-LOGGING-TELEMETRY-INV-05/CLIENT-LOGGING-TELEMETRY-INV-06: the client lint net fires (P2-3/623 review — executable proof, not just eslint.config.mjs prose) the SAME template-literal `data` argument does NOT trip no-restricted-syntax inside src/client/lib/logger.ts's own no-console exemption zone (sanity: the exemption is console-only, not a blanket opt-out)",
+            "telemetry negative proofs 1. CLIENT-LOGGING-TELEMETRY-AC-06: telemetry outage blocks no unrelated product write (FR-001) writeClientLog() itself never throws when its own table is missing — it drops the entry instead"
           ],
           "tests/boundary/telemetry-read.test.ts": [
             "telemetry read route deep suite every filter alone level alone",
@@ -2638,21 +2660,21 @@
           ],
           "tests/boundary/telemetry-sink.test.ts": [
             "telemetry sink seam CLIENT-LOGGING-TELEMETRY-INV-07: the 5-field projection a fake sink receives exactly the five envelope fields for every accepted corpus entry, and `data` appears in zero payloads",
-            "telemetry sink seam CLIENT-LOGGING-TELEMETRY-INV-07: the 5-field projection projectToSinkEnvelope returns exactly the five fields (identity projection over TelemetrySinkEnvelope)",
             "telemetry sink seam CLIENT-LOGGING-TELEMETRY-INV-07: the 5-field projection F4: TelemetrySinkEnvelope rejects a data-carrying value at compile time, even through an intermediate variable",
-            "telemetry sink seam CLIENT-LOGGING-TELEMETRY-INV-07: the 5-field projection F1: loadSinksFromEnv ignores prototype-chain names — never resolves through Object.prototype",
             "telemetry sink seam CLIENT-LOGGING-TELEMETRY-INV-07: the 5-field projection F5: sinks observe the POST-redaction message — the secret-laden corpus entry's envelope never carries the raw mpk- token",
-            "telemetry sink seam CLIENT-LOGGING-TELEMETRY-INV-08: absent-by-default, deploy-level, never a household setting loadSinksFromEnv returns [] when TELEMETRY_SINKS is unset",
-            "telemetry sink seam CLIENT-LOGGING-TELEMETRY-INV-08: absent-by-default, deploy-level, never a household setting loadSinksFromEnv returns [] for a configured-but-unrecognized name (no built-in ships this slice)",
             "telemetry sink seam CLIENT-LOGGING-TELEMETRY-INV-08: absent-by-default, deploy-level, never a household setting no-sink config produces byte-equal ingest responses to a configured-sink run for the same input",
             "telemetry sink seam F2: accounting integrity under a poisoned TELEMETRY_SINKS value accepted+dropped always equals the entry count, rows are inserted, and a later call remains healthy",
-            "telemetry sink seam F6: insert precedes sink fan-out — never a fan-out for a DROPPED entry a sink's send can already SELECT the freshly-inserted row by event_id (weak positive check — see the drop-table test below for the discriminating one)",
             "telemetry sink seam F6: insert precedes sink fan-out — never a fan-out for a DROPPED entry a DROPPED entry (insert fails because the table doesn't exist) never fans out to any sink",
-            "telemetry sink seam F3: sink send is deferred off the synchronous ingest path a sink's send has not run yet immediately after writeClientLog returns, only after the event loop reaches the setImmediate check phase",
             "telemetry sink seam CLIENT-LOGGING-TELEMETRY-AC-03: a throwing sink is swallowed a synchronously-throwing sink never affects the ingest result, increments the failure counter, and later entries in the same batch still fan out",
             "telemetry sink seam CLIENT-LOGGING-TELEMETRY-AC-03: a throwing sink is swallowed an asynchronously-rejecting sink is swallowed without an unhandled rejection, and increments the failure counter",
-            "telemetry sink seam fanOutToSinks direct unit coverage dispatches to every sink in the list and never throws even when every sink throws",
-            "telemetry sink seam fanOutToSinks direct unit coverage with zero sinks, fanOutToSinks is a pure no-op"
+            "telemetry sink seam CLIENT-LOGGING-TELEMETRY-INV-07: the 5-field projection projectToSinkEnvelope() returns exactly the five fields (identity projection over TelemetrySinkEnvelope)",
+            "telemetry sink seam CLIENT-LOGGING-TELEMETRY-INV-07: the 5-field projection F1: loadSinksFromEnv() ignores prototype-chain names — never resolves through Object.prototype",
+            "telemetry sink seam CLIENT-LOGGING-TELEMETRY-INV-08: absent-by-default, deploy-level, never a household setting loadSinksFromEnv() returns [] when TELEMETRY_SINKS is unset",
+            "telemetry sink seam CLIENT-LOGGING-TELEMETRY-INV-08: absent-by-default, deploy-level, never a household setting loadSinksFromEnv() returns [] for a configured-but-unrecognized name (no built-in ships this slice)",
+            "telemetry sink seam F6: insert precedes sink fan-out — never a fan-out for a DROPPED entry a sink's send() can already SELECT the freshly-inserted row by event_id (weak positive check — see the drop-table test below for the discriminating one)",
+            "telemetry sink seam F3: sink send() is deferred off the synchronous ingest path a sink's send() has not run yet immediately after writeClientLog() returns, only after the event loop reaches the setImmediate check phase",
+            "telemetry sink seam fanOutToSinks() direct unit coverage dispatches to every sink in the list and never throws even when every sink throws",
+            "telemetry sink seam fanOutToSinks() direct unit coverage with zero sinks, fanOutToSinks() is a pure no-op"
           ],
           "tests/boundary/time-announcements-crud.test.ts": [
             "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-INV-02/TIME-ANNOUNCEMENTS-AC-01: malformed time is rejected, never normalized TIME-ANNOUNCEMENTS-INV-02/TIME-ANNOUNCEMENTS-AC-01: POST rejects malformed time \"24:00\" — no row created",
@@ -2676,13 +2698,13 @@
             "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-INV-04/TIME-ANNOUNCEMENTS-AC-02: active-overlap runs inside the write transaction TIME-ANNOUNCEMENTS-INV-04: LWW by id / excludeId — a PATCH to an ACTIVE rule never conflicts against ITSELF",
             "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-INV-04/TIME-ANNOUNCEMENTS-AC-02: active-overlap runs inside the write transaction TIME-ANNOUNCEMENTS-INV-04: concurrent double-save race — two sequential activating PATCHes for the same time+weekday slot, only the FIRST survives (proves the in-transaction re-check against latest rows, not parallelism theatre: better-sqlite3 transactions are synchronous, so there is no true interleaving to race)",
             "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-INV-04/TIME-ANNOUNCEMENTS-AC-02: active-overlap runs inside the write transaction TIME-ANNOUNCEMENTS-INV-04: stale-view PATCH — a save based on an outdated fetched view is still re-checked against the CURRENT persisted state (LWW by id, no If-Match/version needed)",
-            "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-INV-04 (structural): the in-transaction property, pinned at the source level TIME-ANNOUNCEMENTS-INV-04: the overlap lookup is called INSIDE the db.transaction callback on BOTH write paths (structural — better-sqlite3's synchronous transactions make this behaviourally unobservable: hoisting the check out of the transaction, or splitting a PATCH into check-then-write, still passes every behavioral test above)",
             "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-INV-05: isActive=false soft-disables; delete is permanent TIME-ANNOUNCEMENTS-INV-05: toggling isActive=false stays listed and editable (never fires — client-side only, unassertable here)",
             "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-INV-05: isActive=false soft-disables; delete is permanent TIME-ANNOUNCEMENTS-INV-05: DELETE is permanent — a subsequent GET/PATCH/DELETE 404s, no archive tier",
             "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-AC-07: CRUD requires the admin write capability (fail-closed); listing is kiosk-visible TIME-ANNOUNCEMENTS-AC-07: POST/PATCH/DELETE without time-announcements:admin are rejected 403, nothing changes",
             "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-AC-07: CRUD requires the admin write capability (fail-closed); listing is kiosk-visible TIME-ANNOUNCEMENTS-AC-07: GET is kiosk-visible — a key with NO write capability can still list rules",
             "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-AC-07: CRUD requires the admin write capability (fail-closed); listing is kiosk-visible TIME-ANNOUNCEMENTS-AC-07: GET ordered by time, ties broken by id",
-            "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-INV-06 (server half): no scheduler job/queue/claim exists for announcements TIME-ANNOUNCEMENTS-INV-06: the entrypoint registers no time-announcements job, and the module never imports the scheduler seam (structural — owns the fuller schema/queue negative-proof sweep)"
+            "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-INV-06 (server half): no scheduler job/queue/claim exists for announcements TIME-ANNOUNCEMENTS-INV-06: the entrypoint registers no time-announcements job, and the module never imports the scheduler seam (structural — owns the fuller schema/queue negative-proof sweep)",
+            "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-INV-04 (structural): the in-transaction property, pinned at the source level TIME-ANNOUNCEMENTS-INV-04: the overlap lookup is called INSIDE the db.transaction() callback on BOTH write paths (structural — better-sqlite3's synchronous transactions make this behaviourally unobservable: hoisting the check out of the transaction, or splitting a PATCH into check-then-write, still passes every behavioral test above)"
           ],
           "tests/boundary/time-announcements-negatives.test.ts": [
             "time-announcements negative proofs 1. TIME-ANNOUNCEMENTS-AC-08/INV-10: no settings surface of any kind GET /api/time-announcements/settings is NOT registered",
@@ -2764,8 +2786,8 @@
             "weather forecast port buildForecastPort — failure matrix (WEATHER-INV-10/12, one telemetry row each) missing `hourly` -> null + exactly one telemetry row with reason missing_hourly",
             "weather forecast port buildForecastPort — failure matrix (WEATHER-INV-10/12, one telemetry row each) a network-level fetch rejection (not an abort) -> null + exactly one telemetry row, reason network_error (P3-1, distinct from timeout)",
             "weather forecast port buildForecastPort — failure matrix (WEATHER-INV-10/12, one telemetry row each) an AbortError (not a TimeoutError) also reports reason timeout (P3-1)",
-            "weather forecast port __setForecastPortForTests / getForecastPort (logger.ts __setTransportForTests precedent) getForecastPort returns the injected test port, bypassing createOpenMeteoPort's throw",
-            "weather forecast port __setForecastPortForTests / getForecastPort (logger.ts __setTransportForTests precedent) getForecastPort falls through to createOpenMeteoPort (and throws) once no injection is set"
+            "weather forecast port __setForecastPortForTests / getForecastPort (logger.ts __setTransportForTests precedent) getForecastPort() returns the injected test port, bypassing createOpenMeteoPort()'s throw",
+            "weather forecast port __setForecastPortForTests / getForecastPort (logger.ts __setTransportForTests precedent) getForecastPort() falls through to createOpenMeteoPort() (and throws) once no injection is set"
           ],
           "tests/boundary/weather-location.test.ts": [
             "weather location semantics accepts lat/lon exactly at the inclusive edges (+/-90, +/-180)",
@@ -2870,15 +2892,17 @@
             "AdminPanel renders trailing actions beside the title",
             "AdminPanel deliberate negative — two panels never collide on the same heading id",
             "AdminPanel defaults to an h2 heading (correct for a panel nested inside a page with its own h1, e.g. MealsManagement)",
-            "AdminPanel renders an h1 when headingLevel='h1' — for a panel that IS the page-level surface for a whole route (review, PR #777, finding F6: CalendarView adopts this so /calendar has exactly one h1, matching ChoresBoard/MealsBoard/DailyBriefingView)",
-            "AdminPanel meets kiosk density for a real control rendered inside it"
+            "AdminPanel meets kiosk density for a real control rendered inside it",
+            "AdminPanel renders an h1 when headingLevel='h1' — for a panel that IS the page-level surface for a whole route ( review, PR #777, finding F6: CalendarView adopts this so /calendar has exactly one h1, matching ChoresBoard/MealsBoard/DailyBriefingView)"
           ],
           "tests/client/admin-pin-keypad.test.tsx": [
             "AdminGate touch PIN keypad enters, masks, deletes, and caps the PIN at six digits without a conventional input",
             "AdminGate touch PIN keypad submits only 4-6 digits and retains wrong-PIN and request-error feedback",
             "AdminGate touch PIN keypad clears state and returns to the recorded family route on Cancel",
             "AdminGate touch PIN keypad falls back to Home when direct Admin navigation has no family history marker",
-            "AdminGate touch PIN keypad accepts hardware keyboard digits, Backspace, and Enter to submit"
+            "AdminGate touch PIN keypad accepts hardware keyboard digits, Backspace, and Enter to submit",
+            "AdminGate touch PIN keypad keeps modified keys, editing fields, and focused control activation out of global PIN entry",
+            "AdminGate touch PIN keypad caps keyboard entry and freezes it while a PIN verification is pending"
           ],
           "tests/client/admin-routes.test.tsx": [
             "AdminRoutes renders the directly requested printing destination instead of the member-create default",
@@ -3024,8 +3048,8 @@
             "CalendarView — the assignment row is a real, keyboard-operable control (FR-013, SC-012) is reachable by Tab, activated by Space (via a native click), and its checked state is announced through an accessible name — not a non-focusable <li onClick> wrapping a readOnly checkbox",
             "CalendarView — the assignment row is a real, keyboard-operable control (FR-013, SC-012) meets kiosk density on the per-member checkbox row (the row that used to be a non-focusable <li>)",
             "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) submits the toggled member id in the PUT payload",
-            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) gives the assign row's label a full-width, pointer-cursor hit area (review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)",
-            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) excludes archived members from assignment choices"
+            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) excludes archived members from assignment choices",
+            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) gives the assign row's label a full-width, pointer-cursor hit area ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)"
           ],
           "tests/client/calendar-week-integration.test.tsx": [
             "CalendarView — Week integration keeps recurrence occurrences distinct and activates local/external and all-day events",
@@ -3212,11 +3236,10 @@
             "densityAttribute setDensity localStorage throwing on write still applies the attribute for this page life"
           ],
           "tests/client/density-control-shell-mount.test.tsx": [
-            "density control — real Shell mount (close-audit F1) renders the control from the Options menu on the default route, WITHOUT any admin unlock",
-            "density control — real Shell mount (close-audit F1) renders the control on a family route too (chores)"
+            "density control — real Shell mount intentionally hidden does not expose the density toggle from Options on the default route",
+            "density control — real Shell mount intentionally hidden does not expose the density toggle from Options on a family route either (/chores)"
           ],
           "tests/client/density-control.test.tsx": [
-            "DensityControl (FR-002/FR-002a) fresh device: empty localStorage + boot's applyStoredDensity renders unpressed/comfortable",
             "DensityControl (FR-002/FR-002a) persistence round-trip: tap -> kiosk persisted + attribute set; tap again -> comfortable + attribute removed",
             "DensityControl (FR-002/FR-002a) does not affect any other device — only writes THIS device's localStorage/attribute, never a network call",
             "DensityControl (FR-002/FR-002a) StatusToggle state-invariant accessible-name doctrine (#763): the accessible name never changes across a press, only aria-pressed and the visible action label do",
@@ -3224,10 +3247,11 @@
             "DensityControl (FR-002/FR-002a) localized labels (both locales) — awaited, the /api/settings race renders Spanish ('Modo kiosco' / 'Activar modo kiosco') once the settings fetch resolves",
             "DensityControl (FR-002/FR-002a) localized labels (both locales) — awaited, the /api/settings race Spanish, pressed: accessible name stays 'Modo kiosco', visible label flips to 'Desactivar modo kiosco'",
             "DensityControl (FR-002/FR-002a) kiosk-density census (SC-001, SC-002) — across both densities comfortable density: exactly one control, the toggle itself",
-            "DensityControl (FR-002/FR-002a) kiosk-density census (SC-001, SC-002) — across both densities kiosk density active: exactly one control, and it MEASURES COMPLIANT (built on Button/, token-clean by construction)",
             "DensityControl (FR-002/FR-002a) kiosk-density census (SC-001, SC-002) — across both densities DELIBERATE NEGATIVE — forcing the toggle below the kiosk minimum makes the assertion fail",
             "DensityControl — cross-tab synchronization (Codex review, FR-002 per-device) another tab's density change (a `storage` event) re-applies the attribute and updates the pressed state",
-            "DensityControl — cross-tab synchronization (Codex review, FR-002 per-device) an unrelated key's storage event does NOT touch density"
+            "DensityControl — cross-tab synchronization (Codex review, FR-002 per-device) an unrelated key's storage event does NOT touch density",
+            "DensityControl (FR-002/FR-002a) fresh device: empty localStorage + boot's applyStoredDensity() renders unpressed/comfortable",
+            "DensityControl (FR-002/FR-002a) kiosk-density census (SC-001, SC-002) — across both densities kiosk density active: exactly one control, and it MEASURES COMPLIANT (built on Button)"
           ],
           "tests/client/density-styles-helper.test.tsx": [
             "densityStyles helper unblocks assertKioskDensityCompliant under jsdom passes a real, class-styled Button (no inline styles) at kiosk density",
@@ -3298,7 +3322,6 @@
             "client logger omits `data` entirely when the caller didn't pass one",
             "client logger CLIENT-LOGGING-TELEMETRY-INV-02: at-most-once — a failed (rejecting) send is dropped, never re-queued",
             "client logger CLIENT-LOGGING-TELEMETRY-INV-02: a synchronously-throwing transport is also swallowed, never re-queued",
-            "client logger CLIENT-LOGGING-TELEMETRY-INV-01: log never throws into its caller, even when the console mirror or buffer machinery misbehaves",
             "client logger auto-flushes once the buffer reaches the 50-entry cap, without waiting for the 10s interval",
             "client logger does not auto-flush below the 50-entry cap",
             "client logger DEV console mirror: mirrors to console.* when import.meta.env.DEV is on",
@@ -3310,7 +3333,8 @@
             "client logger CLIENT-LOGGING-TELEMETRY-INV-01/-INV-02: unload flush never throws (P2-1/623 review) a cyclic `data` fails JSON.stringify on the unload path — the batch is dropped, no throw, no send attempt",
             "client logger CLIENT-LOGGING-TELEMETRY-INV-01/-INV-02: unload flush never throws (P2-1/623 review) a normal buffer still flushes via the unload path (sanity check around the P2-1 fix)",
             "client logger P3-1/623 review: the periodic-flush transport does NOT set fetch keepalive (a full 50-entry batch can exceed the ~64KB keepalive body cap)",
-            "client logger uses the runtime mount for periodic fetch and unload beacon telemetry"
+            "client logger uses the runtime mount for periodic fetch and unload beacon telemetry",
+            "client logger CLIENT-LOGGING-TELEMETRY-INV-01: log() never throws into its caller, even when the console mirror or buffer machinery misbehaves"
           ],
           "tests/client/meal-entry-dialog.test.tsx": [
             "MealEntryDialog keeps submit disabled with localized guidance until recipe or note content is present",
@@ -3390,9 +3414,9 @@
             "B1 shell boundary matches the reviewed complete family and admin route cohort",
             "B1 shell boundary keeps an unprovisioned direct admin route behind the gate without any request",
             "B1 shell boundary mounts the protected member shell after provisioning and keeps admin PIN locked",
-            "B1 shell boundary offers density and member admin navigation when the plugin catalog is unavailable",
             "B1 shell boundary renders an unknown family URL as a localized not-found surface",
-            "B1 shell boundary edits, archives and restores a member through the protected management UI"
+            "B1 shell boundary edits, archives and restores a member through the protected management UI",
+            "B1 shell boundary offers member admin navigation when the plugin catalog is unavailable"
           ],
           "tests/client/members-admin.test.tsx": [
             "MembersManagement — v1-like member workspace renders semantic-colour cards and opens create and edit dialogs",
@@ -3554,20 +3578,20 @@
             "PrintExecutor shows the printing state while a claimed job is mid-transmit",
             "PrintExecutor scripted transport failure calls /fail with the lease token and NEVER calls /ack",
             "PrintExecutor transitions to disconnected + shows the re-pair affordance when the transport reports a dropped connection",
-            "PrintExecutor stays unpaired and surfaces the error when pair itself fails",
             "PrintExecutor DEFAULT_POLL_INTERVAL_MS is 15 seconds",
             "PrintExecutor the payload request URL carries the claim's leaseToken (lease-token fencing, P1-3a)",
             "PrintExecutor the ack body's leaseToken matches the claim's token, and rotates across a re-claim (P1-3b)",
             "PrintExecutor a network-level ack failure after a SUCCESSFUL transmit does NOT call /fail (SC-002, P1-2)",
             "PrintExecutor overlapping-tick guard: a printJob spanning two poll intervals fires only ONE /claim (P2-7c)",
-            "PrintExecutor P2-3: disconnects the transport if capability registration fails right after a successful pair",
             "PrintExecutor FOLD-1(a): transmit ok + ack network failure → next tick issues /ack with the SAME token and NO /claim",
             "PrintExecutor FOLD-1(b): a retried ack that succeeds clears pendingAck/error, with no duplicate print and no /fail",
             "PrintExecutor FOLD-1(c): an ack retry that gets 409 drops pendingAck, and the NEXT tick claims normally",
             "PrintExecutor FOLD-2(d): a scripted onDisconnect event transitions to disconnected without any write",
             "PrintExecutor FOLD-2(e): transport not-ready at a poll tick fires zero /claim and transitions to disconnected",
             "PrintExecutor prints newly queued work immediately without a polling tick",
-            "PrintExecutor retains a queue wakeup received while a claim is in flight"
+            "PrintExecutor retains a queue wakeup received while a claim is in flight",
+            "PrintExecutor stays unpaired and surfaces the error when pair() itself fails",
+            "PrintExecutor P2-3: disconnects the transport if capability registration fails right after a successful pair()"
           ],
           "tests/client/printing-i18n-parity.test.ts": [
             "printing-i18n-parity every printing key in en exists in es",
@@ -3816,7 +3840,8 @@
             "Shell — stale mp_provisioned marker recovery (FR-013) stays provisioned when the authenticated call succeeds",
             "ProvisioningScreen — action exists calls onProvision with the key when the button is clicked",
             "ProvisioningScreen — action exists disables the button when no key is entered",
-            "ProvisioningScreen — action exists shows the one localized, friendly error copy when the error flag is set (FR-019 — no raw fetch/Error detail is ever rendered)"
+            "ProvisioningScreen — action exists shows the one localized, friendly error copy when the error flag is set (FR-019 — no raw fetch/Error detail is ever rendered)",
+            "Shell — unprovisioned gate opens admin immediately when the local PIN bypass flag is enabled"
           ],
           "tests/client/status-toggle.test.tsx": [
             "StatusToggle wires aria-pressed to the pressed prop",
@@ -3845,12 +3870,12 @@
             "telemetry producers global error/unhandledrejection capture (FR-008) a bare resource-load Event (not an ErrorEvent) is ignored (P3-2/623 review)",
             "telemetry producers global error/unhandledrejection capture (FR-008) an unhandled promise rejection becomes a client.global/error entry with a stable message and the raw text in data (INV-03 pattern)",
             "telemetry producers global error/unhandledrejection capture (FR-008) a non-Error rejection reason is stringified into data.message rather than throwing",
-            "telemetry producers i18n missing-key producer (FR-009/AC-08, research D6) CLIENT-LOGGING-TELEMETRY-AC-08/CLIENT-LOGGING-TELEMETRY-INV-13: useT outside a provider (englishFallback path) logs warn/i18n/missing_key with `translationId`, never `key`",
-            "telemetry producers i18n missing-key producer (FR-009/AC-08, research D6) CLIENT-LOGGING-TELEMETRY-AC-08/CLIENT-LOGGING-TELEMETRY-INV-13: useT inside LanguageProvider (the `messages[language][key] ?? messages.en[key]` branch) also logs, with the provider's language",
             "telemetry producers i18n missing-key producer (FR-009/AC-08, research D6) seen-set: the same missing key only fires once per session, but a different key fires again",
             "telemetry producers i18n missing-key producer (FR-009/AC-08, research D6) a key that resolves normally never logs",
             "telemetry producers ingest round-trip: translationId survives the real redact pipeline (Codex F6) a payload keyed `translationId` is stored verbatim, not redacted",
-            "telemetry producers ingest round-trip: translationId survives the real redact pipeline (Codex F6) regression pin: the SAME identifier under a property literally named `key` WOULD be redacted — that's why the producer uses `translationId`"
+            "telemetry producers ingest round-trip: translationId survives the real redact pipeline (Codex F6) regression pin: the SAME identifier under a property literally named `key` WOULD be redacted — that's why the producer uses `translationId`",
+            "telemetry producers i18n missing-key producer (FR-009/AC-08, research D6) CLIENT-LOGGING-TELEMETRY-AC-08/CLIENT-LOGGING-TELEMETRY-INV-13: useT() outside a provider (englishFallback path) logs warn/i18n/missing_key with `translationId`, never `key`",
+            "telemetry producers i18n missing-key producer (FR-009/AC-08, research D6) CLIENT-LOGGING-TELEMETRY-AC-08/CLIENT-LOGGING-TELEMETRY-INV-13: useT() inside LanguageProvider (the `messages[language][key] ?? messages.en[key]` branch) also logs, with the provider's language"
           ],
           "tests/client/time-announcements-engine.test.ts": [
             "computeNext (TIME-ANNOUNCEMENTS-INV-01, TIME-ANNOUNCEMENTS-AC-03) null when there are no rules",
@@ -3933,7 +3958,7 @@
             "time-announcements phrase builders representative generic minutes (INV-09 — never silence-crashes on any valid hour/minute) en: generic minutes read literally as hour + digital-style minute",
             "time-announcements phrase builders representative generic minutes (INV-09 — never silence-crashes on any valid hour/minute) both locales cover all 24 hours x 60 minutes without throwing",
             "time-announcements phrase builders missing-es-key fallback (FR-010 edge case: never throws) phraseText falls back to the en text when the es catalog is missing a key",
-            "time-announcements phrase builders interpolate — the module's only templating helper substitutes named tokens and leaves an unknown token untouched"
+            "time-announcements phrase builders interpolate() — the module's only templating helper substitutes named tokens and leaves an unknown token untouched"
           ],
           "tests/client/time-announcements-service.test.tsx": [
             "AnnouncementService TIME-ANNOUNCEMENTS-AC-03/INV-01: fires at the armed minute in HOUSEHOLD tz even when it differs from the jsdom default (Pacific/Kiritimati, UTC+14, vs UTC)",
@@ -3957,9 +3982,9 @@
           ],
           "tests/client/time-announcements-shell-mount.test.tsx": [
             "time-announcements service — real Shell mount mounts and fetches its rules on the admin-gated default branch",
-            "time-announcements service — real Shell mount mounts and fetches its rules on a family route too (chores)",
             "time-announcements service — real Shell mount does not mount while inactive and leaves core shell requests usable",
-            "time-announcements service — real Shell mount uses explicit plugin metadata instead of a component runtime name"
+            "time-announcements service — real Shell mount uses explicit plugin metadata instead of a component runtime name",
+            "time-announcements service — real Shell mount mounts and fetches its rules on a family route too (/chores)"
           ],
           "tests/client/time-announcements-speech.test.ts": [
             "time-announcements speech TIME-ANNOUNCEMENTS-INV-09/I18N-LOCALIZATION-INV-11: utterance.lang is ALWAYS the household locale, matching voice present -> no miss logged",
@@ -4216,10 +4241,10 @@
             "backups end-to-end smoke (real app: snapshot -> list) POST /api/backups/snapshot then GET /api/backups shows the created file, and member reads stay green",
             "backups end-to-end smoke (real app: snapshot -> list) GET /api/backups with no authenticated key at all is rejected fail-closed (401, authBoundary)",
             "backups end-to-end smoke (real app: snapshot -> list) GET /api/backups with an authenticated key lacking backups:admin is rejected fail-closed (403, capability seam)",
-            "createSnapshot reverse guard (review #638 P3-6) refuses an EXTERNAL snapshot attempt (scheduled/manual) while a restore is in progress",
-            "createSnapshot reverse guard (review #638 P3-6) does NOT refuse the restore engine's OWN pre-restore call — the self-exemption (type !== \"pre-restore\") — even while restoreInProgress is set",
-            "createSnapshot reverse guard (review #638 P3-6) a manual snapshot-now request over HTTP is refused with 409 restore_in_progress while a restore is in progress",
-            "POST /api/backups/snapshot — write-failure envelope (F7, review #636/#637) F7: an injected write failure surfaces as a 500 typed against BackupErrorCode ({error: 'backup_failed', message}), not an ad hoc envelope"
+            "POST /api/backups/snapshot — write-failure envelope (F7, review #636/#637) F7: an injected write failure surfaces as a 500 typed against BackupErrorCode ({error: 'backup_failed', message}), not an ad hoc envelope",
+            "createSnapshot reverse guard refuses an EXTERNAL snapshot attempt (scheduled/manual) while a restore is in progress",
+            "createSnapshot reverse guard does NOT refuse the restore engine's OWN pre-restore call — the self-exemption (type !== \"pre-restore\") — even while restoreInProgress is set",
+            "createSnapshot reverse guard a manual snapshot-now request over HTTP is refused with 409 restore_in_progress while a restore is in progress"
           ],
           "tests/integration/bootstrap-provision.test.ts": [
             "bootstrap-provision — env-only flow via reconciliation (regression #89) reconcileBootstrap() + POST /api/auth/provision with MP_BOOTSTRAP_KEY only (no manual INSERT) → 200, device cookie set, body has no raw key"
@@ -4482,7 +4507,6 @@
             "daily briefing current baseline provides the current schema, defaults, and direct readback"
           ],
           "tests/integration/daily-briefing-regen.test.ts": [
-            "daily-briefing regeneration + supersede + printed-status (research D4/D11, FR-002/003/004/005/007) Constitution XIV probe — better-sqlite3 nested db.transaction composes via SAVEPOINT commits together and rolls back together, empirically",
             "daily-briefing regeneration + supersede + printed-status (research D4/D11, FR-002/003/004/005/007) regeneration preserves the briefing ID, cancels the in-flight job, bumps the generation, and enqueues nothing itself (FR-002/003/004)",
             "daily-briefing regeneration + supersede + printed-status (research D4/D11, FR-002/003/004/005/007) PROBE-5 (review fold P2-1): regeneration clears a POPULATED print cache — the prior test never actually populated it",
             "daily-briefing regeneration + supersede + printed-status (research D4/D11, FR-002/003/004/005/007) PROBE-4 (review fold P2-2): a stale-generation cache is ignored — read re-derives from the CURRENT generation, not the cache",
@@ -4493,7 +4517,8 @@
             "daily-briefing regeneration + supersede + printed-status (research D4/D11, FR-002/003/004/005/007) dropped printing.completed event: read recovers printedStatus via the Printing query, then self-heals the cache (FR-005/AC-04)",
             "daily-briefing regeneration + supersede + printed-status (research D4/D11, FR-002/003/004/005/007) the real ack path (claim -> ack) emits printing.completed and the subscriber updates the cache (batch-C precedent)",
             "daily-briefing regeneration + supersede + printed-status (research D4/D11, FR-002/003/004/005/007) printing inactive => printedStatus is 'unavailable', not 'none' or an error (FR-007/AC-11)",
-            "daily-briefing regeneration + supersede + printed-status (research D4/D11, FR-002/003/004/005/007) printing active but never enqueued => printedStatus is 'none'"
+            "daily-briefing regeneration + supersede + printed-status (research D4/D11, FR-002/003/004/005/007) printing active but never enqueued => printedStatus is 'none'",
+            "daily-briefing regeneration + supersede + printed-status (research D4/D11, FR-002/003/004/005/007) Constitution XIV probe — better-sqlite3 nested db.transaction() composes via SAVEPOINT commits together and rolls back together, empirically"
           ],
           "tests/integration/daily-briefing-render-defs.test.ts": [
             "daily-briefing render-defs — per-type render through the real bridge type \"message\" renders: raster produced, absent from unrendered AND failed lists",
@@ -4541,25 +4566,25 @@
           ],
           "tests/integration/daily-briefing-schedule.test.ts": [
             "daily-briefing scheduled generation (US4 — research D10) main pass — household-tz wall clock, never server-local (v1 gotcha #15) BACKGROUND-JOBS-SCHEDULER-AC-03 / DAILY-BRIEFING-AC-10: fires at 06:00 Europe/Madrid regardless of a mismatched server OS timezone",
-            "daily-briefing scheduled generation (US4 — research D10) startup catch-up (DAILY-BRIEFING-AC-10) — main pass only start before 06:00 — zero rows until the hour",
-            "daily-briefing scheduled generation (US4 — research D10) startup catch-up (DAILY-BRIEFING-AC-10) — main pass only start past 06:00 with zero rows — catch-up generates today",
             "daily-briefing scheduled generation (US4 — research D10) startup catch-up (DAILY-BRIEFING-AC-10) — main pass only a row already present before 06:00 blocks catch-up",
             "daily-briefing scheduled generation (US4 — research D10) retry passes (research D10/FR-021) — regenerate only survivor-failure rows regenerates a partial/failed/render-failed row and leaves a ready row untouched",
             "daily-briefing scheduled generation (US4 — research D10) retry passes (research D10/FR-021) — regenerate only survivor-failure rows a retry pass with no survivor-failure rows for the date is a harmless no-op",
             "daily-briefing scheduled generation (US4 — research D10) re-arm on generation_time change (Codex #693 fold, research D10) changing generationTime via the real settings write moves the OBSERVABLE next firing",
             "daily-briefing scheduled generation (US4 — research D10) re-arm on generation_time change (Codex #693 fold, research D10) a settings write that leaves generationTime unchanged does not disturb the schedule",
             "daily-briefing scheduled generation (US4 — research D10) re-arm on generation_time change (Codex #693 fold, research D10) Codex P2 fold (PR #713): a write that changes ONLY autoPrintTrigger still re-arms when the pre-write effective time came SOLELY from the legacy settings_objects placeholder",
-            "daily-briefing scheduled generation (US4 — research D10) kill-switch parity (SCHEDULER_DISABLED posture — registered but never started) nothing fires — no scheduled pass, no retry, no catch-up — when start is never called"
+            "daily-briefing scheduled generation (US4 — research D10) startup catch-up (DAILY-BRIEFING-AC-10) — main pass only start() before 06:00 — zero rows until the hour",
+            "daily-briefing scheduled generation (US4 — research D10) startup catch-up (DAILY-BRIEFING-AC-10) — main pass only start() past 06:00 with zero rows — catch-up generates today",
+            "daily-briefing scheduled generation (US4 — research D10) kill-switch parity (SCHEDULER_DISABLED posture — registered but never started) nothing fires — no scheduled pass, no retry, no catch-up — when start() is never called"
           ],
           "tests/integration/daily-briefing-scheduled.test.ts": [
             "daily-briefing scheduled generation + catch-up (US1) BACKGROUND-JOBS-SCHEDULER-INV-05: reads are pure — a read does not generate",
             "daily-briefing scheduled generation + catch-up (US1) BACKGROUND-JOBS-SCHEDULER-AC-03: clock advanced past 06:00 household-local — rows exist for opted-in members only",
-            "daily-briefing scheduled generation + catch-up (US1) BACKGROUND-JOBS-SCHEDULER-AC-04 / DAILY-BRIEFING-AC-10: start past 06:00 with zero rows — catch-up generates TODAY only, no backfill",
-            "daily-briefing scheduled generation + catch-up (US1) BACKGROUND-JOBS-SCHEDULER-AC-04: start before 06:00 — zero rows until the hour",
             "daily-briefing scheduled generation + catch-up (US1) BACKGROUND-JOBS-SCHEDULER-AC-04: a row already present before 06:00 blocks catch-up; the scheduled fire refreshes it in place (stable id, zero duplicates)",
             "daily-briefing scheduled generation + catch-up (US1) BACKGROUND-JOBS-SCHEDULER-AC-04 / DAILY-BRIEFING-AC-10: PARTIAL rows — catch-up fires and the missing member gains a row",
             "daily-briefing scheduled generation + catch-up (US1) DST transition day — exactly one fire, both directions (research D2) BACKGROUND-JOBS-SCHEDULER-INV-04: fall-back repeated local hour (Europe/Madrid 2026-10-25) fires once, not twice",
-            "daily-briefing scheduled generation + catch-up (US1) DST transition day — exactly one fire, both directions (research D2) BACKGROUND-JOBS-SCHEDULER-INV-04: spring-forward gap (Europe/Madrid 2026-03-29) fires exactly once at the first valid instant after the gap"
+            "daily-briefing scheduled generation + catch-up (US1) DST transition day — exactly one fire, both directions (research D2) BACKGROUND-JOBS-SCHEDULER-INV-04: spring-forward gap (Europe/Madrid 2026-03-29) fires exactly once at the first valid instant after the gap",
+            "daily-briefing scheduled generation + catch-up (US1) BACKGROUND-JOBS-SCHEDULER-AC-04 / DAILY-BRIEFING-AC-10: start() past 06:00 with zero rows — catch-up generates TODAY only, no backfill",
+            "daily-briefing scheduled generation + catch-up (US1) BACKGROUND-JOBS-SCHEDULER-AC-04: start() before 06:00 — zero rows until the hour"
           ],
           "tests/integration/daily-briefing-skeleton.test.ts": [
             "daily-briefing skeleton — render -> store -> enqueue -> claim -> payload renders a fixture envelope, packs + stores the raster, and the real 018 pipeline serves it",
@@ -4617,29 +4642,29 @@
             "network-devices UniFi client — real TLS dispatcher (issue #665) same live fixture server: tlsInsecure:true resolves, tlsInsecure:false rejects — proves the negative result is a genuine TLS-trust failure, not a dead port"
           ],
           "tests/integration/network-devices-poller.test.ts": [
-            "network-devices poller + block honesty — pollOnce — controller states never conflated controller unconfigured (getUniFiClient -> null): cache state 'unconfigured', ZERO registry writes",
-            "network-devices poller + block honesty — pollOnce — controller states never conflated controller rejected: cache lastError distinguishes 'rejected', registry untouched (P1-2)",
-            "network-devices poller + block honesty — pollOnce — controller states never conflated controller unreachable: distinct lastError from rejected, registry untouched, last-good retained on a later failure (P1-2)",
-            "network-devices poller + block honesty — pollOnce — controller states never conflated poll failure retains last-good cache entries — a healthy poll then an outage never wipes the cache",
-            "network-devices poller + block honesty — pollOnce — controller states never conflated P1 (Codex #660 / fix #671): an HTTP-401 failure through the REAL client -> poll failure semantics (last-good retained, lastError set), NEVER a false freshEmpty success",
-            "network-devices poller + block honesty — pollOnce — lastSeenAt stamping stamps lastSeenAt = now for REGISTERED macs present in the fresh result, leaves absent macs untouched",
-            "network-devices poller + block honesty — pollOnce — lastSeenAt stamping a MAC present in the poll result but NOT registered creates NO row (poller never creates registrations)",
-            "network-devices poller + block honesty — pollOnce — reconcile corrects a divergent believed-unblocked row to blocked=true (controller is authoritative) and clears beliefDivergedAt",
-            "network-devices poller + block honesty — pollOnce — reconcile never mutates a registered device absent from this poll's result (offline device stays as-is)",
-            "network-devices poller + block honesty — pollOnce — reconcile reconcile never creates or deletes registrations — only UPDATEs existing rows",
-            "network-devices poller + block honesty — block/unblock — controller honesty block: controller call happens, mirror follows, event emitted with closed payload",
-            "network-devices poller + block honesty — block/unblock — controller honesty unblock: symmetric — controller call, mirror, event",
-            "network-devices poller + block honesty — block/unblock — controller honesty P1 (Codex #660): a legacy 200-envelope failure through the REAL client on block -> throws, NOTHING mirrored, no event",
-            "network-devices poller + block honesty — block/unblock — controller honesty controller unconfigured -> a DISTINCT unavailable error, nothing mirrored",
-            "network-devices poller + block honesty — block/unblock — controller honesty controller rejected -> error, NOTHING mirrored",
-            "network-devices poller + block honesty — block/unblock — controller honesty controller unreachable -> error, NOTHING mirrored",
-            "network-devices poller + block honesty — block/unblock — controller honesty naive re-send (ADR-053 §2): blocking an already-blocked device re-sends to the controller with NO short-circuit guard",
-            "network-devices poller + block honesty — block/unblock — controller honesty controller success + mirror-write failure -> beliefDivergedAt visible, no throw -> next poll converges AND confirms isBlocked from the poll source",
-            "network-devices poller + block honesty — block/unblock — controller honesty P2-4 double fault: BOTH the mirror write AND the divergence-flag fallback write fail — still no throw, and the next poll still converges",
-            "network-devices poller + block honesty — block/unblock — controller honesty P2-4: a failed read-back after a SUCCESSFUL mirror write does not throw — falls back to a best-effort reconstructed response",
-            "network-devices poller + block honesty — block/unblock — controller honesty P2 (Codex #660): BOTH the mirror write AND the member-label lookup fail — block still resolves, the controller action is not retried",
-            "network-devices poller + block honesty — registerNetworkDevicesPollerJob — registration mechanics registers under NETWORK_DEVICES_POLL_JOB_ID with an interval trigger, and runJobNow drives a real poll",
-            "network-devices poller + block honesty — registerNetworkDevicesPollerJob — registration mechanics P2-3: wireNetworkDevicesCache installs a REAL cache accessor even when the poller job is NEVER registered — the SCHEDULER_DISABLED=1 shape"
+            "network-devices poller + block honesty pollOnce — controller states never conflated controller unconfigured (getUniFiClient() -> null): cache state 'unconfigured', ZERO registry writes",
+            "network-devices poller + block honesty pollOnce — controller states never conflated controller rejected: cache lastError distinguishes 'rejected', registry untouched (P1-2)",
+            "network-devices poller + block honesty pollOnce — controller states never conflated controller unreachable: distinct lastError from rejected, registry untouched, last-good retained on a later failure (P1-2)",
+            "network-devices poller + block honesty pollOnce — controller states never conflated poll failure retains last-good cache entries — a healthy poll then an outage never wipes the cache",
+            "network-devices poller + block honesty pollOnce — controller states never conflated P1 (Codex #660 / fix #671): an HTTP-401 failure through the REAL client -> poll failure semantics (last-good retained, lastError set), NEVER a false freshEmpty success",
+            "network-devices poller + block honesty pollOnce — lastSeenAt stamping stamps lastSeenAt = now for REGISTERED macs present in the fresh result, leaves absent macs untouched",
+            "network-devices poller + block honesty pollOnce — lastSeenAt stamping a MAC present in the poll result but NOT registered creates NO row (poller never creates registrations)",
+            "network-devices poller + block honesty pollOnce — reconcile corrects a divergent believed-unblocked row to blocked=true (controller is authoritative) and clears beliefDivergedAt",
+            "network-devices poller + block honesty pollOnce — reconcile never mutates a registered device absent from this poll's result (offline device stays as-is)",
+            "network-devices poller + block honesty pollOnce — reconcile reconcile never creates or deletes registrations — only UPDATEs existing rows",
+            "network-devices poller + block honesty block/unblock — controller honesty block: controller call happens, mirror follows, event emitted with closed payload",
+            "network-devices poller + block honesty block/unblock — controller honesty unblock: symmetric — controller call, mirror, event",
+            "network-devices poller + block honesty block/unblock — controller honesty P1 (Codex #660): a legacy 200-envelope failure through the REAL client on block() -> throws, NOTHING mirrored, no event",
+            "network-devices poller + block honesty block/unblock — controller honesty controller unconfigured -> a DISTINCT unavailable error, nothing mirrored",
+            "network-devices poller + block honesty block/unblock — controller honesty controller rejected -> error, NOTHING mirrored",
+            "network-devices poller + block honesty block/unblock — controller honesty controller unreachable -> error, NOTHING mirrored",
+            "network-devices poller + block honesty block/unblock — controller honesty naive re-send (ADR-053 §2): blocking an already-blocked device re-sends to the controller with NO short-circuit guard",
+            "network-devices poller + block honesty block/unblock — controller honesty controller success + mirror-write failure -> beliefDivergedAt visible, no throw -> next poll converges AND confirms isBlocked from the poll source",
+            "network-devices poller + block honesty block/unblock — controller honesty P2-4 double fault: BOTH the mirror write AND the divergence-flag fallback write fail — still no throw, and the next poll still converges",
+            "network-devices poller + block honesty block/unblock — controller honesty P2-4: a failed read-back after a SUCCESSFUL mirror write does not throw — falls back to a best-effort reconstructed response",
+            "network-devices poller + block honesty block/unblock — controller honesty P2 (Codex #660): BOTH the mirror write AND the member-label lookup fail — block() still resolves, the controller action is not retried",
+            "network-devices poller + block honesty registerNetworkDevicesPollerJob — registration mechanics registers under NETWORK_DEVICES_POLL_JOB_ID with an interval trigger, and runJobNow drives a real poll",
+            "network-devices poller + block honesty registerNetworkDevicesPollerJob — registration mechanics P2-3: wireNetworkDevicesCache() installs a REAL cache accessor even when the poller job is NEVER registered — the SCHEDULER_DISABLED=1 shape"
           ],
           "tests/integration/plugin-absence-tolerance.test.ts": [
             "Daily Briefing peer absence tolerance omits only weather content when the peer is inactive",
@@ -4651,10 +4676,10 @@
             "Daily Briefing peer absence tolerance allows Daily Briefing to activate and generate before peers, then consumes them after independent activation"
           ],
           "tests/integration/plugin-backups-boundary.test.ts": [
-            "Backups plugin boundary (FR-019) blocks scheduled and manual product job claims while Backups is inactive",
-            "Backups plugin boundary (FR-019) makes every ordinary Backups management route unavailable while inactive",
-            "Backups plugin boundary (FR-019) keeps pre-snapshot, restore validation, integrity/read smoke, and restore execution below lifecycle",
-            "Backups plugin boundary (FR-019) catalogs only optional Backups contributions and never presents host safety controls as disabled services"
+            "Backups plugin boundary blocks scheduled and manual product job claims while Backups is inactive",
+            "Backups plugin boundary makes every ordinary Backups management route unavailable while inactive",
+            "Backups plugin boundary keeps pre-snapshot, restore validation, integrity/read smoke, and restore execution below lifecycle",
+            "Backups plugin boundary catalogs only optional Backups contributions and never presents host safety controls as disabled services"
           ],
           "tests/integration/plugin-compatibility.test.ts": [
             "plugin lifecycle compatibility matrix fresh-empty: records immutable fresh lineage and exactly nine inactive rows without inference",
@@ -4746,7 +4771,6 @@
             "scheduler core (research D1/D3/D4/D5/D7) guard collisions BACKGROUND-JOBS-SCHEDULER-AC-01: a wall-clock fire colliding with an in-flight manual run is coalesced — exactly one deferred run executes on release",
             "scheduler core (research D1/D3/D4/D5/D7) BACKGROUND-JOBS-SCHEDULER-INV-01 / INV-02: interval re-arms only after completion — a slow run is never double-fired by its own cadence",
             "scheduler core (research D1/D3/D4/D5/D7) wall-clock fire + DST re-arm (real nextOccurrenceInTz, Europe/Madrid fall-back 2026-10-25) BACKGROUND-JOBS-SCHEDULER-INV-01: fires once at the first occurrence and re-arms to the next household-local DATE, never a same-day repeat",
-            "scheduler core (research D1/D3/D4/D5/D7) catch-up sweep (research D5) BACKGROUND-JOBS-SCHEDULER-AC-04: household-local now past `at` AND isMissed(today) → fires once on start",
             "scheduler core (research D1/D3/D4/D5/D7) catch-up sweep (research D5) BACKGROUND-JOBS-SCHEDULER-AC-04: household-local now before `at` → no catch-up fire even when isMissed is true",
             "scheduler core (research D1/D3/D4/D5/D7) catch-up sweep (research D5) BACKGROUND-JOBS-SCHEDULER-AC-04: household-local now past `at` but isMissed is false (output already present) → no catch-up fire",
             "scheduler core (research D1/D3/D4/D5/D7) isActive predicate gates every trigger kind (FR-011) BACKGROUND-JOBS-SCHEDULER-AC-07: isActive=false blocks interval ticks, wall-clock fires, manual runs, and catch-up",
@@ -4754,18 +4778,19 @@
             "scheduler core (research D1/D3/D4/D5/D7) error containment (FR-008 / INV-06) #633 follow-up: a MANUAL runJobNow call whose action throws resolves {status:\"failed\", error} — never rejects, never silently resolves completed/undefined",
             "scheduler core (research D1/D3/D4/D5/D7) error containment (FR-008 / INV-06) #633 follow-up: an interval/wall-clock fire whose action throws is unaffected — it still resolves undefined to its own caller, never a {status:\"failed\"} result",
             "scheduler core (research D1/D3/D4/D5/D7) lastRunAt recorded on success BACKGROUND-JOBS-SCHEDULER-INV-01: lastRunAt reflects the completion instant",
-            "scheduler core (research D1/D3/D4/D5/D7) shutdown & lifecycle (research D7) BACKGROUND-JOBS-SCHEDULER-INV-07: stop drains in-flight work, is idempotent (double-stop safe), and a trigger racing stop never starts a run",
-            "scheduler core (research D1/D3/D4/D5/D7) coalesced continuation re-checks its gates on release (review B2) BACKGROUND-JOBS-SCHEDULER-INV-02 / INV-07: a wall-clock fire coalesced behind an in-flight manual run does NOT execute once stop has begun before the guard releases",
             "scheduler core (research D1/D3/D4/D5/D7) coalesced continuation re-checks its gates on release (review B2) BACKGROUND-JOBS-SCHEDULER-AC-07: a wall-clock fire coalesced behind an in-flight run does NOT execute once isActive flips false before the guard releases",
             "scheduler core (research D1/D3/D4/D5/D7) coalesced continuation re-checks its gates on release (review B2) BACKGROUND-JOBS-SCHEDULER-INV-07: a wall-clock fire coalesced behind an in-flight run does NOT execute once the job's own stop handle disposes it before the guard releases",
-            "scheduler core (research D1/D3/D4/D5/D7) wall-clock re-arm anchors to the fired target under clock skew (hardening nit 1) BACKGROUND-JOBS-SCHEDULER-INV-04: re-arming never targets an instant at or before the target that just fired, even if deps.now reads slightly behind it",
             "scheduler core (research D1/D3/D4/D5/D7) module singleton double-init guard (hardening nit 2) initScheduler throws on double-init while the previous instance is live, but allows re-init once it has fully stopped",
-            "scheduler core (research D1/D3/D4/D5/D7) restart (PR-B review P1-4 — restore-quiesce re-arm) does NOT skip the pending wall-clock occurrence stop interrupted, regardless of time of day",
-            "scheduler core (research D1/D3/D4/D5/D7) restart (PR-B review P1-4 — restore-quiesce re-arm) runs the SAME startup catch-up sweep start runs — a restore can install an older DB, making a missed backup MORE likely, not less",
-            "scheduler core (research D1/D3/D4/D5/D7) restart (PR-B review P1-4 — restore-quiesce re-arm) P2-5: a job genuinely resumes firing after stop -> restart, not merely re-armed at the state level",
-            "scheduler core (research D1/D3/D4/D5/D7) restart (PR-B review P1-4 — restore-quiesce re-arm) is a no-op when the scheduler was never stopped (only meaningful after a full stop)",
-            "scheduler core (research D1/D3/D4/D5/D7) restart (PR-B review P1-4 — restore-quiesce re-arm) #633 P2-1: a scheduler that was never started (SCHEDULER_DISABLED=1 posture) stays inert through a stop+restart cycle — restart must not be the FIRST arm",
-            "scheduler core (research D1/D3/D4/D5/D7) restart (PR-B review P1-4 — restore-quiesce re-arm) Codex P2 on #676: a never-started scheduler's stop+restart cycle returns to a manual-ready state — a SUBSEQUENT manual runJobNow call still completes, never wedged at already_running"
+            "scheduler core (research D1/D3/D4/D5/D7) catch-up sweep (research D5) BACKGROUND-JOBS-SCHEDULER-AC-04: household-local now past `at` AND isMissed(today) → fires once on start()",
+            "scheduler core (research D1/D3/D4/D5/D7) shutdown & lifecycle (research D7) BACKGROUND-JOBS-SCHEDULER-INV-07: stop() drains in-flight work, is idempotent (double-stop safe), and a trigger racing stop never starts a run",
+            "scheduler core (research D1/D3/D4/D5/D7) coalesced continuation re-checks its gates on release (review B2) BACKGROUND-JOBS-SCHEDULER-INV-02 / INV-07: a wall-clock fire coalesced behind an in-flight manual run does NOT execute once stop() has begun before the guard releases",
+            "scheduler core (research D1/D3/D4/D5/D7) wall-clock re-arm anchors to the fired target under clock skew (hardening nit 1) BACKGROUND-JOBS-SCHEDULER-INV-04: re-arming never targets an instant at or before the target that just fired, even if deps.now() reads slightly behind it",
+            "scheduler core (research D1/D3/D4/D5/D7) restart (PR-B review P1-4 — restore-quiesce re-arm) does NOT skip the pending wall-clock occurrence stop() interrupted, regardless of time of day",
+            "scheduler core (research D1/D3/D4/D5/D7) restart (PR-B review P1-4 — restore-quiesce re-arm) runs the SAME startup catch-up sweep start() runs — a restore can install an older DB, making a missed backup MORE likely, not less",
+            "scheduler core (research D1/D3/D4/D5/D7) restart (PR-B review P1-4 — restore-quiesce re-arm) P2-5: a job genuinely resumes firing after stop() -> restart(), not merely re-armed at the state level",
+            "scheduler core (research D1/D3/D4/D5/D7) restart (PR-B review P1-4 — restore-quiesce re-arm) is a no-op when the scheduler was never stopped (only meaningful after a full stop())",
+            "scheduler core (research D1/D3/D4/D5/D7) restart (PR-B review P1-4 — restore-quiesce re-arm) #633 P2-1: a scheduler that was never start()ed (SCHEDULER_DISABLED=1 posture) stays inert through a stop()+restart() cycle — restart() must not be the FIRST arm",
+            "scheduler core (research D1/D3/D4/D5/D7) restart (PR-B review P1-4 — restore-quiesce re-arm) Codex P2 on #676: a never-started scheduler's stop()+restart() cycle returns to a manual-ready state — a SUBSEQUENT manual runJobNow call still completes, never wedged at already_running"
           ],
           "tests/integration/seed-calendar.test.ts": [
             "Calendar demo seed integration runs through the seed runner and exposes only masked source URLs",
@@ -4806,12 +4831,12 @@
           ],
           "tests/integration/telemetry-prune.test.ts": [
             "telemetry retention prune (research D7) CLIENT-LOGGING-TELEMETRY-AC-04: zero-ingest fixture pruning an empty table returns 0 and never throws",
-            "telemetry retention prune (research D7) CLIENT-LOGGING-TELEMETRY-AC-04: zero-ingest fixture agedClientLogRowsExist is false on an empty table",
             "telemetry retention prune (research D7) CLIENT-LOGGING-TELEMETRY-INV-09: strictly-older-than-cutoff deletion a row exactly AT the boundary instant (received_at === cutoff) survives",
             "telemetry retention prune (research D7) CLIENT-LOGGING-TELEMETRY-INV-09: strictly-older-than-cutoff deletion a row strictly older than the retention window is deleted; a fresh row survives alongside it",
             "telemetry retention prune (research D7) CLIENT-LOGGING-TELEMETRY-INV-09: strictly-older-than-cutoff deletion idempotent re-run: a second prune at the same frozen instant deletes nothing further",
             "telemetry retention prune (research D7) real registration path — runJobNow(\"telemetry.prune\") CLIENT-LOGGING-TELEMETRY-AC-04/-INV-09: prunes aged rows and keeps fresh rows through the actual registered scheduler job",
-            "telemetry retention prune (research D7) real registration path — runJobNow(\"telemetry.prune\") re-running the real registered job after a prune completes without deleting anything further"
+            "telemetry retention prune (research D7) real registration path — runJobNow(\"telemetry.prune\") re-running the real registered job after a prune completes without deleting anything further",
+            "telemetry retention prune (research D7) CLIENT-LOGGING-TELEMETRY-AC-04: zero-ingest fixture agedClientLogRowsExist() is false on an empty table"
           ]
         }
       },
@@ -4834,8 +4859,8 @@
             "6e307c787cbb131b0797-74845cb4f4c2271944b6"
           ],
           "tests/e2e/calendar-feed-sync.spec.ts": [
-            "ad4a985f07a45a65109d-c212ebd4871ad7d4aebd",
-            "ad4a985f07a45a65109d-cf50ca17c6ca83ed5e60"
+            "ad4a985f07a45a65109d-b11f1438f608d122b32f",
+            "ad4a985f07a45a65109d-8f30ced9f983d3df1491"
           ],
           "tests/e2e/calendar.spec.ts": ["fd11a3d0e6100edc747e-74db3b02bb030c6999ab"],
           "tests/e2e/chores-board.spec.ts": [
@@ -4846,7 +4871,7 @@
           "tests/e2e/daily-briefing.spec.ts": [
             "86839c4e71e65f7dc2a3-aa86899c234dd598acdd",
             "86839c4e71e65f7dc2a3-e4393fb7a8648d313a5e",
-            "86839c4e71e65f7dc2a3-3c584cb45565dfe5cdec"
+            "86839c4e71e65f7dc2a3-da5cab8905813c4e7781"
           ],
           "tests/e2e/daily-messages.spec.ts": ["84aeea7f0cfc163093f1-f7a8bf8818add9ed3690"],
           "tests/e2e/database-lifecycle-recovery.spec.ts": [
@@ -4857,7 +4882,7 @@
           ],
           "tests/e2e/day-periods.spec.ts": ["c59a86f37d87b572ead5-83c2b42dae848f1e2e1d"],
           "tests/e2e/foundation.spec.ts": ["6b60d0cacd30be8ae473-2c7248f78da8d9a829a9"],
-          "tests/e2e/host-api-skeleton.spec.ts": ["f0b208043a5751e043b8-9dc1a15b02d98e57986d"],
+          "tests/e2e/host-api-skeleton.spec.ts": ["f0b208043a5751e043b8-cc9bdad38df2fe52b37e"],
           "tests/e2e/household-dashboard.spec.ts": ["eb78110fe65c730c199a-43307ac1bcc6bb344601"],
           "tests/e2e/household-shell-skeleton.spec.ts": [
             "d9d6d5f7b5326a65c25a-27293a825cd7de2a689f"
@@ -4871,7 +4896,7 @@
           ],
           "tests/e2e/plugin-lifecycle.spec.ts": ["890958b0bb7f57610ba1-ea2aeda258f94bf710a3"],
           "tests/e2e/printing.spec.ts": [
-            "64adef587d995e42b8f9-7aa22fbf2718606ba7d2",
+            "64adef587d995e42b8f9-e514127cf2cc038cd196",
             "64adef587d995e42b8f9-5a07534a8a7a882aeda5"
           ],
           "tests/e2e/reminders-calendar-gated.spec.ts": [
@@ -4879,18 +4904,18 @@
             "bad9dac693639b46b647-cf3cfae8b2bd5775ab9f"
           ],
           "tests/e2e/reminders.spec.ts": ["aa75b1db4695422e71e4-7394a10a06ed8a12b624"],
-          "tests/e2e/telemetry-ingest.spec.ts": ["389399d288f3206225fc-d578221d3cd219c9e517"],
+          "tests/e2e/telemetry-ingest.spec.ts": ["389399d288f3206225fc-6e25b677471b6e3423e9"],
           "tests/e2e/telemetry-transport.spec.ts": [
-            "d52575aebaf5180e5f75-f1c7371e66f767dd5c41",
-            "d52575aebaf5180e5f75-5eba3c520d032bf45c35"
+            "d52575aebaf5180e5f75-990374b5befcaebf9c02",
+            "d52575aebaf5180e5f75-c9d6222685f4b7444f83"
           ],
           "tests/e2e/time-announcements.spec.ts": [
-            "04bcd8d2b3c5433fa791-af0e7ff01fb16b039b6d",
-            "04bcd8d2b3c5433fa791-e093ed9929fe9a79388e"
+            "04bcd8d2b3c5433fa791-db5905637266d4b32ff9",
+            "04bcd8d2b3c5433fa791-26afd185bbffb8871c6a"
           ],
           "tests/e2e/weather.spec.ts": [
-            "d5f1906f292cab0ebdcd-bb4ca8626ede3e1302e8",
-            "d5f1906f292cab0ebdcd-1a8beb43b1a6b4e596af"
+            "d5f1906f292cab0ebdcd-89f4250569c3e2076408",
+            "d5f1906f292cab0ebdcd-470ca95a4a0d7439403e"
           ]
         }
       }
@@ -4904,7 +4929,7 @@
     },
     "files": {
       "src/client/admin/AdminGate.tsx": {
-        "sha256": "9870e7b0ff1fb10a50b51e0b032839d8a77e630c17869801ff02b5f5cc75ea2e",
+        "sha256": "b15f960cdea03a7559725c542b6ef5f70522a16fa3776c2a236efae51d0df60e",
         "layer": "client",
         "minimumTotals": {
           "lines": 68,
@@ -5832,7 +5857,7 @@
         }
       },
       "src/client/i18n/messages.ts": {
-        "sha256": "a430e5b0ace6ceceeb08ed7a9d8bf0d48059f2e95aad11859e7ccc98f5283910",
+        "sha256": "6b0db53098b7ab3431c25d7ddd552e463beec9da9f6a7551f52e298a8c4b6197",
         "layer": "client",
         "minimumTotals": {
           "lines": 4,
@@ -5992,7 +6017,7 @@
         }
       },
       "src/client/main.tsx": {
-        "sha256": "980e4df38a929b588e83690ab01ff1a568d2933d717b7a43c43a9803f5885c7b",
+        "sha256": "17432e3cab8c227338b95b3d2d8be340cf807be386faae84878c8683d0b86191",
         "layer": "client",
         "minimumTotals": {
           "lines": 16,
@@ -6344,7 +6369,7 @@
         }
       },
       "src/client/shell/HouseholdChrome.tsx": {
-        "sha256": "4bb431e7bdd93a90d7b5de2ad672c3bd376a7f006260533ce9adc5e304bea363",
+        "sha256": "027ae361061d524179e33fae3bf1cdd47580f2d3be399a314cd964f999ffc674",
         "layer": "client",
         "minimumTotals": {
           "lines": 81,
@@ -6648,7 +6673,7 @@
         }
       },
       "src/server/auth/gate.ts": {
-        "sha256": "d8e01cb293ce31f338b70f35463b5095e29f0b82f86c1602a53464dccbe29789",
+        "sha256": "de3c072ac6f9cc069f03fbef49c34774860b12c40f9a51bdb30977a7edf5985e",
         "layer": "server",
         "minimumTotals": {
           "lines": 35,
@@ -6696,7 +6721,7 @@
         }
       },
       "src/server/auth/reconcile.ts": {
-        "sha256": "54ce68501b1a8b4daf72a9b7a1645a895033ab06b062ff7f8ec761673706d023",
+        "sha256": "ffa9110fa139bff16b4de713539a20f1c8cc099eaead63477cdbf294afb2f204",
         "layer": "server",
         "minimumTotals": {
           "lines": 35,
@@ -6840,7 +6865,7 @@
         }
       },
       "src/server/db/seeds/cli.ts": {
-        "sha256": "8892079aff867577461e443e4183c04d01cd3589282f9d11dc7cfb334efeceb2",
+        "sha256": "f9f01d2a508560b26a3d3d116f7567eaaae9eb8cc4066a286348bca7fa710106",
         "layer": "server",
         "minimumTotals": {
           "lines": 37,
@@ -7320,7 +7345,7 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/shotgun.ts": {
-        "sha256": "e4d00aba383c7b32749ce507b127c71abefc6701beee6bd9e920d03c19b51b6f",
+        "sha256": "2e319d70d3273614620ceb53102c768587b193004e9fae344c37631aa5b17bdb",
         "layer": "server",
         "minimumTotals": {
           "lines": 17,
@@ -7641,7 +7666,7 @@
         }
       },
       "src/server/modules/daily-briefing/index.ts": {
-        "sha256": "94a68d1d816fb8fd8a11085a3c6c67a1650eaa33de0d131392d47c91d2af8a33",
+        "sha256": "8313632a7b40348def60ff25b82a18da232af4c3880e6b8c48a0b54746447a72",
         "layer": "server",
         "minimumTotals": {
           "lines": 278,
@@ -10144,6 +10169,7 @@
     "tools/dev/generate-ui-catalog.mjs",
     "tools/dev/member-colors.json",
     "tools/dev/noto-overrides/emoji_u1f471_200d_2640.svg",
+    "tools/dev/seed-all.mjs",
     "tools/dev/smoke-dist-render.mjs",
     "tools/dev/start-local.mjs",
     "tools/dev/sync-private-seeds.mjs",

@@ -157,7 +157,7 @@ function parseRdate(token: string, params: Record<string, string>): DateWithTime
     .map(([key, parameter]) => `;${key.toUpperCase()}=${parameter}`)
     .join("");
   const parsed = parseCalendar(
- `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:rdate-probe\nDTSTAMP:20000101T000000Z\nSUMMARY:RDATE probe\nDTSTART${serializedParams}:${value}\nEND:VEVENT\nEND:VCALENDAR`
+    `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:rdate-probe\nDTSTAMP:20000101T000000Z\nSUMMARY:RDATE probe\nDTSTART${serializedParams}:${value}\nEND:VEVENT\nEND:VCALENDAR`
   );
   const event = Object.values(parsed).find(isEvent);
   return event?.start instanceof Date && !Number.isNaN(event.start.valueOf())

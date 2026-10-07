@@ -249,7 +249,7 @@ describe("daily-briefing negatives (FR-010)", () => {
   // ── (6) No trigger binding -> no enqueue ─────────────────────────────────────────────────────
 
   it("(6) with autoPrintTrigger unbound and morning complete, the trigger evaluation enqueues nothing", () => {
- const triggerMemberId = "member-t015-no-binding";
+    const triggerMemberId = "member-t015-no-binding";
     const NOW = Date.UTC(2026, 7, 13, 10, 0, 0); // Thursday
     seedMember(triggerMemberId);
     // Deliberately NO updateSettings({ autoPrintTrigger:... }) call — the binding stays unset

@@ -182,7 +182,7 @@ describe("DensityControl (FR-002/FR-002a)", () => {
       expect(countInteractiveControls(container)).toBe(1);
     });
 
- it("kiosk density active: exactly one control, and it MEASURES COMPLIANT (built on Button)", async () => {
+    it("kiosk density active: exactly one control, and it MEASURES COMPLIANT (built on Button)", async () => {
       const uninject = await injectDensityStyles();
       document.documentElement.setAttribute(DENSITY_ATTRIBUTE, KIOSK_DENSITY);
 

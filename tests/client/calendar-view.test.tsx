@@ -624,7 +624,7 @@ describe("CalendarView — assignment save round-trips the selected members (reg
     });
   });
 
- it("gives the assign row's label a full-width, pointer-cursor hit area ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)", async () => {
+  it("gives the assign row's label a full-width, pointer-cursor hit area ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)", async () => {
     mockBackend();
     renderSurface();
 

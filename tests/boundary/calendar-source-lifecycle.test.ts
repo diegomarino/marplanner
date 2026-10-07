@@ -16,7 +16,7 @@ const feed = [
   "VERSION:2.0",
   "BEGIN:VEVENT",
   "UID:school-day",
- "DTSTAMP:20260928T000000Z",
+  "DTSTAMP:20260928T000000Z",
   "DTSTART;VALUE=DATE:20261015",
   "SUMMARY:Alex school day",
   "END:VEVENT",

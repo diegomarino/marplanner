@@ -38,8 +38,7 @@ export function reconcileBootstrap(): void {
     // `expires_at <= now`; active here is therefore `expires_at === null || expires_at > now`.
     const now = Date.now();
     const isActive =
-      existing.revoked_at === null &&
-      (existing.expires_at === null || existing.expires_at > now);
+      existing.revoked_at === null && (existing.expires_at === null || existing.expires_at > now);
     if (!isActive) {
       // ADR-032 §2 (Rules 2 and 4): config value set + no ACTIVE matching key ⇒ re-establish.
       // Clear BOTH predicates so a revoked or expired row becomes usable again (bootstrap rows are

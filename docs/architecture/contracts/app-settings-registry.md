@@ -89,7 +89,7 @@ Accepts `{ "object": OBJECT_NAME, "settings": { ... } }`. Returns the updated ef
 | ------------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `weather`          | Weather      | `lat` (number or null, **range `[-90,90]`**), `lon` (number or null, **range `[-180,180]`**), `label?` (optional place name or null). Set and cleared as a unit; range-validated (`ADR-052`). No env fallback. |
 | `printer`          | Printing     | `paperWidthDots` (positive integer). (`enabled`/`autoprint` removed: "printing available" = plugin active per ADR-038; "automatic" = an active automatic trigger bound, not a flag.)                           |
-| `printerTransport` | Printing     | `type` (transport enum; only `bluetooth` in this system), `config` (object validated against the schema for `type`).                                                                                                    |
+| `printerTransport` | Printing     | `type` (transport enum; only `bluetooth` in this system), `config` (object validated against the schema for `type`).                                                                                           |
 
 Wi-Fi and USB transport types are not valid `printerTransport.type` values until those transports are implemented.
 

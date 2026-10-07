@@ -1140,7 +1140,7 @@ describe("restore with detached calendar synchronization", () => {
       return result;
     });
     const body =
- "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:before-restore\nDTSTAMP:20260929T000000Z\nDTSTART;VALUE=DATE:20260930\nSUMMARY:Before restore\nEND:VEVENT\nEND:VCALENDAR";
+      "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:before-restore\nDTSTAMP:20260929T000000Z\nDTSTART;VALUE=DATE:20260930\nSUMMARY:Before restore\nEND:VEVENT\nEND:VCALENDAR";
     try {
       await new Promise((resolve) => setTimeout(resolve, 10));
       expect(settled).toBe(false);

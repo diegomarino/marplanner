@@ -17,7 +17,8 @@ export function loadProjectEnv(cwd = ROOT) {
   try {
     loadEnvFile(resolve(cwd, ".env.local"));
   } catch (error) {
-    if (error && typeof error === "object" && "code" in error && error.code !== "ENOENT") throw error;
+    if (error && typeof error === "object" && "code" in error && error.code !== "ENOENT")
+      throw error;
   }
 }
 
@@ -296,9 +297,7 @@ export function formatLocalReadyBanner(ready) {
   const lines = [`API:      ${ready.api}`, `Frontend: ${ready.frontend}`];
   if (ready.cdpPort) {
     lines.push(`CDP:      ${ready.cdpPort}  (auto-launched by session helpers if needed)`);
-    lines.push(
-      "Session:  npm run dev:session | npm run dev:session-reset"
-    );
+    lines.push("Session:  npm run dev:session | npm run dev:session-reset");
   } else {
     lines.push("CDP:      unset (set CHROME_CDP_PORT in .env.local for dev browser tooling)");
   }
@@ -336,11 +335,16 @@ export function resolveFrontendOrigin(argv = process.argv.slice(2), dataDir = re
  */
 export async function assertFrontendReachable(origin, timeoutMs = 2000) {
   try {
-    await fetch(origin, { method: "GET", redirect: "manual", signal: AbortSignal.timeout(timeoutMs) });
+    await fetch(origin, {
+      method: "GET",
+      redirect: "manual",
+      signal: AbortSignal.timeout(timeoutMs),
+    });
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
     throw new Error(
-      `Frontend not reachable at ${origin} (${detail}). Run npm run dev first; if storage is owned, stop the orphaned API (or use npm run dev:fresh) before retrying session helpers.`
+      `Frontend not reachable at ${origin} (${detail}). Run npm run dev first; if storage is owned, stop the orphaned API (or use npm run dev:fresh) before retrying session helpers.`,
+      { cause: error }
     );
   }
 }

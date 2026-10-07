@@ -232,7 +232,7 @@ describe("network-devices negatives — (assert-and-prove)", () => {
 
   // ── 2: MAC-bearing telemetry entry through the REAL writer emerges redacted ─────────────────
 
- it("a MAC-bearing telemetry entry through the REAL writeClientLog pipeline emerges redacted ('s patterns, not rebuilt)", () => {
+  it("a MAC-bearing telemetry entry through the REAL writeClientLog pipeline emerges redacted ('s patterns, not rebuilt)", () => {
     const rawMac = "AA:BB:CC:DD:EE:01";
     const result = writeClientLog("negatives-test-key", [
       {

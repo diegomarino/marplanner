@@ -203,8 +203,10 @@ describe("seed runner integration", () => {
 
     expect(publicResult.status).toBe(0);
     expect(publicResult.stdout).toContain("modules=[public:first]");
+    expect(publicResult.stdout).toContain(`as-of=${AS_OF_DATE}`);
     expect(privateResult.status).toBe(0);
     expect(privateResult.stdout).toContain("modules=[public:first,private:01]");
+    expect(privateResult.stdout).toContain(`as-of=${AS_OF_DATE}`);
     expect(`${privateResult.stdout}${privateResult.stderr}`).not.toContain("private-one");
   });
 

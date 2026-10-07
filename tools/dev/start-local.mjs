@@ -11,7 +11,6 @@ import {
   writeLocalReady,
 } from "./chrome-dev-shared.mjs";
 
-
 try {
   loadEnvFile(".env.local");
 } catch (error) {
@@ -220,11 +219,7 @@ try {
   for (const line of formatLocalReadyBanner({ api, frontend, cdpPort })) {
     console.log(line);
   }
-  const seedWarning = formatSeedWarning(
-    inspectLocalSeedStatus(
-      resolveDatabaseFile()
-    )
-  );
+  const seedWarning = formatSeedWarning(inspectLocalSeedStatus(resolveDatabaseFile()));
   if (seedWarning) {
     console.warn(seedWarning);
     console.log(JSON.stringify({ type: "seed-warning", message: seedWarning }));

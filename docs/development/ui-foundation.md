@@ -4,16 +4,17 @@ Use shared tokens, primitives and recipes when building a client surface. The [c
 
 ## Canonical locations
 
-| Path                            | Responsibility                                                    |
-| ------------------------------- | ----------------------------------------------------------------- |
-| `components.json`               | Shared UI configuration                                           |
+| Path                            | Responsibility                                                        |
+| ------------------------------- | --------------------------------------------------------------------- |
+| `components.json`               | Shared UI configuration                                               |
 | `src/client/styles/tokens.css`  | Semantic token **values** (`:root`); also inlined by access-gate HTML |
-| `src/client/styles/globals.css` | Tailwind entry, `@theme` mapping, density overrides, base layers  |
-| `src/client/components/ui/`     | Shared primitive components                                       |
-| `src/client/lib/utils.ts`       | `cn()` class merge helper                                         |
-| `src/client/lib/recipes.ts`     | Reusable class-string recipes without component state or behavior |
+| `src/client/styles/globals.css` | Tailwind entry, `@theme` mapping, density overrides, base layers      |
+| `src/client/components/ui/`     | Shared primitive components                                           |
+| `src/client/lib/utils.ts`       | `cn()` class merge helper                                             |
+| `src/client/lib/recipes.ts`     | Reusable class-string recipes without component state or behavior     |
 
 ## The UI stack
+
 The UI uses Tailwind CSS v4, shared primitives, semantic tokens and Lucide icons.
 
 - **Tailwind CSS v4**, configured the v4 way: **CSS-based via `@theme`**, no `tailwind.config.*`, no
@@ -33,6 +34,7 @@ The UI uses Tailwind CSS v4, shared primitives, semantic tokens and Lucide icons
 // ❌ never
 <button className="bg-[#5A5A40] text-white">
 ```
+
 Because every screen consumes `bg-primary` / `bg-background` / etc. (which resolve through the
 `@theme inline` mapping to the CSS variables), adapting the palette from provisional defaults to the
 real v2 look is a **single edit to the token _values_ in `tokens.css`** (and `.dark` in
@@ -67,7 +69,7 @@ kiosk contract + v1's product design and are **not** provisional:
   combinations belong in recipes. Reuse `@/ui` and consult `COMPONENTS.md` first.
 - **No parallel token source.** Token **values** live in `src/client/styles/tokens.css` (light
   `:root`) plus `.dark` in `globals.css` for tooling; Tailwind sees them only via `@theme
-  inline`. No component-local colour constants, no second ad-hoc variable sheet. The access-gate
+inline`. No component-local colour constants, no second ad-hoc variable sheet. The access-gate
   HTML **inlines** `tokens.css` — it must not redefine palette hexes.
 - **No private class-string constant.** A class combination that isn't a component (research D3 —
   no state, wiring, or accessibility of its own) is a **recipe**: export it from

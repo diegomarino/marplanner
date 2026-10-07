@@ -112,7 +112,7 @@ describe("daily-briefing job registration (research D8/D9)", () => {
       }
     );
 
- it("Codex P2 fold (PR #713): when BOTH the new table and the legacy settings_objects row exist, the new table wins", () => {
+    it("Codex P2 fold (PR #713): when BOTH the new table and the legacy settings_objects row exist, the new table wins", () => {
       getDb()
         .prepare(
           "INSERT INTO settings_objects (object_name, data, updated_at) VALUES ('daily-briefing', ?, ?)"
