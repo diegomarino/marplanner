@@ -4487,7 +4487,10 @@
             "daily-briefing full generation titles (v1 titleFor port, review fold TITLES/P2-1/P2-2) the *Text titles are distinct from their visual twins (streakText/streak, weatherText/weather) (en household)",
             "daily-briefing full generation titles (v1 titleFor port, review fold TITLES/P2-1/P2-2) an es household resolves titleFor's labels in Spanish, incl. one v1 override (#716)",
             "daily-briefing full generation issue #730/INV-06: an en household never leaks an ES-only structural label into ANY block's payload",
-            "daily-briefing full generation deriveStatus: every block failed settles the briefing failed (no survivors)"
+            "daily-briefing full generation deriveStatus: every block failed settles the briefing failed (no survivors)",
+            "daily-briefing full generation corpus defaults follow the es household with English-only fallback",
+            "daily-briefing full generation corpus defaults follow the en household with English-only fallback",
+            "daily-briefing full generation explicit corpus overrides win while household changes leave stored snapshots intact"
           ],
           "tests/integration/daily-briefing-job.test.ts": [
             "daily-briefing job registration (research D8/D9) isMissed predicate truth table (Codex review F1: per-member, never COUNT(*)==0) DAILY-BRIEFING-AC-10: no daily_briefing row for an opted-in active member — missed",
@@ -7192,7 +7195,7 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/context.ts": {
-        "sha256": "c9664d35efd255aaa7ba1bdd1b960c7a5be927459901c032856fe737d98e9e08",
+        "sha256": "695da6ecf00cdaad526f18af77624be85b85dabe5ac06e531224d64e6d9c65b2",
         "layer": "server",
         "minimumTotals": {
           "lines": 8,
@@ -7673,7 +7676,7 @@
         }
       },
       "src/server/modules/daily-briefing/index.ts": {
-        "sha256": "f7994490a57512aa5f7ee4f00edaa890cc393d011bff4be26ba339a73c3ef86c",
+        "sha256": "175c8002223facf77354bd8d6525dbf67355c1e5b0f7fe2b18253e864f7f5bad",
         "layer": "server",
         "minimumTotals": {
           "lines": 278,

@@ -19,7 +19,8 @@ it does not own delivery.
   date, **ordered list of block instances** (ADR-008 block order owned here).
 - **Block instance** — one configured content unit in the ordered list. A block
   **type may repeat** (ADR-044); each instance carries its own config including an
-  optional **`language`** (default = household language).
+  optional **`language`** (default = household language when that corpus variant
+  exists, otherwise English).
 - **Block** — one content unit; may be member-specific or shared.
 - **Shared daily block cache** — one generated payload per date + shared block
   type, reused across members.
@@ -43,8 +44,9 @@ it does not own delivery.
 6. **DAILY-BRIEFING-INV-06** **Structural copy** (labels/templates) always renders in the **household language**
    via keys (ADR-015). A **per-block `language` override exists only for corpus-backed
    blocks** (ADR-044) and offers only languages with an available corpus; it selects the
-   corpus variant (default household), generated at generation time and frozen in the
-   snapshot (ADR-022). Blocks **without a corpus** have no language override and render
+   corpus variant. Without an override, generation uses the household variant when
+   available, otherwise English; explicit unavailable overrides are rejected. Content,
+   block language and effective params are frozen together in the snapshot (ADR-022). Blocks **without a corpus** have no language override and render
    in the household language — **no English degradation for corpus absence** (the
    English fallback is only for a missing translation _key_, a build bug).
 7. **DAILY-BRIEFING-INV-07** A block failure is isolated: record the failed block, continue others, derive
@@ -130,7 +132,9 @@ per ADR-027. No legacy import (ADR-026).
 - **DAILY-BRIEFING-AC-06** Given a block with no corpus, no language selector is offered and it renders in the
   household language (never English-degraded for corpus absence).
 - **DAILY-BRIEFING-AC-07** Given a corpus-backed block, the language selector offers only languages with an
-  available corpus; the chosen corpus variant is frozen in the snapshot (ADR-044/22).
+  available corpus; without an override, generation chooses the household variant when
+  available, otherwise English. An unavailable explicit override is rejected; the effective
+  language and content are frozen in the snapshot (ADR-044/22).
 - **DAILY-BRIEFING-AC-08** Given a missing briefing, a read returns not-generated without creating a row.
 - **DAILY-BRIEFING-AC-09** Given a block fails, other blocks still render and status reflects survivors.
 - **DAILY-BRIEFING-AC-11** Given the Printing plugin is inactive, printed-status is unavailable (not an
