@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/credential";
+import { appUrl } from "@/lib/base-path";
 import { useT } from "@/i18n";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ErrorNotice } from "@/components/ErrorNotice";
@@ -724,7 +725,9 @@ export function DailyBriefingManagement() {
   const optedInMembers = activeMembers.filter((member) => optIns[member.id]);
   const hasPendingOptInUpdates = pendingOptInMemberIds.size > 0;
   const previewSrc = previewRequest
-    ? `/api/daily-briefing/${previewRequest.memberId}/${previewRequest.date}/preview.png?v=${previewRequest.cacheBust}`
+    ? appUrl(
+        `/api/daily-briefing/${previewRequest.memberId}/${previewRequest.date}/preview.png?v=${previewRequest.cacheBust}`
+      )
     : null;
 
   if (loading) {
