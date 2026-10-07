@@ -87,8 +87,12 @@ test("CI binds the checked-out tree instead of a stale embedded candidate hash",
   assert.equal(commands("standard").filter((run) => run === "npm run check:standard").length, 1);
   assert.ok(commands("native").includes("npm run check:aggregate-only"));
   assert.ok(!commands("native").some((run) => /check:(standard|full)|cohorts:stamp/.test(run)));
-  const upload = steps("standard").find((step) => step.uses === "actions/upload-artifact@v4");
-  const download = steps("native").find((step) => step.uses === "actions/download-artifact@v4");
+  const upload = steps("standard").find(
+    (step) => step.uses?.split("@")[0] === "actions/upload-artifact"
+  );
+  const download = steps("native").find(
+    (step) => step.uses?.split("@")[0] === "actions/download-artifact"
+  );
   assert.equal(
     upload.with.name,
     "standard-evidence-${{ github.run_id }}-${{ github.run_attempt }}"
