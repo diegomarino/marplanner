@@ -4218,7 +4218,11 @@
             "backups quiesce hook — deterministic boundary (review P3-4) does not 503 /api/* when NOT quiesced (falls through to normal auth handling)",
             "backups quiesce hook — in-flight counter release on client abort (review P2-1) a disconnected client stays counted until its handler finishes, then releases the slot",
             "requests closed before handler execution releases the slot and does not execute a handler after transport closure",
-            "runtime mounted restore quiescing quiesces mounted APIs while exempting only the exact restore route and root health"
+            "runtime mounted restore quiescing quiesces mounted APIs while exempting only the exact restore route and root health",
+            "HTTP shutdown drainage preserves an asynchronous handler's durable writes and complete response after close begins",
+            "HTTP shutdown drainage does not discard a partial HTTP header while closing",
+            "HTTP shutdown drainage drains a streamed request body received after shutdown begins",
+            "HTTP shutdown drainage discards a never-requested connection accepted during preClose and removes its listeners"
           ],
           "tests/integration/backups-restore.test.ts": [
             "restore engine — confirmation + validation (BACKUPS-AC-01, no side effects) empty/missing filename -> validation_error, no side effects",
@@ -4664,7 +4668,8 @@
           ],
           "tests/integration/foundation-entrypoint.test.ts": [
             "built foundation entrypoint serves reviewed core routes, isolates static assets, and drains both smoke writes on SIGINT",
-            "built foundation entrypoint keeps scheduler registrations but arms no smoke timer when disabled"
+            "built foundation entrypoint keeps scheduler registrations but arms no smoke timer when disabled",
+            "built foundation entrypoint SIGTERM closes a never-requested TCP connection without reaching the shutdown watchdog"
           ],
           "tests/integration/member-color-migration-0019.test.ts": [
             "member colour current baseline enforces the curated colour set, supplies the default, and exposes it through public reads"
@@ -6624,7 +6629,7 @@
         }
       },
       "src/server/app.ts": {
-        "sha256": "f16cc1c8de18697fa996de8b0390c441a810bb006a32cfcf31ccb12013b1b57d",
+        "sha256": "da055ac489b1537801fecf752a7f01dd6f4f81c405c8ab8d7f83e1b201561033",
         "layer": "server",
         "minimumTotals": {
           "lines": 53,
