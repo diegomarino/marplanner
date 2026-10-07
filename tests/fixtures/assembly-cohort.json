@@ -5012,7 +5012,7 @@
         }
       },
       "src/client/admin/DailyBriefingManagement.tsx": {
-        "sha256": "823fc8236b0a209eb66907ba2e96377d354ec99b6a887516fdb05542d9cbafb7",
+        "sha256": "6b11b2d4e58600480f8925475d15fde9a789375bb7d555b200430b47703bb2e5",
         "layer": "client",
         "minimumTotals": {
           "lines": 313,

@@ -356,6 +356,19 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
       /^\/api\/daily-briefing\/member-ada\/2026-09-07\/preview\.png\?v=\d+$/
     );
 
+    const mount = document.createElement("meta");
+    mount.name = "mp-base-path";
+    mount.content = "/family/planner";
+    document.head.append(mount);
+    try {
+      fireEvent.click(screen.getByTestId("daily-briefing-admin-preview-show"));
+      expect(image.getAttribute("src")).toMatch(
+        /^\/family\/planner\/api\/daily-briefing\/member-ada\/2026-09-07\/preview\.png\?v=\d+$/
+      );
+    } finally {
+      mount.remove();
+    }
+
     assertNoImplicitRegenerate(mockFetch);
   });
 
