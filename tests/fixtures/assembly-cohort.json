@@ -2953,7 +2953,10 @@
             "BackupsManagement requires explicit confirmation before deleting a selected backup",
             "BackupsManagement surfaces a delete refusal (409 retention_floor) and keeps the row in the list",
             "BackupsManagement uploads the selected file as a raw application/octet-stream body and refreshes the list",
-            "BackupsManagement surfaces an oversized-upload refusal (413)"
+            "BackupsManagement surfaces an oversized-upload refusal (413)",
+            "shows localized recovery guidance for a terminal restore failure (en)",
+            "shows localized recovery guidance for a terminal restore failure (es)",
+            "formats backup dates with Spanish household locale and timezone"
           ],
           "tests/client/backups-telemetry-admin.test.tsx": [
             "BackupsManagement / TelemetryManagement — the shared AdminPanel L2 frame was ADOPTED (FR-009) BackupsManagement wraps the surface in a landmark region labelled by its own title",
@@ -3144,7 +3147,9 @@
             "DailyBriefingManagement — admin settings-layer extensions surfaces onThisDay's default-disabled reality on its row",
             "DailyBriefingManagement — admin settings-layer extensions preview shows an <img> whose src targets the endpoint for the selected member/date",
             "DailyBriefingManagement — admin settings-layer extensions block order Save is disabled while the settings GET is pending, then enabled once it resolves",
-            "DailyBriefingManagement — admin settings-layer extensions block order Save stays disabled after the settings GET fails"
+            "DailyBriefingManagement — admin settings-layer extensions block order Save stays disabled after the settings GET fails",
+            "translates block and parameter labels without changing persisted identifiers (en)",
+            "translates block and parameter labels without changing persisted identifiers (es)"
           ],
           "tests/client/daily-briefing-i18n-parity.test.ts": [
             "daily-briefing-i18n-parity every daily briefing key in en exists in es",
@@ -3266,7 +3271,8 @@
           ],
           "tests/client/emoji-picker.test.tsx": [
             "searches the curated catalog by label and selects a literal Unicode icon",
-            "clears an existing icon to null"
+            "clears an existing icon to null",
+            "uses Spanish labels for search and accessibility while preserving keyword aliases and Unicode values"
           ],
           "tests/client/error-notice.test.tsx": [
             "ErrorNotice renders nothing when there is no message",
@@ -3475,6 +3481,7 @@
             "network-devices-i18n-parity admin.nav.networkDevices resolves in both languages (exact strings, per admin-nav-i18n-parity precedent)"
           ],
           "tests/client/network-devices-management.test.tsx": [
+            "NetworkDevicesManagement formats last-seen dates using the household's Spanish locale",
             "NetworkDevicesManagement renders aliases and NEVER a MAC-shaped string anywhere in the registry list",
             "NetworkDevicesManagement the MAC-shape scan ALSO holds once a row enters edit mode (PR-E review P2-4)",
             "NetworkDevicesManagement the MAC-shape scan ALSO holds while a row error is displayed (PR-E review P2-4)",
@@ -3692,7 +3699,8 @@
           "tests/client/recipe-dialog.test.tsx": [
             "RecipeDialog normalizes the form at the UI seam and preserves values after a failed save",
             "sends an explicit empty slots patch when an edited recipe is made valid for every slot",
-            "localizes recipe field accessibility names from the household language"
+            "localizes recipe field accessibility names from the household language",
+            "localizes the recipe detail dialog's accessible close action"
           ],
           "tests/client/reminders-calendar-gated-i18n-parity.test.ts": [
             "reminders-calendar-gated-i18n-parity reminders.calendarGated.*/reminders.dryRun.* keys have identical coverage in en and es (both directions)",
@@ -3750,7 +3758,8 @@
           ],
           "tests/client/schedule-x-week-view.test.ts": [
             "ScheduleXWeekView event projection does not format a stale portal after its event has been filtered out",
-            "ScheduleXWeekView event projection formats a retained timed event in the household timezone"
+            "ScheduleXWeekView event projection formats a retained timed event in the household timezone",
+            "updates actual week headings when the household language changes"
           ],
           "tests/client/select-item-density.test.tsx": [
             "SelectItem — kiosk density on the rendered popover options (#790) meets kiosk density once the popover is OPEN, over the rendered options — the state no prior batch measured",
@@ -3870,7 +3879,10 @@
             "TelemetryManagement P2-1: Load more paginates against the APPLIED filters, not a live-but-unapplied draft edit",
             "TelemetryManagement P2-2: busy disables BOTH actions, and a stale response arriving after a newer Apply is discarded",
             "TelemetryManagement a failed Apply invalidates the OLD cursor — Load more disappears instead of blending new filters with a stale cursor",
-            "TelemetryManagement never uses dangerouslySetInnerHTML anywhere in the panel source (grep assertion)"
+            "TelemetryManagement never uses dangerouslySetInnerHTML anywhere in the panel source (grep assertion)",
+            "localizes filter-load failures without displaying server prose (en)",
+            "localizes filter-load failures without displaying server prose (es)",
+            "sends both date boundaries when applying a telemetry range"
           ],
           "tests/client/telemetry-producers.test.ts": [
             "telemetry producers global error/unhandledrejection capture (FR-008) an uncaught error becomes a client.global/error entry with a stable message and the raw text in data (INV-03 pattern)",
@@ -3937,7 +3949,9 @@
             "TimeAnnouncementsManagement does NOT delete when the confirm dialog is dismissed",
             "TimeAnnouncementsManagement surfaces the server's 409 active-overlap message (naming the conflicting rule) on create",
             "TimeAnnouncementsManagement surfaces the server's 400 validation message on create",
-            "TimeAnnouncementsManagement Test-voice speaks the UNSAVED form time via the speech seam and performs NO POST (FR-014)"
+            "TimeAnnouncementsManagement Test-voice speaks the UNSAVED form time via the speech seam and performs NO POST (FR-014)",
+            "localizes browser exceptions on rule creation (en)",
+            "localizes browser exceptions on rule creation (es)"
           ],
           "tests/client/time-announcements-phrases.test.ts": [
             "time-announcements phrase builders es golden table — v1's 12-case oracle, verbatim (TIME-ANNOUNCEMENTS-AC-05) 00:00 -> \"Es medianoche\"",
@@ -4130,7 +4144,14 @@
             "WeatherManagement Save PUTs {object:'weather', settings:{lat,lon,label}} and refreshes the form from the response",
             "WeatherManagement Clear PUTs {lat:null, lon:null} with NO label key, and empties the label input too (FR-005 clear-as-unit)",
             "WeatherManagement surfaces the server's error message on a failed save",
-            "WeatherManagement a pre-response transport failure (authFetch REJECTS) renders the localized fallback, never the raw exception message (Codex PR #654 P2)"
+            "WeatherManagement a pre-response transport failure (authFetch REJECTS) renders the localized fallback, never the raw exception message (Codex PR #654 P2)",
+            "localizes unknown and transport save failures (en, malformed)",
+            "localizes unknown and transport save failures (es, malformed)",
+            "localizes unknown and transport save failures (en, network)",
+            "localizes unknown and transport save failures (es, network)",
+            "localizes unknown and transport save failures (en, unknown)",
+            "localizes unknown and transport save failures (es, unknown)",
+            "announces geolocation refusal in Spanish without changing or saving the location"
           ],
           "tests/client/weather-pill.test.tsx": [
             "WeatherPill renders nothing when no location is configured (silent absence, FR-022)",
@@ -4487,7 +4508,10 @@
             "daily-briefing full generation titles (v1 titleFor port, review fold TITLES/P2-1/P2-2) the *Text titles are distinct from their visual twins (streakText/streak, weatherText/weather) (en household)",
             "daily-briefing full generation titles (v1 titleFor port, review fold TITLES/P2-1/P2-2) an es household resolves titleFor's labels in Spanish, incl. one v1 override (#716)",
             "daily-briefing full generation issue #730/INV-06: an en household never leaks an ES-only structural label into ANY block's payload",
-            "daily-briefing full generation deriveStatus: every block failed settles the briefing failed (no survivors)"
+            "daily-briefing full generation deriveStatus: every block failed settles the briefing failed (no survivors)",
+            "daily-briefing full generation corpus defaults follow the es household with English-only fallback",
+            "daily-briefing full generation corpus defaults follow the en household with English-only fallback",
+            "daily-briefing full generation explicit corpus overrides win while household changes leave stored snapshots intact"
           ],
           "tests/integration/daily-briefing-job.test.ts": [
             "daily-briefing job registration (research D8/D9) isMissed predicate truth table (Codex review F1: per-member, never COUNT(*)==0) DAILY-BRIEFING-AC-10: no daily_briefing row for an opted-in active member — missed",
@@ -4968,13 +4992,13 @@
         }
       },
       "src/client/admin/BackupsManagement.tsx": {
-        "sha256": "a45b285b7d0461de057997a58122c4aaf44713d6a5e6c7e7cd5a1b83ab512475",
+        "sha256": "42181b5d31652eee734e71651f12a8c7a7cfc1f6a36dbbdb5c6a0dabd9c8b5ba",
         "layer": "client",
         "minimumTotals": {
           "lines": 125,
           "statements": 138,
           "functions": 28,
-          "branches": 76
+          "branches": 72
         },
         "minimumRates": {
           "lines": 93.6,
@@ -5016,12 +5040,12 @@
         }
       },
       "src/client/admin/DailyBriefingManagement.tsx": {
-        "sha256": "6b11b2d4e58600480f8925475d15fde9a789375bb7d555b200430b47703bb2e5",
+        "sha256": "104722be6e6175a6e50709647ced81b914a558b02698a405b24bbf19a821153a",
         "layer": "client",
         "minimumTotals": {
           "lines": 313,
-          "statements": 345,
-          "functions": 105,
+          "statements": 344,
+          "functions": 103,
           "branches": 242
         },
         "minimumRates": {
@@ -5048,13 +5072,13 @@
         }
       },
       "src/client/admin/DayPeriodsManagement.tsx": {
-        "sha256": "64966ac3c50c2d7e6812b20f4a4accfd46df23016808aa0ff6a081ea9e9a8f5b",
+        "sha256": "35d55aee453024c52d175174a4f7f732a2554c6deae28227d0c0c5520ec44542",
         "layer": "client",
         "minimumTotals": {
           "lines": 99,
           "statements": 105,
           "functions": 28,
-          "branches": 50
+          "branches": 46
         },
         "minimumRates": {
           "lines": 87.87,
@@ -5112,7 +5136,7 @@
         }
       },
       "src/client/admin/NetworkDevicesManagement.tsx": {
-        "sha256": "9080e01c16f26ad62dfc68594a309f4a26da27656918e58e382ebc0e99c22183",
+        "sha256": "f773db4edc73e70368cdb74398cfd4358cdab624550c3f0b37d44631379483b3",
         "layer": "client",
         "minimumTotals": {
           "lines": 167,
@@ -5176,13 +5200,13 @@
         }
       },
       "src/client/admin/TelemetryManagement.tsx": {
-        "sha256": "5dd30a26301e4112ea051f53f13e8332f03b4adb71a3698af4fbf3159636969a",
+        "sha256": "a882fb3213169dd269729056c21236ef3275b8a34cff49d7349c198ea4145d14",
         "layer": "client",
         "minimumTotals": {
-          "lines": 57,
-          "statements": 67,
-          "functions": 14,
-          "branches": 42
+          "lines": 55,
+          "statements": 64,
+          "functions": 12,
+          "branches": 40
         },
         "minimumRates": {
           "lines": 96.49,
@@ -5192,13 +5216,13 @@
         }
       },
       "src/client/admin/TimeAnnouncementsManagement.tsx": {
-        "sha256": "cdc04565e91396bfe1500dfe88a79ce55ff47bd4c7d4f02087bc75923acc9f20",
+        "sha256": "4816fe0ae91db5394d1b641966f92a7b40d1ad8dd5b11fd19c4ec34bfb083285",
         "layer": "client",
         "minimumTotals": {
           "lines": 88,
-          "statements": 95,
-          "functions": 27,
-          "branches": 55
+          "statements": 94,
+          "functions": 26,
+          "branches": 53
         },
         "minimumRates": {
           "lines": 93.18,
@@ -5208,13 +5232,13 @@
         }
       },
       "src/client/admin/WeatherManagement.tsx": {
-        "sha256": "2cf1ad08b25c85a96adeda2885ce47fbd36782d07dcc8cf4f615f36e8b0e6179",
+        "sha256": "3790732d2ad00ab0aa761d5ee08a0fcbd8ae4b830d0238c1f86c318f477fe6c2",
         "layer": "client",
         "minimumTotals": {
-          "lines": 85,
-          "statements": 93,
-          "functions": 21,
-          "branches": 61
+          "lines": 81,
+          "statements": 88,
+          "functions": 18,
+          "branches": 59
         },
         "minimumRates": {
           "lines": 97.61,
@@ -5256,7 +5280,7 @@
         }
       },
       "src/client/calendar/ScheduleXWeekView.tsx": {
-        "sha256": "726d16523f88dcef385cb375355e8afe37d4c4e5bd625cb4f2ab526c1fc90afd",
+        "sha256": "a71918bd0879e29a6be1341312867971f0d2784cf4f19b12b9ac6fb9e4ff6ee4",
         "layer": "client",
         "minimumTotals": {
           "lines": 56,
@@ -5384,7 +5408,7 @@
         }
       },
       "src/client/chores/EmojiPicker.tsx": {
-        "sha256": "9953ae1ade8eeb18dcd4b822105569f467862bd568a60daf3517c43963de1f75",
+        "sha256": "3931aa81b360ddb1e8f60e5ea029665b7b52bf000367e5dfe119930e279c014c",
         "layer": "client",
         "minimumTotals": {
           "lines": 20,
@@ -5400,7 +5424,7 @@
         }
       },
       "src/client/chores/emoji-catalog.ts": {
-        "sha256": "56be89b1eda13d09addbbea98c26853fa147509404e569253422bd570fa53d89",
+        "sha256": "758ff59823501ccb055c31f2d9d2163c949a3d51995be640f350a3ce4ac6626e",
         "layer": "client",
         "minimumTotals": {
           "lines": 1,
@@ -5864,7 +5888,7 @@
         }
       },
       "src/client/i18n/messages.ts": {
-        "sha256": "6b0db53098b7ab3431c25d7ddd552e463beec9da9f6a7551f52e298a8c4b6197",
+        "sha256": "eea7d8b62a7ca4b2c6fbd925cdb3fa3721efebc896a748cb2afa37df1ead9eb1",
         "layer": "client",
         "minimumTotals": {
           "lines": 4,
@@ -5892,6 +5916,22 @@
           "lines": 100,
           "statements": 100,
           "functions": 75,
+          "branches": 100
+        }
+      },
+      "src/client/lib/api-error.ts": {
+        "sha256": "47f3ef4ac2bcec8464ee1daa7bb2ac864b9492c812db7325e7235446344946b5",
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 4,
+          "statements": 5,
+          "functions": 2,
+          "branches": 5
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
           "branches": 100
         }
       },
@@ -6056,7 +6096,7 @@
         }
       },
       "src/client/meals/MealEntryDialog.tsx": {
-        "sha256": "a14ef1db6a627da33f77de5c1d1857463a435707aa9a36b8f568a440d919edfa",
+        "sha256": "f96855be0dd527a20571856433251555122c6cdd9c361817f1daca5e1a217117",
         "layer": "client",
         "minimumTotals": {
           "lines": 40,
@@ -6120,7 +6160,7 @@
         }
       },
       "src/client/meals/RecipeDetailDialog.tsx": {
-        "sha256": "80a6f20b51003db621bb8142ec8f79c49db6817898748ea5d340dd094b5a1120",
+        "sha256": "0ca3c8a9214711fd2609738a315eab623af0441433ae74450679867fb13ed471",
         "layer": "client",
         "minimumTotals": {
           "lines": 5,
@@ -6136,7 +6176,7 @@
         }
       },
       "src/client/meals/RecipeDialog.tsx": {
-        "sha256": "86526186f7e780513ef7e0276b0494945754acee3056d2dd408213754f5d5849",
+        "sha256": "b182a0da8a4e536a5f19e7bebf397d141bd0c61674bbb78729b7ab0466be1ff6",
         "layer": "client",
         "minimumTotals": {
           "lines": 32,
@@ -7192,7 +7232,7 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/context.ts": {
-        "sha256": "c9664d35efd255aaa7ba1bdd1b960c7a5be927459901c032856fe737d98e9e08",
+        "sha256": "695da6ecf00cdaad526f18af77624be85b85dabe5ac06e531224d64e6d9c65b2",
         "layer": "server",
         "minimumTotals": {
           "lines": 8,
@@ -7673,7 +7713,7 @@
         }
       },
       "src/server/modules/daily-briefing/index.ts": {
-        "sha256": "f7994490a57512aa5f7ee4f00edaa890cc393d011bff4be26ba339a73c3ef86c",
+        "sha256": "175c8002223facf77354bd8d6525dbf67355c1e5b0f7fe2b18253e864f7f5bad",
         "layer": "server",
         "minimumTotals": {
           "lines": 278,
@@ -9532,6 +9572,7 @@
     "src/client/i18n/index.tsx",
     "src/client/i18n/messages.ts",
     "src/client/lib/adminUnlock.tsx",
+    "src/client/lib/api-error.ts",
     "src/client/lib/base-path.ts",
     "src/client/lib/credential.ts",
     "src/client/lib/day-period-labels.ts",

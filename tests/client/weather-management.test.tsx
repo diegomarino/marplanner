@@ -265,7 +265,9 @@ describe("WeatherManagement", () => {
     fireEvent.change(screen.getByTestId("weather-lon-input"), { target: { value: "0" } });
     fireEvent.click(screen.getByTestId("weather-save"));
 
-    expect(await screen.findByTestId("weather-error")).toHaveTextContent(validationMessage);
+    expect(await screen.findByTestId("weather-error")).toHaveTextContent(
+      messages.en["weather.management.saveError"]
+    );
   });
 
   it("a pre-response transport failure (authFetch REJECTS) renders the localized fallback, never the raw exception message (Codex PR #654 P2)", async () => {
@@ -296,4 +298,74 @@ describe("WeatherManagement", () => {
     expect(errorEl).toHaveTextContent(messages.es["weather.management.saveError"]);
     expect(errorEl).not.toHaveTextContent("Failed to fetch");
   });
+});
+
+it.each([
+  ["en", "malformed"],
+  ["es", "malformed"],
+  ["en", "network"],
+  ["es", "network"],
+  ["en", "unknown"],
+  ["es", "unknown"],
+] as const)("localizes unknown and transport save failures (%s, %s)", async (language, failure) => {
+  currentSettings.language = language;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input, init) => {
+      if (String(input) === "/api/settings" && !init?.method)
+        return jsonResponse({
+          ...BLANK_SETTINGS,
+          locale: { timezone: "UTC", language, weekStartDay: 1 },
+        });
+      if (init?.method === "PUT") {
+        if (failure === "network")
+          throw new TypeError("Failed to fetch private English diagnostics");
+        if (failure === "malformed") return new Response("not JSON", { status: 500 });
+        return jsonResponse(
+          { error: "toString", message: "Private English server diagnostics" },
+          500
+        );
+      }
+      throw new Error("Unexpected request");
+    })
+  );
+  try {
+    renderManagement();
+    await screen.findByRole("button", { name: messages[language]["weather.management.save"] });
+    fireEvent.change(screen.getByTestId("weather-lat-input"), { target: { value: "1" } });
+    fireEvent.change(screen.getByTestId("weather-lon-input"), { target: { value: "2" } });
+    fireEvent.click(screen.getByTestId("weather-save"));
+    const notice = await screen.findByTestId("weather-error");
+    expect(notice).toHaveTextContent(messages[language]["weather.management.saveError"]);
+    expect(notice).not.toHaveTextContent("Private English");
+  } finally {
+    cleanup();
+    vi.unstubAllGlobals();
+  }
+});
+
+it("announces geolocation refusal in Spanish without changing or saving the location", async () => {
+  currentSettings.language = "es";
+  const fetch = vi.fn(async (..._args: FetchCall) => jsonResponse(BLANK_SETTINGS));
+  vi.stubGlobal("fetch", fetch);
+  const geolocation = vi.fn((_success, failure) => failure({ message: "Permission denied" }));
+  Object.defineProperty(navigator, "geolocation", {
+    configurable: true,
+    value: { getCurrentPosition: geolocation },
+  });
+  try {
+    renderManagement();
+    const lat = await screen.findByTestId("weather-lat-input");
+    fireEvent.click(screen.getByTestId("weather-locate"));
+    expect(await screen.findByTestId("weather-error")).toHaveTextContent(
+      messages.es["weather.management.geolocationError"]
+    );
+    expect(lat).toHaveValue(null);
+    expect(screen.getByTestId("weather-lon-input")).toHaveValue(null);
+    expect(fetch.mock.calls.every(([, init]) => !init?.method)).toBe(true);
+  } finally {
+    delete (navigator as { geolocation?: Geolocation }).geolocation;
+    cleanup();
+    vi.unstubAllGlobals();
+  }
 });

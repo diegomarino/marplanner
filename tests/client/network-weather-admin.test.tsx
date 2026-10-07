@@ -511,7 +511,7 @@ describe("WeatherManagement — every error state is announced (SC-011)", () => 
     fireEvent.click(screen.getByTestId("weather-save"));
 
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("boom");
+    expect(alert).toHaveTextContent("Failed to save the weather location.");
     expect(alert).toHaveAttribute("aria-live", "assertive");
   });
 });

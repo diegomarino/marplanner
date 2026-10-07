@@ -630,7 +630,7 @@ describe("BackupsManagement — every error state is announced through ErrorNoti
     fireEvent.click(await screen.findByTestId("backups-snapshot-now"));
 
     const alert = await screen.findByTestId("backups-snapshot-error");
-    expect(alert).toHaveTextContent("disk write failed");
+    expect(alert).toHaveTextContent("Failed to create a snapshot.");
     expectErrorNoticeIdentity(alert, "assertive");
   });
 
@@ -649,7 +649,7 @@ describe("BackupsManagement — every error state is announced through ErrorNoti
     fireEvent.click(await screen.findByTestId("backups-delete-confirm"));
 
     const alert = await screen.findByTestId("backups-delete-error");
-    expect(alert).toHaveTextContent("Deleting this backup would drop the shelf");
+    expect(alert).toHaveTextContent("required by the retention floor");
     expectErrorNoticeIdentity(alert, "assertive");
   });
 
@@ -692,7 +692,7 @@ describe("BackupsManagement — every error state is announced through ErrorNoti
     fireEvent.click(screen.getByTestId("backups-restore-submit"));
 
     const alert = await screen.findByTestId("backups-restore-error");
-    expect(alert).toHaveTextContent("Not a compatible backup");
+    expect(alert).toHaveTextContent("The selected file is not a compatible backup.");
     expectErrorNoticeIdentity(alert, "assertive");
   });
 
@@ -708,7 +708,7 @@ describe("BackupsManagement — every error state is announced through ErrorNoti
     fireEvent.click(screen.getByTestId("backups-upload-submit"));
 
     const alert = await screen.findByTestId("backups-upload-error");
-    expect(alert).toHaveTextContent("Upload exceeds the size cap");
+    expect(alert).toHaveTextContent("exceeds the upload size limit");
     expectErrorNoticeIdentity(alert, "assertive");
   });
 });

@@ -431,3 +431,69 @@ describe("TelemetryManagement", () => {
     expect(source).not.toMatch(/dangerouslySetInnerHTML/);
   });
 });
+
+it.each(["en", "es"] as const)(
+  "localizes filter-load failures without displaying server prose (%s)",
+  async (language) => {
+    let requests = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input) => {
+        if (String(input) === settingsUrl) return jsonResponse({ locale: { language } });
+        requests++;
+        if (requests === 1) return jsonResponse({ rows: [], nextCursor: null });
+        return new Response(
+          JSON.stringify({
+            error: "validation_error",
+            message: "Private English filter diagnostics",
+          }),
+          { status: 400 }
+        );
+      })
+    );
+    try {
+      renderPanel();
+      await screen.findByRole("button", {
+        name: language === "es" ? "Aplicar filtros" : "Apply filters",
+      });
+      await waitFor(() => expect(screen.getByTestId("telemetry-apply-filters")).not.toBeDisabled());
+      fireEvent.click(screen.getByTestId("telemetry-apply-filters"));
+      const notice = await screen.findByRole("alert");
+      expect(notice).toHaveTextContent(
+        language === "es" ? "Error al cargar la telemetría." : "Failed to load telemetry."
+      );
+      expect(notice).not.toHaveTextContent("Private English");
+    } finally {
+      cleanup();
+      vi.unstubAllGlobals();
+    }
+  }
+);
+
+it("sends both date boundaries when applying a telemetry range", async () => {
+  const requested: string[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input) => {
+      const url = String(input);
+      if (url === settingsUrl) return jsonResponse({ locale: { language: "en" } });
+      requested.push(url);
+      return jsonResponse({ rows: [], nextCursor: null });
+    })
+  );
+  try {
+    renderPanel();
+    await waitFor(() => expect(screen.getByTestId("telemetry-apply-filters")).not.toBeDisabled());
+    fireEvent.change(screen.getByTestId("telemetry-filter-from"), { target: { value: "1000" } });
+    fireEvent.change(screen.getByTestId("telemetry-filter-to"), { target: { value: "2000" } });
+    fireEvent.click(screen.getByTestId("telemetry-apply-filters"));
+    await waitFor(() => {
+      const query = new URL(requested.at(-1)!, "http://localhost").searchParams;
+      expect(query.get("from")).toBe("1000");
+      expect(query.get("to")).toBe("2000");
+    });
+  } finally {
+    cleanup();
+    vi.unstubAllGlobals();
+  }
+});

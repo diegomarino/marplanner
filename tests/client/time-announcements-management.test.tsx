@@ -331,7 +331,9 @@ describe("TimeAnnouncementsManagement", () => {
     fireEvent.click(screen.getByTestId("time-announcements-weekday-mon"));
     fireEvent.click(screen.getByTestId("time-announcements-create"));
 
-    expect(await screen.findByTestId("time-announcements-error")).toHaveTextContent(overlapMessage);
+    expect(await screen.findByTestId("time-announcements-error")).toHaveTextContent(
+      "An active rule already announces at this time on an overlapping weekday."
+    );
   });
 
   it("surfaces the server's 400 validation message on create", async () => {
@@ -362,7 +364,7 @@ describe("TimeAnnouncementsManagement", () => {
     fireEvent.click(screen.getByTestId("time-announcements-create"));
 
     expect(await screen.findByTestId("time-announcements-error")).toHaveTextContent(
-      validationMessage
+      "The rule settings are invalid. Check the time and weekdays."
     );
   });
 
@@ -399,3 +401,34 @@ describe("TimeAnnouncementsManagement", () => {
     ).toBe(false);
   });
 });
+
+it.each(["en", "es"] as const)(
+  "localizes browser exceptions on rule creation (%s)",
+  async (language) => {
+    currentSettings.language = language;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input, init) => {
+        if (init?.method === "POST") throw new TypeError("Failed to fetch private diagnostics");
+        return jsonResponse([]);
+      })
+    );
+    try {
+      renderManagement();
+      await screen.findByRole("button", { name: language === "es" ? "Crear" : "Create" });
+      fireEvent.change(screen.getByTestId("time-announcements-time-input"), {
+        target: { value: "07:00" },
+      });
+      fireEvent.click(screen.getByTestId("time-announcements-weekday-mon"));
+      fireEvent.click(screen.getByTestId("time-announcements-create"));
+      const notice = await screen.findByTestId("time-announcements-error");
+      expect(notice).toHaveTextContent(
+        language === "es" ? "Error al crear esta regla." : "Failed to create this rule."
+      );
+      expect(notice).not.toHaveTextContent("private diagnostics");
+    } finally {
+      cleanup();
+      vi.unstubAllGlobals();
+    }
+  }
+);
