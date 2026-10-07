@@ -111,11 +111,13 @@ export function verifyCoverage(expected, observed) {
   }
   return { files: fileNames.length, sums };
 }
-export function fromV8Coverage(raw, policy, root = process.cwd()) {
+export function fromV8Coverage(raw, policy, root = process.cwd(), sourceRoot = root) {
   const files = {};
   const rawFiles = object(raw, "raw V8 report");
   const rawNames = Object.keys(rawFiles)
-    .map((file) => path.relative(root, path.resolve(root, file)).replaceAll(path.sep, "/"))
+    .map((file) =>
+      path.relative(sourceRoot, path.resolve(sourceRoot, file)).replaceAll(path.sep, "/")
+    )
     .sort();
   const declarations = Object.keys(policy.files).filter((file) => policy.files[file].declaration);
   if (declarations.some((file) => !file.endsWith(".d.ts"))) fail("invalid declaration file policy");
@@ -133,7 +135,7 @@ export function fromV8Coverage(raw, policy, root = process.cwd()) {
       };
       continue;
     }
-    const item = rawFiles[absolute] ?? rawFiles[file];
+    const item = rawFiles[path.resolve(sourceRoot, file)] ?? rawFiles[file];
     if (!item || !item.s || !item.f || !item.b || !item.statementMap)
       fail(`${file} absent from raw V8 report`);
     const values = (array) => Object.values(array).flat();
@@ -202,7 +204,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       const observed = {
         candidate,
         toolchain: { node: process.versions.node, vitest: pkg.devDependencies.vitest },
-        files: fromV8Coverage(raw, expected),
+        files: fromV8Coverage(raw, expected, process.cwd(), stamp.sourceRoot ?? process.cwd()),
       };
       console.log(JSON.stringify(verifyCoverage(expected, observed)));
     }

@@ -14,7 +14,28 @@ Apply the required tier to the same reviewed candidate bytes. Changes after a pa
 
 `npm run check:preflight` checks maintained inventory, reviewed coverage source fingerprints and the pinned Node/npm/Vitest toolchain without running tests. Standard runs it before the destructive stamp. `npm run check:preflight:browser` also checks the retained candidate stamp and standard coverage/cohort artifacts, rejects inherited `SCHEDULER_DISABLED=1` and acceptance server reuse (`PW_REUSE_SERVER=1`), and checks local `BASE_URL`/`PORT` consistency before the aggregate build. These early checks do not establish browser execution or a complete environment/build fingerprint; the browser runner still owns browser availability, synthetic data and server startup.
 
-CI uses one workflow: the browser job depends on standard, transfers its raw evidence and verifies it against the browser job's independently installed candidate before running the aggregate stage. A successful standard job alone does not satisfy browser acceptance.
+CI calls the existing selector in `mac-mini-ci.yml`. Trusted repository changes use
+`macmini` when the named runner is online, idle and has the required labels;
+otherwise native jobs use `macos-15`. Fork PRs always use hosted macOS. The lookup
+is an availability snapshot, not a reservation: a disconnect after selection does
+not migrate a queued or running job. `force_hosted` on workflow dispatch (or the
+repository variable `MP_FORCE_HOSTED=true` for reruns before this workflow reaches
+main) forces hosted native acceptance.
+
+`standard` runs the complete standard tier. `native` independently installs the
+same candidate, restores the standard tar archive with its original timestamps,
+verifies coverage and cohorts, then builds and runs every Playwright check. Raw
+Node/Vitest/V8 absolute paths use the producing checkout root recorded in the
+candidate stamp; source hashes still come from the consuming checkout. Artifact
+names include run ID and attempt to prevent mixing retries. Each job has a fresh
+checkout path, job-owned npm configuration/cache/prefix and browser installation;
+no personal environment files, desktop session or existing browser cache is used.
+
+`container` builds and accepts the Docker image on GitHub-hosted Ubuntu, including
+its browser flow. The required `full` check always runs on Ubuntu and succeeds
+only when `select`, `standard`, `native` and `container` all succeeded. Failure,
+cancellation, missing constituents or unexpected skips fail the aggregate gate.
+The required status names remain `standard` and `full`.
 
 ### Failure diagnosis and retries
 

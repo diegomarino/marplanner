@@ -37,10 +37,23 @@ test("CI binds the checked-out tree instead of a stale embedded candidate hash",
   const workflow = readFileSync(".github/workflows/coverage.yml", "utf8");
   assert.doesNotMatch(workflow, /MP_CANDIDATE_ID:\s*[a-f0-9]{64}/);
   const config = load(workflow);
-  assert.deepEqual(Object.keys(config.on).sort(), ["pull_request", "push"]);
+  assert.deepEqual(Object.keys(config.on).sort(), ["pull_request", "push", "workflow_dispatch"]);
   assert.deepEqual(config.on.push.branches, ["main"]);
-  assert.deepEqual(Object.keys(config.jobs).sort(), ["full", "standard"]);
-  assert.equal(config.jobs.full.needs, "standard");
+  assert.deepEqual(Object.keys(config.jobs).sort(), [
+    "container",
+    "full",
+    "native",
+    "select",
+    "standard",
+  ]);
+  assert.deepEqual(config.jobs.full.needs, ["select", "standard", "native", "container"]);
+  assert.equal(config.jobs.full.if, "${{ always() }}");
+  assert.equal(config.jobs.container["runs-on"], "ubuntu-latest");
+  for (const job of ["standard", "native"]) {
+    assert.equal(config.jobs[job]["runs-on"], "${{ fromJSON(needs.select.outputs.runner) }}");
+    assert.ok(config.jobs[job].needs.includes("select"));
+  }
+  assert.equal(config.jobs.select.uses, "./.github/workflows/mac-mini-ci.yml");
   const steps = (job) => config.jobs[job].steps;
   const commands = (job) =>
     steps(job)
@@ -55,7 +68,7 @@ test("CI binds the checked-out tree instead of a stale embedded candidate hash",
       join(root, "tests/fixtures/assembly-cohort.json"),
       JSON.stringify({ productFiles: ["missing.txt"] })
     );
-    for (const job of ["standard", "full"]) {
+    for (const job of ["standard", "native", "container"]) {
       const run = commands(job).find((run) => run.includes("node tools/candidate-identity.mjs"));
       assert.ok(run);
       const envFile = join(root, `${job}-env`);
@@ -72,11 +85,14 @@ test("CI binds the checked-out tree instead of a stale embedded candidate hash",
     rmSync(root, { recursive: true, force: true });
   }
   assert.equal(commands("standard").filter((run) => run === "npm run check:standard").length, 1);
-  assert.ok(commands("full").includes("npm run check:aggregate-only"));
-  assert.ok(!commands("full").some((run) => /check:(standard|full)|cohorts:stamp/.test(run)));
+  assert.ok(commands("native").includes("npm run check:aggregate-only"));
+  assert.ok(!commands("native").some((run) => /check:(standard|full)|cohorts:stamp/.test(run)));
   const upload = steps("standard").find((step) => step.uses === "actions/upload-artifact@v4");
-  const download = steps("full").find((step) => step.uses === "actions/download-artifact@v4");
-  assert.equal(upload.with.name, "standard-evidence-${{ github.run_id }}");
+  const download = steps("native").find((step) => step.uses === "actions/download-artifact@v4");
+  assert.equal(
+    upload.with.name,
+    "standard-evidence-${{ github.run_id }}-${{ github.run_attempt }}"
+  );
   assert.equal(download.with.name, upload.with.name);
   assert.equal(upload.with.overwrite, true);
   assert.equal(upload.if, "always()");
@@ -90,9 +106,75 @@ test("CI binds the checked-out tree instead of a stale embedded candidate hash",
     )
   );
   assert.ok(
-    commands("full").some(
+    commands("native").some(
       (run) => run === 'tar -xzf "$RUNNER_TEMP/standard-evidence/standard-evidence.tar.gz"'
     )
   );
+  const gate = config.jobs.full.steps[0].run;
+  const passing = Object.fromEntries(
+    config.jobs.full.needs.map((name) => [name, { result: "success" }])
+  );
+  for (const status of ["success", "failure", "cancelled", "skipped"]) {
+    for (const name of config.jobs.full.needs) {
+      const results = structuredClone(passing);
+      results[name].result = status;
+      const result = spawnSync("bash", ["-e", "-c", gate], {
+        env: { ...process.env, RESULTS: JSON.stringify(results) },
+        encoding: "utf8",
+      });
+      assert.equal(result.status === 0, status === "success", `${name}: ${status}`);
+    }
+  }
   assert.equal(existsSync(".github/workflows/full-gate.yml"), false);
+});
+
+test("runner selector admits only trusted online idle macmini and falls back safely", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { load } = await import("js-yaml");
+  const selector = load(readFileSync(".github/workflows/mac-mini-ci.yml", "utf8"));
+  assert.match(
+    selector.jobs.select.steps[0].env.TRUSTED,
+    /head.repo.full_name == github.repository/
+  );
+  const script = selector.jobs.select.steps[0].run.split("python3 - <<'PY'\n")[1].split("\nPY")[0];
+  const root = mkdtempSync(join(tmpdir(), "runner-selector-"));
+  try {
+    const runner = {
+      name: "macmini",
+      status: "online",
+      busy: false,
+      labels: ["self-hosted", "macOS", "macmini"].map((name) => ({ name })),
+    };
+    for (const [label, changes, trusted, forced, expected] of [
+      ["idle", {}, "true", "false", ["self-hosted", "macOS", "macmini"]],
+      ["busy", { busy: true }, "true", "false", ["macos-15"]],
+      ["offline", { status: "offline" }, "true", "false", ["macos-15"]],
+      ["wrong name", { name: "other" }, "true", "false", ["macos-15"]],
+      ["missing label", { labels: [] }, "true", "false", ["macos-15"]],
+      ["fork", {}, "false", "false", ["macos-15"]],
+      ["forced", {}, "true", "true", ["macos-15"]],
+    ]) {
+      const output = join(root, label);
+      const setup = `import io, urllib.request\nurllib.request.urlopen = lambda *args, **kwargs: io.StringIO(${JSON.stringify(JSON.stringify({ runners: [{ ...runner, ...changes }] }))})\n`;
+      const result = spawnSync("python3", ["-c", setup + script], {
+        env: {
+          ...process.env,
+          RUNNER_READ_TOKEN: "test",
+          REPOSITORY: "test/repo",
+          TRUSTED: trusted,
+          FORCE_HOSTED: forced,
+          GITHUB_OUTPUT: output,
+        },
+        encoding: "utf8",
+      });
+      assert.equal(result.status, 0, result.stderr);
+      assert.deepEqual(
+        JSON.parse(readFileSync(output, "utf8").trim().slice("runner=".length)),
+        expected,
+        label
+      );
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });

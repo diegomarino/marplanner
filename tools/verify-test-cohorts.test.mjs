@@ -170,3 +170,50 @@ test("standard gate checks Node and Vitest without a Playwright artifact", () =>
   standard.runners.vitest.listed = [];
   assert.throws(() => verifyTestCohorts(expected, standard, ["node", "vitest"]));
 });
+
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { observedFromRaw } from "./verify-test-cohorts.mjs";
+
+test("transferred standard evidence uses its producing checkout root", () => {
+  const dir = mkdtempSync(join(tmpdir(), "cohort-transfer-"));
+  try {
+    mkdirSync(join(dir, "raw"));
+    const raw = join(dir, "raw");
+    writeFileSync(
+      join(raw, "candidate.json"),
+      JSON.stringify({ candidate: "same", startedAt: 0, sourceRoot: "/producer" })
+    );
+    writeFileSync(
+      join(raw, "node-results.xml"),
+      '<testsuites><testcase name="passes" file="/producer/tools/a.test.mjs"/></testsuites>'
+    );
+    writeFileSync(
+      join(raw, "vitest-list.json"),
+      JSON.stringify([{ file: "/producer/tests/client/b.test.ts" }])
+    );
+    writeFileSync(
+      join(raw, "vitest-results.json"),
+      JSON.stringify({
+        success: true,
+        numTotalTests: 1,
+        testResults: [
+          {
+            name: "/producer/tests/client/b.test.ts",
+            assertionResults: [{ fullName: "renders", status: "passed" }],
+          },
+        ],
+      })
+    );
+    const result = observedFromRaw(raw, "same", "/consumer", ["node", "vitest"]);
+    assert.deepEqual(result.runners.node.listed, ["tools/a.test.mjs"]);
+    assert.deepEqual(result.runners.vitest.listed, ["tests/client/b.test.ts"]);
+    assert.throws(
+      () => observedFromRaw(raw, "different", "/consumer", ["node", "vitest"]),
+      /stale/
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

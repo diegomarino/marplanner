@@ -649,7 +649,8 @@
           ],
           "tools/candidate-identity.test.mjs": [
             "candidate identity binds bytes, modes and exact maintained inventory",
-            "CI binds the checked-out tree instead of a stale embedded candidate hash"
+            "CI binds the checked-out tree instead of a stale embedded candidate hash",
+            "runner selector admits only trusted online idle macmini and falls back safely"
           ],
           "tools/check-openapi-drift.test.mjs": [
             "discoverContracts: finds contracts under slices that have one, skips slices that don't",
@@ -794,7 +795,8 @@
             "raw V8 report rejects a production file absent from reviewed policy",
             "declaration files remain visible with zero executable metrics",
             "preflight rejects stale coverage fingerprints before runners",
-            "browser preflight rejects inherited fixture and server overrides"
+            "browser preflight rejects inherited fixture and server overrides",
+            "transferred V8 evidence maps producer paths and hashes consumer source bytes"
           ],
           "tools/verify-test-cohorts.test.mjs": [
             "accepts exact independently expected files and runtime case IDs",
@@ -812,7 +814,8 @@
             "normalizes Vitest list and result case names separately",
             "normalizes Playwright stable spec ID and expected status",
             "rejects a Node-only modifier even when the runner executes all cases",
-            "standard gate checks Node and Vitest without a Playwright artifact"
+            "standard gate checks Node and Vitest without a Playwright artifact",
+            "transferred standard evidence uses its producing checkout root"
           ]
         }
       },
