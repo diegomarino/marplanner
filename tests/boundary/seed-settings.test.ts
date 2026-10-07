@@ -37,10 +37,17 @@ describe("public settings seed", () => {
         locale: { timezone: "Europe/Madrid", language: "en", weekStartDay: 1 },
         weather: { lat: 39.7817, lon: -89.6501, label: "Springfield" },
         printer: { paperWidthDots: 576 },
+        // Printing active → AC-06 default-fills unpaired transport (not seeded as a row).
+        printerTransport: {
+          deviceId: "",
+          name: "",
+          serviceUuid: "",
+          characteristicUuid: "",
+        },
       });
-      expect(JSON.parse(response.body)).not.toHaveProperty("printerTransport");
+      // Seed persists no printerTransport row and no printer runtime/capability state.
       expect(JSON.stringify(JSON.parse(response.body))).not.toMatch(
-        /deviceId|serviceUuid|characteristicUuid|capabilit|connect|pair|job|activit/i
+        /capabilit|connect|pair|job|activit/i
       );
     } finally {
       await app.close();

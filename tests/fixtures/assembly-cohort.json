@@ -1152,7 +1152,8 @@
             "calendar sync publication repeats without duplicates, replaces title assignments, and cancels missing occurrences",
             "calendar sync publication rolls back every event, assignment, and success-health write when publication fails",
             "calendar sync publication purges a cancelled occurrence after it leaves the supported retention window",
-            "calendar sync publication starts manual sync for an enabled source and rejects missing or disabled sources"
+            "calendar sync publication starts manual sync for an enabled source and rejects missing or disabled sources",
+            "calendar sync publication keeps a manual non-ext assignment when title-derived would claim the same member"
           ],
           "tests/boundary/credentials.test.ts": [
             "credentials — mpk- diceware generateKey keys start with 'mpk-'",
@@ -1308,7 +1309,8 @@
             "daily-messages-window (US2 window list + delete + missing-vs-empty) idempotent delete: deleting a missing message -> 204 no-op (DAILY-MESSAGES-FR-006)",
             "daily-messages-window (US2 window list + delete + missing-vs-empty) idempotent delete: deleting for an unknown member -> 204 no-op, NOT 404 (DAILY-MESSAGES-FR-006)",
             "daily-messages-window (US2 window list + delete + missing-vs-empty) delete with a malformed date -> 400, not a 204 no-op (DAILY-MESSAGES-INV-03)",
-            "daily-messages-window (US2 window list + delete + missing-vs-empty) delete removes an existing message (204), leaving it absent on subsequent reads"
+            "daily-messages-window (US2 window list + delete + missing-vs-empty) delete removes an existing message (204), leaving it absent on subsequent reads",
+            "daily-messages-window (US2 window list + delete + missing-vs-empty) GET /current with a malformed date -> 400 (DAILY-MESSAGES-INV-03 binds every endpoint)"
           ],
           "tests/boundary/data-ownership.test.ts": [
             "data-ownership — table inventory (guards the forbidden-set derivation itself) schema.ts declares exactly 37 sqliteTable definitions",
@@ -2566,7 +2568,9 @@
             "settings-write PUT valid weather replaces the object atomically; a subsequent read returns it",
             "settings-write clear-as-unit: writing {lat:null, lon:null} over a set location blanks it atomically",
             "settings-write PUT valid locale (all three fields) replaces the object and round-trips",
-            "settings-write a write to one object does not disturb the other (atomicity is per-object)"
+            "settings-write a write to one object does not disturb the other (atomicity is per-object)",
+            "settings-write printing active with no printerTransport row fills empty defaults (APP-SETTINGS-REGISTRY-AC-06)",
+            "settings-write PUT printerTransport nested type/config shape is rejected as invalid_settings (flat schema)"
           ],
           "tests/boundary/static-serving.test.ts": [
             "static serving — client-only root; backend bundle never leaks GET / serves the SPA shell (200 HTML)",
@@ -7108,7 +7112,7 @@
         }
       },
       "src/server/modules/calendar/reconcile.ts": {
-        "sha256": "235cdc0092a9be9ab6b6aee440e02cb58cce31b317d87edb80d2820d85ccbfc0",
+        "sha256": "46407fd720760142af43fb8457f5b7ab626bdc32ebe1f4ad96ab791bffd309ad",
         "layer": "server",
         "minimumTotals": {
           "lines": 37,
@@ -7252,7 +7256,7 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/message.ts": {
-        "sha256": "769d9a20b4de43ef7d7cc1bc2cf4681f02fd219c77286ed671eb7ad9b2972ee5",
+        "sha256": "6ab5a865f30a47d71009889454606461651a07b1c590789daa1f4d23ef59e406",
         "layer": "server",
         "minimumTotals": {
           "lines": 5,
@@ -7669,7 +7673,7 @@
         }
       },
       "src/server/modules/daily-briefing/index.ts": {
-        "sha256": "8313632a7b40348def60ff25b82a18da232af4c3880e6b8c48a0b54746447a72",
+        "sha256": "f7994490a57512aa5f7ee4f00edaa890cc393d011bff4be26ba339a73c3ef86c",
         "layer": "server",
         "minimumTotals": {
           "lines": 278,
@@ -7701,7 +7705,7 @@
         }
       },
       "src/server/modules/daily-briefing/render/adapter.ts": {
-        "sha256": "af3709a9a6763c567362b862dc6e2b759cde264bd634aa3e2c21f90837516744",
+        "sha256": "24d3503258990ada54b27c3d95eb15d34f9039e0f06ee1e39034cbab89e4db5d",
         "layer": "server",
         "minimumTotals": {
           "lines": 125,
@@ -8197,7 +8201,7 @@
         }
       },
       "src/server/modules/daily-messages/index.ts": {
-        "sha256": "7c4f92a30af059ecf9d6876679a45ea0b6aeda3dd2f2f37cc984969dacbd29a1",
+        "sha256": "3d5d84f2e32b3548bdaa3aaaa781e53dba2961c0a8c49d16f86d6cee641fbf1c",
         "layer": "server",
         "minimumTotals": {
           "lines": 44,
@@ -8229,7 +8233,7 @@
         }
       },
       "src/server/modules/meals/index.ts": {
-        "sha256": "9b5a89af6e262f65f859a83534ab2308fbb7776c0ceba31f288747795df15941",
+        "sha256": "c4b705e96455e42c6ef68e091ded615411342d0e4dcf908871890b356742c62f",
         "layer": "server",
         "minimumTotals": {
           "lines": 385,
@@ -8469,7 +8473,7 @@
         }
       },
       "src/server/modules/settings/index.ts": {
-        "sha256": "d72d7ece6b6aa07ebd840c85a03e6bbbc14c57fcbd3bdcc819a795fe6390a59c",
+        "sha256": "7ee7cdd82235d2033f59c7638cc44ce346cfe140897671294d083a69fca6b432",
         "layer": "server",
         "minimumTotals": {
           "lines": 65,
@@ -8853,7 +8857,7 @@
         }
       },
       "src/server/routes/routines.ts": {
-        "sha256": "deb3472cd972a79a69d6060d824abb80da65fe37b28865a1af64e246ac9f2ab8",
+        "sha256": "34e343569c41fce6cfb62098edcffc85198f5057db1ab0111655bda412431170",
         "layer": "server",
         "minimumTotals": {
           "lines": 147,
