@@ -65,8 +65,10 @@ Example with Printing plugin active:
   "locale": { "timezone": "Europe/Madrid", "language": "es", "weekStartDay": 1 },
   "printer": { "paperWidthDots": 576 },
   "printerTransport": {
-    "type": "bluetooth",
-    "config": { "deviceId": "", "name": "", "serviceUuid": "", "characteristicUuid": "" }
+    "deviceId": "",
+    "name": "",
+    "serviceUuid": "",
+    "characteristicUuid": ""
   }
 }
 ```
@@ -85,13 +87,13 @@ Accepts `{ "object": OBJECT_NAME, "settings": { ... } }`. Returns the updated ef
 
 ### Plugin objects (examples; each plugin registers its own)
 
-| Object             | Owner plugin | Fields                                                                                                                                                                                                         |
-| ------------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `weather`          | Weather      | `lat` (number or null, **range `[-90,90]`**), `lon` (number or null, **range `[-180,180]`**), `label?` (optional place name or null). Set and cleared as a unit; range-validated (`ADR-052`). No env fallback. |
-| `printer`          | Printing     | `paperWidthDots` (positive integer). (`enabled`/`autoprint` removed: "printing available" = plugin active per ADR-038; "automatic" = an active automatic trigger bound, not a flag.)                           |
-| `printerTransport` | Printing     | `type` (transport enum; only `bluetooth` in this system), `config` (object validated against the schema for `type`).                                                                                           |
+| Object             | Owner plugin | Fields                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `weather`          | Weather      | `lat` (number or null, **range `[-90,90]`**), `lon` (number or null, **range `[-180,180]`**), `label?` (optional place name or null). Set and cleared as a unit; range-validated (`ADR-052`). No env fallback.                                                                                                                                                   |
+| `printer`          | Printing     | `paperWidthDots` (positive integer). (`enabled`/`autoprint` removed: "printing available" = plugin active per ADR-038; "automatic" = an active automatic trigger bound, not a flag.)                                                                                                                                                                             |
+| `printerTransport` | Printing     | Flat Bluetooth pairing fields: `deviceId`, `name`, `serviceUuid`, `characteristicUuid` (all strings). Empty strings = unpaired default; otherwise deviceId/name non-empty and both UUIDs must be UUID-shaped. Unknown keys (including a nested `type`/`config` envelope) are rejected. Transport is Bluetooth-only in this system; wifi/usb are not schema arms. |
 
-Wi-Fi and USB transport types are not valid `printerTransport.type` values until those transports are implemented.
+`printerTransport` does not encode a multi-transport discriminated union in the shipped API — Bluetooth is the only local transport, so the object is the Bluetooth config fields themselves.
 
 ## Events
 
@@ -117,7 +119,7 @@ The effective settings response always fills missing persisted values from objec
 - **APP-SETTINGS-REGISTRY-AC-04** Given a storage failure after writing the first field of a `locale` write, all three `locale` fields remain at their prior values.
 - **APP-SETTINGS-REGISTRY-AC-05** Given the Printing plugin is not active, `GET /settings` does not include `printer` or `printerTransport` keys.
 - **APP-SETTINGS-REGISTRY-AC-06** Given the Printing plugin is active, `GET /settings` includes `printer` and `printerTransport` with defaults for any unpersisted fields.
-- **APP-SETTINGS-REGISTRY-AC-07** Given `PUT /settings` with `{ "object": "printerTransport", "settings": { "type": "wifi", "config": {} } }`, the server returns an unsupported transport error (wifi not implemented in this system).
+- **APP-SETTINGS-REGISTRY-AC-07** Given `PUT /settings` with `{ "object": "printerTransport", "settings": { "type": "wifi", "config": {} } }` (nested/unknown-key shape), the server returns a schema-invalid error; the shipped object is flat Bluetooth pairing fields only.
 
 ## Open Decisions
 

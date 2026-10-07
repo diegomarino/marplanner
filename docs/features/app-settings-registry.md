@@ -43,8 +43,7 @@ values.
   its prior values.
 - A storage failure mid-write leaves every field of that object at its prior value
   (no partial object).
-- An unsupported transport type (`wifi`/`usb`) on `printerTransport` is rejected
-  until that transport is implemented.
+- A non-flat / unknown-key `printerTransport` payload (e.g. nested `{ "type": "wifi", "config": {} }`) is rejected as schema-invalid; Bluetooth is the only shipped local transport and is encoded as flat pairing fields.
 - `daily_briefing_block_order` is not a settings object here — Daily Briefing owns
   its own block configuration.
 
@@ -80,7 +79,7 @@ values.
 
 - **FR-014**: Given the Printing plugin is active, when a client requests `GET /settings`, then the response MUST include `printer` and `printerTransport` with defaults for any unpersisted fields (the acceptance surface for the default-filling invariant in FR-006/INV-06 and the plugin-visibility invariant in FR-007/INV-07). _(Realizes: APP-SETTINGS-REGISTRY-AC-06)_
 
-- **FR-015**: Given `PUT /settings` for `printerTransport` with `{ "type": "wifi", "config": {} }`, when it is validated, then the server MUST return an unsupported-transport error because `wifi` is not implemented in this system (only `bluetooth` is a valid `type`). _(Realizes: APP-SETTINGS-REGISTRY-AC-07)_
+- **FR-015**: Given `PUT /settings` for `printerTransport` with `{ "type": "wifi", "config": {} }` (or any nested/unknown-key shape), when it is validated, then the server MUST return a schema-invalid error (`invalid_settings`) because the shipped object is flat Bluetooth pairing fields only. _(Realizes: APP-SETTINGS-REGISTRY-AC-07)_
 
 ### Key Entities
 

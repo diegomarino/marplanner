@@ -4,20 +4,10 @@
  * table directly; v2's equivalent domain (`src/server/modules/daily-messages/index.ts`,
  * `getMessage(memberId, date)`) is a PLUGIN module, so Rule B (ADR-039 §2b′,
  * `eslint.config.mjs`'s daily-briefing import-boundary zone) requires this cross-plugin read to
- * go through `src/server/host-api/index.ts` — which does NOT export `daily-messages` today (only
- * `reminders`/`routines`/`meals`/`calendar`/`weather` are barrel-exposed, per that file's current
- * contents). Adding that export is a `src/server/host-api/index.ts` edit, outside this module's
- * queued-path scope (`src/server/modules/daily-briefing/blocks/* ` + the domain test file ONLY —
- * see /trap-sweep.md).
- * Ported behavior is therefore held behind an INJECTABLE port (the same shape D6 already
- * establishes for `QuoteSource`/`OnThisDaySource`/`WeatherSource`): `ctx.readDailyMessage`, a
- * direct passthrough for `daily-messages`' `getMessage`. This block is fully real and testable
- * today (inject a fake); wiring the REAL `getMessage` in requires a small preceding/parallel
- * barrel-addition (host-api `daily-messages` export) that (or a short follow-up task) must
- * land before this block emits real content in production. Until then `generate` returns
- * `null` (no block — matches every other "nothing to show" block in this registry) whenever the
- * port is not supplied, which is exactly production's current behavior (the port isn't wired
- * anywhere yet).
+ * go through `src/server/host-api/index.ts` (which exports `getMessage` /
+ * `DailyMessageNotFoundError`). Production generation wires `ctx.readDailyMessage` from
+ * `../index.ts`'s `readDailyMessagePort` (maps not-found → null; other errors propagate).
+ * The injectable port remains so unit tests can supply a fake without the host barrel.
  * DAILY-MESSAGES-AC-07 fold: "Text stored verbatim; emoji/wrapping handled at
  * render" assigns emoji handling to the RENDER layer, not generation — the GENERATOR must freeze
  * the snapshot's text RAW (no stripping here), and `null` means ONLY "no message row exists for
@@ -31,7 +21,7 @@
 export interface MessageBlockContext {
   memberId: string;
   date: string;
-  /** See the module doc above — the host-api barrel gap this generator is built around. */
+  /** Production: `readDailyMessagePort` via host-api `getMessage`; tests may inject a fake. */
   readDailyMessage?: (memberId: string, date: string) => { text: string } | null;
 }
 
@@ -43,7 +33,7 @@ export const messageBlock = {
   type: "message" as const,
   scope: "member" as const,
   source:
-    "src/server/modules/daily-messages (getMessage) — injected via ctx.readDailyMessage pending a host-api barrel export (see module doc)",
+    "src/server/modules/daily-messages getMessage (host-api barrel; production wires via index.readDailyMessagePort)",
   async generate(ctx: MessageBlockContext): Promise<MessageBlockData | null> {
     if (!ctx.readDailyMessage) return null;
     const message = ctx.readDailyMessage(ctx.memberId, ctx.date);

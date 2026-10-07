@@ -472,4 +472,47 @@ describe("settings-write", () => {
       await app.close();
     }
   });
+
+  it("printing active with no printerTransport row fills empty defaults (APP-SETTINGS-REGISTRY-AC-06)", async () => {
+    const { buildApp } = await import("../../src/server/app.ts");
+    const deviceKey = seedDeviceKey();
+    setPluginState("printing", "active");
+    const app = await buildApp();
+    try {
+      const res = await getSettings(app, deviceKey);
+      expect(res.statusCode).toBe(200);
+      const body = JSON.parse(res.body);
+      expect(body.printer).toEqual({ paperWidthDots: 576 });
+      expect(body.printerTransport).toEqual({
+        deviceId: "",
+        name: "",
+        serviceUuid: "",
+        characteristicUuid: "",
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("PUT printerTransport nested type/config shape is rejected as invalid_settings (flat schema)", async () => {
+    const { buildApp } = await import("../../src/server/app.ts");
+    const deviceKey = seedDeviceKey();
+    setPluginState("printing", "active");
+    const app = await buildApp();
+    try {
+      const res = await putSettings(app, deviceKey, {
+        object: "printerTransport",
+        settings: { type: "wifi", config: {} },
+      });
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body)).toEqual({ error: "invalid_settings" });
+      expect(
+        getDb()
+          .prepare("SELECT 1 AS ok FROM settings_objects WHERE object_name = 'printerTransport'")
+          .get()
+      ).toBeUndefined();
+    } finally {
+      await app.close();
+    }
+  });
 });
