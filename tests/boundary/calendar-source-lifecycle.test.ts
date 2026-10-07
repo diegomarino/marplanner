@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "../../src/server/db/client";
 import { getEvents } from "../../src/server/modules/calendar/index";
 import {
@@ -45,6 +45,12 @@ const dependencies = {
 
 describe("calendar external-source lifecycle", () => {
   useIsolatedDb();
+  // Keep fixed Calendar fixtures inside the production rolling window; leave async timers real.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-15T12:00:00Z"));
+  });
+  afterEach(() => vi.useRealTimers());
   beforeEach(() => {
     sourceId = `lifecycle-source-${++sequence}`;
   });
@@ -85,10 +91,15 @@ describe("calendar external-source lifecycle", () => {
       },
     });
     await started;
-    setExternalSourceEnabled(sourceId, false);
-    const later = startExternalSourceSynchronization(sourceId, dependencies);
-    release(feed);
-    await Promise.all([run, later]);
+    try {
+      setExternalSourceEnabled(sourceId, false);
+      const later = startExternalSourceSynchronization(sourceId, dependencies);
+      release(feed);
+      await Promise.all([run, later]);
+    } finally {
+      release(feed);
+      await run;
+    }
     await startExternalSourceSynchronization(sourceId, dependencies);
     expect(requests).toBe(1);
     expect(getDb().prepare("SELECT COUNT(*) AS count FROM calendar_events").get()).toEqual({
@@ -115,12 +126,17 @@ describe("calendar external-source lifecycle", () => {
     await started;
     const deletion = deleteExternalSource(sourceId);
     const waitingTrigger = startExternalSourceSynchronization(sourceId, dependencies);
-    expect(
-      getDb().prepare("SELECT COUNT(*) AS count FROM calendar_external_sources").get()
-    ).toEqual({ count: 1 });
-    release(feed);
-    expect(await deletion).toBe(true);
-    await Promise.all([run, waitingTrigger]);
+    try {
+      expect(
+        getDb().prepare("SELECT COUNT(*) AS count FROM calendar_external_sources").get()
+      ).toEqual({ count: 1 });
+      release(feed);
+      expect(await deletion).toBe(true);
+      await Promise.all([run, waitingTrigger]);
+    } finally {
+      release(feed);
+      await Promise.allSettled([run, deletion, waitingTrigger]);
+    }
     await startExternalSourceSynchronization(sourceId, dependencies);
     expect(requests).toBe(1);
     for (const table of [
