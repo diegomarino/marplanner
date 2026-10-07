@@ -227,6 +227,20 @@ describe("daily-messages-window (US2 window list + delete + missing-vs-empty)", 
     }
   });
 
+  it("GET /current with a malformed date -> 400 (DAILY-MESSAGES-INV-03 binds every endpoint)", async () => {
+    const { buildApp } = await import("../../src/server/app.ts");
+    const deviceKey = seedKeys();
+    const memberId = seedMember();
+    const app = await buildApp();
+    try {
+      const res = await getCurrent(app, deviceKey, memberId, "2026-02-30");
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toBe("validation_error");
+    } finally {
+      await app.close();
+    }
+  });
+
   it("delete with a malformed date -> 400, not a 204 no-op (DAILY-MESSAGES-INV-03)", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
     const deviceKey = seedKeys();

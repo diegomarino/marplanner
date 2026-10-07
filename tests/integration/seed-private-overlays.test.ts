@@ -82,12 +82,16 @@ describe("private seed overlays", () => {
         locale: { timezone: "Europe/Madrid", language: "es", weekStartDay: 1 },
         weather: { lat: null, lon: null },
         printer: { paperWidthDots: 576 },
+        // APP-SETTINGS-REGISTRY-AC-06: printing active → cold-read fills empty transport defaults.
+        printerTransport: {
+          deviceId: "",
+          name: "",
+          serviceUuid: "",
+          characteristicUuid: "",
+        },
       })
     );
-    expect(publicRead.settings).not.toHaveProperty("printerTransport");
-    expect(JSON.stringify(publicRead.settings)).not.toMatch(
-      /deviceId|serviceUuid|characteristicUuid/i
-    );
+    expect(JSON.stringify(publicRead.settings)).not.toContain(PRIVATE_DEVICE_ID);
     expect(publicRead.calendarResponse.statusCode).toBe(200);
     expect(publicRead.calendar).toEqual([
       {

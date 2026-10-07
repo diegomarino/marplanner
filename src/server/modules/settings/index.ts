@@ -201,7 +201,8 @@ export function readEffectiveSettings(
     ? (validatePrinter(persisted.get("printer")) ?? PRINTER_DEFAULTS)
     : null;
   const printerTransport = activePlugins.has("printing")
-    ? validatePrinterTransportConfiguration(persisted.get("printerTransport"))
+    ? (validatePrinterTransportConfiguration(persisted.get("printerTransport")) ??
+      PRINTER_TRANSPORT_DEFAULTS)
     : null;
   return {
     locale,

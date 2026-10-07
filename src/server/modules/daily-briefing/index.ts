@@ -311,19 +311,11 @@ function derivePrintedStatus(
 
 // ── Render + store ───────────────────────
 //
-// the skeleton gated the whole render step on "at least one block this registry can render"
-// (`renderableBlocks.length > 0`), an artifact of the render REGISTRY (`render/registry.ts`)
-// knowing only the "message" pressedslip render-def at the time. That gate is REMOVED here per
-// render is attempted whenever Printing is active,
-// period — the registry's own incompleteness (only "message" has a render-def; the other 20
-// block types have no pressedslip visual template yet, a gap NO task in this module's
-// closes) is now surfaced HONESTLY as `unrenderedBlocks` entries (`render/bridge.ts#doRender` +
-// pressedslip's own `composeTree` registry-miss reporting), rather than silently pretending
-// those blocks were never candidates for print at all. A generation with real content therefore
-// legitimately reports MOST block types in `unrenderedBlocks` today — that is accurate
-// render-coverage bookkeeping for the deferred render-def work, not a data-layer OR genuine
-// render defect, and is kept in a SEPARATE population from
-// `failedRenderBlocks` precisely so it never demotes the briefing's status
+// Render is attempted whenever Printing is active. Every "ok" data block is a
+// render candidate; `render/registry.ts` registers pressedslip defs for all 21
+// block types. A registry miss (should not happen in production) still surfaces
+// as `unrenderedBlocks` (`render/bridge.ts#doRender` + pressedslip composeTree
+// reporting), kept separate from `failedRenderBlocks` so it never demotes status
 // (see `deriveOverallStatus` below).
 
 /** Select the renderable subset: every "ok" data block, verbatim envelope v2 title. */
@@ -421,7 +413,7 @@ async function renderAndPackBriefing(
   }
 }
 
-/** Overall status derivation (— the missing render-half clause).
+/** Overall status derivation (render-half clause).
  * The data-layer status stands unchanged unless a render was actually ATTEMPTED (Printing
  * active) — UNLESS the data layer already failed outright (nothing survived to render in the
  * first place, so there is no NEW failure to report). When a render WAS attempted, D5's full
@@ -430,9 +422,9 @@ async function renderAndPackBriefing(
  * REGISTERED block's data failed adapter validation, or pressedslip's own schema/`render`
  * throw) ⇒ `render-failed` even when the raster still partially rendered; otherwise the data
  * layer's own verdict stands. `renderResult.unrenderedBlocks` (registry-miss — no pressedslip
- * render-def yet, e.g. today's 20 not-yet-implemented types) is DELIBERATELY excluded from this
- * check — see `render/bridge.ts#RenderBridgeResult`'s own doc comment for why conflating the two
- * populations would report `render-failed` on every single generation.
+ * render-def for that type) is DELIBERATELY excluded from this check — see
+ * `render/bridge.ts#RenderBridgeResult`'s own doc comment for why conflating the two
+ * populations would report `render-failed` on every registry gap.
  */
 function deriveOverallStatus(
   dataStatus: BriefingStatus,
@@ -935,9 +927,8 @@ export async function generateBriefing(
     throw new DailyBriefingValidationError(`Member "${memberId}" is not opted in`);
   }
 
-  // exit condition: render whenever Printing is active — no longer gated on
-  // whether the (still message-only) render registry has anything to show (see the "Render +
-  // store" section doc comment above `selectRenderableBlocks`).
+  // exit condition: render whenever Printing is active (full 21-type registry;
+  // see the "Render + store" section doc comment above `selectRenderableBlocks`).
   const shouldRender = isPrintingPluginActive();
   const renderResult: RenderStoreResult = shouldRender
     ? await renderAndPackBriefing(memberId, member.displayName, date, blocks)

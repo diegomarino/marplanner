@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FastifyInstance } from "fastify";
 import type {
   Briefing,
@@ -15,6 +15,8 @@ import { useIsolatedDb } from "../helpers/db";
  * "frozen once written — regeneration is the only refresh". This test adds NO new
  * production code (trap-sweep) — it is a regression fence over the behavior; a
  * failure here means the bug is in `daily-briefing/index.ts`, not here.
+ * Clock PINNED (Date only) so fixture date 2026-09-04 stays inside calendar
+ * getEvents -30d/+365d window (de-time-bomb; same pattern as daily-briefing-generate).
  */
 describe("daily-briefing weather block snapshot freeze", () => {
   useIsolatedDb();
@@ -25,6 +27,8 @@ describe("daily-briefing weather block snapshot freeze", () => {
   const date = "2026-09-04";
 
   beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-10T12:00:00.000Z"));
     const now = Date.now();
     const db = getDb();
     deviceKey = `mpk-${now}-${Math.random().toString(36).slice(2)}`;
@@ -74,6 +78,7 @@ describe("daily-briefing weather block snapshot freeze", () => {
     await app?.close();
     const { __setForecastPortForTests } = await import("../../src/server/modules/weather/port");
     __setForecastPortForTests(undefined);
+    vi.useRealTimers();
   });
 
   function auth() {
