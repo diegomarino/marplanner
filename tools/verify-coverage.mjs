@@ -20,7 +20,7 @@ function object(value, label) {
   return value;
 }
 export function preflightCoverage(policy, pkg, runtime, root = process.cwd()) {
-  for (const [key, version] of Object.entries({ node: "24.21.0", vitest: "5.0.2" })) {
+  for (const [key, version] of Object.entries({ node: "24.21.0", vitest: "5.0.3" })) {
     const actual = key === "node" ? runtime.node : pkg.devDependencies?.vitest;
     if (policy.toolchain?.[key] !== version || actual !== version)
       fail(`${key} toolchain mismatch`);
@@ -54,7 +54,7 @@ export function preflightBrowserEnvironment(env = process.env) {
 export function verifyCoverage(expected, observed) {
   if (!expected?.candidate || observed?.candidate !== expected.candidate)
     fail("candidate identity missing or stale");
-  for (const [key, version] of Object.entries({ node: "24.21.0", vitest: "5.0.2" })) {
+  for (const [key, version] of Object.entries({ node: "24.21.0", vitest: "5.0.3" })) {
     if (expected.toolchain?.[key] !== version || observed.toolchain?.[key] !== version)
       fail(`${key} toolchain mismatch`);
   }
