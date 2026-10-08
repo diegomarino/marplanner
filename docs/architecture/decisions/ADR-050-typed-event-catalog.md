@@ -32,7 +32,9 @@ restricts emission, not listening.
 `npm run check:plugin-events` runs before both build and lint. It validates declarations
 against the typed catalog and owner map, then uses TypeScript symbol/signature
 resolution to check domain-bus calls in registered server plugin source directories
-(including the `meals` source alias and Backups' server directory). Imported, local and
+(including the `meals` source alias and Backups' server directory) and their registered
+HTTP route files. Route ownership is explicitly mapped and tested against the
+application's registrar inventory. Imported, local and
 namespace aliases are checked. An event argument must have a statically known literal
 or literal-union type; every possible name must be declared for that operation.
 Undeclared calls, unknown/duplicate declarations and foreign/core namespace emissions

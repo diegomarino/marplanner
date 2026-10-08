@@ -831,6 +831,8 @@
             "transferred standard evidence uses its producing checkout root"
           ],
           "tools/plugin-events.test.mjs": [
+            "plugin route ownership matches the application registrar inventory",
+            "plugin event gate checks registered route emits and subscriptions",
             "plugin event gate rejects a typed foreign-owner emit and an undeclared subscription",
             "plugin event gate accepts owned emits without subscribers and declared cross-owner subscriptions",
             "plugin event gate follows imported, local and namespace aliases through type assertions",
