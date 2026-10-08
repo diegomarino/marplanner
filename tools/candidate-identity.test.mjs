@@ -157,6 +157,26 @@ test("CI binds the checked-out tree instead of a stale embedded candidate hash",
   assert.equal(existsSync(".github/workflows/full-gate.yml"), false);
 });
 
+test("time-announcements browser check runs only when requested and stays off the mac mini", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { load } = await import("js-yaml");
+  const workflow = load(readFileSync(".github/workflows/time-announcements.yml", "utf8"));
+  assert.deepEqual(Object.keys(workflow.on).sort(), ["pull_request", "workflow_dispatch"]);
+  assert.deepEqual(workflow.on.pull_request.types, ["labeled"]);
+  assert.equal(workflow.on.push, undefined);
+  const job = workflow.jobs["time-announcements"];
+  assert.equal(job["runs-on"], "ubuntu-latest");
+  assert.match(job.if, /workflow_dispatch/);
+  assert.match(job.if, /e2e-time-announcements/);
+  const commands = job.steps.filter((step) => step.run).map((step) => step.run);
+  assert.ok(commands.includes("npm run test:e2e:time-announcements"));
+  assert.equal(
+    commands.some((run) => /check:(standard|aggregate-only|full)/.test(run)),
+    false
+  );
+  assert.equal(JSON.stringify(workflow).includes("macmini"), false);
+});
+
 test("runner selector admits only trusted online idle macmini and falls back safely", async () => {
   const { readFileSync } = await import("node:fs");
   const { load } = await import("js-yaml");

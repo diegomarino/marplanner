@@ -8,7 +8,7 @@ Boundary guarantees in [boundary-guarantees.yaml](boundary-guarantees.yaml) reco
 
 - `npm run check:fast` runs formatting, generated member-color and emoji freshness, types, lint, all `tools/*.test.mjs` Node tests and client unit tests. It is not static-only and does not produce standard acceptance evidence.
 - `npm run check:standard` first runs `check:preflight`, then stamps the maintained candidate, checks formatting/generated artifacts/types/lint, builds it, executes the discovered Node and client/boundary/integration Vitest cohorts with coverage, and verifies OpenAPI, UI debt, exception lists, accessible names, coverage and runner evidence.
-- `npm run check:full` runs standard followed by `check:aggregate-only`: browser preflight, build, built-render smoke, Playwright discovery/execution for the acceptance cohort, and aggregate cohort verification. The real-clock time-announcements browser spec is not in that cohort; run it with `npm run test:e2e:time-announcements`.
+- `npm run check:full` runs standard followed by `check:aggregate-only`: browser preflight, build, built-render smoke, Playwright discovery/execution for the acceptance cohort, and aggregate cohort verification. The real-clock time-announcements browser spec is not in that cohort. Run it locally with `npm run test:e2e:time-announcements`. On a pull request, add the `e2e-time-announcements` label, or run the `Time announcements browser check` workflow and choose the branch. That run uses GitHub-hosted Ubuntu, does not take the Mac mini, and is not part of the required `full` gate.
 
 Apply the required tier to the same reviewed candidate bytes. Changes after a pass invalidate affected evidence. `npm run build` alone produces a distributable build; it does not accept the candidate.
 
