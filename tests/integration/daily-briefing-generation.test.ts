@@ -271,20 +271,20 @@ describe("daily-briefing full generation", () => {
     seedMember("m1", { optedIn: true });
 
     const first = await generateBriefing("m1", DATE_FRI);
-    const second = await generateBriefing("m1", DATE_FRI);
-
-    expect(second.payload.blocks).toEqual(first.payload.blocks);
-
     const rows = getDb()
       .prepare("SELECT raster_bits FROM daily_briefing WHERE member_id = ? AND date = ?")
       .get("m1", DATE_FRI) as { raster_bits: Buffer | null };
     expect(rows.raster_bits).not.toBeNull();
+    const firstRaster = Buffer.from(rows.raster_bits as Buffer);
+    const second = await generateBriefing("m1", DATE_FRI);
+    expect(second.payload.blocks).toEqual(first.payload.blocks);
+
     // Regenerating in place replaces the raster with a byte-identical one (same content, same
     // rendering engine, same fonts — SC-003's "identical raster" guarantee).
     const secondRow = getDb()
       .prepare("SELECT raster_bits FROM daily_briefing WHERE id = ?")
       .get(second.id) as { raster_bits: Buffer };
-    expect(Buffer.compare(rows.raster_bits as Buffer, secondRow.raster_bits)).toBe(0);
+    expect(Buffer.compare(firstRaster, secondRow.raster_bits)).toBe(0);
   });
 
   it(": editing a member colour does not alter the monochrome briefing raster", async () => {

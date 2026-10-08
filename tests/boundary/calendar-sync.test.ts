@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import Fastify from "fastify";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "../../src/server/db/client";
 import { listExternalSources } from "../../src/server/modules/calendar/external-sources";
 import { reconcileExternalCalendar } from "../../src/server/modules/calendar/reconcile";
@@ -36,6 +36,12 @@ function parsed(...occurrences: ParsedExternalOccurrence[]): ParsedCalendar {
 
 describe("calendar sync publication", () => {
   useIsolatedDb();
+  // Keep fixed Calendar fixtures inside the production rolling window; leave async timers real.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-28T12:00:00Z"));
+  });
+  afterEach(() => vi.useRealTimers());
 
   function insertSource(): void {
     getDb()

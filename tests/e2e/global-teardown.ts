@@ -8,8 +8,11 @@ import { cleanupE2eDataDir } from "../../tools/e2e-data-dir.mjs";
  */
 export default async function globalTeardown(): Promise<void> {
   try {
-    await stopWeatherFixtureServer();
-    await stopQuoteOnThisDayFixtureServer();
+    try {
+      await stopWeatherFixtureServer();
+    } finally {
+      await stopQuoteOnThisDayFixtureServer();
+    }
   } finally {
     const ownedDataDir = process.env.MP_E2E_OWNED_DATA_DIR;
     if (ownedDataDir) {

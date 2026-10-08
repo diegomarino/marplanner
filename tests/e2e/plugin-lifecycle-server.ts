@@ -26,8 +26,21 @@ async function stopProcess(child: ChildProcess): Promise<void> {
   if (child.exitCode !== null || child.signalCode !== null) return;
   const exited = new Promise<void>((resolveExit) => child.once("exit", () => resolveExit()));
   child.kill("SIGTERM");
-  await Promise.race([exited, new Promise<void>((resolveWait) => setTimeout(resolveWait, 5_000))]);
-  if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      exited,
+      new Promise<void>((resolveWait) => {
+        timeout = setTimeout(resolveWait, 5_000);
+      }),
+    ]);
+    if (child.exitCode === null && child.signalCode === null) {
+      child.kill("SIGKILL");
+      await exited;
+    }
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export async function startFreshPluginLifecycleServer(): Promise<{
