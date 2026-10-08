@@ -12,7 +12,7 @@ Boundary guarantees in [boundary-guarantees.yaml](boundary-guarantees.yaml) reco
 
 Apply the required tier to the same reviewed candidate bytes. Changes after a pass invalidate affected evidence. `npm run build` alone produces a distributable build; it does not accept the candidate.
 
-`npm run check:preflight` checks the maintained product inventory, that every coverage-policy file is present, and the pinned Node/npm/Vitest toolchain without running tests. Standard runs it before the destructive stamp. `npm run check:preflight:browser` also checks the retained candidate stamp and standard coverage/cohort artifacts, rejects inherited `SCHEDULER_DISABLED=1` and acceptance server reuse (`PW_REUSE_SERVER=1`), and checks local `BASE_URL`/`PORT` consistency before the aggregate build. These early checks do not establish browser execution or a complete environment/build fingerprint; the browser runner still owns browser availability, synthetic data and server startup.
+`npm run check:preflight` checks that the checkout matches the git-tracked file list, that every coverage-policy file is present, and the pinned Node/npm/Vitest toolchain without running tests. Standard runs it before the destructive stamp. `npm run check:preflight:browser` also checks the retained candidate stamp and standard coverage/cohort artifacts, rejects inherited `SCHEDULER_DISABLED=1` and acceptance server reuse (`PW_REUSE_SERVER=1`), and checks local `BASE_URL`/`PORT` consistency before the aggregate build. These early checks do not establish browser execution or a complete environment/build fingerprint; the browser runner still owns browser availability, synthetic data and server startup.
 
 CI calls the existing selector in `mac-mini-ci.yml`. Trusted repository changes use
 `macmini` when the named runner is online, idle and has the required labels;
@@ -56,10 +56,10 @@ Review exact changed paths against the trusted declaration and compare only corr
 
 ## Candidate identity and artifacts
 
-The full gate hashes every maintained file and mode listed in
-`tests/fixtures/assembly-cohort.json`, including the fixture itself. Only generated
-build/test directories and TypeScript build caches are outside this tree.
-Unexpected maintained files are rejected. The resulting identity is stamped into
+The full gate hashes every git-tracked file and its mode. Git supplies that file
+list, including this policy fixture. Only generated build/test directories and
+TypeScript build caches are outside this tree. Unexpected untracked files are
+rejected. The resulting identity is stamped into
 `.quality/candidate.json`; the coverage and runner gates recompute it before
 accepting results. Set `MP_CANDIDATE_ID` to require a particular reviewed identity,
 or leave it unset for a local development run. Do not put live `.env.local` or data
@@ -82,7 +82,7 @@ npm run check:aggregate-only
 
 If standard evidence is not already available, `npm run check:full` is the alternative fresh combined invocation; do not run it immediately after standard merely to add browser acceptance.
 
-Use this only after confirming `HEAD` contains the reviewed changes. With a dirty source checkout, first commit the explicitly reviewed maintained candidate locally, or transfer an explicitly reviewed maintained-file diff to the fresh worktree and review its resulting bytes. A worktree at `HEAD` does not include uncommitted changes. Do not copy `.env.local`, secrets, household data or `node_modules`; do not delete user data to satisfy the scanner. New maintained paths require a separately reviewed cohort inventory update. Keep logs and evidence outside the candidate directory.
+Use this only after confirming `HEAD` contains the reviewed changes. With a dirty source checkout, first commit the explicitly reviewed maintained candidate locally, or transfer an explicitly reviewed maintained-file diff to the fresh worktree and review its resulting bytes. A worktree at `HEAD` does not include uncommitted changes. Do not copy `.env.local`, secrets, household data or `node_modules`; do not delete user data to satisfy the scanner. Commit a new maintained path for it to join the candidate. Keep logs and evidence outside the candidate directory.
 
 The fixture's own `candidate` field identifies the reviewed scope policy, not its
 containing tree. This avoids a circular self-hash. The runner stamp and external
@@ -104,7 +104,7 @@ The Node test runner already runs test files concurrently. Playwright retains on
 
 Type-aware lint applies to real project sources. Architectural lint tests explicitly use typescript-eslint's `disableTypeChecked` configuration for their virtual syntax fixtures; they still exercise the production import, logging and UI rules. The normal lint command and the new typed-rule probes retain type checking.
 
-This hardening adds six Node lint-policy cases and two invalid-date Calendar regressions and one recipe-search consumer case, and corrects the isolated density-control case name. The reviewed production changes are explicit dispatch of already-contained asynchronous operations, accurate async hook/subscriber types, removal of obsolete suppressions, documented density behavior, and moving Calendar date conversion into its existing error boundary. The cohort inventory admits `.editorconfig`, `tools/lint.mjs` and `tools/lint-policy.test.mjs`. Coverage floors and per-file minimums stay in place.
+This hardening adds six Node lint-policy cases and two invalid-date Calendar regressions and one recipe-search consumer case, and corrects the isolated density-control case name. The reviewed production changes are explicit dispatch of already-contained asynchronous operations, accurate async hook/subscriber types, removal of obsolete suppressions, documented density behavior, and moving Calendar date conversion into its existing error boundary. That review admitted `.editorconfig`, `tools/lint.mjs` and `tools/lint-policy.test.mjs`. Coverage floors and per-file minimums stay in place.
 
 ## Imported history reconciliation
 
