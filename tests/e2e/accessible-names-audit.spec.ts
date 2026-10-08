@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { unlockAdmin } from "./admin-unlock";
+import { messages, resolveLang } from "../../src/client/i18n/messages";
 
 /** accessible-names-audit.spec.ts — runtime companion to `tools/dev/audit-accessible-names.mjs`
  * (follow-up).
@@ -163,8 +164,13 @@ test("runtime accessible-name audit: Day Periods edit mode has no unnamed contro
   await page.getByTestId("admin-nav-day-periods").click();
   await expect(page.getByTestId(/^day-period-/)).toHaveCount(4, { timeout: 10_000 });
 
+  const settingsResp = await page.request.get("/api/settings");
+  expect(settingsResp.ok()).toBeTruthy();
+  const settings = (await settingsResp.json()) as { locale: { language: string } };
+  const m = messages[resolveLang(settings.locale.language)];
+
   const afternoonCard = page.getByTestId("day-period-afternoon");
-  await afternoonCard.getByRole("button", { name: "Editar" }).click();
+  await afternoonCard.getByRole("button", { name: m["dayPeriods.action.edit"] }).click();
   await expect(page.locator('input[type="time"]')).toBeVisible({ timeout: 5000 });
 
   const tree = (await page.locator("body").ariaSnapshotJSON()) as AriaNode[];

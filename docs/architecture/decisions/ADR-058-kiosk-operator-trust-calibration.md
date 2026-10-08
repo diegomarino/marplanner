@@ -27,8 +27,7 @@ endpoint require admin scope?" (it surfaced ad-hoc in ADR-053 and ADR-057).
 3. **The single server-side kiosk/operator boundary is `key-management` (already ADR-030):**
    creating/revoking keys is the **one self-escalating, catastrophic, irreversible act**, so it
    alone requires a **raw `*` key presented in a header** (which a device cookie deliberately
-   cannot supply) + anti-lockout. This is the one free security win worth taking, and it is
-   already taken. **No new tier or mechanism is added.**
+   cannot supply) + anti-lockout. This is the one free security win worth taking, and it is already specified, with lifecycle mutations deferred in the installed release. **No new household privilege tier is added.**
 
 4. **Everything else is household-tier** (reachable by a device `*` cookie + client-side PIN):
    backups (restore/delete — recoverable via pre-restore snapshot + count floor, ADR-017/042),
@@ -58,7 +57,7 @@ family kiosk.** Generalizing into an "operator tier" was over-engineering: (a) i
 a malicious API-capable insider that the threat model excludes, and (b) it fights the kiosk's
 own auth shape — the httpOnly device cookie cannot present a raw key, so any header-`*` op is, by
 construction, "you must hold the bootstrap key," which is disproportionate friction for
-_reversible_ operations. The one act that genuinely warrants it (key-management) already has it.
+_reversible_ operations. Future key-management must use the raw-header boundary and preserve an operator-usable credential; these mutations are deferred in the first release (`ADR-030`/`ADR-032`).
 This is the same "accept + document" posture chosen for telemetry (ADR-057), applied consistently.
 
 ## Affected Specs

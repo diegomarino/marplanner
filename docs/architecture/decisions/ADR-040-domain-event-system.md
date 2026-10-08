@@ -65,7 +65,15 @@ is exactly the absence-tolerance the plugin architecture requires.
   a per-subscriber delivery-failure counter and expose it on the plugin health
   endpoint; a subscriber throwing N consecutive times SHOULD surface as
   `degraded` (ties to ADR-039 `errored` state + Kiosk Shell global health
-  indicator). A simple atomic counter — not a dead-letter queue.
+  indicator). For the initial diagnostic delivery, every subscriber failure has the stable code
+  `event-bus.subscriber-failed`, a unique failure ID, event name and subscriber identity.
+  It is persisted through the existing bounded/redacted telemetry pipeline, available
+  in Administration → Telemetry → Subscriber failures. Browser ingest cannot use the
+  reserved `event-bus` component, and internal failure records bypass browser flood
+  admission. If persistence fails, a redacted stderr record preserves the diagnostic.
+  No event payload is logged. Current production subscriptions declare stable names;
+  unnamed registrations receive a unique process-local ID. Per-subscriber counters
+  and automatic health degradation remain follow-up work.
 
 ### Durability division of labor
 
@@ -143,14 +151,6 @@ revisited.
   (core) / manifest-declared (plugins); a magic-string/undeclared name is a build error.
   Closes the silent-typo footgun inherent to at-most-once + absent-subscriber-is-fine.
   Delivery semantics here are unchanged.
-
-## Open Questions
-
-- Exact in-process pub/sub API shape — implementation detail (now constrained by the
-  `ADR-050` typed catalog).
-- ~~Backfill of Events sections into the five already-written contracts~~ — **DONE
-  (2026-06-29):** Members (emits lifecycle, not load-bearing), App Settings / Auth / Kiosk
-  Shell / Plugin System (deliberate non-participants — pull/registry/settings-mechanism).
 
 ## Traceability
 

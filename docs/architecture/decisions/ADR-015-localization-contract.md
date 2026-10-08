@@ -11,10 +11,7 @@ table). The model:
 
 **Language model.**
 
-- **Base/default language = `en`** (changed from the v1 `es` default). Because
-  default = resource-shape reference = key-fallback, choosing `en` collapses the v1
-  `es`-default-vs-`en`-fallback conflict into one base language; `es` is the
-  translation layer.
+- **Initial household, reference and fallback language = `en`**; `es` is the translation layer. Fresh setup, effective settings without a persisted language and structural briefing copy default to English. Existing household language preferences are preserved.
 - Effective language = the household `language` setting (App Settings); it wins at
   cold boot and is readable on the API-key surface cold (ADR-031). Browser detection
   is a last resort only when settings are unreachable.

@@ -84,7 +84,7 @@ snapshot and preserve it separately. Automatic pre-migration recovery snapshots
 provide a local restore point; they do not replace a separately retained upgrade backup. Never seed at container
 startup. The recipe has no provider agent, platform workaround or automatic
 publishing/deployment. For container acceptance, build with source provenance labels
-from the maintained candidate inventory, then run the harness:
+from the candidate identity, then run the harness:
 
 ```sh
 docker build -f infra/docker/Dockerfile -t marplanner:review \
@@ -256,3 +256,33 @@ server and do not set `PW_REUSE_SERVER=1` against household data. Tests must run
 sequentially with other commands that rebuild `dist`. Provider fixtures use local
 ports; physical printing, audible speech and controller writes need separate
 operator verification.
+
+## Weekday integrity at startup
+
+Before serving requests or starting scheduled jobs, the server validates persisted
+weekday codes (`mon` through `sun`) and their JSON masks. A `Weekday integrity failed`
+error names the table, column and row. Startup stops without modifying that row; inspect
+and correct the recurrence data before restarting. Invalid masks are never silently
+converted into rules that match no days. Seed modules undergo the same check before
+commit and roll back if they introduce invalid weekday data.
+
+Live restore checks weekday integrity after applying any required migrations and
+before activating the replacement runtime. An invalid backup returns
+`incompatible_backup` and rolls back to the pre-restore snapshot. The recovered
+snapshot is checked too; if recovery fails, traffic and scheduled work remain
+quiesced for manual recovery.
+
+## Find event subscriber failures
+
+Open Administration → Telemetry and select **Subscriber failures**, or filter by
+level `error` and component `event-bus`. The authenticated diagnostic query is
+`GET /api/telemetry/client-log?level=error&component=event-bus`.
+
+Each row has message `event-bus.subscriber-failed`, its normal telemetry event ID,
+and diagnostic data containing `failureId`, event name, subscriber identity and
+redacted error details. Production subscriber names identify the reacting module;
+event payloads are omitted. These logs use the existing telemetry retention policy.
+Browser ingest reserves the `event-bus` component for internal diagnostics. Internal
+failures bypass browser flood admission. If storage is unavailable, the same stable
+code and failure ID are written to redacted stderr; the admin database query cannot
+show rows that could not be persisted. Logging never retries the subscriber action.

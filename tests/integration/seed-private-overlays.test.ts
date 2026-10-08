@@ -79,7 +79,7 @@ describe("private seed overlays", () => {
     expect(publicRead.settingsResponse.statusCode).toBe(200);
     expect(publicRead.settingsResponse.body).toEqual(
       JSON.stringify({
-        locale: { timezone: "Europe/Madrid", language: "es", weekStartDay: 1 },
+        locale: { timezone: "Europe/Madrid", language: "en", weekStartDay: 1 },
         weather: { lat: null, lon: null },
         printer: { paperWidthDots: 576 },
         // APP-SETTINGS-REGISTRY-AC-06: printing active → cold-read fills empty transport defaults.

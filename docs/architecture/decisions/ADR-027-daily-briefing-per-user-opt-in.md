@@ -46,5 +46,5 @@ Legacy parent-linked Daily Briefing rows remain evidence only; no rows are impor
 ## Traceability
 
 - Conflicts: narrows `CR-002-active-child-targets`; affects `CR-003-parent-briefing-history`
-- Related prior: modifies `ADR-002`; resolves/supersedes the migration-only part of `ADR-003` under `ADR-026`
+- Related: `ADR-002` (active targets), `ADR-009` (profile-only creation), `ADR-026` (fresh store).
 - Domain grill: `../domain-grills/members.md`

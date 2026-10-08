@@ -24,7 +24,7 @@ changes the shape, subscriber reads a stale field) becomes a compile error.
 manifest** the events it **emits** and **subscribes** to, namespaced by plugin ID (Rule
 B; drop-on-uninstall). Emitting or subscribing to an **undeclared** name is a
 declaration/build error. A namespace prefix must match its owner (a plugin cannot emit
-under `core.*` or another plugin's namespace).
+under `core.*` or another plugin's namespace). The shared core catalog is implemented, but plugin manifests currently lack these declarations and owner checks; the plugin gate remains required implementation work.
 
 **Semantics unchanged (this is a name/type gate, not a delivery change).** A **registered
 event with zero subscribers is still valid** — intentional graceful degradation is

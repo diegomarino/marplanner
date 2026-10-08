@@ -36,7 +36,7 @@ export interface BirthdayBlockContext {
   /** Household language for the `ownLabel` snapshot string (P1 fold addendum,
    * DAILY-BRIEFING-INV-06) — resolved by the caller (`index.ts`'s generator dispatch) via the same
    * settings read `../render/labels.ts#getLabels` documents. Optional — `getLabels` defaults to the
-   * household's system-wide default ("es") when absent. */
+   * household's system-wide default ("en") when absent. */
   language?: string;
 }
 
@@ -88,7 +88,7 @@ export const birthdayBlock = {
   type: TYPE,
   scope: "member" as const,
   source: "ctx.listActiveMembers (host-api member-listing gap, see module doc — same as shotgun)",
-  async generate(ctx: BirthdayBlockContext): Promise<BirthdayBlockData | null> {
+  generate(ctx: BirthdayBlockContext): BirthdayBlockData | null {
     if (!ctx.listActiveMembers) return null;
     const all = ctx.listActiveMembers();
 

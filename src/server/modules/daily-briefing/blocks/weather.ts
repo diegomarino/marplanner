@@ -42,7 +42,7 @@
  * would read the permanently-cached `null` instead of re-fetching, and the briefing would be
  * permanently weatherless. `generateWeatherBlock` therefore takes an explicit `now` (household-date
  * math needs a clock, per `readHouseholdTimezone`/`todayInHouseholdTz` convention — never a hidden
- * `Date.now` read) and only caches a horizon miss when `date <= todayInHouseholdTz(now)`; a
+ * `Date.now` read) and only caches a horizon miss when `date <= today`; a
  * future-date miss throws instead (not cached), so the next generation pass — by which time the
  * date IS today and in horizon — retries.
  */
@@ -54,7 +54,11 @@ import {
   todayInHouseholdTz,
 } from "../../../host-api";
 import type { ForecastDay } from "../../../../shared";
-import { getOrFetchOnceDaily, type DailyBlockCache } from "../external/shared-cache";
+import {
+  getOrFetchOnceDaily,
+  readBlockCacheEpoch,
+  type DailyBlockCache,
+} from "../external/shared-cache";
 
 export type WeatherBlockData = ForecastDay;
 
@@ -99,37 +103,64 @@ function hasInvalidConfiguredEndpoint(): boolean {
   }
 }
 
+export interface WeatherBlockInputs {
+  location: ReturnType<typeof readWeatherLocation>;
+  timezone: string;
+  today: string;
+  cacheEpoch: number;
+}
+
+export function readWeatherBlockInputs(now: number): WeatherBlockInputs | null {
+  try {
+    return {
+      location: readWeatherLocation(),
+      timezone: readHouseholdTimezone(),
+      today: todayInHouseholdTz(now),
+      cacheEpoch: readBlockCacheEpoch(),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function generateWeatherBlock(
   cache: DailyBlockCache,
   date: string,
-  now: number
+  now: number,
+  inputs?: WeatherBlockInputs | null
 ): Promise<WeatherBlockData | null> {
-  return getOrFetchOnceDaily(cache, BLOCK_TYPE, async () => {
-    const location = readWeatherLocation();
-    if (!location) return null;
-    // Stable operator-config states — resolved WITHOUT calling the port, and
-    // cacheable exactly like the blank-location case above.
-    if (isWeatherSourceDisabled() || hasInvalidConfiguredEndpoint()) return null;
-    const tz = readHouseholdTimezone();
+  return getOrFetchOnceDaily(
+    cache,
+    BLOCK_TYPE,
+    async () => {
+      const gathered = inputs === undefined ? readWeatherBlockInputs(now) : inputs;
+      if (gathered === null) throw new Error("daily-briefing.weather-block: input read failed");
+      const { location, timezone: tz, today } = gathered;
+      if (!location) return null;
+      // Stable operator-config states — resolved WITHOUT calling the port, and
+      // cacheable exactly like the blank-location case above.
+      if (isWeatherSourceDisabled() || hasInvalidConfiguredEndpoint()) return null;
 
-    const forecast = await getForecastPort()(location, tz);
-    if (!forecast) {
-      // Having ruled out both stable-config gates above, a `null` port result here can only be
-      // one of the genuinely transient causes (timeout/network/HTTP/malformed) — throw so the
-      // combinator skips caching it, allowing the next generation pass to retry.
-      throw new Error("daily-briefing.weather-block: forecast port returned null");
-    }
-    // Select the daily[] entry whose date matches the briefing's date exactly — never
-    // substitute another day (same rule as the merged resolver, WEATHER-INV-05).
-    const day = forecast.daily.find((entry) => entry.date === date);
-    if (day) return day;
+      const forecast = await getForecastPort()(location, tz);
+      if (!forecast) {
+        // Having ruled out both stable-config gates above, a `null` port result here can only be
+        // one of the genuinely transient causes (timeout/network/HTTP/malformed) — throw so the
+        // combinator skips caching it, allowing the next generation pass to retry.
+        throw new Error("daily-briefing.weather-block: forecast port returned null");
+      }
+      // Select the daily[] entry whose date matches the briefing's date exactly — never
+      // substitute another day (same rule as the merged resolver, WEATHER-INV-05).
+      const day = forecast.daily.find((entry) => entry.date === date);
+      if (day) return day;
 
-    // Horizon miss: cacheable only for today-or-earlier — a future date's
-    // miss is transient (the date hasn't entered the horizon yet) and must NOT be cached, or a
-    // later scheduled pass for that date would read a permanently-poisoned null.
-    if (date <= todayInHouseholdTz(now)) return null;
-    throw new Error(
-      "daily-briefing.weather-block: forecast horizon does not yet cover a future date"
-    );
-  });
+      // Horizon miss: cacheable only for today-or-earlier — a future date's
+      // miss is transient (the date hasn't entered the horizon yet) and must NOT be cached, or a
+      // later scheduled pass for that date would read a permanently-poisoned null.
+      if (date <= today) return null;
+      throw new Error(
+        "daily-briefing.weather-block: forecast horizon does not yet cover a future date"
+      );
+    },
+    inputs?.cacheEpoch
+  );
 }

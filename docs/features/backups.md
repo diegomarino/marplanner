@@ -9,7 +9,7 @@ data, **not** household planning content; backup files live **outside** the acti
 database in a configured `backups/` root, so their list, version, and source are
 derived from files rather than any active-DB row. marplanner is a single
 self-hosted instance, and restore is whole-database replacement — never a
-per-domain merge — gated on the migration-version number and made reversible by an
+per-domain merge — gated on supported baseline lineage and migration-file sets and made reversible by an
 automatic pre-restore snapshot.
 
 ## User workflows
@@ -17,7 +17,7 @@ automatic pre-restore snapshot.
 ### User Story 1 — Restore the database from a backup
 
 An admin types the exact backup filename to confirm, the system takes a retained
-`pre-restore` snapshot, re-reads and version-checks the backup, quiesces writes,
+`pre-restore` snapshot, re-reads and lineage-checks the backup, quiesces writes,
 force-closes all DB handles, swaps to the backup, reopens fresh connections,
 migrates current, and signals clients to reload — with no half-restored state ever
 observable and no process restart.
@@ -61,9 +61,9 @@ backups root.
 
 - **FR-003**: Given a restore in progress, when the DB swap occurs, then writes MUST be quiesced around the swap and all DB handles MUST be force-closed before it with fresh connections opened to the new path (connections MUST NOT be recycled, owing to the old inode/WAL hazard), so that no half-restored state is observable; on success clients MUST be signalled to reload and the process MUST NOT be restarted. Contract: BACKUPS-INV-03.
 
-- **FR-004**: Given a restore candidate, when its compatibility is decided, then the decision MUST be made on the migration-version number and never on a schema diff, a downgrade (backup newer than the running code) MUST be rejected, and a same-or-older backup MUST be accepted and migrated current by invoking the migration runner directly within the restore sequence. Contract: BACKUPS-INV-04.
+- **FR-004**: Given a restore candidate, when its compatibility is decided, then the decision MUST use supported baseline lineage and migration-file sets, never a schema diff; unsupported lineage and unknown migrations MUST be rejected, and a supported equal/subset migration set MUST be accepted and migrated current by invoking the migration runner directly within the restore sequence. Contract: BACKUPS-INV-04.
 
-- **FR-005**: Given retention enforcement, when it runs, then it MUST be count-primary (keep N≈14 most recent) with age as secondary, MUST never drop below the count floor and never leave zero backups, MUST prune only after a confirmed-good new backup, and MUST exempt `pre-restore` snapshots; an explicit admin delete MUST also respect the floor and MUST NOT remove a `pre-restore` snapshot during an in-flight restore. Contract: BACKUPS-INV-05.
+- **FR-005**: Given retention enforcement, when it runs, then it MUST be count-primary (keep N≈14 most recent) with age as secondary, MUST never drop below the count floor and never leave zero backups, MUST prune only after a confirmed-good new backup, and MUST exempt `pre-restore` snapshots; an explicit admin delete MUST preserve one regular backup and MUST NOT remove a `pre-restore` snapshot during an in-flight restore. Contract: BACKUPS-INV-05.
 
 - **FR-006**: Given an import operation, when a file is brought into the backups root, then only a `.db` upload MUST be accepted and a `.sql` execute-into-DB import MUST be refused, while `download-sql` MUST remain available as a read-only export. Contract: BACKUPS-INV-06.
 
@@ -75,11 +75,11 @@ backups root.
 
 - **FR-010**: Given a restore, when it is performed, then it MUST create a retained `pre-restore` snapshot before the swap, a mismatched typed filename confirmation MUST block the restore, half-restored state MUST NOT be observable, clients MUST reload on success, and the process MUST NOT be restarted (the acceptance surface for the reversibility/observability invariants in FR-002/FR-003). Contract: BACKUPS-AC-01.
 
-- **FR-011**: Given a restore candidate's migration version, when it is checked, then a backup newer than the running code MUST be rejected as a downgrade, a same-or-older backup MUST be accepted and migrated current, and a failed forward migration MUST roll back to the pre-restore snapshot with no loss (the acceptance surface for the version-gating invariant in FR-004). Contract: BACKUPS-AC-02.
+- **FR-011**: Given a restore candidate, when its lineage is checked, then a missing supported baseline MUST be rejected as unsupported lineage, unknown migrations MUST be rejected as a downgrade, and a supported equal/subset migration set MUST be restored and migrated current, and a failed forward migration MUST roll back to the pre-restore snapshot with no loss (the acceptance surface for the version-gating invariant in FR-004). Contract: BACKUPS-AC-02.
 
 - **FR-012**: Given the import/export surface, when a `.sql` import is attempted it MUST be rejected, and when a `download-sql` is requested it MUST still produce a read-only export (the acceptance surface for the `.db`-only invariant in FR-006). Contract: BACKUPS-AC-03.
 
-- **FR-013**: Given a prune, when it runs, then it MUST keep the N most recent plus all `pre-restore` snapshots, MUST never drop below the floor, MUST never leave zero backups, and MUST run only after a confirmed-good new backup (the acceptance surface for the retention invariant in FR-005). Contract: BACKUPS-AC-04.
+- **FR-013**: Given a prune, when it runs, then it MUST keep the N most recent regular backups plus younger beyond-N backups; normal pruning MUST preserve the regular count floor and run only after a confirmed-good new backup; pre-restore snapshots MUST use a separate last-K lane (currently five), and explicit deletion MUST preserve one regular backup (the acceptance surface for the retention invariant in FR-005). Contract: BACKUPS-AC-04.
 
 - **FR-014**: Given a filename containing `/`, `..`, or an encoded traversal form, when any backup op receives it, then the op MUST be rejected and all ops MUST resolve inside the backups root (the acceptance surface for the path-safety invariant in FR-007). Contract: BACKUPS-AC-05.
 
@@ -99,20 +99,16 @@ backups root.
 - **Source prefix**: the filename prefix encoding origin — `scheduled` / `snapshot`
   / `pre-restore` / `upload` — used for display and restore-proof metadata, not as
   an auth boundary.
-- **Migration-version stamp**: the monotonic schema/migration version read from
-  inside a backup file (re-read at restore-execution time) and used to gate restore
-  compatibility (reject downgrade; accept same-or-older).
+- **Migration lineage**: the baseline sentinel and migration-file set re-read from a backup at restore execution; unsupported lineage and unknown migrations are refused, supported equal/subset sets restore and migrate.
 
 ## Success Criteria
 
 - **SC-001**: Every restore is preceded by a durable, retained `pre-restore`
   snapshot; if that snapshot fails to write, 100% of such restores abort with the
   active DB unchanged.
-- **SC-002**: 100% of restore-version decisions are made on the migration-version
-  number — downgrades are rejected, same-or-older are migrated current, and failed
+- **SC-002**: 100% of restore compatibility decisions use supported baseline lineage and migration-file sets — unsupported lineage and downgrades are rejected, supported equal/subset sets are migrated current, and failed
   forward migrations roll back to the pre-restore snapshot with no loss.
-- **SC-003**: Retention and explicit delete never leave zero backups and never drop
-  below the count floor; prune runs only after a confirmed-good durable new backup.
+- **SC-003**: Normal retention preserves the regular count floor; explicit delete preserves one regular backup; pre-restore retention is a separate last-K policy; prune runs only after a confirmed-good durable new backup.
 - **SC-004**: 100% of path-traversal or non-`.db` filenames, and 100% of `.sql`
   execute-into-DB imports, are rejected; every op resolves inside the backups root.
 
@@ -125,8 +121,7 @@ backups root.
   startup catch-up, and the in-flight guard that prevents overlapping runs; it
   invokes the same snapshot + prune actions this spec defines.
 - Fresh setup starts with zero backups; the scheduler's catch-up creates the
-  first, and no legacy backup files are imported automatically (ADR-026) — a legacy
-  `.db` re-enters only via upload, subject to the restore version check.
+  first, and no legacy backup files are imported automatically (ADR-026) — uploading a legacy `.db` does not make unsupported lineage restorable.
 - Backup files may contain all household data (including auth/session rows) and are
   handled with active-DB sensitivity; telemetry must never record their contents,
   SQL dumps, keys, session IDs, or uploaded payloads.

@@ -18,6 +18,7 @@ import { pathToFileURL, fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
+import { trackedProductFiles } from "../candidate-identity.mjs";
 
 const methods = ["get", "post", "put", "patch", "delete", "head", "options"];
 const normalize = (route) => route.replace(/:([^/]+)/g, "{$1}");
@@ -274,16 +275,14 @@ export function prepareRun(
     throw Error("Choose either --observations <jsonl> or --run-tests, not both.");
   }
   const source = resolve(values.product ?? defaultProduct);
-  const cohort = JSON.parse(readFileSync(join(source, "tests/fixtures/assembly-cohort.json")));
-  if (!Array.isArray(cohort.productFiles) || !cohort.productFiles.length)
-    throw Error("Maintained inventory missing");
+  const files = trackedProductFiles(source);
   const out = values.out
     ? resolve(values.out)
     : mkdtempSync(join(tmpdir(), "marplanner-api-audit-"));
   if (values.out) mkdirSync(out, { recursive: false });
   const product = join(out, "product");
   mkdirSync(product);
-  for (const name of cohort.productFiles) {
+  for (const name of files) {
     if (typeof name !== "string" || isAbsolute(name) || name.split(/[\\/]/).includes(".."))
       throw Error("Unsafe maintained path");
     const destination = join(product, name);
@@ -291,7 +290,7 @@ export function prepareRun(
     copyFileSync(join(source, name), destination);
   }
   symlinkSync(join(source, "node_modules"), join(product, "node_modules"));
-  return { product, out, source, runTests: !values.observations };
+  return { product, out, source, files, runTests: !values.observations };
 }
 
 async function main() {
@@ -303,7 +302,7 @@ async function main() {
       "run-tests": { type: "boolean" },
     },
   });
-  const { product, out, source, runTests } = prepareRun(values);
+  const { product, out, source, files, runTests } = prepareRun(values);
   console.log(`Auditing an isolated copy of ${source}`);
   console.log(`Report: ${join(out, "report.json")}`);
   const require = createRequire(join(product, "package.json"));
@@ -315,7 +314,7 @@ async function main() {
   const { candidateIdentity } = await import(
     pathToFileURL(join(product, "tools/candidate-identity.mjs"))
   );
-  const candidateBefore = candidateIdentity(product);
+  const candidateBefore = candidateIdentity(product, files);
   const paths = checker.discoverContracts(join(product, "docs/api"));
   const cohort = JSON.parse(readFileSync(join(product, "tests/fixtures/assembly-cohort.json")));
   checker.validateContractCohort(
@@ -392,7 +391,7 @@ export default { ...base, test: { ...base.test, projects, fileParallelism: false
         .map((line) => JSON.parse(line))
     : [];
   const report = audit(documents, rows, { Ajv, formats });
-  const candidateAfter = candidateIdentity(product);
+  const candidateAfter = candidateIdentity(product, files);
   if (candidateBefore !== candidateAfter) throw Error("Product changed during the audit");
   const inputs = Object.fromEntries(
     paths.map((p) => [relative(product, p), hash(readFileSync(p))])

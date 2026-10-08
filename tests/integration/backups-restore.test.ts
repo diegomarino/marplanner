@@ -175,6 +175,69 @@ describe("restore engine — confirmation + validation (BACKUPS-AC-01, no side e
     expect(isRestoreInProgress()).toBe(false);
   });
 
+  it("invalid weekday data in same-version and older backups rolls back before runtime activation", async () => {
+    seedMember("original", "Original");
+    const scheduler = initScheduler();
+    await scheduler.start();
+    for (const appliedFiles of [REAL_MIGRATION_FILES, REAL_MIGRATION_FILES.slice(0, 1)]) {
+      for (const weekdays of ["[1]", '["mon","bogus"]', "{broken", "1", "null", "{}"]) {
+        const filename = seedBackupFixture("upload", Date.now(), appliedFiles, [], (db) => {
+          seedMemberInto(db, "replacement", "Replacement");
+          db.prepare(
+            "INSERT INTO reminder (id, kind, targeting_mode, text, weekdays, created_at, updated_at) VALUES ('invalid', 'scheduled', 'apply_to_all', 'Test', ?, 0, 0)"
+          ).run(weekdays);
+        });
+        const reconciledMembers: string[][] = [];
+        const result = await restoreDatabase({ filename, confirmFilename: filename }, undefined, {
+          reconcileAll: async () => {
+            expect(isQuiesced()).toBe(true);
+            expect(scheduler.isStopped()).toBe(true);
+            reconciledMembers.push(memberNames());
+            return { results: [] };
+          },
+        });
+        expect(result.status).toBe("incompatible_backup");
+        expect(memberNames()).toEqual(["Original"]);
+        expect(
+          getDb().prepare("SELECT id FROM reminder WHERE id = 'invalid'").get()
+        ).toBeUndefined();
+        expect(reconciledMembers).toEqual([["Original"]]);
+        expect(isQuiesced()).toBe(false);
+        expect(isRestoreInProgress()).toBe(false);
+        await vi.waitFor(() => expect(scheduler.isStopped()).toBe(false));
+        expect(listBackups().map((backup) => backup.filename)).toContain(filename);
+      }
+    }
+    await scheduler.stop();
+  }, 15_000); // Twelve restore cycles share this case; allow instrumented parallel-suite overhead.
+
+  it("invalid weekday data in the rollback snapshot keeps traffic and jobs quiesced", async () => {
+    seedMember("original", "Original");
+    getDb()
+      .prepare(
+        "INSERT INTO reminder (id, kind, targeting_mode, text, weekdays, created_at, updated_at) VALUES ('invalid', 'scheduled', 'apply_to_all', 'Test', '[1]', 0, 0)"
+      )
+      .run();
+    const filename = seedBackupFixture("upload", Date.now(), REAL_MIGRATION_FILES, [], (db) => {
+      seedMemberInto(db, "replacement", "Replacement");
+      db.prepare(
+        "INSERT INTO reminder (id, kind, targeting_mode, text, weekdays, created_at, updated_at) VALUES ('invalid', 'scheduled', 'apply_to_all', 'Test', '{broken', 0, 0)"
+      ).run();
+    });
+    const scheduler = initScheduler();
+    await scheduler.start();
+    const reconcileAll = vi.fn(async () => ({ results: [] }));
+    const result = await restoreDatabase({ filename, confirmFilename: filename }, undefined, {
+      reconcileAll,
+    });
+    expect(result.status).toBe("rollback_failed");
+    expect(memberNames()).toEqual(["Original"]);
+    expect(reconcileAll).not.toHaveBeenCalled();
+    expect(isQuiesced()).toBe(true);
+    expect(scheduler.isStopped()).toBe(true);
+    expect(isRestoreInProgress()).toBe(false);
+  });
+
   it("confirmFilename mismatch blocks restore before any side effect (BACKUPS-AC-01)", async () => {
     const filename = seedBackupFixture("snapshot", Date.now(), REAL_MIGRATION_FILES);
     seedMember("m1", "Original");

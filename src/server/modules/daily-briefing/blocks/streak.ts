@@ -40,7 +40,7 @@ export interface StreakBlockContext {
   /** Household language for the `label` snapshot string (P1 fold addendum,
    * DAILY-BRIEFING-INV-06) — resolved by the caller (`index.ts`'s generator dispatch) via the same
    * settings read `../render/labels.ts#getLabels` documents. Optional — `getLabels` defaults to the
-   * household's system-wide default ("es") when absent. */
+   * household's system-wide default ("en") when absent. */
   language?: string;
 }
 
@@ -90,7 +90,7 @@ export const streakBlock = {
   type: TYPE,
   scope: "member" as const,
   source: "src/server/modules/routines getBoard (host-api-barrel-exported, 010 precedent)",
-  async generate(ctx: StreakBlockContext): Promise<StreakBlockData | null> {
+  generate(ctx: StreakBlockContext): StreakBlockData | null {
     const todayColumn = getBoard(ctx.date).find((c) => c.memberId === ctx.memberId);
     if (!todayColumn) return null; // not an active child tracked by routines at all
 

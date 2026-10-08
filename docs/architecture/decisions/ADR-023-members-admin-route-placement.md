@@ -41,7 +41,6 @@ No legacy route behavior should be copied as a v2 permission model. The old `/me
 
 ## Open Questions
 
-- The exact admin credential/session enforcement model remains open under Auth & Sessions.
 - Whether a read-only members route is useful in this system remains a Kiosk/navigation design question.
 
 ## Traceability

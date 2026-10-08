@@ -11,7 +11,7 @@ export const streakTextBlock = {
   type: "streakText" as const,
   scope: "member" as const,
   source: "./streak.ts (pure delegate — v1 parity)",
-  async generate(ctx: StreakBlockContext): Promise<StreakBlockData | null> {
+  generate(ctx: StreakBlockContext): StreakBlockData | null {
     return streakBlock.generate(ctx);
   },
 };

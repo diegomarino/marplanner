@@ -1,13 +1,48 @@
 # Architecture decisions
 
-These records preserve rationale and consequences. Dates and decision IDs are
-historical provenance. Superseded records remain labeled; active behavior is
-specified by the [contracts](../contracts/README.md) and verified implementation.
+These records define the first-release architecture, rationale and consequences.
+Each decision states its current policy directly; unmet implementation requirements
+remain explicit. The [contracts](../contracts/README.md) define stable interfaces
+and acceptance IDs, while executed checks establish delivery. Decision IDs are
+not renumbered when redundant migration-only records are removed.
+
+## Current decision map
+
+Keep each policy consistent across the decision, contract and feature requirements.
+Related decisions explain ownership and scope without requiring readers to apply
+errata to obsolete instructions. Contract invariant and acceptance IDs stay stable.
+
+| Topic                                     | Governing decisions and disposition                                                                                                                                                                                             |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Member lifecycle and briefing eligibility | ADR-054 governs archive-only references; ADR-027 allows briefing opt-in for any active member; ADR-026 excludes legacy import.                                                                                                  |
+| Authorization and serving                 | ADR-013 defines the client-only PIN; ADR-030/032 define future key lifecycle; ADR-058 calibrates household trust; ADR-059/060 define serving and transport. Key management remains deferred in the installed release.           |
+| Plugin lifecycle                          | ADR-039 narrows ADR-029/038: first-party, activate/deactivate, canonical registry; dynamic install/uninstall stays dormant.                                                                                                     |
+| Printing                                  | ADR-035 means one claimant per live lease, not exactly-once physical delivery. ADR-022 permits already-fetched content to finish after regeneration. ADR-066 settles server-side conversion while preserving ADR-041 ownership. |
+| Announcements                             | ADR-051/065 govern browser-local scheduling; the kiosk contract states this exception directly.                                                                                                                                 |
+| Restore and retention                     | ADR-017/042 follow the supported-lineage launch scope in ADR-056; pre-restore snapshots have a separate bounded lane.                                                                                                           |
+
+### Outstanding implementation and policy gaps
+
+These are open obligations or choices, not silently accepted exceptions. Updating
+documentation does not satisfy a missing check or establish runtime acceptance.
+
+| Decision | Remaining work                                                                                                                                                                         |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ADR-040  | Subscriber failures are persisted and searchable in admin; counters and automatic health degradation remain follow-up work.                                                            |
+| ADR-045  | Briefing snapshots flatten the required structured meal lists; preserve the list or explicitly approve a contract amendment.                                                           |
+| ADR-050  | Plugin manifest event declarations and owner-namespace build checks remain absent; core event typing exists.                                                                           |
+| ADR-056  | Production onboarding examples and their DB protections are not implemented; their launch disposition needs an explicit decision. Current synthetic seeds require a disposable target. |
+| ADR-061  | The shared client runtime has catalog-wide parity; canonical dynamic-key declarations and locale resolution remain incomplete.                                                         |
+| ADR-003  | Plugin lifecycle/lineage ISO TEXT timestamps diverge from the integer convention; choose a bounded exception or a safe migration.                                                      |
+
+ADR-021 is absent from the maintained corpus. Printer configuration is governed by
+ADR-028 and the [Printing contract](../contracts/printing.md); no replacement
+historical record is fabricated to fill the numbering gap.
 
 - [ADR-001 Member Role Model](ADR-001-member-role-model.md)
 - [ADR-002 Active Member Targets](ADR-002-active-member-targets.md)
-- [ADR-003 Parent-Linked Daily Briefing History](ADR-003-parent-briefing-history-superseded.md)
-- [ADR-004 Orphaned Routine Assignments](ADR-004-orphan-routine-assignments-superseded.md)
+- [ADR-003 Audit Timestamp Encoding](ADR-003-audit-timestamp-integer-epoch-storage.md)
+- [ADR-004 Reminder Assignments and Product Surface](ADR-004-reminder-per-member-assignment-and-surface.md)
 - [ADR-005 Household Timezone Contract](ADR-005-household-timezone-contract.md)
 - [ADR-006 Strict Calendar-Valid Date Validation](ADR-006-strict-date-validation.md)
 - [ADR-007 API Key as the Backend Authorization Boundary; PIN is UI-Only](ADR-007-api-key-backend-boundary.md)
@@ -56,16 +91,14 @@ specified by the [contracts](../contracts/README.md) and verified implementation
 - [ADR-051 Time Announcements: Firing Model and Product Surface](ADR-051-time-announcements-firing-and-surface.md)
 - [ADR-052 Weather Service Contract (tz, single-source location, correctness fixes)](ADR-052-weather-service-contract.md)
 - [ADR-053 Network Devices Service Contract (ownership separation, external-mirror state, data minimization)](ADR-053-network-devices-service-contract.md)
-- [ADR-054 Member Referential Integrity — Archive-Only, No Hard Delete (closes ADR-004 in-product thread)](ADR-054-member-referential-integrity-and-discard.md)
+- [ADR-054 Member Referential Integrity — Archive-Only, No Hard Delete](ADR-054-member-referential-integrity-and-discard.md)
 - [ADR-055 — Technology Stack Baseline](ADR-055-stack-baseline.md)
 - [ADR-056 — Engineering Process / DX Baseline](ADR-056-process-dx-baseline.md)
 - [ADR-057 Admin Telemetry Read View](ADR-057-admin-telemetry-read-view.md)
 - [ADR-058 Kiosk / Operator Trust Calibration (single household tier)](ADR-058-kiosk-operator-trust-calibration.md)
-- [ADR-059 Serving & API-Boundary Reconciliation](ADR-059-serving-and-boundary-reconciliation.md)
+- [ADR-059 Same-Origin Serving and API Boundaries](ADR-059-serving-and-boundary-reconciliation.md)
 - [ADR-060 Deployment Transport Posture & Cookie Security](ADR-060-deployment-transport-posture-and-cookie-security.md)
-- [ADR-061 Members-local i18n seam (ahead of the i18n-localization domain)](ADR-061-members-local-i18n-seam.md)
+- [ADR-061 Shared Client Localization Runtime](ADR-061-members-local-i18n-seam.md)
 - [ADR-062 Calendar Timed-Event Storage — UTC Instant Plus Originating TZID](ADR-062-calendar-timed-event-utc-plus-tzid.md)
-- [ADR-063 Audit-Timestamp Storage — Integer Epoch-Milliseconds (and the Storage Time Taxonomy)](ADR-063-audit-timestamp-integer-epoch-storage.md)
-- [ADR-064 Reminder per-member assignment model and first surface](ADR-064-reminder-per-member-assignment-and-surface.md)
-- [ADR-065 Announcement firing placement: ADR-035 / ADR-051 reconciliation](ADR-065-announcement-firing-placement-reconciliation.md)
+- [ADR-065 Browser-Local Announcement Placement](ADR-065-announcement-firing-placement-reconciliation.md)
 - [ADR-066 — ESC/POS conversion placement: server-side (candidate B full)](ADR-066-escpos-conversion-placement.md)

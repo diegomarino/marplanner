@@ -62,4 +62,4 @@ Fresh setup seeds canonical default values for all object fields. The effective 
 ## Traceability
 
 - Conflicts: `CR-007`, `CR-009`, `CR-022`
-- Related prior: `ADR-009` (atomicity resolved by design), `ADR-021` (validation resolved by per-object schema)
+- Related prior: `ADR-009` (atomicity resolved by design)

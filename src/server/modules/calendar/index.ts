@@ -157,13 +157,18 @@ function validateEventShape(input: Partial<EventInput>): void {
   }
 }
 
+type CalendarReadEntry = { item: FeedItem; description: string; location: string };
+
+/** Request-scoped event reuse; only valid during the caller's synchronous DB transaction. */
+export type CalendarReadContext = Map<string, CalendarReadEntry[]>;
+
 export interface GetEventsParams {
   source: string;
   assignedTo?: string;
   query?: string;
   queryFields?: string[];
   range?: { from: string; to: string };
-  txCtx?: unknown;
+  txCtx?: CalendarReadContext;
 }
 
 export interface CreateEventInput {
@@ -293,8 +298,8 @@ export function getEvents(params: GetEventsParams): FeedItem[] {
     matchFields = queryFields;
   }
 
-  if (txCtx !== undefined) {
-    console.warn("Read transaction context is ignored in this implementation");
+  if (txCtx !== undefined && !getDb().inTransaction) {
+    throw new ValidationError("Calendar read context requires an active DB transaction");
   }
 
   if (source !== "all" && source !== "local" && source !== "external") {
@@ -315,6 +320,30 @@ export function getEvents(params: GetEventsParams): FeedItem[] {
   const tzid = readHouseholdTimezone();
   const expandRange = buildExpandRange(range.from, range.to, tzid);
 
+  const key = JSON.stringify([source, assignedTo ?? "", range.from, range.to]);
+  const entries = txCtx?.get(key) ?? readEventEntries(source, assignedTo, expandRange, tzid);
+  txCtx?.set(key, entries);
+
+  if (query !== undefined) {
+    const normalizedQuery = normalizeForMatch(query);
+    return entries
+      .filter((entry) =>
+        matchFields.some((field) =>
+          normalizeForMatch(eventFieldValue(entry, field)).includes(normalizedQuery)
+        )
+      )
+      .map(({ item }) => item);
+  }
+
+  return entries.map(({ item }) => item);
+}
+
+function readEventEntries(
+  source: string,
+  assignedTo: string | undefined,
+  expandRange: ReturnType<typeof buildExpandRange>,
+  tzid: string
+): CalendarReadEntry[] {
   const db = getDb();
   const highlightRules = listHighlightRules();
 
@@ -498,18 +527,7 @@ export function getEvents(params: GetEventsParams): FeedItem[] {
     }
   }
 
-  if (query !== undefined) {
-    const normalizedQuery = normalizeForMatch(query);
-    return entries
-      .filter((entry) =>
-        matchFields.some((field) =>
-          normalizeForMatch(eventFieldValue(entry, field)).includes(normalizedQuery)
-        )
-      )
-      .map(({ item }) => item);
-  }
-
-  return entries.map(({ item }) => item);
+  return entries;
 }
 
 export function createEvent(input: EventInput): { id: string } {

@@ -43,7 +43,7 @@ export const mealsBlock = {
   type: TYPE,
   scope: "shared" as const,
   source: "src/server/modules/meals getMenu (host-api-barrel-exported, 010 precedent)",
-  async generate(ctx: MealsBlockContext): Promise<MealsBlockData | null> {
+  generate(ctx: MealsBlockContext): MealsBlockData | null {
     const items = getMenu(ctx.date, undefined);
 
     // N-per-slot (MEALS-RECIPES-AC-10): collect EVERY entry for a slot, in getMenu's own

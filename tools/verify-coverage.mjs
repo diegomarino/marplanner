@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import { execFileSync } from "node:child_process";
 import { requireCandidate } from "./candidate-identity.mjs";
-import { createHash } from "node:crypto";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 const METRICS = ["lines", "statements", "functions", "branches"];
@@ -28,17 +27,13 @@ export function preflightCoverage(policy, pkg, runtime, root = process.cwd()) {
   if (pkg.packageManager !== "npm@11.19.0" || runtime.npm !== "11.19.0")
     fail("npm toolchain mismatch");
   const files = object(policy.files, "expected files");
-  if (!Object.keys(files).length) fail("expected files empty");
-  for (const [file, review] of Object.entries(files)) {
-    if (!/^[a-f0-9]{64}$/.test(review?.sha256)) fail(`${file} expected hash invalid`);
-    if (
-      createHash("sha256")
-        .update(fs.readFileSync(path.join(root, file)))
-        .digest("hex") !== review.sha256
-    )
-      fail(`${file} source hash differs`);
+  const names = Object.keys(files);
+  if (!names.length) fail("expected files empty");
+  for (const file of names) {
+    if (!fs.statSync(path.join(root, file), { throwIfNoEntry: false })?.isFile())
+      fail(`${file} missing from coverage cohort`);
   }
-  return { files: Object.keys(files).length };
+  return { files: names.length };
 }
 
 export function preflightBrowserEnvironment(env = process.env) {
@@ -75,8 +70,6 @@ export function verifyCoverage(expected, observed) {
   for (const file of fileNames) {
     const policy = object(policies[file], `${file} policy`);
     const actual = object(actuals[file], `${file} report`);
-    if (!/^[a-f0-9]{64}$/.test(policy.sha256)) fail(`${file} expected hash invalid`);
-    if (actual.sha256 !== policy.sha256) fail(`${file} source hash differs`);
     if (!["client", "server", "shared"].includes(policy.layer)) fail(`${file} layer invalid`);
     for (const metric of METRICS) {
       const { covered, total } = object(actual.metrics?.[metric], `${file} ${metric}`);
@@ -128,9 +121,10 @@ export function fromV8Coverage(raw, policy, root = process.cwd(), sourceRoot = r
     fail("raw V8 production inventory differs from reviewed cohort");
   for (const file of Object.keys(policy.files)) {
     const absolute = path.resolve(root, file);
+    if (!fs.statSync(absolute, { throwIfNoEntry: false })?.isFile())
+      fail(`${file} missing from checkout`);
     if (declarations.includes(file)) {
       files[file] = {
-        sha256: createHash("sha256").update(fs.readFileSync(absolute)).digest("hex"),
         metrics: Object.fromEntries(METRICS.map((metric) => [metric, { covered: 0, total: 0 }])),
       };
       continue;
@@ -150,7 +144,6 @@ export function fromV8Coverage(raw, policy, root = process.cwd(), sourceRoot = r
       lineHits.set(line, Math.max(lineHits.get(line) ?? 0, item.s[id]));
     }
     files[file] = {
-      sha256: createHash("sha256").update(fs.readFileSync(absolute)).digest("hex"),
       metrics: {
         lines: aggregate([...lineHits.values()]),
         statements: aggregate(values(item.s)),

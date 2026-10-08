@@ -19,14 +19,24 @@ Reminders migrates off ISO `1..7`.
 - **`weekStartDay` (App Settings) is presentation-only** — where the week grid starts
   — and never affects matching. `mon` matches Monday regardless of grid start.
 
-**All write paths must use the shared validator (peer-review I2):** SQLite's weak typing
-will silently store an integer `1` if a seed/fixture/migration/direct insert bypasses the
-API validator; then read-time `weekdayOf` returns `"mon"` which never equals `1`, so the
-assignment/rule **silently matches no day** (chores vanish, reminders stop emitting, no
-error). Defenses: (a) every write path (API, seeds, fixtures, migrations) goes through the
-shared weekday schema — make it impossible to write weekday data otherwise; (b) a startup
-integrity check selects any non-string/out-of-enum weekday token and fails loudly;
-(c) tests exercise the integer-rejection path.
+**All weekday writes use the canonical validator (peer-review I2).** API and public
+seed writers share `src/shared/weekdays.ts`; domain-specific empty-set, duplicate and
+ordering policies remain unchanged. SQLite's weak typing can otherwise store integer
+`1` or JSON `[1]`, which never matches the derived code `"mon"`.
+
+The seed runner checks persisted weekday data before committing each module, including
+private modules that insert directly. After migrations and before authentication
+reconciliation, serving or scheduling, startup checks all weekday-bearing tables:
+routine assignments, reminders and their assignments, briefing block masks, time
+announcements and meal entries. Invalid JSON, non-array masks and noncanonical tokens
+abort startup with the table, column and row identifier; no data is repaired or deleted.
+Nullable masks retain their domain meaning, and empty arrays remain valid where defined.
+Live restore applies the same check after migrations and before runtime activation;
+a failure rolls back to the pre-restore snapshot, whose integrity is also checked
+before traffic and jobs resume.
+Tests intentionally bypass write validation to prove integer rejection and seed rollback.
+The current baseline migration contains no weekday recurrence rows; future data
+migrations must validate weekday writes before committing.
 
 ## Rationale
 

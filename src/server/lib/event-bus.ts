@@ -1,48 +1,76 @@
+import { randomUUID } from "node:crypto";
 import type { CoreEventCatalog } from "../../shared/events.js";
+import { writeServerLog } from "../telemetry/index";
+import { boundAndRedact, DEFAULT_LIMITS } from "../telemetry/redact";
 
-type Handler<P> = (payload: P) => void;
+type Handler<P> = (payload: P) => unknown;
 
-/** Typed in-process event bus — fire-and-forget async dispatch.
- * Per ADR-040: the emitter never blocks on, waits for, or is affected by
- * subscribers. Each handler gets its own independent
- * `Object.freeze(structuredClone(payload))` copy.
- */
+function logSubscriberFailure(event: string, subscriber: string, error: unknown): void {
+  const failureId = randomUUID();
+  const entry = {
+    level: "error" as const,
+    component: "event-bus",
+    message: "event-bus.subscriber-failed",
+    data: { failureId, event, subscriber, error: "Error details unavailable" } as Record<
+      string,
+      unknown
+    >,
+  };
+  try {
+    entry.data.error =
+      error instanceof Error
+        ? {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+            code: (error as Error & { code?: unknown }).code,
+          }
+        : String(error);
+    // Reserve envelope budget so oversized error details cannot erase failure identity.
+    entry.data.error = boundAndRedact(
+      { message: "", component: "", data: entry.data.error },
+      { ...DEFAULT_LIMITS, maxBytes: 4096, maxDepth: 5, maxKeys: 60 }
+    ).data;
+    if (writeServerLog(entry).accepted === 1) return;
+  } catch {
+    // Storage or error serialization must never escape subscriber fault containment.
+  }
+  try {
+    console.error(JSON.stringify(boundAndRedact(entry)));
+  } catch {
+    console.error("event-bus.subscriber-failed", failureId);
+  }
+}
+
+/** In-process, post-commit notifications; failures never propagate to emitters or peers. */
 export function createEventBus() {
-  const handlers = new Map<keyof CoreEventCatalog, Set<Handler<any>>>();
+  const handlers = new Map<keyof CoreEventCatalog, Map<Handler<any>, string>>();
 
   function subscribe<K extends keyof CoreEventCatalog>(
     name: K,
-    handler: Handler<CoreEventCatalog[K]>
+    handler: Handler<CoreEventCatalog[K]>,
+    subscriberId?: string
   ): void {
-    const registry = handlers.get(name);
-    if (registry) {
-      registry.add(handler);
-    } else {
-      handlers.set(name, new Set([handler]));
+    let registry = handlers.get(name);
+    if (!registry) {
+      registry = new Map();
+      handlers.set(name, registry);
     }
+    registry.set(handler, subscriberId ?? registry.get(handler) ?? randomUUID());
   }
 
   function emit<K extends keyof CoreEventCatalog>(name: K, payload: CoreEventCatalog[K]): void {
     const registry = handlers.get(name);
-    if (!registry || registry.size === 0) return;
-
-    for (const handler of registry) {
+    if (!registry) return;
+    for (const [handler, subscriber] of registry) {
       queueMicrotask(() => {
-        const copy = Object.freeze(structuredClone(payload));
         try {
-          const raw = handler(copy);
-          // A subscriber may be async and return a rejected promise.
-          // The synchronous try/catch above won't catch a rejection —
-          // attach a handler to contain it (ADR-040 fault containment).
-          const r = raw as unknown;
-          if (r && typeof (r as { catch: Function }).catch === "function") {
-            (r as { catch: (onReject: () => void) => unknown }).catch(() => {
-              /* contained: a rejecting async subscriber never propagates */
-            });
-          }
-        } catch {
-          // Fault containment: a throwing subscriber never propagates
-          // to the emitter or other subscribers (ADR-040).
+          const copy = Object.freeze(structuredClone(payload));
+          void Promise.resolve(handler(copy)).catch((error: unknown) => {
+            logSubscriberFailure(name, subscriber, error);
+          });
+        } catch (error) {
+          logSubscriberFailure(name, subscriber, error);
         }
       });
     }
@@ -51,15 +79,8 @@ export function createEventBus() {
   return { emit, subscribe };
 }
 
-/** Singleton event bus instance, exported for cross-module use.
- * Tests can also call `createEventBus` directly to get a fresh instance
- * with no accumulated subscriptions (required for RED-first isolation).
- */
 export const eventBus = createEventBus();
 
-/** Typed emit — constrained to declared CoreEventCatalog keys.
- * An undeclared (magic-string) event name fails at compile time (ADR-050).
- */
 export function emit<K extends keyof CoreEventCatalog>(
   name: K,
   payload: CoreEventCatalog[K]
@@ -67,11 +88,10 @@ export function emit<K extends keyof CoreEventCatalog>(
   eventBus.emit(name, payload);
 }
 
-/** Typed subscribe — constrained to declared CoreEventCatalog keys.
- */
 export function subscribe<K extends keyof CoreEventCatalog>(
   name: K,
-  handler: (payload: CoreEventCatalog[K]) => void
+  handler: Handler<CoreEventCatalog[K]>,
+  subscriberId?: string
 ): void {
-  eventBus.subscribe(name, handler);
+  eventBus.subscribe(name, handler, subscriberId);
 }

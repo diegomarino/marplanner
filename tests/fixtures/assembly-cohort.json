@@ -555,6 +555,7 @@
     "isTestRuntime",
     "listActiveMembers",
     "memberExists",
+    "readEffectiveSettings",
     "readHouseholdTimezone",
     "readSettingsObject",
     "readWeatherLocation",
@@ -649,7 +650,9 @@
           ],
           "tools/candidate-identity.test.mjs": [
             "candidate identity binds bytes, modes and exact maintained inventory",
+            "tracked checkout inventory comes from git and rejects untracked files",
             "CI binds the checked-out tree instead of a stale embedded candidate hash",
+            "time-announcements browser check runs only when requested and stays off the mac mini",
             "runner selector admits only trusted online idle macmini and falls back safely"
           ],
           "tools/check-openapi-drift.test.mjs": [
@@ -737,6 +740,14 @@
             "parseRouteTree joins radix suffixes while preserving slash children and parameters",
             "route discovery preserves caller database bytes and creates no adjacent state"
           ],
+          "tools/lint-policy.test.mjs": [
+            "lint excludes local storage, worktrees and generated reports",
+            "TypeScript lint understands type members and rejects unused bindings",
+            "type-aware lint rejects ignored and misplaced promises",
+            "TypeScript suppression requires a reason and rejects blanket escapes",
+            "lint suppressions require named rules and a reason",
+            "lint command rejects a blanket suppression that hides the policy rule itself"
+          ],
           "tools/local-env.test.mjs": [
             "local server and seed scripts load the optional local environment",
             "chrome CDP session helper scripts are wired for local development",
@@ -786,7 +797,6 @@
             "rejects lower metric",
             "rejects reduced denominator",
             "rejects per-file regression hidden by aggregate",
-            "rejects wrong source hash",
             "rejects stale candidate",
             "rejects wrong toolchain",
             "rejects fabricated summary",
@@ -794,9 +804,10 @@
             "raw V8 counters preserve an unexecuted file's denominator",
             "raw V8 report rejects a production file absent from reviewed policy",
             "declaration files remain visible with zero executable metrics",
-            "preflight rejects stale coverage fingerprints before runners",
+            "preflight accepts source edits and rejects toolchain drift before runners",
+            "coverage policy keeps minima without per-file source hashes",
             "browser preflight rejects inherited fixture and server overrides",
-            "transferred V8 evidence maps producer paths and hashes consumer source bytes"
+            "transferred V8 evidence maps producer paths onto the consuming checkout"
           ],
           "tools/verify-test-cohorts.test.mjs": [
             "accepts exact independently expected files and runtime case IDs",
@@ -1058,6 +1069,7 @@
             "Calendar highlight rules decorates local titles and external descriptions by first active accent-insensitive match without writes"
           ],
           "tests/boundary/calendar-merged-feed.test.ts": [
+            "Calendar merged feed read ADR-043: reuses one event read while preserving private query fields and transaction scope",
             "Calendar merged feed read merges local and active external occurrences with masked, stable provenance",
             "Calendar merged feed read excludes disabled, cancelled, and orphaned external rows from every source filter",
             "Calendar merged feed read requires an explicit active assignment for member-scoped external reads",
@@ -2535,7 +2547,8 @@
             "seed runner boundary rejects invalid and duplicate module identities before creating a profile marker",
             "seed runner boundary rejects a module without a stable ID before creating a profile marker",
             "seed runner boundary redacts malformed private filenames from diagnostics",
-            "seed runner boundary runs migrations before creating the profile marker or invoking a module"
+            "seed runner boundary runs migrations before creating the profile marker or invoking a module",
+            "seed runner boundary rolls back a direct seed insert containing an integer weekday"
           ],
           "tests/boundary/seed-settings.test.ts": [
             "public settings seed runs through the seed runner and exposes only portable settings through authenticated GET",
@@ -2711,7 +2724,8 @@
             "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-AC-07: CRUD requires the admin write capability (fail-closed); listing is kiosk-visible TIME-ANNOUNCEMENTS-AC-07: GET is kiosk-visible — a key with NO write capability can still list rules",
             "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-AC-07: CRUD requires the admin write capability (fail-closed); listing is kiosk-visible TIME-ANNOUNCEMENTS-AC-07: GET ordered by time, ties broken by id",
             "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-INV-06 (server half): no scheduler job/queue/claim exists for announcements TIME-ANNOUNCEMENTS-INV-06: the entrypoint registers no time-announcements job, and the module never imports the scheduler seam (structural — owns the fuller schema/queue negative-proof sweep)",
-            "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-INV-04 (structural): the in-transaction property, pinned at the source level TIME-ANNOUNCEMENTS-INV-04: the overlap lookup is called INSIDE the db.transaction() callback on BOTH write paths (structural — better-sqlite3's synchronous transactions make this behaviourally unobservable: hoisting the check out of the transaction, or splitting a PATCH into check-then-write, still passes every behavioral test above)"
+            "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-INV-04 (structural): the in-transaction property, pinned at the source level TIME-ANNOUNCEMENTS-INV-04: the overlap lookup is called INSIDE the db.transaction() callback on BOTH write paths (structural — better-sqlite3's synchronous transactions make this behaviourally unobservable: hoisting the check out of the transaction, or splitting a PATCH into check-then-write, still passes every behavioral test above)",
+            "time-announcements-crud (US1 rule authoring) rejects a non-boolean active flag without persisting an announcement"
           ],
           "tests/boundary/time-announcements-negatives.test.ts": [
             "time-announcements negative proofs 1. TIME-ANNOUNCEMENTS-AC-08/INV-10: no settings surface of any kind GET /api/time-announcements/settings is NOT registered",
@@ -2967,10 +2981,10 @@
             "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with the restore-confirm panel OPEN (+3: the typed-confirm input, submit, cancel — 10 total), including while the restore submit is IN-FLIGHT",
             "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) CENSUS FIRES ON REMOVAL — deleting a backup drops its row's 4 controls from the count (11 -> 7), not a synthetic shrink",
             "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own Snapshot Now button below the kiosk minimum makes the assertion fail, and reverting restores compliance",
-            "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density while loading — the filter row (5 controls) is ALWAYS mounted, even before the first page resolves",
-            "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with NO rows (still 5 — the filter row only)",
-            "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with rows AND a next cursor — Load More adds a 6th control",
-            "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) CENSUS FIRES ON REMOVAL — a failed Apply invalidates the cursor and Load More disappears (6 -> 5)",
+            "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density while loading — the filter row (6 controls) is ALWAYS mounted, even before the first page resolves",
+            "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with NO rows (still 6 — filters and diagnostic shortcut)",
+            "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with rows AND a next cursor — Load More adds a 7th control",
+            "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) CENSUS FIRES ON REMOVAL — a failed Apply invalidates the cursor and Load More disappears (7 -> 6)",
             "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own Apply Filters button below the kiosk minimum makes the assertion fail, and reverting restores compliance",
             "BackupsManagement — every error state is announced through ErrorNotice, with its own identity (SC-011) a load failure",
             "BackupsManagement — every error state is announced through ErrorNotice, with its own identity (SC-011) a lastBackupError surfaced on load (assertive)",
@@ -3059,7 +3073,9 @@
             "CalendarView — the assignment row is a real, keyboard-operable control (FR-013, SC-012) meets kiosk density on the per-member checkbox row (the row that used to be a non-focusable <li>)",
             "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) submits the toggled member id in the PUT payload",
             "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) excludes archived members from assignment choices",
-            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) gives the assign row's label a full-width, pointer-cursor hit area ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)"
+            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) gives the assign row's label a full-width, pointer-cursor hit area ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)",
+            "CalendarView — error states are announced (SC-011) announces invalid date conversion during create and releases the submit button",
+            "CalendarView — error states are announced (SC-011) announces invalid date conversion during edit and releases the submit button"
           ],
           "tests/client/calendar-week-integration.test.tsx": [
             "CalendarView — Week integration keeps recurrence occurrences distinct and activates local/external and all-day events",
@@ -3262,7 +3278,7 @@
             "DensityControl (FR-002/FR-002a) kiosk-density census (SC-001, SC-002) — across both densities DELIBERATE NEGATIVE — forcing the toggle below the kiosk minimum makes the assertion fail",
             "DensityControl — cross-tab synchronization (Codex review, FR-002 per-device) another tab's density change (a `storage` event) re-applies the attribute and updates the pressed state",
             "DensityControl — cross-tab synchronization (Codex review, FR-002 per-device) an unrelated key's storage event does NOT touch density",
-            "DensityControl (FR-002/FR-002a) fresh device: empty localStorage + boot's applyStoredDensity() renders unpressed/comfortable",
+            "DensityControl (FR-002/FR-002a) empty localStorage leaves the isolated density control unpressed/comfortable",
             "DensityControl (FR-002/FR-002a) kiosk-density census (SC-001, SC-002) — across both densities kiosk density active: exactly one control, and it MEASURES COMPLIANT (built on Button)"
           ],
           "tests/client/density-styles-helper.test.tsx": [
@@ -3369,7 +3385,8 @@
             "MealsBoard weekly planner localizes workspace chrome and date labels while retaining authored content",
             "MealsBoard weekly planner uses the household date rather than the device date for the initial week request",
             "MealsBoard weekly planner renders a tombstone as non-editable instead of exposing its deleted recipe",
-            "MealsBoard weekly planner keeps every slot interactive when a valid week contains no entries"
+            "MealsBoard weekly planner keeps every slot interactive when a valid week contains no entries",
+            "MealsBoard weekly planner searches recipes from the weekly board and displays matching results"
           ],
           "tests/client/meals-household-timezone-error-retry.test.tsx": [
             "MealsManagement — household timezone setup error shows a retry action when settings fail, then loads dates after retry succeeds"
@@ -3882,7 +3899,8 @@
             "TelemetryManagement never uses dangerouslySetInnerHTML anywhere in the panel source (grep assertion)",
             "localizes filter-load failures without displaying server prose (en)",
             "localizes filter-load failures without displaying server prose (es)",
-            "sends both date boundaries when applying a telemetry range"
+            "sends both date boundaries when applying a telemetry range",
+            "TelemetryManagement opens the subscriber failure query and replaces draft time filters"
           ],
           "tests/client/telemetry-producers.test.ts": [
             "telemetry producers global error/unhandledrejection capture (FR-008) an uncaught error becomes a client.global/error entry with a stable message and the raw text in data (INV-03 pattern)",
@@ -4256,7 +4274,9 @@
             "restore with detached calendar synchronization drains detached work or aborts safely (timeout=false, failure=false)",
             "restore with detached calendar synchronization drains detached work or aborts safely (timeout=false, failure=true)",
             "restore with detached calendar synchronization drains detached work or aborts safely (timeout=true, failure=false)",
-            "restore with detached calendar synchronization drains detached work or aborts safely (timeout=true, failure=true)"
+            "restore with detached calendar synchronization drains detached work or aborts safely (timeout=true, failure=true)",
+            "restore engine — confirmation + validation (BACKUPS-AC-01, no side effects) invalid weekday data in same-version and older backups rolls back before runtime activation",
+            "restore engine — confirmation + validation (BACKUPS-AC-01, no side effects) invalid weekday data in the rollback snapshot keeps traffic and jobs quiesced"
           ],
           "tests/integration/backups-snapshot.test.ts": [
             "backups snapshot creation (BACKUPS-INV-09, FR-002) BACKUPS-INV-09: a snapshot is a consistent, independently-readable image — temp-write + atomic rename, and creation never mutates live data",
@@ -4435,7 +4455,8 @@
             "daily-briefing EXTERNAL blocks + shared cache production adapters (zenQuotesSource / wikipediaOnThisDaySource) wikipediaOnThisDaySource a non-2xx response throws",
             "daily-briefing EXTERNAL blocks + shared cache production adapters (zenQuotesSource / wikipediaOnThisDaySource) wikipediaOnThisDaySource honors an operator-overridden endpoint (ONTHISDAY_ENDPOINT), replacing the language-prefixed origin",
             "daily-briefing EXTERNAL blocks + shared cache production adapters (zenQuotesSource / wikipediaOnThisDaySource) wikipediaOnThisDaySource pickThirds: fewer than 6 items returns all of them; six or more returns the recent/middle/old trio",
-            "daily-briefing EXTERNAL blocks + shared cache production adapters (zenQuotesSource / wikipediaOnThisDaySource) wikipediaOnThisDaySource empty categories are omitted from the result entirely (all-empty resolves null)"
+            "daily-briefing EXTERNAL blocks + shared cache production adapters (zenQuotesSource / wikipediaOnThisDaySource) wikipediaOnThisDaySource empty categories are omitted from the result entirely (all-empty resolves null)",
+            "daily-briefing EXTERNAL blocks + shared cache captured weather input failures omit without poisoning the external cache"
           ],
           "tests/integration/daily-briefing-catchup-e2e.test.ts": [
             "daily-briefing catch-up — built-bundle process boot DAILY-BRIEFING-AC-10 / BACKGROUND-JOBS-SCHEDULER-AC-03 / -AC-04 / -INV-04 / -INV-03: a scheduler-enabled boot catches up today's briefing for an opted-in member"
@@ -4489,6 +4510,9 @@
             "daily-briefing corpora corpus-availability map (FR-008/FR-009) isKnownBlockType recognizes all 21 registry types and rejects garbage"
           ],
           "tests/integration/daily-briefing-generation.test.ts": [
+            "daily-briefing full generation ADR-043: freezes local content before a concurrent edit during external work",
+            "daily-briefing full generation ADR-043: freezes local settings before a concurrent edit during external work",
+            "daily-briefing full generation rejects an empty member before generation or persistence",
             "daily-briefing full generation FR-014: effective order merge — configured instances (incl. a repeated type with distinct params) first, then unlisted registry types in registry order",
             "daily-briefing full generation SC-003: generating the same member/date twice produces identical block selections and an identical raster",
             "daily-briefing full generation : editing a member colour does not alter the monochrome briefing raster",
@@ -4515,7 +4539,9 @@
             "daily-briefing full generation deriveStatus: every block failed settles the briefing failed (no survivors)",
             "daily-briefing full generation corpus defaults follow the es household with English-only fallback",
             "daily-briefing full generation corpus defaults follow the en household with English-only fallback",
-            "daily-briefing full generation explicit corpus overrides win while household changes leave stored snapshots intact"
+            "daily-briefing full generation explicit corpus overrides win while household changes leave stored snapshots intact",
+            "daily-briefing full generation contains malformed persisted external cache entries as block failures",
+            "daily-briefing full generation generates an enabled onThisDay block and contains its external failure"
           ],
           "tests/integration/daily-briefing-job.test.ts": [
             "daily-briefing job registration (research D8/D9) isMissed predicate truth table (Codex review F1: per-member, never COUNT(*)==0) DAILY-BRIEFING-AC-10: no daily_briefing row for an opted-in active member — missed",
@@ -4873,6 +4899,19 @@
             "telemetry retention prune (research D7) real registration path — runJobNow(\"telemetry.prune\") CLIENT-LOGGING-TELEMETRY-AC-04/-INV-09: prunes aged rows and keeps fresh rows through the actual registered scheduler job",
             "telemetry retention prune (research D7) real registration path — runJobNow(\"telemetry.prune\") re-running the real registered job after a prune completes without deleting anything further",
             "telemetry retention prune (research D7) CLIENT-LOGGING-TELEMETRY-AC-04: zero-ingest fixture agedClientLogRowsExist() is false on an empty table"
+          ],
+          "tests/boundary/weekday-integrity.test.ts": [
+            "canonical weekday integrity rejects integer and noncanonical tokens without coercing or changing domain set policies",
+            "canonical weekday integrity accepts fresh and public-seeded databases including null and empty masks",
+            "canonical weekday integrity identifies corrupt persisted weekday rows in every domain without rewriting data"
+          ],
+          "tests/boundary/event-subscriber-logs.test.ts": [
+            "event subscriber diagnostics persists unique redacted sync and async failures and exposes them through the admin query",
+            "event subscriber diagnostics keeps internal failures queryable beyond the client flood bound and rejects client impersonation",
+            "event subscriber diagnostics falls back to redacted stderr when storage is unavailable while containing the fault",
+            "event subscriber diagnostics deduplicates anonymous registrations and preserves their identity across deliveries",
+            "event subscriber diagnostics contains diagnostic serialization failures and retains a unique stderr breadcrumb",
+            "event subscriber diagnostics preserves failure identity when oversized errors are persisted or sent to stderr"
           ]
         }
       },
@@ -4945,10 +4984,6 @@
             "d52575aebaf5180e5f75-990374b5befcaebf9c02",
             "d52575aebaf5180e5f75-c9d6222685f4b7444f83"
           ],
-          "tests/e2e/time-announcements.spec.ts": [
-            "04bcd8d2b3c5433fa791-db5905637266d4b32ff9",
-            "04bcd8d2b3c5433fa791-26afd185bbffb8871c6a"
-          ],
           "tests/e2e/weather.spec.ts": [
             "d5f1906f292cab0ebdcd-89f4250569c3e2076408",
             "d5f1906f292cab0ebdcd-470ca95a4a0d7439403e"
@@ -4965,7 +5000,6 @@
     },
     "files": {
       "src/client/admin/AdminGate.tsx": {
-        "sha256": "b15f960cdea03a7559725c542b6ef5f70522a16fa3776c2a236efae51d0df60e",
         "layer": "client",
         "minimumTotals": {
           "lines": 68,
@@ -4981,7 +5015,6 @@
         }
       },
       "src/client/admin/AdminRoutes.tsx": {
-        "sha256": "07ed513348b75c45a60d93884cb72c85853227e9c5b6d9372a653861853beb58",
         "layer": "client",
         "minimumTotals": {
           "lines": 19,
@@ -4997,7 +5030,6 @@
         }
       },
       "src/client/admin/BackupsManagement.tsx": {
-        "sha256": "42181b5d31652eee734e71651f12a8c7a7cfc1f6a36dbbdb5c6a0dabd9c8b5ba",
         "layer": "client",
         "minimumTotals": {
           "lines": 125,
@@ -5013,7 +5045,6 @@
         }
       },
       "src/client/admin/CalendarManagement.tsx": {
-        "sha256": "0f92a6512cb893a5c814f356dbf6cfb7488297f36d741196a6eae4a0bdcfffbc",
         "layer": "client",
         "minimumTotals": {
           "lines": 162,
@@ -5029,7 +5060,6 @@
         }
       },
       "src/client/admin/ChoreOrderControls.tsx": {
-        "sha256": "d559f41fb082543d67b8122335795a678cd9f97784c237b9a70387835b1b24d1",
         "layer": "client",
         "minimumTotals": {
           "lines": 36,
@@ -5045,7 +5075,6 @@
         }
       },
       "src/client/admin/DailyBriefingManagement.tsx": {
-        "sha256": "104722be6e6175a6e50709647ced81b914a558b02698a405b24bbf19a821153a",
         "layer": "client",
         "minimumTotals": {
           "lines": 313,
@@ -5061,7 +5090,6 @@
         }
       },
       "src/client/admin/DailyMessagesManagement.tsx": {
-        "sha256": "a8ec2ad77e04aea3cfc5dc3fae858ef89f548af612cfa2d8d1f276a1cd90228f",
         "layer": "client",
         "minimumTotals": {
           "lines": 138,
@@ -5077,7 +5105,6 @@
         }
       },
       "src/client/admin/DayPeriodsManagement.tsx": {
-        "sha256": "35d55aee453024c52d175174a4f7f732a2554c6deae28227d0c0c5520ec44542",
         "layer": "client",
         "minimumTotals": {
           "lines": 99,
@@ -5093,7 +5120,6 @@
         }
       },
       "src/client/admin/MealsManagement.tsx": {
-        "sha256": "583bcf9666f53accae967a3a90b04a4dfca9a94ec36677cbdf7902a50dc606e4",
         "layer": "client",
         "minimumTotals": {
           "lines": 368,
@@ -5109,7 +5135,6 @@
         }
       },
       "src/client/admin/MemberCreateForm.tsx": {
-        "sha256": "3ad4308c74be0da403abbdecf60b8104dafddf4e326cc3a98a40f50f89567421",
         "layer": "client",
         "minimumTotals": {
           "lines": 78,
@@ -5125,7 +5150,6 @@
         }
       },
       "src/client/admin/MembersManagement.tsx": {
-        "sha256": "9ec0056fbad90a590c2bf35b171cd7118e33c6464217e8177de3f015607d788a",
         "layer": "client",
         "minimumTotals": {
           "lines": 149,
@@ -5141,7 +5165,6 @@
         }
       },
       "src/client/admin/NetworkDevicesManagement.tsx": {
-        "sha256": "f773db4edc73e70368cdb74398cfd4358cdab624550c3f0b37d44631379483b3",
         "layer": "client",
         "minimumTotals": {
           "lines": 167,
@@ -5157,7 +5180,6 @@
         }
       },
       "src/client/admin/PrintingManagement.tsx": {
-        "sha256": "e2496e6d6ed7ad7fe2191205fc458f23e46e205e7d98c71f87365615a3077383",
         "layer": "client",
         "minimumTotals": {
           "lines": 38,
@@ -5173,7 +5195,6 @@
         }
       },
       "src/client/admin/RemindersManagement.tsx": {
-        "sha256": "3e8ea96591f90bc4e2c7a2cb8c437099fae9fff4a477581d937d9c52bada462f",
         "layer": "client",
         "minimumTotals": {
           "lines": 251,
@@ -5189,7 +5210,6 @@
         }
       },
       "src/client/admin/RoutinesManagement.tsx": {
-        "sha256": "d202de1d89041bdea43d9037f6056a32683da57d072a1fb1e6eb7e8957c90737",
         "layer": "client",
         "minimumTotals": {
           "lines": 165,
@@ -5205,7 +5225,6 @@
         }
       },
       "src/client/admin/TelemetryManagement.tsx": {
-        "sha256": "a882fb3213169dd269729056c21236ef3275b8a34cff49d7349c198ea4145d14",
         "layer": "client",
         "minimumTotals": {
           "lines": 55,
@@ -5221,7 +5240,6 @@
         }
       },
       "src/client/admin/TimeAnnouncementsManagement.tsx": {
-        "sha256": "4816fe0ae91db5394d1b641966f92a7b40d1ad8dd5b11fd19c4ec34bfb083285",
         "layer": "client",
         "minimumTotals": {
           "lines": 88,
@@ -5237,7 +5255,6 @@
         }
       },
       "src/client/admin/WeatherManagement.tsx": {
-        "sha256": "3790732d2ad00ab0aa761d5ee08a0fcbd8ae4b830d0238c1f86c318f477fe6c2",
         "layer": "client",
         "minimumTotals": {
           "lines": 81,
@@ -5253,7 +5270,6 @@
         }
       },
       "src/client/calendar/CalendarMonthView.tsx": {
-        "sha256": "f86acf3e3ae04195f9f258dfb1f5e01bde08f7289e69a92e7d6632fa562a158d",
         "layer": "client",
         "minimumTotals": {
           "lines": 22,
@@ -5269,7 +5285,6 @@
         }
       },
       "src/client/calendar/CalendarView.tsx": {
-        "sha256": "79b2375346c57d9875ceb21395f5eb7ed326740617f2434893df6859b601eb0c",
         "layer": "client",
         "minimumTotals": {
           "lines": 273,
@@ -5285,7 +5300,6 @@
         }
       },
       "src/client/calendar/ScheduleXWeekView.tsx": {
-        "sha256": "a71918bd0879e29a6be1341312867971f0d2784cf4f19b12b9ac6fb9e4ff6ee4",
         "layer": "client",
         "minimumTotals": {
           "lines": 56,
@@ -5301,7 +5315,6 @@
         }
       },
       "src/client/calendar/admin/ExternalSourceCard.tsx": {
-        "sha256": "7576d04f4ec2af2cb00def913fcc44b5ef282ffb7667f06f8623ef471c3a388f",
         "layer": "client",
         "minimumTotals": {
           "lines": 13,
@@ -5317,7 +5330,6 @@
         }
       },
       "src/client/calendar/admin/HighlightRuleCard.tsx": {
-        "sha256": "63e647e0ab35b6a4051e49af4b62fe527d3d959c23aba22cccd9dffbb80389ed",
         "layer": "client",
         "minimumTotals": {
           "lines": 7,
@@ -5333,7 +5345,6 @@
         }
       },
       "src/client/calendar/admin/reorder.ts": {
-        "sha256": "d6ae0d8bb82391d02e47b901d40e270c1443b5a35d5aa678eb641ae63092e3bc",
         "layer": "client",
         "minimumTotals": {
           "lines": 4,
@@ -5349,7 +5360,6 @@
         }
       },
       "src/client/calendar/calendar-presentation.ts": {
-        "sha256": "27b3e171a80dc2bada5fab8d5077ddaddc984060576cea47c51fa3207611df48",
         "layer": "client",
         "minimumTotals": {
           "lines": 66,
@@ -5365,7 +5375,6 @@
         }
       },
       "src/client/calendar/member-event-style.ts": {
-        "sha256": "62d64194d7d8cf3a02de8cac17b3d04522d88df6593fddc5a14fc9d81eb7c1ed",
         "layer": "client",
         "minimumTotals": {
           "lines": 13,
@@ -5381,7 +5390,6 @@
         }
       },
       "src/client/chores/ChoreColumns.tsx": {
-        "sha256": "0329603e8e1459ba8174c0a8f9a555fe498e2bc97a46164f5d4167922835185b",
         "layer": "client",
         "minimumTotals": {
           "lines": 57,
@@ -5397,7 +5405,6 @@
         }
       },
       "src/client/chores/ChoresBoard.tsx": {
-        "sha256": "77f456e9605ec1cc84c11aea1c31f574a11bea032cfa51fd3acc766ab21ba27b",
         "layer": "client",
         "minimumTotals": {
           "lines": 14,
@@ -5413,7 +5420,6 @@
         }
       },
       "src/client/chores/EmojiPicker.tsx": {
-        "sha256": "3931aa81b360ddb1e8f60e5ea029665b7b52bf000367e5dfe119930e279c014c",
         "layer": "client",
         "minimumTotals": {
           "lines": 20,
@@ -5429,7 +5435,6 @@
         }
       },
       "src/client/chores/emoji-catalog.ts": {
-        "sha256": "758ff59823501ccb055c31f2d9d2163c949a3d51995be640f350a3ce4ac6626e",
         "layer": "client",
         "minimumTotals": {
           "lines": 1,
@@ -5445,7 +5450,6 @@
         }
       },
       "src/client/chores/noto-emoji.tsx": {
-        "sha256": "89b9980550d5905cfe02e11455a7677f095812e6490bb3b15b9c763e76cec80d",
         "layer": "client",
         "minimumTotals": {
           "lines": 13,
@@ -5461,7 +5465,6 @@
         }
       },
       "src/client/chores/useTodayChores.ts": {
-        "sha256": "d29812a7a04d69a781c851c839ba54a43a731faf5593955af1a9aa7c3e5ee47d",
         "layer": "client",
         "minimumTotals": {
           "lines": 56,
@@ -5477,7 +5480,6 @@
         }
       },
       "src/client/components/AdminPanel.tsx": {
-        "sha256": "ba685a9d2d230919a424e1b29837e2faa51abf750efa3425b43b6b418ba655d1",
         "layer": "client",
         "minimumTotals": {
           "lines": 4,
@@ -5493,7 +5495,6 @@
         }
       },
       "src/client/components/CheckboxField.tsx": {
-        "sha256": "96de6a847a6a4b8c36dc1bf69d05acda3b190ce851ed4e428bd009066585f57c",
         "layer": "client",
         "minimumTotals": {
           "lines": 2,
@@ -5509,7 +5510,6 @@
         }
       },
       "src/client/components/ConfirmDialog.tsx": {
-        "sha256": "a194f80be8c6ed1a5bdfbf4767fc80ed03dc084cea150ff867800917cc390f1d",
         "layer": "client",
         "minimumTotals": {
           "lines": 9,
@@ -5525,7 +5525,6 @@
         }
       },
       "src/client/components/ErrorNotice.tsx": {
-        "sha256": "2e20be89e1def8271a1f61e9d905d665c594c2520733df43587388f03b385d47",
         "layer": "client",
         "minimumTotals": {
           "lines": 3,
@@ -5541,7 +5540,6 @@
         }
       },
       "src/client/components/Field.tsx": {
-        "sha256": "322cc021d3ebdae32ec5e4ff471273826c0bb6bc60df7bc6284d20def2cd8833",
         "layer": "client",
         "minimumTotals": {
           "lines": 7,
@@ -5557,7 +5555,6 @@
         }
       },
       "src/client/components/RadioField.tsx": {
-        "sha256": "01b587d55ce438db4009d3c517c6c88c0d1b5e21acc813f66800b6e1b98a137b",
         "layer": "client",
         "minimumTotals": {
           "lines": 2,
@@ -5573,7 +5570,6 @@
         }
       },
       "src/client/components/StatusToggle.tsx": {
-        "sha256": "fbe7c52be15c6ca4a610de5396928d88dd38d283d99f034118bac1a4c52a132d",
         "layer": "client",
         "minimumTotals": {
           "lines": 1,
@@ -5589,7 +5585,6 @@
         }
       },
       "src/client/components/WeekdayPicker.tsx": {
-        "sha256": "8826977886d97f56a8e7698c9b6b62d6619ff1936c17c3f82e42046e7182bee3",
         "layer": "client",
         "minimumTotals": {
           "lines": 23,
@@ -5605,7 +5600,6 @@
         }
       },
       "src/client/components/ui/button.tsx": {
-        "sha256": "413b90d067e5e0ed50314c7391d7ce652543638f868e4b61b72ea88ba2c0deb5",
         "layer": "client",
         "minimumTotals": {
           "lines": 3,
@@ -5621,7 +5615,6 @@
         }
       },
       "src/client/components/ui/card.tsx": {
-        "sha256": "d345a950f9a2fe209b1df94aaa3a48d0a8503418816c328cbd0819882ef68f2a",
         "layer": "client",
         "minimumTotals": {
           "lines": 7,
@@ -5637,7 +5630,6 @@
         }
       },
       "src/client/components/ui/dialog.tsx": {
-        "sha256": "83714205224f0eacb068c88aa7a9c6200f1a5bbaf91a72d8b0a8bc66de72dc9a",
         "layer": "client",
         "minimumTotals": {
           "lines": 10,
@@ -5653,7 +5645,6 @@
         }
       },
       "src/client/components/ui/input.tsx": {
-        "sha256": "411261b33cfaa23eb41672010fa7d6131d494ec9d5df593f31b35a5f669b58b0",
         "layer": "client",
         "minimumTotals": {
           "lines": 1,
@@ -5669,7 +5660,6 @@
         }
       },
       "src/client/components/ui/label.tsx": {
-        "sha256": "3ab7908535d50799f6b347f4d91895ef67e2d62f01bf8d35a94d391cf87ce583",
         "layer": "client",
         "minimumTotals": {
           "lines": 1,
@@ -5685,7 +5675,6 @@
         }
       },
       "src/client/components/ui/select.tsx": {
-        "sha256": "6df9660a65b73f806f08a1e7ab14f4cb30d7fa58a5171568c71a9fabc82a1fbc",
         "layer": "client",
         "minimumTotals": {
           "lines": 10,
@@ -5701,7 +5690,6 @@
         }
       },
       "src/client/components/ui/textarea.tsx": {
-        "sha256": "c5f7c3edfde46a050f837186867355d027c631b5a743faf45b9f4801b4259e14",
         "layer": "client",
         "minimumTotals": {
           "lines": 1,
@@ -5717,7 +5705,6 @@
         }
       },
       "src/client/daily-briefing/DailyBriefingView.tsx": {
-        "sha256": "26a5a11a1d9e42d8ef541194536c42654297278af06dfb31d1e8d520cc536c37",
         "layer": "client",
         "minimumTotals": {
           "lines": 117,
@@ -5733,7 +5720,6 @@
         }
       },
       "src/client/daily-briefing/blockRenderers.tsx": {
-        "sha256": "6c2872337d1c49a405ba522e5bebb3ad1c9b11958363d0e5a84d6aa027cf1454",
         "layer": "client",
         "minimumTotals": {
           "lines": 50,
@@ -5749,7 +5735,6 @@
         }
       },
       "src/client/home/HomeSurface.tsx": {
-        "sha256": "544513ade2e6c3a6e75754a22216402319ab5cba70e699638a3d50aa988f9810",
         "layer": "client",
         "minimumTotals": {
           "lines": 7,
@@ -5765,7 +5750,6 @@
         }
       },
       "src/client/home/TodayAgenda.tsx": {
-        "sha256": "8f678d9db5d7bcba1a18db59e5f0342fb2864f32582adb50bc47d2f4e5c366c5",
         "layer": "client",
         "minimumTotals": {
           "lines": 62,
@@ -5781,7 +5765,6 @@
         }
       },
       "src/client/home/TodayChores.tsx": {
-        "sha256": "70c61301128c635476d4692bff552849f974e7ae5fa32fd0ebef05f175637522",
         "layer": "client",
         "minimumTotals": {
           "lines": 3,
@@ -5797,7 +5780,6 @@
         }
       },
       "src/client/home/TodayMeals.tsx": {
-        "sha256": "8388176c90310242e87e8e69abfcbffa9e3bf70622d7fb849d6b5c4b4a9fe802",
         "layer": "client",
         "minimumTotals": {
           "lines": 17,
@@ -5813,7 +5795,6 @@
         }
       },
       "src/client/home/WeatherPill.tsx": {
-        "sha256": "a8b821a497ade7e314cbcca428190656f01f5607ad0dfe96d57e42dd88298705",
         "layer": "client",
         "minimumTotals": {
           "lines": 48,
@@ -5829,7 +5810,6 @@
         }
       },
       "src/client/home/agenda-presentation.ts": {
-        "sha256": "55bccff6aca916b5f90a36cf5a59c0526af8b65efb50f04a66ab006d47111ff2",
         "layer": "client",
         "minimumTotals": {
           "lines": 28,
@@ -5845,7 +5825,6 @@
         }
       },
       "src/client/home/weatherCache.ts": {
-        "sha256": "e47132cfd641ba31ecbca3dde6afbca73e751efa2b02698168576a86bf7c088f",
         "layer": "client",
         "minimumTotals": {
           "lines": 17,
@@ -5861,7 +5840,6 @@
         }
       },
       "src/client/home/weatherFormat.ts": {
-        "sha256": "372ba793cefe6005d7d18ca39b0bdb8ec14aa873333074739ec87d058b388e36",
         "layer": "client",
         "minimumTotals": {
           "lines": 6,
@@ -5877,7 +5855,6 @@
         }
       },
       "src/client/i18n/index.tsx": {
-        "sha256": "e11bc02187b676fac0fc855d3b1656a020875e0a8505fde8830ddf670341dfed",
         "layer": "client",
         "minimumTotals": {
           "lines": 38,
@@ -5893,7 +5870,6 @@
         }
       },
       "src/client/i18n/messages.ts": {
-        "sha256": "eea7d8b62a7ca4b2c6fbd925cdb3fa3721efebc896a748cb2afa37df1ead9eb1",
         "layer": "client",
         "minimumTotals": {
           "lines": 4,
@@ -5909,7 +5885,6 @@
         }
       },
       "src/client/lib/adminUnlock.tsx": {
-        "sha256": "327e13db470e1d2af81963ab01578ead51231d69b060fe8539ea32f928ae56c6",
         "layer": "client",
         "minimumTotals": {
           "lines": 5,
@@ -5925,7 +5900,6 @@
         }
       },
       "src/client/lib/api-error.ts": {
-        "sha256": "47f3ef4ac2bcec8464ee1daa7bb2ac864b9492c812db7325e7235446344946b5",
         "layer": "client",
         "minimumTotals": {
           "lines": 4,
@@ -5941,7 +5915,6 @@
         }
       },
       "src/client/lib/base-path.ts": {
-        "sha256": "3a164b8c3c143d8bd0fdcb7a240299cfd5c9914a0d0fe8aaab2eaf759af9ccbc",
         "layer": "client",
         "minimumTotals": {
           "lines": 3,
@@ -5957,7 +5930,6 @@
         }
       },
       "src/client/lib/credential.ts": {
-        "sha256": "ee534ee095bf74da3c1bafb6b299af6178a08063a860346b21392b6545b66f05",
         "layer": "client",
         "minimumTotals": {
           "lines": 20,
@@ -5973,7 +5945,6 @@
         }
       },
       "src/client/lib/day-period-labels.ts": {
-        "sha256": "b3b4c5ba7ff027a00b5e3ca8511aa6c25345a73727850a68020d3daadf66701f",
         "layer": "client",
         "minimumTotals": {
           "lines": 1,
@@ -5989,7 +5960,6 @@
         }
       },
       "src/client/lib/household-date.ts": {
-        "sha256": "562f3471594318135a926bac14ea7c3d67c6f1b437cffca122ea877ce77df8b1",
         "layer": "client",
         "minimumTotals": {
           "lines": 1,
@@ -6005,7 +5975,6 @@
         }
       },
       "src/client/lib/householdSettings.tsx": {
-        "sha256": "c47c13e819372b3fedc000748b07e83279d84c9d9c9be49542faa743d6f5deb4",
         "layer": "client",
         "minimumTotals": {
           "lines": 39,
@@ -6021,7 +5990,6 @@
         }
       },
       "src/client/lib/logger.ts": {
-        "sha256": "b05f1423a5f6c03914c7ad6bc27231d1740ee300a7fb98a202d2fccb4bd0b1da",
         "layer": "client",
         "minimumTotals": {
           "lines": 73,
@@ -6037,7 +6005,6 @@
         }
       },
       "src/client/lib/recipes.ts": {
-        "sha256": "6ef2c77f407af01006f543e8e41339f2a7558658464f3f467144d91ec60d9e28",
         "layer": "client",
         "minimumTotals": {
           "lines": 3,
@@ -6053,7 +6020,6 @@
         }
       },
       "src/client/lib/utils.ts": {
-        "sha256": "c01591eca897ab0baa81cc3fac8c5179348e18c0918bc65140280416504e777e",
         "layer": "client",
         "minimumTotals": {
           "lines": 1,
@@ -6069,7 +6035,6 @@
         }
       },
       "src/client/main.tsx": {
-        "sha256": "17432e3cab8c227338b95b3d2d8be340cf807be386faae84878c8683d0b86191",
         "layer": "client",
         "minimumTotals": {
           "lines": 16,
@@ -6085,7 +6050,6 @@
         }
       },
       "src/client/meals/MealCell.tsx": {
-        "sha256": "48956a297a23d1d91a20ff491523cf1f660ac0f5884795c65c6c0b175caf0dc0",
         "layer": "client",
         "minimumTotals": {
           "lines": 11,
@@ -6101,7 +6065,6 @@
         }
       },
       "src/client/meals/MealEntryDialog.tsx": {
-        "sha256": "f96855be0dd527a20571856433251555122c6cdd9c361817f1daca5e1a217117",
         "layer": "client",
         "minimumTotals": {
           "lines": 40,
@@ -6117,7 +6080,6 @@
         }
       },
       "src/client/meals/MealPlanGrid.tsx": {
-        "sha256": "b57013553ebdbd84bf7a59741b11b2dfd4f1f872d5d13b661b38bcee7731d3ec",
         "layer": "client",
         "minimumTotals": {
           "lines": 10,
@@ -6133,7 +6095,6 @@
         }
       },
       "src/client/meals/MealsBoard.tsx": {
-        "sha256": "79f0c93cd2085629c4169da58edcf304a581e2b452fe50e5ceda537fe21672cd",
         "layer": "client",
         "minimumTotals": {
           "lines": 11,
@@ -6149,7 +6110,6 @@
         }
       },
       "src/client/meals/RecipeCatalogue.tsx": {
-        "sha256": "d0182afd795ed4dcbd32d85b5a8fd1863b90551113cd9f77e337c9a9fee0269b",
         "layer": "client",
         "minimumTotals": {
           "lines": 18,
@@ -6165,7 +6125,6 @@
         }
       },
       "src/client/meals/RecipeDetailDialog.tsx": {
-        "sha256": "0ca3c8a9214711fd2609738a315eab623af0441433ae74450679867fb13ed471",
         "layer": "client",
         "minimumTotals": {
           "lines": 5,
@@ -6181,7 +6140,6 @@
         }
       },
       "src/client/meals/RecipeDialog.tsx": {
-        "sha256": "b182a0da8a4e536a5f19e7bebf397d141bd0c61674bbb78729b7ab0466be1ff6",
         "layer": "client",
         "minimumTotals": {
           "lines": 32,
@@ -6197,7 +6155,6 @@
         }
       },
       "src/client/meals/useMealsWorkspace.ts": {
-        "sha256": "c0b9481ce38e9dd1d5adc198198c87988fa90bb1c6864e7c442c2fb9bc2330b9",
         "layer": "client",
         "minimumTotals": {
           "lines": 96,
@@ -6213,7 +6170,6 @@
         }
       },
       "src/client/meals/useTodayMeals.ts": {
-        "sha256": "038706f143d43b4b58e2269249fa89c71c6211792fc78a7fbde607ee8ef5fb4e",
         "layer": "client",
         "minimumTotals": {
           "lines": 47,
@@ -6229,7 +6185,6 @@
         }
       },
       "src/client/plugins/PluginCatalogProvider.tsx": {
-        "sha256": "0319ed595ad7bd5f440690d6d358198aee401b6b5589c60880b9df1aa1542729",
         "layer": "client",
         "minimumTotals": {
           "lines": 77,
@@ -6245,7 +6200,6 @@
         }
       },
       "src/client/plugins/PluginHealthIndicator.tsx": {
-        "sha256": "043fcb61954438b64016b4ce90463def90ef1c8885ea274fe5aa429d3d82024a",
         "layer": "client",
         "minimumTotals": {
           "lines": 15,
@@ -6261,7 +6215,6 @@
         }
       },
       "src/client/plugins/PluginManagement.tsx": {
-        "sha256": "a67b25778e14cc264c15759dfe665fe716b7c4135c5cc51419f368fa4c156877",
         "layer": "client",
         "minimumTotals": {
           "lines": 42,
@@ -6277,7 +6230,6 @@
         }
       },
       "src/client/plugins/PluginUnavailable.tsx": {
-        "sha256": "eb6c82999ed25c1f12b40b796efc50b81535a690f8821bc15907f21c0f6cacd6",
         "layer": "client",
         "minimumTotals": {
           "lines": 4,
@@ -6293,7 +6245,6 @@
         }
       },
       "src/client/plugins/contributions.ts": {
-        "sha256": "04d8dad7a4a256d8f0f3aae0c46a4b5f50531afae0a4affa31adb2c1327c8ed1",
         "layer": "client",
         "minimumTotals": {
           "lines": 21,
@@ -6309,7 +6260,6 @@
         }
       },
       "src/client/printing/PrintExecutor.tsx": {
-        "sha256": "b1d0050de9517a4a791d03675154216bd57808d57abd03f4dfff791ffcdc974a",
         "layer": "client",
         "minimumTotals": {
           "lines": 116,
@@ -6325,7 +6275,6 @@
         }
       },
       "src/client/printing/PrinterAttention.tsx": {
-        "sha256": "3cfd9a8c2ea86dab9e7c11891d40649a8cf44786ddf96281f1c9ed618e0a639d",
         "layer": "client",
         "minimumTotals": {
           "lines": 4,
@@ -6341,7 +6290,6 @@
         }
       },
       "src/client/printing/PrinterSession.tsx": {
-        "sha256": "403772d909d5dfdf6a7e2b773bca113f24bdb4fbdaf0f756737a507cd7e2e2d9",
         "layer": "client",
         "minimumTotals": {
           "lines": 1,
@@ -6357,7 +6305,6 @@
         }
       },
       "src/client/printing/pluginStatus.ts": {
-        "sha256": "cf64e87963661b63faf0766342e90956a2453d0d90d02a6a60d1a44aca9004a4",
         "layer": "client",
         "minimumTotals": {
           "lines": 27,
@@ -6373,7 +6320,6 @@
         }
       },
       "src/client/printing/queueWakeup.ts": {
-        "sha256": "d639576f868f157a7807701e36b577945305172c254f877e9aa9fe288d1ba9cf",
         "layer": "client",
         "minimumTotals": {
           "lines": 2,
@@ -6389,7 +6335,6 @@
         }
       },
       "src/client/printing/transport.ts": {
-        "sha256": "d5fd993827c5302e905354cb193da223af9e72c31535ec7b6cf1ca1bb2025ac4",
         "layer": "client",
         "minimumTotals": {
           "lines": 129,
@@ -6405,7 +6350,6 @@
         }
       },
       "src/client/shell/DensityControl.tsx": {
-        "sha256": "8e6f3c1f4ae8d9dc56442badf89272f7a226866cf884818ac0d0bb45f7471eec",
         "layer": "client",
         "minimumTotals": {
           "lines": 15,
@@ -6421,7 +6365,6 @@
         }
       },
       "src/client/shell/HouseholdChrome.tsx": {
-        "sha256": "027ae361061d524179e33fae3bf1cdd47580f2d3be399a314cd964f999ffc674",
         "layer": "client",
         "minimumTotals": {
           "lines": 81,
@@ -6437,7 +6380,6 @@
         }
       },
       "src/client/shell/Shell.tsx": {
-        "sha256": "aca4b4a4094589f466f7c72195abccad1a17b5d8af2ac4859d7049c5c9a8fc11",
         "layer": "client",
         "minimumTotals": {
           "lines": 62,
@@ -6453,7 +6395,6 @@
         }
       },
       "src/client/shell/densityAttribute.ts": {
-        "sha256": "a6ff23afb9a75e6f1b3eb2709fa0e29039335acbc9252732e1ff4b710c0d2ded",
         "layer": "client",
         "minimumTotals": {
           "lines": 16,
@@ -6469,7 +6410,6 @@
         }
       },
       "src/client/shell/routes.ts": {
-        "sha256": "273855d69c9ebc545722bcd1905ff0ea50ac61c6e2c9a080c7c3ba4446692231",
         "layer": "client",
         "minimumTotals": {
           "lines": 10,
@@ -6485,7 +6425,6 @@
         }
       },
       "src/client/shell/usePresentationMode.ts": {
-        "sha256": "917602804e0f813f74070dd9e7b407ed087fbc657fb04ad17f2997486fdb9b65",
         "layer": "client",
         "minimumTotals": {
           "lines": 16,
@@ -6501,7 +6440,6 @@
         }
       },
       "src/client/time-announcements/engine.ts": {
-        "sha256": "3d3eaccf2c486ea5f403e5e3bd5631297af0832f1288539e2ad7b2af3d44b5f4",
         "layer": "client",
         "minimumTotals": {
           "lines": 42,
@@ -6517,7 +6455,6 @@
         }
       },
       "src/client/time-announcements/events.ts": {
-        "sha256": "7ba2afd43ff6fde270a26340cde60cde320c159411e063ee94339735ac682051",
         "layer": "client",
         "minimumTotals": {
           "lines": 1,
@@ -6533,7 +6470,6 @@
         }
       },
       "src/client/time-announcements/leader.ts": {
-        "sha256": "22e6c9658e19672301ed1643eaeb898594581e3387594095bb45b6ce144e4b44",
         "layer": "client",
         "minimumTotals": {
           "lines": 100,
@@ -6549,7 +6485,6 @@
         }
       },
       "src/client/time-announcements/phrases.ts": {
-        "sha256": "ac90c1516c22f8a51a90919669785fd1d5cdb7d4d2e0c837aa4dd69a91098fac",
         "layer": "client",
         "minimumTotals": {
           "lines": 53,
@@ -6565,7 +6500,6 @@
         }
       },
       "src/client/time-announcements/seams.ts": {
-        "sha256": "88eeda106f4ca004fdee0d5b2273be8dec66abb76f8b4f2825a531ada41b8dd4",
         "layer": "client",
         "minimumTotals": {
           "lines": 16,
@@ -6581,7 +6515,6 @@
         }
       },
       "src/client/time-announcements/service.tsx": {
-        "sha256": "5f79d293185d47ef027776b2eff80133739fbe0715aebf49655c0f7d9dd02523",
         "layer": "client",
         "minimumTotals": {
           "lines": 115,
@@ -6597,7 +6530,6 @@
         }
       },
       "src/client/time-announcements/speech.ts": {
-        "sha256": "348da12d1244473ce9a50a18132ac129a621d5819d0570e4dfd0ba188f725d01",
         "layer": "client",
         "minimumTotals": {
           "lines": 54,
@@ -6613,7 +6545,6 @@
         }
       },
       "src/client/ui.ts": {
-        "sha256": "4dc2a888888588017d33dd06aaa12dec9c341f97417a78f86d86351707595056",
         "layer": "client",
         "minimumTotals": {
           "lines": 0,
@@ -6629,7 +6560,6 @@
         }
       },
       "src/server/app.ts": {
-        "sha256": "da055ac489b1537801fecf752a7f01dd6f4f81c405c8ab8d7f83e1b201561033",
         "layer": "server",
         "minimumTotals": {
           "lines": 53,
@@ -6645,7 +6575,6 @@
         }
       },
       "src/server/auth/boundary.ts": {
-        "sha256": "467d8a8a7d24b13ec29bf7462dc98bfef6e1a4356620bf2d90b638107b37b875",
         "layer": "server",
         "minimumTotals": {
           "lines": 48,
@@ -6661,7 +6590,6 @@
         }
       },
       "src/server/auth/capability.ts": {
-        "sha256": "e446db6bad7e9d0f968dbbd3fced15799efe1b577157399dea94a9ef2bb93147",
         "layer": "server",
         "minimumTotals": {
           "lines": 43,
@@ -6677,7 +6605,6 @@
         }
       },
       "src/server/auth/cookies.ts": {
-        "sha256": "d48424a08211f040c614d4f94b2bfa821250bfce35c7f0742db335f764c881cc",
         "layer": "server",
         "minimumTotals": {
           "lines": 3,
@@ -6693,7 +6620,6 @@
         }
       },
       "src/server/auth/credentials.ts": {
-        "sha256": "8060168cdae0c1399afeb93ee3a4a8b08bc6457c85a5b6259d3dcf4e5348eac2",
         "layer": "server",
         "minimumTotals": {
           "lines": 16,
@@ -6709,7 +6635,6 @@
         }
       },
       "src/server/auth/eff-wordlist.ts": {
-        "sha256": "46ed15f0387459f289af70233356c968965fc797a1dcf396c54ffb7a37bc9ddc",
         "layer": "server",
         "minimumTotals": {
           "lines": 1,
@@ -6725,7 +6650,6 @@
         }
       },
       "src/server/auth/gate.ts": {
-        "sha256": "de3c072ac6f9cc069f03fbef49c34774860b12c40f9a51bdb30977a7edf5985e",
         "layer": "server",
         "minimumTotals": {
           "lines": 35,
@@ -6741,7 +6665,6 @@
         }
       },
       "src/server/auth/pin.ts": {
-        "sha256": "6a3670d4fe727bb06c803940e3f384b2c4223492cc758a5fa53ab8fa28edad0b",
         "layer": "server",
         "minimumTotals": {
           "lines": 3,
@@ -6757,7 +6680,6 @@
         }
       },
       "src/server/auth/provision.ts": {
-        "sha256": "209bb7d977e189e6f3b6937aa1486fcc7f1d9810f5587ea13b4d4757904f5c64",
         "layer": "server",
         "minimumTotals": {
           "lines": 42,
@@ -6773,7 +6695,6 @@
         }
       },
       "src/server/auth/reconcile.ts": {
-        "sha256": "ffa9110fa139bff16b4de713539a20f1c8cc099eaead63477cdbf294afb2f204",
         "layer": "server",
         "minimumTotals": {
           "lines": 35,
@@ -6789,7 +6710,6 @@
         }
       },
       "src/server/auth/throttle.ts": {
-        "sha256": "9511623e98c88c448484f89ea7ad02716aac85a318426813a533ed597dfc2203",
         "layer": "server",
         "minimumTotals": {
           "lines": 43,
@@ -6805,7 +6725,6 @@
         }
       },
       "src/server/backups/job.ts": {
-        "sha256": "743b68a0be4bea0115d07100fac3630644ed57af4e2937a9c0d5c02654820458",
         "layer": "server",
         "minimumTotals": {
           "lines": 8,
@@ -6821,7 +6740,6 @@
         }
       },
       "src/server/backups/restore.ts": {
-        "sha256": "1805d0fe61150752e20bc21a902a77d9b4455da037201231beb6a656c07b0865",
         "layer": "server",
         "minimumTotals": {
           "lines": 160,
@@ -6837,7 +6755,6 @@
         }
       },
       "src/server/backups/storage.ts": {
-        "sha256": "3c07b4e09c79ac0ae5472d9e121778f1ae3ad8c23dcb908ad0e60fb8546671ad",
         "layer": "server",
         "minimumTotals": {
           "lines": 227,
@@ -6853,7 +6770,6 @@
         }
       },
       "src/server/db/client.ts": {
-        "sha256": "31982aae6e5a0e606691396b2aa20799ad69af4a9d7114b2fde9b7d6d26b923a",
         "layer": "server",
         "minimumTotals": {
           "lines": 12,
@@ -6869,7 +6785,6 @@
         }
       },
       "src/server/db/migrate.ts": {
-        "sha256": "38adfa0ef494da4c3a385731ab356de92f8c6d74fa4563af99785d697038d461",
         "layer": "server",
         "minimumTotals": {
           "lines": 60,
@@ -6885,7 +6800,6 @@
         }
       },
       "src/server/db/runtime-storage.ts": {
-        "sha256": "88d5137ed0d162029d01357b0e3cadca615d883184838c2be4bbac216189c702",
         "layer": "server",
         "minimumTotals": {
           "lines": 43,
@@ -6901,7 +6815,6 @@
         }
       },
       "src/server/db/schema.ts": {
-        "sha256": "1f82156a0e2c6139d51dd6d5c0b09824422d67f1f5c4d5ac9a026db0fdace91a",
         "layer": "server",
         "minimumTotals": {
           "lines": 88,
@@ -6917,7 +6830,6 @@
         }
       },
       "src/server/db/seeds/cli.ts": {
-        "sha256": "f9f01d2a508560b26a3d3d116f7567eaaae9eb8cc4066a286348bca7fa710106",
         "layer": "server",
         "minimumTotals": {
           "lines": 37,
@@ -6933,7 +6845,6 @@
         }
       },
       "src/server/db/seeds/ownership.ts": {
-        "sha256": "6048ae0669c1c319aa9fdc93e871a870647159ea4dfcb831cbeaac322ea9b1cd",
         "layer": "server",
         "minimumTotals": {
           "lines": 124,
@@ -6949,7 +6860,6 @@
         }
       },
       "src/server/db/seeds/runner.ts": {
-        "sha256": "27f1d083350cbd9eae912e4b0918397c8497d7cddf6bc418038ada4715f7714c",
         "layer": "server",
         "minimumTotals": {
           "lines": 92,
@@ -6965,7 +6875,6 @@
         }
       },
       "src/server/db/seeds/types.ts": {
-        "sha256": "2a6d37e447fbd50840e969082394cc8b385dfd77cc1496ae82368d9fe050699d",
         "layer": "server",
         "minimumTotals": {
           "lines": 0,
@@ -6981,7 +6890,6 @@
         }
       },
       "src/server/host-api/index.ts": {
-        "sha256": "6d8c281cdf95e74de3eaa31c10280092bcab6ef0e9621d58fbb571c5247f184c",
         "layer": "server",
         "minimumTotals": {
           "lines": 7,
@@ -6997,7 +6905,6 @@
         }
       },
       "src/server/index.ts": {
-        "sha256": "ed7d65dcd47ab016dd5878e27c80e4d978764460105eb3e1538fa0467504e9fd",
         "layer": "server",
         "minimumTotals": {
           "lines": 84,
@@ -7013,7 +6920,6 @@
         }
       },
       "src/server/lib/event-bus.ts": {
-        "sha256": "ccecaec3a2a4213fe0555938983ddf231595d586d9bba091f7ce06ae8c07aaeb",
         "layer": "server",
         "minimumTotals": {
           "lines": 19,
@@ -7029,7 +6935,6 @@
         }
       },
       "src/server/lib/household-date.ts": {
-        "sha256": "d59516eacf0ed916b77822c5ac5fb5c3eb9ee5846077dcfbcfd8b084a2faca45",
         "layer": "server",
         "minimumTotals": {
           "lines": 18,
@@ -7045,7 +6950,6 @@
         }
       },
       "src/server/lib/settings-objects.ts": {
-        "sha256": "2c19920b5253005a44ffdb12d20e3eab149253e271716b47987d5259aca872a0",
         "layer": "server",
         "minimumTotals": {
           "lines": 3,
@@ -7061,7 +6965,6 @@
         }
       },
       "src/server/modules/calendar/external-sources.ts": {
-        "sha256": "7b84a41e7e0c5337e2384d6dd7902a023877e40a07ae95ba0059ffe27ef10618",
         "layer": "server",
         "minimumTotals": {
           "lines": 132,
@@ -7077,7 +6980,6 @@
         }
       },
       "src/server/modules/calendar/fetch-ics.ts": {
-        "sha256": "242ea706d7f54dbaad291863edc14e3acec44cb68a91b927ff783c4c03de978d",
         "layer": "server",
         "minimumTotals": {
           "lines": 126,
@@ -7093,7 +6995,6 @@
         }
       },
       "src/server/modules/calendar/highlights.ts": {
-        "sha256": "8ea9bc5c657012b92c0086f92c0f68792d870bbd7fa4d90848daf0660415a4cd",
         "layer": "server",
         "minimumTotals": {
           "lines": 69,
@@ -7109,7 +7010,6 @@
         }
       },
       "src/server/modules/calendar/index.ts": {
-        "sha256": "21df22252675433861cbcaa7a049aab29b41bb87d869f76b2d382ee7ce50f8a6",
         "layer": "server",
         "minimumTotals": {
           "lines": 272,
@@ -7125,7 +7025,6 @@
         }
       },
       "src/server/modules/calendar/job.ts": {
-        "sha256": "5163569b883a9b62117e4d20ae75fe7edfdd6ceec35f967c69ba008bb6b9ae55",
         "layer": "server",
         "minimumTotals": {
           "lines": 6,
@@ -7141,7 +7040,6 @@
         }
       },
       "src/server/modules/calendar/parse-ics.ts": {
-        "sha256": "9335d72872d78a713b13a53cf6dae67c690b46b5ff28acef9cc37fd8a9ad9f2d",
         "layer": "server",
         "minimumTotals": {
           "lines": 142,
@@ -7157,7 +7055,6 @@
         }
       },
       "src/server/modules/calendar/reconcile.ts": {
-        "sha256": "46407fd720760142af43fb8457f5b7ab626bdc32ebe1f4ad96ab791bffd309ad",
         "layer": "server",
         "minimumTotals": {
           "lines": 37,
@@ -7173,7 +7070,6 @@
         }
       },
       "src/server/modules/calendar/recurrence.ts": {
-        "sha256": "28d628b4cd92e773f7516769cbc2b4ae2b577fe5395d83961b493c85c18811ea",
         "layer": "server",
         "minimumTotals": {
           "lines": 76,
@@ -7189,7 +7085,6 @@
         }
       },
       "src/server/modules/calendar/sync-coordinator.ts": {
-        "sha256": "be48510e56cdfadab5109940276af8f8a6aab99b19190a4b90881a30bfea2610",
         "layer": "server",
         "minimumTotals": {
           "lines": 70,
@@ -7205,7 +7100,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/animal-fact.ts": {
-        "sha256": "2427a7a68243fac3348f5127de6d96bdbef622ce4e22065a88a92242b23ba624",
         "layer": "server",
         "minimumTotals": {
           "lines": 5,
@@ -7221,7 +7115,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/birthday.ts": {
-        "sha256": "464642e5d7792ade05225a3d4f7759de0d5f6838c5785b3ec20d175f1c94800e",
         "layer": "server",
         "minimumTotals": {
           "lines": 35,
@@ -7237,7 +7130,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/context.ts": {
-        "sha256": "695da6ecf00cdaad526f18af77624be85b85dabe5ac06e531224d64e6d9c65b2",
         "layer": "server",
         "minimumTotals": {
           "lines": 8,
@@ -7253,7 +7145,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/dad-joke.ts": {
-        "sha256": "60686ceae85cf36fb58fcced595936dda5ae2a8acce343f217728406d9d4c68e",
         "layer": "server",
         "minimumTotals": {
           "lines": 5,
@@ -7269,7 +7160,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/drawing-prompt.ts": {
-        "sha256": "07dbf17f63ced54836a79e2e8be35dbdc2dc4f0b63a7ba8d1c6dcba4ccd88fc4",
         "layer": "server",
         "minimumTotals": {
           "lines": 4,
@@ -7285,7 +7175,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/meals.ts": {
-        "sha256": "7a707748b0c188f145c5abcebd7fe4a1099d1d9b52cb8007771348c3f4ce33cf",
         "layer": "server",
         "minimumTotals": {
           "lines": 16,
@@ -7301,7 +7190,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/message.ts": {
-        "sha256": "6ab5a865f30a47d71009889454606461651a07b1c590789daa1f4d23ef59e406",
         "layer": "server",
         "minimumTotals": {
           "lines": 5,
@@ -7317,7 +7205,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/number-fact.ts": {
-        "sha256": "fdf0d9abdfc7462db81b9e1e1e90d5c2ec80f665b2f8cdbb6359b390d6ae391b",
         "layer": "server",
         "minimumTotals": {
           "lines": 11,
@@ -7333,7 +7220,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/onThisDay.ts": {
-        "sha256": "632a462cc7ba48f00a6c2da2454931a1dc3d9609c413add0f4022be0f0037dbf",
         "layer": "server",
         "minimumTotals": {
           "lines": 2,
@@ -7349,7 +7235,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/quoteOfDay.ts": {
-        "sha256": "f62d1b72f68f558d04baf64b4c9f1bec09d612e4c8165e258e5f65080e2f6aed",
         "layer": "server",
         "minimumTotals": {
           "lines": 2,
@@ -7365,7 +7250,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/reminders.ts": {
-        "sha256": "43e8e823cd128c754f8d49fb42d57f85b4c09bcea1052b777eb7c9dcdae5d4cf",
         "layer": "server",
         "minimumTotals": {
           "lines": 5,
@@ -7381,7 +7265,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/riddle.ts": {
-        "sha256": "e3fac71754c11cb3eedf32d20be468128b0d5474e9335db8f9287272167ceee8",
         "layer": "server",
         "minimumTotals": {
           "lines": 6,
@@ -7397,7 +7280,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/shotgun.ts": {
-        "sha256": "2e319d70d3273614620ceb53102c768587b193004e9fae344c37631aa5b17bdb",
         "layer": "server",
         "minimumTotals": {
           "lines": 17,
@@ -7413,7 +7295,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/streak-text.ts": {
-        "sha256": "ca1a4f4a1c25801d6e54f9a48ccddb06fd9c103abd8ebb66908014be7be1d01b",
         "layer": "server",
         "minimumTotals": {
           "lines": 2,
@@ -7429,7 +7310,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/streak.ts": {
-        "sha256": "38118db8ee3e0029dd91e1551dd6e7cd3fbb7e2b3573b2ec4accd62376c394d8",
         "layer": "server",
         "minimumTotals": {
           "lines": 25,
@@ -7445,7 +7325,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/today.ts": {
-        "sha256": "bb5584bb34b673e37ea0a119f32a26aad9b1a2580370812ca065a00a21a7bebe",
         "layer": "server",
         "minimumTotals": {
           "lines": 19,
@@ -7461,7 +7340,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/trivia.ts": {
-        "sha256": "f66a6805b52de63cff7c7ac521912af52a671dbe36bf5b83382c9e4bbf00844f",
         "layer": "server",
         "minimumTotals": {
           "lines": 16,
@@ -7477,7 +7355,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/weather.ts": {
-        "sha256": "9a3331096c0ba072abe43d82b1e04f3af7e4c8de0d99d6d02c4005ff57031c2d",
         "layer": "server",
         "minimumTotals": {
           "lines": 21,
@@ -7493,7 +7370,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/weatherText.ts": {
-        "sha256": "d8b3149b5d0d1e742e5e72497a0040aaed08a64046bf27b3cc3997a5ffe7cab9",
         "layer": "server",
         "minimumTotals": {
           "lines": 1,
@@ -7509,7 +7385,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/word-of-day.ts": {
-        "sha256": "dc8d121103756e502332af8919bd03a9f64d58d632da385d92997c88d8bbcfd2",
         "layer": "server",
         "minimumTotals": {
           "lines": 19,
@@ -7525,7 +7400,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/word-search-placement.ts": {
-        "sha256": "e5199b912a6aef843a3ed3e666bcc41589caad2ac99ae873a8c5c05878867295",
         "layer": "server",
         "minimumTotals": {
           "lines": 41,
@@ -7541,7 +7415,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/word-search.ts": {
-        "sha256": "3c49c59b5175915d2b5066b03e927e70fb518f9813b7b204331230e5b69e0b7a",
         "layer": "server",
         "minimumTotals": {
           "lines": 21,
@@ -7557,7 +7430,6 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/would-you-rather.ts": {
-        "sha256": "55ba8d833e9d8d73b33c27938531cb96cf90c9196667b93b4d3b41c6e647b476",
         "layer": "server",
         "minimumTotals": {
           "lines": 5,
@@ -7573,7 +7445,6 @@
         }
       },
       "src/server/modules/daily-briefing/corpora/block-types.ts": {
-        "sha256": "dab6d1d3647f190b734518b07710e6b666551fc37eebe93c5f6d89b82a68cfb8",
         "layer": "server",
         "minimumTotals": {
           "lines": 11,
@@ -7589,7 +7460,6 @@
         }
       },
       "src/server/modules/daily-briefing/corpora/determinism.ts": {
-        "sha256": "fd7a345fd4a0832f1732825281448046532157a7f6c8317ffdf7ebdf940017cb",
         "layer": "server",
         "minimumTotals": {
           "lines": 21,
@@ -7605,7 +7475,6 @@
         }
       },
       "src/server/modules/daily-briefing/corpora/index.ts": {
-        "sha256": "73be08cf6b2ad16be614c4e9f4861cd5079937ee3b986f1062a17c5962774a20",
         "layer": "server",
         "minimumTotals": {
           "lines": 0,
@@ -7621,7 +7490,6 @@
         }
       },
       "src/server/modules/daily-briefing/corpora/json-modules.d.ts": {
-        "sha256": "7892c4fcb30bf67812f84b36fd2ebf2dcff8b73ee80b88c52c394c992cdb4baf",
         "layer": "server",
         "declaration": true,
         "minimumTotals": {
@@ -7638,7 +7506,6 @@
         }
       },
       "src/server/modules/daily-briefing/corpora/loader.ts": {
-        "sha256": "0c0f78a7b28e275c42180d3a5514207ebee8c087b32a8b76b426eee5e61a7b44",
         "layer": "server",
         "minimumTotals": {
           "lines": 10,
@@ -7654,7 +7521,6 @@
         }
       },
       "src/server/modules/daily-briefing/corpora/types.ts": {
-        "sha256": "78af3121610a27fafba71332e374fbb490d6a6eeb526f7365a7a14e7a052c5b4",
         "layer": "server",
         "minimumTotals": {
           "lines": 0,
@@ -7670,7 +7536,6 @@
         }
       },
       "src/server/modules/daily-briefing/errors.ts": {
-        "sha256": "bbdf65e9f685539a2bb33a4f7b0d6d8693ff72994084520f40cb784167dd4831",
         "layer": "server",
         "minimumTotals": {
           "lines": 2,
@@ -7686,7 +7551,6 @@
         }
       },
       "src/server/modules/daily-briefing/external/ports.ts": {
-        "sha256": "106c025ecb194a850768823c05349bb37b5c02ef10e0498d98daacb5e87e3908",
         "layer": "server",
         "minimumTotals": {
           "lines": 37,
@@ -7702,7 +7566,6 @@
         }
       },
       "src/server/modules/daily-briefing/external/shared-cache.ts": {
-        "sha256": "cd9a7fcaa09d5ee124e356a26d0998a0edb933694a99da123205eaf95cd1033b",
         "layer": "server",
         "minimumTotals": {
           "lines": 33,
@@ -7718,13 +7581,12 @@
         }
       },
       "src/server/modules/daily-briefing/index.ts": {
-        "sha256": "175c8002223facf77354bd8d6525dbf67355c1e5b0f7fe2b18253e864f7f5bad",
         "layer": "server",
         "minimumTotals": {
-          "lines": 278,
-          "statements": 318,
+          "lines": 276,
+          "statements": 316,
           "functions": 57,
-          "branches": 229
+          "branches": 227
         },
         "minimumRates": {
           "lines": 93.52,
@@ -7734,7 +7596,6 @@
         }
       },
       "src/server/modules/daily-briefing/job.ts": {
-        "sha256": "d226e6abbea7fe87a090f5b2c535b954e642d45ee1b5761e350a782f34a4a3ff",
         "layer": "server",
         "minimumTotals": {
           "lines": 68,
@@ -7750,7 +7611,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/adapter.ts": {
-        "sha256": "24d3503258990ada54b27c3d95eb15d34f9039e0f06ee1e39034cbab89e4db5d",
         "layer": "server",
         "minimumTotals": {
           "lines": 125,
@@ -7766,7 +7626,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/animal-fact.ts": {
-        "sha256": "94439559acd5e24a67ca08bb9f8f5f2585235af23c5a7ce3b26b8de79ab32e95",
         "layer": "server",
         "minimumTotals": {
           "lines": 3,
@@ -7782,7 +7641,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/birthday.ts": {
-        "sha256": "363c008c3aabed9fe99c6e061ea2eaae701653a32dff81bfddb5de7cb952ad8f",
         "layer": "server",
         "minimumTotals": {
           "lines": 8,
@@ -7798,7 +7656,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/dad-joke.ts": {
-        "sha256": "8267592a9d3a33cfc93c1b759802af2eeb2320e0daa379c766cb3af4a0af752f",
         "layer": "server",
         "minimumTotals": {
           "lines": 3,
@@ -7814,7 +7671,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/drawing-prompt.ts": {
-        "sha256": "d48956c4428f93b9227f676bcf70543649d203cb500fadae0a87f1f5a66a4a0b",
         "layer": "server",
         "minimumTotals": {
           "lines": 4,
@@ -7830,7 +7686,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/meals.ts": {
-        "sha256": "30a71557b1d3642604d1d015999eeb98374e15a34eec9cd1d814f1f0e676d6bb",
         "layer": "server",
         "minimumTotals": {
           "lines": 9,
@@ -7846,7 +7701,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/message.ts": {
-        "sha256": "0361de53f258cd199c463b8b79e5238abf7b477a0f443183ec30293073e11420",
         "layer": "server",
         "minimumTotals": {
           "lines": 4,
@@ -7862,7 +7716,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/number-fact.ts": {
-        "sha256": "ecc5e99748501e170b9480f805e39c71139af5ff063e8b91fc43eb278fcf17a4",
         "layer": "server",
         "minimumTotals": {
           "lines": 3,
@@ -7878,7 +7731,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/on-this-day.ts": {
-        "sha256": "69676684491e2b541cbad5647a0749f8c8e6e8dc10fa831fa3c077da475ecf15",
         "layer": "server",
         "minimumTotals": {
           "lines": 14,
@@ -7894,7 +7746,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/quote-of-day.ts": {
-        "sha256": "45adfdd1d1bf6556d3e5ccf871d0014863c34faa12881ea053072b4f0c35c2a9",
         "layer": "server",
         "minimumTotals": {
           "lines": 3,
@@ -7910,7 +7761,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/reminders.ts": {
-        "sha256": "18b243ddd17918a3706f4073c9ab460ffb674530f0ec34df2becf5d768bb8328",
         "layer": "server",
         "minimumTotals": {
           "lines": 5,
@@ -7926,7 +7776,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/riddle.ts": {
-        "sha256": "60df5b911d444beede9eaee15133673e64db7c0e9c63d2a8936f1932ca2a7a9a",
         "layer": "server",
         "minimumTotals": {
           "lines": 3,
@@ -7942,7 +7791,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/shotgun.ts": {
-        "sha256": "526e60f7a130e2825dbe571fd0b819a8945dd80d52520d1c39db5782969619cc",
         "layer": "server",
         "minimumTotals": {
           "lines": 4,
@@ -7958,7 +7806,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/streak-text.ts": {
-        "sha256": "cb0e6fd7769770891c35c24cb54fb9a4bcff385fd2eef6e531cdcd507f09df73",
         "layer": "server",
         "minimumTotals": {
           "lines": 5,
@@ -7974,7 +7821,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/streak.ts": {
-        "sha256": "a1ab7ff161f360eb6151790447b9f723837a5f936f127a2f5719486a91dc2721",
         "layer": "server",
         "minimumTotals": {
           "lines": 22,
@@ -7990,7 +7836,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/today.ts": {
-        "sha256": "a2ca8c228156e9d138169eb14358d0c05336fe18d1063ceb438b28d99ab88472",
         "layer": "server",
         "minimumTotals": {
           "lines": 5,
@@ -8006,7 +7851,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/trivia.ts": {
-        "sha256": "95b1326f3e5d922273d7f1d975ad6f83eeb299eac2590410ac83f85b57792195",
         "layer": "server",
         "minimumTotals": {
           "lines": 4,
@@ -8022,7 +7866,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/weather-text.ts": {
-        "sha256": "9d768ae74339679feb82be2ae1f5456a680e09a9bda54fc2a9f92e8582925f4a",
         "layer": "server",
         "minimumTotals": {
           "lines": 8,
@@ -8038,7 +7881,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/weather.ts": {
-        "sha256": "fe507f467120110a6446cbbb5c93009bc6f015aab1e1702f5eeb9d126a3133c2",
         "layer": "server",
         "minimumTotals": {
           "lines": 12,
@@ -8054,7 +7896,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/word-of-day.ts": {
-        "sha256": "40a64c315ccfeeb168fff8f4b98dc64ab4b47a7c13a77e11e6c72e24478efcdc",
         "layer": "server",
         "minimumTotals": {
           "lines": 22,
@@ -8070,7 +7911,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/word-search.ts": {
-        "sha256": "b81da3806f0c2d6b3c4bac81c080e37e7d957ca32c83e783fbe0e373c7bd4358",
         "layer": "server",
         "minimumTotals": {
           "lines": 2,
@@ -8086,7 +7926,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/blocks/would-you-rather.ts": {
-        "sha256": "13af37bb6a11472fbb5080f9065998e9b6c94c81e4849c23696e3d1662b59514",
         "layer": "server",
         "minimumTotals": {
           "lines": 3,
@@ -8102,7 +7941,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/bridge.ts": {
-        "sha256": "2ef0da222d76a458bd4f39a9b3d7715a3fb63fbb660184ea886974259ef7e22e",
         "layer": "server",
         "minimumTotals": {
           "lines": 29,
@@ -8118,7 +7956,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/index.ts": {
-        "sha256": "8cddd7107f969250d2b89b028c4b57247ecb34e317a72aa3d6c5c2fe38be380b",
         "layer": "server",
         "minimumTotals": {
           "lines": 0,
@@ -8134,7 +7971,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/labels.ts": {
-        "sha256": "5e51561015dce6e0172a1e12cda99a036fdd6dc010dc229ac914f5fbbc0ad2ca",
         "layer": "server",
         "minimumTotals": {
           "lines": 13,
@@ -8150,7 +7986,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/raster.ts": {
-        "sha256": "5bf58b0068e2efce4b0a627b172aae38169bfc135459c7b0d3457163fb3dd89a",
         "layer": "server",
         "minimumTotals": {
           "lines": 22,
@@ -8166,7 +8001,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/registry.ts": {
-        "sha256": "3431ef841371482f096a6ea7440f4dfd10a998cfa15169a8b96630d44e70ec8a",
         "layer": "server",
         "minimumTotals": {
           "lines": 1,
@@ -8182,7 +8016,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/theme.ts": {
-        "sha256": "201542bce5fe0dd24d63b62cc913b56cefa1cb71ad6fc6efb703aba610434c00",
         "layer": "server",
         "minimumTotals": {
           "lines": 19,
@@ -8198,7 +8031,6 @@
         }
       },
       "src/server/modules/daily-briefing/render/types.ts": {
-        "sha256": "a495b0c70cc0b0278acedd09e8c8e8d00a2c4dd42228eefa1ba75022b0510528",
         "layer": "server",
         "minimumTotals": {
           "lines": 0,
@@ -8214,13 +8046,12 @@
         }
       },
       "src/server/modules/daily-briefing/settings.ts": {
-        "sha256": "552588ca2afa688d5a6a752f3fa01efedcbb4db6b4ff7bba491f525c23012742",
         "layer": "server",
         "minimumTotals": {
-          "lines": 97,
-          "statements": 105,
+          "lines": 93,
+          "statements": 101,
           "functions": 20,
-          "branches": 95
+          "branches": 91
         },
         "minimumRates": {
           "lines": 90.72,
@@ -8230,7 +8061,6 @@
         }
       },
       "src/server/modules/daily-briefing/trigger.ts": {
-        "sha256": "675bd5dad62848c7a4f79269da4284eeaaf19db9edea159c2dbc1d4a19f0eb90",
         "layer": "server",
         "minimumTotals": {
           "lines": 43,
@@ -8246,7 +8076,6 @@
         }
       },
       "src/server/modules/daily-messages/index.ts": {
-        "sha256": "3d5d84f2e32b3548bdaa3aaaa781e53dba2961c0a8c49d16f86d6cee641fbf1c",
         "layer": "server",
         "minimumTotals": {
           "lines": 44,
@@ -8262,7 +8091,6 @@
         }
       },
       "src/server/modules/day-periods/index.ts": {
-        "sha256": "7462cc08404b798b1dafff42e97aa905c03c10ac8d028b27c3bf754523e4ff44",
         "layer": "server",
         "minimumTotals": {
           "lines": 27,
@@ -8278,13 +8106,12 @@
         }
       },
       "src/server/modules/meals/index.ts": {
-        "sha256": "c4b705e96455e42c6ef68e091ded615411342d0e4dcf908871890b356742c62f",
         "layer": "server",
         "minimumTotals": {
-          "lines": 385,
-          "statements": 395,
+          "lines": 384,
+          "statements": 394,
           "functions": 55,
-          "branches": 308
+          "branches": 304
         },
         "minimumRates": {
           "lines": 87.53,
@@ -8294,7 +8121,6 @@
         }
       },
       "src/server/modules/members/birthdate.ts": {
-        "sha256": "fba4d6993436c58ade8341f0021fb4296ddc94e530f8f65c9c90fa67f0666319",
         "layer": "server",
         "minimumTotals": {
           "lines": 17,
@@ -8310,7 +8136,6 @@
         }
       },
       "src/server/modules/members/index.ts": {
-        "sha256": "8d07007c44d88530e421e6830a247d2e99c05a1ee3470697d2a236d22886c176",
         "layer": "server",
         "minimumTotals": {
           "lines": 79,
@@ -8326,7 +8151,6 @@
         }
       },
       "src/server/modules/members/label.ts": {
-        "sha256": "fb4ec22f06fdefa22bfb6de7564eb8b4ce6fee12feae6d101f101199fc1570f2",
         "layer": "server",
         "minimumTotals": {
           "lines": 5,
@@ -8342,7 +8166,6 @@
         }
       },
       "src/server/modules/members/referential.ts": {
-        "sha256": "0ec3bb522e6c06d7b708a3631b64515013303246f8948a94531bde7eab3d4eab",
         "layer": "server",
         "minimumTotals": {
           "lines": 14,
@@ -8358,7 +8181,6 @@
         }
       },
       "src/server/modules/network-devices/cache.ts": {
-        "sha256": "b8c0b671fd7652c9836acc4521c65503bd0a21dbfd01308416e23966b133d728",
         "layer": "server",
         "minimumTotals": {
           "lines": 15,
@@ -8374,7 +8196,6 @@
         }
       },
       "src/server/modules/network-devices/client.ts": {
-        "sha256": "70909772d9280b872725ecebae8dbb2f4494f49075e20bc8c5bd021ff50c3fd2",
         "layer": "server",
         "minimumTotals": {
           "lines": 85,
@@ -8390,7 +8211,6 @@
         }
       },
       "src/server/modules/network-devices/index.ts": {
-        "sha256": "dbba4d07615b6013d9f7236f7470df34d2ae964d089b185a1669fead470c5d7d",
         "layer": "server",
         "minimumTotals": {
           "lines": 158,
@@ -8406,7 +8226,6 @@
         }
       },
       "src/server/modules/network-devices/normalize.ts": {
-        "sha256": "f1e3a85775368ebfa2eb14e089b432d28ffd1b601b7d4633c5001837ec373e8b",
         "layer": "server",
         "minimumTotals": {
           "lines": 27,
@@ -8422,7 +8241,6 @@
         }
       },
       "src/server/modules/network-devices/poll.ts": {
-        "sha256": "3a188011255838e14d554ea17ed39d3220aa5501650d74e4032f99520cec41a0",
         "layer": "server",
         "minimumTotals": {
           "lines": 34,
@@ -8438,7 +8256,6 @@
         }
       },
       "src/server/modules/printing/artifact.ts": {
-        "sha256": "29beced9bbf6763d281b87a4bd76381837a804d79a820e61d3e021a2afcac7ad",
         "layer": "server",
         "minimumTotals": {
           "lines": 71,
@@ -8454,7 +8271,6 @@
         }
       },
       "src/server/modules/printing/escpos.ts": {
-        "sha256": "708d78799f02a83a79ae96a1fa993635437a3c9a6f06e90856ca65b4fc83c758",
         "layer": "server",
         "minimumTotals": {
           "lines": 23,
@@ -8470,7 +8286,6 @@
         }
       },
       "src/server/modules/printing/index.ts": {
-        "sha256": "ed64ccdfced9d1cb73a1315a1934324e30e4bd02e3b04144c27566b3ac0d986d",
         "layer": "server",
         "minimumTotals": {
           "lines": 195,
@@ -8486,13 +8301,12 @@
         }
       },
       "src/server/modules/reminders/index.ts": {
-        "sha256": "b5738153ed00d3c47fdfdb0352a5e8f0ed9a28cab0e82989a88451f5bf06939b",
         "layer": "server",
         "minimumTotals": {
-          "lines": 315,
-          "statements": 323,
+          "lines": 311,
+          "statements": 319,
           "functions": 46,
-          "branches": 244
+          "branches": 240
         },
         "minimumRates": {
           "lines": 89.2,
@@ -8502,13 +8316,12 @@
         }
       },
       "src/server/modules/routines/index.ts": {
-        "sha256": "948d83c6c8ef0143e9dfd0c4d1e878c6cd44007802fc0d0f97cae2e05f225cb4",
         "layer": "server",
         "minimumTotals": {
-          "lines": 367,
-          "statements": 388,
+          "lines": 363,
+          "statements": 384,
           "functions": 59,
-          "branches": 236
+          "branches": 232
         },
         "minimumRates": {
           "lines": 91,
@@ -8518,7 +8331,6 @@
         }
       },
       "src/server/modules/settings/index.ts": {
-        "sha256": "7ee7cdd82235d2033f59c7638cc44ce346cfe140897671294d083a69fca6b432",
         "layer": "server",
         "minimumTotals": {
           "lines": 65,
@@ -8534,13 +8346,12 @@
         }
       },
       "src/server/modules/time-announcements/index.ts": {
-        "sha256": "fea7d77e359ad2e1f08043facecaee8f23151864c6706966d73dd1458e0b3fc8",
         "layer": "server",
         "minimumTotals": {
-          "lines": 93,
-          "statements": 98,
+          "lines": 89,
+          "statements": 94,
           "functions": 18,
-          "branches": 70
+          "branches": 66
         },
         "minimumRates": {
           "lines": 96.77,
@@ -8550,7 +8361,6 @@
         }
       },
       "src/server/modules/weather/index.ts": {
-        "sha256": "e3af8bff95faa3b1878ab723a1e7181ffda9bf407fa7cef02bd1a64b28261610",
         "layer": "server",
         "minimumTotals": {
           "lines": 33,
@@ -8566,7 +8376,6 @@
         }
       },
       "src/server/modules/weather/normalize.ts": {
-        "sha256": "d1c31904c08e4de077143d53bdbdd9af746ad48d5c4764bc09e3eec1ec1158a0",
         "layer": "server",
         "minimumTotals": {
           "lines": 40,
@@ -8582,7 +8391,6 @@
         }
       },
       "src/server/modules/weather/port.ts": {
-        "sha256": "cadcfb0e5ceb3c7c0fcc268faa69271561dbc22b2f4346fefe28f26a72210b06",
         "layer": "server",
         "minimumTotals": {
           "lines": 50,
@@ -8598,7 +8406,6 @@
         }
       },
       "src/server/plugins/errors.ts": {
-        "sha256": "40a965eda8ee5e30e5d480b4a1ae7e113b62d98e32d6e3c1524f24905a739520",
         "layer": "server",
         "minimumTotals": {
           "lines": 8,
@@ -8614,7 +8421,6 @@
         }
       },
       "src/server/plugins/http.ts": {
-        "sha256": "0e7d690a6c6de832f4fdec534c8c2d08c47abf5a22e3ead4e2c55f83a2a1ed4a",
         "layer": "server",
         "minimumTotals": {
           "lines": 21,
@@ -8630,7 +8436,6 @@
         }
       },
       "src/server/plugins/lifecycle.ts": {
-        "sha256": "722af505a0523717a36ec0335bc4ab6d6c827c8c426107aac59e9a005aa74d94",
         "layer": "server",
         "minimumTotals": {
           "lines": 143,
@@ -8646,7 +8451,6 @@
         }
       },
       "src/server/plugins/manifest.ts": {
-        "sha256": "a07495402afae08d25925accdb82e31aecfed6cfc1cc7228b3afe2f47b23cfc3",
         "layer": "server",
         "minimumTotals": {
           "lines": 20,
@@ -8662,7 +8466,6 @@
         }
       },
       "src/server/plugins/routes.ts": {
-        "sha256": "c8ffbb4c18530e4df7e9801aab9f109d695e2b6ba39e9bda42a36aef88e42e28",
         "layer": "server",
         "minimumTotals": {
           "lines": 44,
@@ -8678,7 +8481,6 @@
         }
       },
       "src/server/plugins/runtime.ts": {
-        "sha256": "8efa18e545b6bb25f03773044abcd84431e9a3d8dca0c0da628fcc46fe0b70ea",
         "layer": "server",
         "minimumTotals": {
           "lines": 52,
@@ -8694,7 +8496,6 @@
         }
       },
       "src/server/plugins/store.ts": {
-        "sha256": "c6992b416137ff762e8f7d72c1e106be71741d9131b957710365209df407f701",
         "layer": "server",
         "minimumTotals": {
           "lines": 39,
@@ -8710,7 +8511,6 @@
         }
       },
       "src/server/routes/backups.ts": {
-        "sha256": "08c9ae365d58b11c301343290e01e2165e8862237330d3be5ef614f153efce14",
         "layer": "server",
         "minimumTotals": {
           "lines": 147,
@@ -8726,7 +8526,6 @@
         }
       },
       "src/server/routes/calendar.ts": {
-        "sha256": "dfcff26b1c9f0f2bff60fa03c9c92cf28cc4444942be6529afcfcdc77bf80450",
         "layer": "server",
         "minimumTotals": {
           "lines": 147,
@@ -8742,7 +8541,6 @@
         }
       },
       "src/server/routes/daily-briefing.ts": {
-        "sha256": "3686d81a817b7e2167a2874907e589de075917e0d7e8dec32b3944040c8a83b0",
         "layer": "server",
         "minimumTotals": {
           "lines": 111,
@@ -8758,7 +8556,6 @@
         }
       },
       "src/server/routes/daily-messages.ts": {
-        "sha256": "6e65afb32ca5948a147a377a19c4012f3145cdfebd9c81557d137c9e8e1030e6",
         "layer": "server",
         "minimumTotals": {
           "lines": 41,
@@ -8774,13 +8571,12 @@
         }
       },
       "src/server/routes/day-periods.ts": {
-        "sha256": "bde979824d4acf4bd12c79614dd723b53e53d60612e4e1d1b2d6c90ab2576f6c",
         "layer": "server",
         "minimumTotals": {
-          "lines": 29,
-          "statements": 31,
+          "lines": 22,
+          "statements": 24,
           "functions": 6,
-          "branches": 12
+          "branches": 8
         },
         "minimumRates": {
           "lines": 96.55,
@@ -8790,7 +8586,6 @@
         }
       },
       "src/server/routes/health.ts": {
-        "sha256": "373d148daef151655cdecc926db010bd9e160fce552b77cdb839985b90cacc8b",
         "layer": "server",
         "minimumTotals": {
           "lines": 1,
@@ -8806,7 +8601,6 @@
         }
       },
       "src/server/routes/meals.ts": {
-        "sha256": "d36cec281b45ca901ba27c615a7ca77fa154c156d948beb6422cbd77e4a19ab0",
         "layer": "server",
         "minimumTotals": {
           "lines": 98,
@@ -8822,7 +8616,6 @@
         }
       },
       "src/server/routes/members.ts": {
-        "sha256": "4ec101af720ed90e13e1064e09096359eb1321f048e0311676618cd87b79ff3f",
         "layer": "server",
         "minimumTotals": {
           "lines": 42,
@@ -8838,7 +8631,6 @@
         }
       },
       "src/server/routes/network-devices.ts": {
-        "sha256": "445d00095006968241a1d81aaab95e5e7bb536abfc719103dcd92a147fa07776",
         "layer": "server",
         "minimumTotals": {
           "lines": 71,
@@ -8854,7 +8646,6 @@
         }
       },
       "src/server/routes/printing.ts": {
-        "sha256": "9a18f7334006bece09d3530a5a152c4671b80cd77dc7f4c1043e81d8ee190fdd",
         "layer": "server",
         "minimumTotals": {
           "lines": 90,
@@ -8870,7 +8661,6 @@
         }
       },
       "src/server/routes/provision.ts": {
-        "sha256": "cc4e4dcc7107409d6f63fb934c6e54b9d7394bb1d4307a4c93837d5b41920868",
         "layer": "server",
         "minimumTotals": {
           "lines": 1,
@@ -8886,7 +8676,6 @@
         }
       },
       "src/server/routes/reminders.ts": {
-        "sha256": "a578a870b8559bfb33c6c4235faa618ee12f12a96f59f9c91f66bc9e21f03167",
         "layer": "server",
         "minimumTotals": {
           "lines": 54,
@@ -8902,7 +8691,6 @@
         }
       },
       "src/server/routes/routines.ts": {
-        "sha256": "34e343569c41fce6cfb62098edcffc85198f5057db1ab0111655bda412431170",
         "layer": "server",
         "minimumTotals": {
           "lines": 147,
@@ -8918,7 +8706,6 @@
         }
       },
       "src/server/routes/settings.ts": {
-        "sha256": "4b248d8b6314596c38549c0b959b8eb8aca185433cbefd00a7cba027256cbe52",
         "layer": "server",
         "minimumTotals": {
           "lines": 13,
@@ -8934,7 +8721,6 @@
         }
       },
       "src/server/routes/telemetry.ts": {
-        "sha256": "14cd0f3f769c11c00f0134be19495771863a08e3e6e9a04c146582a5a838c1f0",
         "layer": "server",
         "minimumTotals": {
           "lines": 43,
@@ -8950,7 +8736,6 @@
         }
       },
       "src/server/routes/time-announcements.ts": {
-        "sha256": "9ca175620f9b9b97990f11707b99880d7bbd9dd4836470e866687a1e1f33c254",
         "layer": "server",
         "minimumTotals": {
           "lines": 28,
@@ -8966,7 +8751,6 @@
         }
       },
       "src/server/routes/verify-pin.ts": {
-        "sha256": "dafdffaf57fb6d2594a3161366d562a72b5c7fe6ffcb11934f303dd7cdba9cef",
         "layer": "server",
         "minimumTotals": {
           "lines": 11,
@@ -8982,7 +8766,6 @@
         }
       },
       "src/server/routes/weather.ts": {
-        "sha256": "b862f2820b15f9f2e889693a54db064107578f2f82fa84475fa8eaba3014df11",
         "layer": "server",
         "minimumTotals": {
           "lines": 7,
@@ -8998,7 +8781,6 @@
         }
       },
       "src/server/scheduler/index.ts": {
-        "sha256": "3d6dc50991a017fb3dcc8fa7be4740a6be8f39f3261a44d055e097153405cf1c",
         "layer": "server",
         "minimumTotals": {
           "lines": 181,
@@ -9014,7 +8796,6 @@
         }
       },
       "src/server/telemetry/index.ts": {
-        "sha256": "a786d11d59cd56acdf1b309039fa674137f2aff672c4854662a4068913708240",
         "layer": "server",
         "minimumTotals": {
           "lines": 115,
@@ -9030,7 +8811,6 @@
         }
       },
       "src/server/telemetry/job.ts": {
-        "sha256": "ee154fdd5a5ae969d6287b7d7f9deadb93492134264b1784dafddecfaf46124b",
         "layer": "server",
         "minimumTotals": {
           "lines": 5,
@@ -9046,7 +8826,6 @@
         }
       },
       "src/server/telemetry/redact.ts": {
-        "sha256": "cfb89e592e711927a0aec6f9d41c1c268db338d8ab42f77e589d25fe7bf2192b",
         "layer": "server",
         "minimumTotals": {
           "lines": 113,
@@ -9062,7 +8841,6 @@
         }
       },
       "src/server/telemetry/sink.ts": {
-        "sha256": "544fbae4e059de95b3c0c3f6525915f2c1cf912b0c341190c4ac3a55f35975f7",
         "layer": "server",
         "minimumTotals": {
           "lines": 39,
@@ -9078,7 +8856,6 @@
         }
       },
       "src/shared/base-path.ts": {
-        "sha256": "33f8d4a8367d6cd7370299f84e2ed16a9c1ca027aac664d2e4d364df4f1d5b11",
         "layer": "shared",
         "minimumTotals": {
           "lines": 13,
@@ -9094,7 +8871,6 @@
         }
       },
       "src/shared/dailyBriefing.ts": {
-        "sha256": "ec7181cf7fe23cbacf8868da3d4d02f599c88c4832acca6c0503b34c083a803e",
         "layer": "shared",
         "minimumTotals": {
           "lines": 0,
@@ -9110,7 +8886,6 @@
         }
       },
       "src/shared/dayPeriods.ts": {
-        "sha256": "a088b9ccd45556ba5438b05eaa9323f3967adfc4f5334248d28f38eb1c30e307",
         "layer": "shared",
         "minimumTotals": {
           "lines": 48,
@@ -9126,7 +8901,6 @@
         }
       },
       "src/shared/events.ts": {
-        "sha256": "8bf6ead703a1374b851aa4495a76ad6f1e42940cd630b57f8e1bc3dbb050c0c9",
         "layer": "shared",
         "minimumTotals": {
           "lines": 0,
@@ -9142,7 +8916,6 @@
         }
       },
       "src/shared/householdTime.ts": {
-        "sha256": "4b41dce15ee6b62f2dfa136f33990775375b7b62433587ea6f9a170d9bed7bc7",
         "layer": "shared",
         "minimumTotals": {
           "lines": 89,
@@ -9158,7 +8931,6 @@
         }
       },
       "src/shared/index.ts": {
-        "sha256": "65cac45a4790106d14a37ddf729f7c396719e39cf28435c1606738ba4493d3e8",
         "layer": "shared",
         "minimumTotals": {
           "lines": 5,
@@ -9174,7 +8946,6 @@
         }
       },
       "src/shared/member-color.ts": {
-        "sha256": "cf46b4f1707011f9978623bc0c090698d5849cf990ce34e33dc60fc15bb78dce",
         "layer": "shared",
         "minimumTotals": {
           "lines": 4,
@@ -9190,7 +8961,6 @@
         }
       },
       "src/shared/networkDevices.ts": {
-        "sha256": "3fc044a50fbe9ebbbfb9bcde7b1244e26ee0982a830dddcbaac550ad280416d9",
         "layer": "shared",
         "minimumTotals": {
           "lines": 0,
@@ -9206,7 +8976,6 @@
         }
       },
       "src/shared/plugins.ts": {
-        "sha256": "b52d5213e0762eecc0b15db6687046ee5e8e3d3bec7940c1d9fdb1c98beef020",
         "layer": "shared",
         "minimumTotals": {
           "lines": 1,
@@ -9222,7 +8991,6 @@
         }
       },
       "src/shared/printing.ts": {
-        "sha256": "a5c4a1287d6794b1bca5fa32e31e1741f0065d92fca83a2239151bdfeaff4aaf",
         "layer": "shared",
         "minimumTotals": {
           "lines": 1,
@@ -9238,7 +9006,6 @@
         }
       },
       "src/shared/weather.ts": {
-        "sha256": "0941d1b8e88b607dac2ffeb89a8ea3209c9afd80d4224e987f930de5b903bad7",
         "layer": "shared",
         "minimumTotals": {
           "lines": 4,
@@ -9252,1002 +9019,37 @@
           "functions": 100,
           "branches": 100
         }
+      },
+      "src/server/db/weekday-integrity.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 12,
+          "statements": 15,
+          "functions": 1,
+          "branches": 12
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/shared/weekdays.ts": {
+        "layer": "shared",
+        "minimumTotals": {
+          "lines": 7,
+          "statements": 8,
+          "functions": 2,
+          "branches": 7
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
       }
     }
-  },
-  "productFiles": [
-    ".dockerignore",
-    ".env.example",
-    ".github/dependabot.yml",
-    ".github/runtime-paths.regex",
-    ".github/workflows/coverage.yml",
-    ".github/workflows/mac-mini-ci.yml",
-    ".gitignore",
-    ".nvmrc",
-    ".prettierignore",
-    ".prettierrc.json",
-    "COMPONENTS.md",
-    "CONTRIBUTING.md",
-    "LICENSE",
-    "README.md",
-    "SECURITY.md",
-    "THIRD_PARTY_NOTICES.md",
-    "components.json",
-    "docs/api/backups/openapi.yaml",
-    "docs/api/bootstrap/openapi.yaml",
-    "docs/api/briefing-render/openapi.yaml",
-    "docs/api/calendar-feed-sync/openapi.planned.yaml",
-    "docs/api/calendar-feed-sync/openapi.yaml",
-    "docs/api/calendar-reminders/openapi.yaml",
-    "docs/api/calendar/openapi.yaml",
-    "docs/api/chores/openapi.yaml",
-    "docs/api/daily-briefing/openapi.yaml",
-    "docs/api/daily-messages/openapi.yaml",
-    "docs/api/day-periods/openapi.yaml",
-    "docs/api/meals/openapi.yaml",
-    "docs/api/members/openapi.yaml",
-    "docs/api/network-devices/openapi.yaml",
-    "docs/api/plugin-lifecycle/openapi.yaml",
-    "docs/api/printing/openapi.yaml",
-    "docs/api/reminders/openapi.yaml",
-    "docs/api/telemetry/openapi.yaml",
-    "docs/api/time-announcements/openapi.yaml",
-    "docs/api/weather/openapi.yaml",
-    "docs/architecture/contracts/README.md",
-    "docs/architecture/contracts/app-settings-registry.md",
-    "docs/architecture/contracts/auth-sessions.md",
-    "docs/architecture/contracts/background-jobs-scheduler.md",
-    "docs/architecture/contracts/backups.md",
-    "docs/architecture/contracts/calendar.md",
-    "docs/architecture/contracts/client-logging-telemetry.md",
-    "docs/architecture/contracts/daily-briefing.md",
-    "docs/architecture/contracts/daily-messages.md",
-    "docs/architecture/contracts/day-periods.md",
-    "docs/architecture/contracts/i18n-localization.md",
-    "docs/architecture/contracts/kiosk-shell-navigation.md",
-    "docs/architecture/contracts/meals-recipes.md",
-    "docs/architecture/contracts/members.md",
-    "docs/architecture/contracts/network-devices.md",
-    "docs/architecture/contracts/plugin-system.md",
-    "docs/architecture/contracts/printing.md",
-    "docs/architecture/contracts/reminders.md",
-    "docs/architecture/contracts/routines-chores.md",
-    "docs/architecture/contracts/time-announcements.md",
-    "docs/architecture/contracts/weather.md",
-    "docs/architecture/database-lifecycle.md",
-    "docs/architecture/decisions/ADR-001-member-role-model.md",
-    "docs/architecture/decisions/ADR-002-active-member-targets.md",
-    "docs/architecture/decisions/ADR-003-parent-briefing-history-superseded.md",
-    "docs/architecture/decisions/ADR-004-orphan-routine-assignments-superseded.md",
-    "docs/architecture/decisions/ADR-005-household-timezone-contract.md",
-    "docs/architecture/decisions/ADR-006-strict-date-validation.md",
-    "docs/architecture/decisions/ADR-007-api-key-backend-boundary.md",
-    "docs/architecture/decisions/ADR-008-block-order-daily-briefing-ownership.md",
-    "docs/architecture/decisions/ADR-009-member-create-no-briefing-side-effect.md",
-    "docs/architecture/decisions/ADR-010-day-period-configurability.md",
-    "docs/architecture/decisions/ADR-011-day-period-default-start-times.md",
-    "docs/architecture/decisions/ADR-012-birth-date-profile-data.md",
-    "docs/architecture/decisions/ADR-013-pin-client-side-ui-gate.md",
-    "docs/architecture/decisions/ADR-014-background-job-singleton-status.md",
-    "docs/architecture/decisions/ADR-015-localization-contract.md",
-    "docs/architecture/decisions/ADR-016-client-telemetry-privacy-retention-sinks.md",
-    "docs/architecture/decisions/ADR-017-backup-restore-safety-and-compatibility.md",
-    "docs/architecture/decisions/ADR-018-calendar-read-interface-merged-feed.md",
-    "docs/architecture/decisions/ADR-019-print-success-acknowledgement.md",
-    "docs/architecture/decisions/ADR-020-weekday-model.md",
-    "docs/architecture/decisions/ADR-022-generated-output-snapshot-and-regeneration.md",
-    "docs/architecture/decisions/ADR-023-members-admin-route-placement.md",
-    "docs/architecture/decisions/ADR-024-external-provider-vocabulary.md",
-    "docs/architecture/decisions/ADR-025-member-lifecycle-archive.md",
-    "docs/architecture/decisions/ADR-026-no-legacy-database-migration.md",
-    "docs/architecture/decisions/ADR-027-daily-briefing-per-user-opt-in.md",
-    "docs/architecture/decisions/ADR-028-settings-write-api-contract.md",
-    "docs/architecture/decisions/ADR-029-core-plugin-architecture-intent.md",
-    "docs/architecture/decisions/ADR-030-multi-key-scoped-api-keys.md",
-    "docs/architecture/decisions/ADR-031-frontend-access-gate-and-unauthenticated-surface.md",
-    "docs/architecture/decisions/ADR-032-bootstrap-key-establishment.md",
-    "docs/architecture/decisions/ADR-033-fail-closed-no-environment-auth-bypass.md",
-    "docs/architecture/decisions/ADR-034-admin-entry-long-press-affordance.md",
-    "docs/architecture/decisions/ADR-035-runtime-service-placement.md",
-    "docs/architecture/decisions/ADR-036-connection-setup-provisioning-placement.md",
-    "docs/architecture/decisions/ADR-037-credential-format-and-generation.md",
-    "docs/architecture/decisions/ADR-038-plugin-management-surface.md",
-    "docs/architecture/decisions/ADR-039-plugin-system-trust-and-extension-model.md",
-    "docs/architecture/decisions/ADR-040-domain-event-system.md",
-    "docs/architecture/decisions/ADR-041-render-ownership-and-device-context.md",
-    "docs/architecture/decisions/ADR-042-backup-storage-format-and-retention.md",
-    "docs/architecture/decisions/ADR-043-multistep-atomicity-and-derived-on-read.md",
-    "docs/architecture/decisions/ADR-044-daily-briefing-repeated-blocks-per-block-language.md",
-    "docs/architecture/decisions/ADR-045-meals-additive-recurring-model.md",
-    "docs/architecture/decisions/ADR-046-recipe-deletion-informed-cascade.md",
-    "docs/architecture/decisions/ADR-047-recipe-catalogue-shape.md",
-    "docs/architecture/decisions/ADR-048-daily-messages-targeting-and-authoring.md",
-    "docs/architecture/decisions/ADR-049-reminder-kind-split.md",
-    "docs/architecture/decisions/ADR-050-typed-event-catalog.md",
-    "docs/architecture/decisions/ADR-051-time-announcements-firing-and-surface.md",
-    "docs/architecture/decisions/ADR-052-weather-service-contract.md",
-    "docs/architecture/decisions/ADR-053-network-devices-service-contract.md",
-    "docs/architecture/decisions/ADR-054-member-referential-integrity-and-discard.md",
-    "docs/architecture/decisions/ADR-055-stack-baseline.md",
-    "docs/architecture/decisions/ADR-056-process-dx-baseline.md",
-    "docs/architecture/decisions/ADR-057-admin-telemetry-read-view.md",
-    "docs/architecture/decisions/ADR-058-kiosk-operator-trust-calibration.md",
-    "docs/architecture/decisions/ADR-059-serving-and-boundary-reconciliation.md",
-    "docs/architecture/decisions/ADR-060-deployment-transport-posture-and-cookie-security.md",
-    "docs/architecture/decisions/ADR-061-members-local-i18n-seam.md",
-    "docs/architecture/decisions/ADR-062-calendar-timed-event-utc-plus-tzid.md",
-    "docs/architecture/decisions/ADR-063-audit-timestamp-integer-epoch-storage.md",
-    "docs/architecture/decisions/ADR-064-reminder-per-member-assignment-and-surface.md",
-    "docs/architecture/decisions/ADR-065-announcement-firing-placement-reconciliation.md",
-    "docs/architecture/decisions/ADR-066-escpos-conversion-placement.md",
-    "docs/architecture/decisions/README.md",
-    "docs/architecture/plugin-manifest-matrix.md",
-    "docs/architecture/principles.md",
-    "docs/development/README.md",
-    "docs/development/onboarding.md",
-    "docs/development/style-guide.md",
-    "docs/development/ui-foundation.md",
-    "docs/features/app-settings-registry.md",
-    "docs/features/auth-sessions.md",
-    "docs/features/background-jobs-scheduler.md",
-    "docs/features/backups.md",
-    "docs/features/calendar.md",
-    "docs/features/client-logging-telemetry.md",
-    "docs/features/daily-briefing.md",
-    "docs/features/daily-messages.md",
-    "docs/features/day-periods.md",
-    "docs/features/i18n-localization.md",
-    "docs/features/kiosk-shell-navigation.md",
-    "docs/features/meals-recipes.md",
-    "docs/features/members.md",
-    "docs/features/network-devices.md",
-    "docs/features/plugin-system.md",
-    "docs/features/printing.md",
-    "docs/features/reminders.md",
-    "docs/features/routines-chores.md",
-    "docs/features/time-announcements.md",
-    "docs/features/weather.md",
-    "docs/operations.md",
-    "docs/quality/api-contract-audit.md",
-    "docs/quality/boundary-guarantees.yaml",
-    "docs/quality/household-acceptance.md",
-    "docs/quality/verification.md",
-    "docs/quality/weather-validation.md",
-    "docs/superpowers/plans/2026-10-02-portable-container-runtime.md",
-    "docs/ui/calendar-synchronization.md",
-    "docs/ui/component-contract.md",
-    "docs/ui/household-contract.md",
-    "docs/ui/plugin-management.md",
-    "drizzle.config.ts",
-    "drizzle/0000_current_baseline.sql",
-    "drizzle/0001_calendar_feed_sync.sql",
-    "drizzle/0002_plugin_lifecycle.sql",
-    "eslint.config.mjs",
-    "index.html",
-    "infra/docker/.env.example",
-    "infra/docker/Dockerfile",
-    "infra/docker/compose.yaml",
-    "package-lock.json",
-    "package.json",
-    "playwright.config.ts",
-    "scripts/build-server.mjs",
-    "seeds/seed-010-settings.ts",
-    "seeds/seed-020-members.ts",
-    "seeds/seed-030-calendar.ts",
-    "seeds/seed-040-routines.ts",
-    "seeds/seed-050-reminders.ts",
-    "seeds/seed-060-meals.ts",
-    "seeds/seed-070-daily-content.ts",
-    "seeds/seed-080-time-announcements.ts",
-    "src/client/admin/AdminGate.tsx",
-    "src/client/admin/AdminRoutes.tsx",
-    "src/client/admin/BackupsManagement.tsx",
-    "src/client/admin/CalendarManagement.tsx",
-    "src/client/admin/ChoreOrderControls.tsx",
-    "src/client/admin/DailyBriefingManagement.tsx",
-    "src/client/admin/DailyMessagesManagement.tsx",
-    "src/client/admin/DayPeriodsManagement.tsx",
-    "src/client/admin/MealsManagement.tsx",
-    "src/client/admin/MemberCreateForm.tsx",
-    "src/client/admin/MembersManagement.tsx",
-    "src/client/admin/NetworkDevicesManagement.tsx",
-    "src/client/admin/PrintingManagement.tsx",
-    "src/client/admin/RemindersManagement.tsx",
-    "src/client/admin/RoutinesManagement.tsx",
-    "src/client/admin/TelemetryManagement.tsx",
-    "src/client/admin/TimeAnnouncementsManagement.tsx",
-    "src/client/admin/WeatherManagement.tsx",
-    "src/client/calendar/CalendarMonthView.tsx",
-    "src/client/calendar/CalendarView.tsx",
-    "src/client/calendar/ScheduleXWeekView.tsx",
-    "src/client/calendar/admin/ExternalSourceCard.tsx",
-    "src/client/calendar/admin/HighlightRuleCard.tsx",
-    "src/client/calendar/admin/reorder.ts",
-    "src/client/calendar/calendar-presentation.ts",
-    "src/client/calendar/member-event-style.ts",
-    "src/client/calendar/schedule-x-overrides.css",
-    "src/client/chores/ChoreColumns.tsx",
-    "src/client/chores/ChoresBoard.tsx",
-    "src/client/chores/EmojiPicker.tsx",
-    "src/client/chores/emoji-catalog.ts",
-    "src/client/chores/noto-emoji.tsx",
-    "src/client/chores/noto/emoji_u1f305.svg",
-    "src/client/chores/noto/emoji_u1f319.svg",
-    "src/client/chores/noto/emoji_u1f321.svg",
-    "src/client/chores/noto/emoji_u1f34e.svg",
-    "src/client/chores/noto/emoji_u1f35e.svg",
-    "src/client/chores/noto/emoji_u1f373.svg",
-    "src/client/chores/noto/emoji_u1f37d.svg",
-    "src/client/chores/noto/emoji_u1f381.svg",
-    "src/client/chores/noto/emoji_u1f382.svg",
-    "src/client/chores/noto/emoji_u1f388.svg",
-    "src/client/chores/noto/emoji_u1f389.svg",
-    "src/client/chores/noto/emoji_u1f38a.svg",
-    "src/client/chores/noto/emoji_u1f392.svg",
-    "src/client/chores/noto/emoji_u1f393.svg",
-    "src/client/chores/noto/emoji_u1f3b5.svg",
-    "src/client/chores/noto/emoji_u1f3b6.svg",
-    "src/client/chores/noto/emoji_u1f3b8.svg",
-    "src/client/chores/noto/emoji_u1f3b9.svg",
-    "src/client/chores/noto/emoji_u1f3bc.svg",
-    "src/client/chores/noto/emoji_u1f3be.svg",
-    "src/client/chores/noto/emoji_u1f3c0.svg",
-    "src/client/chores/noto/emoji_u1f3c3.svg",
-    "src/client/chores/noto/emoji_u1f3c6.svg",
-    "src/client/chores/noto/emoji_u1f3ca.svg",
-    "src/client/chores/noto/emoji_u1f3cb.svg",
-    "src/client/chores/noto/emoji_u1f3e5.svg",
-    "src/client/chores/noto/emoji_u1f453.svg",
-    "src/client/chores/noto/emoji_u1f454.svg",
-    "src/client/chores/noto/emoji_u1f455.svg",
-    "src/client/chores/noto/emoji_u1f458.svg",
-    "src/client/chores/noto/emoji_u1f45f.svg",
-    "src/client/chores/noto/emoji_u1f471_200d_2640.svg",
-    "src/client/chores/noto/emoji_u1f48a.svg",
-    "src/client/chores/noto/emoji_u1f4bb.svg",
-    "src/client/chores/noto/emoji_u1f4c5.svg",
-    "src/client/chores/noto/emoji_u1f4d6.svg",
-    "src/client/chores/noto/emoji_u1f4da.svg",
-    "src/client/chores/noto/emoji_u1f4dd.svg",
-    "src/client/chores/noto/emoji_u1f507.svg",
-    "src/client/chores/noto/emoji_u1f5d1.svg",
-    "src/client/chores/noto/emoji_u1f634.svg",
-    "src/client/chores/noto/emoji_u1f697.svg",
-    "src/client/chores/noto/emoji_u1f6b4.svg",
-    "src/client/chores/noto/emoji_u1f6bf.svg",
-    "src/client/chores/noto/emoji_u1f6cf.svg",
-    "src/client/chores/noto/emoji_u1f94b.svg",
-    "src/client/chores/noto/emoji_u1f955.svg",
-    "src/client/chores/noto/emoji_u1f95b.svg",
-    "src/client/chores/noto/emoji_u1f963.svg",
-    "src/client/chores/noto/emoji_u1f964.svg",
-    "src/client/chores/noto/emoji_u1f96a.svg",
-    "src/client/chores/noto/emoji_u1f9b7.svg",
-    "src/client/chores/noto/emoji_u1f9d8.svg",
-    "src/client/chores/noto/emoji_u1f9e0.svg",
-    "src/client/chores/noto/emoji_u1f9ea.svg",
-    "src/client/chores/noto/emoji_u1f9eb.svg",
-    "src/client/chores/noto/emoji_u1f9ee.svg",
-    "src/client/chores/noto/emoji_u1f9ef.svg",
-    "src/client/chores/noto/emoji_u1f9f3.svg",
-    "src/client/chores/noto/emoji_u1f9f4.svg",
-    "src/client/chores/noto/emoji_u1f9f8.svg",
-    "src/client/chores/noto/emoji_u1f9f9.svg",
-    "src/client/chores/noto/emoji_u1f9fa.svg",
-    "src/client/chores/noto/emoji_u1f9fc.svg",
-    "src/client/chores/noto/emoji_u1f9fd.svg",
-    "src/client/chores/noto/emoji_u1fa79.svg",
-    "src/client/chores/noto/emoji_u1faa3.svg",
-    "src/client/chores/noto/emoji_u1faa5.svg",
-    "src/client/chores/noto/emoji_u1faae.svg",
-    "src/client/chores/noto/emoji_u1fab4.svg",
-    "src/client/chores/noto/emoji_u1fae7.svg",
-    "src/client/chores/noto/emoji_u23f0.svg",
-    "src/client/chores/noto/emoji_u262e.svg",
-    "src/client/chores/noto/emoji_u26bd.svg",
-    "src/client/chores/noto/emoji_u270f.svg",
-    "src/client/chores/noto/emoji_u2764.svg",
-    "src/client/chores/noto/emoji_u2b50.svg",
-    "src/client/chores/useTodayChores.ts",
-    "src/client/components/AdminPanel.tsx",
-    "src/client/components/CheckboxField.tsx",
-    "src/client/components/ConfirmDialog.tsx",
-    "src/client/components/ErrorNotice.tsx",
-    "src/client/components/Field.tsx",
-    "src/client/components/RadioField.tsx",
-    "src/client/components/StatusToggle.tsx",
-    "src/client/components/WeekdayPicker.tsx",
-    "src/client/components/ui/button.tsx",
-    "src/client/components/ui/card.tsx",
-    "src/client/components/ui/dialog.tsx",
-    "src/client/components/ui/input.tsx",
-    "src/client/components/ui/label.tsx",
-    "src/client/components/ui/select.tsx",
-    "src/client/components/ui/textarea.tsx",
-    "src/client/daily-briefing/DailyBriefingView.tsx",
-    "src/client/daily-briefing/blockRenderers.tsx",
-    "src/client/home/HomeSurface.tsx",
-    "src/client/home/TodayAgenda.tsx",
-    "src/client/home/TodayChores.tsx",
-    "src/client/home/TodayMeals.tsx",
-    "src/client/home/WeatherPill.tsx",
-    "src/client/home/agenda-presentation.ts",
-    "src/client/home/weatherCache.ts",
-    "src/client/home/weatherFormat.ts",
-    "src/client/i18n/index.tsx",
-    "src/client/i18n/messages.ts",
-    "src/client/lib/adminUnlock.tsx",
-    "src/client/lib/api-error.ts",
-    "src/client/lib/base-path.ts",
-    "src/client/lib/credential.ts",
-    "src/client/lib/day-period-labels.ts",
-    "src/client/lib/household-date.ts",
-    "src/client/lib/householdSettings.tsx",
-    "src/client/lib/logger.ts",
-    "src/client/lib/recipes.ts",
-    "src/client/lib/utils.ts",
-    "src/client/main.tsx",
-    "src/client/meals/MealCell.tsx",
-    "src/client/meals/MealEntryDialog.tsx",
-    "src/client/meals/MealPlanGrid.tsx",
-    "src/client/meals/MealsBoard.tsx",
-    "src/client/meals/RecipeCatalogue.tsx",
-    "src/client/meals/RecipeDetailDialog.tsx",
-    "src/client/meals/RecipeDialog.tsx",
-    "src/client/meals/useMealsWorkspace.ts",
-    "src/client/meals/useTodayMeals.ts",
-    "src/client/plugins/PluginCatalogProvider.tsx",
-    "src/client/plugins/PluginHealthIndicator.tsx",
-    "src/client/plugins/PluginManagement.tsx",
-    "src/client/plugins/PluginUnavailable.tsx",
-    "src/client/plugins/contributions.ts",
-    "src/client/printing/PrintExecutor.tsx",
-    "src/client/printing/PrinterAttention.tsx",
-    "src/client/printing/PrinterSession.tsx",
-    "src/client/printing/pluginStatus.ts",
-    "src/client/printing/queueWakeup.ts",
-    "src/client/printing/transport.ts",
-    "src/client/shell/DensityControl.tsx",
-    "src/client/shell/HouseholdChrome.tsx",
-    "src/client/shell/Shell.tsx",
-    "src/client/shell/densityAttribute.ts",
-    "src/client/shell/routes.ts",
-    "src/client/shell/usePresentationMode.ts",
-    "src/client/styles/globals.css",
-    "src/client/styles/member-colors.generated.css",
-    "src/client/styles/tokens.css",
-    "src/client/time-announcements/engine.ts",
-    "src/client/time-announcements/events.ts",
-    "src/client/time-announcements/leader.ts",
-    "src/client/time-announcements/phrases.ts",
-    "src/client/time-announcements/seams.ts",
-    "src/client/time-announcements/service.tsx",
-    "src/client/time-announcements/speech.ts",
-    "src/client/ui.ts",
-    "src/server/app.ts",
-    "src/server/auth/boundary.ts",
-    "src/server/auth/capability.ts",
-    "src/server/auth/cookies.ts",
-    "src/server/auth/credentials.ts",
-    "src/server/auth/eff-wordlist.ts",
-    "src/server/auth/gate.ts",
-    "src/server/auth/pin.ts",
-    "src/server/auth/provision.ts",
-    "src/server/auth/reconcile.ts",
-    "src/server/auth/throttle.ts",
-    "src/server/backups/job.ts",
-    "src/server/backups/restore.ts",
-    "src/server/backups/storage.ts",
-    "src/server/db/client.ts",
-    "src/server/db/migrate.ts",
-    "src/server/db/runtime-storage.ts",
-    "src/server/db/schema.ts",
-    "src/server/db/seeds/cli.ts",
-    "src/server/db/seeds/ownership.ts",
-    "src/server/db/seeds/runner.ts",
-    "src/server/db/seeds/types.ts",
-    "src/server/host-api/index.ts",
-    "src/server/index.ts",
-    "src/server/lib/event-bus.ts",
-    "src/server/lib/household-date.ts",
-    "src/server/lib/settings-objects.ts",
-    "src/server/modules/calendar/external-sources.ts",
-    "src/server/modules/calendar/fetch-ics.ts",
-    "src/server/modules/calendar/highlights.ts",
-    "src/server/modules/calendar/index.ts",
-    "src/server/modules/calendar/job.ts",
-    "src/server/modules/calendar/parse-ics.ts",
-    "src/server/modules/calendar/reconcile.ts",
-    "src/server/modules/calendar/recurrence.ts",
-    "src/server/modules/calendar/sync-coordinator.ts",
-    "src/server/modules/daily-briefing/blocks/animal-fact.ts",
-    "src/server/modules/daily-briefing/blocks/birthday.ts",
-    "src/server/modules/daily-briefing/blocks/context.ts",
-    "src/server/modules/daily-briefing/blocks/dad-joke.ts",
-    "src/server/modules/daily-briefing/blocks/drawing-prompt.ts",
-    "src/server/modules/daily-briefing/blocks/meals.ts",
-    "src/server/modules/daily-briefing/blocks/message.ts",
-    "src/server/modules/daily-briefing/blocks/number-fact.ts",
-    "src/server/modules/daily-briefing/blocks/onThisDay.ts",
-    "src/server/modules/daily-briefing/blocks/quoteOfDay.ts",
-    "src/server/modules/daily-briefing/blocks/reminders.ts",
-    "src/server/modules/daily-briefing/blocks/riddle.ts",
-    "src/server/modules/daily-briefing/blocks/shotgun.ts",
-    "src/server/modules/daily-briefing/blocks/streak-text.ts",
-    "src/server/modules/daily-briefing/blocks/streak.ts",
-    "src/server/modules/daily-briefing/blocks/today.ts",
-    "src/server/modules/daily-briefing/blocks/trivia.ts",
-    "src/server/modules/daily-briefing/blocks/weather.ts",
-    "src/server/modules/daily-briefing/blocks/weatherText.ts",
-    "src/server/modules/daily-briefing/blocks/word-of-day.ts",
-    "src/server/modules/daily-briefing/blocks/word-search-placement.ts",
-    "src/server/modules/daily-briefing/blocks/word-search.ts",
-    "src/server/modules/daily-briefing/blocks/would-you-rather.ts",
-    "src/server/modules/daily-briefing/corpora/animal-facts.es.json",
-    "src/server/modules/daily-briefing/corpora/animal-facts.json",
-    "src/server/modules/daily-briefing/corpora/block-types.ts",
-    "src/server/modules/daily-briefing/corpora/determinism.ts",
-    "src/server/modules/daily-briefing/corpora/drawing-prompts.es.json",
-    "src/server/modules/daily-briefing/corpora/drawing-prompts.json",
-    "src/server/modules/daily-briefing/corpora/index.ts",
-    "src/server/modules/daily-briefing/corpora/jokes.json",
-    "src/server/modules/daily-briefing/corpora/json-modules.d.ts",
-    "src/server/modules/daily-briefing/corpora/loader.ts",
-    "src/server/modules/daily-briefing/corpora/number-facts.es.json",
-    "src/server/modules/daily-briefing/corpora/number-facts.json",
-    "src/server/modules/daily-briefing/corpora/riddles.json",
-    "src/server/modules/daily-briefing/corpora/trivia-questions.json",
-    "src/server/modules/daily-briefing/corpora/types.ts",
-    "src/server/modules/daily-briefing/corpora/vocabulary-entries.json",
-    "src/server/modules/daily-briefing/corpora/word-search-corpus.json",
-    "src/server/modules/daily-briefing/corpora/would-you-rathers.es.json",
-    "src/server/modules/daily-briefing/corpora/would-you-rathers.json",
-    "src/server/modules/daily-briefing/errors.ts",
-    "src/server/modules/daily-briefing/external/ports.ts",
-    "src/server/modules/daily-briefing/external/shared-cache.ts",
-    "src/server/modules/daily-briefing/index.ts",
-    "src/server/modules/daily-briefing/job.ts",
-    "src/server/modules/daily-briefing/render/adapter.ts",
-    "src/server/modules/daily-briefing/render/blocks/animal-fact.ts",
-    "src/server/modules/daily-briefing/render/blocks/birthday.ts",
-    "src/server/modules/daily-briefing/render/blocks/dad-joke.ts",
-    "src/server/modules/daily-briefing/render/blocks/drawing-prompt.ts",
-    "src/server/modules/daily-briefing/render/blocks/meals.ts",
-    "src/server/modules/daily-briefing/render/blocks/message.ts",
-    "src/server/modules/daily-briefing/render/blocks/number-fact.ts",
-    "src/server/modules/daily-briefing/render/blocks/on-this-day.ts",
-    "src/server/modules/daily-briefing/render/blocks/quote-of-day.ts",
-    "src/server/modules/daily-briefing/render/blocks/reminders.ts",
-    "src/server/modules/daily-briefing/render/blocks/riddle.ts",
-    "src/server/modules/daily-briefing/render/blocks/shotgun.ts",
-    "src/server/modules/daily-briefing/render/blocks/streak-text.ts",
-    "src/server/modules/daily-briefing/render/blocks/streak.ts",
-    "src/server/modules/daily-briefing/render/blocks/today.ts",
-    "src/server/modules/daily-briefing/render/blocks/trivia.ts",
-    "src/server/modules/daily-briefing/render/blocks/weather-text.ts",
-    "src/server/modules/daily-briefing/render/blocks/weather.ts",
-    "src/server/modules/daily-briefing/render/blocks/word-of-day.ts",
-    "src/server/modules/daily-briefing/render/blocks/word-search.ts",
-    "src/server/modules/daily-briefing/render/blocks/would-you-rather.ts",
-    "src/server/modules/daily-briefing/render/bridge.ts",
-    "src/server/modules/daily-briefing/render/fonts/jetbrains-mono/JetBrainsMono-Bold.ttf",
-    "src/server/modules/daily-briefing/render/fonts/jetbrains-mono/JetBrainsMono-Italic.ttf",
-    "src/server/modules/daily-briefing/render/fonts/jetbrains-mono/JetBrainsMono-Medium.ttf",
-    "src/server/modules/daily-briefing/render/fonts/jetbrains-mono/JetBrainsMono-Regular.ttf",
-    "src/server/modules/daily-briefing/render/fonts/jetbrains-mono/OFL.txt",
-    "src/server/modules/daily-briefing/render/index.ts",
-    "src/server/modules/daily-briefing/render/labels.ts",
-    "src/server/modules/daily-briefing/render/raster.ts",
-    "src/server/modules/daily-briefing/render/registry.ts",
-    "src/server/modules/daily-briefing/render/theme.ts",
-    "src/server/modules/daily-briefing/render/types.ts",
-    "src/server/modules/daily-briefing/settings.ts",
-    "src/server/modules/daily-briefing/trigger.ts",
-    "src/server/modules/daily-messages/index.ts",
-    "src/server/modules/day-periods/index.ts",
-    "src/server/modules/meals/index.ts",
-    "src/server/modules/members/birthdate.ts",
-    "src/server/modules/members/index.ts",
-    "src/server/modules/members/label.ts",
-    "src/server/modules/members/referential.ts",
-    "src/server/modules/network-devices/cache.ts",
-    "src/server/modules/network-devices/client.ts",
-    "src/server/modules/network-devices/index.ts",
-    "src/server/modules/network-devices/normalize.ts",
-    "src/server/modules/network-devices/poll.ts",
-    "src/server/modules/printing/artifact.ts",
-    "src/server/modules/printing/escpos.ts",
-    "src/server/modules/printing/index.ts",
-    "src/server/modules/reminders/index.ts",
-    "src/server/modules/routines/index.ts",
-    "src/server/modules/settings/index.ts",
-    "src/server/modules/time-announcements/index.ts",
-    "src/server/modules/weather/index.ts",
-    "src/server/modules/weather/normalize.ts",
-    "src/server/modules/weather/port.ts",
-    "src/server/plugins/errors.ts",
-    "src/server/plugins/http.ts",
-    "src/server/plugins/lifecycle.ts",
-    "src/server/plugins/manifest.ts",
-    "src/server/plugins/routes.ts",
-    "src/server/plugins/runtime.ts",
-    "src/server/plugins/store.ts",
-    "src/server/routes/backups.ts",
-    "src/server/routes/calendar.ts",
-    "src/server/routes/daily-briefing.ts",
-    "src/server/routes/daily-messages.ts",
-    "src/server/routes/day-periods.ts",
-    "src/server/routes/health.ts",
-    "src/server/routes/meals.ts",
-    "src/server/routes/members.ts",
-    "src/server/routes/network-devices.ts",
-    "src/server/routes/printing.ts",
-    "src/server/routes/provision.ts",
-    "src/server/routes/reminders.ts",
-    "src/server/routes/routines.ts",
-    "src/server/routes/settings.ts",
-    "src/server/routes/telemetry.ts",
-    "src/server/routes/time-announcements.ts",
-    "src/server/routes/verify-pin.ts",
-    "src/server/routes/weather.ts",
-    "src/server/scheduler/index.ts",
-    "src/server/telemetry/index.ts",
-    "src/server/telemetry/job.ts",
-    "src/server/telemetry/redact.ts",
-    "src/server/telemetry/sink.ts",
-    "src/shared/base-path.ts",
-    "src/shared/dailyBriefing.ts",
-    "src/shared/dayPeriods.ts",
-    "src/shared/events.ts",
-    "src/shared/householdTime.ts",
-    "src/shared/index.ts",
-    "src/shared/member-color.ts",
-    "src/shared/networkDevices.ts",
-    "src/shared/plugins.ts",
-    "src/shared/printing.ts",
-    "src/shared/weather.ts",
-    "tests/boundary/access-gate.test.ts",
-    "tests/boundary/auth-boundary.test.ts",
-    "tests/boundary/auth-throttling.test.ts",
-    "tests/boundary/backups-lineage.test.ts",
-    "tests/boundary/backups-routes.test.ts",
-    "tests/boundary/backups-storage.test.ts",
-    "tests/boundary/boot.test.ts",
-    "tests/boundary/bootstrap-reconcile.test.ts",
-    "tests/boundary/calendar-assembly.test.ts",
-    "tests/boundary/calendar-assign.test.ts",
-    "tests/boundary/calendar-create.test.ts",
-    "tests/boundary/calendar-external-sources-contract.test.ts",
-    "tests/boundary/calendar-external-sources.test.ts",
-    "tests/boundary/calendar-feed-sync-contract.test.ts",
-    "tests/boundary/calendar-fetch.test.ts",
-    "tests/boundary/calendar-highlights.test.ts",
-    "tests/boundary/calendar-merged-feed.test.ts",
-    "tests/boundary/calendar-mutate.test.ts",
-    "tests/boundary/calendar-parse.test.ts",
-    "tests/boundary/calendar-parser-dependency.test.ts",
-    "tests/boundary/calendar-query-matching.test.ts",
-    "tests/boundary/calendar-read.test.ts",
-    "tests/boundary/calendar-recurrence.test.ts",
-    "tests/boundary/calendar-source-lifecycle.test.ts",
-    "tests/boundary/calendar-sync.test.ts",
-    "tests/boundary/credentials.test.ts",
-    "tests/boundary/daily-briefing-assembly.test.ts",
-    "tests/boundary/daily-briefing-generate.test.ts",
-    "tests/boundary/daily-briefing-import-boundary.test.ts",
-    "tests/boundary/daily-briefing-negatives.test.ts",
-    "tests/boundary/daily-briefing-optin-isolation.test.ts",
-    "tests/boundary/daily-briefing-preview.test.ts",
-    "tests/boundary/daily-briefing-render-probe.test.ts",
-    "tests/boundary/daily-briefing-settings.test.ts",
-    "tests/boundary/daily-briefing-snapshot.test.ts",
-    "tests/boundary/daily-messages-assembly.test.ts",
-    "tests/boundary/daily-messages-crud.test.ts",
-    "tests/boundary/daily-messages-window.test.ts",
-    "tests/boundary/data-ownership.test.ts",
-    "tests/boundary/database-baseline.test.ts",
-    "tests/boundary/day-periods-active.test.ts",
-    "tests/boundary/day-periods-assembly.test.ts",
-    "tests/boundary/day-periods-edit.test.ts",
-    "tests/boundary/day-periods-read.test.ts",
-    "tests/boundary/day-periods-resolver.test.ts",
-    "tests/boundary/db-pragmas.test.ts",
-    "tests/boundary/encoding-bypass.test.ts",
-    "tests/boundary/event-bus.test.ts",
-    "tests/boundary/fail-closed.test.ts",
-    "tests/boundary/fk-drop-integrity.test.ts",
-    "tests/boundary/foundation-host-api.test.ts",
-    "tests/boundary/foundation-runtime.test.ts",
-    "tests/boundary/foundation-telemetry-outage.test.ts",
-    "tests/boundary/health.test.ts",
-    "tests/boundary/host-api-mediation.test.ts",
-    "tests/boundary/host-api-skeleton.test.ts",
-    "tests/boundary/host-api-subscribe.test.ts",
-    "tests/boundary/household-date.test.ts",
-    "tests/boundary/household-time-shared.test.ts",
-    "tests/boundary/import-boundary.test.ts",
-    "tests/boundary/key-lifecycle.test.ts",
-    "tests/boundary/meals-assembly.test.ts",
-    "tests/boundary/meals-cascade.test.ts",
-    "tests/boundary/meals-entries.test.ts",
-    "tests/boundary/meals-menu.test.ts",
-    "tests/boundary/meals-plans.test.ts",
-    "tests/boundary/meals-recipes.test.ts",
-    "tests/boundary/meals-tombstone.test.ts",
-    "tests/boundary/member-admin-gate.test.ts",
-    "tests/boundary/member-archive-restore.test.ts",
-    "tests/boundary/member-assembly.test.ts",
-    "tests/boundary/member-birthdate.test.ts",
-    "tests/boundary/member-color.test.ts",
-    "tests/boundary/member-create.test.ts",
-    "tests/boundary/member-label.test.ts",
-    "tests/boundary/member-list-lifecycle.test.ts",
-    "tests/boundary/member-no-side-effects.test.ts",
-    "tests/boundary/member-referential.test.ts",
-    "tests/boundary/member-write.test.ts",
-    "tests/boundary/migrate-runner.test.ts",
-    "tests/boundary/network-devices-auth.test.ts",
-    "tests/boundary/network-devices-cache.test.ts",
-    "tests/boundary/network-devices-client.test.ts",
-    "tests/boundary/network-devices-events.test.ts",
-    "tests/boundary/network-devices-negatives.test.ts",
-    "tests/boundary/network-devices-normalize.test.ts",
-    "tests/boundary/network-devices-registry.test.ts",
-    "tests/boundary/network-devices-routes.test.ts",
-    "tests/boundary/network-devices-rule-b.test.ts",
-    "tests/boundary/no-session.test.ts",
-    "tests/boundary/operator-config.test.ts",
-    "tests/boundary/plugin-lifecycle.test.ts",
-    "tests/boundary/plugin-lineage.test.ts",
-    "tests/boundary/plugin-manifest.test.ts",
-    "tests/boundary/plugin-routes.test.ts",
-    "tests/boundary/printing-artifact.test.ts",
-    "tests/boundary/printing-core.test.ts",
-    "tests/boundary/printing-events.test.ts",
-    "tests/boundary/printing-lease-fencing.test.ts",
-    "tests/boundary/printing-negatives.test.ts",
-    "tests/boundary/printing-routes.test.ts",
-    "tests/boundary/printing-rule-b.test.ts",
-    "tests/boundary/provision.test.ts",
-    "tests/boundary/reminders-assembly.test.ts",
-    "tests/boundary/reminders-assignments.test.ts",
-    "tests/boundary/reminders-calendar-gated-assembly.test.ts",
-    "tests/boundary/reminders-calendar-gated-discriminant.test.ts",
-    "tests/boundary/reminders-calendar-gated.test.ts",
-    "tests/boundary/reminders-crud.test.ts",
-    "tests/boundary/reminders-discriminant.test.ts",
-    "tests/boundary/reminders-dry-run.test.ts",
-    "tests/boundary/reminders-emission.test.ts",
-    "tests/boundary/reminders-member-lifecycle.test.ts",
-    "tests/boundary/routines-assembly.test.ts",
-    "tests/boundary/routines-assignments.test.ts",
-    "tests/boundary/routines-board.test.ts",
-    "tests/boundary/routines-complete.test.ts",
-    "tests/boundary/routines-crud.test.ts",
-    "tests/boundary/routines-streak-suppression.test.ts",
-    "tests/boundary/routines-streak.test.ts",
-    "tests/boundary/seed-calendar.test.ts",
-    "tests/boundary/seed-cli.test.ts",
-    "tests/boundary/seed-daily-content.test.ts",
-    "tests/boundary/seed-meals.test.ts",
-    "tests/boundary/seed-members.test.ts",
-    "tests/boundary/seed-ownership.test.ts",
-    "tests/boundary/seed-private-overlays.test.ts",
-    "tests/boundary/seed-routines-reminders.test.ts",
-    "tests/boundary/seed-runner.test.ts",
-    "tests/boundary/seed-settings.test.ts",
-    "tests/boundary/settings-coldread.test.ts",
-    "tests/boundary/settings-seam.test.ts",
-    "tests/boundary/settings-write.test.ts",
-    "tests/boundary/static-serving.test.ts",
-    "tests/boundary/telemetry-capability.test.ts",
-    "tests/boundary/telemetry-ingest.test.ts",
-    "tests/boundary/telemetry-negatives.test.ts",
-    "tests/boundary/telemetry-read.test.ts",
-    "tests/boundary/telemetry-redact.test.ts",
-    "tests/boundary/telemetry-sink.test.ts",
-    "tests/boundary/time-announcements-crud.test.ts",
-    "tests/boundary/time-announcements-negatives.test.ts",
-    "tests/boundary/ui-debt-ratchet.test.ts",
-    "tests/boundary/verify-pin.test.ts",
-    "tests/boundary/weather-briefing-block.test.ts",
-    "tests/boundary/weather-briefing-snapshot.test.ts",
-    "tests/boundary/weather-forecast-port.test.ts",
-    "tests/boundary/weather-location.test.ts",
-    "tests/boundary/weather-negatives.test.ts",
-    "tests/boundary/weather-read.test.ts",
-    "tests/boundary/weather-rule-b.test.ts",
-    "tests/client/admin-gate-no-boot-probe.test.tsx",
-    "tests/client/admin-gate-panel-reset.test.tsx",
-    "tests/client/admin-gate-printing-nav.test.tsx",
-    "tests/client/admin-gate.test.tsx",
-    "tests/client/admin-household-timezone-defaults.test.tsx",
-    "tests/client/admin-nav-i18n-parity.test.ts",
-    "tests/client/admin-panel.test.tsx",
-    "tests/client/admin-pin-keypad.test.tsx",
-    "tests/client/admin-routes.test.tsx",
-    "tests/client/announcements-briefing-admin.test.tsx",
-    "tests/client/backups-i18n-parity.test.ts",
-    "tests/client/backups-management.test.tsx",
-    "tests/client/backups-telemetry-admin.test.tsx",
-    "tests/client/button.test.tsx",
-    "tests/client/calendar-i18n-parity.test.ts",
-    "tests/client/calendar-management.test.tsx",
-    "tests/client/calendar-members-error-retry.test.tsx",
-    "tests/client/calendar-presentation.test.ts",
-    "tests/client/calendar-settings.test.tsx",
-    "tests/client/calendar-view.test.tsx",
-    "tests/client/calendar-week-integration.test.tsx",
-    "tests/client/calendar-window.test.tsx",
-    "tests/client/checkbox-field.test.tsx",
-    "tests/client/chore-order-controls.test.tsx",
-    "tests/client/chores-board-empty-state.test.tsx",
-    "tests/client/chores-board.test.tsx",
-    "tests/client/confirm-dialog.test.tsx",
-    "tests/client/credential.test.ts",
-    "tests/client/daily-briefing-admin-mirror-fence.test.tsx",
-    "tests/client/daily-briefing-admin.test.tsx",
-    "tests/client/daily-briefing-i18n-parity.test.ts",
-    "tests/client/daily-briefing-management.test.tsx",
-    "tests/client/daily-briefing-view.test.tsx",
-    "tests/client/daily-briefing-weather-block.test.tsx",
-    "tests/client/daily-messages-i18n-parity.test.ts",
-    "tests/client/daily-messages-management.test.tsx",
-    "tests/client/day-periods-i18n-parity.test.ts",
-    "tests/client/day-periods-management.test.tsx",
-    "tests/client/day-periods-messages-admin.test.tsx",
-    "tests/client/density-attribute.test.ts",
-    "tests/client/density-control-shell-mount.test.tsx",
-    "tests/client/density-control.test.tsx",
-    "tests/client/density-styles-helper.test.tsx",
-    "tests/client/emoji-picker.test.tsx",
-    "tests/client/error-notice.test.tsx",
-    "tests/client/family-surfaces.test.tsx",
-    "tests/client/field.test.tsx",
-    "tests/client/foundation-primitives.test.tsx",
-    "tests/client/foundation-settings.test.tsx",
-    "tests/client/helpers/density.ts",
-    "tests/client/helpers/densityStyles.ts",
-    "tests/client/logger.test.ts",
-    "tests/client/meal-entry-dialog.test.tsx",
-    "tests/client/meals-all-slot-picker.test.tsx",
-    "tests/client/meals-board.test.tsx",
-    "tests/client/meals-household-timezone-error-retry.test.tsx",
-    "tests/client/meals-i18n-parity.test.ts",
-    "tests/client/meals-management.test.tsx",
-    "tests/client/meals-recipe-edit-clear-fields.test.tsx",
-    "tests/client/meals-view-refresh-coherence.test.tsx",
-    "tests/client/meals-workspace.test.tsx",
-    "tests/client/member-event-style.test.ts",
-    "tests/client/member-i18n-parity.test.ts",
-    "tests/client/member-shell-boundary.test.tsx",
-    "tests/client/members-admin.test.tsx",
-    "tests/client/members-management-mount.test.tsx",
-    "tests/client/network-devices-i18n-parity.test.ts",
-    "tests/client/network-devices-management.test.tsx",
-    "tests/client/network-weather-admin.test.tsx",
-    "tests/client/noto-emoji.test.tsx",
-    "tests/client/plugin-contributions.test.tsx",
-    "tests/client/plugin-management.test.tsx",
-    "tests/client/presentation-mode.test.tsx",
-    "tests/client/printer-attention.test.tsx",
-    "tests/client/printing-executor-fr013.test.tsx",
-    "tests/client/printing-executor.test.tsx",
-    "tests/client/printing-i18n-parity.test.ts",
-    "tests/client/printing-management.test.tsx",
-    "tests/client/printing-plugin-status-retry.test.tsx",
-    "tests/client/printing-plugin-status.test.tsx",
-    "tests/client/printing-surfaces.test.tsx",
-    "tests/client/printing-transport.test.ts",
-    "tests/client/provisioning-gate.test.tsx",
-    "tests/client/radio-field.test.tsx",
-    "tests/client/recipe-catalogue.test.tsx",
-    "tests/client/recipe-dialog.test.tsx",
-    "tests/client/reminders-calendar-gated-i18n-parity.test.ts",
-    "tests/client/reminders-i18n-parity.test.ts",
-    "tests/client/reminders.test.tsx",
-    "tests/client/routines-i18n-parity.test.ts",
-    "tests/client/routines.test.tsx",
-    "tests/client/schedule-x-week-view.test.ts",
-    "tests/client/select-item-density.test.tsx",
-    "tests/client/shell-routes.test.tsx",
-    "tests/client/shell-service-mount.test.tsx",
-    "tests/client/shell.test.tsx",
-    "tests/client/status-toggle.test.tsx",
-    "tests/client/telemetry-i18n-parity.test.ts",
-    "tests/client/telemetry-panel.test.tsx",
-    "tests/client/telemetry-producers.test.ts",
-    "tests/client/time-announcements-engine.test.ts",
-    "tests/client/time-announcements-i18n-parity.test.ts",
-    "tests/client/time-announcements-leader.test.ts",
-    "tests/client/time-announcements-management.test.tsx",
-    "tests/client/time-announcements-phrases.test.ts",
-    "tests/client/time-announcements-service.test.tsx",
-    "tests/client/time-announcements-shell-mount.test.tsx",
-    "tests/client/time-announcements-speech.test.ts",
-    "tests/client/today-agenda.test.tsx",
-    "tests/client/today-chores.test.tsx",
-    "tests/client/today-meals.test.tsx",
-    "tests/client/ui-density-helper.test.ts",
-    "tests/client/ui-smoke.test.tsx",
-    "tests/client/weather-cache.test.ts",
-    "tests/client/weather-i18n-parity.test.ts",
-    "tests/client/weather-management.test.tsx",
-    "tests/client/weather-pill.test.tsx",
-    "tests/client/weather-wmo-map.test.ts",
-    "tests/client/weekday-picker.test.tsx",
-    "tests/e2e/accessible-names-audit.spec.ts",
-    "tests/e2e/admin-household-timezone-defaults.spec.ts",
-    "tests/e2e/admin-unlock-resilience.spec.ts",
-    "tests/e2e/admin-unlock.ts",
-    "tests/e2e/backups-restore.spec.ts",
-    "tests/e2e/calendar-feed-sync.spec.ts",
-    "tests/e2e/calendar.spec.ts",
-    "tests/e2e/chores-board.spec.ts",
-    "tests/e2e/critical-flow.spec.ts",
-    "tests/e2e/daily-briefing.spec.ts",
-    "tests/e2e/daily-messages.spec.ts",
-    "tests/e2e/database-lifecycle-recovery.spec.ts",
-    "tests/e2e/database-lifecycle-skeleton.spec.ts",
-    "tests/e2e/day-periods.spec.ts",
-    "tests/e2e/foundation.spec.ts",
-    "tests/e2e/global-setup.ts",
-    "tests/e2e/global-teardown.ts",
-    "tests/e2e/host-api-skeleton.spec.ts",
-    "tests/e2e/household-dashboard.spec.ts",
-    "tests/e2e/household-shell-skeleton.spec.ts",
-    "tests/e2e/meals.spec.ts",
-    "tests/e2e/member-lifecycle.spec.ts",
-    "tests/e2e/member-management.spec.ts",
-    "tests/e2e/network-devices.spec.ts",
-    "tests/e2e/plugin-fixture-db.ts",
-    "tests/e2e/plugin-lifecycle-server.ts",
-    "tests/e2e/plugin-lifecycle-visual.spec.ts",
-    "tests/e2e/plugin-lifecycle.spec.ts",
-    "tests/e2e/prepare-shared-db.ts",
-    "tests/e2e/printer-session.ts",
-    "tests/e2e/printing.spec.ts",
-    "tests/e2e/quote-onthisday-fixture-server.ts",
-    "tests/e2e/reminders-calendar-gated.spec.ts",
-    "tests/e2e/reminders.spec.ts",
-    "tests/e2e/telemetry-ingest.spec.ts",
-    "tests/e2e/telemetry-transport.spec.ts",
-    "tests/e2e/time-announcements.spec.ts",
-    "tests/e2e/unifi-fixture-server.ts",
-    "tests/e2e/weather-fixture-server.ts",
-    "tests/e2e/weather.spec.ts",
-    "tests/fixtures/assembly-cohort.json",
-    "tests/fixtures/calendar/adapter-defaults.ics",
-    "tests/fixtures/calendar/adapter-isolation.ics",
-    "tests/fixtures/calendar/adapter-window.ics",
-    "tests/fixtures/calendar/all-day-range.ics",
-    "tests/fixtures/calendar/invalid-whole-calendar.ics",
-    "tests/fixtures/calendar/malformed-individual.ics",
-    "tests/fixtures/calendar/recurrence-matrix.ics",
-    "tests/fixtures/calendar/tracer.ics",
-    "tests/fixtures/plugin-lifecycle/fresh-empty.sql",
-    "tests/fixtures/plugin-lifecycle/migrated-fresh.sql",
-    "tests/fixtures/plugin-lifecycle/migrated-prior.sql",
-    "tests/fixtures/plugin-lifecycle/prior-baseline.sql",
-    "tests/fixtures/plugin-lifecycle/unsupported-history.sql",
-    "tests/helpers/calendar-process.ts",
-    "tests/helpers/daily-briefing-seed.ts",
-    "tests/helpers/db.ts",
-    "tests/helpers/fake-clock.ts",
-    "tests/helpers/schema-tables.ts",
-    "tests/helpers/self-signed-tls-fixture.ts",
-    "tests/helpers/unifi-fixtures.ts",
-    "tests/helpers/weather-fixtures.ts",
-    "tests/integration/backups-lineage.test.ts",
-    "tests/integration/backups-quiesce-hook.test.ts",
-    "tests/integration/backups-restore.test.ts",
-    "tests/integration/backups-snapshot.test.ts",
-    "tests/integration/bootstrap-provision.test.ts",
-    "tests/integration/calendar-external-sources.test.ts",
-    "tests/integration/calendar-feed-consumers.test.ts",
-    "tests/integration/calendar-feed-job.test.ts",
-    "tests/integration/calendar-feed-sync-migration.test.ts",
-    "tests/integration/calendar-feed-sync.test.ts",
-    "tests/integration/calendar-highlights.test.ts",
-    "tests/integration/calendar-merged-feed.test.ts",
-    "tests/integration/calendar-source-lifecycle.test.ts",
-    "tests/integration/daily-briefing-blocks-corpus.test.ts",
-    "tests/integration/daily-briefing-blocks-domain.test.ts",
-    "tests/integration/daily-briefing-blocks-external.test.ts",
-    "tests/integration/daily-briefing-catchup-e2e.test.ts",
-    "tests/integration/daily-briefing-corpora.test.ts",
-    "tests/integration/daily-briefing-generation.test.ts",
-    "tests/integration/daily-briefing-job.test.ts",
-    "tests/integration/daily-briefing-migration-0017.test.ts",
-    "tests/integration/daily-briefing-regen.test.ts",
-    "tests/integration/daily-briefing-render-defs.test.ts",
-    "tests/integration/daily-briefing-render-degrade.test.ts",
-    "tests/integration/daily-briefing-schedule.test.ts",
-    "tests/integration/daily-briefing-scheduled.test.ts",
-    "tests/integration/daily-briefing-skeleton.test.ts",
-    "tests/integration/daily-briefing-trigger.test.ts",
-    "tests/integration/database-baseline.test.ts",
-    "tests/integration/database-lifecycle-aggregate.test.ts",
-    "tests/integration/entrypoint.test.ts",
-    "tests/integration/foundation-entrypoint.test.ts",
-    "tests/integration/member-color-migration-0019.test.ts",
-    "tests/integration/network-devices-client-tls.test.ts",
-    "tests/integration/network-devices-poller.test.ts",
-    "tests/integration/plugin-absence-tolerance.test.ts",
-    "tests/integration/plugin-backups-boundary.test.ts",
-    "tests/integration/plugin-compatibility.test.ts",
-    "tests/integration/plugin-data-retention.test.ts",
-    "tests/integration/plugin-installed-cohort.test.ts",
-    "tests/integration/plugin-lifecycle-drain.test.ts",
-    "tests/integration/plugin-lifecycle-skeleton.test.ts",
-    "tests/integration/plugin-reconciliation.test.ts",
-    "tests/integration/plugin-runtime.test.ts",
-    "tests/integration/printing-skeleton.test.ts",
-    "tests/integration/provision-then-settings.test.ts",
-    "tests/integration/scheduler-lifecycle.test.ts",
-    "tests/integration/scheduler.test.ts",
-    "tests/integration/seed-calendar.test.ts",
-    "tests/integration/seed-daily-content.test.ts",
-    "tests/integration/seed-meals.test.ts",
-    "tests/integration/seed-ownership.test.ts",
-    "tests/integration/seed-private-overlays.test.ts",
-    "tests/integration/seed-routines-reminders.test.ts",
-    "tests/integration/seed-runner.test.ts",
-    "tests/integration/telemetry-prune.test.ts",
-    "tools/api-contract-audit/README.md",
-    "tools/api-contract-audit/audit.mjs",
-    "tools/api-contract-audit/audit.test.mjs",
-    "tools/api-contract-audit/capture-route.mjs",
-    "tools/api-contract-audit/capture.mjs",
-    "tools/audit-accessible-names.test.mjs",
-    "tools/candidate-identity.mjs",
-    "tools/candidate-identity.test.mjs",
-    "tools/check-openapi-drift.mjs",
-    "tools/check-openapi-drift.test.mjs",
-    "tools/check-quality-tools-negative.test.mjs",
-    "tools/chrome-dev-shared.test.mjs",
-    "tools/container-smoke.mjs",
-    "tools/count-ui-debt.test.mjs",
-    "tools/dev/accessible-names-baseline.txt",
-    "tools/dev/audit-accessible-names.mjs",
-    "tools/dev/browser-reset.mjs",
-    "tools/dev/browser-session.mjs",
-    "tools/dev/check-exception-list.mjs",
-    "tools/dev/chrome-cdp.mjs",
-    "tools/dev/chrome-dev-shared.mjs",
-    "tools/dev/count-ui-debt.mjs",
-    "tools/dev/fresh-local.mjs",
-    "tools/dev/generate-member-colors.mjs",
-    "tools/dev/generate-noto-emojis.mjs",
-    "tools/dev/generate-ui-catalog.mjs",
-    "tools/dev/member-colors.json",
-    "tools/dev/noto-overrides/emoji_u1f471_200d_2640.svg",
-    "tools/dev/seed-all.mjs",
-    "tools/dev/smoke-dist-render.mjs",
-    "tools/dev/start-local.mjs",
-    "tools/dev/sync-private-seeds.mjs",
-    "tools/e2e-data-dir.mjs",
-    "tools/e2e-data-dir.test.mjs",
-    "tools/fresh-local.test.mjs",
-    "tools/gen-openapi.mjs",
-    "tools/gen-openapi.test.mjs",
-    "tools/local-env.test.mjs",
-    "tools/local-runtime.test.mjs",
-    "tools/member-colors.test.mjs",
-    "tools/noto-emojis.test.mjs",
-    "tools/storage-runtime.test.mjs",
-    "tools/sync-private-seeds.test.mjs",
-    "tools/ui-catalog.test.mjs",
-    "tools/validation/provider-egress-observer.mjs",
-    "tools/verify-coverage.mjs",
-    "tools/verify-coverage.test.mjs",
-    "tools/verify-test-cohorts.mjs",
-    "tools/verify-test-cohorts.test.mjs",
-    "tsconfig.client.json",
-    "tsconfig.json",
-    "tsconfig.server.json",
-    "vite.config.ts",
-    "vitest.config.ts",
-    "vitest.setup.ts"
-  ]
+  }
 }

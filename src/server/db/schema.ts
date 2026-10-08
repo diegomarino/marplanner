@@ -87,7 +87,7 @@ export const members = sqliteTable(
 /** Settings Object — per-object persisted settings, written and validated as a unit.
  * `locale` core object (seeded on fresh setup):
  * timezone TEXT (IANA) DEFAULT 'Europe/Madrid'
- * language TEXT DEFAULT 'es'
+ * language TEXT DEFAULT 'en'
  * weekStartDay INTEGER (1-7) DEFAULT 1
  */
 export const settingsObjects = sqliteTable("settings_objects", {

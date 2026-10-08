@@ -19,6 +19,8 @@
  */
 import { getEvents, readHouseholdTimezone } from "../../../host-api";
 
+import type { CalendarReadContext } from "../../../host-api";
+
 const TYPE = "today";
 const MAX_EVENTS = 10;
 /** Hard cap on bullet length so the renderer never overflows its usable width (v1 parity
@@ -29,6 +31,7 @@ const MAX_BULLET_CHARS = 36;
 export interface TodayBlockContext {
   memberId: string;
   date: string;
+  txCtx?: CalendarReadContext;
 }
 
 export interface TodayBlockData {
@@ -61,9 +64,10 @@ export const todayBlock = {
   scope: "member" as const,
   source:
     "src/server/modules/calendar getEvents (host-api-barrel-exported, 010 precedent) + readHouseholdTimezone",
-  async generate(ctx: TodayBlockContext): Promise<TodayBlockData | null> {
+  generate(ctx: TodayBlockContext): TodayBlockData | null {
     const items = getEvents({
       source: "all",
+      txCtx: ctx.txCtx,
       assignedTo: ctx.memberId,
       range: { from: ctx.date, to: ctx.date },
     });

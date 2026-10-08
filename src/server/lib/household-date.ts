@@ -18,38 +18,42 @@ export {
   nextOccurrenceInTz,
 } from "../../shared/householdTime.js";
 
-/** Read the household timezone from persisted settings.
- * Returns the timezone from the 'locale' settings object, or the default
- * (Europe/Madrid) when no such object exists.
- */
-export function readHouseholdTimezone(): string {
-  const db = getDb();
-  const row = db
+/** Read only persisted locale fields; corrupt data uses defaults without rewriting the row. */
+function readLocale(): Record<string, unknown> {
+  const row = getDb()
     .prepare("SELECT data FROM settings_objects WHERE object_name = ?")
     .get("locale") as { data: string } | undefined;
   if (row) {
-    const persisted: Record<string, unknown> = JSON.parse(row.data);
-    if (persisted.timezone) return persisted.timezone as string;
+    try {
+      const value: unknown = JSON.parse(row.data);
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        return value as Record<string, unknown>;
+      }
+    } catch {
+      // A restored or corrupted locale must not abort calendar-date reads.
+    }
+  }
+  return {};
+}
+
+/** Read a valid household timezone, falling back to Europe/Madrid when unset or invalid. */
+export function readHouseholdTimezone(): string {
+  const timezone = readLocale().timezone;
+  if (typeof timezone === "string") {
+    try {
+      new Intl.DateTimeFormat("en", { timeZone: timezone });
+      return timezone;
+    } catch {
+      // Invalid persisted timezone; retain the row and use the configured default.
+    }
   }
   return DEFAULT_TZ;
 }
 
-/** Read the `weekStartDay` app-setting (0=Sunday, 1=Monday) from the same
- * `locale` settings object `readHouseholdTimezone` reads — moved from meals'
- * local copy (ADR-039 §2b′ host-mediation; no new setting added).
- */
+/** Read the supported week-start value (0=Sunday, 1=Monday), defaulting to Monday. */
 export function readWeekStartDay(): number {
-  const db = getDb();
-  const row = db
-    .prepare("SELECT data FROM settings_objects WHERE object_name = ?")
-    .get("locale") as { data: string } | undefined;
-  if (row) {
-    const persisted: Record<string, unknown> = JSON.parse(row.data);
-    if (typeof persisted.weekStartDay === "number") {
-      return persisted.weekStartDay;
-    }
-  }
-  return DEFAULT_WEEK_START_DAY;
+  const weekStartDay = readLocale().weekStartDay;
+  return weekStartDay === 0 || weekStartDay === 1 ? weekStartDay : DEFAULT_WEEK_START_DAY;
 }
 
 /** Household-local calendar date ("YYYY-MM-DD") for the given epoch-ms
