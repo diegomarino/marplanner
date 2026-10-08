@@ -13,7 +13,7 @@ import { test, expect } from "@playwright/test";
  * the httpOnly device-key cookie after provisioning). The e2e asserts the
  * READ path expands recurrence; DST-instant correctness is unit-proven in
  * src/server/modules/calendar/recurrence.ts, not re-proven here.
- * - The app localizes to es by default (ADR-061). Interactive targets on
+ * - The app localizes to en by default (ADR-015). Interactive targets on
  * CalendarView carry stable `data-testid`s (added for this e2e), so row +
  * action-button + per-member-checkbox targeting is locale- and DOM-shape
  * independent — no text/`.last` races, and the member checkbox cannot

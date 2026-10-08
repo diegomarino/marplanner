@@ -4,6 +4,7 @@ import { useIsolatedDb } from "../helpers/db";
 import {
   isStrictCalendarDate,
   readHouseholdTimezone,
+  readWeekStartDay,
   weekdayOf,
   nextOccurrenceInTz,
   todayInHouseholdTz,
@@ -47,6 +48,27 @@ describe("household-date (RED tests, implementation)", () => {
   describe("readHouseholdTimezone", () => {
     it("returns Europe/Madrid when no locale settings object exists", () => {
       expect(readHouseholdTimezone()).toBe("Europe/Madrid");
+      for (const raw of [
+        "{invalid-json",
+        "null",
+        "[]",
+        "42",
+        '"locale"',
+        JSON.stringify({ timezone: "invalid", weekStartDay: 9 }),
+        JSON.stringify({ timezone: 42, weekStartDay: "0" }),
+      ]) {
+        getDb()
+          .prepare(
+            "INSERT INTO settings_objects (object_name, data, updated_at) VALUES ('locale', ?, ?) ON CONFLICT(object_name) DO UPDATE SET data = excluded.data"
+          )
+          .run(raw, Date.now());
+        expect(readHouseholdTimezone()).toBe("Europe/Madrid");
+        expect(readWeekStartDay()).toBe(1);
+        expect(todayInHouseholdTz(Date.now())).toBe("2026-08-09");
+        expect(
+          getDb().prepare("SELECT data FROM settings_objects WHERE object_name = 'locale'").get()
+        ).toEqual({ data: raw });
+      }
     });
 
     it("returns the persisted timezone when a locale settings object exists", () => {

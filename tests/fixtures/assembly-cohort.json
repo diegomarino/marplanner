@@ -555,6 +555,7 @@
     "isTestRuntime",
     "listActiveMembers",
     "memberExists",
+    "readEffectiveSettings",
     "readHouseholdTimezone",
     "readSettingsObject",
     "readWeatherLocation",
@@ -4500,6 +4501,7 @@
             "daily-briefing corpora corpus-availability map (FR-008/FR-009) isKnownBlockType recognizes all 21 registry types and rejects garbage"
           ],
           "tests/integration/daily-briefing-generation.test.ts": [
+            "daily-briefing full generation rejects an empty member before generation or persistence",
             "daily-briefing full generation FR-014: effective order merge — configured instances (incl. a repeated type with distinct params) first, then unlisted registry types in registry order",
             "daily-briefing full generation SC-003: generating the same member/date twice produces identical block selections and an identical raster",
             "daily-briefing full generation : editing a member colour does not alter the monochrome briefing raster",
@@ -6912,7 +6914,7 @@
         }
       },
       "src/server/db/schema.ts": {
-        "sha256": "1f82156a0e2c6139d51dd6d5c0b09824422d67f1f5c4d5ac9a026db0fdace91a",
+        "sha256": "9195adbc146c4fb7a2d1a1770471045d477820385abf9cfb628bfa8cf1f0fd12",
         "layer": "server",
         "minimumTotals": {
           "lines": 88,
@@ -6992,7 +6994,7 @@
         }
       },
       "src/server/host-api/index.ts": {
-        "sha256": "6d8c281cdf95e74de3eaa31c10280092bcab6ef0e9621d58fbb571c5247f184c",
+        "sha256": "7014f83ce966acf90d06e70516768491ea12d374d28f37578bff2e6a8494e4ed",
         "layer": "server",
         "minimumTotals": {
           "lines": 7,
@@ -7040,7 +7042,7 @@
         }
       },
       "src/server/lib/household-date.ts": {
-        "sha256": "d59516eacf0ed916b77822c5ac5fb5c3eb9ee5846077dcfbcfd8b084a2faca45",
+        "sha256": "09f93fdfde0b8fe6a8aceb9d8cb3a6aafcfe913bad9bff3d316282fd592db86b",
         "layer": "server",
         "minimumTotals": {
           "lines": 18,
@@ -7232,7 +7234,7 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/birthday.ts": {
-        "sha256": "464642e5d7792ade05225a3d4f7759de0d5f6838c5785b3ec20d175f1c94800e",
+        "sha256": "e82299b575dbb41da1bf0141e58d60b3a602c257cff9dad4fede3857c769df7c",
         "layer": "server",
         "minimumTotals": {
           "lines": 35,
@@ -7440,7 +7442,7 @@
         }
       },
       "src/server/modules/daily-briefing/blocks/streak.ts": {
-        "sha256": "38118db8ee3e0029dd91e1551dd6e7cd3fbb7e2b3573b2ec4accd62376c394d8",
+        "sha256": "0136bf1e325863769f7f30bf6019d0a0dbfa9932bb321824fecc82c6c45fd805",
         "layer": "server",
         "minimumTotals": {
           "lines": 25,
@@ -7729,13 +7731,13 @@
         }
       },
       "src/server/modules/daily-briefing/index.ts": {
-        "sha256": "175c8002223facf77354bd8d6525dbf67355c1e5b0f7fe2b18253e864f7f5bad",
+        "sha256": "496c7d45a3776ec9b4c707b5cb1d6a692c98a795590776a688cc200741a0d058",
         "layer": "server",
         "minimumTotals": {
-          "lines": 278,
-          "statements": 318,
+          "lines": 276,
+          "statements": 316,
           "functions": 57,
-          "branches": 229
+          "branches": 227
         },
         "minimumRates": {
           "lines": 93.52,
@@ -8145,7 +8147,7 @@
         }
       },
       "src/server/modules/daily-briefing/render/labels.ts": {
-        "sha256": "5e51561015dce6e0172a1e12cda99a036fdd6dc010dc229ac914f5fbbc0ad2ca",
+        "sha256": "cca1582eadb15889b1c62f29a2c7ce1d42ea4ef745562f790760c18d1a107433",
         "layer": "server",
         "minimumTotals": {
           "lines": 13,
@@ -8529,7 +8531,7 @@
         }
       },
       "src/server/modules/settings/index.ts": {
-        "sha256": "7ee7cdd82235d2033f59c7638cc44ce346cfe140897671294d083a69fca6b432",
+        "sha256": "8ff860833aa12c9ddaffa319e72896e8c020f2f570b168bc4f7b585e88b12d3d",
         "layer": "server",
         "minimumTotals": {
           "lines": 65,
@@ -8785,13 +8787,13 @@
         }
       },
       "src/server/routes/day-periods.ts": {
-        "sha256": "bde979824d4acf4bd12c79614dd723b53e53d60612e4e1d1b2d6c90ab2576f6c",
+        "sha256": "6285820a4651f73290a81bf2fc27321e2ec34926d62a23d63b0b417d13d68370",
         "layer": "server",
         "minimumTotals": {
-          "lines": 29,
-          "statements": 31,
+          "lines": 22,
+          "statements": 24,
           "functions": 6,
-          "branches": 12
+          "branches": 8
         },
         "minimumRates": {
           "lines": 96.55,

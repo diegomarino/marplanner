@@ -224,7 +224,7 @@ test("critical flow: gate → provision → cold settings → admin → member �
 
       // 6. Member create (FR-019/022/023): display name + role=parent → 201.
       // Language-agnostic selectors: the admin Members UI localizes to the household
-      // locale (default 'es', ADR-061), so target stable ids/roles + a testid, NOT
+      // locale (default 'en', ADR-015), so target stable ids/roles + a testid, NOT
       // English label text (which flips to Spanish once /api/settings resolves).
       const createSubmit = page.locator('form button[type="submit"]');
       await expect(createSubmit).toBeVisible();

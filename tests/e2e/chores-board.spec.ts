@@ -111,7 +111,7 @@ test("chores board critical flow: configure → board → complete → streak (#
   await expect(page.getByTestId("home-surface")).toBeVisible({ timeout: 15_000 });
 
   // Locale-robust text assertions below key off the LIVE settings response,
-  // never a hardcoded language (household default is es, ADR-061).
+  // never a hardcoded language (household default is en, ADR-015).
   const settingsResp = await page.request.get("/api/settings");
   expect(settingsResp.status()).toBe(200);
   const settings = await settingsResp.json();

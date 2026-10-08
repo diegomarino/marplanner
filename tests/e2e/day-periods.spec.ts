@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { unlockAdmin } from "./admin-unlock";
+import { messages, resolveLang } from "../../src/client/i18n/messages";
 
 /** — day periods critical-flow e2e (· FR-002/FR-003/FR-005/FR-006/FR-007/FR-008/FR-009).
  * Flow: auth prelude → Períodos Diarios screen → US1 (view 4 periods ordered)
@@ -33,11 +34,18 @@ test("day periods critical-flow: view → edit → active now (US1, US2, US3)", 
 
   await expect(page.getByTestId("admin-nav-member-create")).toBeVisible({ timeout: 10_000 });
 
+  const settingsResp = await page.request.get("/api/settings");
+  expect(settingsResp.ok()).toBeTruthy();
+  const settings = (await settingsResp.json()) as { locale: { language: string } };
+  const m = messages[resolveLang(settings.locale.language)];
+
   // --- Navigate to Períodos Diarios screen ---
   await page.getByTestId("admin-nav-day-periods").click();
 
   // --- US1 (view): exactly FOUR periods render, with their i18n labels ---
-  await expect(page.getByText("Cargando…")).toHaveCount(0, { timeout: 5000 });
+  await expect(page.getByText(m["dayPeriods.management.loading"])).toHaveCount(0, {
+    timeout: 5000,
+  });
 
   // Stable, non-fragile card locators (the whole point of the data-testid).
   const cards = page.getByTestId(/^day-period-/);
@@ -57,18 +65,20 @@ test("day periods critical-flow: view → edit → active now (US1, US2, US3)", 
   const morningCard = page.getByTestId("day-period-morning");
   const afternoonCard = page.getByTestId("day-period-afternoon");
 
-  // i18n proof (es): morning=Mañana, afternoon=Mediodía, evening=Tarde, night=Noche.
-  await expect(morningCard.getByText("Mañana", { exact: true })).toBeVisible({ timeout: 10_000 });
-  await expect(afternoonCard.getByText("Mediodía", { exact: true })).toBeVisible();
+  // Period labels must match the effective household language.
+  await expect(morningCard.getByText(m["dayPeriod.morning"], { exact: true })).toBeVisible({
+    timeout: 10_000,
+  });
+  await expect(afternoonCard.getByText(m["dayPeriod.afternoon"], { exact: true })).toBeVisible();
   await expect(
-    page.getByTestId("day-period-evening").getByText("Tarde", { exact: true })
+    page.getByTestId("day-period-evening").getByText(m["dayPeriod.evening"], { exact: true })
   ).toBeVisible();
   await expect(
-    page.getByTestId("day-period-night").getByText("Noche", { exact: true })
+    page.getByTestId("day-period-night").getByText(m["dayPeriod.night"], { exact: true })
   ).toBeVisible();
 
   // --- US2 (edit): change afternoon's start; SAVE; assert it persists + morning's derived end follows ---
-  await afternoonCard.getByRole("button", { name: "Editar" }).click();
+  await afternoonCard.getByRole("button", { name: m["dayPeriods.action.edit"] }).click();
 
   const timeInput = page.locator('input[type="time"]');
   await expect(timeInput).toBeVisible({ timeout: 5000 });
@@ -77,8 +87,10 @@ test("day periods critical-flow: view → edit → active now (US1, US2, US3)", 
 
   const newAfternoonStart = "11:30";
   await timeInput.fill(newAfternoonStart);
-  await afternoonCard.getByRole("button", { name: "Guardar" }).click();
-  await expect(afternoonCard.getByRole("button", { name: "Guardando…" })).toHaveCount(0, {
+  await afternoonCard.getByRole("button", { name: m["dayPeriods.action.save"] }).click();
+  await expect(
+    afternoonCard.getByRole("button", { name: m["dayPeriods.management.saving"] })
+  ).toHaveCount(0, {
     timeout: 5000,
   });
 
@@ -90,26 +102,28 @@ test("day periods critical-flow: view → edit → active now (US1, US2, US3)", 
   await expect(afternoonCard).toContainText(/\d{2}:\d{2}\s*–\s*\d{2}:\d{2}/);
 
   // --- US3 (active): exactly one "active now" indicator, on the CORRECT (server-authoritative) period ---
-  await expect(page.getByText("Activo ahora", { exact: true })).toHaveCount(1, { timeout: 10_000 });
+  await expect(page.getByText(m["dayPeriods.activeNow"], { exact: true })).toHaveCount(1, {
+    timeout: 10_000,
+  });
   // Cross-check: the badge sits in the card the SERVER says is active (client resolver agrees with server).
   const activeResp = await page.request.get("/api/day-periods/active");
   expect(activeResp.ok()).toBeTruthy();
   const { activeId } = (await activeResp.json()) as { activeId: string };
   await expect(
-    page.getByTestId(`day-period-${activeId}`).getByText("Activo ahora", { exact: true })
+    page.getByTestId(`day-period-${activeId}`).getByText(m["dayPeriods.activeNow"], { exact: true })
   ).toBeVisible();
 
   // --- US2 (negative): an out-of-order edit is rejected and does not persist ---
-  await afternoonCard.getByRole("button", { name: "Editar" }).click();
+  await afternoonCard.getByRole("button", { name: m["dayPeriods.action.edit"] }).click();
   await timeInput.fill("04:00"); // before morning's 05:00 → strict-order violation
-  await afternoonCard.getByRole("button", { name: "Guardar" }).click();
+  await afternoonCard.getByRole("button", { name: m["dayPeriods.action.save"] }).click();
 
   // A save/validation error is surfaced via the shared ErrorNotice live region (
   // migrated this off an inline `style="color: crimson"` selector, which the token-dialect
   // migration removes entirely — the stable testid is the decoupled replacement).
   await expect(page.getByTestId("day-periods-error")).toBeVisible({ timeout: 5000 });
 
-  await afternoonCard.getByRole("button", { name: "Cancelar" }).click();
+  await afternoonCard.getByRole("button", { name: m["dayPeriods.action.cancel"] }).click();
   // The rejected edit persisted nothing (client): afternoon still shows the last accepted value.
   await expect(afternoonCard).toContainText(newAfternoonStart, { timeout: 5000 });
 

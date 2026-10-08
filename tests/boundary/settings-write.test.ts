@@ -98,7 +98,7 @@ describe("settings-write", () => {
       const res = await getSettings(app, deviceKey);
       expect(res.statusCode).toBe(200);
       const body = JSON.parse(res.body);
-      expect(body.locale).toEqual({ timezone: "Europe/Madrid", language: "es", weekStartDay: 1 });
+      expect(body.locale).toEqual({ timezone: "Europe/Madrid", language: "en", weekStartDay: 1 });
       expect(body.weather).toEqual({ lat: null, lon: null });
     } finally {
       await app.close();
@@ -392,7 +392,7 @@ describe("settings-write", () => {
       expect(putBody.weather).toEqual({ lat: 40.4168, lon: -3.7038, label: "Madrid" });
       expect(putBody.locale).toEqual({
         timezone: "Europe/Madrid",
-        language: "es",
+        language: "en",
         weekStartDay: 1,
       });
 

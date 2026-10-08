@@ -107,7 +107,7 @@ non-participation is deliberate (`ADR-040`: every contract states its Events sur
 
 ## Data / Setup Contract
 
-the product starts with a fresh data store. No legacy `app_settings` rows are migrated. The core `locale` object is seeded with defaults (`Europe/Madrid`, `es`, `1`) on fresh setup. Plugin objects are seeded when their plugin is activated.
+the product starts with a fresh data store. No legacy `app_settings` rows are migrated. The core `locale` object is seeded with defaults (`Europe/Madrid`, `en`, `1`) on fresh setup. Plugin objects are seeded when their plugin is activated.
 
 The effective settings response always fills missing persisted values from object defaults, so the response is always complete for active objects even before any explicit write.
 
