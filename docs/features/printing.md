@@ -99,8 +99,10 @@ can be printed again without a stale duplicate slipping through.
   `printing.completed`; the server is the only authority for "did this print".
 - **SC-002**: For any output/date already printed, 0 duplicate jobs are enqueued, and a
   `supersedePrintRecord` call makes that output re-printable.
-- **SC-003**: With two or more connected tabs contending, exactly one claims each job
-  (0 double-claims).
+- **SC-003**: With two or more connected tabs contending, each job has at most one
+  claimant holding a valid active lease (0 concurrent double-claims). After lease
+  expiry, another tab may reclaim the job; a lost acknowledgement can therefore
+  cause duplicate physical transmission.
 
 ## Assumptions
 

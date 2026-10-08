@@ -58,7 +58,7 @@ not-found, and any racing read renders a tombstone rather than erroring.
 
 - **FR-003**: Given a `(date, slot)`, when its menu is requested, then it MUST be derived on read as the union of recurring entries of all active `meal_plan`s whose `weekday = weekdayOf(date, householdTz)` plus one-off entries for that exact date, and no occurrence rows MUST be materialized or stored. Contract: MEALS-RECIPES-INV-03.
 
-- **FR-004**: Given a derived menu, when its entries are ordered, then they MUST follow the canonical order — recurring entries before one-off, then `meal_plan` name ASC, then `createdAt` ASC — so the same logical menu always renders identically and briefing snapshots are reproducible. Contract: MEALS-RECIPES-INV-04.
+- **FR-004**: Given a derived menu, when its entries are ordered, then they MUST follow the canonical order — recurring entries before one-off, then `meal_plan` name ASC, `mealPlanId` ASC (tie-breaking equal names), `createdAt` ASC, then entry ID ASC — so the same logical menu always renders identically and briefing snapshots are reproducible. Contract: MEALS-RECIPES-INV-04.
 
 - **FR-005**: Given a recurring entry, when a single matching date should be skipped, then no per-occurrence skip MUST exist — editing or deactivating the entry or plan MUST change every matching weekday — and a non-always-recurring meal MUST instead be entered as a one-off entry. Contract: MEALS-RECIPES-INV-05.
 

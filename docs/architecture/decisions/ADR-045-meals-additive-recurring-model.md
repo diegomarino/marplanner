@@ -122,7 +122,7 @@ without forcing them into one artificial object.
 - Entries are household-wide; no member targeting.
 - Week boundaries/"today" use household tz + `weekStartDay`; no stored week window.
 - The derived menu is returned in the canonical order (recurring before one-off, then
-  plan name ASC, then `createdAt` ASC); two reads/regenerations of an unchanged menu
+  plan name ASC, `mealPlanId` ASC, `createdAt` ASC, then entry ID ASC); two reads/regenerations of an unchanged menu
   produce identical sequences.
 - Consumers receive a per-slot **list** of resolved labels; the briefing freezes the
   list verbatim (`ADR-022`).
