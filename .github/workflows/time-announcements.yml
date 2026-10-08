@@ -1,0 +1,47 @@
+name: Time announcements browser check
+"on":
+  workflow_dispatch: null
+  pull_request:
+    types:
+      - labeled
+permissions:
+  contents: read
+jobs:
+  time-announcements:
+    name: time-announcements
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.label.name == 'e2e-time-announcements' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Record execution machine
+        env:
+          MACHINE: ${{ runner.name }}
+          MACHINE_OS: ${{ runner.os }}
+        run: |-
+          printf 'Runner: %s; OS: %s\n' "$MACHINE" "$MACHINE_OS"
+          uname -m
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.21.0
+      - name: Prepare job-owned tools and caches
+        run: |-
+          tool_root="$RUNNER_TEMP/marplanner-time-announcements-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          mkdir -p "$tool_root"
+          touch "$tool_root/npmrc"
+          {
+            echo "NPM_CONFIG_USERCONFIG=$tool_root/npmrc"
+            echo "NPM_CONFIG_PREFIX=$tool_root/npm-global"
+            echo "npm_config_cache=$tool_root/npm-cache"
+            echo "PLAYWRIGHT_BROWSERS_PATH=$tool_root/playwright"
+          } >> "$GITHUB_ENV"
+          echo "$tool_root/npm-global/bin" >> "$GITHUB_PATH"
+      - run: npm install --global npm@11.19.0
+      - run: test "$(node --version)" = v24.21.0 && test "$(npm --version)" = 11.19.0
+      - run: npm ci
+      - run: npx playwright install --with-deps --only-shell chromium
+      - run: npm run test:e2e:time-announcements
