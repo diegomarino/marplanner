@@ -4,13 +4,17 @@
 // `../labels.ts` (DAILY-BRIEFING-INV-06, P1 fold).
 import { createElement } from "react";
 import { defineBlock, type BlockDefinition } from "pressedslip";
-import { type ZodType, z } from "zod";
+import { z } from "zod";
 import { labelsFromCtx } from "../labels";
 
-const schema: ZodType<{ lunch?: string; snack?: string; dinner?: string }> = z.object({
-  lunch: z.string().optional(),
-  snack: z.string().optional(),
-  dinner: z.string().optional(),
+const slotSchema = z.union([
+  z.string(),
+  z.array(z.object({ kind: z.enum(["recipe", "note"]), label: z.string() })),
+]);
+const schema = z.object({
+  lunch: slotSchema.optional(),
+  snack: slotSchema.optional(),
+  dinner: slotSchema.optional(),
 });
 export type MealsData = z.infer<typeof schema>;
 
@@ -20,9 +24,13 @@ export const mealsBlock: BlockDefinition<MealsData> = defineBlock({
   render: ({ data, ctx }) => {
     const labels = labelsFromCtx(ctx).meals;
     const items: { id: string; value: string }[] = [];
-    if (data.lunch) items.push({ id: labels.lunch, value: data.lunch });
-    if (data.snack) items.push({ id: labels.snack, value: data.snack });
-    if (data.dinner) items.push({ id: labels.dinner, value: data.dinner });
+    for (const slot of ["lunch", "snack", "dinner"] as const) {
+      const entries = data[slot];
+      if (entries === undefined) continue;
+      const value =
+        typeof entries === "string" ? entries : entries.map((item) => item.label).join(", ");
+      if (value) items.push({ id: labels[slot], value });
+    }
     return createElement(
       "div",
       { style: { width: "100%", padding: 8, display: "flex", flexDirection: "column", gap: 4 } },

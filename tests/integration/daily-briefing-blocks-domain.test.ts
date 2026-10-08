@@ -424,32 +424,48 @@ describe("daily-briefing domain blocks (FR-013)", () => {
       expect(result).toBeNull();
     });
 
-    it("returns lunch/dinner when planned (single entry per slot, unchanged), omits snack, adapter-compatible (FR-013)", async () => {
+    it("returns verbatim lunch/dinner lists when planned, omits snack, adapter-compatible (FR-013)", async () => {
       seedOneOffMeal("lunch", "Soup 🍲");
       seedOneOffMeal("dinner", "Pasta");
 
       const result = mealsBlock.generate({ date: DATE });
-      expect(result).toEqual({ lunch: "Soup", dinner: "Pasta" });
+      expect(result).toEqual({
+        lunch: [{ kind: "note", label: "Soup 🍲" }],
+        dinner: [{ kind: "note", label: "Pasta" }],
+      });
       expect(result).not.toHaveProperty("snack");
       expect(() => adaptBlockData("meals", result)).not.toThrow();
     });
 
-    /** MEALS-RECIPES-AC-10 fold: v2's meals domain is an additive, N-per-slot
-     * contract extension over v1's single-per-slot port — "Consumers receive a per-slot
-     * resolved-label list; the briefing freezes it verbatim". Before this `find` silently
-     * dropped every sibling entry past the first. Seeds TWO lunch entries; both labels must
-     * survive, joined in the domain's own returned order (`getMenu`'s tie-break for same-date
-     * one-off entries is `created_at ASC, entry_id ASC` — both share this frozen-clock test's
-     * `created_at`, so `entry_id` "meal-lunch-a" < "meal-lunch-b" decides the order).
-     */
-    it("preserves ALL entries for a slot (N-per-slot), joined with ', ' in domain order, adapter-compatible (FR-013, AC-10)", async () => {
+    it("preserves ALL entries for a slot (N-per-slot) as lists in domain order, adapter-compatible (FR-013, AC-10)", async () => {
       seedOneOffMeal("lunch", "Soup", DATE, "meal-lunch-a");
       seedOneOffMeal("lunch", "Tacos", DATE, "meal-lunch-b");
       seedOneOffMeal("dinner", "Pasta");
 
       const result = mealsBlock.generate({ date: DATE });
-      expect(result).toEqual({ lunch: "Soup, Tacos", dinner: "Pasta" });
+      expect(result).toEqual({
+        lunch: [
+          { kind: "note", label: "Soup" },
+          { kind: "note", label: "Tacos" },
+        ],
+        dinner: [{ kind: "note", label: "Pasta" }],
+      });
       expect(() => adaptBlockData("meals", result)).not.toThrow();
+    });
+
+    it("preserves stale recipe references as structured tombstone entries", () => {
+      const db = getDb();
+      db.pragma("foreign_keys = OFF");
+      try {
+        db.prepare(
+          "INSERT INTO meal_entries (id, entry_date, slot, recipe_id, created_at) VALUES ('stale', ?, 'dinner', 'missing-recipe', ?)"
+        ).run(DATE, Date.now());
+      } finally {
+        db.pragma("foreign_keys = ON");
+      }
+      expect(mealsBlock.generate({ date: DATE })).toEqual({
+        dinner: [{ kind: "recipe", label: "Deleted recipe" }],
+      });
     });
 
     it("excludes breakfast (v1 parity — the envelope shape has no breakfast field)", async () => {

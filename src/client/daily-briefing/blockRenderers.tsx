@@ -22,7 +22,7 @@ import type { MessageKey } from "@/i18n/messages";
 import { formatDayLabel } from "@/home/weatherFormat";
 import { WEATHER_CONDITION_LABEL_KEYS } from "@/home/WeatherPill";
 import { SLOT_LABEL_KEYS } from "@/meals/MealsBoard";
-import type { ForecastDay } from "../../shared";
+import type { BriefingMealItem, ForecastDay } from "../../shared";
 
 /** A single non-empty string, or `fallback` (an id) when the value is missing/blank. */
 export function displayText(value: unknown, fallback: string): string {
@@ -65,9 +65,9 @@ export interface TodayData {
 }
 
 export interface MealsV2Data {
-  lunch?: string;
-  snack?: string;
-  dinner?: string;
+  lunch?: BriefingMealItem[] | string;
+  snack?: BriefingMealItem[] | string;
+  dinner?: BriefingMealItem[] | string;
 }
 
 export interface BirthdayFamilyEntry {
@@ -219,18 +219,17 @@ export function WeatherBlock({ data }: { data: ForecastDay }): React.JSX.Element
   );
 }
 
-/** schemaVersion-2 "meals" shape — `{lunch?, snack?, dinner?}`, fixing the empty-render bug
- * where `Array.isArray(data)` was false for this object shape (e2e migration finding). */
+/** Render structured meal slots and existing scalar snapshots without rewriting either. */
 export function MealsBlock({ data }: { data: MealsV2Data }): React.JSX.Element {
   const { t } = useTranslation();
-  const rows: Array<[MessageKey, string | undefined]> = [
-    [SLOT_LABEL_KEYS.lunch, data.lunch],
-    [SLOT_LABEL_KEYS.snack, data.snack],
-    [SLOT_LABEL_KEYS.dinner, data.dinner],
-  ];
-  const items = rows
-    .filter((row): row is [MessageKey, string] => row[1] !== undefined)
-    .map(([key, label]) => `${t(key)}: ${label}`);
+  const items: string[] = [];
+  for (const slot of ["lunch", "snack", "dinner"] as const) {
+    const entries = data[slot];
+    if (entries === undefined) continue;
+    const label =
+      typeof entries === "string" ? entries : entries.map((item) => item.label).join(", ");
+    items.push(`${t(SLOT_LABEL_KEYS[slot])}: ${label}`);
+  }
   return <TextList items={items} />;
 }
 
