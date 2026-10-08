@@ -42,6 +42,7 @@ describe("Calendar demo seed boundary", () => {
         "meals:demo",
         "daily:content:demo",
         "time:announcements:demo",
+        "plugins:demo",
       ]);
       expect(
         getDb()
@@ -84,7 +85,12 @@ describe("Calendar demo seed boundary", () => {
           .prepare("SELECT COUNT(*) AS count FROM calendar_events WHERE source = 'external'")
           .get()
       ).toEqual({ count: 0 });
-      expect(fetchSpy).not.toHaveBeenCalled();
+      // Lifecycle assembly may load embedded WASM; no external fetch is allowed.
+      expect(
+        fetchSpy.mock.calls.filter(
+          ([input]) => !String(input).startsWith("data:application/octet-stream;base64,")
+        )
+      ).toEqual([]);
     } finally {
       fetchSpy.mockRestore();
     }

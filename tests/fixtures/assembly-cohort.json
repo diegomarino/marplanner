@@ -4876,6 +4876,8 @@
             "Calendar demo seed integration reads stable local seed events through the Calendar route after a changed-clock rerun"
           ],
           "tests/integration/seed-daily-content.test.ts": [
+            "daily content demo seed integration rolls back failed demo activation and repairs the same-date profile",
+            "daily content demo seed integration activates every demo plugin and restores deactivated plugins on a public profile rerun",
             "daily content demo seed integration exposes messages, briefing settings, opt-ins, and announcements through public HTTP reads"
           ],
           "tests/integration/seed-meals.test.ts": [

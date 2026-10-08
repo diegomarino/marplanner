@@ -35,6 +35,7 @@ describe("routines and reminders demo seed boundary", () => {
       "meals:demo",
       "daily:content:demo",
       "time:announcements:demo",
+      "plugins:demo",
     ]);
     expect(listRoutines()).toEqual([
       {
