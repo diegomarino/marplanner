@@ -1,4 +1,4 @@
-# ADR-063 Audit Timestamp Encoding
+# ADR-003 Audit Timestamp Encoding
 
 Status: accepted
 Owner: architecture
@@ -20,7 +20,7 @@ DTOs expose numbers. This refines ADR-005's UTC semantics.
 | -------------------- | -------------------------------------- | ------------------------------- | ----------- |
 | Business date        | Household calendar day                 | TEXT YYYY-MM-DD                 | ADR-005/006 |
 | Domain event instant | Timed event and originating wall-clock | TEXT ISO instant plus IANA TZID | ADR-062     |
-| Audit timestamp      | Operational ordering and diagnostics   | INTEGER epoch-ms                | ADR-063     |
+| Audit timestamp      | Operational ordering and diagnostics   | INTEGER epoch-ms                | ADR-003     |
 
 The convention is per purpose, not a SQLite prohibition on mixed column types.
 One STRICT table may contain INTEGER and TEXT columns; rejection occurs when a

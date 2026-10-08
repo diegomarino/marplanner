@@ -103,7 +103,7 @@ uses orchestration + registry + absence-tolerance instead (declare-now, enforce-
 
 ## Data / Setup Contract
 
-Plugin lifecycle/lineage audit timestamps currently use ISO TEXT and string DTOs, diverging from ADR-063. A bounded exception or safe forward migration remains unresolved.
+Plugin lifecycle/lineage audit timestamps currently use ISO TEXT and string DTOs, diverging from ADR-003. A bounded exception or safe forward migration remains unresolved.
 
 Fresh deployment: a core-owned `active_plugins` registry; each plugin ships id-prefixed
 tables + its own migrations. All plugins seed **inactive**; the owner activates

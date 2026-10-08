@@ -104,5 +104,5 @@ legacy import (ADR-026). All-day rows have no tzid. See the Calendar module and 
 - Historical motivation: recurring local events, reviewed on 2026-07-30.
 - Refines: `docs/architecture/contracts/calendar.md`; related `ADR-005` (household tz), `ADR-006` (dates),
   `ADR-028` (mutable tz), `ADR-043` (derive-on-read), `ADR-018`/`ADR-024` (Calendar interface/vocab),
-  `ADR-063` (audit-timestamp encoding & the storage time taxonomy).
+  `ADR-003` (audit-timestamp encoding & the storage time taxonomy).
 - Constitution: IV (time/date discipline), XIV (empirical evidence — probe above).
