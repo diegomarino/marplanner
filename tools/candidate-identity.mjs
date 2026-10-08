@@ -34,7 +34,7 @@ export function trackedProductFiles(root = process.cwd()) {
     });
   } catch (error) {
     const detail = error.stderr?.toString("utf8").trim();
-    throw new Error(detail || "Candidate inventory requires a git checkout");
+    throw new Error(detail || "Candidate inventory requires a git checkout", { cause: error });
   }
   const files = output.toString("utf8").split("\0").filter(Boolean);
   if (!files.length || new Set(files).size !== files.length)
