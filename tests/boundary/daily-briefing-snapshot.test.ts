@@ -133,6 +133,51 @@ describe("daily-briefing snapshot + regeneration boundary", () => {
     ).toEqual({ count: 1 });
   });
 
+  it("ADR-045: freezes ordered meal kinds and verbatim labels until regeneration", async () => {
+    const db = getDb();
+    const now = Date.now();
+    db.prepare(
+      "INSERT INTO recipes (id, name, created_at, updated_at) VALUES ('recipe', 'Soup, bread 🍲', ?, ?)"
+    ).run(now, now);
+    db.prepare(
+      "INSERT INTO meal_plans (id, name, active, created_at, updated_at) VALUES ('plan', 'School', 1, ?, ?)"
+    ).run(now, now);
+    db.prepare(
+      "INSERT INTO meal_entries (id, meal_plan_id, weekday, slot, recipe_id, created_at) VALUES ('recurring', 'plan', 'fri', 'lunch', 'recipe', ?)"
+    ).run(now);
+    db.prepare(
+      "INSERT INTO meal_entries (id, entry_date, slot, note, created_at) VALUES ('note', ?, 'lunch', 'Soup, bread 🍲', ?)"
+    ).run(date, now);
+    const expected = {
+      lunch: [
+        { kind: "recipe", label: "Soup, bread 🍲" },
+        { kind: "note", label: "Soup, bread 🍲" },
+      ],
+    };
+    const meals = (briefing: Briefing) =>
+      briefing.payload.blocks.find((block) => block.type === "meals")?.data;
+    const response = await generate();
+    expect(response.statusCode).toBe(200);
+    const initial = response.json<Briefing>();
+    expect(meals(initial)).toEqual(expected);
+    db.prepare("UPDATE recipes SET name = 'Edited recipe' WHERE id = 'recipe'").run();
+    db.prepare("UPDATE meal_entries SET note = 'Edited note' WHERE id = 'note'").run();
+    const frozen = await read();
+    expect(frozen.generated).toBe(true);
+    if (!frozen.generated) throw new Error("Expected a persisted briefing");
+    expect(meals(frozen.briefing)).toEqual(expected);
+    const regeneratedResponse = await generate();
+    expect(regeneratedResponse.statusCode).toBe(200);
+    const regenerated = regeneratedResponse.json<Briefing>();
+    expect(regenerated.id).toBe(initial.id);
+    expect(meals(regenerated)).toEqual({
+      lunch: [
+        { kind: "recipe", label: "Edited recipe" },
+        { kind: "note", label: "Edited note" },
+      ],
+    });
+  });
+
   it("tolerates archived snapshots on read without revalidating the member", async () => {
     const response = await generate();
     expect(response.statusCode).toBe(200);

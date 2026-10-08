@@ -207,9 +207,27 @@ export function adaptBlockData(blockType: string, raw: unknown): unknown {
     }
     case "meals": {
       const out: Record<string, unknown> = {};
-      if (data.lunch !== undefined) out.lunch = needString(blockType, "lunch", data.lunch);
-      if (data.snack !== undefined) out.snack = needString(blockType, "snack", data.snack);
-      if (data.dinner !== undefined) out.dinner = needString(blockType, "dinner", data.dinner);
+      for (const slot of ["lunch", "snack", "dinner"] as const) {
+        if (data[slot] === undefined) continue;
+        // Existing snapshots retain scalar slots; new generation stores structured lists.
+        if (typeof data[slot] === "string") {
+          out[slot] = needString(blockType, slot, data[slot]);
+          continue;
+        }
+        out[slot] = needArray<Record<string, unknown>>(blockType, slot, data[slot], "meal").map(
+          (item, i) => {
+            const field = `${slot}[${i}]`;
+            if (typeof item !== "object" || item === null || Array.isArray(item)) {
+              throw new AdapterError(blockType, field, "expected meal object");
+            }
+            const kind = needString(blockType, `${field}.kind`, item.kind);
+            if (kind !== "recipe" && kind !== "note") {
+              throw new AdapterError(blockType, `${field}.kind`, "expected recipe|note");
+            }
+            return { kind, label: needString(blockType, `${field}.label`, item.label) };
+          }
+        );
+      }
       return out;
     }
     case "streak":

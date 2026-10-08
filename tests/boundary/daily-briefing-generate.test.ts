@@ -131,7 +131,7 @@ describe("daily-briefing generate + read boundary", () => {
     expect(byType("meals")).toMatchObject({
       scope: "shared",
       status: "ok",
-      data: { lunch: "Soup" },
+      data: { lunch: [{ kind: "note", label: "Soup" }] },
     });
   });
 
