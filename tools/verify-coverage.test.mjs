@@ -13,7 +13,7 @@ const metrics = (covered, total) =>
   );
 const expected = {
   candidate: "candidate-1",
-  toolchain: { node: "24.21.0", vitest: "5.0.2" },
+  toolchain: { node: "24.21.0", vitest: "5.0.3" },
   files: {
     "src/client/a.ts": {
       sha256: "a".repeat(64),
@@ -37,7 +37,7 @@ const expected = {
 };
 const observed = {
   candidate: "candidate-1",
-  toolchain: { node: "24.21.0", vitest: "5.0.2" },
+  toolchain: { node: "24.21.0", vitest: "5.0.3" },
   files: {
     "src/client/a.ts": { sha256: "a".repeat(64), metrics: metrics(10, 10) },
     "src/server/b.ts": { sha256: "b".repeat(64), metrics: metrics(10, 10) },
@@ -181,9 +181,13 @@ test("preflight rejects stale coverage fingerprints before runners", async () =>
         },
       },
     };
-    const pkg = { packageManager: "npm@11.19.0", devDependencies: { vitest: "5.0.2" } };
+    const pkg = { packageManager: "npm@11.19.0", devDependencies: { vitest: "5.0.3" } };
     const runtime = { node: "24.21.0", npm: "11.19.0" };
     assert.equal(preflightCoverage(policy, pkg, runtime, root).files, 1);
+    const stalePkg = { ...pkg, devDependencies: { vitest: "5.0.2" } };
+    assert.throws(() => preflightCoverage(policy, stalePkg, runtime, root), /vitest toolchain/);
+    const staleEvidence = { ...observed, toolchain: { ...observed.toolchain, vitest: "5.0.2" } };
+    assert.throws(() => verifyCoverage(expected, staleEvidence), /vitest toolchain/);
     fs.writeFileSync(join(root, "a.ts"), "changed");
     assert.throws(() => preflightCoverage(policy, pkg, runtime, root), /source hash differs/);
     policy.files["a.ts"].sha256 = "invalid";
