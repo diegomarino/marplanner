@@ -44,11 +44,6 @@ Historical references to archived members must remain readable. New assignments,
 - Given an archived member, when ordinary member lists and assignment pickers load, then the member is omitted.
 - Given historical data referencing an archived member, when a history or audit view renders the record, then the member reference remains legible rather than disappearing or becoming assignable again.
 
-## Open Questions
-
-- Resolved by `ADR-054`: member hard delete is forbidden; archive/restore preserves references.
-- The exact downstream role eligibility rules remain open under `ADR-002`.
-
 ## Traceability
 
 - Conflicts: related to `CR-002-active-child-targets`

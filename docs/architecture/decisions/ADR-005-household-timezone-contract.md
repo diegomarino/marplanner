@@ -39,7 +39,7 @@ Generated briefings are snapshots of the data at generation time. If the househo
 
 ## Implementation Reference
 
-The former monorepo path and phase checklist are historical. Current shared calendar/time primitives live in `src/shared/householdTime.ts`; server household-date readers live in `src/server/lib/household-date.ts`. Timed-event storage and originating timezone are refined by `ADR-062`; audit encoding is governed by `ADR-063`. Source locations are not execution evidence.
+Shared calendar/time primitives live in `src/shared/householdTime.ts`; server household-date readers live in `src/server/lib/household-date.ts`. Timed-event storage and originating timezone are refined by `ADR-062`; audit encoding is governed by `ADR-063`. Source locations are not execution evidence.
 
 ## Affected Specs
 

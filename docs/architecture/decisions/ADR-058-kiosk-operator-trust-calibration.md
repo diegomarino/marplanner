@@ -6,10 +6,6 @@ Decision date: 2026-06-30
 Peer-reviewed: no (deliberate non-mechanism — ratifies the existing calibration; low-risk)
 Builds on: `ADR-030` (keys), `ADR-013` (PIN UI gate), `ADR-053` (device block), `ADR-057` (telemetry view).
 
-## Reconciliation (2026-10-08)
-
-The household trust calibration remains unchanged. Key-management mutations and anti-lockout are future lifecycle work, not delivered endpoints; their raw-header boundary is a required target. `ADR-030`/`ADR-032` now specify that cookie-only device keys cannot satisfy operator anti-lockout. Dynamic plugin install/uninstall also remains dormant under `ADR-039`.
-
 ## Decision
 
 **Names and ratifies the trust calibration that was already emergent — there is no second
@@ -61,7 +57,7 @@ family kiosk.** Generalizing into an "operator tier" was over-engineering: (a) i
 a malicious API-capable insider that the threat model excludes, and (b) it fights the kiosk's
 own auth shape — the httpOnly device cookie cannot present a raw key, so any header-`*` op is, by
 construction, "you must hold the bootstrap key," which is disproportionate friction for
-_reversible_ operations. The one act that genuinely warrants it (future key-management) has the raw-header boundary specified; implementation is deferred.
+_reversible_ operations. Future key-management must use the raw-header boundary and preserve an operator-usable credential; these mutations are deferred in the first release (`ADR-030`/`ADR-032`).
 This is the same "accept + document" posture chosen for telemetry (ADR-057), applied consistently.
 
 ## Affected Specs

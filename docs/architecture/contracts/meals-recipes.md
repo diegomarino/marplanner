@@ -4,10 +4,6 @@ Status: maintained contract
 Depends on decisions: `ADR-002`, `ADR-005`, `ADR-006`, `ADR-013`, `ADR-015`, `ADR-020`,
 `ADR-022`, `ADR-026`, `ADR-030`, `ADR-043`, `ADR-045`, `ADR-046`, `ADR-047`
 
-## Implementation reconciliation (2026-10-08)
-
-The additive menu and deterministic ordering exist. Daily Briefing currently flattens its meal lists into scalar strings and removes emoji before storing the snapshot; that does not realize the verbatim structured-list requirement in `MEALS-RECIPES-AC-10`/`ADR-045`. Preserve that requirement until implemented or explicitly amended.
-
 ## Purpose
 
 Low-friction household meal planning, patterned on Routines/Chores: reusable recipes, a
@@ -143,7 +139,7 @@ occurrences, no `weekStart`/`weekEnd` columns. The 7 `meal_plans` / 33 `meals` /
 - **MEALS-RECIPES-AC-08** Recipe `name` blank-after-trim rejected; name-only recipe accepted; absent/empty
   `slots` ⇒ all pickers.
 - **MEALS-RECIPES-AC-09** Dates outside strict `YYYY-MM-DD` rejected; week/today use household tz + `weekStartDay`.
-- **MEALS-RECIPES-AC-10** Consumers receive a per-slot resolved-label list; the briefing freezes it verbatim.
+- **MEALS-RECIPES-AC-10** Consumers receive a per-slot resolved-label list; the briefing freezes it verbatim. The current briefing producer instead stores joined strings and removes emoji; structured-list preservation remains unimplemented (ADR-045).
 
 ## Open Decisions
 

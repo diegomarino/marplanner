@@ -4,10 +4,6 @@ Status: accepted
 Owner: architecture + ops
 Decision date: 2026-06-28
 
-## Reconciliation (2026-10-08)
-
-Restore compatibility is narrowed to the supported baseline lineage for the installed launch scope (`ADR-056`, launch amendment). The gate reads the baseline sentinel and migration-file set inside the candidate at execution time: unsupported lineage is refused; an unknown migration is rejected as a downgrade; a supported equal/subset set can restore and migrate. Arbitrary historical/legacy upgrade compatibility is deferred. Uploading a SQLite file does not make it restorable or authorize legacy-data migration (`ADR-026`). Safety, quiescence and rollback requirements below remain in force.
-
 ## Decision
 
 Restore is the only operation that replaces all-domains database state at once, so
@@ -39,8 +35,7 @@ it is treated as destructive and rare — safety beats convenience. Restore is a
 
 **Compatibility (migration-lineage checked, not schema-diffed):**
 
-Cross-version restore is a tail case (≈all restores are recent = same version), so
-no bespoke migrate-on-restore engine is built now.
+Restore supports the installed baseline lineage and its migration-file subsets. Arbitrary historical upgrades are outside the first-release scope (`ADR-056`). The shared migration runner upgrades supported candidates; uploading a legacy SQLite file does not make it restorable (`ADR-026`).
 
 4. Restore reads the **baseline sentinel and migration-file set** from inside the backup file (its own
    migrations table), **re-read at restore-execution time, not from the list cache**

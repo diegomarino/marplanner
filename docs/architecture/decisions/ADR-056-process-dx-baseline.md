@@ -7,10 +7,6 @@ Builds on: ADR-055 (stack). Depends on / reinforces: ADR-017/042 (backups), ADR-
 split), ADR-015 (i18n parity), ADR-039 (plugin boundaries), ADR-028 (boundary validation),
 ADR-046/054/025 (delete/archive lifecycle). Folds into [developer verification policy](../../quality/verification.md).
 
-## Reconciliation (2026-10-08)
-
-The production onboarding examples described below are not implemented. Installed synthetic seed profiles require an explicitly disposable target and must not run at container startup. The proposed default-on production examples, reserved `example-%` IDs and `isExample` protections remain unresolved product scope; no launch completion may be inferred from synthetic seed tooling. This update neither enables production seeding nor silently waives those proposed protections.
-
 ## Decision
 
 The engineering processes, calibrated to a distributable single-instance self-hosted app built
@@ -74,14 +70,12 @@ Run acceptance in a fresh validation worktree at the reviewed local candidate wi
   build-provenance attestation** (proportionate supply-chain hygiene when third parties run the
   image; cosign optional). Deploy/rollback = N/A (self-hoster owns).
 
-### Launch scope amendment (2026-10-03)
+### First-release scope
 
-The maintainer explicitly defers release versioning policy, arbitrary historical
-upgrade compatibility and the `SKIP_MIGRATION` read-only mode until after launch.
-The SemVer/release automation and historical migration policies above/below remain
-future design requirements; they are not implemented features or launch gates.
-This deferral does not relax pre-migration recovery snapshots, fail-fast backup
-errors, safe storage ownership, request/job drain or preservation of recovery data.
+Release versioning policy, arbitrary historical upgrade compatibility and
+`SKIP_MIGRATION` read-only mode are outside the first-release scope. Their designs
+remain future requirements. This scope preserves pre-migration recovery snapshots,
+fail-fast backup errors, storage ownership, request/job drain and recovery data.
 
 ### Migration policy (Q16)
 
@@ -99,26 +93,22 @@ errors, safe storage ownership, request/job drain or preservation of recovery da
   change to the upgrade path (drops pre-baseline installs), allowed only as an explicit announced
   "min-supported-from vX" baseline = a MAJOR bump.
 
-### Seeds (Q16b) — original three-set design; production onboarding pending
+### Seeds
 
-1. **Essential/system** via **data migrations** (all envs, ordered, impossible to forget): default
-   day-periods (ADR-010/011), initial household/settings row.
-2. **Dev fixtures:** populated playground; **excluded from the prod image** + `NODE_ENV !==
-'production'` guard with a loud refuse. Tests use programmatic per-test fixtures.
-3. **Proposed onboarding — not implemented; scope decision pending** (first-install prod, localized ADR-015, real example content; proposed default-ON, wizard
-   "start empty" deferred): **controlled deterministic IDs in a reserved namespace** + `INSERT …
-ON CONFLICT(id) DO NOTHING` (idempotent vs re-run/edit/archive/partial-failure; never
-   overwrites/un-archives). **`isExample` ⇒ archive-only**, enforced by a **`BEFORE DELETE` SQLite
-   trigger (`RAISE(ABORT)`)** so it's bypass-proof even against in-process plugins doing raw `DELETE`
-   - `ON DELETE CASCADE` (ADR-039/046) [peer-review L-b]. Reserved namespace enforced by a DB
-     **CHECK constraint** `CHECK (id NOT LIKE 'example-%' OR is_example=1)` so a user ID can't silently
-     block the seed [peer-review L-a]. Future caveat: any archived-row purge must exclude `isExample`.
-     Prod image carries Set 1 + Set 3, NOT Set 2.
+Essential/system values are established through ordered data migrations. Public
+and private synthetic seed profiles require an explicitly disposable target; they
+must not run at container startup or overwrite active household data.
+
+Production onboarding examples are not implemented and their release disposition
+remains undecided. A future design must decide whether examples are useful and
+define deterministic identity, idempotence, archival/deletion behavior and
+reserved-namespace enforcement before enabling them. Synthetic fixtures do not
+establish production onboarding acceptance.
 
 ### Generated artifacts & component reuse (Q17)
 
 - **Generated (4), each generator + drift check:** Drizzle migrations · OpenAPI spec
-  (`@fastify/swagger`) · i18n key parity (ADR-015) · `COMPONENTS.md` (TypeScript export inventory; prop and cva contracts linked to maintained source). **API contracts are maintained under `docs/api/` with the installed route/shape drift gates**; a live `/docs` serving surface is not established by this historical generator proposal. **NOT generated** (avoided by structure): API client types (shared via
+  (`@fastify/swagger`) · i18n key parity (ADR-015) · `COMPONENTS.md` (TypeScript export inventory; prop and cva contracts linked to maintained source). **API contracts are maintained under `docs/api/` with the installed route/shape drift gates**; a live `/docs` serving surface is not part of the documented installed API. **NOT generated** (avoided by structure): API client types (shared via
   `src/shared`), route tree, ER diagram (YAGNI), design tokens (Tailwind config is source).
 - **OpenAPI schema-coverage gate:** a Fastify `ready` hook asserts every route carries a schema
   (also serves ADR-028) [peer-review S-a].
@@ -129,7 +119,7 @@ ON CONFLICT(id) DO NOTHING` (idempotent vs re-run/edit/archive/partial-failure; 
 
 ### Contributor guardrails
 
-Document runnable commands in [onboarding](../../development/onboarding.md) and verify them against `package.json`. Enforce module boundaries through lint and tests; keep generated artifacts under drift checks. A change to a shared contract requires consumer regression checks. Historical tool choices in this decision do not establish that a command or gate exists in the current repository.
+Document runnable commands in [onboarding](../../development/onboarding.md) and verify them against `package.json`. Enforce module boundaries through lint and tests; keep generated artifacts under drift checks. A change to a shared contract requires consumer regression checks. Verify every documented command and gate against the current repository before relying on it.
 
 ## Implementation status (2026-10-02)
 
@@ -159,20 +149,14 @@ gate or publishing lane described above is implemented.
   CI; a stale generated artifact fails CI; a documented command absent from `package.json` is a documentation finding.
 - A migration applied with a failed pre-backup aborts (no data-loss window); a migration failure
   surfaces a human-readable message and retains a verified recovery point. The
-  `SKIP_MIGRATION` mode is deferred until after launch by the scope amendment above.
+  `SKIP_MIGRATION` mode is deferred until after launch by the first-release scope above.
 - Onboarding example content survives archive but cannot be hard-deleted (trigger) and cannot be
   blocked by a user-chosen reserved-namespace ID (CHECK).
 - The app runs correctly behind a subpath reverse proxy via `BASE_PATH`.
 
 ## Open questions
 
-- ~~**OPEN (parked, structural):** "Vite `base` = `BASE_PATH`" collides with ADR-055's single
-  prebuilt image.~~ **RESOLVED at spec level (2026-06-30):** the erroneous "Vite `base` = it" claim
-  is corrected in the dev-loop section — `BASE_PATH` is a **runtime** env (build-arg is excluded as
-  it would break the pull-one-prebuilt-image distribution), and the SPA base path is **injected at
-  runtime**. The contradiction is gone; the only residual is the **impl choice of injection
-  mechanism** (placeholder+entrypoint-rewrite vs Fastify `index.html` templating) — bounded, deferred
-  to implementation, not a structural open question.
-- Whether the wizard "start empty / start with examples" toggle ships in a later release (deferred).
-- Follow-up (separate domain): ADR-016 security re-grill (telemetry ingest authorization vs ADR-030,
-  browser-console pre-ingest leak, deny-list PII sufficiency) surfaced by Codex during this review.
+- Decide whether production onboarding examples belong in the first release and,
+  if so, define their identity, idempotence and data-safety policy before enabling them.
+- The shared i18n dynamic-key and plugin-event requirements remain tracked in
+  ADR-015/050/061; no new parallel runtime should be introduced.

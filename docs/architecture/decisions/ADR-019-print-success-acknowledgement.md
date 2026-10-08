@@ -102,11 +102,6 @@ column on the briefing row; no client localStorage authority. No legacy import
 - Given Printing is inactive, then a producer's printed-status is unavailable
   rather than erroring.
 
-## Open Questions
-
-- Snapshot and regeneration policy is resolved by `ADR-022`, including the accepted fetched/in-flight transmission limitation.
-- Physical paper confirmation remains outside the success contract; manual reprint is the recovery path.
-
 ## Traceability
 
 - Related prior: `ADR-019`

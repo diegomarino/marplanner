@@ -3,10 +3,6 @@
 Status: maintained contract
 Depends on decisions: `ADR-029`, `ADR-038`, `ADR-039`, `ADR-028`, `ADR-030`, `ADR-035`, `ADR-040`, `ADR-050`, `ADR-053`
 
-## Implementation reconciliation (2026-10-08)
-
-The manifest event declarations/owner-namespace gate (`ADR-050`) and subscriber failure health counters (`ADR-040`) remain outstanding. Shared core event names and payloads are typed; this does not realize those separate plugin guarantees. Plugin lifecycle/lineage timestamps currently use ISO TEXT, an unresolved divergence from `ADR-063`. These notes preserve the requirements below rather than declaring them satisfied.
-
 ## Purpose
 
 Defines how optional features ("plugins") extend the core system: their contract
@@ -86,6 +82,8 @@ future third-party plugins ("declare-now, enforce-later").
 
 ## Events
 
+Manifest event declarations and owner-namespace checks remain unimplemented (ADR-050), as do subscriber failure counters/health exposure (ADR-040). Core catalog typing does not satisfy those requirements.
+
 (ADR-040 / ADR-050.) **The Plugin System domain** itself **emits: none, subscribes: none**
 (for this system) — but it **owns the manifest where each plugin declares the events it emits and
 subscribes to** (`ADR-050`): namespaced by plugin ID, build-validated, dropped on
@@ -104,6 +102,8 @@ A future third-party tier _may_ introduce plugin-lifecycle events, but v2 delibe
 uses orchestration + registry + absence-tolerance instead (declare-now, enforce-later).
 
 ## Data / Setup Contract
+
+Plugin lifecycle/lineage audit timestamps currently use ISO TEXT and string DTOs, diverging from ADR-063. A bounded exception or safe forward migration remains unresolved.
 
 Fresh deployment: a core-owned `active_plugins` registry; each plugin ships id-prefixed
 tables + its own migrations. All plugins seed **inactive**; the owner activates

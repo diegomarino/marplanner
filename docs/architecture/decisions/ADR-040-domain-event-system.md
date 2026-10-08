@@ -4,10 +4,6 @@ Status: accepted
 Owner: architecture
 Decision date: 2026-06-28
 
-## Reconciliation (2026-10-08)
-
-Typed best-effort delivery and fault containment exist, but `src/server/lib/event-bus.ts` currently swallows subscriber failures without the failure counters/health exposure required below. That is an outstanding implementation gap, not a relaxation of this requirement.
-
 ## Decision
 
 v2 modules (core domains and plugins) communicate across boundaries in exactly
@@ -69,7 +65,7 @@ is exactly the absence-tolerance the plugin architecture requires.
   a per-subscriber delivery-failure counter and expose it on the plugin health
   endpoint; a subscriber throwing N consecutive times SHOULD surface as
   `degraded` (ties to ADR-039 `errored` state + Kiosk Shell global health
-  indicator). A simple atomic counter — not a dead-letter queue.
+  indicator). A simple atomic counter — not a dead-letter queue. The current event bus contains subscriber failures but does not keep these counters or expose them in health; this requirement remains unimplemented.
 
 ### Durability division of labor
 
@@ -147,14 +143,6 @@ revisited.
   (core) / manifest-declared (plugins); a magic-string/undeclared name is a build error.
   Closes the silent-typo footgun inherent to at-most-once + absent-subscriber-is-fine.
   Delivery semantics here are unchanged.
-
-## Open Questions
-
-- Exact in-process pub/sub API shape — implementation detail (now constrained by the
-  `ADR-050` typed catalog).
-- ~~Backfill of Events sections into the five already-written contracts~~ — **DONE
-  (2026-06-29):** Members (emits lifecycle, not load-bearing), App Settings / Auth / Kiosk
-  Shell / Plugin System (deliberate non-participants — pull/registry/settings-mechanism).
 
 ## Traceability
 
