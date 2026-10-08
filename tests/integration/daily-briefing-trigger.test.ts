@@ -583,10 +583,13 @@ describe("daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018)", 
       await Promise.resolve();
       expect(countJobsForOutputRef(outputRefFor(memberId))).toBe(0);
       expect(db.prepare("SELECT COUNT(*) AS n FROM print_records").get()).toEqual({ n: 0 });
-      expect(errorSpy).toHaveBeenCalledWith(
-        "daily-briefing.trigger.wakeup-failed",
-        expect.objectContaining({ code: "SQLITE_BUSY" })
-      );
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("event-bus.subscriber-failed"));
+      const diagnostic = JSON.parse(errorSpy.mock.calls[0][0] as string);
+      expect(diagnostic.data).toMatchObject({
+        event: "routines.completion_changed",
+        subscriber: "daily-briefing.auto-print-wakeup",
+        error: { code: "SQLITE_BUSY" },
+      });
       locker.exec("ROLLBACK");
       wakeup();
       wakeup();
