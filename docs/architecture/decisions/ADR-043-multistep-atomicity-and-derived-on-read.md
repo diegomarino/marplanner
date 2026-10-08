@@ -4,6 +4,10 @@ Status: accepted
 Owner: architecture
 Decision date: 2026-06-29
 
+## Reconciliation (2026-10-08)
+
+The common read snapshot for generation remains required. Current briefing block gathering in `src/server/modules/daily-briefing/index.ts` awaits external work between local reads before opening its write transaction. A mixed-state snapshot is a source-inferred risk, not a reproduced runtime failure. Reproduce that interleave, then collect local DB inputs in one synchronous read snapshot before external fetch/render work; do not hold the transaction across HTTP waits.
+
 ## Decision
 
 Generalizes the ADR-009 atomicity umbrella into two classes that determine when a

@@ -4,6 +4,10 @@ Status: accepted
 Owner: architecture + product
 Decision date: 2026-06-29
 
+## Reconciliation (2026-10-08)
+
+English remains the accepted reference/fallback and initial-default decision. The installed essential locale default in `src/server/modules/settings/index.ts` is Spanish, while the optional public seed selects English. `ADR-061` described that bootstrap state but did not amend this decision. The household initial-default choice remains unresolved; this documentation update changes neither stored preferences nor runtime defaults.
+
 ## Decision
 
 i18n is a **cross-cutting runtime contract**, not an owned data domain (no server

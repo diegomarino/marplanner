@@ -21,7 +21,7 @@ double-speak is accepted rather than coordinated (:14–27), with the explicit p
 argument that a server-coordinated single speaker would be over-engineering because — unlike
 printing — duplicate speech costs nothing (:21–27).
 
-Both ADRs are `accepted`. The domain contract and the boundary ledger already encode ADR-051's
+Both ADRs were `accepted` when this reconciliation was authored; ADR-035 now carries the browser-local exception explicitly. The domain contract and the boundary ledger already encode ADR-051's
 model (`docs/architecture/contracts/time-announcements.md` INV-06 :31, INV-07 :34; all TIME-ANNOUNCEMENTS
 guarantees `active`), while one kiosk-shell guarantee still encodes ADR-035's
 (`docs/architecture/contracts/kiosk-shell-navigation.md` AC-07 :96 — and the untagged Behaviors prose at
@@ -46,12 +46,12 @@ browsers and executed once"). The contradiction surfaced while preparing .
    announcements.** A missed slot is simply not spoken; no server-side record exists that it
    was missed. Audio capability is _implicit_ (a browser that cannot speak swallows the
    failure per `TIME-ANNOUNCEMENTS-INV-08`), never registered.
-4. **`KIOSK-SHELL-NAVIGATION-AC-07`'s announcement half is narrowed.** The "dispatched only to
-   capability-registered browsers and executed once" clause applies to print/hardware-claim
-   work only; the "time announcements continue on admin routes" clause stands unchanged and
-   binds . `docs/features/kiosk-shell-navigation.md` FR-014 is narrowed accordingly and
-   the boundary ledger entry carries a note citing this ADR (disposition stays `active` — a
-   `superseded` disposition would wrongly drop the still-valid printing half).
+4. **`KIOSK-SHELL-NAVIGATION-AC-07` separates the two delivery models.** Capability registration
+   and atomic claims apply to Printing only, with one claimant per live lease and possible
+   resend after a lost acknowledgement (`ADR-035`). Time announcements continue on admin
+   routes with browser-local leadership and no server dispatch.
+   `docs/features/kiosk-shell-navigation.md` FR-014 states the same distinction, and
+   the maintained kiosk contract now states that narrowing directly under the same acceptance ID. Historical ledger notes are provenance, not a semantic override of the maintained contract.
 5. **Dependency correction**: Time Announcements depends on neither Day Periods
    nor the background-jobs scheduler (the contract's dependency list contains no Day-Periods
    ADR; the only "Day Periods" mention is a peer-review rationale analogy at :104). Its real
@@ -77,19 +77,20 @@ ADRs consistent instead of leaving the contradiction implicit.
   staleness sweep exists for announcements.
 - Given two kiosk devices, both may speak the same minute; nothing coordinates them.
 - Given two tabs in one browser, exactly one speaks (browser-local leader).
-- Given `docs/features/kiosk-shell-navigation.md`, FR-014's "executed once" clause applies to
-  print/hardware work only.
+- Given the kiosk contract and feature FR-014, capability claims apply to Printing only;
+  announcements use browser-local leadership, and neither promises exactly-once physical delivery.
 - Given the installed dependencies, Time Announcements declares no Day Periods and no
   background-jobs-scheduler dependency.
 
 ## Traceability
 
-Reconciles `ADR-035` × `ADR-051` (scope rule, no retro-edit of either — the design corpus is
-read-only; this ADR is the erratum vehicle per the implementation-time series precedent
-`ADR-059`/`ADR-060`/`ADR-063`/`ADR-064`). Deliberate choice: the ADR-064 alternative (amend the
-vendored contract + regen its hash) was considered and declined — the contract AC's wording
-stays; the narrowing lives here, in the realizing FR, and in the ledger note that makes the
-machine-invisible divergence legible. Related: `ADR-029` (plugin placement), `ADR-015`
-(speech language), `ADR-005`/`ADR-020` (household time/weekdays), `ADR-028` (tz validity),
-`ADR-030` (admin capability). Ripples: `docs/features/kiosk-shell-navigation.md` FR-014
-narrowing + ledger note on `KIOSK-SHELL-NAVIGATION-AC-07`; the dependency correction is recorded above.
+Reconciles `ADR-035` × `ADR-051`. The 2026-10-08 documentation reconciliation
+updates the maintained kiosk contract directly, preserving its invariant and
+acceptance IDs; readers need not discover a separate prose ledger override.
+Earlier source-line references in Context describe the pre-reconciliation corpus,
+not current line locations. The original read-only design-corpus restriction is
+historical and does not govern maintenance of the installed contracts.
+Related: `ADR-029` (plugin placement), `ADR-015` (speech language),
+`ADR-005`/`ADR-020` (household time/weekdays), `ADR-028` (timezone validity),
+`ADR-030` (capability model). Runtime dependencies remain household settings and
+the kiosk shell, without a server scheduler or Day Periods dependency.

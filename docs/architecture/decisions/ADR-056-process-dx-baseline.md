@@ -7,6 +7,10 @@ Builds on: ADR-055 (stack). Depends on / reinforces: ADR-017/042 (backups), ADR-
 split), ADR-015 (i18n parity), ADR-039 (plugin boundaries), ADR-028 (boundary validation),
 ADR-046/054/025 (delete/archive lifecycle). Folds into [developer verification policy](../../quality/verification.md).
 
+## Reconciliation (2026-10-08)
+
+The production onboarding examples described below are not implemented. Installed synthetic seed profiles require an explicitly disposable target and must not run at container startup. The proposed default-on production examples, reserved `example-%` IDs and `isExample` protections remain unresolved product scope; no launch completion may be inferred from synthetic seed tooling. This update neither enables production seeding nor silently waives those proposed protections.
+
 ## Decision
 
 The engineering processes, calibrated to a distributable single-instance self-hosted app built
@@ -60,8 +64,7 @@ Run acceptance in a fresh validation worktree at the reviewed local candidate wi
   build/push image to GHCR `:edge`) · Release (`check:full` + versioned image + evidence). **CI
   builds & publishes the artifact; it does NOT deploy** to self-hosters' boxes.
 - **Versioning: SemVer.** MAJOR = breaking upgrade/migration baseline (Q16 consolidation) OR
-  config/env format OR plugin API (ADR-039) OR external-integration contract. The ADR-017 DB version
-  stamp IS this SemVer. **Conventional Commits + release-please**: a standing Release PR accumulates
+  config/env format OR plugin API (ADR-039) OR external-integration contract. A future release/DB compatibility policy must define its relationship to migration lineage; the installed ADR-017 gate uses baseline and migration-file sets, not a SemVer stamp. **Conventional Commits + release-please**: a standing Release PR accumulates
   changes + computes the pending version (bookkeeping only, not feature code) and is the human gate +
   trigger; merging it → tag + GitHub Release + Release lane. Individual fixes only update the draft.
   Tag channels `:vX.Y.Z`/`:vX`/`:latest`/`:edge`; **`:vX` is the recommended self-hoster pinning
@@ -96,13 +99,13 @@ errors, safe storage ownership, request/job drain or preservation of recovery da
   change to the upgrade path (drops pre-baseline installs), allowed only as an explicit announced
   "min-supported-from vX" baseline = a MAJOR bump.
 
-### Seeds (Q16b) — three sets, separation made unrepresentable-to-cross
+### Seeds (Q16b) — original three-set design; production onboarding pending
 
 1. **Essential/system** via **data migrations** (all envs, ordered, impossible to forget): default
    day-periods (ADR-010/011), initial household/settings row.
 2. **Dev fixtures:** populated playground; **excluded from the prod image** + `NODE_ENV !==
 'production'` guard with a loud refuse. Tests use programmatic per-test fixtures.
-3. **Onboarding** (first-install prod, localized ADR-015, real example content; default-ON, wizard
+3. **Proposed onboarding — not implemented; scope decision pending** (first-install prod, localized ADR-015, real example content; proposed default-ON, wizard
    "start empty" deferred): **controlled deterministic IDs in a reserved namespace** + `INSERT …
 ON CONFLICT(id) DO NOTHING` (idempotent vs re-run/edit/archive/partial-failure; never
    overwrites/un-archives). **`isExample` ⇒ archive-only**, enforced by a **`BEFORE DELETE` SQLite
@@ -115,8 +118,7 @@ ON CONFLICT(id) DO NOTHING` (idempotent vs re-run/edit/archive/partial-failure; 
 ### Generated artifacts & component reuse (Q17)
 
 - **Generated (4), each generator + drift check:** Drizzle migrations · OpenAPI spec
-  (`@fastify/swagger`) · i18n key parity (ADR-015) · `COMPONENTS.md` (TypeScript export inventory; prop and cva contracts linked to maintained source). **API docs served LIVE at `/docs`** (not
-  committed → can't drift). **NOT generated** (avoided by structure): API client types (shared via
+  (`@fastify/swagger`) · i18n key parity (ADR-015) · `COMPONENTS.md` (TypeScript export inventory; prop and cva contracts linked to maintained source). **API contracts are maintained under `docs/api/` with the installed route/shape drift gates**; a live `/docs` serving surface is not established by this historical generator proposal. **NOT generated** (avoided by structure): API client types (shared via
   `src/shared`), route tree, ER diagram (YAGNI), design tokens (Tailwind config is source).
 - **OpenAPI schema-coverage gate:** a Fastify `ready` hook asserts every route carries a schema
   (also serves ADR-028) [peer-review S-a].

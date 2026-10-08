@@ -55,4 +55,4 @@ Keeping the frontend access gate separate is a deliberate defense-in-depth choic
 ## Traceability
 
 - Conflicts: `CR-007`, `CR-022`
-- Related prior: `ADR-007`, `ADR-013`, `ADR-021`
+- Related prior: `ADR-007`, `ADR-013`

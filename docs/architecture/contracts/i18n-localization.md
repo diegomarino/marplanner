@@ -3,6 +3,10 @@
 Status: maintained contract
 Depends on decisions: `ADR-015`, `ADR-005`, `ADR-010`, `ADR-020`, `ADR-022`, `ADR-027`, `ADR-028`, `ADR-029`, `ADR-031`, `ADR-039`, `ADR-044`
 
+## Implementation reconciliation (2026-10-08)
+
+The original `ADR-061` seam now serves the shared shell; the historically named member parity test compares the complete English/Spanish catalog. Dynamic-key registry/plugin declarations remain absent, and the exact en/es resolver has not realized the specified region-to-language fallback. The essential default is Spanish despite `ADR-015` selecting English; ratification or implementation alignment is pending. The invariant targets below are not silently relaxed.
+
 ## Purpose
 
 A cross-cutting **runtime contract** for displaying the kiosk, admin screens,

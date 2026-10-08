@@ -36,8 +36,8 @@ No legacy member or Daily Briefing rows are imported under `ADR-026`.
 
 ## Open Questions
 
-- Broader multi-step atomicity rules for other domains remain open under the overall atomic update contract.
-- Daily Briefing still needs to decide default opt-in UX and configuration defaults.
+- Cross-domain atomicity is resolved by `ADR-043`.
+- Member creation has no briefing opt-in side effect (`ADR-027`); future opt-in presentation changes belong to Daily Briefing.
 
 ## Traceability
 

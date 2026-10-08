@@ -4,6 +4,42 @@ These records preserve rationale and consequences. Dates and decision IDs are
 historical provenance. Superseded records remain labeled; active behavior is
 specified by the [contracts](../contracts/README.md) and verified implementation.
 
+## Current decision map (2026-10-08)
+
+Keep historical IDs and rationale. A later decision replaces only the clauses it
+explicitly narrows; earlier records must point to that refinement. Contract
+invariant and acceptance IDs remain stable when their wording is reconciled.
+
+| Topic                                     | Governing decisions and disposition                                                                                                                                                                                             |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Member lifecycle and briefing eligibility | ADR-054 closes ADR-004/025 hard-delete questions; ADR-027 narrows ADR-002 for briefing opt-in; ADR-003/004 remain superseded.                                                                                                   |
+| Authorization and serving                 | ADR-013 defines the client-only PIN; ADR-030/032 define future key lifecycle; ADR-058 calibrates household trust; ADR-059/060 define serving and transport. Key management remains deferred in the installed release.           |
+| Plugin lifecycle                          | ADR-039 narrows ADR-029/038: first-party, activate/deactivate, canonical registry; dynamic install/uninstall stays dormant.                                                                                                     |
+| Printing                                  | ADR-035 means one claimant per live lease, not exactly-once physical delivery. ADR-022 permits already-fetched content to finish after regeneration. ADR-066 settles server-side conversion while preserving ADR-041 ownership. |
+| Announcements                             | ADR-051/065 govern browser-local scheduling; the kiosk contract states this exception directly.                                                                                                                                 |
+| Restore and retention                     | ADR-017/042 follow the supported-lineage launch scope in ADR-056; pre-restore snapshots have a separate bounded lane.                                                                                                           |
+
+### Outstanding implementation and policy gaps
+
+These are open obligations or choices, not silently accepted exceptions. Updating
+documentation does not satisfy a missing check or establish runtime acceptance.
+
+| Decision | Remaining work                                                                                                                                                                         |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ADR-015  | Ratify household initial language: the decision says English; essential runtime defaults say Spanish. English reference/fallback is unchanged.                                         |
+| ADR-020  | Shared weekday write validation and startup persisted-token integrity check remain incomplete.                                                                                         |
+| ADR-040  | Subscriber failure counters and health exposure are missing.                                                                                                                           |
+| ADR-043  | Generation gathers local reads around asynchronous external work; reproduce the inferred mixed-state risk and realize the required common read snapshot.                               |
+| ADR-045  | Briefing snapshots flatten the required structured meal lists; preserve the list or explicitly approve a contract amendment.                                                           |
+| ADR-050  | Plugin manifest event declarations and owner-namespace build checks remain absent; core event typing exists.                                                                           |
+| ADR-056  | Production onboarding examples and their DB protections are not implemented; their launch disposition needs an explicit decision. Current synthetic seeds require a disposable target. |
+| ADR-061  | The original local seam is now shared; catalog-wide parity exists, but canonical dynamic-key declarations and locale-resolution reconciliation remain open.                            |
+| ADR-063  | Plugin lifecycle/lineage ISO TEXT timestamps diverge from the integer convention; choose a bounded exception or a safe migration.                                                      |
+
+ADR-021 is absent from the maintained corpus. Printer configuration is governed by
+ADR-028 and the [Printing contract](../contracts/printing.md); no replacement
+historical record is fabricated to fill the numbering gap.
+
 - [ADR-001 Member Role Model](ADR-001-member-role-model.md)
 - [ADR-002 Active Member Targets](ADR-002-active-member-targets.md)
 - [ADR-003 Parent-Linked Daily Briefing History](ADR-003-parent-briefing-history-superseded.md)

@@ -12,7 +12,7 @@ Admin authority is a non-person-scoped capability for performing admin tasks whe
 
 ## Rationale
 
-Production member-role validation recognizes only `parent` and `child`, and current member management UI only offers those roles. Current Auth & Sessions evidence models admin access through global PIN/session/API boundaries with nullable member links, not through member-profile login.
+Production member-role validation recognizes only `parent` and `child`, and current member management UI only offers those roles. Legacy Auth & Sessions evidence used PIN/session/API boundaries with nullable member links. The current model uses a client-only PIN gate and API credentials (`ADR-013`/`ADR-058`), not member-profile login.
 
 Separating household identity from admin authority keeps Members responsible for household participants and leaves credential/session policy to Auth & Sessions.
 
@@ -38,7 +38,7 @@ Existing nullable `pin_codes.member_id` and `sessions.member_id` links are evide
 
 ## Open Questions
 
-- Which admin tasks require PIN-derived backend admin session, API key only, or another authorization boundary remains open under `ADR-007` and `ADR-013`.
+- Resolved by `ADR-013` and `ADR-058`: the PIN gates the admin UI only; backend authorization uses API credentials, with no PIN-derived backend admin session.
 
 ## Traceability
 

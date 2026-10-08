@@ -1,7 +1,7 @@
 # Printing Domain Contract
 
 Status: maintained contract
-Depends on decisions: `ADR-019`, `ADR-021`, `ADR-022`, `ADR-028`, `ADR-035`, `ADR-038`, `ADR-039`, `ADR-040`, `ADR-041`, `ADR-066`
+Depends on decisions: `ADR-019`, `ADR-022`, `ADR-028`, `ADR-035`, `ADR-038`, `ADR-039`, `ADR-040`, `ADR-041`, `ADR-066`
 
 ## Purpose
 
@@ -39,7 +39,7 @@ additive.
 4. **PRINTING-INV-04** **Success = successfully transmitted to a connected, ready printer** (byte
    write completed). Physical paper outcome (jam/out) is **out of scope**;
    recovery is human manual reprint (ADR-019).
-5. **PRINTING-INV-05** Exactly-once dispatch via ADR-035 atomic claim; **idempotency is server-side
+5. **PRINTING-INV-05** One claimant per active lease via ADR-035 atomic claim; **idempotency is server-side
    per output/date** — no duplicate enqueue for an already-printed output. This
    idempotency is **reset by `supersedePrintRecord(outputRef, date)`** (called by
    the producer on regeneration, ADR-022), so a regenerated output is
@@ -110,8 +110,7 @@ additive.
 Fresh deployment: print job/attempt records (job id, output ref, status, attempts,
 errorCode, byteCount, printedAt) in Printing's namespaced tables. `printer`
 settings object via ADR-028 with Bluetooth transport. No `printed_at` on producer
-rows. Inactive plugin → no settings object, no services (ADR-029/038). Uninstall
-drops Printing's tables incl. print history (ADR-039). No legacy import (ADR-026).
+rows. Inactive plugin → no settings object, no services (ADR-029/038). Dynamic uninstall is dormant in this release; a future uninstall policy would drop Printing's owned tables, including print history (ADR-039). No legacy import (ADR-026).
 
 ## Acceptance Criteria
 
@@ -121,7 +120,7 @@ drops Printing's tables incl. print history (ADR-039). No legacy import (ADR-026
   ADR-035.
 - **PRINTING-AC-03** Given paper runs out after a successful send, the system still reports success
   (out of scope); the human uses manual reprint.
-- **PRINTING-AC-04** Given two connected tabs, exactly one claims a job (ADR-035).
+- **PRINTING-AC-04** Given two connected tabs, only one holds the active job lease (ADR-035); reclaim after an unacknowledged send may repeat physical transmission.
 - **PRINTING-AC-05** Given an output already printed for the date, the trigger does not enqueue a
   duplicate.
 - **PRINTING-AC-06** Given the Printing plugin is inactive, no new jobs are enqueued or claimed; a
@@ -130,7 +129,7 @@ drops Printing's tables incl. print history (ADR-039). No legacy import (ADR-026
   `admin/plugins` (ADR-038).
 - **PRINTING-AC-07** Given a future producer rendering to the device render context, delivery is
   unchanged.
-- **PRINTING-AC-08** Given a producer calls `supersedePrintRecord` on regeneration, the print record is superseded (re-printable) and any pending or claimed-not-yet-fetched print job is cancelled. _(split from DAILY-BRIEFING-AC-02; see boundary-ledger.yaml.)_
+- **PRINTING-AC-08** Given a producer calls `supersedePrintRecord` on regeneration, the print record is superseded (re-printable) and any pending or claimed-not-yet-fetched print job is cancelled. Already-fetched bytes may finish transmitting; their acknowledgement cannot mark the replacement generation printed. _(split from DAILY-BRIEFING-AC-02; see boundary-ledger.yaml.)_
 
 ## Open Decisions
 

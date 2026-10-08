@@ -35,6 +35,10 @@ This ADR pins the encoding ADR-005 left open, so the convention is **citable** a
 stops recurring on every future table migration (Reminders, Routines, …). It refines ADR-005; it does
 not contradict it.
 
+## Reconciliation (2026-10-08)
+
+The integer epoch-ms convention remains the accepted target. Plugin lifecycle and installation-lineage tables currently use ISO TEXT columns with matching string DTOs and CHECKs. They are functional but not a ratified exception. Decide between a bounded documented exception and a safe forward migration with consumer checks; this update changes no schema or timestamp values.
+
 ## Decision
 
 **Audit / operational timestamp columns** — the record-keeping "when did this happen" fields
@@ -46,20 +50,17 @@ contradiction.
 This positions audit timestamps as the third leg of the **storage time taxonomy** — three distinct
 representations, split by purpose, each with a canonical source:
 
-| Kind                              | Purpose                         | Example columns                    | Storage encoding                      | Source            |
-| --------------------------------- | ------------------------------- | ---------------------------------- | ------------------------------------- | ----------------- |
-| **Business date**                 | a calendar day, household-tz    | `birth_*`, `start_date`/`end_date` | `text` `YYYY-MM-DD`                   | ADR-005 / ADR-006 |
-| **Domain event instant**          | a displayed moment, tz-paired   | `start_utc`/`end_utc` + `tzid`     | `text` ISO-8601 instant + IANA `tzid` | ADR-062           |
-| **Audit / operational timestamp** | record-keeping, never displayed | `created_at`/`updated_at`          | **`INTEGER` epoch-ms (UTC)**          | ADR-063 (this)    |
+| Kind                              | Purpose                        | Example columns                    | Storage encoding                      | Source            |
+| --------------------------------- | ------------------------------ | ---------------------------------- | ------------------------------------- | ----------------- |
+| **Business date**                 | a calendar day, household-tz   | `birth_*`, `start_date`/`end_date` | `text` `YYYY-MM-DD`                   | ADR-005 / ADR-006 |
+| **Domain event instant**          | a displayed moment, tz-paired  | `start_utc`/`end_utc` + `tzid`     | `text` ISO-8601 instant + IANA `tzid` | ADR-062           |
+| **Audit / operational timestamp** | record-keeping and diagnostics | `created_at`/`updated_at`          | **`INTEGER` epoch-ms (UTC)**          | ADR-063 (this)    |
 
 **Why audit = integer but domain-instant = text** (the split is principled, not accidental): audit
-timestamps are never displayed, never timezone-converted, and never inspected as domain values — they
-exist for ordering and record-keeping, and `Date.now()` yields epoch-ms directly, so `INTEGER` is the
-minimal STRICT-friendly encoding and it matches the entire existing schema. Domain event instants, by
+timestamps primarily record operational ordering; they may still be displayed in diagnostics. `Date.now()` yields epoch-ms directly, making `INTEGER` the canonical encoding for those columns. Existing plugin lifecycle/lineage exceptions are recorded above. Domain event instants, by
 contrast, **are** rendered in the household timezone, are paired with their originating `tzid`, and are
 human-inspected during debugging — `text` ISO-8601 is legible and pairs naturally with the `tzid`
-(ADR-062). Mixing the two encodings on one STRICT table is a runtime error, so a single citable rule
-per purpose is what keeps writers correct.
+(ADR-062). A value whose encoding mismatches its particular STRICT column is rejected; a table may legally contain both INTEGER and TEXT timestamp columns. A citable convention keeps each writer aligned with its declared column.
 
 ## Empirical Evidence (Constitution XIV)
 

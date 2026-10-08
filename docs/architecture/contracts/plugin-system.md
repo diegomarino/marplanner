@@ -3,6 +3,10 @@
 Status: maintained contract
 Depends on decisions: `ADR-029`, `ADR-038`, `ADR-039`, `ADR-028`, `ADR-030`, `ADR-035`, `ADR-040`, `ADR-050`, `ADR-053`
 
+## Implementation reconciliation (2026-10-08)
+
+The manifest event declarations/owner-namespace gate (`ADR-050`) and subscriber failure health counters (`ADR-040`) remain outstanding. Shared core event names and payloads are typed; this does not realize those separate plugin guarantees. Plugin lifecycle/lineage timestamps currently use ISO TEXT, an unresolved divergence from `ADR-063`. These notes preserve the requirements below rather than declaring them satisfied.
+
 ## Purpose
 
 Defines how optional features ("plugins") extend the core system: their contract

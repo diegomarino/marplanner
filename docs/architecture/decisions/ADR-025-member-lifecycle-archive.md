@@ -46,7 +46,7 @@ Historical references to archived members must remain readable. New assignments,
 
 ## Open Questions
 
-- Whether v2 also supports a hard-delete operation remains out of scope for this decision and should be treated as a separate admin/data-retention question if needed.
+- Resolved by `ADR-054`: member hard delete is forbidden; archive/restore preserves references.
 - The exact downstream role eligibility rules remain open under `ADR-002`.
 
 ## Traceability

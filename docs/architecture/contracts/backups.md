@@ -22,9 +22,9 @@ marplanner is a **single self-hosted instance**.
   `pre-restore`-prefixed, exempt from normal retention prune (ADR-017).
 - **Source prefix** — filename prefix encoding origin: `scheduled` / `snapshot` /
   `pre-restore` / `upload`. Display + restore-proof metadata, **not** an auth boundary.
-- **Migration-version stamp** — the monotonic schema/migration version read from
-  inside a backup file (re-read at restore-execution time), used for restore
-  compatibility (ADR-017).
+- **Regular retention lane** — scheduled/manual snapshots. Uploaded files are exempt
+  from automatic pruning and require explicit deletion; pre-restore has its own lane.
+- **Migration lineage** — the baseline sentinel and migration-file set read from inside a backup at restore-execution time. Unsupported lineage or unknown migrations are refused; supported equal/subset sets can restore and migrate (ADR-017/056).
 - **`createdAt`** — encoded in the filename at creation time; mtime is advisory only
   (mtime is fragile under copy/rsync) (ADR-042).
 
@@ -42,15 +42,9 @@ marplanner is a **single self-hosted instance**.
    before the swap and fresh connections opened to the new path** (recycling
    connections is unsafe — old inode/WAL hazard); on success clients are signalled to
    reload; the process is not restarted (ADR-017).
-4. **BACKUPS-INV-04** **Restore compatibility is decided on the migration-version number, never on a
-   schema diff.** Downgrade (backup newer than code) is rejected; same-or-older is
-   allowed and **migrated current by invoking the migration runner directly within
-   the restore sequence** (no process restart triggers it otherwise) (ADR-017).
+4. **BACKUPS-INV-04** **Restore compatibility uses supported baseline lineage and migration-file sets, never a schema diff.** Missing baseline is unsupported lineage; unknown migrations are rejected as downgrade. Supported equal/subset sets are **migrated current by invoking the migration runner directly within the restore sequence** (ADR-017/056); arbitrary historical compatibility is deferred.
 5. **BACKUPS-INV-05** **Retention guarantees existence:** count-primary (keep N≈14 most recent),
-   age-secondary, never below the count floor, never zero backups; prune only after
-   a confirmed-good new backup; `pre-restore` snapshots exempt. **Explicit admin
-   delete also respects the floor** and cannot remove a `pre-restore` snapshot during
-   an in-flight restore (ADR-042, ADR-017, ADR-014).
+   age-secondary, never below the regular count floor when enough backups exist; prune only after a confirmed-good new backup. Pre-restore snapshots use a separate last-K lane (currently five). **Explicit admin delete preserves one regular backup** and cannot remove a pre-restore snapshot during an in-flight restore (ADR-042/017/014).
 6. **BACKUPS-INV-06** **Import is `.db`-only;** `.sql` execute-into-DB import is removed. `download-sql`
    remains a read-only export (ADR-042).
 7. **BACKUPS-INV-07** **Filename/path safety:** allowlist (`.db` + safe charset); reject `/`, `..`, and
@@ -76,7 +70,7 @@ marplanner is a **single self-hosted instance**.
 - **Download (.db) / download-sql:** read the selected file; `download-sql` generates
   a read-only dump on demand. Sensitive export — same admin class.
 - **Restore:** require a typed-filename confirmation match; take the `pre-restore`
-  snapshot (abort if it fails); re-read & check migration version (reject downgrade);
+  snapshot (abort if it fails); re-read supported lineage/migrations (reject unsupported lineage and downgrade);
   quiesce writes; force-close all DB handles; swap; reopen fresh connections; invoke
   the migration runner directly; signal clients to reload; on forward-migration
   failure, roll back to the pre-restore snapshot (ADR-017).
@@ -107,8 +101,7 @@ not via the domain event bus.
 Backup files live in a configured `backups/` root outside the active DB. No
 active-DB tables for manifests, runs, or audit. Fresh setup starts with zero
 backups; the scheduler's catch-up creates the first. No legacy backup files imported
-automatically (ADR-026); a legacy `.db` can re-enter only via upload, subject to the
-restore version check. Backup files may contain all household data (incl. auth/
+automatically (ADR-026). Upload stores a candidate file; unsupported legacy lineage cannot be restored. Backup files may contain all household data (incl. auth/
 session rows) and must be handled with active-DB sensitivity; telemetry must never
 record their contents, SQL dumps, keys, session IDs, or uploaded payloads.
 
@@ -117,12 +110,9 @@ record their contents, SQL dumps, keys, session IDs, or uploaded payloads.
 - **BACKUPS-AC-01** Restore creates a retained `pre-restore` snapshot before swap; mismatched typed
   filename blocks restore; no half-restored state observable; clients reload on
   success; no process restart.
-- **BACKUPS-AC-02** Backup newer than running code → restore rejected (downgrade); same-or-older →
-  accepted and migrated current; failed forward migration → rollback to pre-restore
-  with no loss.
+- **BACKUPS-AC-02** Missing supported baseline → unsupported lineage; migrations unknown to running code → downgrade rejected; supported equal/subset migration sets → restore and migrate; failed forward migration → rollback to pre-restore with no loss.
 - **BACKUPS-AC-03** `.sql` import rejected; `download-sql` still works read-only.
-- **BACKUPS-AC-04** Prune keeps N most recent + all `pre-restore`, never drops below the floor, never
-  leaves zero; runs only after a confirmed-good new backup.
+- **BACKUPS-AC-04** Normal prune keeps the N newest regular backups plus younger beyond-N backups and runs only after a confirmed-good new backup; pre-restore uses its own last-K lane. Explicit delete refuses to remove the last regular backup.
 - **BACKUPS-AC-05** Path traversal (`/`, `..`, encoded) rejected; all ops resolve inside the root.
 - **BACKUPS-AC-06** After a restore, the backup list is still derivable (file-derived metadata).
 - **BACKGROUND-JOBS-SCHEDULER-AC-06** Given a backup run, old backups are pruned only after a new durable backup exists. _(carried from Background Jobs; prune ordering/durability is Backups' domain action. See boundary-ledger.yaml.)_

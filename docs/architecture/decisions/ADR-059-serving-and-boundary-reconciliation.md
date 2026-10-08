@@ -16,6 +16,10 @@ was absent. The critical-flow browser test required the running app and made
 all of this due at once. This ADR reconciles the bootstrap with the already-accepted architecture
 (ADR-031, ADR-055, ADR-056); it decides sequencing and minimal scope, not new topology.
 
+## Reconciliation (2026-10-08)
+
+The bootstrap sequencing and minimal API described below are historical. Runtime `BASE_PATH` injection and mounted client/API routes are now implemented as recorded in `ADR-055`/`ADR-056` and the `ADR-060` mount amendment. Their built-browser/container acceptance is separate evidence; `BASE_PATH` is no longer an unimplemented bootstrap follow-up.
+
 ## Decision
 
 1. **API-key boundary scope.** The API-key deny hook covers **exactly `/api/*`**. Frontend
@@ -29,8 +33,7 @@ all of this due at once. This ADR reconciles the bootstrap with the already-acce
    preserves those statements literally and keeps infra probes trivial.
 3. **All other API routes migrate under `/api` now** (ADR-056), before the e2e:
    `/api/auth/provision`, `/api/auth/verify-pin`, `/api/settings`, `/api/members`. The client
-   calls relative `/api` via an `apiBase()` helper. `BASE_PATH` runtime injection (ADR-056) is
-   a distribution concern and stays a tracked follow-up — not required for the bootstrap.
+   calls relative `/api` via an `apiBase()` helper. `BASE_PATH` runtime injection (ADR-056) was outside the initial bootstrap and is now implemented; see the reconciliation above.
 4. **The bootstrap includes a minimal access gate.** A single static deployment token
    (`MP_ACCESS_TOKEN` env, fail-closed: unset ⇒ the gate cannot be passed): with no gate
    cookie, any frontend request receives the minimal access-token entry form (200) — never the

@@ -10,7 +10,7 @@ The API key boundary is the sole backend authorization boundary for all settings
 
 > **Narrowed by `ADR-030` (2026-06-28):** "a valid API key authorizes everything" was true under the original single-key model. The system now uses multiple scoped keys: a `*` key authorizes everything, but a scoped key authorizes only its granted `domain:verb` capabilities. The boundary is still "the API key" — what changed is that a key's authority is bounded by its scopes. PIN-is-UI-only is unaffected.
 
-`/health` (or equivalent liveness/readiness probes) may be exempt from API key requirement, as they serve infrastructure monitoring rather than household data.
+`/health` is the root credential-free infrastructure endpoint (`ADR-031`/`ADR-059`). Household API operations require API credentials; frontend serving uses the separate access gate.
 
 ## Rationale
 
@@ -22,7 +22,7 @@ The PIN was never the right backend boundary. It is a household convenience mech
 
 This decision resolves CR-007 (settings/admin write authorization) and partially resolves CR-022 (effective settings cold-boot read availability) from the App Settings Registry perspective.
 
-The PIN lifecycle (setup-pin, verify-pin endpoint existence, admin session creation and expiry) remains a separate question under **ADR-013**. This decision only establishes that whatever PIN mechanism Auth & Sessions defines must not be consulted by the backend for API endpoint authorization.
+The PIN lifecycle is resolved by **ADR-013**: verification unlocks client UI state, with no backend admin session; recovery uses operator configuration. This decision only establishes that whatever PIN mechanism Auth & Sessions defines must not be consulted by the backend for API endpoint authorization.
 
 ## Affected Specs
 
@@ -36,19 +36,19 @@ The PIN lifecycle (setup-pin, verify-pin endpoint existence, admin session creat
 
 ## Data / Setup Implications
 
-Fresh setup defines one API key for the household deployment. No PIN rows, no PIN session rows, and no session-token tables are required by the backend API layer. The PIN and any frontend session token it produces are opaque to the backend.
+Fresh setup configures a bootstrap credential; provisioning creates per-device keys (`ADR-030`/`ADR-032`). The advisory PIN hash exists, but there is no backend PIN session or admin session-token table (`ADR-013`). Arbitrary scoped issuance and key-management mutations remain future lifecycle work, as stated in the authentication contract.
 
 ## Acceptance Criteria
 
 - Given a valid API key, when a client requests the settings map at cold boot (no PIN entered, no admin session), then it receives the complete effective settings map.
-- Given a valid API key, when a client submits a settings write, then the backend accepts or rejects based on API key validity only.
+- Given a valid API key, when a client submits a settings write, then the backend accepts or rejects based on API credential validity and the declared capability, never PIN state.
 - Given no API key, when a client requests any endpoint other than liveness probes, then the backend returns 401/403 regardless of PIN state.
 - Given a valid API key, when a client enters or skips the PIN, then the backend response to any endpoint is identical.
 
 ## Open Questions
 
-- `/health` and other infrastructure probes: confirm whether they are exempt from API key or require it too. (Ops decision, not product.)
-- ADR-013: what does the frontend PIN session token look like, how is it stored, and when does it expire? (Auth & Sessions grill.)
+- Health exemption and serving/API separation are resolved by `ADR-031`/`ADR-059`.
+- Client-only PIN state and recovery are resolved by `ADR-013`; key lifecycle is separately scoped in the authentication contract.
 
 ## Traceability
 

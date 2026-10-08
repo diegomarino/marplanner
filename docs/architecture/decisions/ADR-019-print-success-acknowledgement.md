@@ -104,8 +104,8 @@ column on the briefing row; no client localStorage authority. No legacy import
 
 ## Open Questions
 
-- Which snapshot prints vs. regeneration/staleness clearing `printedAt` — Q3 of
-  the cluster (ADR-022 interaction).
+- Snapshot and regeneration policy is resolved by `ADR-022`, including the accepted fetched/in-flight transmission limitation.
+- Physical paper confirmation remains outside the success contract; manual reprint is the recovery path.
 
 ## Traceability
 
