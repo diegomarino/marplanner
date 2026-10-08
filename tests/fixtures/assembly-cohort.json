@@ -4272,7 +4272,9 @@
             "restore with detached calendar synchronization drains detached work or aborts safely (timeout=false, failure=false)",
             "restore with detached calendar synchronization drains detached work or aborts safely (timeout=false, failure=true)",
             "restore with detached calendar synchronization drains detached work or aborts safely (timeout=true, failure=false)",
-            "restore with detached calendar synchronization drains detached work or aborts safely (timeout=true, failure=true)"
+            "restore with detached calendar synchronization drains detached work or aborts safely (timeout=true, failure=true)",
+            "restore engine — confirmation + validation (BACKUPS-AC-01, no side effects) invalid weekday data in same-version and older backups rolls back before runtime activation",
+            "restore engine — confirmation + validation (BACKUPS-AC-01, no side effects) invalid weekday data in the rollback snapshot keeps traffic and jobs quiesced"
           ],
           "tests/integration/backups-snapshot.test.ts": [
             "backups snapshot creation (BACKUPS-INV-09, FR-002) BACKUPS-INV-09: a snapshot is a consistent, independently-readable image — temp-write + atomic rename, and creation never mutates live data",

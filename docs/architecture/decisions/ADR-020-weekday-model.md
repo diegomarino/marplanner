@@ -31,6 +31,9 @@ routine assignments, reminders and their assignments, briefing block masks, time
 announcements and meal entries. Invalid JSON, non-array masks and noncanonical tokens
 abort startup with the table, column and row identifier; no data is repaired or deleted.
 Nullable masks retain their domain meaning, and empty arrays remain valid where defined.
+Live restore applies the same check after migrations and before runtime activation;
+a failure rolls back to the pre-restore snapshot, whose integrity is also checked
+before traffic and jobs resume.
 Tests intentionally bypass write validation to prove integer rejection and seed rollback.
 The current baseline migration contains no weekday recurrence rows; future data
 migrations must validate weekday writes before committing.

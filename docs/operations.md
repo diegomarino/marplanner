@@ -265,3 +265,9 @@ error names the table, column and row. Startup stops without modifying that row;
 and correct the recurrence data before restarting. Invalid masks are never silently
 converted into rules that match no days. Seed modules undergo the same check before
 commit and roll back if they introduce invalid weekday data.
+
+Live restore checks weekday integrity after applying any required migrations and
+before activating the replacement runtime. An invalid backup returns
+`incompatible_backup` and rolls back to the pre-restore snapshot. The recovered
+snapshot is checked too; if recovery fails, traffic and scheduled work remain
+quiesced for manual recovery.
