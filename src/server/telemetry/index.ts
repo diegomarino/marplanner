@@ -137,6 +137,15 @@ function rowToClientLogRow(row: ClientLogRowRecord): ClientLogRow {
  * FR-002/FR-003 — the caller never needs retry logic, always 200 for a parseable body).
  */
 export function writeClientLog(apiKeyId: string, rawEntries: unknown[]): ClientLogIngestResult {
+  return writeLogs(apiKeyId, rawEntries);
+}
+
+/** Trusted server failures share redaction, retention and admin reads without client flood admission. */
+export function writeServerLog(entry: unknown): ClientLogIngestResult {
+  return writeLogs(null, [entry]);
+}
+
+function writeLogs(apiKeyId: string | null, rawEntries: unknown[]): ClientLogIngestResult {
   const db = getDb();
   let accepted = 0;
   let dropped = 0;
@@ -147,7 +156,7 @@ export function writeClientLog(apiKeyId: string, rawEntries: unknown[]): ClientL
 
   for (const raw of candidates) {
     const validated = validateEntry(raw);
-    if (!validated) {
+    if (!validated || (apiKeyId !== null && validated.component === "event-bus")) {
       dropped += 1;
       continue;
     }
@@ -164,7 +173,7 @@ export function writeClientLog(apiKeyId: string, rawEntries: unknown[]): ClientL
     try {
       const bounded = boundData(validated.data, DEFAULT_LIMITS);
 
-      if (!admitUnderFloodBound(apiKeyId)) {
+      if (apiKeyId !== null && !admitUnderFloodBound(apiKeyId)) {
         dropped += 1;
         continue;
       }
