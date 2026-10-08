@@ -5,7 +5,13 @@ import { ESLint } from "eslint";
 import { spawnSync } from "node:child_process";
 import { writeFileSync, rmSync } from "node:fs";
 
-const eslint = new ESLint({ cwd: fileURLToPath(new URL("../", import.meta.url)) });
+const eslint = new ESLint({
+  cwd: fileURLToPath(new URL("../", import.meta.url)),
+  // Each probe replaces the same virtual file; CI must not reuse its previous type program.
+  overrideConfig: {
+    languageOptions: { parserOptions: { disallowAutomaticSingleRunInference: true } },
+  },
+});
 
 async function messages(code, filePath = "src/shared/index.ts") {
   return (await eslint.lintText(code, { filePath }))[0].messages;
