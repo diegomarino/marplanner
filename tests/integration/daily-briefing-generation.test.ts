@@ -118,12 +118,7 @@ function seedRoutineForStreak(memberId: string, weekday: string): void {
   );
 }
 
-/** Seeds the `locale` settings object's `language` field — `index.ts#readHouseholdLanguage`'s * read seam (mirrors `daily-briefing-blocks-external.test.ts`'s `seedWeatherLocation` pattern for
- * the `weather` object). Absent this row, `readHouseholdLanguage` defaults to "es"
- * (`settings.ts`'s `LOCALE_DEFAULTS.language`) — the titles tests below seed "en" explicitly
- * wherever they assert English label text, per the fold (titleFor now genuinely resolves
- * through household language instead of always emitting English).
- */
+/** Persist a household language preference for tests; absent locale rows default to English. */
 function seedHouseholdLanguage(language: "en" | "es"): void {
   getDb()
     .prepare("INSERT INTO settings_objects (object_name, data, updated_at) VALUES ('locale', ?, ?)")
@@ -784,10 +779,12 @@ describe("daily-briefing full generation", () => {
     });
 
     it("the 4 v1 title overrides are exact (en household)", async () => {
-      // fold: titleFor now genuinely resolves through household language — an unseeded
-      // `locale` row defaults to "es" (`readHouseholdLanguage`), so this en-assertion test seeds
-      // "en" explicitly (it used to get English unconditionally, which was exactly the bug).
-      seedHouseholdLanguage("en");
+      // A fresh household without a locale row uses English for structural briefing copy.
+      expect(
+        getDb().prepare("SELECT data FROM settings_objects WHERE object_name = 'locale'").get()
+      ).toBeUndefined();
+      expect(getLabels(undefined)).toEqual(getLabels("en"));
+      expect(getLabels("unsupported")).toEqual(getLabels("en"));
       seedMember("m1", { optedIn: true });
       // quoteOfDay resolves to "no port available" (omitted) under test runtime unless a source
       // is injected — inject one so the block actually generates and its title is checkable.
@@ -828,6 +825,12 @@ describe("daily-briefing full generation", () => {
       expect(titleOf("shotgun")).toMatch(/ COPILOTO$/);
       // Plain type whose *Text twin must stay distinct (mirrors the en test above).
       expect(titleOf("streak")).toMatch(/ RACHA$/);
+      expect(briefing.payload.blocks.find((b) => b.type === "streak")?.data).toMatchObject({
+        label: "¡Empieza tu racha hoy!",
+      });
+      expect(briefing.payload.blocks.find((b) => b.type === "streakText")?.data).toMatchObject({
+        label: "¡Empieza tu racha hoy!",
+      });
       expect(titleOf("streak")).not.toBe(titleOf("streakText"));
       // One of the 4 v1 title overrides — proves the override branch localizes too, not just
       // the algorithmic camelCase-split branch.
@@ -837,7 +840,7 @@ describe("daily-briefing full generation", () => {
 
   //: `streakText` is a pure delegate to `streak`'s generator (blocks/streak-text.ts),
   // so its call site in `generateBlockData`'s switch must pass the SAME `language` the "streak"
-  // arm passes — omitting it silently falls back to `getLabels`' "es" default regardless of the
+  // arm passes — omitting it falls back to English regardless of a configured Spanish
   // household's real setting. Driven through the REAL `generateBriefing` (not a per-block
   // generator call, which is exactly what let this regress unnoticed — see the sibling
   // `daily-briefing-blocks-domain.test.ts` suite, which seeds `language` directly on each call

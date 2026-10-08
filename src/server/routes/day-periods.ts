@@ -50,7 +50,7 @@ export async function dayPeriodsRoutes(app: FastifyInstance): Promise<void> {
 
     const DEFAULT_LOCALE = {
       timezone: "Europe/Madrid",
-      language: "es",
+      language: "en",
       weekStartDay: 1,
     };
 

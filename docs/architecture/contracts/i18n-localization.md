@@ -22,7 +22,7 @@ predictably when localization is incomplete. **No owned table** (App Settings ow
 
 1. **I18N-LOCALIZATION-INV-01** **Base/default = `en`** (= reference = fallback); `es` is a translation layer.
    Supported `language` is a validated enum at the settings boundary (ADR-028); free
-   strings rejected. Essential defaults currently use Spanish; alignment with the accepted English initial-default decision or explicit policy ratification remains pending.
+   strings rejected. Fresh household settings and unset structural briefing language default to English; persisted household preferences are preserved.
 2. **I18N-LOCALIZATION-INV-02** **Household-wide only** — no per-device/per-member language (ADR-013).
 3. **I18N-LOCALIZATION-INV-03** **Effective language = household setting**, readable cold via the API-key surface
    (ADR-031); browser detection is last resort; household always wins once loaded.

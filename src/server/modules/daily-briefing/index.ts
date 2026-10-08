@@ -344,7 +344,7 @@ const NO_RENDER_RESULT: RenderStoreResult = {
 };
 
 /** Read structural briefing copy language from the locale settings object, defaulting to
- * Spanish. This is a database-only lookup; external content has its own language policy.
+ * English. This is a database-only lookup; external content has its own language policy.
  */
 function readHouseholdLanguage(): string {
   const raw = readSettingsObject("locale");
@@ -358,7 +358,7 @@ function readHouseholdLanguage(): string {
       // Malformed persisted JSON — fall through to the default below.
     }
   }
-  return "es";
+  return "en";
 }
 
 /** Render the briefing's currently-renderable blocks and pack the result. Never

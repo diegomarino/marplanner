@@ -29,7 +29,7 @@ export type HouseholdLanguage = "es" | "en";
 /** Mirrors `settings.ts`'s `LOCALE_DEFAULTS.language` / `day-periods.ts`'s `DEFAULT_LOCALE.language`
  * — the same system-wide default every other "locale" settings-object reader in this codebase
  * falls back to. */
-const DEFAULT_LANGUAGE: HouseholdLanguage = "es";
+const DEFAULT_LANGUAGE: HouseholdLanguage = "en";
 
 /** The 21 block types `index.ts#titleFor` (below, fold) stamps a server-side ordinal title
  * for at generation time. Derived (not duplicated —) from
@@ -212,10 +212,8 @@ const ES: DailyBriefingLabels = {
 
 const BY_LANGUAGE: Record<HouseholdLanguage, DailyBriefingLabels> = { en: EN, es: ES };
 
-/** Resolve the label set for a household language string. Falls back to `DEFAULT_LANGUAGE`
- * ("es") for anything other than the two supported codes — never a silent English degradation
- * for an unset/unrecognized value (INV-06's "no English degradation" principle, mirrored from
- * its corpus-language clause). */
+/** Resolve structural copy in the configured household language, or English when unset or
+ * unsupported. A configured Spanish household keeps Spanish labels. */
 export function getLabels(language: string | undefined): DailyBriefingLabels {
   if (language === "en" || language === "es") return BY_LANGUAGE[language];
   return BY_LANGUAGE[DEFAULT_LANGUAGE];

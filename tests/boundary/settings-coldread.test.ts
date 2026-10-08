@@ -40,8 +40,7 @@ describe("settings-coldread (red-by-design, turns green)", () => {
       "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
     ).run(`${Date.now()}-device`, deviceHash, now);
 
-    // Seed the locale settings object with defaults ( timezone=Europe/Madrid,
-    // language=es, weekStartDay=1) as JSON — this is what the server seeds on fresh setup.
+    // Persist an explicit Spanish preference; the English initial default must not replace it.
     const localeData = JSON.stringify({
       timezone: "Europe/Madrid",
       language: "es",
@@ -90,7 +89,7 @@ describe("settings-coldread (red-by-design, turns green)", () => {
 
       // FR-011: the locale object has all three of its fields.
       // FR-010: defaults fill any unset persisted value.
-      // The defaults are: timezone='Europe/Madrid', language='es', weekStartDay=1.
+      // Configured Spanish remains effective; initial defaults apply only to missing values.
       expect(typeof locale.timezone).toBe("string");
       expect(locale.timezone).toBe("Europe/Madrid");
 

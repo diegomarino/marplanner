@@ -11,7 +11,7 @@ table). The model:
 
 **Language model.**
 
-- **Reference and fallback language = `en`**; `es` is the translation layer. The accepted initial household default is also `en`, but essential runtime defaults currently select `es` while the optional public seed selects `en`. Initial-default alignment or an explicit policy change remains required; existing household preferences must be preserved.
+- **Initial household, reference and fallback language = `en`**; `es` is the translation layer. Fresh setup, effective settings without a persisted language and structural briefing copy default to English. Existing household language preferences are preserved.
 - Effective language = the household `language` setting (App Settings); it wins at
   cold boot and is readable on the API-key surface cold (ADR-031). Browser detection
   is a last resort only when settings are unreachable.
