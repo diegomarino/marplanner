@@ -111,23 +111,23 @@ export function createDailyBlockCache(date: string): DailyBlockCache {
 export async function getOrFetchOnceDaily<T>(
   cache: DailyBlockCache,
   blockType: string,
-  fetcher: () => Promise<T | null>
+  fetcher: () => Promise<T | null>,
+  epochAtInputRead = evictionEpoch
 ): Promise<T | null> {
-  const cached = cache.get<T | null>(blockType);
-  if (cached !== undefined) return cached;
+  if (epochAtInputRead === evictionEpoch) {
+    const cached = cache.get<T | null>(blockType);
+    if (cached !== undefined) return cached;
 
-  const justPersisted = cache.refresh<T | null>(blockType);
-  if (justPersisted !== undefined) return justPersisted;
+    const justPersisted = cache.refresh<T | null>(blockType);
+    if (justPersisted !== undefined) return justPersisted;
+  }
 
-  // (P1 TOCTOU): capture the eviction epoch BEFORE the fetcher
-  // starts — see `evictionEpoch`'s own doc comment below for the exact race this closes.
-  const epochAtFetchStart = evictionEpoch;
   try {
     const data = await fetcher();
-    if (evictionEpoch === epochAtFetchStart) {
+    if (evictionEpoch === epochAtInputRead) {
       cache.set(blockType, data);
     } else {
-      // A weather-cache eviction ran WHILE this fetch was in flight — the fetch was almost
+      // A weather-cache eviction ran after this input was gathered — the fetch was almost
       // certainly kicked off with the OLD (now-stale) location/tz, so persisting its result
       // would silently resurrect exactly what the eviction was trying to clear. Discard the
       // WRITE only: this call's own caller still gets the value it already computed (a single
@@ -136,7 +136,7 @@ export async function getOrFetchOnceDaily<T>(
       // blockType/date observes a genuine cache miss and fetches fresh.
       console.warn(
         `daily-briefing.shared-cache.stale-write-discarded: blockType=${blockType} ` +
-          `(an eviction ran mid-fetch — the fetch's own input may be stale)`
+          `(an eviction ran after input gathering — the fetch's own input may be stale)`
       );
     }
     return data;
@@ -156,11 +156,16 @@ export async function getOrFetchOnceDaily<T>(
  * in-flight fetch (still carrying location A's request) resolves and reaches `cache.set`,
  * which would otherwise silently RE-INSERT location A's forecast right after step 2 just
  * cleared it — defeating the eviction and leaking stale data to every subsequent reader for the
- * rest of that date. `getOrFetchOnceDaily` captures this value BEFORE calling `fetcher` and
+ * rest of that date. `getOrFetchOnceDaily` captures this value before fetching, or accepts the epoch
+ * captured with immutable local inputs before earlier external awaits, and
  * discards the `cache.set` write (not the return value — see that function's own comment) if
  * the epoch moved during the await.
  */
 let evictionEpoch = 0;
+
+export function readBlockCacheEpoch(): number {
+  return evictionEpoch;
+}
 
 /** Evicts every persisted `weather` cache row, ALL dates: a TRACED guarantee
  * FR-020/SC-005/SC-008, tracing WEATHER-INV-09/AC-08) requires that regeneration

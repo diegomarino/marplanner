@@ -40,10 +40,29 @@ ON` per connection** so a future code path that forgets the guard cannot leave d
 `ext:` rows.
 
 **Consistent read snapshot for generation (peer-review I1):** when a consumer makes
-multiple cross-module reads that must agree (e.g. Daily Briefing calling both
-`Routines.getMemberStreak` and `Calendar.getEvents` for one member/date), local DB input gathering runs inside **one SQLite read transaction** whose context is threaded through
-both reads — otherwise the snapshot can mix pre-write and post-write state. SQLite read
-transactions must cover the local DB reads synchronously, before external fetching/rendering; never hold one across HTTP awaits. Current briefing gathering interleaves local reads and external work before the write transaction, so this requirement remains incomplete. A mixed-state interleave is source-inferred and still needs runtime reproduction. Calendar events for a member/date are fetched **once** and reused across reminder rules.
+multiple cross-module reads that must agree, Daily Briefing gathers all local inputs
+synchronously inside **one SQLite read transaction**, using the shared `getDb()`
+connection. This includes the business date, member label, block order and settings,
+household language, weather location/timezone, and local domain block outcomes.
+Routines derives streaks on that same connection; Calendar and Reminders share a
+request-scoped `CalendarReadContext` to fetch events once per member/date and reuse
+private query metadata across reminder rules. The context is valid only inside the
+caller's synchronous transaction and is discarded after gathering.
+
+The transaction closes before external fetching and rendering. Those phases consume
+captured local inputs; they never reopen domain reads to complete the snapshot.
+Weather cache admission uses the eviction epoch captured with its local inputs:
+a settings edit during earlier external work cannot republish a stale forecast.
+External content keeps its independent once-per-date cache and provider timing, so
+this is a coherent **local** snapshot, not a distributed snapshot of upstream systems
+or an all-members batch snapshot. Eligibility is checked again before rendering and
+inside the atomic persistence/print-supersession transaction: a concurrent archive or
+opt-out can still prevent publication of captured content.
+
+A controlled quote-source pause with an atomic local edit reproduces the prior
+mixed-state result (old member identity alongside newly read content/settings).
+Generation regressions cover captured content, settings, Calendar/Reminders and
+render language; regeneration observes the new local state under the stable ID.
 
 ## Rationale
 
@@ -76,6 +95,13 @@ authoritative state; they become a Routines read interface
   still reconcile and the source records the failure (idempotent best-effort).
 - Given a source delete, when it runs, then source + imported events + `ext:`
   assignment rows are removed together (atomic), leaving no orphans.
+
+- Given local state changes while an external source is paused, then the generated
+  local content and render language reflect the pre-await read snapshot; regeneration
+  observes the edit without changing the briefing ID.
+- Given several calendar-gated rules in one gather, then one event read supplies their
+  independently filtered queries without exposing private metadata in the public feed.
+- Given external fetching or rendering, then no local read transaction remains open.
 
 ## Open Questions
 

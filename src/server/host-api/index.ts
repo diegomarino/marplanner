@@ -19,7 +19,7 @@ export { resolveMemberLabel } from "../modules/members/label";
  */
 export { getMessage, DailyMessageNotFoundError } from "../modules/daily-messages/index";
 export { getEvents, WindowError } from "../modules/calendar/index";
-export type { GetEventsParams } from "../modules/calendar/index";
+export type { CalendarReadContext, GetEventsParams } from "../modules/calendar/index";
 export { getReminders } from "../modules/reminders/index";
 export { getBoard } from "../modules/routines/index";
 export { getMenu } from "../modules/meals/index";
