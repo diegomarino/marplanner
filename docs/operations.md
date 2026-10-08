@@ -84,7 +84,7 @@ snapshot and preserve it separately. Automatic pre-migration recovery snapshots
 provide a local restore point; they do not replace a separately retained upgrade backup. Never seed at container
 startup. The recipe has no provider agent, platform workaround or automatic
 publishing/deployment. For container acceptance, build with source provenance labels
-from the maintained candidate inventory, then run the harness:
+from the candidate identity, then run the harness:
 
 ```sh
 docker build -f infra/docker/Dockerfile -t marplanner:review \
