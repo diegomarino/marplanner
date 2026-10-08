@@ -1,3 +1,4 @@
+import { validateWeekdays } from "../src/shared/weekdays";
 import type { SeedModule } from "../src/server/db/seeds/types";
 
 const WEEKDAYS = ["mon", "tue", "wed", "thu", "fri"] as const;
@@ -30,7 +31,7 @@ const seedTimeAnnouncements: SeedModule = {
           OR week_days IS NOT excluded.week_days
           OR is_active IS NOT excluded.is_active`
     );
-    const weekDays = JSON.stringify(WEEKDAYS);
+    const weekDays = JSON.stringify(validateWeekdays(WEEKDAYS));
     for (const announcement of TIME_ANNOUNCEMENTS) {
       upsertRule.run(announcement.id, announcement.time, weekDays, nowMs, nowMs);
     }
