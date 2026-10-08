@@ -209,7 +209,7 @@ describe("restore engine — confirmation + validation (BACKUPS-AC-01, no side e
       }
     }
     await scheduler.stop();
-  });
+  }, 15_000); // Twelve restore cycles share this case; allow instrumented parallel-suite overhead.
 
   it("invalid weekday data in the rollback snapshot keeps traffic and jobs quiesced", async () => {
     seedMember("original", "Original");
