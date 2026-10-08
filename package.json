@@ -11,7 +11,7 @@
     "npm": "11.19.0"
   },
   "scripts": {
-    "build": "vite build && node scripts/build-server.mjs",
+    "build": "npm run check:plugin-events && vite build && node scripts/build-server.mjs",
     "check:accessible-names": "node tools/dev/audit-accessible-names.mjs --strict-weak --check-baseline tools/dev/accessible-names-baseline.txt",
     "check:aggregate-only": "npm run check:preflight:browser && npm run build && node tools/dev/smoke-dist-render.mjs && npm run test:cohorts:e2e:list && npm run test:cohorts:e2e && npm run check:test-cohorts",
     "check:container": "node tools/container-smoke.mjs",
@@ -42,7 +42,7 @@
     "generate:member-colors": "node tools/dev/generate-member-colors.mjs",
     "generate:noto-emojis": "node tools/dev/generate-noto-emojis.mjs",
     "generate:ui-catalog": "node tools/dev/generate-ui-catalog.mjs",
-    "lint": "node tools/lint.mjs",
+    "lint": "npm run check:plugin-events && node tools/lint.mjs",
     "seed:all": "node tools/dev/seed-all.mjs",
     "seed:private": "node --env-file-if-exists=.env.local --import tsx src/server/db/seeds/cli.ts --mode private",
     "seed:public": "node --env-file-if-exists=.env.local --import tsx src/server/db/seeds/cli.ts --mode public",
@@ -63,7 +63,8 @@
     "test:integration": "vitest run tests/integration --environment node",
     "test:unit": "vitest run tests/client",
     "test": "node --test tools/*.test.mjs",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "check:plugin-events": "node tools/check-plugin-events.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "6.3.1",

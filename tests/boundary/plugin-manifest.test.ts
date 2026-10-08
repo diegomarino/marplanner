@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
+import { EVENT_NAMESPACE_OWNERS } from "../../src/shared/events.js";
 import { messages } from "../../src/client/i18n/messages.js";
 import * as pluginDtoModule from "../../src/shared/plugins.js";
 import * as pluginManifestModule from "../../src/server/plugins/manifest.js";
@@ -499,12 +500,29 @@ describe("first-party plugin manifest inventory", () => {
     }
   });
 
+  it("declares typed events with explicit published namespace owners", () => {
+    expect(EVENT_NAMESPACE_OWNERS).toEqual({
+      daily_briefing: "daily-briefing",
+      printing: "printing",
+      network: "network-devices",
+      routines: "core",
+    });
+    expect(Object.isFrozen(EVENT_NAMESPACE_OWNERS)).toBe(true);
+    expect(PLUGIN_MANIFESTS.find((manifest) => manifest.id === "daily-briefing")?.events).toEqual({
+      emits: ["daily_briefing.generated"],
+      subscribes: ["printing.completed", "printing.failed", "routines.completion_changed"],
+    });
+  });
+
   it("cannot be expanded or rewritten through runtime registration", () => {
     expect(Object.isFrozen(PLUGIN_IDS)).toBe(true);
     expect(Object.isFrozen(PLUGIN_MANIFESTS)).toBe(true);
     for (const manifest of PLUGIN_MANIFESTS) {
       expect(Object.isFrozen(manifest)).toBe(true);
       expect(Object.isFrozen(manifest.contributions)).toBe(true);
+      expect(Object.isFrozen(manifest.events)).toBe(true);
+      expect(Object.isFrozen(manifest.events.emits)).toBe(true);
+      expect(Object.isFrozen(manifest.events.subscribes)).toBe(true);
       for (const contributionIds of Object.values(manifest.contributions)) {
         expect(Object.isFrozen(contributionIds)).toBe(true);
       }

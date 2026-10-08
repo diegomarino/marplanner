@@ -827,6 +827,14 @@
             "rejects a Node-only modifier even when the runner executes all cases",
             "standard gate checks Node and Vitest without a Playwright artifact",
             "transferred standard evidence uses its producing checkout root"
+          ],
+          "tools/plugin-events.test.mjs": [
+            "plugin event gate rejects a typed foreign-owner emit and an undeclared subscription",
+            "plugin event gate accepts owned emits without subscribers and declared cross-owner subscriptions",
+            "plugin event gate follows imported, local and namespace aliases through type assertions",
+            "plugin event gate checks every conditional event name and rejects opaque names",
+            "plugin event gate rejects missing, duplicate, unknown and foreign-owner manifest declarations",
+            "plugin event gate ignores unrelated methods and rejects a missing typed catalog"
           ]
         }
       },
@@ -2104,6 +2112,7 @@
             "first-party plugin manifest inventory matches the canonical contribution, requirement, and settings matrix exactly",
             "first-party plugin manifest inventory projects every internal contribution exactly once into the closed public shape",
             "first-party plugin manifest inventory fails closed on the complete TypeScript export surface",
+            "first-party plugin manifest inventory declares typed events with explicit published namespace owners",
             "first-party plugin manifest inventory cannot be expanded or rewritten through runtime registration"
           ],
           "tests/boundary/plugin-routes.test.ts": [

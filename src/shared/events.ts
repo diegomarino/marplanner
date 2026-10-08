@@ -1,3 +1,4 @@
+import type { PluginId } from "./plugins.js";
 import type { PrintFailureErrorCode } from "./printing.js";
 
 export interface CoreEventCatalog {
@@ -48,3 +49,16 @@ export interface CoreEventCatalog {
     errorCode: PrintFailureErrorCode;
   };
 }
+
+/** Published namespace aliases have one owner; manifests cannot assign their own prefix. */
+export const EVENT_NAMESPACE_OWNERS = Object.freeze({
+  daily_briefing: "daily-briefing",
+  printing: "printing",
+  network: "network-devices",
+  routines: "core",
+} as const satisfies Record<
+  {
+    [K in keyof CoreEventCatalog]: K extends `${infer Namespace}.${string}` ? Namespace : never;
+  }[keyof CoreEventCatalog],
+  PluginId | "core"
+>);

@@ -21,10 +21,23 @@ Typing the payload per event also kills a second silent class — **payload drif
 changes the shape, subscriber reads a stale field) becomes a compile error.
 
 **Plugin events — manifest-declared (ADR-039 aligned).** Each plugin **declares in its
-manifest** the events it **emits** and **subscribes** to, namespaced by plugin ID (Rule
-B; drop-on-uninstall). Emitting or subscribing to an **undeclared** name is a
-declaration/build error. A namespace prefix must match its owner (a plugin cannot emit
-under `core.*` or another plugin's namespace). The shared core catalog is implemented, but plugin manifests currently lack these declarations and owner checks; the plugin gate remains required implementation work.
+manifest** typed `events.emits` and `events.subscribes` lists. Both lists are immutable
+and reference `CoreEventCatalog`. The shared `EVENT_NAMESPACE_OWNERS` map fixes one
+owner per published prefix: `daily_briefing` → `daily-briefing`, `network` →
+`network-devices`, `printing` → `printing`, and `routines` → core. These explicit
+aliases preserve the published event names; a plugin cannot choose another owner's
+prefix. Subscriptions may target another domain's event when declared; ownership
+restricts emission, not listening.
+
+`npm run check:plugin-events` runs before both build and lint. It validates declarations
+against the typed catalog and owner map, then uses TypeScript symbol/signature
+resolution to check domain-bus calls in registered server plugin source directories
+(including the `meals` source alias and Backups' server directory). Imported, local and
+namespace aliases are checked. An event argument must have a statically known literal
+or literal-union type; every possible name must be declared for that operation.
+Undeclared calls, unknown/duplicate declarations and foreign/core namespace emissions
+fail the gate. Payload compatibility remains the existing TypeScript compile gate.
+This is an in-tree source gate, not a sandbox or dynamic third-party loader.
 
 **Semantics unchanged (this is a name/type gate, not a delivery change).** A **registered
 event with zero subscribers is still valid** — intentional graceful degradation is
@@ -66,7 +79,7 @@ manifest event declarations. No legacy import (`ADR-026`).
 
 ## Open Questions
 
-- Catalog source-of-truth mechanism (shared types vs codegen) — implementation detail.
+- No open delivery decision: shared types, immutable manifests and the build/lint source gate are the source-of-truth mechanism.
 
 ## Peer Review
 
