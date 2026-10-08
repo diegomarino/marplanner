@@ -25,8 +25,30 @@ function write(root, rel, text) {
   mkdirSync(path.dirname(p), { recursive: true });
   writeFileSync(p, text);
 }
-function run(toolPath, argv) {
-  return spawnSync("node", [toolPath, ...argv], { encoding: "utf8" });
+function run(toolPath, fixture) {
+  const { argv, cwd } = Array.isArray(fixture) ? { argv: fixture } : fixture;
+  return spawnSync("node", [toolPath, ...argv], { cwd, encoding: "utf8" });
+}
+
+function pluginEventFixture(event) {
+  const root = tmp("mpk-plugin-events-");
+  write(root, "tsconfig.server.json", JSON.stringify({ include: ["src/**/*.ts"] }));
+  write(
+    root,
+    "src/shared/events.ts",
+    readFileSync(path.join(TRACE_DIR, "../src/shared/events.ts"), "utf8")
+  );
+  write(
+    root,
+    "src/server/lib/event-bus.ts",
+    "export function emit(name: string, payload: unknown): void {}\n"
+  );
+  write(
+    root,
+    "src/server/modules/printing/probe.ts",
+    `import { emit } from "../../lib/event-bus";\nemit("${event}", {});\n`
+  );
+  return { argv: [], cwd: root };
 }
 
 // The exception ratchet fixture uses two real commits and a clean worktree.
@@ -64,9 +86,13 @@ function commitExceptionListChange(root, newList) {
 }
 
 // ── Break-recipes: one per check-*.mjs tool ─────────────────────────────────
-// Each recipe builds a fixture and returns the argv to spawn. `bad` must drive a
+// Each recipe returns argv or argv with a fixture cwd. `bad` must drive a
 // non-zero exit; `good` must drive exit 0.
 const RECIPES = {
+  "check-plugin-events.mjs": {
+    bad: () => pluginEventFixture("routines.completion_changed"),
+    good: () => pluginEventFixture("printing.completed"),
+  },
   "check-exception-list.mjs": {
     // An added exception must fail against the committed predecessor.
     bad() {

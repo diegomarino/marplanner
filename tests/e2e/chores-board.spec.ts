@@ -193,7 +193,12 @@ test("chores board critical flow: configure → board → complete → streak (#
   await expect(toggleA).toHaveAttribute("aria-pressed", "true");
 
   // 6) Reload → still complete (server-side persistence, not optimistic-only state).
+  const reloadedBoard = page.waitForResponse(
+    (r) => r.url().includes("/api/chores/board") && r.request().method() === "GET"
+  );
   await page.reload();
+  expect((await reloadedBoard).status()).toBe(200);
+  await expect(page.getByText(m["chores.board.loading"])).toHaveCount(0, { timeout: 15_000 });
   await selectPeriod(
     memberColumn,
     "morning",

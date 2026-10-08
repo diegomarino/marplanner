@@ -16,6 +16,8 @@ For a running local server, use a writable persistent `DATA_DIR` and unique cred
 
 Keep server authorization, persistence and side effects behind their owning modules. Preserve the distinction between the frontend access gate, backend device credential and advisory UI PIN. Add a focused regression test for changed behavior, including failure and recovery when relevant. Changes to a shared primitive or contract need checks for all affected consumers.
 
+Build and lint first validate plugin event declarations, source calls and namespace ownership with `npm run check:plugin-events` (ADR-050).
+
 Run `npm run format:check`, `npm run typecheck`, `npm run lint`, and the relevant test tiers. `npm run check:standard` includes the client unit, boundary, integration, OpenAPI and accessibility checks; `npm run check:full` adds browser and built-render checks. Consult [verification](docs/quality/verification.md) for exact discovery, skip and instrumented coverage policy. Do not equate a boundary-guarantee reference with measured code coverage.
 
 ## Formatting, lint and comments

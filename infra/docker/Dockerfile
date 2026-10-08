@@ -16,6 +16,7 @@ FROM dependencies AS build
 COPY index.html vite.config.ts tsconfig*.json ./
 COPY src/ src/
 COPY scripts/ scripts/
+COPY tools/check-plugin-events.mjs tools/
 RUN npm run build
 
 FROM dependencies AS production-dependencies
