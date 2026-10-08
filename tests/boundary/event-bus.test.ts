@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { createEventBus } from "../../src/server/lib/event-bus.js";
 import { emit, subscribe } from "../../src/server/lib/event-bus.js";
+import { useIsolatedDb } from "../helpers/db";
 import type { CoreEventCatalog } from "../../src/shared/events.js";
 
 // Helper: drain all pending microtasks
@@ -13,6 +14,7 @@ function flushMicrotasks(): Promise<void> {
 }
 
 describe("event bus — (RED-first unit tests)", () => {
+  useIsolatedDb();
   let bus: ReturnType<typeof createEventBus>;
 
   beforeEach(() => {

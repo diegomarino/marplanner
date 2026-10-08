@@ -65,7 +65,15 @@ is exactly the absence-tolerance the plugin architecture requires.
   a per-subscriber delivery-failure counter and expose it on the plugin health
   endpoint; a subscriber throwing N consecutive times SHOULD surface as
   `degraded` (ties to ADR-039 `errored` state + Kiosk Shell global health
-  indicator). A simple atomic counter — not a dead-letter queue. The current event bus contains subscriber failures but does not keep these counters or expose them in health; this requirement remains unimplemented.
+  indicator). For the initial diagnostic delivery, every subscriber failure has the stable code
+  `event-bus.subscriber-failed`, a unique failure ID, event name and subscriber identity.
+  It is persisted through the existing bounded/redacted telemetry pipeline, available
+  in Administration → Telemetry → Subscriber failures. Browser ingest cannot use the
+  reserved `event-bus` component, and internal failure records bypass browser flood
+  admission. If persistence fails, a redacted stderr record preserves the diagnostic.
+  No event payload is logged. Current production subscriptions declare stable names;
+  unnamed registrations receive a unique process-local ID. Per-subscriber counters
+  and automatic health degradation remain follow-up work.
 
 ### Durability division of labor
 

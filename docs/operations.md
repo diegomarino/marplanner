@@ -256,3 +256,18 @@ server and do not set `PW_REUSE_SERVER=1` against household data. Tests must run
 sequentially with other commands that rebuild `dist`. Provider fixtures use local
 ports; physical printing, audible speech and controller writes need separate
 operator verification.
+
+## Find event subscriber failures
+
+Open Administration → Telemetry and select **Subscriber failures**, or filter by
+level `error` and component `event-bus`. The authenticated diagnostic query is
+`GET /api/telemetry/client-log?level=error&component=event-bus`.
+
+Each row has message `event-bus.subscriber-failed`, its normal telemetry event ID,
+and diagnostic data containing `failureId`, event name, subscriber identity and
+redacted error details. Production subscriber names identify the reacting module;
+event payloads are omitted. These logs use the existing telemetry retention policy.
+Browser ingest reserves the `event-bus` component for internal diagnostics. Internal
+failures bypass browser flood admission. If storage is unavailable, the same stable
+code and failure ID are written to redacted stderr; the admin database query cannot
+show rows that could not be persisted. Logging never retries the subscriber action.

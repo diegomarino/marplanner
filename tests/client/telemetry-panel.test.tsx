@@ -116,6 +116,28 @@ describe("TelemetryManagement", () => {
     });
   });
 
+  it("opens the subscriber failure query and replaces draft time filters", async () => {
+    const mockFetch = vi.mocked(globalThis.fetch);
+    mockFetch.mockImplementation(async (...args: FetchCall) => {
+      const url = String(args[0]);
+      if (url === settingsUrl)
+        return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
+      return jsonResponse({ rows: [], nextCursor: null });
+    });
+    renderPanel();
+    await screen.findByTestId("telemetry-empty");
+    fireEvent.change(screen.getByTestId("telemetry-filter-from"), { target: { value: "123" } });
+    fireEvent.click(screen.getByRole("button", { name: "Subscriber failures" }));
+    await waitFor(() =>
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("level=error&component=event-bus"),
+        expect.anything()
+      )
+    );
+    expect(screen.getByTestId("telemetry-filter-from")).toHaveValue(null);
+    expect(screen.getByTestId("telemetry-filter-component")).toHaveValue("event-bus");
+  });
+
   it("CLIENT-LOGGING-TELEMETRY-INV-11: a hostile row (active HTML/script in message AND data) renders inert — no element is injected", async () => {
     const hostileMessage = '<img src=x onerror="window.__pwned=true">';
     const hostileData = '{"payload":"<script>window.__pwned=true</script>"}';

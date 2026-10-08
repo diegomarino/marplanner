@@ -407,7 +407,7 @@ describe("BackupsManagement — kiosk density across every reachable state (SC-0
 });
 
 describe("TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002)", () => {
-  it("meets kiosk density while loading — the filter row (5 controls) is ALWAYS mounted, even before the first page resolves", async () => {
+  it("meets kiosk density while loading — the filter row (6 controls) is ALWAYS mounted, even before the first page resolves", async () => {
     let resolveList: (() => void) | undefined;
     const mockFetch = vi.fn((input: string | URL) => {
       const url = String(input);
@@ -429,10 +429,10 @@ describe("TelemetryManagement — kiosk density across every reachable state (SC
       renderTelemetry();
       await screen.findByText("Loading telemetry…");
 
-      // Level select + component/from/to inputs + Apply — the filter row sits OUTSIDE the
+      // Level select + component/from/to inputs + Apply + Subscriber failures — the filter row sits OUTSIDE the
       // loading branch, so it is never a zero-control phase on this surface (unlike Backups'
       // initial load or PrintExecutor's transient states).
-      expect(countInteractiveControls(document.body)).toBe(5);
+      expect(countInteractiveControls(document.body)).toBe(6);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
       resolveList?.();
@@ -442,7 +442,7 @@ describe("TelemetryManagement — kiosk density across every reachable state (SC
     }
   });
 
-  it("meets kiosk density with NO rows (still 5 — the filter row only)", async () => {
+  it("meets kiosk density with NO rows (still 6 — filters and diagnostic shortcut)", async () => {
     mockTelemetryBackend();
     const uninject = await injectDensityStyles();
     document.documentElement.setAttribute("data-density", "kiosk");
@@ -451,14 +451,14 @@ describe("TelemetryManagement — kiosk density across every reachable state (SC
       renderTelemetry();
       await screen.findByTestId("telemetry-empty");
 
-      expect(countInteractiveControls(document.body)).toBe(5);
+      expect(countInteractiveControls(document.body)).toBe(6);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
     }
   });
 
-  it("meets kiosk density with rows AND a next cursor — Load More adds a 6th control", async () => {
+  it("meets kiosk density with rows AND a next cursor — Load More adds a 7th control", async () => {
     mockTelemetryBackend({
       list: () =>
         jsonResponse({
@@ -485,14 +485,14 @@ describe("TelemetryManagement — kiosk density across every reachable state (SC
       await screen.findByTestId("telemetry-row-row-1");
 
       expect(screen.getByTestId("telemetry-load-more")).toBeInTheDocument();
-      expect(countInteractiveControls(document.body)).toBe(6);
+      expect(countInteractiveControls(document.body)).toBe(7);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
     }
   });
 
-  it("CENSUS FIRES ON REMOVAL — a failed Apply invalidates the cursor and Load More disappears (6 -> 5)", async () => {
+  it("CENSUS FIRES ON REMOVAL — a failed Apply invalidates the cursor and Load More disappears (7 -> 6)", async () => {
     let calls = 0;
     mockTelemetryBackend({
       list: () => {
@@ -524,15 +524,15 @@ describe("TelemetryManagement — kiosk density across every reachable state (SC
       renderTelemetry();
       await screen.findByTestId("telemetry-row-row-seed");
       expect(screen.getByTestId("telemetry-load-more")).toBeInTheDocument();
-      expect(countInteractiveControls(document.body)).toBe(6);
+      expect(countInteractiveControls(document.body)).toBe(7);
 
       fireEvent.click(screen.getByTestId("telemetry-apply-filters"));
       await waitFor(() =>
         expect(screen.queryByTestId("telemetry-load-more")).not.toBeInTheDocument()
       );
 
-      // A census that failed to actually recompute (a stale/memoized count) would still read 6.
-      expect(countInteractiveControls(document.body)).toBe(5);
+      // A census that failed to actually recompute (a stale/memoized count) would still read 7.
+      expect(countInteractiveControls(document.body)).toBe(6);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
