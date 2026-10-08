@@ -101,7 +101,7 @@ on the kiosk dashboard and the Daily Briefing. Replaces the v1 weekly-window pla
   - activate/deactivate; recurring-entry and one-off-entry add/edit/delete; derived
     menu read for a date or week range; recipe search-by-name.
 - Outbound: a per-`(date, slot)` resolved-label **list** consumed by Daily Briefing and
-  the dashboard widget (read interface; no cross-module table access, Rule B).
+  the dashboard widget (read interface; no cross-module table access, Rule B). Daily Briefing projects each included slot to ordered `{kind: "recipe" | "note", label: string}` entries and freezes labels verbatim, including tombstones, punctuation and emoji (ADR-045/022).
 
 ## Events
 
@@ -139,7 +139,7 @@ occurrences, no `weekStart`/`weekEnd` columns. The 7 `meal_plans` / 33 `meals` /
 - **MEALS-RECIPES-AC-08** Recipe `name` blank-after-trim rejected; name-only recipe accepted; absent/empty
   `slots` ⇒ all pickers.
 - **MEALS-RECIPES-AC-09** Dates outside strict `YYYY-MM-DD` rejected; week/today use household tz + `weekStartDay`.
-- **MEALS-RECIPES-AC-10** Consumers receive a per-slot resolved-label list; the briefing freezes it verbatim. The current briefing producer instead stores joined strings and removes emoji; structured-list preservation remains unimplemented (ADR-045).
+- **MEALS-RECIPES-AC-10** Consumers receive a per-slot resolved-label list. Daily Briefing freezes ordered `{kind: "recipe" | "note", label: string}` lists for lunch, snack and dinner, preserving labels verbatim, including punctuation, emoji and recipe tombstones (ADR-045/022). Source edits leave the stored lists unchanged until regeneration; existing scalar-slot snapshots remain readable without rewriting. Breakfast inclusion remains the separate decision below.
 
 ## Open Decisions
 

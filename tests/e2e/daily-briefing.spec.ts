@@ -470,9 +470,11 @@ test("admin opt-in -> Generate -> complete ordered catalogue and raster preview 
         .flatMap((group) => group.items)
         .some((item) => item.value === householdContent.reminderText)
     ).toBe(true);
-    const meals = blockOf(briefing, "meals")?.data as { dinner?: string };
+    const meals = blockOf(briefing, "meals")?.data as {
+      dinner?: Array<{ kind: "recipe" | "note"; label: string }>;
+    };
     expect(meals.dinner).toBeDefined();
-    expect(meals.dinner as string).toContain(householdContent.mealNote);
+    expect(meals.dinner).toContainEqual({ kind: "note", label: householdContent.mealNote });
     // "streak" (was "chores") no longer exposes chore NAMES at all — it derives a completion
     // summary, never the raw routine/chore rows ("The 21 block types"). Presence
     // + shape is what's left to prove; this is the finding that retires this spec's original

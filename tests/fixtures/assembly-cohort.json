@@ -1291,6 +1291,7 @@
           ],
           "tests/boundary/daily-briefing-snapshot.test.ts": [
             "daily-briefing snapshot + regeneration boundary freezes source data until regeneration, then replaces the payload in place with a settled status",
+            "daily-briefing snapshot + regeneration boundary ADR-045: freezes ordered meal kinds and verbatim labels until regeneration",
             "daily-briefing snapshot + regeneration boundary tolerates archived snapshots on read without revalidating the member",
             "daily-briefing snapshot + regeneration boundary rejects regeneration for a member archived after generation and leaves the frozen snapshot unchanged"
           ],
@@ -3180,6 +3181,7 @@
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) keeps Generate-all disabled while an earlier opt-in PUT is still pending"
           ],
           "tests/client/daily-briefing-view.test.tsx": [
+            "DailyBriefingView — full block registry keeps existing scalar meal snapshots visible",
             "DailyBriefingView — full block registry renders all 21 registry block types with visible, correct content",
             "DailyBriefingView — full block registry renders an unrecognized/future block type as a quiet fallback — title only, no crash",
             "DailyBriefingView — full block registry backward-renders a schemaVersion-1 (010-era) envelope through the same renderers",
@@ -4411,8 +4413,9 @@
             "daily-briefing domain blocks (FR-013) today caps at 10 events",
             "daily-briefing domain blocks (FR-013) today places a 23:30-local event in TODAY's block even when its UTC instant falls on the next UTC day (FR-012)",
             "daily-briefing domain blocks (FR-013) meals returns null when nothing is planned that day",
-            "daily-briefing domain blocks (FR-013) meals returns lunch/dinner when planned (single entry per slot, unchanged), omits snack, adapter-compatible (FR-013)",
-            "daily-briefing domain blocks (FR-013) meals preserves ALL entries for a slot (N-per-slot), joined with ', ' in domain order, adapter-compatible (FR-013, AC-10)",
+            "daily-briefing domain blocks (FR-013) meals returns verbatim lunch/dinner lists when planned, omits snack, adapter-compatible (FR-013)",
+            "daily-briefing domain blocks (FR-013) meals preserves ALL entries for a slot (N-per-slot) as lists in domain order, adapter-compatible (FR-013, AC-10)",
+            "daily-briefing domain blocks (FR-013) meals preserves stale recipe references as structured tombstone entries",
             "daily-briefing domain blocks (FR-013) meals excludes breakfast (v1 parity — the envelope shape has no breakfast field)",
             "daily-briefing domain blocks (FR-013) birthday returns null when no member-listing port is injected (host-api gap — see module doc)",
             "daily-briefing domain blocks (FR-013) birthday computes own + family days-until, leap-day Feb-29 -> Feb-28 substitution, sorted ascending, adapter-compatible (FR-013)",
@@ -4611,6 +4614,7 @@
             "daily-briefing render-defs — per-type render through the real bridge single-block height floors (measured baseline, ~10% margin for font-hinting jitter) type \"drawingPrompt\" renders at least its measured height floor (508px)",
             "daily-briefing render-defs — per-type render through the real bridge single-block height floors (measured baseline, ~10% margin for font-hinting jitter) type \"wordSearch\" renders at least its measured height floor (432px)",
             "daily-briefing render-defs — per-type render through the real bridge single-block height floors (measured baseline, ~10% margin for font-hinting jitter) type \"wordOfDay\" renders at least its measured height floor (420px)",
+            "daily-briefing render-defs — per-type render through the real bridge structural labels — household language (DAILY-BRIEFING-INV-06, Codex #709 P1 fold) validates structured meal entries and renders existing scalar slots",
             "daily-briefing render-defs — per-type render through the real bridge structural labels — household language (DAILY-BRIEFING-INV-06, Codex #709 P1 fold) meals renders Lunch/Snack/Dinner in en, Comida/Merienda/Cena in es",
             "daily-briefing render-defs — per-type render through the real bridge structural labels — household language (DAILY-BRIEFING-INV-06, Codex #709 P1 fold) onThisDay renders Events/Births/Deaths in en, Sucesos/Nacimientos/Fallecimientos in es",
             "daily-briefing render-defs — per-type render through the real bridge structural labels — household language (DAILY-BRIEFING-INV-06, Codex #709 P1 fold) birthday's empty-payload fallback renders in household language",
@@ -5724,7 +5728,7 @@
         "minimumTotals": {
           "lines": 50,
           "statements": 53,
-          "functions": 31,
+          "functions": 30,
           "branches": 40
         },
         "minimumRates": {
@@ -7177,10 +7181,10 @@
       "src/server/modules/daily-briefing/blocks/meals.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 16,
-          "statements": 22,
-          "functions": 5,
-          "branches": 13
+          "lines": 10,
+          "statements": 11,
+          "functions": 3,
+          "branches": 6
         },
         "minimumRates": {
           "lines": 100,

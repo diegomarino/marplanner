@@ -50,7 +50,7 @@ per slot** (the resolved display labels in canonical order), not a singular
 generation time (`ADR-022`); the meals block in `daily-briefing.md` stores resolved
 date-specific labels, never plan/rule IDs. This closes the seam between additive
 N-per-slot (ADR-045) and the single-label framing ADR-022/the briefing spec previously
-assumed. The briefing producer currently flattens these lists into scalar strings and removes emoji before persistence; preserving the structured snapshot remains required implementation work.
+assumed. The briefing producer stores `{kind, label}` lists for lunch, snack and dinner, preserving canonical order and labels verbatim, including punctuation and emoji. Recipe tombstones remain recipe entries with their resolved label. Empty slots are omitted. The web view and print renderer format the frozen labels for presentation; reads do not reshape stored payloads. Existing scalar-slot snapshots remain readable and are replaced only on regeneration. Breakfast coverage remains the separate question below.
 
 **Stale recipe reference must render as a tombstone, never break the read (peer-review
 I2 — floor invariant).** A recurring or one-off entry whose recipe reference points at
