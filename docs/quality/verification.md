@@ -12,7 +12,7 @@ Boundary guarantees in [boundary-guarantees.yaml](boundary-guarantees.yaml) reco
 
 Apply the required tier to the same reviewed candidate bytes. Changes after a pass invalidate affected evidence. `npm run build` alone produces a distributable build; it does not accept the candidate.
 
-`npm run check:preflight` checks maintained inventory, reviewed coverage source fingerprints and the pinned Node/npm/Vitest toolchain without running tests. Standard runs it before the destructive stamp. `npm run check:preflight:browser` also checks the retained candidate stamp and standard coverage/cohort artifacts, rejects inherited `SCHEDULER_DISABLED=1` and acceptance server reuse (`PW_REUSE_SERVER=1`), and checks local `BASE_URL`/`PORT` consistency before the aggregate build. These early checks do not establish browser execution or a complete environment/build fingerprint; the browser runner still owns browser availability, synthetic data and server startup.
+`npm run check:preflight` checks the maintained product inventory, that every coverage-policy file is present, and the pinned Node/npm/Vitest toolchain without running tests. Standard runs it before the destructive stamp. `npm run check:preflight:browser` also checks the retained candidate stamp and standard coverage/cohort artifacts, rejects inherited `SCHEDULER_DISABLED=1` and acceptance server reuse (`PW_REUSE_SERVER=1`), and checks local `BASE_URL`/`PORT` consistency before the aggregate build. These early checks do not establish browser execution or a complete environment/build fingerprint; the browser runner still owns browser availability, synthetic data and server startup.
 
 CI calls the existing selector in `mac-mini-ci.yml`. Trusted repository changes use
 `macmini` when the named runner is online, idle and has the required labels;
@@ -26,7 +26,8 @@ main) forces hosted native acceptance.
 same candidate, restores the standard tar archive with its original timestamps,
 verifies coverage and cohorts, then builds and runs every Playwright check. Raw
 Node/Vitest/V8 absolute paths use the producing checkout root recorded in the
-candidate stamp; source hashes still come from the consuming checkout. Artifact
+candidate stamp. The consuming checkout recomputes candidate identity and accepts
+the archive only when that identity matches the stamp. Artifact
 names include run ID and attempt to prevent mixing retries. Each job has a fresh
 checkout path, job-owned npm configuration/cache/prefix and browser installation;
 no personal environment files, desktop session or existing browser cache is used.
@@ -47,7 +48,7 @@ A required suite must be discovered from its runner's actual list/results. Rejec
 
 ## Instrumented coverage
 
-Measure the complete cumulative production cohort, including files never imported by a test and the seed CLI. Bind raw V8 output, exact source hashes, runtime/toolchain and candidate identity. Required line/statement/function/branch percentages are: overall `85/85/85/80`, client `87/85/83/78`, server `90/89/92/83`, shared `96/96/100/93`. An absent layer requires explicit cohort evidence; deleting files from a denominator does not satisfy a floor. Compare retained unchanged files against the approved original cohort; document the reason for any transformed-file denominator change. A focused green test or mapped historical percentage cannot accept the candidate.
+Measure the complete cumulative production cohort, including files never imported by a test and the seed CLI. Bind raw V8 output to the pinned runtime/toolchain and to the candidate identity computed from the maintained tree. The coverage policy records aggregate floors, per-file minimum rates and per-file minimum totals. Required line/statement/function/branch percentages are: overall `85/85/85/80`, client `87/85/83/78`, server `90/89/92/83`, shared `96/96/100/93`. An absent layer requires explicit cohort evidence; deleting files from a denominator does not satisfy a floor. Compare retained unchanged files against the approved original cohort; document the reason for any transformed-file denominator change. A focused green test or mapped historical percentage cannot accept the candidate.
 
 ## Change scope
 
@@ -103,13 +104,13 @@ The Node test runner already runs test files concurrently. Playwright retains on
 
 Type-aware lint applies to real project sources. Architectural lint tests explicitly use typescript-eslint's `disableTypeChecked` configuration for their virtual syntax fixtures; they still exercise the production import, logging and UI rules. The normal lint command and the new typed-rule probes retain type checking.
 
-This hardening adds six Node lint-policy cases and two invalid-date Calendar regressions and one recipe-search consumer case, and corrects the isolated density-control case name. The reviewed production changes are explicit dispatch of already-contained asynchronous operations, accurate async hook/subscriber types, removal of obsolete suppressions, documented density behavior, and moving Calendar date conversion into its existing error boundary. The cohort inventory admits `.editorconfig`, `tools/lint.mjs` and `tools/lint-policy.test.mjs`. Only fingerprints of these reviewed source changes are updated; coverage floors and per-file minimums are preserved.
+This hardening adds six Node lint-policy cases and two invalid-date Calendar regressions and one recipe-search consumer case, and corrects the isolated density-control case name. The reviewed production changes are explicit dispatch of already-contained asynchronous operations, accurate async hook/subscriber types, removal of obsolete suppressions, documented density behavior, and moving Calendar date conversion into its existing error boundary. The cohort inventory admits `.editorconfig`, `tools/lint.mjs` and `tools/lint-policy.test.mjs`. Coverage floors and per-file minimums stay in place.
 
 ## Imported history reconciliation
 
 The initial GitHub import includes changes after the previously reviewed runtime
-candidate. Its product inventory and coverage fingerprints are reconciled with
-those maintained bytes, including shared gate tokens and local seed/browser tools.
+candidate. Its product inventory is reconciled with those maintained bytes,
+including shared gate tokens and local seed/browser tools.
 The original production coverage cohort, file minimum totals, file minimum rates,
 and aggregate floors remain unchanged. Keyboard and module-relative gate-token
 regressions exercise new branches instead of lowering coverage requirements.
