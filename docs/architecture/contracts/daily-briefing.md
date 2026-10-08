@@ -3,10 +3,6 @@
 Status: maintained contract
 Depends on decisions: `ADR-005`, `ADR-008`, `ADR-019`, `ADR-022`, `ADR-027`, `ADR-028`, `ADR-035`, `ADR-039`, `ADR-040`, `ADR-041`, `ADR-044`, `ADR-015`
 
-## Implementation reconciliation (2026-10-08)
-
-The common local-DB read snapshot required by `ADR-043` is not yet established by asynchronous block gathering; an interleaved-edit reproduction remains pending. Meal snapshot lists also remain flattened in the current producer (`ADR-045`). Snapshot write atomicity does not itself prove input-read consistency. These are implementation gaps, not weaker replacement guarantees.
-
 ## Purpose
 
 Daily Briefing is a **plugin** (ADR-029) that generates a per-member/date
@@ -36,7 +32,7 @@ it does not own delivery.
 
 1. **DAILY-BRIEFING-INV-01** A briefing is a snapshot: it reads other domains **at generation time** and
    never silently mutates on later source changes (ADR-022). Refresh only via
-   regeneration.
+   regeneration. Cross-domain local DB inputs must share the read snapshot required by ADR-043; the current asynchronous gather has not established that snapshot, and interleaved-edit reproduction remains pending.
 2. **DAILY-BRIEFING-INV-02** The briefing **ID is stable across regeneration**; regeneration replaces the
    payload in place. **No per-regeneration version history** (ADR-022).
 3. **DAILY-BRIEFING-INV-03** Per-member/date uniqueness: one current row per member/date; a `pending`

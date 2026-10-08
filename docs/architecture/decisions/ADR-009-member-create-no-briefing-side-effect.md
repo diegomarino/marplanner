@@ -34,11 +34,6 @@ No legacy member or Daily Briefing rows are imported under `ADR-026`.
 - Given a member create request, when Daily Briefing storage or configuration logic is unavailable, then member creation is unaffected.
 - Given a member needs a Daily Briefing, when opt-in/configuration is set through Daily Briefing behavior, then Daily Briefing owns the resulting settings.
 
-## Open Questions
-
-- Cross-domain atomicity is resolved by `ADR-043`.
-- Member creation has no briefing opt-in side effect (`ADR-027`); future opt-in presentation changes belong to Daily Briefing.
-
 ## Traceability
 
 - Conflicts: `CR-009-multistep-atomicity`

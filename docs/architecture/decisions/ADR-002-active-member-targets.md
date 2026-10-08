@@ -48,11 +48,6 @@ New v2 writes must reject archived targets. Child-facing writes/generation must 
 - Given historical data referencing an archived member, when the owning domain renders history, then the member label remains readable and read-only.
 - Given new Calendar, Network Devices, Reminders, or Daily Messages targets, when a member is selected, then the member must be active.
 
-## Open Questions
-
-- Parent-linked legacy briefing migration is superseded by `ADR-026`; current opt-in eligibility is governed by `ADR-027`.
-- Orphan-reference policy is resolved by `ADR-054`: archive-only members, strict writes and tolerant historical reads.
-
 ## Traceability
 
 - Conflicts: `CR-002-active-child-targets`

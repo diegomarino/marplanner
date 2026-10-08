@@ -47,8 +47,9 @@ self-hosters** (N users × 1 instance each):
   ethos. SPA served same-origin by Fastify (see ADR-056 `/api` rule).
 - **npm:** collapsing the monorepo removed pnpm's workspace rationale; npm ships with Node.
 
-## Distribution model (Q10) — the load-bearing distributable decision
+## Distribution model
 
+- **Configuration:** `DATA_DIR` is persistent storage; `DATABASE_PATH` defaults to `marplanner.db`; `BACKUPS_ROOT` defaults under `DATA_DIR`. Runtime `BASE_PATH`, integration overrides and boot preflight are specified in [operations](../../operations.md).
 - **Governing principle:** ALL platform variance lives in thin external recipes (compose, fly.toml,
   templates); **the image NEVER** — leaking platform specifics into the image forks the artifact.
 - **Phase 1 (committed):** one platform-agnostic Docker image as source-of-truth runtime; config
@@ -94,7 +95,7 @@ runner; snapshot failure aborts before migration SQL. During restore, existing r
 recovers the original active pre-restore state, distinct from the older restored
 candidate captured by the migration snapshot. Failed attempts may retain partial
 files; only completed, verified snapshots are recovery points. Recovery and retention are operator-managed, as described in
-[operations](../../operations.md#pre-migration-recovery-snapshots). Runtime `BASE_PATH` now mounts the same portable client/server build with runtime HTML injection; root `/health` is preserved. Built-browser/container acceptance and applicable storage safety checks remain required for the launch candidate. The maintainer explicitly defers versioning policy, arbitrary historical upgrade compatibility and `SKIP_MIGRATION` until after launch; see [ADR-056](ADR-056-process-dx-baseline.md#launch-scope-amendment-2026-10-03). These deferred features are not launch gates. Packaging and platform-specific runtime evidence do not establish
+[operations](../../operations.md#pre-migration-recovery-snapshots). Runtime `BASE_PATH` now mounts the same portable client/server build with runtime HTML injection; root `/health` is preserved. Built-browser/container acceptance and applicable storage safety checks remain required for the launch candidate. The maintainer explicitly defers versioning policy, arbitrary historical upgrade compatibility and `SKIP_MIGRATION` until after launch; see [ADR-056](ADR-056-process-dx-baseline.md#first-release-scope). These deferred features are not launch gates. Packaging and platform-specific runtime evidence do not establish
 full distribution acceptance.
 
 ## Acceptance criteria
@@ -106,22 +107,3 @@ full distribution acceptance.
 - The same image runs unmodified from `docker compose up` and from a Fly recipe; no platform string
   appears inside the image.
 - STRICT tables reject wrong-typed column writes at the engine level.
-
-## Open questions
-
-- ~~Host-coupling re-scan of ADR-001..054 (config-externalization audit) — tracked, not yet
-  executed.~~ **DONE 2026-06-30 (peer-reviewed).** Verdict: ADR-001..036 structurally clean
-  (ADR-032/033 over-deliver on portability); no destructive backward ripple. Findings folded into
-  [operations](../../operations.md): current operator configuration and storage
-  contract (resolves "reserved names" below + ADR-042 backups root + ADR-053 UniFi key); operator-only
-  `WEATHER_ENDPOINT`/`WEATHER_ENABLED` (ADR-052); volume UID/GID writability + boot preflight; host
-  clock (NTP) precondition.
-- ~~Exact reserved data dir / env var names (`DATABASE_PATH`, `DATA_DIR`, `BASE_PATH`) — naming
-  only.~~ **Resolved** by the maintained [operator contract](../../operations.md): `DATA_DIR`
-  is the storage root; `DATABASE_PATH` defaults to `marplanner.db`; `BACKUPS_ROOT`
-  defaults under `DATA_DIR`. Integration overrides use the explicit keys in the
-  environment examples and Compose allowlist. `BASE_PATH` is injected at runtime; see [operations](../../operations.md#runtime-subpath-hosting).
-- ~~**OPEN (parked, structural):** `BASE_PATH` × Vite — build-time `base` vs single prebuilt
-  image.~~ **RESOLVED at spec level (2026-06-30):** `BASE_PATH` is a **runtime** env (build-arg
-  excluded — it would break this image's pull-one-prebuilt distribution); the SPA base path is
-  injected at runtime. ADR-056's erroneous "Vite `base` = it" is corrected. The injection mechanism is now implemented with Fastify HTML base/meta injection; see the implementation status above, ADR-056 and operations. Acceptance still requires candidate-specific evidence.

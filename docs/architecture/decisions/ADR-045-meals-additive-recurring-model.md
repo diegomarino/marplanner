@@ -4,10 +4,6 @@ Status: accepted
 Owner: architecture + product
 Decision date: 2026-06-29
 
-## Reconciliation (2026-10-08)
-
-The additive menu is implemented, but the briefing meals block currently joins labels into scalar strings and removes emoji before snapshot persistence. That does not preserve the structured list verbatim. The requirement below remains open implementation work; changing it to a scalar contract requires an explicit decision, not a compliance claim in a code comment.
-
 ## Decision
 
 Replaces the v1 Meals model (one weekly `meal_plan` window owning at-most-one
@@ -54,7 +50,7 @@ per slot** (the resolved display labels in canonical order), not a singular
 generation time (`ADR-022`); the meals block in `daily-briefing.md` stores resolved
 date-specific labels, never plan/rule IDs. This closes the seam between additive
 N-per-slot (ADR-045) and the single-label framing ADR-022/the briefing spec previously
-assumed.
+assumed. The briefing producer currently flattens these lists into scalar strings and removes emoji before persistence; preserving the structured snapshot remains required implementation work.
 
 **Stale recipe reference must render as a tombstone, never break the read (peer-review
 I2 — floor invariant).** A recurring or one-off entry whose recipe reference points at

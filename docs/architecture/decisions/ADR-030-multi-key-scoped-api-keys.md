@@ -4,13 +4,9 @@ Status: accepted
 Owner: architecture / security
 Decision date: 2026-06-28
 
-## Reconciliation (2026-10-08)
-
-Key-management issuance/revocation/rotation and the anti-lockout mutation gate remain deferred in the installed release. Their future invariant must protect operator-usable credentials, not merely count device keys. A device cookie cannot supply the raw header credential required below. `ADR-032` retirement must preserve both future management access and replacement-device provisioning.
-
 ## Decision
 
-The system replaces the single deployment API key with **multiple named API keys**, each with capability scopes and a managed lifecycle. This narrows `ADR-007`: a valid API key no longer implies full access — it authorizes exactly its granted capabilities.
+API credentials use **multiple named key records** with capability scopes. The first release reconciles configured bootstrap/management credentials and provisions device keys; issuance, revocation, rotation and their anti-lockout mutations are deferred lifecycle requirements. This narrows `ADR-007`: a valid API key no longer implies full access — it authorizes exactly its granted capabilities.
 
 ### Capability model
 

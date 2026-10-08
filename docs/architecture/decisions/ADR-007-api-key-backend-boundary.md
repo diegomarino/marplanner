@@ -8,7 +8,7 @@ Decision date: 2026-06-27
 
 The API key boundary is the sole backend authorization boundary for all settings reads, settings writes, and all other feature operations. The PIN is a UI-layer gate only — its purpose is to prevent casual or accidental access to admin UI screens. PIN state must never be evaluated by the backend as a required condition for any API endpoint.
 
-> **Narrowed by `ADR-030` (2026-06-28):** "a valid API key authorizes everything" was true under the original single-key model. The system now uses multiple scoped keys: a `*` key authorizes everything, but a scoped key authorizes only its granted `domain:verb` capabilities. The boundary is still "the API key" — what changed is that a key's authority is bounded by its scopes. PIN-is-UI-only is unaffected.
+Credential authority is bounded by declared capabilities (`ADR-030`), the household trust model and its documented carve-outs (`ADR-058`). Device `*` cookies carry household authority; arbitrary scoped issuance remains future integration work. Neither key scope nor transport may be inferred from PIN state.
 
 `/health` is the root credential-free infrastructure endpoint (`ADR-031`/`ADR-059`). Household API operations require API credentials; frontend serving uses the separate access gate.
 
@@ -44,11 +44,6 @@ Fresh setup configures a bootstrap credential; provisioning creates per-device k
 - Given a valid API key, when a client submits a settings write, then the backend accepts or rejects based on API credential validity and the declared capability, never PIN state.
 - Given no API key, when a client requests any endpoint other than liveness probes, then the backend returns 401/403 regardless of PIN state.
 - Given a valid API key, when a client enters or skips the PIN, then the backend response to any endpoint is identical.
-
-## Open Questions
-
-- Health exemption and serving/API separation are resolved by `ADR-031`/`ADR-059`.
-- Client-only PIN state and recovery are resolved by `ADR-013`; key lifecycle is separately scoped in the authentication contract.
 
 ## Traceability
 

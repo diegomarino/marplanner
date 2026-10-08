@@ -6,7 +6,7 @@ Decision date: 2026-06-28
 
 ## Decision
 
-Runtime services are placed by the capability they require. Server capabilities own persistent decisions and jobs; browser capabilities own local hardware execution. Time announcements are the explicit exception: the browser evaluates and fires them locally under ADR-065. This reconciliation supersedes the server-queued announcement language preserved below as historical rationale.
+Runtime services are placed by the capability they require. Server capabilities own persistent decisions and jobs; browser capabilities own local hardware execution. Time announcements are the explicit exception: the browser evaluates and fires them locally under ADR-065. Persistent Printing claims do not apply to announcement timing.
 
 ### Principle 1 — Placement by required capability
 
@@ -16,8 +16,7 @@ Runtime services are placed by the capability they require. Server capabilities 
 ### Principle 2 — Decision/execution split for hardware-bound behaviors
 
 - The "what and when" for printing is owned **server-side** as the single source of truth. Announcement timing is browser-local under ADR-065.
-- The "execute on hardware" (speak the time, send bytes to the printer) is **UI-bound**: a connected browser claims pending work and executes it.
-- This replaces the legacy browser leader-election (BroadcastChannel) and single-tab print assumptions.
+- Hardware execution is **UI-bound**: a capable browser claims Printing work and sends printer bytes; announcement speech and timing run locally without a server claim.
 
 ### Principle 3 — Capability registration (required)
 
@@ -46,7 +45,7 @@ Per `ADR-029`, a service belongs to its plugin. An inactive plugin mounts neithe
 
 The legacy system placed these services ad hoc in the browser, producing multi-tab leader-election for announcements and a single-tab assumption for printing. Capability placement keeps persistent printing decisions on the server and hardware execution in a capable browser. ADR-065 later placed announcement timing and speech execution in the browser.
 
-The original review favored server scheduling for announcements to avoid a browser lease gap near a slot boundary. ADR-065 superseded that placement. Its original reasoning remains here to explain the tradeoff, while implementation and tests must follow the browser-local decision.
+Duplicate speech across devices is an accepted household tradeoff. Printing retains server claims because duplicate physical delivery wastes paper; the two behaviors therefore require different coordination guarantees (`ADR-051`/`ADR-065`).
 
 ## Affected capabilities
 

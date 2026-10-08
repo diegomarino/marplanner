@@ -4,10 +4,6 @@ Status: accepted
 Owner: product / architecture
 Decision date: 2026-06-27
 
-## Reconciliation (2026-10-08)
-
-`ADR-039` settles the in-tree first-party implementation and canonical activation registry. Settings presence is only a derived client hint, not activation truth; settings-less plugins can be active. This partially refines the original intent while preserving the core/plugin classification.
-
 ## Decision
 
 v2 distinguishes between **core** and **plugin** features. Core features are always present in any household deployment. Plugins are optional features that a household activates; they may require specific hardware, external integrations, or generate content that not every household needs.
@@ -64,7 +60,6 @@ An inactive plugin's settings objects are **absent** from `GET /settings`. The p
 
 ## Open Questions
 
-- Explicit activation, registry ownership and inactive-plugin behavior are resolved by `ADR-038`/`ADR-039`.
 - A first-run activation wizard remains future product work; no dynamic install/uninstall UI is implied.
 
 ## Traceability

@@ -4,10 +4,6 @@ Status: accepted
 Owner: architecture
 Decision date: 2026-06-29
 
-## Reconciliation (2026-10-08)
-
-The common read snapshot for generation remains required. Current briefing block gathering in `src/server/modules/daily-briefing/index.ts` awaits external work between local reads before opening its write transaction. A mixed-state snapshot is a source-inferred risk, not a reproduced runtime failure. Reproduce that interleave, then collect local DB inputs in one synchronous read snapshot before external fetch/render work; do not hold the transaction across HTTP waits.
-
 ## Decision
 
 Generalizes the ADR-009 atomicity umbrella into two classes that determine when a
@@ -45,11 +41,9 @@ ON` per connection** so a future code path that forgets the guard cannot leave d
 
 **Consistent read snapshot for generation (peer-review I1):** when a consumer makes
 multiple cross-module reads that must agree (e.g. Daily Briefing calling both
-`Routines.getMemberStreak` and `Calendar.getEvents` for one member/date), the whole
-generation runs inside **one SQLite read transaction** whose context is threaded through
+`Routines.getMemberStreak` and `Calendar.getEvents` for one member/date), local DB input gathering runs inside **one SQLite read transaction** whose context is threaded through
 both reads — otherwise the snapshot can mix pre-write and post-write state. SQLite read
-transactions are free. Calendar events for a member/date are fetched **once** and reused
-across that member's reminder rules, not once per rule.
+transactions must cover the local DB reads synchronously, before external fetching/rendering; never hold one across HTTP awaits. Current briefing gathering interleaves local reads and external work before the write transaction, so this requirement remains incomplete. A mixed-state interleave is source-inferred and still needs runtime reproduction. Calendar events for a member/date are fetched **once** and reused across reminder rules.
 
 ## Rationale
 

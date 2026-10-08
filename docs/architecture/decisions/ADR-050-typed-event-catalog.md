@@ -4,10 +4,6 @@ Status: accepted
 Owner: architecture
 Decision date: 2026-06-29
 
-## Reconciliation (2026-10-08)
-
-Core event names and payloads are constrained by the shared typed catalog. Plugin manifests currently lack the emits/subscribes declarations and owner-namespace checks required below. This is a partial implementation, not evidence that the plugin declaration gate exists; reconcile that gate explicitly without introducing third-party infrastructure.
-
 ## Decision
 
 Refines `ADR-040` (domain event bus): event names and payloads are a **declared, typed
@@ -28,7 +24,7 @@ changes the shape, subscriber reads a stale field) becomes a compile error.
 manifest** the events it **emits** and **subscribes** to, namespaced by plugin ID (Rule
 B; drop-on-uninstall). Emitting or subscribing to an **undeclared** name is a
 declaration/build error. A namespace prefix must match its owner (a plugin cannot emit
-under `core.*` or another plugin's namespace).
+under `core.*` or another plugin's namespace). The shared core catalog is implemented, but plugin manifests currently lack these declarations and owner checks; the plugin gate remains required implementation work.
 
 **Semantics unchanged (this is a name/type gate, not a delivery change).** A **registered
 event with zero subscribers is still valid** — intentional graceful degradation is

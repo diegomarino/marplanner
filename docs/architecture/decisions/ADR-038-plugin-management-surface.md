@@ -4,10 +4,6 @@ Status: accepted
 Owner: product / architecture
 Decision date: 2026-06-28
 
-## Reconciliation (2026-10-08)
-
-`ADR-039` partially supersedes this record: current plugins are trusted first-party code; only activate/deactivate is exposed. Install/uninstall and official/unofficial security enforcement are dormant future concepts. Visibility and the single management surface remain accepted.
-
 ## Decision
 
 Plugin lifecycle is managed from a single dedicated admin surface (e.g. `admin/plugins`): **activate and deactivate**. Install/uninstall remains dormant under `ADR-039`. This is the only place plugins are managed.
@@ -19,16 +15,11 @@ Plugin lifecycle is managed from a single dedicated admin surface (e.g. `admin/p
 
 ### Plugin types
 
-The original two-tier vocabulary below is retained for future extension; it does not describe an installed untrusted-plugin ecosystem (`ADR-039`):
-
-- **Official:** verified, behavior can be presupposed.
-- **Unofficial / third-party:** untrusted code; behavior is not known in advance.
-
-The full trust, permission, installation-source, and sandbox model for these tiers is **out of scope for this decision** and is governed by a dedicated Plugin System grill (`ADR-039`, see that decision/grill).
+All current plugins are trusted first-party code (`ADR-039`). Third-party installation, trust enforcement and sandboxing require a separate future ecosystem decision; the management UI must not imply those protections exist.
 
 ### Lifecycle consequences (already defined elsewhere)
 
-Activating a plugin registers its settings objects with defaults (`ADR-028`/`ADR-029`), mounts its runtime services (`ADR-035`), and adds its nav/widgets. Deactivating reverses this: its settings objects disappear from `GET /settings` (consistent with `ADR-029` "absent object = plugin inactive"), its runtime services unmount, and its nav/widgets disappear. Activate/deactivate is therefore a switch with well-defined, system-wide consequences, not merely a nav toggle.
+Activating a plugin registers its settings objects with defaults (`ADR-028`/`ADR-029`), mounts its runtime services (`ADR-035`), and adds its nav/widgets. Deactivating reverses this: the activation registry is canonical (`ADR-039`), and its settings objects disappear from `GET /settings`, its runtime services unmount, and its nav/widgets disappear. Activate/deactivate is therefore a switch with well-defined, system-wide consequences, not merely a nav toggle.
 
 ## Rationale
 
@@ -48,7 +39,6 @@ A single management surface keeps plugin lifecycle in one auditable place. Hidin
 
 ## Open Questions
 
-- Trust, manifest, activation and registry ownership are resolved by `ADR-039`.
 - A first-run activation wizard remains deferred; dynamic installation requires a separate future decision.
 
 ## Traceability

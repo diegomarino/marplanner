@@ -4,10 +4,6 @@ Status: accepted
 Owner: architecture / ops
 Decision date: 2026-06-28
 
-## Reconciliation (2026-10-08)
-
-The installed release reconciles deployment credentials and provisions devices; it has no key-management mutation API or retirement nudge. The retirement policy below is a future requirement. A retained device cookie preserves household use but is not an operator-held raw management/provisioning credential; it cannot alone make bootstrap retirement safe.
-
 ## Decision
 
 The first `*` (full-access) API key on a fresh deployment — the bootstrap key — is established from a **deployment-provided configuration value**, expressed deployment-agnostically. The portable mechanism is an environment variable; the product must not couple this to any specific hosting platform (Fly, Docker, Kubernetes, bare metal, systemd, `.env`, etc. are all valid).
@@ -16,7 +12,7 @@ The first `*` (full-access) API key on a fresh deployment — the bootstrap key 
 
 1. **Bootstrap source.** The deployment provides the bootstrap key value through an environment variable (or equivalent config secret). No hosting-platform-specific mechanism is assumed or required.
 2. **Startup reconciliation.** On startup, if the bootstrap value is configured and no active `*` key record matching it exists, the system seeds a `*` key record for it (hash stored like any key). This lets the bootstrap participate in the uniform per-request validation and the anti-lockout rule (`ADR-030`).
-3. **Provisioning.** The operator uses the bootstrap key in the connection-setup flow to provision per-device `*` keys (`ADR-030`). The same bootstrap key may provision multiple devices (multiple kiosks).
+3. **Provisioning.** The operator uses the bootstrap key in the connection-setup flow to provision per-device `*` keys (`ADR-030`). The same bootstrap key may provision multiple devices (multiple kiosks). Key-management mutations and the retirement nudge are not part of the first release.
 4. **No auto-rotation on first access.** The bootstrap key is **not** automatically revoked when the first device is provisioned. Auto-revoking would (a) prevent provisioning additional kiosks from the same bootstrap and (b) conflict with startup reconciliation, which would re-seed it while the config value is still present.
 5. **Operator retirement with a nudge.** When key lifecycle is implemented, the admin UI may recommend retirement only after all devices are set up and a replacement operator-held credential is retained for management and future device provisioning. Retiring is an explicit two-step operator action: remove the bootstrap config value from the deployment (so reconciliation no longer re-seeds it) and revoke the bootstrap key record. The **anti-lockout** rule (`ADR-030`) protects the last operator-usable credential; a device `*` cookie alone is insufficient. Until the provisioning flow admits a retained replacement credential, bootstrap retirement is not supported.
 
