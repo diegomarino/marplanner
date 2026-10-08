@@ -16,19 +16,16 @@ const expected = {
   toolchain: { node: "24.21.0", vitest: "5.0.3" },
   files: {
     "src/client/a.ts": {
-      sha256: "a".repeat(64),
       layer: "client",
       minimumTotals: { lines: 10, statements: 10, functions: 10, branches: 10 },
       minimumRates: { lines: 100, statements: 100, functions: 100, branches: 100 },
     },
     "src/server/b.ts": {
-      sha256: "b".repeat(64),
       layer: "server",
       minimumTotals: { lines: 10, statements: 10, functions: 10, branches: 10 },
       minimumRates: { lines: 90, statements: 90, functions: 90, branches: 90 },
     },
     "src/shared/c.ts": {
-      sha256: "c".repeat(64),
       layer: "shared",
       minimumTotals: { lines: 10, statements: 10, functions: 10, branches: 10 },
       minimumRates: { lines: 90, statements: 90, functions: 90, branches: 90 },
@@ -39,9 +36,9 @@ const observed = {
   candidate: "candidate-1",
   toolchain: { node: "24.21.0", vitest: "5.0.3" },
   files: {
-    "src/client/a.ts": { sha256: "a".repeat(64), metrics: metrics(10, 10) },
-    "src/server/b.ts": { sha256: "b".repeat(64), metrics: metrics(10, 10) },
-    "src/shared/c.ts": { sha256: "c".repeat(64), metrics: metrics(10, 10) },
+    "src/client/a.ts": { metrics: metrics(10, 10) },
+    "src/server/b.ts": { metrics: metrics(10, 10) },
+    "src/shared/c.ts": { metrics: metrics(10, 10) },
   },
 };
 const clone = (value) => structuredClone(value);
@@ -70,12 +67,6 @@ for (const [name, mutate] of [
     "per-file regression hidden by aggregate",
     (value) => {
       value.files["src/client/a.ts"].metrics.lines.covered = 9;
-    },
-  ],
-  [
-    "wrong source hash",
-    (value) => {
-      value.files["src/client/a.ts"].sha256 = "wrong".repeat(12) + "xxxx";
     },
   ],
   [
@@ -163,35 +154,28 @@ test("declaration files remain visible with zero executable metrics", () => {
   );
 });
 
-test("preflight rejects stale coverage fingerprints before runners", async () => {
+test("preflight accepts source edits and rejects toolchain drift before runners", async () => {
   const fs = await import("node:fs");
   const { tmpdir } = await import("node:os");
   const { join } = await import("node:path");
-  const { createHash } = await import("node:crypto");
   const root = fs.mkdtempSync(join(tmpdir(), "mp-preflight-"));
   try {
     fs.writeFileSync(join(root, "a.ts"), "export const a = 1;\n");
     const policy = {
       toolchain: expected.toolchain,
-      files: {
-        "a.ts": {
-          sha256: createHash("sha256")
-            .update(fs.readFileSync(join(root, "a.ts")))
-            .digest("hex"),
-        },
-      },
+      files: { "a.ts": { layer: "shared" } },
     };
     const pkg = { packageManager: "npm@11.19.0", devDependencies: { vitest: "5.0.3" } };
     const runtime = { node: "24.21.0", npm: "11.19.0" };
+    assert.equal(preflightCoverage(policy, pkg, runtime, root).files, 1);
+    fs.writeFileSync(join(root, "a.ts"), "export const a = 1; // comment-only\n");
     assert.equal(preflightCoverage(policy, pkg, runtime, root).files, 1);
     const stalePkg = { ...pkg, devDependencies: { vitest: "5.0.2" } };
     assert.throws(() => preflightCoverage(policy, stalePkg, runtime, root), /vitest toolchain/);
     const staleEvidence = { ...observed, toolchain: { ...observed.toolchain, vitest: "5.0.2" } };
     assert.throws(() => verifyCoverage(expected, staleEvidence), /vitest toolchain/);
-    fs.writeFileSync(join(root, "a.ts"), "changed");
-    assert.throws(() => preflightCoverage(policy, pkg, runtime, root), /source hash differs/);
-    policy.files["a.ts"].sha256 = "invalid";
-    assert.throws(() => preflightCoverage(policy, pkg, runtime, root), /expected hash invalid/);
+    fs.rmSync(join(root, "a.ts"));
+    assert.throws(() => preflightCoverage(policy, pkg, runtime, root), /missing from coverage cohort/);
     assert.throws(
       () => preflightCoverage(policy, pkg, { ...runtime, node: "26.9.0" }, root),
       /node toolchain/
@@ -202,6 +186,27 @@ test("preflight rejects stale coverage fingerprints before runners", async () =>
     );
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("coverage policy keeps minima without per-file source hashes", async () => {
+  const { readFileSync } = await import("node:fs");
+  const policy = JSON.parse(readFileSync("tests/fixtures/assembly-cohort.json", "utf8"))
+    .coveragePolicy;
+  const files = Object.entries(policy.files);
+  assert.ok(files.length > 0);
+  for (const [file, review] of files) {
+    assert.equal(Object.hasOwn(review, "sha256"), false, file);
+    for (const metric of ["lines", "statements", "functions", "branches"]) {
+      assert.equal(Number.isSafeInteger(review.minimumTotals?.[metric]), true, file);
+      assert.equal(
+        Number.isFinite(review.minimumRates?.[metric]) &&
+          review.minimumRates[metric] >= 0 &&
+          review.minimumRates[metric] <= 100,
+        true,
+        file
+      );
+    }
   }
 });
 
@@ -217,11 +222,10 @@ test("browser preflight rejects inherited fixture and server overrides", () => {
     assert.throws(() => preflightBrowserEnvironment(env));
 });
 
-test("transferred V8 evidence maps producer paths and hashes consumer source bytes", async () => {
+test("transferred V8 evidence maps producer paths onto the consuming checkout", async () => {
   const fs = await import("node:fs");
   const { tmpdir } = await import("node:os");
   const { join } = await import("node:path");
-  const { createHash } = await import("node:crypto");
   const root = fs.mkdtempSync(join(tmpdir(), "coverage-transfer-"));
   try {
     fs.writeFileSync(join(root, "a.ts"), "consumer source");
@@ -234,9 +238,11 @@ test("transferred V8 evidence maps producer paths and hashes consumer source byt
       },
     };
     const result = fromV8Coverage(raw, { files: { "a.ts": {} } }, root, "/producer");
-    assert.equal(
-      result["a.ts"].sha256,
-      createHash("sha256").update("consumer source").digest("hex")
+    assert.deepEqual(result["a.ts"].metrics.statements, { covered: 1, total: 1 });
+    assert.equal(result["a.ts"].sha256, undefined);
+    assert.throws(
+      () => fromV8Coverage(raw, { files: { "a.ts": {} } }, root, "/other-producer"),
+      /inventory/
     );
     assert.throws(
       () =>
@@ -247,6 +253,11 @@ test("transferred V8 evidence maps producer paths and hashes consumer source byt
           "/producer"
         ),
       /inventory/
+    );
+    fs.rmSync(join(root, "a.ts"));
+    assert.throws(
+      () => fromV8Coverage(raw, { files: { "a.ts": {} } }, root, "/producer"),
+      /missing from checkout/
     );
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
