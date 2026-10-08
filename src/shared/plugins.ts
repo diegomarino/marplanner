@@ -1,3 +1,5 @@
+import type { CoreEventCatalog } from "./events.js";
+
 export const PLUGIN_IDS = Object.freeze([
   "daily-briefing",
   "printing",
@@ -81,6 +83,10 @@ export interface PluginManifest {
   readonly descriptionKey: string;
   readonly trustTier: PluginTrustTier;
   readonly contributions: PluginManifestContributionSummary;
+  readonly events: {
+    readonly emits: readonly (keyof CoreEventCatalog)[];
+    readonly subscribes: readonly (keyof CoreEventCatalog)[];
+  };
   readonly requirements: readonly PluginRequirementId[];
   readonly settingsSchema: readonly PluginSettingDescriptor[];
   readonly dataNamespace: string;

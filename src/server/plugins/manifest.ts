@@ -31,6 +31,9 @@ const LIFECYCLE_CAPABILITIES = Object.freeze([
 ] as const satisfies readonly PluginLifecycleCapability[]);
 
 function freezeManifest(manifest: PluginManifest): PluginManifest {
+  Object.freeze(manifest.events.emits);
+  Object.freeze(manifest.events.subscribes);
+  Object.freeze(manifest.events);
   for (const service of manifest.contributions.services) {
     Object.freeze(service);
   }
@@ -94,6 +97,10 @@ export const PLUGIN_MANIFESTS: readonly PluginManifest[] = Object.freeze([
         "daily-briefing.auto-print-sweep",
       ],
     }),
+    events: {
+      emits: ["daily_briefing.generated"],
+      subscribes: ["printing.completed", "printing.failed", "routines.completion_changed"],
+    },
     requirements: ["members", "app-settings", "calendar-local", "day-periods", "routines-chores"],
     settingsSchema: settingsSchema([
       {
@@ -133,6 +140,7 @@ export const PLUGIN_MANIFESTS: readonly PluginManifest[] = Object.freeze([
       contentSources: [],
       jobs: [],
     }),
+    events: { emits: ["printing.completed", "printing.failed"], subscribes: [] },
     requirements: ["auth-sessions", "app-settings", "kiosk-shell"],
     settingsSchema: settingsSchema([]),
     dataNamespace: "printing",
@@ -154,6 +162,7 @@ export const PLUGIN_MANIFESTS: readonly PluginManifest[] = Object.freeze([
       contentSources: ["weather", "weatherText"],
       jobs: [],
     }),
+    events: { emits: [], subscribes: [] },
     requirements: ["app-settings"],
     settingsSchema: settingsSchema([
       {
@@ -197,6 +206,7 @@ export const PLUGIN_MANIFESTS: readonly PluginManifest[] = Object.freeze([
       contentSources: [],
       jobs: [],
     }),
+    events: { emits: [], subscribes: [] },
     requirements: ["app-settings", "kiosk-shell"],
     settingsSchema: settingsSchema([]),
     dataNamespace: "time_announcements",
@@ -218,6 +228,7 @@ export const PLUGIN_MANIFESTS: readonly PluginManifest[] = Object.freeze([
       contentSources: [],
       jobs: ["backups.nightly"],
     }),
+    events: { emits: [], subscribes: [] },
     requirements: ["auth-sessions", "app-settings"],
     settingsSchema: settingsSchema([]),
     dataNamespace: "backups",
@@ -239,6 +250,7 @@ export const PLUGIN_MANIFESTS: readonly PluginManifest[] = Object.freeze([
       contentSources: [],
       jobs: ["network-devices.poll"],
     }),
+    events: { emits: ["network.device_blocked", "network.device_unblocked"], subscribes: [] },
     requirements: ["members"],
     settingsSchema: settingsSchema([]),
     dataNamespace: "network_devices",
@@ -260,6 +272,7 @@ export const PLUGIN_MANIFESTS: readonly PluginManifest[] = Object.freeze([
       contentSources: ["meals"],
       jobs: [],
     }),
+    events: { emits: [], subscribes: [] },
     requirements: ["members", "app-settings"],
     settingsSchema: settingsSchema([]),
     dataNamespace: "meals_recipes",
@@ -281,6 +294,7 @@ export const PLUGIN_MANIFESTS: readonly PluginManifest[] = Object.freeze([
       contentSources: ["reminders"],
       jobs: [],
     }),
+    events: { emits: [], subscribes: [] },
     requirements: ["members", "calendar-local", "app-settings"],
     settingsSchema: settingsSchema([]),
     dataNamespace: "reminders",
@@ -302,6 +316,7 @@ export const PLUGIN_MANIFESTS: readonly PluginManifest[] = Object.freeze([
       contentSources: ["message"],
       jobs: [],
     }),
+    events: { emits: [], subscribes: [] },
     requirements: ["members"],
     settingsSchema: settingsSchema([]),
     dataNamespace: "daily_messages",
