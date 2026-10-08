@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PNG } from "pngjs";
+import { __setForecastPortForTests } from "../../src/server/modules/weather/port";
+import {
+  createDailyBlockCache,
+  evictWeatherCache,
+} from "../../src/server/modules/daily-briefing/external/shared-cache";
 import { getDb } from "../../src/server/db/client";
 import { RASTER_WIDTH_DOTS } from "../../src/server/modules/daily-briefing/render/raster";
 
@@ -12,7 +17,7 @@ import { RASTER_WIDTH_DOTS } from "../../src/server/modules/daily-briefing/rende
 const { bridgeOverride } = vi.hoisted(() => ({
   bridgeOverride: {
     current: null as
-      | (() => Promise<{
+      | ((envelope: RenderEnvelope) => Promise<{
           bitmapPng: Uint8Array | null;
           bitmapHeight: number | null;
           failedRenderBlocks: string[];
@@ -27,7 +32,9 @@ vi.mock("../../src/server/modules/daily-briefing/render/index", async (importOri
   return {
     ...actual,
     renderBriefingBitmap: (...args: Parameters<typeof actual.renderBriefingBitmap>) =>
-      bridgeOverride.current ? bridgeOverride.current() : actual.renderBriefingBitmap(...args),
+      bridgeOverride.current
+        ? bridgeOverride.current(args[0])
+        : actual.renderBriefingBitmap(...args),
   };
 });
 import {
@@ -57,6 +64,7 @@ import { ALL_BLOCK_TYPES } from "../../src/server/modules/daily-briefing/corpora
 import { getLabels } from "../../src/server/modules/daily-briefing/render/labels";
 import { useIsolatedDb } from "../helpers/db";
 import { seedMember } from "../helpers/daily-briefing-seed";
+import type { RenderEnvelope } from "../../src/server/modules/daily-briefing/render/types";
 import type { Briefing } from "../../src/shared";
 
 /** docs/features/daily-briefing.md — the full-generation integrator's own
@@ -225,6 +233,9 @@ describe("daily-briefing full generation", () => {
     __setPrintingPluginActiveForTests(undefined);
     __setQuoteSourceForTests(undefined);
     __setOnThisDaySourceForTests(undefined);
+    __setForecastPortForTests(undefined);
+    bridgeOverride.current = null;
+    vi.useRealTimers();
   });
 
   it("rejects an empty member before generation or persistence", async () => {
@@ -233,6 +244,165 @@ describe("daily-briefing full generation", () => {
       count: 0,
     });
   });
+
+  it.each(["content", "settings"])(
+    "ADR-043: freezes local %s before a concurrent edit during external work",
+    async (mutation) => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date(`${DATE_FRI}T12:00:00Z`));
+      seedMember("m1", { optedIn: true });
+      seedDailyMessage("m1", DATE_FRI, "Before edit");
+      writeBlockOrder([
+        { type: "shotgun" },
+        { type: "streak" },
+        { type: "quoteOfDay" },
+        { type: "message" },
+        { type: "streakText" },
+      ]);
+      seedHouseholdLanguage("en");
+      const db = getDb();
+      db.prepare(
+        "INSERT INTO calendar_events (id, source, title, all_day, start_date, end_date, created_at, updated_at) VALUES ('event', 'local', 'Before event', 1, ?, '2026-08-22', ?, ?)"
+      ).run(DATE_FRI, Date.now(), Date.now());
+      db.prepare(
+        "INSERT INTO calendar_assignments (id, event_id, member_id, created_at) VALUES ('assignment', 'event', 'm1', ?)"
+      ).run(Date.now());
+      db.prepare(
+        `INSERT INTO reminder (id, kind, targeting_mode, text, query, query_fields, active, created_at, updated_at) VALUES ('rule', 'calendar_gated', 'apply_to_all', 'Before reminder', 'before', '["title"]', 1, ?, ?)`
+      ).run(Date.now(), Date.now());
+      db.prepare("UPDATE members SET created_at = ? WHERE id = 'm1'").run(Date.UTC(2026, 0, 1));
+      db.prepare(
+        "INSERT INTO routines (id, day_period_id, name, active, created_at, updated_at) VALUES ('routine', 'morning', 'Morning', 1, ?, ?)"
+      ).run(Date.now(), Date.now());
+      db.prepare(
+        "INSERT INTO chores (id, routine_id, name, sort_order, active, created_at, updated_at) VALUES ('chore', 'routine', 'Make bed', 0, 1, ?, ?)"
+      ).run(Date.now(), Date.now());
+      db.prepare(
+        `INSERT INTO routine_assignments (id, routine_id, member_id, weekdays, active, created_at, updated_at) VALUES ('routine-assignment', 'routine', 'm1', '["mon","tue","wed","thu","fri","sat","sun"]', 1, ?, ?)`
+      ).run(Date.now(), Date.now());
+      db.prepare(
+        "INSERT INTO settings_objects (object_name, data, updated_at) VALUES ('weather', ?, ?)"
+      ).run(JSON.stringify({ lat: 40, lon: -3 }), Date.now());
+      __setForecastPortForTests(async (location) => ({
+        current: { conditionKey: "clear", tempC: location.lat, rainPct: 0 },
+        hourly: [],
+        daily: [
+          {
+            date: DATE_FRI,
+            conditionKey: "clear",
+            tempMinC: location.lat,
+            tempMaxC: location.lat,
+            rainPct: 0,
+          },
+        ],
+      }));
+      __setPrintingPluginActiveForTests(true);
+      let renderedLanguage: string | undefined;
+      bridgeOverride.current = (envelope) => {
+        renderedLanguage = envelope.language;
+        expect(db.inTransaction).toBe(false);
+        return Promise.resolve({
+          bitmapPng: buildValidPng(),
+          bitmapHeight: 1,
+          failedRenderBlocks: [],
+          unrenderedBlocks: [],
+        });
+      };
+      let signalEntered!: () => void;
+      let release!: () => void;
+      const entered = new Promise<void>((resolve) => {
+        signalEntered = resolve;
+      });
+      const resume = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      __setQuoteSourceForTests(async () => {
+        signalEntered();
+        await resume;
+        return { text: "Paused quote", author: "Test" };
+      });
+
+      const pending = generateBriefing("m1", DATE_FRI);
+      await entered;
+      try {
+        expect(db.inTransaction).toBe(false);
+        db.transaction(() => {
+          db.prepare("UPDATE members SET display_name = 'After edit' WHERE id = 'm1'").run();
+          db.prepare("UPDATE daily_messages SET text = 'After edit' WHERE member_id = 'm1'").run();
+          db.prepare("UPDATE calendar_events SET title = 'After event' WHERE id = 'event'").run();
+          db.prepare(
+            "UPDATE reminder SET text = 'After reminder', query = 'after' WHERE id = 'rule'"
+          ).run();
+          db.prepare("UPDATE settings_objects SET data = ? WHERE object_name = 'locale'").run(
+            JSON.stringify({ language: "es" })
+          );
+          db.prepare(
+            "INSERT INTO chore_completions (id, chore_id, member_id, date, completed_at) VALUES ('completion', 'chore', 'm1', '2026-08-20', ?)"
+          ).run(Date.now());
+          db.prepare("UPDATE settings_objects SET data = ? WHERE object_name = 'weather'").run(
+            JSON.stringify({ lat: 50, lon: -4 })
+          );
+          evictWeatherCache();
+          if (mutation === "settings")
+            writeMemberBlockSettings("m1", "message", { enabled: false });
+        })();
+      } finally {
+        release();
+      }
+      const briefing = await pending;
+      expect(briefing.payload.member.displayName).toBe("m1");
+      expect(briefing.payload.blocks.find((b) => b.type === "shotgun")?.data).toEqual({
+        ranking: ["m1"],
+      });
+      expect(briefing.payload.blocks.find((b) => b.type === "message")?.data).toEqual({
+        text: "Before edit",
+      });
+      expect(readBriefing("m1", DATE_FRI)).toMatchObject({
+        briefing: { payload: briefing.payload },
+      });
+      expect(briefing.payload.blocks.find((b) => b.type === "today")?.data).toEqual({
+        bullets: ["Before event"],
+      });
+      expect(briefing.payload.blocks.find((b) => b.type === "reminders")?.data).toEqual({
+        groups: [{ items: [{ value: "Before reminder" }] }],
+      });
+      const streak = briefing.payload.blocks.find((b) => b.type === "streak")?.data;
+      expect(streak).toMatchObject({
+        days: 0,
+        last7: [false, false, false, false, false, false, false],
+      });
+      expect(briefing.payload.blocks.find((b) => b.type === "streakText")?.data).toEqual(streak);
+      expect(briefing.payload.blocks.find((b) => b.type === "weather")?.data).toMatchObject({
+        tempMaxC: 40,
+      });
+      expect(
+        db
+          .prepare("SELECT payload FROM daily_briefing_block_cache WHERE block_type = 'weather'")
+          .get()
+      ).toBeUndefined();
+      expect(renderedLanguage).toBe("en");
+      const regenerated = await generateBriefing("m1", DATE_FRI);
+      expect(regenerated.id).toBe(briefing.id);
+      expect(renderedLanguage).toBe("es");
+      expect(regenerated.payload.blocks.find((b) => b.type === "weather")?.data).toMatchObject({
+        tempMaxC: 50,
+      });
+      expect(regenerated.payload.blocks.find((b) => b.type === "streak")?.data).toMatchObject({
+        days: 1,
+        last7: [false, false, false, false, false, false, true],
+      });
+      expect(regenerated.payload.blocks.find((b) => b.type === "today")?.data).toEqual({
+        bullets: ["After event"],
+      });
+      expect(regenerated.payload.blocks.find((b) => b.type === "reminders")?.data).toEqual({
+        groups: [{ items: [{ value: "After reminder" }] }],
+      });
+      expect(regenerated.payload.member.displayName).toBe("After edit");
+      expect(regenerated.payload.blocks.find((b) => b.type === "message")?.data).toEqual(
+        mutation === "settings" ? undefined : { text: "After edit" }
+      );
+    }
+  );
 
   it("FR-014: effective order merge — configured instances (incl. a repeated type with distinct params) first, then unlisted registry types in registry order", async () => {
     seedMember("m1", { optedIn: true });
@@ -702,6 +872,58 @@ describe("daily-briefing full generation", () => {
 
     const briefing = await generateBriefing("m1", DATE_FRI);
     expect(briefing.payload.blocks.map((b) => b.type)).not.toContain("quoteOfDay");
+  });
+
+  it("contains malformed persisted external cache entries as block failures", async () => {
+    seedMember("m1", { optedIn: true });
+    __setPrintingPluginActiveForTests(false);
+    const cache = createDailyBlockCache(DATE_FRI);
+    getDb()
+      .prepare(
+        "INSERT INTO daily_briefing_block_cache (date, block_type, payload, created_at) VALUES (?, 'weather', 'invalid-json', ?)"
+      )
+      .run(DATE_FRI, Date.now());
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const briefing = await generateBriefing("m1", DATE_FRI, cache);
+      expect(briefing.status).toBe("partial");
+      expect(briefing.payload.blocks.find((b) => b.type === "weather")).toMatchObject({
+        status: "failed",
+        error: "gather_failed",
+      });
+    } finally {
+      error.mockRestore();
+    }
+  });
+
+  it("generates an enabled onThisDay block and contains its external failure", async () => {
+    seedMember("m1", { optedIn: true });
+    writeMemberBlockSettings("m1", "onThisDay", { enabled: true });
+    __setPrintingPluginActiveForTests(false);
+    __setOnThisDaySourceForTests(async () => ({
+      events: ["2000: Test event"],
+      births: [],
+      deaths: [],
+    }));
+    const first = await generateBriefing("m1", DATE_FRI);
+    expect(first.payload.blocks.find((b) => b.type === "onThisDay")).toMatchObject({
+      status: "ok",
+      data: { events: ["2000: Test event"] },
+    });
+    getDb().prepare("DELETE FROM daily_briefing_block_cache WHERE block_type = 'onThisDay'").run();
+    __setOnThisDaySourceForTests(async () => {
+      throw new Error("source unavailable");
+    });
+    const failed = await generateBriefing("m1", DATE_FRI);
+    expect(failed.id).toBe(first.id);
+    expect(failed.payload.blocks.find((b) => b.type === "onThisDay")).toMatchObject({
+      status: "failed",
+      error: "gather_failed",
+    });
+    __setOnThisDaySourceForTests(undefined);
+    expect(
+      (await generateBriefing("m1", DATE_FRI)).payload.blocks.some((b) => b.type === "onThisDay")
+    ).toBe(false);
   });
 
   //: this does NOT prove the FR-020 serial-loop fence itself — word-search's

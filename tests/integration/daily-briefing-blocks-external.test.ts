@@ -14,7 +14,10 @@ import {
 } from "../../src/server/modules/daily-briefing/external/ports";
 import { generateQuoteOfDayBlock } from "../../src/server/modules/daily-briefing/blocks/quoteOfDay";
 import { generateOnThisDayBlock } from "../../src/server/modules/daily-briefing/blocks/onThisDay";
-import { generateWeatherBlock } from "../../src/server/modules/daily-briefing/blocks/weather";
+import {
+  generateWeatherBlock,
+  readWeatherBlockInputs,
+} from "../../src/server/modules/daily-briefing/blocks/weather";
 import { generateWeatherTextBlock } from "../../src/server/modules/daily-briefing/blocks/weatherText";
 import { adaptBlockData } from "../../src/server/modules/daily-briefing/render/adapter";
 import { renderBriefingBitmap } from "../../src/server/modules/daily-briefing/render/bridge";
@@ -190,6 +193,18 @@ describe("daily-briefing EXTERNAL blocks + shared cache", () => {
       expect(await generateOnThisDayBlock(cache, source, DATE)).toEqual({ events: ["recovered"] });
       expect(attempt).toBe(2);
     });
+  });
+
+  it("captured weather input failures omit without poisoning the external cache", async () => {
+    seedWeatherLocation();
+    getDb()
+      .prepare("UPDATE settings_objects SET data = 'null' WHERE object_name = 'weather'")
+      .run();
+    const inputs = readWeatherBlockInputs(NOW);
+    expect(inputs).toBeNull();
+    const cache = createDailyBlockCache(DATE);
+    expect(await generateWeatherBlock(cache, DATE, NOW, inputs)).toBeNull();
+    expect(cache.get("weather")).toBeUndefined();
   });
 
   describe("weather (via the 016 weather seam — readWeatherLocation/getForecastPort)", () => {

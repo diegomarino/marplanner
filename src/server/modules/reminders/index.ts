@@ -17,6 +17,8 @@ import {
   getDb,
 } from "../../host-api";
 
+import type { CalendarReadContext } from "../../host-api";
+
 // ── Error types ────────────────────────────────────────────────────────────
 
 export class ReminderValidationError extends Error {
@@ -800,7 +802,11 @@ export function replaceAssignments(reminderId: string, input: unknown): Reminder
  * active assignment for this member whose weekday set contains it. Tolerant
  * of an inactive/unknown member — returns `[]` rather than throwing (D4).
  */
-export function getReminders(memberId: unknown, date: unknown): ReminderEmission[] {
+export function getReminders(
+  memberId: unknown,
+  date: unknown,
+  txCtx?: CalendarReadContext
+): ReminderEmission[] {
   if (typeof memberId !== "string" || memberId.trim().length === 0) {
     throw new ReminderValidationError("memberId is required and must be a non-blank string");
   }
@@ -852,7 +858,7 @@ export function getReminders(memberId: unknown, date: unknown): ReminderEmission
     .all() as Array<{ id: string; text: string; query: string; query_fields: string }>;
 
   const calendarGatedApplyToAllEmissions = calendarGatedApplyToAllRows
-    .filter((row) => calendarGateMatches(memberId, date, row.query, row.query_fields))
+    .filter((row) => calendarGateMatches(memberId, date, row.query, row.query_fields, txCtx))
     .map((row) => ({ id: row.id, text: row.text }));
 
   // calendar_gated specific — membership-only targeting (AC-05): a member is targeted iff
@@ -869,7 +875,7 @@ export function getReminders(memberId: unknown, date: unknown): ReminderEmission
     .all(memberId) as Array<{ id: string; text: string; query: string; query_fields: string }>;
 
   const calendarGatedSpecificEmissions = calendarGatedSpecificRows
-    .filter((row) => calendarGateMatches(memberId, date, row.query, row.query_fields))
+    .filter((row) => calendarGateMatches(memberId, date, row.query, row.query_fields, txCtx))
     .map((row) => ({ id: row.id, text: row.text }));
 
   return [
@@ -890,12 +896,14 @@ function calendarGateMatches(
   memberId: string,
   date: string,
   query: string,
-  queryFieldsJson: string
+  queryFieldsJson: string,
+  txCtx?: CalendarReadContext
 ): boolean {
   try {
     return (
       getEvents({
         source: "all",
+        txCtx,
         assignedTo: memberId,
         query,
         queryFields: JSON.parse(queryFieldsJson) as string[],

@@ -19,7 +19,7 @@ import {
   supersedePrintRecordTxn,
   weekdayOf,
 } from "../../host-api";
-import type { PrintableRaster } from "../../host-api";
+import type { CalendarReadContext, PrintableRaster } from "../../host-api";
 import { renderBriefingBitmap, pngToPackedRaster, RASTER_WIDTH_DOTS } from "./render/index";
 import type { RenderBlockInput, RenderEnvelope } from "./render/index";
 import type {
@@ -51,8 +51,8 @@ import { mealsBlock } from "./blocks/meals";
 import { birthdayBlock } from "./blocks/birthday";
 import type { BirthdayActiveMember } from "./blocks/birthday";
 import { remindersBlock } from "./blocks/reminders";
-import { generateWeatherBlock } from "./blocks/weather";
-import { generateWeatherTextBlock } from "./blocks/weatherText";
+import { generateWeatherBlock, readWeatherBlockInputs } from "./blocks/weather";
+import type { WeatherBlockInputs } from "./blocks/weather";
 import { generateDadJoke } from "./blocks/dad-joke";
 import { generateWordOfDay } from "./blocks/word-of-day";
 import { generateAnimalFact } from "./blocks/animal-fact";
@@ -368,13 +368,14 @@ async function renderAndPackBriefing(
   memberId: string,
   memberName: string,
   date: string,
-  blocks: BlockInstance[]
+  blocks: BlockInstance[],
+  language: string
 ): Promise<RenderStoreResult> {
   const envelope: RenderEnvelope = {
     memberId,
     memberName,
     date,
-    language: readHouseholdLanguage(),
+    language,
     blocks: selectRenderableBlocks(blocks),
   };
   const rendered = await renderBriefingBitmap(envelope);
@@ -476,7 +477,7 @@ function titleLabel(type: string, language: string): string {
 }
 
 /** "NN TITLE", zero-padded. `ordinal` is v1-faithful: the block's position
- * in the FULL effective order (`generateFullRegistryBlocks`'s own loop index + 1), NOT a
+ * in the FULL effective order (`gatherLocalBlocks`'s own loop index + 1), NOT a
  * recount of survivors — a disabled/weekday-masked/null-omitted block leaves a numbering GAP,
  * matching FR-021's retry-pass re-stamp presumption (re-stamped from the CURRENT effective order
  * on every run, never persisted as a stable per-block id). `language` resolves the label text
@@ -636,26 +637,25 @@ async function generateExternalBlock<T>(
  * `{error: "gather_failed"}` and NEVER lets escape to the caller — every generator in this
  * dispatch, corpus ones especially, may throw for an invalid param — see each `case`).
  */
-async function generateBlockData(
+function generateLocalBlockData(
   type: string,
   memberId: string,
   date: string,
-  now: number,
   params: Record<string, unknown> | undefined,
-  cache: DailyBlockCache
-): Promise<BlockOutcome> {
-  if (!isPluginContentSourceActive(type)) return null;
+  language: string,
+  txCtx: CalendarReadContext
+): BlockOutcome {
   try {
     switch (type) {
       case "shotgun": {
-        const data = await shotgunBlock.generate({
+        const data = shotgunBlock.generate({
           date,
           listActiveMembers: listActiveMembersPort,
         });
         return data === null ? null : { data };
       }
       case "message": {
-        const data = await messageBlock.generate({
+        const data = messageBlock.generate({
           memberId,
           date,
           readDailyMessage: readDailyMessagePort,
@@ -663,63 +663,46 @@ async function generateBlockData(
         return data === null ? null : { data };
       }
       case "streak": {
-        const data = await streakBlock.generate({
+        const data = streakBlock.generate({
           memberId,
           date,
-          language: readHouseholdLanguage(),
+          language,
         });
         return data === null ? null : { data };
       }
       case "streakText": {
-        const data = await streakTextBlock.generate({
+        const data = streakTextBlock.generate({
           memberId,
           date,
-          language: readHouseholdLanguage(),
+          language,
         });
         return data === null ? null : { data };
       }
       case "today": {
-        const data = await todayBlock.generate({ memberId, date });
+        const data = todayBlock.generate({ memberId, date, txCtx });
         return data === null ? null : { data };
       }
       case "meals": {
-        const data = await mealsBlock.generate({ date });
+        const data = mealsBlock.generate({ date });
         return data === null ? null : { data };
       }
       case "birthday": {
-        const data = await birthdayBlock.generate({
+        const data = birthdayBlock.generate({
           memberId,
           date,
           listActiveMembers: listActiveMembersPort,
-          language: readHouseholdLanguage(),
+          language,
         });
         return data === null ? null : { data };
       }
       case "reminders": {
-        const data = await remindersBlock.generate({ memberId, date });
+        const data = remindersBlock.generate({ memberId, date, txCtx });
         return data === null ? null : { data };
-      }
-      // WEATHER-INV-10/12 (handoff note): weather/weatherText NEVER report a failure — a
-      // failed/unreachable/unconfigured forecast simply contributes no block (matches the
-      // merged resolver this replaces). `generateWeatherBlock` itself never rejects.
-      case "weather": {
-        const data = await generateWeatherBlock(cache, date, now);
-        return data === null ? null : { data };
-      }
-      case "weatherText": {
-        const data = await generateWeatherTextBlock(cache, date, now);
-        return data === null ? null : { data };
-      }
-      case "quoteOfDay":
-        return generateExternalBlock(cache, "quoteOfDay", resolveQuoteSource());
-      case "onThisDay": {
-        const source = resolveOnThisDaySource();
-        return generateExternalBlock(cache, "onThisDay", source ? () => source(date) : null);
       }
       // Corpus-backed generators are SYNCHRONOUS and throw
       // `CorpusBlockParamError` on an invalid/unavailable param — caught below like any other
       // data-layer failure (FR-020's serial-loop discipline is the CALLER's — see
-      // `generateFullRegistryBlocks`).
+      // `gatherLocalBlocks`).
       case "dadJoke":
         return { data: generateDadJoke({ date, memberId, params: params as CorpusBlockParams }) };
       case "wordOfDay":
@@ -766,26 +749,20 @@ async function generateBlockData(
   }
 }
 
-/** Full 21-block registry generation for one member/date (FR-011/FR-013/FR-014/FR-020). STRICTLY
- * SERIAL — never `Promise.all`/`Promise.allSettled` — because `wordSearch`'s placement step
- * confines the process-global `Math.random` for its own duration (`corpora/determinism.ts`
- * `withSeededMathRandom`); two confined calls in flight at once would corrupt each other's
- * randomness ("Determinism guard", FR-020).
+/** Capture local outcomes and effective metadata synchronously in the caller's read transaction.
+ * Keep corpus generation serial: wordSearch confines process-global Math.random (FR-020).
  */
-async function generateFullRegistryBlocks(
+function gatherLocalBlocks(
   memberId: string,
   date: string,
-  now: number,
-  cache: DailyBlockCache
-): Promise<BlockInstance[]> {
+  language: string,
+  txCtx: CalendarReadContext
+): Array<{ block: BlockInstance; outcome: BlockOutcome; external: boolean }> {
   const tz = readHouseholdTimezone();
   const weekday = weekdayOf(date, tz);
   const effectiveOrder = buildEffectiveOrder(readBlockOrder());
-  // fold: resolved once per pass (same precedent as `tz`/`weekday` above) — titleFor's
-  // label text localizes through this, per DAILY-BRIEFING-INV-06.
-  const language = readHouseholdLanguage();
 
-  const blocks: BlockInstance[] = [];
+  const blocks: Array<{ block: BlockInstance; outcome: BlockOutcome; external: boolean }> = [];
 
   // FR-020 fence — see this function's own doc comment above. Do not parallelize this loop.
   for (let i = 0; i < effectiveOrder.length; i += 1) {
@@ -808,21 +785,20 @@ async function generateFullRegistryBlocks(
       };
     }
 
-    const outcome = await generateBlockData(instance.type, memberId, date, now, params, cache);
-    if (outcome === null) continue; // handoff note: null-omit, never a recorded block.
+    if (!isPluginContentSourceActive(instance.type)) continue;
+    const external = ["weather", "weatherText", "quoteOfDay", "onThisDay"].includes(instance.type);
+    const outcome = external
+      ? null
+      : generateLocalBlockData(instance.type, memberId, date, params, language, txCtx);
+    if (!external && outcome === null) continue; // handoff note: null-omit, never a recorded block.
 
     const block: BlockInstance = {
       type: instance.type as BlockInstance["type"],
       scope: BLOCK_SCOPE[instance.type] ?? "shared",
-      status: "error" in outcome ? "failed" : "ok",
+      status: "ok",
       index: position,
       title: titleFor(instance.type, position, language),
     };
-    if ("error" in outcome) {
-      block.error = outcome.error;
-    } else {
-      block.data = outcome.data;
-    }
     // FR-008/FR-009: `language` appears ONLY for corpus-backed types, resolved through the SAME
     // resolver `blocks/context.ts`'s generators themselves call (— single
     // source of truth for the frozen effective language, not a re-derived duplicate).
@@ -839,14 +815,69 @@ async function generateFullRegistryBlocks(
     if (params !== undefined) {
       block.params = params;
     }
+    blocks.push({ block, outcome, external });
+  }
+  return blocks;
+}
+
+async function finishBlocks(
+  gathered: ReturnType<typeof gatherLocalBlocks>,
+  memberId: string,
+  cache: DailyBlockCache,
+  date: string,
+  now: number,
+  weatherInputs: WeatherBlockInputs | null
+): Promise<BlockInstance[]> {
+  const blocks: BlockInstance[] = [];
+  for (const { block, outcome: localOutcome, external } of gathered) {
+    let outcome = localOutcome;
+    if (external) {
+      try {
+        switch (block.type) {
+          case "weather":
+          case "weatherText": {
+            const data = await generateWeatherBlock(cache, date, now, weatherInputs);
+            outcome = data === null ? null : { data };
+            break;
+          }
+          case "quoteOfDay":
+            outcome = await generateExternalBlock(cache, "quoteOfDay", resolveQuoteSource());
+            break;
+          case "onThisDay": {
+            const source = resolveOnThisDaySource();
+            outcome = await generateExternalBlock(
+              cache,
+              "onThisDay",
+              source ? () => source(date) : null
+            );
+            break;
+          }
+        }
+      } catch (err) {
+        console.error("daily-briefing.generate-block.failed", {
+          type: block.type,
+          memberId: memberId,
+          date,
+          error: String(err),
+        });
+        outcome = { error: "gather_failed" };
+      }
+    }
+    if (outcome === null) continue;
+    if ("error" in outcome) {
+      block.status = "failed";
+      block.error = outcome.error;
+    } else {
+      block.data = outcome.data;
+    }
     blocks.push(block);
   }
   return blocks;
 }
 
 /** Generate a content-ready Daily Briefing snapshot for one opted-in active
- * member. Reads are gathered in Daily Briefing's fixed order and persisted as
- * a single synchronous transaction before the non-load-bearing event emits.
+ * member. Local reads share one synchronous transaction; external work and rendering
+ * finish before the separate atomic persistence transaction and post-commit event.
  * `sharedCache` ( mirroring the `weatherMemo` shape) is threaded through by
  * `generateAllBriefings` so a batch shares one `daily_briefing_block_cache` instance (one
  * external call per source per date per household); a direct caller (the manual single-member
@@ -886,33 +917,45 @@ export async function generateBriefing(
   if (typeof memberId !== "string" || memberId.trim().length === 0) {
     throw new DailyBriefingValidationError("memberId is required");
   }
-  const date = resolveBusinessDate(requestedDate);
-
-  try {
-    assertActiveMember(memberId);
-  } catch (err) {
-    throw new DailyBriefingValidationError(
-      err instanceof Error ? err.message : `Member "${memberId}" is not active`
-    );
-  }
-  const member = resolveMemberLabel(memberId);
-  if (!member) {
-    throw new DailyBriefingValidationError(`Member "${memberId}" does not exist`);
-  }
-  if (!isOptedIn(memberId)) {
-    throw new DailyBriefingValidationError(`Member "${memberId}" is not opted in`);
-  }
-
-  const cache = sharedCache ?? createDailyBlockCache(date);
-  // Single explicit clock read for every household-date-relative computation the gather phase
-  // needs (weather's future-date horizon check) — never a hidden `Date.now` inside a generator.
+  const db = getDb();
   const generationClock = Date.now();
+  const inputs = db.transaction(() => {
+    const date = resolveBusinessDate(requestedDate);
+    try {
+      assertActiveMember(memberId);
+    } catch (err) {
+      throw new DailyBriefingValidationError(
+        err instanceof Error ? err.message : `Member "${memberId}" is not active`
+      );
+    }
+    const member = resolveMemberLabel(memberId);
+    if (!member) {
+      throw new DailyBriefingValidationError(`Member "${memberId}" does not exist`);
+    }
+    if (!isOptedIn(memberId)) {
+      throw new DailyBriefingValidationError(`Member "${memberId}" is not opted in`);
+    }
 
-  //, generalized by: the async gather phase can now make SEVERAL
-  // external calls (weather, quoteOfDay, onThisDay), each up to their own bounded timeout —
-  // better-sqlite3 transactions are synchronous, so this whole phase must resolve BEFORE the
-  // transaction below opens.
-  const blocks = await generateFullRegistryBlocks(memberId, date, generationClock, cache);
+    const language = readHouseholdLanguage();
+    const txCtx: CalendarReadContext = new Map();
+    return {
+      member,
+      date,
+      language,
+      weather: readWeatherBlockInputs(generationClock),
+      blocks: gatherLocalBlocks(memberId, date, language, txCtx),
+    };
+  })();
+  const { member, date, language } = inputs;
+  const cache = sharedCache ?? createDailyBlockCache(date);
+  const blocks = await finishBlocks(
+    inputs.blocks,
+    memberId,
+    cache,
+    date,
+    generationClock,
+    inputs.weather
+  );
 
   // TOCTOU re-validation ( generalized to the now-multi-call gather
   // phase): re-run the SAME two eligibility checks immediately before the transaction opens, so a
@@ -933,11 +976,10 @@ export async function generateBriefing(
   // see the "Render + store" section doc comment above `selectRenderableBlocks`).
   const shouldRender = isPrintingPluginActive();
   const renderResult: RenderStoreResult = shouldRender
-    ? await renderAndPackBriefing(memberId, member.displayName, date, blocks)
+    ? await renderAndPackBriefing(memberId, member.displayName, date, blocks, language)
     : NO_RENDER_RESULT;
 
   const now = Date.now();
-  const db = getDb();
   let briefing: Briefing;
   try {
     briefing = db.transaction((): Briefing => {

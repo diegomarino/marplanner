@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "../../src/server/db/client";
-import { getEvents } from "../../src/server/modules/calendar/index";
+import { getEvents, type CalendarReadContext } from "../../src/server/modules/calendar/index";
 import { useIsolatedDb } from "../helpers/db";
 
 const range = { from: "2026-10-14", to: "2026-10-16" };
@@ -166,6 +166,53 @@ describe("Calendar merged feed read", () => {
     expect(
       getEvents({ source: "external", range, query: "medico", queryFields: ["title"] })
     ).toEqual([]);
+  });
+
+  it("ADR-043: reuses one event read while preserving private query fields and transaction scope", () => {
+    source("enabled");
+    event("external", "external", "Ordinary title");
+    meta("external", "enabled", "active", "Médico privado");
+    getDb()
+      .prepare(
+        "UPDATE calendar_external_event_meta SET location = 'Clínica' WHERE event_id = 'external'"
+      )
+      .run();
+    const db = getDb();
+    const txCtx: CalendarReadContext = new Map();
+    expect(() => getEvents({ source: "all", range, txCtx })).toThrow("active DB transaction");
+    const prepare = vi.spyOn(db, "prepare");
+    try {
+      db.transaction(() => {
+        expect(
+          getEvents({ source: "all", range, txCtx, query: "MEDICO" }).map((e) => e.id)
+        ).toEqual(["external"]);
+        expect(
+          getEvents({
+            source: "all",
+            range,
+            txCtx,
+            query: "clinica",
+            queryFields: ["location"],
+          }).map((e) => e.id)
+        ).toEqual(["external"]);
+        expect(
+          getEvents({ source: "all", range, txCtx, query: "medico", queryFields: ["title"] })
+        ).toEqual([]);
+        expect(getEvents({ source: "all", range, txCtx })[0]).not.toHaveProperty("description");
+        expect(() => getEvents({ source: "all", range, txCtx, queryFields: ["invalid"] })).toThrow(
+          "Invalid queryFields"
+        );
+      })();
+      expect(prepare.mock.calls.filter(([sql]) => sql.includes("calendar_events.id,")).length).toBe(
+        1
+      );
+    } finally {
+      prepare.mockRestore();
+    }
+    db.prepare("UPDATE calendar_events SET title = 'Updated' WHERE id = 'external'").run();
+    expect(
+      db.transaction(() => getEvents({ source: "all", range, txCtx: new Map() }))()[0].title
+    ).toBe("Updated");
   });
 
   it("keeps distinct recurrence identities and the household date range", () => {

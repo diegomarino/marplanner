@@ -34,7 +34,7 @@ export const messageBlock = {
   scope: "member" as const,
   source:
     "src/server/modules/daily-messages getMessage (host-api barrel; production wires via index.readDailyMessagePort)",
-  async generate(ctx: MessageBlockContext): Promise<MessageBlockData | null> {
+  generate(ctx: MessageBlockContext): MessageBlockData | null {
     if (!ctx.readDailyMessage) return null;
     const message = ctx.readDailyMessage(ctx.memberId, ctx.date);
     // AC-07: null means ONLY "no message row" — the text itself is frozen verbatim, never

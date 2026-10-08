@@ -23,11 +23,14 @@
  */
 import { getReminders } from "../../../host-api";
 
+import type { CalendarReadContext } from "../../../host-api";
+
 const TYPE = "reminders";
 
 export interface RemindersBlockContext {
   memberId: string;
   date: string;
+  txCtx?: CalendarReadContext;
 }
 
 export interface RemindersBlockItem {
@@ -47,8 +50,8 @@ export const remindersBlock = {
   scope: "member" as const,
   source:
     "src/server/modules/reminders getReminders (host-api-barrel-exported, 010 precedent — already NFD-diacritic-insensitive calendar_gated matching via getEvents' normalizeForMatch)",
-  async generate(ctx: RemindersBlockContext): Promise<RemindersBlockData | null> {
-    const emissions = getReminders(ctx.memberId, ctx.date);
+  generate(ctx: RemindersBlockContext): RemindersBlockData | null {
+    const emissions = getReminders(ctx.memberId, ctx.date, ctx.txCtx);
     if (emissions.length === 0) return null;
     return { groups: [{ items: emissions.map((e) => ({ value: e.text })) }] };
   },
