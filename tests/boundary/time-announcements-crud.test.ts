@@ -179,6 +179,21 @@ describe("time-announcements-crud (US1 rule authoring)", () => {
     });
   });
 
+  it("rejects a non-boolean active flag without persisting an announcement", async () => {
+    const { buildApp } = await import("../../src/server/app.ts");
+    const deviceKey = seedKey("*");
+    const app = await buildApp();
+    try {
+      for (const isActive of [1, "true", null]) {
+        const res = await postRule(app, deviceKey, { time: "07:00", weekDays: ["mon"], isActive });
+        expect(res.statusCode).toBe(400);
+        expect(countRows()).toBe(0);
+      }
+    } finally {
+      await app.close();
+    }
+  });
+
   // ── Unknown-key rejection (validation_error precedent) ──────────────────
 
   describe("unknown-key rejection", () => {

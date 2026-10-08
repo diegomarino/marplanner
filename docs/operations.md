@@ -257,6 +257,21 @@ sequentially with other commands that rebuild `dist`. Provider fixtures use loca
 ports; physical printing, audible speech and controller writes need separate
 operator verification.
 
+## Weekday integrity at startup
+
+Before serving requests or starting scheduled jobs, the server validates persisted
+weekday codes (`mon` through `sun`) and their JSON masks. A `Weekday integrity failed`
+error names the table, column and row. Startup stops without modifying that row; inspect
+and correct the recurrence data before restarting. Invalid masks are never silently
+converted into rules that match no days. Seed modules undergo the same check before
+commit and roll back if they introduce invalid weekday data.
+
+Live restore checks weekday integrity after applying any required migrations and
+before activating the replacement runtime. An invalid backup returns
+`incompatible_backup` and rolls back to the pre-restore snapshot. The recovered
+snapshot is checked too; if recovery fails, traffic and scheduled work remain
+quiesced for manual recovery.
+
 ## Find event subscriber failures
 
 Open Administration → Telemetry and select **Subscriber failures**, or filter by

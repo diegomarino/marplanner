@@ -3,6 +3,7 @@ import { basename, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { getDb } from "../client";
 import { runMigrations } from "../migrate";
+import { assertWeekdayIntegrity } from "../weekday-integrity";
 import { beginSeedProfile, completeSeedProfile, type SeedProfileResult } from "./ownership";
 import type { SeedContext, SeedMode, SeedModule, SeedRunReport, SeedRunRequest } from "./types";
 
@@ -155,6 +156,7 @@ async function runModuleInTransaction(
   db.exec("BEGIN IMMEDIATE");
   try {
     await discovered.module.run(context);
+    assertWeekdayIntegrity();
     db.exec("COMMIT");
   } catch {
     try {
