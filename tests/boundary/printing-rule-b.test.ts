@@ -1,3 +1,4 @@
+import tsEslint from "typescript-eslint";
 import path from "node:path";
 import { describe, it, expect } from "vitest";
 import { ESLint } from "eslint";
@@ -16,7 +17,7 @@ import { ESLint } from "eslint";
 const repoRoot = path.resolve(__dirname, "../..");
 
 async function lint(relativeFilePath: string, code: string) {
-  const eslint = new ESLint({ cwd: repoRoot });
+  const eslint = new ESLint({ cwd: repoRoot, overrideConfig: tsEslint.configs.disableTypeChecked });
   const results = await eslint.lintText(code, {
     filePath: path.join(repoRoot, relativeFilePath),
   });

@@ -52,10 +52,8 @@ export interface AnnouncementMirrorEntry extends AnnounceInput {
 const MIRROR_CAP = 50;
 export const ANNOUNCEMENT_EVENT = "mp:announcement";
 
-// TS declaration merging (same pattern/rationale as `window.__mpTelemetry` in logger.ts):
-// base ESLint's `no-unused-vars` doesn't understand declaration merging.
+// Keep the optional browser-test announcement mirror typed on the global Window.
 declare global {
-  // eslint-disable-next-line no-unused-vars
   interface Window {
     __mpAnnouncements?: { entries: AnnouncementMirrorEntry[] };
   }

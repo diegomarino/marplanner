@@ -95,6 +95,16 @@ Concurrent isolated browser lanes may set `PORT` (matching `BASE_URL`), `MP_E2E_
 
 The exception-list command defaults to the reviewed main predecessor `f8db1b6fc51d6952d06e224dba03b8e62f22d56c` (empty terminal list), replacing the absent historical `B0` ref. `MP_ACCEPTED_PREDECESSOR` can name an explicitly reviewed alternative; no synthetic tag or enlarged exception baseline is created.
 
+## Test concurrency
+
+Vitest runs files in parallel with a maximum of four workers, capped by the host's available CPU count. Its default process pool and file isolation remain enabled. Tests within a file retain their normal serial order; database tests use their existing temporary directories and listener tests use their existing dynamic ports. For a serial reproduction, append `--fileParallelism=false` to the Vitest invocation.
+
+The Node test runner already runs test files concurrently. Playwright retains one worker in CI: its browser cases share a server and database, and printer tests coordinate through their existing cross-process lock. Increasing browser concurrency requires a separate shared-state review.
+
+Type-aware lint applies to real project sources. Architectural lint tests explicitly use typescript-eslint's `disableTypeChecked` configuration for their virtual syntax fixtures; they still exercise the production import, logging and UI rules. The normal lint command and the new typed-rule probes retain type checking.
+
+This hardening adds six Node lint-policy cases and two invalid-date Calendar regressions and one recipe-search consumer case, and corrects the isolated density-control case name. The reviewed production changes are explicit dispatch of already-contained asynchronous operations, accurate async hook/subscriber types, removal of obsolete suppressions, documented density behavior, and moving Calendar date conversion into its existing error boundary. The cohort inventory admits `.editorconfig`, `tools/lint.mjs` and `tools/lint-policy.test.mjs`. Only fingerprints of these reviewed source changes are updated; coverage floors and per-file minimums are preserved.
+
 ## Imported history reconciliation
 
 The initial GitHub import includes changes after the previously reviewed runtime

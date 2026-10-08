@@ -134,11 +134,11 @@ function jsonResponse(body: unknown, status = 200): Response {
 }
 
 describe("PrintExecutor", () => {
-  let mockFetch: ReturnType<typeof vi.fn>;
+  let mockFetch: ReturnType<typeof vi.fn<typeof fetch>>;
 
   beforeEach(() => {
     currentLanguage = "en";
-    mockFetch = vi.fn();
+    mockFetch = vi.fn<typeof fetch>();
     vi.stubGlobal("fetch", mockFetch);
     vi.useFakeTimers();
   });
@@ -217,7 +217,7 @@ describe("PrintExecutor", () => {
     mockFetch.mockResolvedValueOnce(claimResponse());
     mockFetch.mockResolvedValueOnce(payloadResponse());
     mockFetch.mockResolvedValueOnce(jsonResponse(makeJob({ state: "printed" })));
-    act(() => window.dispatchEvent(new Event("marplanner:print-intent-enqueued")));
+    await act(() => window.dispatchEvent(new Event("marplanner:print-intent-enqueued")));
     await flushMicrotasks();
 
     expect(transport.recordedChunks()).toHaveLength(1);
@@ -243,7 +243,7 @@ describe("PrintExecutor", () => {
     mockFetch.mockResolvedValueOnce(claimResponse());
     mockFetch.mockResolvedValueOnce(payloadResponse());
     mockFetch.mockResolvedValueOnce(jsonResponse(makeJob({ state: "printed" })));
-    act(() => window.dispatchEvent(new Event("marplanner:print-intent-enqueued")));
+    await act(() => window.dispatchEvent(new Event("marplanner:print-intent-enqueued")));
     settleClaim(new Response(null, { status: 204 }));
     await flushMicrotasks();
 

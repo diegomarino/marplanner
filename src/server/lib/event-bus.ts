@@ -1,6 +1,7 @@
 import type { CoreEventCatalog } from "../../shared/events.js";
 
-type Handler<P> = (payload: P) => void;
+// Subscribers may return values or promises; dispatch contains failures and ignores results.
+type Handler<P> = (payload: P) => unknown;
 
 /** Typed in-process event bus — fire-and-forget async dispatch.
  * Per ADR-040: the emitter never blocks on, waits for, or is affected by
@@ -71,7 +72,7 @@ export function emit<K extends keyof CoreEventCatalog>(
  */
 export function subscribe<K extends keyof CoreEventCatalog>(
   name: K,
-  handler: (payload: CoreEventCatalog[K]) => void
+  handler: Handler<CoreEventCatalog[K]>
 ): void {
   eventBus.subscribe(name, handler);
 }

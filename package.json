@@ -42,7 +42,7 @@
     "generate:member-colors": "node tools/dev/generate-member-colors.mjs",
     "generate:noto-emojis": "node tools/dev/generate-noto-emojis.mjs",
     "generate:ui-catalog": "node tools/dev/generate-ui-catalog.mjs",
-    "lint": "eslint .",
+    "lint": "node tools/lint.mjs",
     "seed:all": "node tools/dev/seed-all.mjs",
     "seed:private": "node --env-file-if-exists=.env.local --import tsx src/server/db/seeds/cli.ts --mode private",
     "seed:public": "node --env-file-if-exists=.env.local --import tsx src/server/db/seeds/cli.ts --mode public",
