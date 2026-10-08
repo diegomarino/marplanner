@@ -50,6 +50,19 @@ A required suite must be discovered from its runner's actual list/results. Rejec
 
 Measure the complete cumulative production cohort, including files never imported by a test and the seed CLI. Bind raw V8 output to the pinned runtime/toolchain and to the candidate identity computed from the maintained tree. The coverage policy records aggregate floors, per-file minimum rates and per-file minimum totals. Required line/statement/function/branch percentages are: overall `85/85/85/80`, client `87/85/83/78`, server `90/89/92/83`, shared `96/96/100/93`. An absent layer requires explicit cohort evidence; deleting files from a denominator does not satisfy a floor. Compare retained unchanged files against the approved original cohort; document the reason for any transformed-file denominator change. A focused green test or mapped historical percentage cannot accept the candidate.
 
+ADR-045 removes the meals producer's emoji-stripping helper and scalar concatenation,
+and replaces three scalar-slot branches with one slot loop. Its measured executable
+cohort changes from 16 lines / 22 statements / 5 functions / 13 branches to
+10 / 11 / 3 / 6. The per-file minimum totals follow that reviewed transformation;
+its minimum rates (100 / 95.45 / 100 / 84.61) and all aggregate floors remain unchanged.
+Focused tests execute every remaining producer branch, including empty menus, multiple
+entries, omitted slots, breakfast exclusion and stale recipe tombstones.
+The client meals renderer replaces the intermediate row/filter/map pipeline with
+a slot loop, removing one callback (31 to 30 functions in `blockRenderers.tsx`);
+its other minimum totals and all minimum rates remain unchanged. Other files'
+minimum totals and rates remain unchanged. Runtime identity changes are limited to
+tests whose behavior changed and the added regressions.
+
 ## Change scope
 
 Review exact changed paths against the trusted declaration and compare only corresponding source cohorts when making historical claims. Test negative authorization, invalid input, transaction/side-effect failure, lifecycle cleanup and restart recovery through the public seam. A shared component or contract change requires regression checks across its consumers. Include built-process checks for startup, health, authorized access, scheduler-disabled operation and shutdown. Browser and external-effect acceptance must be recorded at the exact stage where those features are actually present.

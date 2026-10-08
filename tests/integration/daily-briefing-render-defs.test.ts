@@ -12,6 +12,7 @@ import { renderBriefingBitmap } from "../../src/server/modules/daily-briefing/re
 import { prepareDailyBriefingTheme } from "../../src/server/modules/daily-briefing/render/theme";
 import { riddleBlock } from "../../src/server/modules/daily-briefing/render/blocks/riddle";
 import { wordSearchBlock } from "../../src/server/modules/daily-briefing/render/blocks/word-search";
+import { adaptBlockData } from "../../src/server/modules/daily-briefing/render/adapter";
 import { mealsBlock } from "../../src/server/modules/daily-briefing/render/blocks/meals";
 import { onThisDayBlock } from "../../src/server/modules/daily-briefing/render/blocks/on-this-day";
 import { birthdayBlock } from "../../src/server/modules/daily-briefing/render/blocks/birthday";
@@ -73,7 +74,11 @@ const TYPE_FIXTURES: Record<string, unknown> = {
       },
     ],
   },
-  meals: { lunch: "Pizza", snack: "Apple", dinner: "Pasta" },
+  meals: {
+    lunch: [{ kind: "recipe", label: "Pizza" }],
+    snack: [{ kind: "note", label: "Apple" }],
+    dinner: [{ kind: "recipe", label: "Pasta" }],
+  },
   streak: { days: 5, label: "5 day streak!", last7: [true, false, true, true, false, true, true] },
   streakText: {
     days: 5,
@@ -269,8 +274,42 @@ describe("daily-briefing render-defs — per-type render through the real bridge
   });
 
   describe("structural labels — household language (DAILY-BRIEFING-INV-06, Codex #709 P1 fold)", () => {
+    it("validates structured meal entries and renders existing scalar slots", () => {
+      const data = {
+        lunch: [
+          { kind: "recipe", label: "Soup, bread 🍲" },
+          { kind: "note", label: "Rice" },
+        ],
+      };
+      expect(adaptBlockData("meals", data)).toEqual(data);
+      expect(
+        collectText(
+          mealsBlock.render({
+            data: data as Parameters<typeof mealsBlock.render>[0]["data"],
+            ctx: makeCtx("meals", data),
+          })
+        )
+      ).toContain("Soup, bread 🍲, Rice");
+      for (const lunch of [
+        null,
+        1,
+        [null],
+        ["Soup"],
+        [[]],
+        [{ kind: "other", label: "Soup" }],
+        [{ kind: "note", label: 1 }],
+      ]) {
+        expect(() => adaptBlockData("meals", { lunch })).toThrow();
+      }
+      const scalar = { lunch: "Saved lunch", snack: "Saved snack", dinner: "Saved dinner" };
+      expect(adaptBlockData("meals", scalar)).toEqual(scalar);
+      expect(
+        collectText(mealsBlock.render({ data: scalar, ctx: makeCtx("meals", scalar) }))
+      ).toContain("Saved lunch");
+    });
+
     it("meals renders Lunch/Snack/Dinner in en, Comida/Merienda/Cena in es", () => {
-      const data = TYPE_FIXTURES.meals as { lunch: string; snack: string; dinner: string };
+      const data = TYPE_FIXTURES.meals as Parameters<typeof mealsBlock.render>[0]["data"];
       const en = collectText(mealsBlock.render({ data, ctx: makeCtx("meals", data, "en") }));
       expect(en).toContain("Lunch:");
       expect(en).toContain("Snack:");

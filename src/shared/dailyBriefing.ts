@@ -55,6 +55,12 @@ export type BlockType =
  */
 export type BlockScope = "shared" | "member";
 
+/** Resolved meal content frozen in canonical menu order (ADR-045). */
+export interface BriefingMealItem {
+  kind: "recipe" | "note";
+  label: string;
+}
+
 /** BlockInstance — one gathered block in the payload envelope. `data` present iff `status`
  * is `ok`; `error` present iff `status` is `failed`. A block that is DISABLED (settings) or
  * excluded by its weekday mask is OMITTED from `blocks` entirely — never stored as a third

@@ -126,7 +126,14 @@ function fullRegistryBlocks(): BlockInstance[] {
       status: "ok",
       index: 6,
       title: "06 MEALS",
-      data: { lunch: "Pasta Bolognese", snack: "Yogurt", dinner: "Tomato Soup" },
+      data: {
+        lunch: [
+          { kind: "recipe", label: "Pasta Bolognese" },
+          { kind: "note", label: "Bread 🍞" },
+        ],
+        snack: [{ kind: "note", label: "Yogurt" }],
+        dinner: [{ kind: "recipe", label: "Tomato Soup" }],
+      },
     },
     {
       type: "birthday",
@@ -337,6 +344,27 @@ describe("DailyBriefingView — full block registry", () => {
     cleanup();
   });
 
+  it("keeps existing scalar meal snapshots visible", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchFor(
+        baseBriefing([
+          {
+            type: "meals",
+            scope: "shared",
+            status: "ok",
+            data: { lunch: "Saved lunch", dinner: "Saved dinner" },
+          },
+        ])
+      )
+    );
+    renderView();
+    const meals = await screen.findByTestId("daily-briefing-block-meals");
+    expect(meals).toHaveTextContent("Lunch: Saved lunch");
+    expect(meals).not.toHaveTextContent("Snack:");
+    expect(meals).toHaveTextContent("Dinner: Saved dinner");
+  });
+
   it("renders all 21 registry block types with visible, correct content", async () => {
     vi.stubGlobal("fetch", mockFetchFor(baseBriefing(fullRegistryBlocks())));
     renderView();
@@ -367,7 +395,7 @@ describe("DailyBriefingView — full block registry", () => {
     // Regression: meals object shape — every slot label + value visible.
     const meals = screen.getByTestId("daily-briefing-block-meals");
     expect(meals).toHaveTextContent("Lunch");
-    expect(meals).toHaveTextContent("Pasta Bolognese");
+    expect(meals).toHaveTextContent("Pasta Bolognese, Bread 🍞");
     expect(meals).toHaveTextContent("Snack");
     expect(meals).toHaveTextContent("Yogurt");
     expect(meals).toHaveTextContent("Dinner");

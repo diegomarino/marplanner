@@ -101,7 +101,7 @@ on the kiosk dashboard and the Daily Briefing. Replaces the v1 weekly-window pla
   - activate/deactivate; recurring-entry and one-off-entry add/edit/delete; derived
     menu read for a date or week range; recipe search-by-name.
 - Outbound: a per-`(date, slot)` resolved-label **list** consumed by Daily Briefing and
-  the dashboard widget (read interface; no cross-module table access, Rule B).
+  the dashboard widget (read interface; no cross-module table access, Rule B). Daily Briefing projects each included slot to ordered `{kind: "recipe" | "note", label: string}` entries and freezes labels verbatim, including tombstones, punctuation and emoji (ADR-045/022).
 
 ## Events
 
