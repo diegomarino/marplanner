@@ -247,16 +247,24 @@ function refreshPrintedStatusCache(memberId: string, date: string): void {
     .run(status, printedAt, record.generation, memberId, date);
 }
 
-subscribe("printing.completed", (payload) => {
-  const parsed = tryParseDatedOutputRef(payload.outputRef);
-  if (!parsed) return; // not this plugin's output — every OTHER producer shares this bus too
-  refreshPrintedStatusCache(parsed.memberId, parsed.date);
-});
-subscribe("printing.failed", (payload) => {
-  const parsed = tryParseDatedOutputRef(payload.outputRef);
-  if (!parsed) return;
-  refreshPrintedStatusCache(parsed.memberId, parsed.date);
-});
+subscribe(
+  "printing.completed",
+  (payload) => {
+    const parsed = tryParseDatedOutputRef(payload.outputRef);
+    if (!parsed) return; // not this plugin's output — every OTHER producer shares this bus too
+    refreshPrintedStatusCache(parsed.memberId, parsed.date);
+  },
+  "daily-briefing.printing-completed"
+);
+subscribe(
+  "printing.failed",
+  (payload) => {
+    const parsed = tryParseDatedOutputRef(payload.outputRef);
+    if (!parsed) return;
+    refreshPrintedStatusCache(parsed.memberId, parsed.date);
+  },
+  "daily-briefing.printing-failed"
+);
 
 /** Read-time derivation (FR-005/FR-007). Gate: Printing inactive ⇒ `unavailable`
  * (AC-11) — distinct from `none`, and deliberately checked BEFORE touching any Printing table (an

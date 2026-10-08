@@ -2980,10 +2980,10 @@
             "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with the restore-confirm panel OPEN (+3: the typed-confirm input, submit, cancel — 10 total), including while the restore submit is IN-FLIGHT",
             "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) CENSUS FIRES ON REMOVAL — deleting a backup drops its row's 4 controls from the count (11 -> 7), not a synthetic shrink",
             "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own Snapshot Now button below the kiosk minimum makes the assertion fail, and reverting restores compliance",
-            "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density while loading — the filter row (5 controls) is ALWAYS mounted, even before the first page resolves",
-            "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with NO rows (still 5 — the filter row only)",
-            "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with rows AND a next cursor — Load More adds a 6th control",
-            "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) CENSUS FIRES ON REMOVAL — a failed Apply invalidates the cursor and Load More disappears (6 -> 5)",
+            "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density while loading — the filter row (6 controls) is ALWAYS mounted, even before the first page resolves",
+            "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with NO rows (still 6 — filters and diagnostic shortcut)",
+            "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with rows AND a next cursor — Load More adds a 7th control",
+            "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) CENSUS FIRES ON REMOVAL — a failed Apply invalidates the cursor and Load More disappears (7 -> 6)",
             "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own Apply Filters button below the kiosk minimum makes the assertion fail, and reverting restores compliance",
             "BackupsManagement — every error state is announced through ErrorNotice, with its own identity (SC-011) a load failure",
             "BackupsManagement — every error state is announced through ErrorNotice, with its own identity (SC-011) a lastBackupError surfaced on load (assertive)",
@@ -3898,7 +3898,8 @@
             "TelemetryManagement never uses dangerouslySetInnerHTML anywhere in the panel source (grep assertion)",
             "localizes filter-load failures without displaying server prose (en)",
             "localizes filter-load failures without displaying server prose (es)",
-            "sends both date boundaries when applying a telemetry range"
+            "sends both date boundaries when applying a telemetry range",
+            "TelemetryManagement opens the subscriber failure query and replaces draft time filters"
           ],
           "tests/client/telemetry-producers.test.ts": [
             "telemetry producers global error/unhandledrejection capture (FR-008) an uncaught error becomes a client.global/error entry with a stable message and the raw text in data (INV-03 pattern)",
@@ -4897,6 +4898,14 @@
             "canonical weekday integrity rejects integer and noncanonical tokens without coercing or changing domain set policies",
             "canonical weekday integrity accepts fresh and public-seeded databases including null and empty masks",
             "canonical weekday integrity identifies corrupt persisted weekday rows in every domain without rewriting data"
+          ],
+          "tests/boundary/event-subscriber-logs.test.ts": [
+            "event subscriber diagnostics persists unique redacted sync and async failures and exposes them through the admin query",
+            "event subscriber diagnostics keeps internal failures queryable beyond the client flood bound and rejects client impersonation",
+            "event subscriber diagnostics falls back to redacted stderr when storage is unavailable while containing the fault",
+            "event subscriber diagnostics deduplicates anonymous registrations and preserves their identity across deliveries",
+            "event subscriber diagnostics contains diagnostic serialization failures and retains a unique stderr breadcrumb",
+            "event subscriber diagnostics preserves failure identity when oversized errors are persisted or sent to stderr"
           ]
         }
       },

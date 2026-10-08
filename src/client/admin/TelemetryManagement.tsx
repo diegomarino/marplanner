@@ -148,6 +148,16 @@ export function TelemetryManagement() {
     void load(snapshot, undefined);
   }
 
+  function showSubscriberFailures() {
+    const filters: Filters = { ...EMPTY_FILTERS, level: "error", component: "event-bus" };
+    setLevel(filters.level);
+    setComponent(filters.component);
+    setFrom("");
+    setTo("");
+    setAppliedFilters(filters);
+    void load(filters, undefined);
+  }
+
   function loadMore() {
     if (!nextCursor) return;
     void load(appliedFilters, nextCursor);
@@ -214,6 +224,10 @@ export function TelemetryManagement() {
           {t("telemetry.management.applyFilters")}
         </Button>
       </div>
+
+      <Button type="button" disabled={busy} onClick={showSubscriberFailures}>
+        {t("telemetry.management.subscriberFailures")}
+      </Button>
 
       {loading ? (
         <p className="text-muted-foreground">{t("telemetry.management.loading")}</p>

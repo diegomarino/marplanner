@@ -271,3 +271,18 @@ before activating the replacement runtime. An invalid backup returns
 `incompatible_backup` and rolls back to the pre-restore snapshot. The recovered
 snapshot is checked too; if recovery fails, traffic and scheduled work remain
 quiesced for manual recovery.
+
+## Find event subscriber failures
+
+Open Administration → Telemetry and select **Subscriber failures**, or filter by
+level `error` and component `event-bus`. The authenticated diagnostic query is
+`GET /api/telemetry/client-log?level=error&component=event-bus`.
+
+Each row has message `event-bus.subscriber-failed`, its normal telemetry event ID,
+and diagnostic data containing `failureId`, event name, subscriber identity and
+redacted error details. Production subscriber names identify the reacting module;
+event payloads are omitted. These logs use the existing telemetry retention policy.
+Browser ingest reserves the `event-bus` component for internal diagnostics. Internal
+failures bypass browser flood admission. If storage is unavailable, the same stable
+code and failure ID are written to redacted stderr; the admin database query cannot
+show rows that could not be persisted. Logging never retries the subscriber action.

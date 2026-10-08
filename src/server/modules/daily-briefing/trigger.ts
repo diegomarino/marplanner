@@ -248,15 +248,13 @@ export function registerAutoPrintTrigger(overrides?: AutoPrintTriggerOverrides):
   const sweepIntervalMs = overrides?.sweepIntervalMs ?? DEFAULT_SWEEP_INTERVAL_MS;
 
   // (a) wakeup hint.
-  subscribe("routines.completion_changed", () => {
-    try {
+  subscribe(
+    "routines.completion_changed",
+    () => {
       evaluateAutoPrintTrigger(now());
-    } catch (err) {
-      // The event bus contains subscriber failures; record this wakeup failure before
-      // containment. A later event or sweep re-evaluates current state without retries.
-      console.error("daily-briefing.trigger.wakeup-failed", err);
-    }
-  });
+    },
+    "daily-briefing.auto-print-wakeup"
+  );
 
   // (b)+(c) periodic sweep + startup evaluation, scheduler-routed (see doc comment above).
   return registerJob({
