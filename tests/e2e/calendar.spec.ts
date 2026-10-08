@@ -89,16 +89,15 @@ test("calendar critical flow: create/read (recurrence-expanded) → assign+membe
   );
   await page.goto("/calendar");
   await expect(page.getByRole("heading", { name: /calendario|calendar/i })).toBeVisible();
-  // Install the clock after the app's Temporal/Intl polyfill has initialized.
-  // The week view scrolls to the household's current hour: keep the 10:00 event
-  // in that viewport regardless of CI's wall clock. Timers still run normally.
-  await page.clock.setFixedTime(new Date(`${ymd(new Date())}T08:00:00.000Z`));
   const feed = await feedResp;
   expect(feed.status()).toBe(200);
   // Loading indicator must clear (surface actually rendered the feed).
   await expect(page.getByText(/cargando calendario|loading calendar/i)).toHaveCount(0, {
     timeout: 15_000,
   });
+  // Wait for the initial range to load before clock installation temporarily changes Date.now.
+  // Keep the 10:00 event in the viewport while timers continue normally.
+  await page.clock.setFixedTime(new Date(`${ymd(new Date())}T08:00:00.000Z`));
   const feedItems = (await feed.json()) as Array<{ title: string }>;
   expect(feedItems.filter((item) => item.title === recurringTitle).length).toBeGreaterThanOrEqual(
     2
