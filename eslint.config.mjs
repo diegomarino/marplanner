@@ -390,6 +390,37 @@ export { UI_DEBT_EXCEPTION_FILES };
 
 export default [
   {
+    plugins: {
+      quality: {
+        rules: {
+          "justified-disable": {
+            meta: { type: "problem", schema: [] },
+            create(context) {
+              return {
+                Program() {
+                  for (const comment of context.sourceCode.getAllComments()) {
+                    const directive = comment.value
+                      .trim()
+                      .match(/^eslint-disable(?:-next-line|-line)?\b(.*)/s);
+                    if (!directive) continue;
+                    const [rules, reason] = directive[1].split(/\s+--\s+/);
+                    if (!rules.trim() || !reason?.trim())
+                      context.report({
+                        loc: comment.loc,
+                        message:
+                          "Lint exceptions must name specific rules and explain why after --.",
+                      });
+                  }
+                },
+              };
+            },
+          },
+        },
+      },
+    },
+    rules: { "quality/justified-disable": "error" },
+  },
+  {
     files: ["src/client/**/*.{ts,tsx}"],
     plugins: { "ui-policy": uiPolicy },
     rules: {
@@ -399,15 +430,30 @@ export default [
       "ui-policy/layers": "error",
     },
   },
-  // Unused `eslint-disable-next-line` directives must fail lint. ESLint 10 defaults these to
-  // warnings, and `npm run lint` does not set `--max-warnings`; without this option, stale
-  // directives would exit successfully.
+  // Stale suppressions are errors, including when ESLint is invoked directly.
   {
     linterOptions: {
       reportUnusedDisableDirectives: "error",
     },
   },
-  { ignores: ["node_modules/", "dist/", "build/", ".specify/", ".opencode/"] },
+  {
+    ignores: [
+      "node_modules/",
+      "dist/",
+      "build/",
+      ".specify/",
+      ".opencode/",
+      ".data/",
+      ".data-fresh/",
+      ".worktrees/",
+      "coverage/",
+      "playwright-report/",
+      "test-results/",
+      ".quality/",
+      ".playwright-mcp/",
+      ".e2e-data/",
+    ],
+  },
 
   // Base rules for all JS/CJS/MJS
   js.configs.recommended,
@@ -427,9 +473,10 @@ export default [
     },
   },
 
-  // TypeScript / TSX support (no project / no projectService)
+  // TypeScript rules own unused bindings; the core rule misreads type declarations.
   {
     files: ["**/*.ts", "**/*.tsx"],
+    plugins: { "@typescript-eslint": tsEslint.plugin },
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: "module",
@@ -446,7 +493,38 @@ export default [
       },
     },
     rules: {
-      "no-unused-vars": ["error", { args: "none" }],
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": ["error", { args: "none" }],
+      "@typescript-eslint/ban-ts-comment": [
+        "error",
+        {
+          "ts-ignore": true,
+          "ts-nocheck": true,
+          "ts-expect-error": "allow-with-description",
+          minimumDescriptionLength: 10,
+        },
+      ],
+    },
+  },
+  {
+    files: [
+      "src/**/*.{ts,tsx}",
+      "tests/client/**/*.{ts,tsx}",
+      "tests/boundary/**/*.ts",
+      "tests/integration/**/*.ts",
+      "tests/helpers/**/*.ts",
+      "vitest.setup.ts",
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ["./tsconfig.client.json", "./tsconfig.server.json"],
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-misused-promises": "error",
+      "@typescript-eslint/await-thenable": "error",
     },
   },
 

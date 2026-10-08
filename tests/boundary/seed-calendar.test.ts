@@ -121,7 +121,7 @@ describe("Calendar demo seed boundary", () => {
       nowMs: NOW + 1,
     });
 
-    await expect(() =>
+    expect(() =>
       upsertSeedEvent({
         id: ordinary.id,
         title: "Attempted overwrite",
@@ -131,7 +131,7 @@ describe("Calendar demo seed boundary", () => {
         nowMs: NOW + 2,
       })
     ).toThrow(/seed-owned/i);
-    await expect(() =>
+    expect(() =>
       upsertSeedEvent({
         id: "demo:calendar:event:invalid",
         title: "Invalid event",

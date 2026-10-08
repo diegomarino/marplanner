@@ -4,7 +4,7 @@
  * DEV-only: drive the CDP Chrome profile through gate + provision.
  * Does not put credentials in the URL. Requires npm run dev.
  * Launches the worktree Chrome CDP profile when it is not already running.
- * Density control is deferred (TODO(density)); forces comfortable localStorage.
+ * Matches release density behavior: forces comfortable localStorage.
  */
 import { chromium } from "playwright";
 import {

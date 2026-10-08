@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ESLint } from "eslint";
+import tsEslint from "typescript-eslint";
 
 /** Exercise the public ESLint configuration: FR-014 debt, FR-015 exceptions,
  * recipe admission, layering, density, and preservation of INV-05/SC-011.
@@ -9,7 +10,7 @@ import { ESLint } from "eslint";
 const repoRoot = join(__dirname, "../..");
 
 async function lint(relativeFilePath: string, code: string) {
-  const eslint = new ESLint({ cwd: repoRoot });
+  const eslint = new ESLint({ cwd: repoRoot, overrideConfig: tsEslint.configs.disableTypeChecked });
   const results = await eslint.lintText(code, {
     filePath: join(repoRoot, relativeFilePath),
   });

@@ -1,3 +1,4 @@
+import tsEslint from "typescript-eslint";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -164,7 +165,10 @@ describe("foundation host API", () => {
   });
 
   it("allows the barrel while rejecting raw core imports through normalized plugin paths", async () => {
-    const eslint = new ESLint({ cwd: process.cwd() });
+    const eslint = new ESLint({
+      cwd: process.cwd(),
+      overrideConfig: tsEslint.configs.disableTypeChecked,
+    });
     const filePath = resolve("src/server/modules/weather/__foundation_fixture__.ts");
     const good = await eslint.lintText(
       'import { emit } from "../../host-api";\nexport const use = emit;\n',

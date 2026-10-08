@@ -90,7 +90,7 @@ function releaseLock(): void {
 export const test = base.extend<{ printerSession: void }>({
   // Playwright's fixture signature always takes a (possibly-empty) dependency-fixtures object as
   // its first param; this fixture needs none.
-  // eslint-disable-next-line no-empty-pattern
+  // eslint-disable-next-line no-empty-pattern -- Playwright requires destructured fixture dependencies even when none are used.
   printerSession: async ({}, use, testInfo: TestInfo) => {
     // See "TIMEOUT ORDERING" in this module's own doc comment above — this MUST run before
     // `acquireLock` (which is exactly the step that can legitimately block for a while), not
