@@ -12,7 +12,7 @@ import {
   isTestRuntime,
   listActiveMembers,
   readHouseholdTimezone,
-  readSettingsObject,
+  readEffectiveSettings,
   registerPrintableProvider,
   resolveMemberLabel,
   subscribe,
@@ -343,22 +343,9 @@ const NO_RENDER_RESULT: RenderStoreResult = {
   unrenderedBlocks: [],
 };
 
-/** Read structural briefing copy language from the locale settings object, defaulting to
- * English. This is a database-only lookup; external content has its own language policy.
- */
+/** Structural briefing copy uses the same validated locale and defaults as settings reads. */
 function readHouseholdLanguage(): string {
-  const raw = readSettingsObject("locale");
-  if (raw) {
-    try {
-      const persisted = JSON.parse(raw) as Record<string, unknown>;
-      if (persisted.language === "es" || persisted.language === "en") {
-        return persisted.language;
-      }
-    } catch {
-      // Malformed persisted JSON — fall through to the default below.
-    }
-  }
-  return "en";
+  return readEffectiveSettings().locale.language;
 }
 
 /** Render the briefing's currently-renderable blocks and pack the result. Never

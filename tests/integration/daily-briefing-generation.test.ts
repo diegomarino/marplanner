@@ -796,6 +796,24 @@ describe("daily-briefing full generation", () => {
       expect(titleOf("wordOfDay")).toMatch(/ WORD OF THE DAY$/);
       expect(titleOf("wordSearch")).toMatch(/ WORD SEARCH$/);
       expect(titleOf("wouldYouRather")).toMatch(/ WOULD YOU RATHER\.\.\.\?$/);
+
+      const { readEffectiveSettings } = await import("../../src/server/modules/settings");
+      for (const rawLocale of [
+        JSON.stringify({ language: "es", timezone: "invalid" }),
+        JSON.stringify({ language: "es", unknown: true }),
+        JSON.stringify({ language: "es", weekStartDay: 9 }),
+      ]) {
+        getDb()
+          .prepare(
+            "INSERT INTO settings_objects (object_name, data, updated_at) VALUES ('locale', ?, ?) ON CONFLICT(object_name) DO UPDATE SET data = excluded.data"
+          )
+          .run(rawLocale, Date.now());
+        expect(readEffectiveSettings().locale.language).toBe("en");
+        const regenerated = await generateBriefing("m1", DATE_FRI);
+        expect(regenerated.payload.blocks.find((b) => b.type === "wordOfDay")?.title).toMatch(
+          / WORD OF THE DAY$/
+        );
+      }
     });
 
     it("the *Text titles are distinct from their visual twins (streakText/streak, weatherText/weather) (en household)", async () => {
