@@ -39,9 +39,7 @@ Generated briefings are snapshots of the data at generation time. If the househo
 
 ## Implementation Reference
 
-Already implemented in the `fix/timezones` branch via `packages/shared/src/datetime/zoned.ts` — a canonical Intl.DateTimeFormat-based module with no external date library dependencies. Phases 1–4 complete; Phases 5–6 in progress.
-
-Key primitives: `getIsoDateInTz`, `zonedTimeToUtc`, `zonedDayBoundsUtc`, `nextOccurrenceInTz`, `getWeekStartIso`, `getWeekRange`.
+Shared calendar/time primitives live in `src/shared/householdTime.ts`; server household-date readers live in `src/server/lib/household-date.ts`. Timed-event storage and originating timezone are refined by `ADR-062`; audit encoding is governed by `ADR-003`. Source locations are not execution evidence.
 
 ## Affected Specs
 

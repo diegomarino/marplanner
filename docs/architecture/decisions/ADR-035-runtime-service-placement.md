@@ -6,7 +6,7 @@ Decision date: 2026-06-28
 
 ## Decision
 
-Runtime services are placed by the capability they require. Server capabilities own persistent decisions and jobs; browser capabilities own local hardware execution. Time announcements are the explicit exception: the browser evaluates and fires them locally under ADR-065. This reconciliation supersedes the server-queued announcement language preserved below as historical rationale.
+Runtime services are placed by the capability they require. Server capabilities own persistent decisions and jobs; browser capabilities own local hardware execution. Time announcements are the explicit exception: the browser evaluates and fires them locally under ADR-065. Persistent Printing claims do not apply to announcement timing.
 
 ### Principle 1 — Placement by required capability
 
@@ -16,8 +16,7 @@ Runtime services are placed by the capability they require. Server capabilities 
 ### Principle 2 — Decision/execution split for hardware-bound behaviors
 
 - The "what and when" for printing is owned **server-side** as the single source of truth. Announcement timing is browser-local under ADR-065.
-- The "execute on hardware" (speak the time, send bytes to the printer) is **UI-bound**: a connected browser claims pending work and executes it.
-- This replaces the legacy browser leader-election (BroadcastChannel) and single-tab print assumptions.
+- Hardware execution is **UI-bound**: a capable browser claims Printing work and sends printer bytes; announcement speech and timing run locally without a server claim.
 
 ### Principle 3 — Capability registration (required)
 
@@ -25,8 +24,8 @@ For server-dispatched hardware work such as printing, a connected browser regist
 
 ### Principle 4 — Coordination and queuing
 
-- **Exactly-once dispatch via atomic claim.** The server hands out each unit of work once using an atomic compare-and-swap claim (`UPDATE ... WHERE claimed_by IS NULL RETURNING ...`). Two connected tabs cannot both claim the same job.
-- **At-least-once execution, made safe per behavior.** A browser can execute a side effect and then crash before acknowledging, causing re-issue after lease expiry. Printing tolerates this via idempotency/dedup by job id (or a server-side "side-effect executed" flag before ack). Time announcements do not use this server queue; the browser drops stale local slots under ADR-065.
+- **One claimant per active lease.** The server serializes claims for each unit of work using an atomic compare-and-swap claim (`UPDATE ... WHERE claimed_by IS NULL RETURNING ...`). Two connected tabs cannot both claim the same job.
+- **At-least-once execution with an accepted duplicate risk.** A browser can execute a side effect and then crash before acknowledging, causing re-issue after lease expiry. Server-side enqueue/ack deduplication prevents duplicate records, but cannot atomically cover a Bluetooth side effect. A crash after send and before acknowledgement can cause a duplicate physical print; this is accepted. A pre-send flag would instead risk a lost print and is not an exactly-once solution. Time announcements do not use this server queue; the browser drops stale local slots under ADR-065.
 - **Zero connected browsers.** Printing work waits in a server queue. On reconnect, a capable browser drains it, subject to staleness. Announcements have no server backlog.
 - **Server-side staleness expiry and compaction.** A periodic server cleanup removes stale queued printing work. After the kiosk is off, its browser must not replay old announcement slots.
 
@@ -46,7 +45,7 @@ Per `ADR-029`, a service belongs to its plugin. An inactive plugin mounts neithe
 
 The legacy system placed these services ad hoc in the browser, producing multi-tab leader-election for announcements and a single-tab assumption for printing. Capability placement keeps persistent printing decisions on the server and hardware execution in a capable browser. ADR-065 later placed announcement timing and speech execution in the browser.
 
-The original review favored server scheduling for announcements to avoid a browser lease gap near a slot boundary. ADR-065 superseded that placement. Its original reasoning remains here to explain the tradeoff, while implementation and tests must follow the browser-local decision.
+Duplicate speech across devices is an accepted household tradeoff. Printing retains server claims because duplicate physical delivery wastes paper; the two behaviors therefore require different coordination guarantees (`ADR-051`/`ADR-065`).
 
 ## Affected capabilities
 
@@ -54,11 +53,11 @@ Printing uses the server decision and browser hardware execution split. Daily Br
 
 ## Relationship to ADR-014
 
-This decision substantially shapes `ADR-014` (background job singleton/status ownership): server-side printing jobs use a persisted queue with atomic claim/lease and server-side staleness compaction. `ADR-014` remains open for non-hardware background job details, but the hardware-bound dispatch model is settled here.
+This decision substantially shapes `ADR-014` (background job singleton/status ownership): server-side printing jobs use a persisted queue with atomic claim/lease and server-side staleness compaction. `ADR-014` governs process-local concurrency and domain-owned status; this ADR specifies the hardware-bound claim/lease model.
 
 ## Acceptance Criteria
 
-- Given two connected tabs, when a print job is queued, then exactly one tab executes it (atomic claim).
+- Given two connected tabs, when a print job is queued, then only one holds its active lease. Expiry and reclaim after an unacknowledged send may repeat physical transmission.
 - Given a phone session without the paired printer and a tablet session with it, when a print job is queued, then only the tablet session is offered the job (capability registration).
 - Given no connected browser, a missed announcement slot is not replayed late when a browser reconnects.
 - Given the kiosk was off for two weeks, its browser does not replay a backlog of stale announcements.

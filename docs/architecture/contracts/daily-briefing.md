@@ -32,7 +32,7 @@ it does not own delivery.
 
 1. **DAILY-BRIEFING-INV-01** A briefing is a snapshot: it reads other domains **at generation time** and
    never silently mutates on later source changes (ADR-022). Refresh only via
-   regeneration.
+   regeneration. Cross-domain local DB inputs must share the read snapshot required by ADR-043; the current asynchronous gather has not established that snapshot, and interleaved-edit reproduction remains pending.
 2. **DAILY-BRIEFING-INV-02** The briefing **ID is stable across regeneration**; regeneration replaces the
    payload in place. **No per-regeneration version history** (ADR-022).
 3. **DAILY-BRIEFING-INV-03** Per-member/date uniqueness: one current row per member/date; a `pending`
@@ -75,7 +75,7 @@ it does not own delivery.
   `supersedePrintRecord(outputRef, date)` host API** so the regenerated output is
   re-printable (resets Printing's per-output idempotency). Also **cancel any
   pending OR claimed-not-yet-fetched print job** for the output (revoke the
-  claim) so an in-flight job cannot print the regenerated raster (ADR-022). Does
+  claim). Already-fetched work may finish with the older raster, but its acknowledgement cannot mark the replacement generation printed (ADR-022). Does
   **not** auto-print.
 - **Read (view/history):** pure; a missing briefing returns "not generated / not
   scheduled", never a side effect. Derived printed-status: if the local derived

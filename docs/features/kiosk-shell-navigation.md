@@ -35,7 +35,7 @@ local failure.
 - All "today" computations across widgets use the household timezone, never browser/UTC-local.
 - Inactive plugins appear nowhere except `admin/plugins`.
 - A pending PWA update waits for an idle-of-edits moment (or the ~4am forced reload) before reloading.
-- Time announcements continue even on admin routes; hardware work dispatches once to a capability browser.
+- Time announcements continue even on admin routes; printing uses one claimant per live lease in a capable browser; lost acknowledgements may cause resend.
 - Archived members/children are never resurrected onto user-facing surfaces.
 
 ## Requirements
@@ -68,7 +68,7 @@ local failure.
 
 - **FR-013**: Given a pending PWA update, when an edit is in progress it MUST NOT reload over that edit, and when the app is idle of edits (or at the ~4am household-local forced reload) it MUST reload. Contract: KIOSK-SHELL-NAVIGATION-AC-06.
 
-- **FR-014**: Given connected browsers, when hardware-claim work (auto-print) is dispatched, then it MUST be dispatched only to capability-registered browsers and executed once, and time announcements MUST continue on admin routes (their firing is client-side per browser — `ADR-051`, scope reconciled by `ADR-065`; the "executed once" clause applies to print/hardware-claim work only). Contract: KIOSK-SHELL-NAVIGATION-AC-07.
+- **FR-014**: Given connected browsers, when hardware-claim work (auto-print) is dispatched, then it MUST be offered only to capability-registered browsers with one claimant per active lease, allowing resend after a lost acknowledgement; time announcements MUST continue on admin routes with browser-local leadership and no server dispatch (`ADR-035`/`ADR-051`/`ADR-065`). Contract: KIOSK-SHELL-NAVIGATION-AC-07.
 
 - **FR-015**: Given provisioned family-facing routes, when any such route renders, then it MUST share persistent navigation for dashboard, calendar, chores, and meals; administration MUST live only under the PIN-protected `/admin` subtree, and Daily Briefing MUST have no family-facing route. Contract: KIOSK-SHELL-NAVIGATION-INV-08.
 

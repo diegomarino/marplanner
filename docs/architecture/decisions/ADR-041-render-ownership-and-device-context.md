@@ -18,8 +18,8 @@ a producer-agnostic **device render context**.
   stays with the producer (status `partial`/`render-failed`).
 - **Printing owns raster → device bytes + delivery.** The pipeline performs the
   printer-specific step — ESC/POS wrapping for the paired printer's paper
-  width/transport — then the Bluetooth send (ADR-035 UI-bound execution). Printing
-  owns printer config (ADR-021).
+  width/transport — then the Bluetooth send (ADR-035 UI-bound execution). Raster decoding and ESC/POS wrapping execute server-side (`ADR-066`); the browser only fetches final bytes, transmits and acknowledges. Printing
+  owns printer config (`ADR-028` and the Printing contract).
 - **Hand-off = fetch-at-execute.** At send time, Printing fetches the producer's
   current artefact through the producer's host-mediated interface (ADR-022,
   ADR-039 absence-tolerant). Printing never reads a foreign table and holds no
@@ -43,7 +43,7 @@ declares render constraints; producers adapt or bow out.
 
 - Content → raster is **server-side generation** (Daily Briefing is a server-side
   global service).
-- Raster → device bytes → Bluetooth send is the **UI-bound executor**.
+- Raster → device bytes is **server-side Printing conversion** (`ADR-066`); Bluetooth send is the **UI-bound executor**.
 
 ## Rationale
 
@@ -81,14 +81,12 @@ it converts and delivers. No legacy import (ADR-026).
 
 ## Open Questions
 
-- Exact location of ESC/POS conversion (server vs browser within the UI-bound
-  executor) — implementation detail; ownership (Printing) is fixed here.
 - Full device-context schema beyond `paperWidthDots` — added when a second
   device/format exists.
 
 ## Traceability
 
-- Related prior: relates to `ADR-019`, `ADR-021` (printer config), `ADR-015` (render/i18n)
+- Related prior: relates to `ADR-019`, `ADR-028` (printer config registry), `ADR-015` (render/i18n)
 - Related: `ADR-035` (decision/execution split, capability registration),
   `ADR-039` (namespace ownership, absence-tolerance), `ADR-022` (fetch-at-execute)
 - Domain grill: `../domain-grills/daily-briefing-printing.md` (Q4)

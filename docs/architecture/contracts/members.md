@@ -1,7 +1,7 @@
 # Members Domain Contract
 
 Status: maintained contract
-Depends on decisions: `ADR-001`, `ADR-002`, `ADR-003` (superseded → `ADR-027`), `ADR-004` (closed by `ADR-054`), `ADR-009`, `ADR-012`, `ADR-023`, `ADR-025`, `ADR-026`, `ADR-027`, `ADR-040`, `ADR-054`
+Depends on decisions: `ADR-001`, `ADR-002`, `ADR-009`, `ADR-012`, `ADR-023`, `ADR-025`, `ADR-026`, `ADR-027`, `ADR-040`, `ADR-054`
 
 ## Purpose
 

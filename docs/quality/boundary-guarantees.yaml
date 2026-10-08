@@ -96,7 +96,7 @@ guarantees:
     disposition: active
     owner: reminders
     spec: reminders
-    note: "Targeting: specific-mode binds active members via assignments; zero-assignment write rejected; archived self-heal (ADR-064)."
+    note: "Targeting: specific-mode binds active members via assignments; zero-assignment write rejected; archived self-heal (ADR-004)."
   - id: REMINDERS-INV-03
     disposition: active
     owner: reminders
@@ -131,7 +131,7 @@ guarantees:
     disposition: active
     owner: reminders
     spec: reminders
-    note: "Per-member assignment discriminant (ADR-064): specific holds N one-member assignments (weekdays for scheduled, membership for calendar_gated); invalid targeting/weekday combos rejected at boundary (mirrors INV-01); emission is AC-03."
+    note: "Per-member assignment discriminant (ADR-004): specific holds N one-member assignments (weekdays for scheduled, membership for calendar_gated); invalid targeting/weekday combos rejected at boundary (mirrors INV-01); emission is AC-03."
   - id: REMINDERS-AC-01
     disposition: active
     owner: reminders
@@ -146,7 +146,7 @@ guarantees:
     disposition: active
     owner: reminders
     spec: reminders
-    note: "scheduled emits on the applicable weekdays (rule-level apply_to_all / per-member specific); ADR-064; regardless of calendar."
+    note: "scheduled emits on the applicable weekdays (rule-level apply_to_all / per-member specific); ADR-004; regardless of calendar."
   - id: REMINDERS-AC-04
     disposition: active
     owner: reminders
@@ -695,7 +695,7 @@ guarantees:
     disposition: active
     owner: meals-recipes
     spec: meals-recipes
-    note: "Canonical order: recurring before one-off, plan name ASC, createdAt ASC."
+    note: "Canonical order: recurring before one-off, plan name ASC, mealPlanId ASC (equal-name tiebreak), createdAt ASC, entry ID ASC."
   - id: MEALS-RECIPES-INV-05
     disposition: active
     owner: meals-recipes
@@ -1114,12 +1114,12 @@ guarantees:
     disposition: active
     owner: backups
     spec: backups
-    note: "Compat by migration-version number; reject downgrade, migrate same-or-older."
+    note: "Compat by supported baseline and migration-file sets; reject unsupported lineage or unknown migrations; migrate supported equal/subset sets."
   - id: BACKUPS-INV-05
     disposition: active
     owner: backups
     spec: backups
-    note: "Retention count-primary, never below floor/zero; pre-restore exempt; prune post-good."
+    note: "Regular retention count-primary with age-secondary and count floor; pre-restore separate last-K lane (five); prune post-good; explicit delete preserves one regular backup."
   - id: BACKUPS-INV-06
     disposition: active
     owner: backups
@@ -1149,7 +1149,7 @@ guarantees:
     disposition: active
     owner: backups
     spec: backups
-    note: "Downgrade rejected; same-or-older migrated; failed migration rolls back lossless."
+    note: "Missing baseline rejected as unsupported lineage; unknown migrations rejected as downgrade; supported equal/subset sets migrated; failed migration rolls back lossless."
   - id: BACKUPS-AC-03
     disposition: active
     owner: backups
@@ -1159,7 +1159,7 @@ guarantees:
     disposition: active
     owner: backups
     spec: backups
-    note: "Prune keeps N + all pre-restore, never below floor/zero, only after good backup."
+    note: "Prune keeps N newest regular backups plus younger beyond-N backups, only after good backup; pre-restore keeps last K (five); explicit delete preserves last regular backup."
   - id: BACKUPS-AC-05
     disposition: active
     owner: backups

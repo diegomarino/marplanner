@@ -22,7 +22,7 @@ predictably when localization is incomplete. **No owned table** (App Settings ow
 
 1. **I18N-LOCALIZATION-INV-01** **Base/default = `en`** (= reference = fallback); `es` is a translation layer.
    Supported `language` is a validated enum at the settings boundary (ADR-028); free
-   strings rejected.
+   strings rejected. Essential defaults currently use Spanish; alignment with the accepted English initial-default decision or explicit policy ratification remains pending.
 2. **I18N-LOCALIZATION-INV-02** **Household-wide only** — no per-device/per-member language (ADR-013).
 3. **I18N-LOCALIZATION-INV-03** **Effective language = household setting**, readable cold via the API-key surface
    (ADR-031); browser detection is last resort; household always wins once loaded.
@@ -37,7 +37,7 @@ predictably when localization is incomplete. **No owned table** (App Settings ow
    (`t(prefix+var)`) go through a typed `dynamicKeyRegistry`** consumed by both the
    call site and the parity checker; an unregistered prefix is a **build/lint error**,
    and plugins using dynamic i18n **declare their key domains in the manifest** (absence
-   = build failure). The build gate (+ registry) is the only hard guarantee.
+   = build failure). Catalog-wide English/Spanish parity is checked by `tests/client/member-i18n-parity.test.ts`; dynamic-key registry and plugin declarations remain unimplemented. The complete build gate (+ registry) is the required hard guarantee.
 6. **I18N-LOCALIZATION-INV-06** **Translatable-vs-content by authorship:** product copy → keys; user content →
    as-authored (never translated); external content → source language (locale corpora
    deferred).
@@ -68,6 +68,8 @@ predictably when localization is incomplete. **No owned table** (App Settings ow
 - **Parity check** at build/CI across all locales and namespaces.
 
 ## Interfaces
+
+The shared runtime is described by ADR-061. It currently resolves exact en/es only; the region-to-language resolution required below remains incomplete.
 
 - Inbound: translation function (key → localized string), locale-aware formatters.
   Language _write_ is an App Settings operation (ADR-028), not owned here.

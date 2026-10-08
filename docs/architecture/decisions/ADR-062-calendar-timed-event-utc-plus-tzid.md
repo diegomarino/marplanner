@@ -93,7 +93,7 @@ legacy import (ADR-026). All-day rows have no tzid. See the Calendar module and 
 ## Acceptance Criteria
 
 - Given a recurring timed event stored as UTC+TZID, when the feed is read across a DST transition,
-  then every occurrence resolves to the same household-local wall-clock time (probed above).
+  then every occurrence resolves to the same originating-local wall-clock time in the stored TZID (probed above); household display timezone changes do not redefine that recurrence.
 - Given a one-off timed event, when the household timezone is later changed and the event is made
   recurring, then its originating wall-clock is preserved (the stored TZID is authoritative).
 - Given the shared expander, when an external ICS `RRULE` is later ingested (slice B), then it uses
@@ -104,5 +104,5 @@ legacy import (ADR-026). All-day rows have no tzid. See the Calendar module and 
 - Historical motivation: recurring local events, reviewed on 2026-07-30.
 - Refines: `docs/architecture/contracts/calendar.md`; related `ADR-005` (household tz), `ADR-006` (dates),
   `ADR-028` (mutable tz), `ADR-043` (derive-on-read), `ADR-018`/`ADR-024` (Calendar interface/vocab),
-  `ADR-063` (audit-timestamp encoding & the storage time taxonomy).
+  `ADR-003` (audit-timestamp encoding & the storage time taxonomy).
 - Constitution: IV (time/date discipline), XIV (empirical evidence — probe above).

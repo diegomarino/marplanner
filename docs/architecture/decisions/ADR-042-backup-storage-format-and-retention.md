@@ -27,15 +27,14 @@ Killing the dangerous direction loses no real value.
   floor — never zero backups regardless of elapsed time. It is the real protection.
 - **Secondary rule (age):** among backups beyond the count, very old ones (>~30d)
   may be dropped, but **age can never reduce below the count floor**.
-- **`pre-restore` snapshots are exempt** (ADR-017) — own lane / guaranteed minimum.
+- **`pre-restore` snapshots are exempt from normal pruning** (ADR-017), with their own last-K lane (currently K=5); they are not retained indefinitely.
 - **Not configurable in MVP** (sensible hardcoded constant, documented). **Not
   size-based** (disk-full is operational; count bounds size indirectly).
 - Pruning runs only **after a confirmed-good new backup** (ADR-014) and never below
   the floor — never leaves zero backups.
-- **Explicit admin delete also respects the floor:** a delete that would leave zero
+- **Explicit admin delete preserves one regular backup, independently of the automatic N-count policy:** a delete that would leave zero
   regular backups is refused, and a `pre-restore` snapshot cannot be deleted while a
-  restore is in flight (restore-in-progress lock, ADR-017). The floor is not a
-  prune-only rule.
+  restore is in flight (restore-in-progress lock, ADR-017). Automatic pruning retains N regular backups; explicit deletion has a separate one-regular-backup safety floor.
 
 Rationale: age-only retention can silently violate the guarantee that matters
 (having _something_ to restore) under irregular kiosk uptime; mtime is fragile
@@ -100,8 +99,7 @@ imported automatically (ADR-026).
 - Given a `.sql` upload, when imported, then it is rejected (import is `.db`-only).
 - Given a listed backup, when `download-sql` is invoked, then a read-only SQL dump
   is produced without making it re-importable.
-- Given more than N backups exist, when prune runs, then the N most recent (plus all
-  `pre-restore` snapshots) are retained and prune never leaves zero backups.
+- Given more than N regular backups exist, normal pruning keeps the N newest plus younger beyond-N backups; pre-restore snapshots use their own last-K policy. Explicit deletion refuses to remove the last regular backup.
 - Given an old backup beyond the count, when only the age rule would remove it but
   doing so drops below N, then it is retained.
 - Given an explicit admin delete that would leave zero regular backups, when invoked,

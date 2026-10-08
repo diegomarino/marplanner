@@ -8,11 +8,11 @@ Decision date: 2026-06-27
 
 In v2, `admin` is not a member role. `member.role` is limited to `parent` and `child`.
 
-Admin authority is a non-person-scoped capability for performing admin tasks when the caller has the required credential or access state, such as knowing the PIN code or holding the API key. It must not be modeled as a household participant or tied to one specific member profile.
+Admin UI access uses the household PIN gate; backend authority uses API credentials (`ADR-013`/`ADR-058`). Neither is a member-profile login, and the PIN creates no backend admin session. It must not be modeled as a household participant or tied to one specific member profile.
 
 ## Rationale
 
-Production member-role validation recognizes only `parent` and `child`, and current member management UI only offers those roles. Current Auth & Sessions evidence models admin access through global PIN/session/API boundaries with nullable member links, not through member-profile login.
+Production member-role validation recognizes only `parent` and `child`, and current member management UI only offers those roles. Legacy Auth & Sessions evidence used PIN/session/API boundaries with nullable member links. The current model uses a client-only PIN gate and API credentials (`ADR-013`/`ADR-058`), not member-profile login.
 
 Separating household identity from admin authority keeps Members responsible for household participants and leaves credential/session policy to Auth & Sessions.
 
@@ -35,10 +35,6 @@ Existing nullable `pin_codes.member_id` and `sessions.member_id` links are evide
 - Given a v2 member create or update request, when `role = admin`, then the request is rejected as an invalid member role.
 - Given an admin-capable caller, when admin tasks are authorized, then authorization is evaluated through Auth & Sessions/API-boundary rules rather than through `member.role`.
 - Given v2 member data, when role validation runs, then `parent` and `child` are accepted and `admin` is rejected.
-
-## Open Questions
-
-- Which admin tasks require PIN-derived backend admin session, API key only, or another authorization boundary remains open under `ADR-007` and `ADR-013`.
 
 ## Traceability
 
