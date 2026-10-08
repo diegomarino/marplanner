@@ -140,10 +140,10 @@ vi.mock("@/printing/pluginStatus", () => ({
 }));
 
 describe("Shell — unprovisioned gate", () => {
-  let mockFetch: ReturnType<typeof vi.fn>;
+  let mockFetch: ReturnType<typeof vi.fn<typeof fetch>>;
 
   beforeEach(() => {
-    mockFetch = vi.fn();
+    mockFetch = vi.fn<typeof fetch>();
     vi.stubGlobal("fetch", mockFetch);
     // Clear any provisioned marker so each test controls provisioned state (FR-031).
     document.cookie = "mp_provisioned=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
@@ -204,7 +204,7 @@ describe("Shell — unprovisioned gate", () => {
 
   it("renders the household shell when the provisioned marker is present (FR-031)", async () => {
     document.cookie = "mp_provisioned=1; path=/";
-    mockFetch.mockImplementation((url: string | URL) => {
+    mockFetch.mockImplementation((url) => {
       if (String(url) === "/api/plugins") return Promise.resolve(pluginCatalogResponse());
       const value = String(url).includes("/api/settings")
         ? { locale: { timezone: "UTC", language: "en", weekStartDay: 1 } }
@@ -219,7 +219,7 @@ describe("Shell — unprovisioned gate", () => {
 
   it("marks the current family destination and exposes Options as an Escape-dismissible disclosure", async () => {
     document.cookie = "mp_provisioned=1; path=/";
-    mockFetch.mockImplementation((url: string | URL) => {
+    mockFetch.mockImplementation((url) => {
       if (String(url) === "/api/plugins") return Promise.resolve(pluginCatalogResponse());
       const value = String(url).includes("/api/settings")
         ? { locale: { timezone: "UTC", language: "en", weekStartDay: 1 } }
@@ -256,7 +256,7 @@ describe("Shell — unprovisioned gate", () => {
 
   it("organizes the household chrome into compact navigation, contextual center, and secondary actions", async () => {
     document.cookie = "mp_provisioned=1; path=/";
-    mockFetch.mockImplementation((url: string | URL) => {
+    mockFetch.mockImplementation((url) => {
       if (String(url) === "/api/plugins") return Promise.resolve(pluginCatalogResponse());
       const value = String(url).includes("/api/settings")
         ? { locale: { timezone: "UTC", language: "en", weekStartDay: 1 } }
@@ -285,7 +285,7 @@ describe("Shell — unprovisioned gate", () => {
     vi.stubEnv("MODE", "development");
     vi.stubEnv("VITE_DEV_BYPASS_ADMIN_PIN", "1");
     let printingActive = true;
-    mockFetch.mockImplementation((input: string | URL, init?: Parameters<typeof fetch>[1]) => {
+    mockFetch.mockImplementation((input, init) => {
       const url = String(input);
       if (url === "/api/plugins") {
         return Promise.resolve(
@@ -321,7 +321,7 @@ describe("Shell — unprovisioned gate", () => {
 
   it("requires a three-second physical hold, shows progress, and resets after an early release", async () => {
     document.cookie = "mp_provisioned=1; path=/";
-    mockFetch.mockImplementation((url: string | URL) => {
+    mockFetch.mockImplementation((url) => {
       if (String(url) === "/api/plugins") return Promise.resolve(pluginCatalogResponse());
       const value = String(url).includes("/api/settings")
         ? { locale: { timezone: "UTC", language: "en", weekStartDay: 1 } }
@@ -342,7 +342,7 @@ describe("Shell — unprovisioned gate", () => {
       expect(progress).toHaveAttribute("data-progress-state", "filling");
       expect(progress).toHaveClass("scale-x-100", "duration-[3000ms]");
 
-      act(() => vi.advanceTimersByTime(2_999));
+      await act(() => vi.advanceTimersByTime(2_999));
       expect(window.location.pathname).toBe("/");
 
       fireEvent.pointerUp(admin, { pointerId: 7 });
@@ -351,7 +351,7 @@ describe("Shell — unprovisioned gate", () => {
       expect(progress).toHaveClass("scale-x-0");
 
       fireEvent.pointerDown(admin, { pointerId: 8 });
-      act(() => vi.advanceTimersByTime(3_000));
+      await act(() => vi.advanceTimersByTime(3_000));
     } finally {
       vi.useRealTimers();
     }
@@ -365,7 +365,7 @@ describe("Shell — unprovisioned gate", () => {
     document.cookie = "mp_provisioned=1; path=/";
     vi.stubEnv("MODE", "development");
     vi.stubEnv("VITE_DEV_BYPASS_ADMIN_PIN", "1");
-    mockFetch.mockImplementation((url: string | URL) => {
+    mockFetch.mockImplementation((url) => {
       if (String(url) === "/api/plugins") return Promise.resolve(pluginCatalogResponse());
       const value = String(url).includes("/api/settings")
         ? { locale: { timezone: "UTC", language: "en", weekStartDay: 1 } }
@@ -388,7 +388,7 @@ describe("Shell — unprovisioned gate", () => {
 
   it("rejects a quick physical tap but accepts keyboard hold and synthetic AT activation", async () => {
     document.cookie = "mp_provisioned=1; path=/";
-    mockFetch.mockImplementation((url: string | URL) => {
+    mockFetch.mockImplementation((url) => {
       const value = String(url).includes("/api/settings")
         ? { locale: { timezone: "UTC", language: "en", weekStartDay: 1 } }
         : [];
@@ -411,7 +411,7 @@ describe("Shell — unprovisioned gate", () => {
       fireEvent.keyDown(admin, { key: "Enter" });
       fireEvent.click(admin, { detail: 0 });
       expect(window.location.pathname).toBe("/");
-      act(() => vi.advanceTimersByTime(3_000));
+      await act(() => vi.advanceTimersByTime(3_000));
     } finally {
       vi.useRealTimers();
     }
@@ -426,7 +426,7 @@ describe("Shell — unprovisioned gate", () => {
       fireEvent.keyDown(admin, { key: " " });
       fireEvent.click(admin, { detail: 0 });
       expect(window.location.pathname).toBe("/");
-      act(() => vi.advanceTimersByTime(3_000));
+      await act(() => vi.advanceTimersByTime(3_000));
     } finally {
       vi.useRealTimers();
     }
@@ -442,7 +442,7 @@ describe("Shell — unprovisioned gate", () => {
 
   it("captures the pointer, survives layout-shift leave events, and resets on cancellation", async () => {
     document.cookie = "mp_provisioned=1; path=/";
-    mockFetch.mockImplementation((url: string | URL) => {
+    mockFetch.mockImplementation((url) => {
       const value = String(url).includes("/api/settings")
         ? { locale: { timezone: "UTC", language: "en", weekStartDay: 1 } }
         : [];
@@ -459,10 +459,10 @@ describe("Shell — unprovisioned gate", () => {
     try {
       fireEvent.pointerDown(admin, { pointerId: 42 });
       expect(capture).toHaveBeenCalledWith(42);
-      act(() => vi.advanceTimersByTime(200));
+      await act(() => vi.advanceTimersByTime(200));
       fireEvent.mouseLeave(admin);
       fireEvent.pointerLeave(admin);
-      act(() => vi.advanceTimersByTime(2_800));
+      await act(() => vi.advanceTimersByTime(2_800));
     } finally {
       vi.useRealTimers();
     }
@@ -476,12 +476,12 @@ describe("Shell — unprovisioned gate", () => {
     try {
       fireEvent.pointerDown(cancelledAdmin, { pointerId: 43 });
       fireEvent.pointerCancel(cancelledAdmin, { pointerId: 43 });
-      act(() => vi.advanceTimersByTime(3_000));
+      await act(() => vi.advanceTimersByTime(3_000));
       expect(cancelledAdmin).toHaveAttribute("data-hold-state", "idle");
 
       fireEvent.pointerDown(cancelledAdmin, { pointerId: 44 });
       fireEvent.lostPointerCapture(cancelledAdmin, { pointerId: 44 });
-      act(() => vi.advanceTimersByTime(3_000));
+      await act(() => vi.advanceTimersByTime(3_000));
     } finally {
       vi.useRealTimers();
     }
@@ -506,7 +506,7 @@ describe("Shell — unprovisioned gate", () => {
 });
 
 describe("Shell — stale mp_provisioned marker recovery (FR-013)", () => {
-  let mockFetch: ReturnType<typeof vi.fn>;
+  let mockFetch: ReturnType<typeof vi.fn<typeof fetch>>;
   let unregister: () => void;
 
   /** A stand-in for AdminGate/MemberCreateForm: makes one authenticated call. */
@@ -523,7 +523,7 @@ describe("Shell — stale mp_provisioned marker recovery (FR-013)", () => {
   }
 
   beforeEach(() => {
-    mockFetch = vi.fn();
+    mockFetch = vi.fn<typeof fetch>();
     vi.stubGlobal("fetch", mockFetch);
     // A stale marker: present client-side, but the device key behind it is
     // revoked/expired server-side — every /api/* call will 401/403.
@@ -543,7 +543,7 @@ describe("Shell — stale mp_provisioned marker recovery (FR-013)", () => {
   });
 
   it("falls back to the provisioning gate when an authenticated call 401s (no manual refresh needed)", async () => {
-    mockFetch.mockImplementation((url: string | URL) => {
+    mockFetch.mockImplementation((url) => {
       if (String(url) === "/api/settings") {
         return Promise.resolve(
           Response.json({ locale: { timezone: "Europe/Madrid", language: "es", weekStartDay: 1 } })
@@ -573,7 +573,7 @@ describe("Shell — stale mp_provisioned marker recovery (FR-013)", () => {
   });
 
   it("falls back to the provisioning gate on a 403 (revoked key) the same way", async () => {
-    mockFetch.mockImplementation((url: string | URL) => {
+    mockFetch.mockImplementation((url) => {
       if (String(url) === "/api/settings") {
         return Promise.resolve(
           Response.json({ locale: { timezone: "Europe/Madrid", language: "es", weekStartDay: 1 } })
@@ -593,7 +593,7 @@ describe("Shell — stale mp_provisioned marker recovery (FR-013)", () => {
   });
 
   it("stays provisioned when the authenticated call succeeds", async () => {
-    mockFetch.mockImplementation((url: string | URL) => {
+    mockFetch.mockImplementation((url) => {
       if (String(url) === "/api/settings") {
         return Promise.resolve(
           Response.json({ locale: { timezone: "Europe/Madrid", language: "es", weekStartDay: 1 } })
@@ -615,10 +615,10 @@ describe("Shell — stale mp_provisioned marker recovery (FR-013)", () => {
 });
 
 describe("ProvisioningScreen — action exists", () => {
-  let mockFetch: ReturnType<typeof vi.fn>;
+  let mockFetch: ReturnType<typeof vi.fn<typeof fetch>>;
 
   beforeEach(() => {
-    mockFetch = vi.fn();
+    mockFetch = vi.fn<typeof fetch>();
     vi.stubGlobal("fetch", mockFetch);
   });
 

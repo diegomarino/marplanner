@@ -1,3 +1,4 @@
+import tsEslint from "typescript-eslint";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -183,7 +184,10 @@ describe("telemetry negative proofs", () => {
     it("a fixture with a raw console call and a template-literal `data` argument trips both rules", async () => {
       const { ESLint } = await import("eslint");
       const repoRoot = join(__dirname, "../..");
-      const eslint = new ESLint({ cwd: repoRoot });
+      const eslint = new ESLint({
+        cwd: repoRoot,
+        overrideConfig: tsEslint.configs.disableTypeChecked,
+      });
 
       const fixture = [
         'import { log } from "../../src/client/lib/logger";',
@@ -208,7 +212,10 @@ describe("telemetry negative proofs", () => {
     it("the SAME template-literal `data` argument does NOT trip no-restricted-syntax inside src/client/lib/logger.ts's own no-console exemption zone (sanity: the exemption is console-only, not a blanket opt-out)", async () => {
       const { ESLint } = await import("eslint");
       const repoRoot = join(__dirname, "../..");
-      const eslint = new ESLint({ cwd: repoRoot });
+      const eslint = new ESLint({
+        cwd: repoRoot,
+        overrideConfig: tsEslint.configs.disableTypeChecked,
+      });
 
       const fixture = [
         "declare function log(level: string, component: string, message: string, data?: unknown): void;",

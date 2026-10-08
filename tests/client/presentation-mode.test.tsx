@@ -30,7 +30,7 @@ describe("usePresentationMode", () => {
     vi.restoreAllMocks();
   });
 
-  it("tracks fullscreen and the two probed display-mode changes, then removes every listener", () => {
+  it("tracks fullscreen and the two probed display-mode changes, then removes every listener", async () => {
     const standalone = createMediaQuery();
     const fullscreen = createMediaQuery();
     vi.stubGlobal(
@@ -47,11 +47,11 @@ describe("usePresentationMode", () => {
     expect(screen.getByText("inactive")).toBeInTheDocument();
 
     fullscreenElement = document.documentElement;
-    act(() => document.dispatchEvent(new Event("fullscreenchange")));
+    await act(() => document.dispatchEvent(new Event("fullscreenchange")));
     expect(screen.getByText("active")).toBeInTheDocument();
 
     fullscreenElement = null;
-    act(() => document.dispatchEvent(new Event("fullscreenchange")));
+    await act(() => document.dispatchEvent(new Event("fullscreenchange")));
     act(() => standalone.emit(true));
     expect(screen.getByText("active")).toBeInTheDocument();
 

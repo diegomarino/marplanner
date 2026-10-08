@@ -90,15 +90,23 @@ class FakeLockManager {
     _options: unknown,
     callback: (lock: unknown) => Promise<T>
   ): Promise<T> {
-    return new Promise<T>((resolveOuter) => {
+    return new Promise<T>((resolveOuter, rejectOuter) => {
       const run = () => {
         this.busy = true;
-        callback({}).then((result) => {
-          resolveOuter(result);
-          this.busy = false;
-          const next = this.waiters.shift();
-          next?.();
-        });
+        void callback({}).then(
+          (result) => {
+            resolveOuter(result);
+            this.busy = false;
+            const next = this.waiters.shift();
+            next?.();
+          },
+          (error) => {
+            rejectOuter(error);
+            this.busy = false;
+            const next = this.waiters.shift();
+            next?.();
+          }
+        );
       };
       if (this.busy) this.waiters.push(run);
       else run();

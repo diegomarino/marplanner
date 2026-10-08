@@ -372,7 +372,7 @@ export function resolveDensityFromArgv(argv = process.argv.slice(2)) {
       return parseDensity(value);
     }
   }
-  // Product density control is deferred (TODO(density)); session helpers default comfortable.
+  // Match the comfortable release default documented in the development style guide.
   return COMFORTABLE_DENSITY;
 }
 
