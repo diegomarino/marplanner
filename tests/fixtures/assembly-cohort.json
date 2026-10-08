@@ -688,6 +688,8 @@
             "runtime classifier cannot waive product checks for any changed path",
             "check-openapi-drift.mjs negative-test home (tools/check-openapi-drift.test.mjs) exists",
             "every check-*.mjs tool (repo-wide) is classified: break-recipe or documented exclusion",
+            "check-plugin-events.mjs — synthetic violation → NON-ZERO exit (not false-green)",
+            "check-plugin-events.mjs — clean fixture → exit 0 (not always-red)",
             "check-exception-list.mjs — synthetic violation → NON-ZERO exit (not false-green)",
             "check-exception-list.mjs — clean fixture → exit 0 (not always-red)"
           ],
