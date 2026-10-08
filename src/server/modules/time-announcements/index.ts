@@ -1,3 +1,7 @@
+import {
+  CANONICAL_WEEKDAY_ORDER,
+  validateWeekdays as validateWeekdayTokens,
+} from "../../../shared/weekdays";
 import { randomUUID } from "node:crypto";
 import type { TimeAnnouncementRule, WeekdayCode } from "../../../shared";
 import { getDb } from "../../host-api";
@@ -40,19 +44,6 @@ export class TimeAnnouncementOverlapError extends Error {
 // trim, no zero-padding a short form, no clamping an out-of-range value.
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-// Canonical weekday order (mon..sun) — every stored/returned `weekDays` array is re-sorted into
-// this order regardless of input order ("canonical order on write").
-const CANONICAL_WEEKDAY_ORDER: readonly WeekdayCode[] = [
-  "mon",
-  "tue",
-  "wed",
-  "thu",
-  "fri",
-  "sat",
-  "sun",
-];
-const VALID_WEEKDAYS = new Set<string>(CANONICAL_WEEKDAY_ORDER);
-
 function validateTime(time: unknown): string {
   if (typeof time !== "string" || !TIME_PATTERN.test(time)) {
     throw new TimeAnnouncementValidationError(
@@ -68,12 +59,7 @@ function validateWeekDays(weekDays: unknown): WeekdayCode[] {
     throw new TimeAnnouncementValidationError("weekDays is required and must be a non-empty array");
   }
   const seen = new Set<string>();
-  for (const day of weekDays) {
-    if (typeof day !== "string" || !VALID_WEEKDAYS.has(day)) {
-      throw new TimeAnnouncementValidationError(
-        `Invalid weekday "${String(day)}": must be one of mon, tue, wed, thu, fri, sat, sun`
-      );
-    }
+  for (const day of validateWeekdayTokens(weekDays, TimeAnnouncementValidationError)) {
     if (seen.has(day)) {
       throw new TimeAnnouncementValidationError(`Duplicate weekday "${day}" in weekDays`);
     }

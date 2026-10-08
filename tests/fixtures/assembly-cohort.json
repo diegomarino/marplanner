@@ -2546,7 +2546,8 @@
             "seed runner boundary rejects invalid and duplicate module identities before creating a profile marker",
             "seed runner boundary rejects a module without a stable ID before creating a profile marker",
             "seed runner boundary redacts malformed private filenames from diagnostics",
-            "seed runner boundary runs migrations before creating the profile marker or invoking a module"
+            "seed runner boundary runs migrations before creating the profile marker or invoking a module",
+            "seed runner boundary rolls back a direct seed insert containing an integer weekday"
           ],
           "tests/boundary/seed-settings.test.ts": [
             "public settings seed runs through the seed runner and exposes only portable settings through authenticated GET",
@@ -2722,7 +2723,8 @@
             "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-AC-07: CRUD requires the admin write capability (fail-closed); listing is kiosk-visible TIME-ANNOUNCEMENTS-AC-07: GET is kiosk-visible — a key with NO write capability can still list rules",
             "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-AC-07: CRUD requires the admin write capability (fail-closed); listing is kiosk-visible TIME-ANNOUNCEMENTS-AC-07: GET ordered by time, ties broken by id",
             "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-INV-06 (server half): no scheduler job/queue/claim exists for announcements TIME-ANNOUNCEMENTS-INV-06: the entrypoint registers no time-announcements job, and the module never imports the scheduler seam (structural — owns the fuller schema/queue negative-proof sweep)",
-            "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-INV-04 (structural): the in-transaction property, pinned at the source level TIME-ANNOUNCEMENTS-INV-04: the overlap lookup is called INSIDE the db.transaction() callback on BOTH write paths (structural — better-sqlite3's synchronous transactions make this behaviourally unobservable: hoisting the check out of the transaction, or splitting a PATCH into check-then-write, still passes every behavioral test above)"
+            "time-announcements-crud (US1 rule authoring) TIME-ANNOUNCEMENTS-INV-04 (structural): the in-transaction property, pinned at the source level TIME-ANNOUNCEMENTS-INV-04: the overlap lookup is called INSIDE the db.transaction() callback on BOTH write paths (structural — better-sqlite3's synchronous transactions make this behaviourally unobservable: hoisting the check out of the transaction, or splitting a PATCH into check-then-write, still passes every behavioral test above)",
+            "time-announcements-crud (US1 rule authoring) rejects a non-boolean active flag without persisting an announcement"
           ],
           "tests/boundary/time-announcements-negatives.test.ts": [
             "time-announcements negative proofs 1. TIME-ANNOUNCEMENTS-AC-08/INV-10: no settings surface of any kind GET /api/time-announcements/settings is NOT registered",
@@ -4888,6 +4890,11 @@
             "telemetry retention prune (research D7) real registration path — runJobNow(\"telemetry.prune\") CLIENT-LOGGING-TELEMETRY-AC-04/-INV-09: prunes aged rows and keeps fresh rows through the actual registered scheduler job",
             "telemetry retention prune (research D7) real registration path — runJobNow(\"telemetry.prune\") re-running the real registered job after a prune completes without deleting anything further",
             "telemetry retention prune (research D7) CLIENT-LOGGING-TELEMETRY-AC-04: zero-ingest fixture agedClientLogRowsExist() is false on an empty table"
+          ],
+          "tests/boundary/weekday-integrity.test.ts": [
+            "canonical weekday integrity rejects integer and noncanonical tokens without coercing or changing domain set policies",
+            "canonical weekday integrity accepts fresh and public-seeded databases including null and empty masks",
+            "canonical weekday integrity identifies corrupt persisted weekday rows in every domain without rewriting data"
           ]
         }
       },
@@ -8024,10 +8031,10 @@
       "src/server/modules/daily-briefing/settings.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 97,
-          "statements": 105,
+          "lines": 93,
+          "statements": 101,
           "functions": 20,
-          "branches": 95
+          "branches": 91
         },
         "minimumRates": {
           "lines": 90.72,
@@ -8084,10 +8091,10 @@
       "src/server/modules/meals/index.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 385,
-          "statements": 395,
+          "lines": 384,
+          "statements": 394,
           "functions": 55,
-          "branches": 308
+          "branches": 304
         },
         "minimumRates": {
           "lines": 87.53,
@@ -8279,10 +8286,10 @@
       "src/server/modules/reminders/index.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 315,
-          "statements": 323,
+          "lines": 311,
+          "statements": 319,
           "functions": 46,
-          "branches": 244
+          "branches": 240
         },
         "minimumRates": {
           "lines": 89.2,
@@ -8294,10 +8301,10 @@
       "src/server/modules/routines/index.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 367,
-          "statements": 388,
+          "lines": 363,
+          "statements": 384,
           "functions": 59,
-          "branches": 236
+          "branches": 232
         },
         "minimumRates": {
           "lines": 91,
@@ -8324,10 +8331,10 @@
       "src/server/modules/time-announcements/index.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 93,
-          "statements": 98,
+          "lines": 89,
+          "statements": 94,
           "functions": 18,
-          "branches": 70
+          "branches": 66
         },
         "minimumRates": {
           "lines": 96.77,
@@ -8988,6 +8995,36 @@
           "statements": 5,
           "functions": 2,
           "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/db/weekday-integrity.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 12,
+          "statements": 15,
+          "functions": 1,
+          "branches": 12
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/shared/weekdays.ts": {
+        "layer": "shared",
+        "minimumTotals": {
+          "lines": 7,
+          "statements": 8,
+          "functions": 2,
+          "branches": 7
         },
         "minimumRates": {
           "lines": 100,

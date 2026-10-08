@@ -1,3 +1,4 @@
+import { isWeekday } from "../../../shared/weekdays";
 import { randomUUID } from "node:crypto";
 import type {
   Recipe,
@@ -37,7 +38,6 @@ export class MealNotFoundError extends Error {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 const VALID_SLOTS = new Set<string>(["breakfast", "lunch", "snack", "dinner"]);
-const VALID_WEEKDAYS = new Set<string>(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]);
 
 // ── Recipe field normalization (FR-001/FR-002) ──────────────────────────────
 
@@ -636,7 +636,7 @@ export function createEntry(input: unknown): MealEntry {
     if (typeof mealPlanId !== "string" || mealPlanId.trim().length === 0) {
       throw new MealValidationError("mealPlanId is required for a recurring entry");
     }
-    if (typeof weekday !== "string" || !VALID_WEEKDAYS.has(weekday)) {
+    if (!isWeekday(weekday)) {
       throw new MealValidationError(`Invalid weekday "${String(weekday)}"`);
     }
     const planRow = db.prepare("SELECT id FROM meal_plans WHERE id = ?").get(mealPlanId);
@@ -832,7 +832,7 @@ function validatedEntry(value: Record<string, unknown>): ValidatedEntry {
   if (typeof mealPlanId !== "string" || mealPlanId.trim().length === 0) {
     throw new MealValidationError("mealPlanId is required for a recurring entry");
   }
-  if (typeof weekday !== "string" || !VALID_WEEKDAYS.has(weekday)) {
+  if (!isWeekday(weekday)) {
     throw new MealValidationError(`Invalid weekday "${String(weekday)}"`);
   }
   if (!db.prepare("SELECT id FROM meal_plans WHERE id = ?").get(mealPlanId)) {

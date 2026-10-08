@@ -1,3 +1,4 @@
+import { validateWeekdays } from "../src/shared/weekdays";
 import type { SeedModule } from "../src/server/db/seeds/types";
 
 const SCHOOL_DAYS = ["mon", "tue", "wed", "thu", "fri"] as const;
@@ -97,7 +98,7 @@ const seedReminders: SeedModule = {
         assignment.id,
         assignment.reminderId,
         assignment.memberId,
-        JSON.stringify(assignment.weekdays),
+        JSON.stringify(validateWeekdays(assignment.weekdays)),
         nowMs,
         nowMs
       );

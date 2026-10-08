@@ -45,6 +45,21 @@ describe("seed runner boundary", () => {
     ]);
   });
 
+  it("rolls back a direct seed insert containing an integer weekday", async () => {
+    const seedsDirectory = makeSeedsDirectory({
+      "seed-010-corrupt.mjs": `export default {
+        id: "public:corrupt",
+        run({ db }) {
+          db.prepare("INSERT INTO reminder (id, kind, targeting_mode, text, weekdays, created_at, updated_at) VALUES ('bad', 'scheduled', 'apply_to_all', 'Test', '[1]', 0, 0)").run();
+        }
+      };`,
+    });
+    await expect(
+      runSeedProfile({ mode: "public", disposableTarget: true, seedsDirectory })
+    ).rejects.toThrow("Seed module failed: public:corrupt");
+    expect(getDb().prepare("SELECT id FROM reminder WHERE id = 'bad'").get()).toBeUndefined();
+  });
+
   it("refuses an undisposable target before changing an ordinary row", async () => {
     getDb()
       .prepare(

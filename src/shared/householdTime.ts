@@ -17,7 +17,8 @@
 // local day boundary itself doesn't exist.
 // ─────────────────────────────────────────────────────────────────────
 
-export type WeekdayCode = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
+import type { WeekdayCode } from "./weekdays";
+export type { WeekdayCode } from "./weekdays";
 
 /** True when `s` is `YYYY-MM-DD` shaped (no calendar-validity check — see `isStrictCalendarDate`). */
 export function isDateOnly(s: string): boolean {
