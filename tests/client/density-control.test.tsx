@@ -85,10 +85,8 @@ describe("DensityControl (FR-002/FR-002a)", () => {
     cleanup();
   });
 
-  it("fresh device: empty localStorage + boot's applyStoredDensity() renders unpressed/comfortable", () => {
-    // Mirrors the real boot order (main.tsx): applyStoredDensity runs BEFORE the app
-    // renders. With nothing ever stored, it leaves the attribute absent (comfortable) —
-    // the control must read exactly that state, not assume it.
+  it("empty localStorage leaves the isolated density control unpressed/comfortable", () => {
+    // Persisted-density restoration is tested in isolation; release boot forces comfortable.
     applyStoredDensity();
     expect(document.documentElement.hasAttribute(DENSITY_ATTRIBUTE)).toBe(false);
 

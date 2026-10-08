@@ -233,12 +233,8 @@ interface TelemetryWindowHook {
   flush: () => Promise<void>;
 }
 
-// TS declaration merging: `Window` below augments the global lib.dom.d.ts `Window` interface.
-// Base ESLint's `no-unused-vars` doesn't understand declaration merging, so it sees this as an
-// unreferenced local binding — it isn't; every `window.__mpTelemetry` access elsewhere (this
-// file, e2e specs) is typed through this merge.
+// Keep development and browser-test telemetry hooks typed on the global Window.
 declare global {
-  // eslint-disable-next-line no-unused-vars
   interface Window {
     __mpTelemetry?: TelemetryWindowHook;
   }

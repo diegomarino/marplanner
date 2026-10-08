@@ -456,7 +456,7 @@ export function MealsManagement() {
                 t={t}
                 onSave={(updates) => editRecipe(recipe.id, updates)}
                 onPrepareDelete={() => prepareRecipeDeletion(recipe)}
-                onConfirmDelete={() => confirmRecipeDeletion(recipe)}
+                onConfirmDelete={() => void confirmRecipeDeletion(recipe)}
               />
             ))}
           </div>

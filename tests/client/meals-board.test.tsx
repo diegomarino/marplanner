@@ -72,6 +72,49 @@ describe("MealsBoard weekly planner", () => {
     cleanup();
   });
 
+  it("searches recipes from the weekly board and displays matching results", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: string | URL) => {
+        const url = new URL(String(input), "http://localhost");
+        if (url.pathname === "/api/settings")
+          return Promise.resolve(
+            Response.json({ locale: { timezone: "UTC", weekStartDay: 1, language: "en" } })
+          );
+        if (url.pathname === "/api/menu/week") return Promise.resolve(Response.json(emptyWeek()));
+        if (url.pathname === "/api/recipes")
+          return Promise.resolve(
+            Response.json(
+              url.searchParams.get("search") === "ham"
+                ? [
+                    {
+                      id: "recipe-search",
+                      name: "Steamed Hams",
+                      ingredients: ["patties"],
+                      instructions: "Grill.",
+                      slots: ["dinner"],
+                      createdAt: 0,
+                      updatedAt: 0,
+                    },
+                  ]
+                : []
+            )
+          );
+        throw new Error(`unexpected fetch: ${url}`);
+      })
+    );
+    render(
+      <HouseholdSettingsProvider>
+        <LanguageProvider>
+          <MealsBoard />
+        </LanguageProvider>
+      </HouseholdSettingsProvider>
+    );
+    await screen.findByTestId("meal-plan-grid");
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "ham" } });
+    expect(await screen.findByRole("button", { name: "Steamed Hams" })).toBeVisible();
+  });
+
   it("renders seven dates, fixed slot rows, duplicate labels, and an add affordance", async () => {
     vi.stubGlobal(
       "fetch",

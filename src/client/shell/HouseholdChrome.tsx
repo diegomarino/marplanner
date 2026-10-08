@@ -209,9 +209,8 @@ function HouseholdChromeContent({
                     }
                   }}
                 >
-                  {/* TODO(density): revert — remount `<DensityControl />` here and flip
-                      density-control-shell-mount + shell Options assertions back to "exposed".
-                      Pair with main.tsx boot: restore `applyStoredDensity()` instead of forced comfortable. */}
+                  {/* TODO(density): remount with persisted boot density and shell visibility tests;
+                      see docs/development/style-guide.md#release-density-behavior. */}
                   <Button
                     type="button"
                     variant="outline"
