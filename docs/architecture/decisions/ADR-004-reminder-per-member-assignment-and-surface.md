@@ -1,4 +1,4 @@
-# ADR-064 Reminder Assignments and Product Surface
+# ADR-004 Reminder Assignments and Product Surface
 
 Status: accepted
 Owner: product + architecture

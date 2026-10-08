@@ -96,7 +96,7 @@ guarantees:
     disposition: active
     owner: reminders
     spec: reminders
-    note: "Targeting: specific-mode binds active members via assignments; zero-assignment write rejected; archived self-heal (ADR-064)."
+    note: "Targeting: specific-mode binds active members via assignments; zero-assignment write rejected; archived self-heal (ADR-004)."
   - id: REMINDERS-INV-03
     disposition: active
     owner: reminders
@@ -131,7 +131,7 @@ guarantees:
     disposition: active
     owner: reminders
     spec: reminders
-    note: "Per-member assignment discriminant (ADR-064): specific holds N one-member assignments (weekdays for scheduled, membership for calendar_gated); invalid targeting/weekday combos rejected at boundary (mirrors INV-01); emission is AC-03."
+    note: "Per-member assignment discriminant (ADR-004): specific holds N one-member assignments (weekdays for scheduled, membership for calendar_gated); invalid targeting/weekday combos rejected at boundary (mirrors INV-01); emission is AC-03."
   - id: REMINDERS-AC-01
     disposition: active
     owner: reminders
@@ -146,7 +146,7 @@ guarantees:
     disposition: active
     owner: reminders
     spec: reminders
-    note: "scheduled emits on the applicable weekdays (rule-level apply_to_all / per-member specific); ADR-064; regardless of calendar."
+    note: "scheduled emits on the applicable weekdays (rule-level apply_to_all / per-member specific); ADR-004; regardless of calendar."
   - id: REMINDERS-AC-04
     disposition: active
     owner: reminders

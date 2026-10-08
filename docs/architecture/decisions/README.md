@@ -36,7 +36,7 @@ documentation does not satisfy a missing check or establish runtime acceptance.
 | ADR-050  | Plugin manifest event declarations and owner-namespace build checks remain absent; core event typing exists.                                                                           |
 | ADR-056  | Production onboarding examples and their DB protections are not implemented; their launch disposition needs an explicit decision. Current synthetic seeds require a disposable target. |
 | ADR-061  | The shared client runtime has catalog-wide parity; canonical dynamic-key declarations and locale resolution remain incomplete.                                                         |
-| ADR-063  | Plugin lifecycle/lineage ISO TEXT timestamps diverge from the integer convention; choose a bounded exception or a safe migration.                                                      |
+| ADR-003  | Plugin lifecycle/lineage ISO TEXT timestamps diverge from the integer convention; choose a bounded exception or a safe migration.                                                      |
 
 ADR-021 is absent from the maintained corpus. Printer configuration is governed by
 ADR-028 and the [Printing contract](../contracts/printing.md); no replacement
@@ -44,6 +44,8 @@ historical record is fabricated to fill the numbering gap.
 
 - [ADR-001 Member Role Model](ADR-001-member-role-model.md)
 - [ADR-002 Active Member Targets](ADR-002-active-member-targets.md)
+- [ADR-003 Audit Timestamp Encoding](ADR-003-audit-timestamp-integer-epoch-storage.md)
+- [ADR-004 Reminder Assignments and Product Surface](ADR-004-reminder-per-member-assignment-and-surface.md)
 - [ADR-005 Household Timezone Contract](ADR-005-household-timezone-contract.md)
 - [ADR-006 Strict Calendar-Valid Date Validation](ADR-006-strict-date-validation.md)
 - [ADR-007 API Key as the Backend Authorization Boundary; PIN is UI-Only](ADR-007-api-key-backend-boundary.md)
@@ -101,7 +103,5 @@ historical record is fabricated to fill the numbering gap.
 - [ADR-060 Deployment Transport Posture & Cookie Security](ADR-060-deployment-transport-posture-and-cookie-security.md)
 - [ADR-061 Shared Client Localization Runtime](ADR-061-members-local-i18n-seam.md)
 - [ADR-062 Calendar Timed-Event Storage — UTC Instant Plus Originating TZID](ADR-062-calendar-timed-event-utc-plus-tzid.md)
-- [ADR-063 Audit Timestamp Encoding](ADR-063-audit-timestamp-integer-epoch-storage.md)
-- [ADR-064 Reminder Assignments and Product Surface](ADR-064-reminder-per-member-assignment-and-surface.md)
 - [ADR-065 Browser-Local Announcement Placement](ADR-065-announcement-firing-placement-reconciliation.md)
 - [ADR-066 — ESC/POS conversion placement: server-side (candidate B full)](ADR-066-escpos-conversion-placement.md)
