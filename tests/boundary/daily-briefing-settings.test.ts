@@ -300,14 +300,21 @@ describe("daily-briefing settings boundary", () => {
   });
 
   it("rejects a bad weekday value with 400", async () => {
-    const res = await app.inject({
-      method: "PUT",
-      url: `/api/daily-briefing/block-settings/${memberId}/dadJoke`,
-      cookies: auth(),
-      payload: { weekdays: ["funday"] },
-    });
-    expect(res.statusCode).toBe(400);
-    expect(res.json()).toMatchObject({ error: "validation_error" });
+    for (const weekdays of [["funday"], [1], ["mon", 1], 1, "mon", {}]) {
+      const res = await app.inject({
+        method: "PUT",
+        url: `/api/daily-briefing/block-settings/${memberId}/dadJoke`,
+        cookies: auth(),
+        payload: { weekdays },
+      });
+      expect(res.statusCode).toBe(400);
+      expect(res.json()).toMatchObject({ error: "validation_error" });
+      expect(
+        getDb()
+          .prepare("SELECT * FROM daily_briefing_member_block_settings WHERE member_id = ?")
+          .all(memberId)
+      ).toEqual([]);
+    }
   });
 
   it("rejects a MIXED valid+invalid weekday array with 400, persisting NOTHING from it (P2-2 batch-B review)", async () => {

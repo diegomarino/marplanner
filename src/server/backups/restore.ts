@@ -1,6 +1,6 @@
 /** Restore validates the selected shelf file, quiesces traffic and scheduler work,
  * drains active requests, takes a pre-restore snapshot and swaps the database.
- * Post-swap migration and plugin reconciliation run before traffic resumes.
+ * Post-swap migration, weekday integrity and plugin reconciliation run before traffic resumes.
  * A forward failure rolls back to the pre-restore snapshot. If rollback fails,
  * keep the server quiesced and the scheduler stopped for manual recovery.
  * Validated file descriptors reject symlinks and recheck containment at use time.
@@ -13,6 +13,7 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import { getDb, resetDb } from "../db/client";
 import { runMigrations } from "../db/migrate";
+import { assertWeekdayIntegrity } from "../db/weekday-integrity";
 import { getScheduler } from "../scheduler/index";
 import {
   isValidBackupFilename,
@@ -358,6 +359,7 @@ async function rollbackToPreRestore(
     removeStaleWalShm(dbPath);
     swapInPlaceFromValidatedPath(preRestorePath, dbPath);
     getDb();
+    assertWeekdayIntegrity();
     await pluginLifecycle?.reconcileAll();
   } catch (err) {
     console.error(
@@ -575,6 +577,20 @@ export async function restoreDatabase(
           pluginLifecycle
         );
       }
+    }
+
+    try {
+      assertWeekdayIntegrity();
+    } catch (err) {
+      console.error("Backups: restored weekday integrity failed — rolling back:", err);
+      return await rollbackToPreRestore(
+        preRestorePath,
+        preRestoreOutcome.filename,
+        dbPath,
+        schedulerWasStopped,
+        "incompatible_backup",
+        pluginLifecycle
+      );
     }
 
     // 12. Reconcile the active runtime against the freshly restored canonical lifecycle state

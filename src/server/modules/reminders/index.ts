@@ -1,3 +1,4 @@
+import { validateWeekdays as validateWeekdayTokens } from "../../../shared/weekdays";
 import { randomUUID } from "node:crypto";
 import type {
   DryRunResult,
@@ -37,20 +38,11 @@ export class ReminderNotFoundError extends Error {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-const VALID_WEEKDAYS = new Set<string>(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]);
-
 function validateWeekdays(weekdays: unknown): Weekday[] {
   if (!Array.isArray(weekdays) || weekdays.length === 0) {
     throw new ReminderValidationError("weekdays is required and must be a non-empty array");
   }
-  for (const day of weekdays) {
-    if (typeof day !== "string" || !VALID_WEEKDAYS.has(day)) {
-      throw new ReminderValidationError(
-        `Invalid weekday "${String(day)}": must be one of mon, tue, wed, thu, fri, sat, sun`
-      );
-    }
-  }
-  return weekdays as Weekday[];
+  return validateWeekdayTokens(weekdays, ReminderValidationError);
 }
 
 function rowToReminder(
