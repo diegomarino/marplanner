@@ -99,7 +99,12 @@ describe("Calendar demo seed integration", () => {
         },
       ]);
       for (const rawUrl of RAW_URLS) expect(publicResponse).not.toContain(rawUrl);
-      expect(fetchSpy).not.toHaveBeenCalled();
+      // Lifecycle assembly may load embedded WASM; no external fetch is allowed.
+      expect(
+        fetchSpy.mock.calls.filter(
+          ([input]) => !String(input).startsWith("data:application/octet-stream;base64,")
+        )
+      ).toEqual([]);
       expect(
         getDb()
           .prepare("SELECT COUNT(*) AS count FROM calendar_events WHERE source = 'external'")
