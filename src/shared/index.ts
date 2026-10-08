@@ -12,9 +12,7 @@ export type { MemberColorKey } from "./member-color.js";
  * (`enum: [parent, child]`; `admin` is rejected).
  */
 export enum Role {
-  /* eslint-disable-next-line no-unused-vars -- enum member used by Role type */
   parent = "parent",
-  /* eslint-disable-next-line no-unused-vars -- enum member used by Role type */
   child = "child",
 }
 

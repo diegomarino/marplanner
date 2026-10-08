@@ -21,14 +21,21 @@ class FakeLockManager implements LockManagerLike {
     _options: { mode?: "exclusive" | "shared" },
     callback: (lock: unknown) => Promise<T>
   ): Promise<T> {
-    return new Promise<T>((resolveOuter) => {
+    return new Promise<T>((resolveOuter, rejectOuter) => {
       const run = () => {
         this.busy = true;
-        callback({}).then((result) => {
-          resolveOuter(result);
-          this.busy = false;
-          this.advance();
-        });
+        void callback({}).then(
+          (result) => {
+            resolveOuter(result);
+            this.busy = false;
+            this.advance();
+          },
+          (error) => {
+            rejectOuter(error);
+            this.busy = false;
+            this.advance();
+          }
+        );
       };
       if (this.busy) {
         this.waiters.push(run);

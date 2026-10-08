@@ -1,3 +1,4 @@
+import tsEslint from "typescript-eslint";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { ESLint } from "eslint";
@@ -60,7 +61,10 @@ describe("host-api subscribe seam (research D9)", () => {
     const repoRoot = path.resolve(__dirname, "../..");
 
     async function lint(relativeFilePath: string, code: string) {
-      const eslint = new ESLint({ cwd: repoRoot });
+      const eslint = new ESLint({
+        cwd: repoRoot,
+        overrideConfig: tsEslint.configs.disableTypeChecked,
+      });
       const results = await eslint.lintText(code, {
         filePath: path.join(repoRoot, relativeFilePath),
       });

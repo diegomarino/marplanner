@@ -409,7 +409,6 @@ let hooksFakeInstance: FakePrintTransport | null = null;
 
 // TS declaration merging (same pattern as `window.__mpAnnouncements` in seams.ts).
 declare global {
-  // eslint-disable-next-line no-unused-vars
   interface Window {
     __mpPrintTransport?: FakePrintTransport;
   }

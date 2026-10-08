@@ -135,7 +135,7 @@ export function ChoreOrderControls({ routineId, chores, onReorder }: ChoreOrderC
           type="button"
           variant="secondary"
           size="sm"
-          onClick={handleSaveOrder}
+          onClick={() => void handleSaveOrder()}
           disabled={saving}
         >
           {saving ? t("routines.management.loading") : t("routines.chores.saveOrder")}

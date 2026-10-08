@@ -1,3 +1,4 @@
+import tsEslint from "typescript-eslint";
 import path from "node:path";
 import { describe, it, expect, vi } from "vitest";
 import { ESLint } from "eslint";
@@ -24,7 +25,10 @@ const repoRoot = path.resolve(__dirname, "../..");
 
 describe("host-api-mediation — plugin roots lint clean (ESLint Node API)", () => {
   it("reminders/daily-messages/meals module roots have 0 import-x/no-restricted-paths violations", async () => {
-    const eslint = new ESLint({ cwd: repoRoot });
+    const eslint = new ESLint({
+      cwd: repoRoot,
+      overrideConfig: tsEslint.configs.disableTypeChecked,
+    });
     const results = await eslint.lintFiles([
       "src/server/modules/reminders/**/*.{ts,tsx}",
       "src/server/modules/daily-messages/**/*.{ts,tsx}",

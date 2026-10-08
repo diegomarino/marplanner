@@ -166,10 +166,10 @@ function genericOkResponse(url: string): Response {
 }
 
 describe("WeatherPill", () => {
-  let mockFetch: ReturnType<typeof vi.fn>;
+  let mockFetch: ReturnType<typeof vi.fn<typeof fetch>>;
 
   beforeEach(() => {
-    mockFetch = vi.fn();
+    mockFetch = vi.fn<typeof fetch>();
     vi.stubGlobal("fetch", mockFetch);
     window.localStorage.clear();
   });
@@ -183,7 +183,7 @@ describe("WeatherPill", () => {
   });
 
   it("renders nothing when no location is configured (silent absence, FR-022)", async () => {
-    mockFetch.mockImplementation((url: string | URL) => {
+    mockFetch.mockImplementation((url) => {
       const u = String(url);
       if (u.includes("/api/settings")) return Promise.resolve(settingsResponse());
       return Promise.reject(new Error(`unexpected fetch: ${u}`));
@@ -203,7 +203,7 @@ describe("WeatherPill", () => {
   });
 
   it("renders condition/temp/rain once a location + healthy forecast resolve", async () => {
-    mockFetch.mockImplementation((url: string | URL) => {
+    mockFetch.mockImplementation((url) => {
       const u = String(url);
       if (u.includes("/api/settings"))
         return Promise.resolve(settingsResponse({ lat: 40.4, lon: -3.7 }));
@@ -233,7 +233,7 @@ describe("WeatherPill", () => {
       "matchMedia",
       vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }))
     );
-    mockFetch.mockImplementation((url: string | URL) => {
+    mockFetch.mockImplementation((url) => {
       const u = String(url);
       if (u.includes("/api/settings"))
         return Promise.resolve(settingsResponse({ lat: 40.4, lon: -3.7 }));
@@ -251,7 +251,7 @@ describe("WeatherPill", () => {
     expect(screen.queryByLabelText("Device time")).not.toBeInTheDocument();
 
     fullscreenElement = document.documentElement;
-    act(() => document.dispatchEvent(new Event("fullscreenchange")));
+    await act(() => document.dispatchEvent(new Event("fullscreenchange")));
     expect(screen.getByLabelText("Device time")).toHaveTextContent(/^\d{2}:\d{2}$/);
   });
 
@@ -292,12 +292,12 @@ describe("WeatherPill", () => {
     rerender(<WeatherPillView lat={40.4} lon={-3.7} />);
     expect(await screen.findByTestId("weather-pill")).toBeInTheDocument();
     fullscreenElement = null;
-    act(() => document.dispatchEvent(new Event("fullscreenchange")));
+    await act(() => document.dispatchEvent(new Event("fullscreenchange")));
     expect([...activeIntervals.values()]).toEqual([60_000]);
   });
 
   it("renders nothing when the forecast is null (blank/disabled/failed server-side) — NO error or retry UI", async () => {
-    mockFetch.mockImplementation((url: string | URL) => {
+    mockFetch.mockImplementation((url) => {
       const u = String(url);
       if (u.includes("/api/settings"))
         return Promise.resolve(settingsResponse({ lat: 40.4, lon: -3.7 }));
@@ -321,7 +321,7 @@ describe("WeatherPill", () => {
   });
 
   it("renders nothing when the /api/weather call itself fails — NO error or retry UI", async () => {
-    mockFetch.mockImplementation((url: string | URL) => {
+    mockFetch.mockImplementation((url) => {
       const u = String(url);
       if (u.includes("/api/settings"))
         return Promise.resolve(settingsResponse({ lat: 40.4, lon: -3.7 }));
@@ -346,10 +346,10 @@ describe("WeatherPill", () => {
 });
 
 describe("WeatherPill — shared family chrome", () => {
-  let mockFetch: ReturnType<typeof vi.fn>;
+  let mockFetch: ReturnType<typeof vi.fn<typeof fetch>>;
 
   beforeEach(() => {
-    mockFetch = vi.fn((url: string | URL) => {
+    mockFetch = vi.fn<typeof fetch>((url) => {
       const u = String(url);
       if (u.includes("/api/settings"))
         return Promise.resolve(settingsResponse({ lat: 40.4, lon: -3.7 }));
@@ -670,7 +670,7 @@ describe("WeatherPillView — TTL-expiry recheck (Codex review on #656, P2)", ()
     };
     writeWeatherCache(31, 31, { fetchedAt: Date.now(), result: forecast });
 
-    const mockFetch = vi.fn();
+    const mockFetch = vi.fn<typeof fetch>();
     vi.stubGlobal("fetch", mockFetch);
 
     render(<WeatherPillView lat={31} lon={31} />);

@@ -420,6 +420,30 @@ describe("CalendarView — kiosk density (SC-001, SC-002, FR-009)", () => {
 });
 
 describe("CalendarView — error states are announced (SC-011)", () => {
+  it.each(["create", "edit"] as const)(
+    "announces invalid date conversion during %s and releases the submit button",
+    async (action) => {
+      mockBackend();
+      renderSurface();
+      await screen.findByTestId("calendar-event-row");
+      if (action === "edit") {
+        await activateFirstEvent();
+        fireEvent.click(screen.getByTestId("calendar-edit-btn"));
+      } else {
+        fireEvent.click(screen.getByTestId("calendar-create-btn"));
+      }
+      fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "" } });
+      const submit = await screen.findByTestId(
+        action === "edit" ? "calendar-edit-save-btn" : "calendar-create-submit"
+      );
+      fireEvent.submit(submit.closest("form")!);
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        action === "edit" ? "Failed to save changes." : "Failed to load calendar events."
+      );
+      expect(submit).toBeEnabled();
+    }
+  );
+
   it("announces the events-load failure", async () => {
     mockBackend({ events: () => json(null, 500) });
     renderSurface();

@@ -58,10 +58,9 @@ window.addEventListener("unhandledrejection", (event: PromiseRejectionEvent) => 
   });
 });
 
-// TODO(density): revert — restore `applyStoredDensity()` (and drop this forced
-// comfortable lock) when `<DensityControl />` is remounted in HouseholdChrome Options.
-// DensityControl is temporarily unmounted from Options. Lock the document to the
-// comfortable default so a prior kiosk localStorage choice cannot stick without a UI exit.
+// Ignore stored kiosk density while Options has no control to undo it.
+// TODO(density): restore persisted density with the control and shell tests;
+// see docs/development/style-guide.md#release-density-behavior.
 setDensity(COMFORTABLE_DENSITY);
 
 createRoot(document.getElementById("root")!).render(

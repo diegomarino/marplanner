@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import { availableParallelism } from "node:os";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
@@ -25,7 +26,7 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"],
     passWithNoTests: false,
     allowOnly: false,
-    fileParallelism: false,
+    maxWorkers: Math.min(4, availableParallelism()),
     coverage: {
       provider: "v8",
       reporter: ["json", "json-summary", "text"],

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import Fastify from "fastify";
-import type { preHandlerHookHandler } from "fastify";
+import type { preHandlerAsyncHookHandler } from "fastify";
 import { buildApp } from "../../src/server/app.ts";
 import { getDb } from "../../src/server/db/client.ts";
 import { hashKey } from "../../src/server/auth/credentials.ts";
@@ -95,7 +95,7 @@ describe("network-devices auth — requireManagementKey (RED-first)", () => {
 
   function buildScratchApp(
     apiKeyId: string | undefined,
-    preHandler: preHandlerHookHandler | preHandlerHookHandler[]
+    preHandler: preHandlerAsyncHookHandler | preHandlerAsyncHookHandler[]
   ) {
     const app = Fastify();
     // Minimal stand-in for authBoundary (telemetry-capability.test.ts precedent):
