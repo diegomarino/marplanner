@@ -204,11 +204,7 @@ is deploy-level (env/secret), absent by default. No household settings object.
   - implementation (against this envelope).
 - Exact bound values (size/depth/keys **+ ingest rate/volume per key+window**) and the
   final deny-list — implementation, tuned to real producers.
-- ~~Diagnostics read/export UI (filtering, access) — deferred.~~ **Read view now decided
-  (`ADR-057`).** Export/`download-sql` UI remains deferred (separate privacy decision).
-- ~~The cross-cutting kiosk-`*`-defeats-admin-confinement key-model wart (`ADR-030`/`ADR-053`/
-  `ADR-057`).~~ **Closed by `ADR-058`** — ratified as a deliberate single household trust tier
-  (no second server-side tier; key-management is the sole boundary; PIN is UI-only).
+- Diagnostics read is governed by ADR-057; a separate telemetry-export privacy decision remains open.
 
 ## Peer Review
 

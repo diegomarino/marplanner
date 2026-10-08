@@ -83,8 +83,8 @@ is not mistaken for a broken feature.
   discriminated union on `kind` — `scheduled` (weekday-driven) or `calendar_gated`
   (event-driven). Attributes: text, `targeting_mode`, active flag, priority; plus
   `query`/`queryFields` (`calendar_gated`) or, for `scheduled` + `apply_to_all`, a
-  rule-level `weekdays` set (`ADR-064`).
-- **Reminder assignment** (`ADR-064`): a `specific`-mode link binding one active member to
+  rule-level `weekdays` set (`ADR-004`).
+- **Reminder assignment** (`ADR-004`): a `specific`-mode link binding one active member to
   that member's own weekday set (`scheduled`), or member-membership only (`calendar_gated`).
   A reminder holds N assignments — one prompt may reach different members on different days.
 

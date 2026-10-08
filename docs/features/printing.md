@@ -39,7 +39,7 @@ can be printed again without a stale duplicate slipping through.
 
 ### Edge Cases
 
-- Two connected tabs racing for the same job: exactly one claims it (atomic claim).
+- Two connected tabs racing for the same job: one claimant per active lease; later expiry/reclaim can repeat a lost-acknowledgement transmission.
 - An output already printed for the date: the trigger does not enqueue a duplicate.
 - A crash after send but before ack: rare double-print is the accepted at-least-once trade.
 - An output incompatible with the available device: an absence-tolerant skip, not a forced print.
@@ -57,7 +57,7 @@ can be printed again without a stale duplicate slipping through.
 
 - **FR-004**: Given a job, when the bytes have been written to a connected, ready printer, then success MUST be defined as that completed transmission, and the physical paper outcome (jam / out) MUST be treated as out of scope with recovery left to a human manual reprint. Contract: PRINTING-INV-04.
 
-- **FR-005**: Given an output already printed for a date, when a trigger fires, then dispatch MUST be exactly-once via the atomic claim and the system MUST NOT enqueue a duplicate, and when `supersedePrintRecord(outputRef, date)` is called the per-output/date idempotency MUST be reset so the regenerated output is re-printable, and a rare double-print on crash-after-send-before-ack MAY occur as the accepted ADR-035 at-least-once trade. Contract: PRINTING-INV-05.
+- **FR-005**: Given an output already printed for a date, when a trigger fires, then only one claimant MUST hold the active lease via the atomic claim and the system MUST NOT enqueue a duplicate, and when `supersedePrintRecord(outputRef, date)` is called the per-output/date idempotency MUST be reset so the regenerated output is re-printable, and a rare double-print on crash-after-send-before-ack MAY occur as the accepted ADR-035 at-least-once trade. Contract: PRINTING-INV-05.
 
 - **FR-006**: Given the question of whether printing is available at all, when it is determined, then availability MUST be defined as the Printing plugin being active, and the system MUST provide no master switch and no `autoPrint` flag. Contract: PRINTING-INV-06.
 
@@ -69,7 +69,7 @@ can be printed again without a stale duplicate slipping through.
 
 - **FR-010**: Given paper runs out after a successful send, when the outcome is reported, then the system MUST still report success (out of scope) and the human MUST use manual reprint to recover. Contract: PRINTING-AC-03.
 
-- **FR-011**: Given two connected tabs, when they contend for one job, then exactly one MUST claim it (per ADR-035). Contract: PRINTING-AC-04.
+- **FR-011**: Given two connected tabs, when they contend for one job, then only one MUST hold the active lease; expiry/reclaim can repeat an unacknowledged send (per ADR-035). Contract: PRINTING-AC-04.
 
 - **FR-012**: Given an output already printed for the date, when the trigger fires, then it MUST NOT enqueue a duplicate. Contract: PRINTING-AC-05.
 
@@ -77,7 +77,7 @@ can be printed again without a stale duplicate slipping through.
 
 - **FR-014**: Given a future producer rendering to the device render context, when it delivers a raster, then delivery MUST be unchanged. Contract: PRINTING-AC-07.
 
-- **FR-015**: Given a producer calls `supersedePrintRecord` on regeneration, when it is processed, then the print record MUST be superseded (re-printable) and any pending or claimed-not-yet-fetched print job MUST be cancelled. Contract: PRINTING-AC-08.
+- **FR-015**: Given a producer calls `supersedePrintRecord` on regeneration, when it is processed, then the print record MUST be superseded (re-printable) and any pending or claimed-not-yet-fetched print job MUST be cancelled; already-fetched bytes MAY finish transmitting, but their acknowledgement MUST NOT mark the replacement generation printed. Contract: PRINTING-AC-08.
 
 ### Key Entities
 
@@ -99,8 +99,10 @@ can be printed again without a stale duplicate slipping through.
   `printing.completed`; the server is the only authority for "did this print".
 - **SC-002**: For any output/date already printed, 0 duplicate jobs are enqueued, and a
   `supersedePrintRecord` call makes that output re-printable.
-- **SC-003**: With two or more connected tabs contending, exactly one claims each job
-  (0 double-claims).
+- **SC-003**: With two or more connected tabs contending, each job has at most one
+  claimant holding a valid active lease (0 concurrent double-claims). After lease
+  expiry, another tab may reclaim the job; a lost acknowledgement can therefore
+  cause duplicate physical transmission.
 
 ## Assumptions
 

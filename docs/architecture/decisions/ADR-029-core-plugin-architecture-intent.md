@@ -8,7 +8,7 @@ Decision date: 2026-06-27
 
 v2 distinguishes between **core** and **plugin** features. Core features are always present in any household deployment. Plugins are optional features that a household activates; they may require specific hardware, external integrations, or generate content that not every household needs.
 
-The technical implementation shape — feature flags vs. separately deployable modules — is deferred. The conceptual boundary is established here.
+The conceptual boundary is established here; `ADR-039` subsequently selects in-tree first-party plugins with explicit activation and host-mediated interfaces. Dynamic third-party installation remains dormant.
 
 ## Implications for App Settings
 
@@ -56,12 +56,11 @@ Plugin settings go through the same `GET /settings` / `PUT /settings` endpoint a
 
 ## Plugin Settings Presence Contract
 
-An inactive plugin's settings objects are **absent** from `GET /settings`. The presence of a settings object in the response is the signal that the plugin is active. Clients check `settings.printer !== undefined` to detect whether Printing is active — not `settings.printer?.enabled`.
+An inactive plugin's settings objects are **absent** from `GET /settings`. The presence of a settings object is a derived hint that its owning plugin is active; the activation registry is canonical (`ADR-039`). Clients check `settings.printer !== undefined` to detect whether Printing is active — not `settings.printer?.enabled`.
 
 ## Open Questions
 
-- What does "activate a plugin" look like for the household admin at first run?
-- How does plugin activation interact with App Settings seed logic and cold-boot reads?
+- A first-run activation wizard remains future product work; no dynamic install/uninstall UI is implied.
 
 ## Traceability
 

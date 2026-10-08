@@ -102,11 +102,6 @@ column on the briefing row; no client localStorage authority. No legacy import
 - Given Printing is inactive, then a producer's printed-status is unavailable
   rather than erroring.
 
-## Open Questions
-
-- Which snapshot prints vs. regeneration/staleness clearing `printedAt` — Q3 of
-  the cluster (ADR-022 interaction).
-
 ## Traceability
 
 - Related prior: `ADR-019`

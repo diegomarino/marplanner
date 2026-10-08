@@ -26,7 +26,7 @@ assignment/rule **silently matches no day** (chores vanish, reminders stop emitt
 error). Defenses: (a) every write path (API, seeds, fixtures, migrations) goes through the
 shared weekday schema — make it impossible to write weekday data otherwise; (b) a startup
 integrity check selects any non-string/out-of-enum weekday token and fails loudly;
-(c) tests exercise the integer-rejection path.
+(c) tests exercise the integer-rejection path. API validation exists, but the domains still use separate validators and the startup persisted-token check is missing; these defenses remain implementation requirements.
 
 ## Rationale
 

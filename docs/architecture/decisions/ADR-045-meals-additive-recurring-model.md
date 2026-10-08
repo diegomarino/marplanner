@@ -40,7 +40,7 @@ sort** so the same logical menu always renders in the same sequence (SQLite give
 order without `ORDER BY`; rowid reuse/VACUUM would otherwise reshuffle, and two
 briefings generated seconds apart could differ with no semantic change):
 **recurring entries before one-off entries, then by `meal_plan` name ASC, then by
-`createdAt` ASC.** This also makes briefing snapshots reproducible across regenerations.
+`mealPlanId` ASC (tie-breaking equal names), `createdAt` ASC, then entry ID ASC.** This also makes briefing snapshots reproducible across regenerations.
 
 **Briefing/consumer payload is a LIST per slot, not a single label (peer-review C1).**
 Because a `(date, slot)` holds N entries, every consumer of the derived menu — Daily
@@ -50,15 +50,14 @@ per slot** (the resolved display labels in canonical order), not a singular
 generation time (`ADR-022`); the meals block in `daily-briefing.md` stores resolved
 date-specific labels, never plan/rule IDs. This closes the seam between additive
 N-per-slot (ADR-045) and the single-label framing ADR-022/the briefing spec previously
-assumed.
+assumed. The briefing producer currently flattens these lists into scalar strings and removes emoji before persistence; preserving the structured snapshot remains required implementation work.
 
 **Stale recipe reference must render as a tombstone, never break the read (peer-review
 I2 — floor invariant).** A recurring or one-off entry whose recipe reference points at
 a deleted recipe **MUST** be displayed as a tombstone label (e.g. an i18n
 `[deleted recipe]` key, `ADR-015`) — **never** a read error and **never** a silent
 omission, so on-read derivation, the dashboard, and briefing generation cannot break.
-This is the minimum floor; the full recipe-deletion policy (block / convert-to-note /
-snapshot name) remains the next grill question, but it may not violate this floor.
+This is the minimum floor; the full recipe-deletion policy is resolved by `ADR-046` (informed cascade), without weakening this tolerant-read floor.
 
 **No per-occurrence exception/skip (option A).** A recurring entry never "skips" a
 single date. To change it, edit or deactivate the rule/plan (affects all matching
@@ -123,7 +122,7 @@ without forcing them into one artificial object.
 - Entries are household-wide; no member targeting.
 - Week boundaries/"today" use household tz + `weekStartDay`; no stored week window.
 - The derived menu is returned in the canonical order (recurring before one-off, then
-  plan name ASC, then `createdAt` ASC); two reads/regenerations of an unchanged menu
+  plan name ASC, `mealPlanId` ASC, `createdAt` ASC, then entry ID ASC); two reads/regenerations of an unchanged menu
   produce identical sequences.
 - Consumers receive a per-slot **list** of resolved labels; the briefing freezes the
   list verbatim (`ADR-022`).
@@ -132,11 +131,8 @@ without forcing them into one artificial object.
 
 ## Open Questions
 
-- Recurring entry referencing a recipe that is later deleted → resolved with the
-  general recipe-deletion rule (next grill question; likely snapshot name / convert to
-  note to avoid dangling pointers).
-- Recipe `slots` suitability semantics (no-tags = all slots?) and empty-ingredients
-  drafts — separate recipe-catalogue questions.
+- Recipe deletion is resolved by `ADR-046`: informed cascade with surviving plans.
+- Recipe suitability and shell-recipe rules are resolved by `ADR-047`; empty slots mean all slots.
 - Daily Briefing slot coverage (breakfast inclusion) — separate question.
 - Per-date recurring-entry skip (option B) — deferred unless needed.
 - Per-member targeting — deferred future seam.

@@ -1,4 +1,4 @@
-# ADR-054 Member Referential Integrity — Archive-Only, No Hard Delete (closes ADR-004 in-product thread)
+# ADR-054 Member Referential Integrity — Archive-Only, No Hard Delete
 
 Status: accepted
 Owner: product + architecture
@@ -6,9 +6,7 @@ Decision date: 2026-06-29
 
 ## Decision
 
-This decision formally closes the lingering in-product thread of `ADR-004` (orphaned member
-references). The migration question was already dead under `ADR-026` (no legacy import); what
-remained was the **runtime** question: what happens to references when a member goes away.
+Every domain must preserve member references when a member leaves the household. Fresh-store policy (`ADR-026`) excludes legacy-row migration; runtime integrity follows the archive-only lifecycle below.
 
 **v2 member lifecycle is `active` | `archived` only. There is NO hard delete of a member —
 not even a narrow carve-out** (`ADR-025`). A member that leaves the household, or one created
@@ -72,7 +70,7 @@ family-kiosk model: no compliance-driven erase requirement, your own data on you
 
 - `../../01-members.md`, `../../05-routines-chores.md`
 - `../domain-contracts/members.md` (adds the cross-cutting invariant; confirms no hard delete)
-- Supersedes the remaining open thread of `ADR-004`.
+- Routine assignment eligibility belongs to Routines; assignment-set writes follow `ADR-043` atomicity.
 
 ## Data / Setup Implications
 
@@ -94,12 +92,11 @@ rows are imported (`ADR-026`).
 
 ## Open Questions
 
-- None. (Routines eligibility and assignment-set atomicity — ADR-004's old open items — are
-  owned by Routines and resolved by `ADR-043`.)
+- None. Member eligibility belongs to the referencing domain; assignment-set atomicity follows ADR-043.
 
 ## Traceability
 
-- Closes: `ADR-004` (in-product thread); migration thread already superseded by `ADR-026`.
+- Fresh-store scope: `ADR-026`; runtime integrity is defined here.
 - Consolidates the emergent rule from `ADR-002`, `ADR-025`, `ADR-048`, `ADR-049`, `ADR-053`.
 - Peer-reviewed: rejected the zero-reference-discard carve-out (issue-1 plugin-orphan +
   issue-2 missing-row vs archived-row); folded issue-4 (invariant covers INSERT+UPDATE).

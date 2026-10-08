@@ -96,8 +96,6 @@ ADR-016). The read endpoint declares `telemetry:admin` (fail-closed, ADR-030); `
 - Concrete page-cap constant and cursor encoding — implementation (joins ADR-016's "exact bound
   values" open question).
 - Read/export ergonomics beyond severity filtering (saved filters, etc.) — later product/DX.
-- ~~The cross-cutting "kiosk `*` defeats admin confinement" key-model wart (ADR-030/053).~~
-  **Resolved by ADR-058** (deliberate single household trust tier).
 
 ## Traceability
 
