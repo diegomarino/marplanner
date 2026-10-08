@@ -279,38 +279,38 @@ export function CalendarView() {
       return;
     }
 
-    const payload: Partial<EventInput> = {};
+    try {
+      const payload: Partial<EventInput> = {};
 
-    if (fEditTitle !== original.title) {
-      payload.title = fEditTitle;
-    }
+      if (fEditTitle !== original.title) {
+        payload.title = fEditTitle;
+      }
 
-    if (original.allDay) {
-      const newDate = fEditDate !== original.occurrenceStart.slice(0, 10);
-      if (newDate) {
-        payload.startDate = fEditDate;
-        const originalSpanDays = original.occurrenceEnd
-          ? Temporal.PlainDate.from(original.occurrenceStart).until(
-              Temporal.PlainDate.from(original.occurrenceEnd),
-              { largestUnit: "day" }
-            ).days
-          : 1;
-        payload.endDate = addCalendarDays(fEditDate, originalSpanDays);
-      }
-    } else {
-      const originalStartLocal = formatInstantAsDateTimeLocal(original.occurrenceStart, timezone);
-      if (fEditStart !== originalStartLocal) {
-        payload.startUtc = dateTimeLocalToUtcInstant(fEditStart, timezone);
-      }
-      if (original.occurrenceEnd && fEditEnd) {
-        const originalEndLocal = formatInstantAsDateTimeLocal(original.occurrenceEnd, timezone);
-        if (fEditEnd !== originalEndLocal) {
-          payload.endUtc = dateTimeLocalToUtcInstant(fEditEnd, timezone);
+      if (original.allDay) {
+        const newDate = fEditDate !== original.occurrenceStart.slice(0, 10);
+        if (newDate) {
+          payload.startDate = fEditDate;
+          const originalSpanDays = original.occurrenceEnd
+            ? Temporal.PlainDate.from(original.occurrenceStart).until(
+                Temporal.PlainDate.from(original.occurrenceEnd),
+                { largestUnit: "day" }
+              ).days
+            : 1;
+          payload.endDate = addCalendarDays(fEditDate, originalSpanDays);
+        }
+      } else {
+        const originalStartLocal = formatInstantAsDateTimeLocal(original.occurrenceStart, timezone);
+        if (fEditStart !== originalStartLocal) {
+          payload.startUtc = dateTimeLocalToUtcInstant(fEditStart, timezone);
+        }
+        if (original.occurrenceEnd && fEditEnd) {
+          const originalEndLocal = formatInstantAsDateTimeLocal(original.occurrenceEnd, timezone);
+          if (fEditEnd !== originalEndLocal) {
+            payload.endUtc = dateTimeLocalToUtcInstant(fEditEnd, timezone);
+          }
         }
       }
-    }
 
-    try {
       const res = await authFetch(`/api/calendar/events/${eventId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -382,25 +382,25 @@ export function CalendarView() {
     e.preventDefault();
     setCreating(true);
     setCreateError(null);
-    let input: EventInput;
-    if (fAllDay) {
-      // Half-open single day: endDate = startDate + 1 (server rejects start == end).
-      input = {
-        title: fTitle,
-        allDay: true,
-        startDate: fDate,
-        endDate: addCalendarDays(fDate, 1),
-      };
-    } else {
-      input = {
-        title: fTitle,
-        allDay: false,
-        startUtc: dateTimeLocalToUtcInstant(fStart, timezone),
-        endUtc: dateTimeLocalToUtcInstant(fEnd, timezone),
-        tzid: timezone,
-      };
-    }
     try {
+      let input: EventInput;
+      if (fAllDay) {
+        // Half-open single day: endDate = startDate + 1 (server rejects start == end).
+        input = {
+          title: fTitle,
+          allDay: true,
+          startDate: fDate,
+          endDate: addCalendarDays(fDate, 1),
+        };
+      } else {
+        input = {
+          title: fTitle,
+          allDay: false,
+          startUtc: dateTimeLocalToUtcInstant(fStart, timezone),
+          endUtc: dateTimeLocalToUtcInstant(fEnd, timezone),
+          tzid: timezone,
+        };
+      }
       const res = await authFetch("/api/calendar/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -616,7 +616,7 @@ export function CalendarView() {
       {showCreate ? (
         <div className="mb-2">
           <form
-            onSubmit={submitCreate}
+            onSubmit={(event) => void submitCreate(event)}
             className="flex max-w-[360px] flex-col gap-2 rounded-md border p-3"
           >
             <Label className="flex flex-col items-start gap-1.5">
@@ -787,7 +787,7 @@ export function CalendarView() {
                               type="button"
                               size="sm"
                               data-testid="calendar-assign-save-btn"
-                              onClick={() => submitAssignment(event.id)}
+                              onClick={() => void submitAssignment(event.id)}
                               disabled={updatingAssignment}
                             >
                               {updatingAssignment ? t("calendar.updating") : t("calendar.save")}
@@ -822,7 +822,7 @@ export function CalendarView() {
                           <form
                             onSubmit={(e) => {
                               e.preventDefault();
-                              submitEdit(event.id);
+                              void submitEdit(event.id);
                             }}
                             className="flex flex-col gap-2"
                           >
@@ -911,7 +911,7 @@ export function CalendarView() {
                                 variant="destructive"
                                 size="sm"
                                 data-testid="calendar-delete-confirm-btn"
-                                onClick={() => submitDelete(event.id)}
+                                onClick={() => void submitDelete(event.id)}
                                 disabled={deletingEvent}
                               >
                                 {deletingEvent ? t("calendar.deleting") : t("calendar.delete")}

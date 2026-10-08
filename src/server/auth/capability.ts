@@ -2,7 +2,7 @@ import type {
   FastifyInstance,
   FastifyRequest,
   FastifyReply,
-  preHandlerHookHandler,
+  preHandlerAsyncHookHandler,
   RouteHandlerMethod,
 } from "fastify";
 import { eq } from "drizzle-orm";
@@ -26,7 +26,7 @@ import { AUTH_CREDENTIAL_INVALID_CODE, AUTH_SCOPE_DENIED_CODE } from "../../shar
  * mean the credential itself is no longer valid, so they carry `AUTH_CREDENTIAL_INVALID_CODE`
  * instead, same as `boundary.ts`.
  */
-export function requireCapability(capability: string): preHandlerHookHandler {
+export function requireCapability(capability: string): preHandlerAsyncHookHandler {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     const apiKeyId = (request as FastifyRequest & { apiKeyId?: string }).apiKeyId;
     if (!apiKeyId) {
@@ -66,7 +66,7 @@ export function requireCapability(capability: string): preHandlerHookHandler {
  * a raw-header `integration` bearer. Bootstrap credentials and crossed transport/kind pairs are
  * denied here. The Admin PIN is presentation-only and is neither accepted nor evaluated here.
  */
-export function requireFullAccess(): preHandlerHookHandler {
+export function requireFullAccess(): preHandlerAsyncHookHandler {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     const authenticatedRequest = request as FastifyRequest & {
       apiKeyId?: string;
@@ -129,7 +129,7 @@ export function requireFullAccess(): preHandlerHookHandler {
  * reach this surface), not an allow-list of exactly one "management" kind; narrowing further
  * (e.g. excluding `'bootstrap'`) is out of this module's scope (ADR-053 §6).
  */
-export function requireManagementKey(): preHandlerHookHandler {
+export function requireManagementKey(): preHandlerAsyncHookHandler {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     const apiKeyId = (request as FastifyRequest & { apiKeyId?: string }).apiKeyId;
     if (!apiKeyId) {

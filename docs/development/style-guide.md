@@ -140,3 +140,9 @@ Radix dialogs and other portalled content render outside the surface's DOM subtr
 `Button` uses a compact, single-line base for fixed actions such as Save and Cancel. For a label supplied by a household member, use `<Button wrap>` or `<StatusToggle wrap>` so the control can grow vertically and shrink inside a flex row. The variant includes `wrap-anywhere` for long unbroken strings; `whitespace-normal` or `break-words` alone leaves an `inline-flex` control's minimum width too large. The `shrink` override also matters: a button can fit its own content while pushing its parent row outside the viewport.
 
 Test long labels at both densities. Check the control's horizontal and vertical scroll dimensions and, in a flex layout, the row's width. A page-level horizontal scroll check alone can miss a local overlap. Changes to `buttonVariants` or `StatusToggle` forwarding need their own component tests and affected surface checks. The `wrap` variant belongs to the existing primitive because it changes that primitive's layout contract; it is not a recipe. A different control such as `SelectTrigger` needs its own review before adopting the same rule.
+
+## Release density behavior
+
+The release uses comfortable density and keeps the density toggle out of Options. Boot deliberately ignores a previously stored kiosk preference so users retain an accessible layout without needing a hidden control to undo that preference.
+
+Re-enabling selectable density is deferred. Complete it as one change: remount `DensityControl` in `HouseholdChrome`, restore `applyStoredDensity()` in `main.tsx`, update the shell visibility assertions in `density-control-shell-mount.test.tsx`, and verify persisted kiosk/comfortable choices and their escape path. The isolated control and attribute tests remain useful, but they do not establish that the published shell exposes the control.

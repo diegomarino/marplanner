@@ -56,7 +56,7 @@ export function MealsBoard(): React.JSX.Element {
         {
           <RecipeCatalogue
             recipes={workspace.recipes ?? []}
-            onSearch={workspace.searchRecipes}
+            onSearch={(query) => void workspace.searchRecipes(query)}
             onCreate={workspace.createRecipe}
             onEdit={workspace.editRecipe}
             error={workspace.recipeError}

@@ -737,6 +737,14 @@
             "parseRouteTree joins radix suffixes while preserving slash children and parameters",
             "route discovery preserves caller database bytes and creates no adjacent state"
           ],
+          "tools/lint-policy.test.mjs": [
+            "lint excludes local storage, worktrees and generated reports",
+            "TypeScript lint understands type members and rejects unused bindings",
+            "type-aware lint rejects ignored and misplaced promises",
+            "TypeScript suppression requires a reason and rejects blanket escapes",
+            "lint suppressions require named rules and a reason",
+            "lint command rejects a blanket suppression that hides the policy rule itself"
+          ],
           "tools/local-env.test.mjs": [
             "local server and seed scripts load the optional local environment",
             "chrome CDP session helper scripts are wired for local development",
@@ -3059,7 +3067,9 @@
             "CalendarView — the assignment row is a real, keyboard-operable control (FR-013, SC-012) meets kiosk density on the per-member checkbox row (the row that used to be a non-focusable <li>)",
             "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) submits the toggled member id in the PUT payload",
             "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) excludes archived members from assignment choices",
-            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) gives the assign row's label a full-width, pointer-cursor hit area ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)"
+            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) gives the assign row's label a full-width, pointer-cursor hit area ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)",
+            "CalendarView — error states are announced (SC-011) announces invalid date conversion during create and releases the submit button",
+            "CalendarView — error states are announced (SC-011) announces invalid date conversion during edit and releases the submit button"
           ],
           "tests/client/calendar-week-integration.test.tsx": [
             "CalendarView — Week integration keeps recurrence occurrences distinct and activates local/external and all-day events",
@@ -3262,7 +3272,7 @@
             "DensityControl (FR-002/FR-002a) kiosk-density census (SC-001, SC-002) — across both densities DELIBERATE NEGATIVE — forcing the toggle below the kiosk minimum makes the assertion fail",
             "DensityControl — cross-tab synchronization (Codex review, FR-002 per-device) another tab's density change (a `storage` event) re-applies the attribute and updates the pressed state",
             "DensityControl — cross-tab synchronization (Codex review, FR-002 per-device) an unrelated key's storage event does NOT touch density",
-            "DensityControl (FR-002/FR-002a) fresh device: empty localStorage + boot's applyStoredDensity() renders unpressed/comfortable",
+            "DensityControl (FR-002/FR-002a) empty localStorage leaves the isolated density control unpressed/comfortable",
             "DensityControl (FR-002/FR-002a) kiosk-density census (SC-001, SC-002) — across both densities kiosk density active: exactly one control, and it MEASURES COMPLIANT (built on Button)"
           ],
           "tests/client/density-styles-helper.test.tsx": [
@@ -3369,7 +3379,8 @@
             "MealsBoard weekly planner localizes workspace chrome and date labels while retaining authored content",
             "MealsBoard weekly planner uses the household date rather than the device date for the initial week request",
             "MealsBoard weekly planner renders a tombstone as non-editable instead of exposing its deleted recipe",
-            "MealsBoard weekly planner keeps every slot interactive when a valid week contains no entries"
+            "MealsBoard weekly planner keeps every slot interactive when a valid week contains no entries",
+            "MealsBoard weekly planner searches recipes from the weekly board and displays matching results"
           ],
           "tests/client/meals-household-timezone-error-retry.test.tsx": [
             "MealsManagement — household timezone setup error shows a retry action when settings fail, then loads dates after retry succeeds"
@@ -5029,7 +5040,7 @@
         }
       },
       "src/client/admin/ChoreOrderControls.tsx": {
-        "sha256": "d559f41fb082543d67b8122335795a678cd9f97784c237b9a70387835b1b24d1",
+        "sha256": "fe40b758d45314e3975f97b625125e70ecd73d47cf1bd34c5a2a82d150965fbd",
         "layer": "client",
         "minimumTotals": {
           "lines": 36,
@@ -5093,7 +5104,7 @@
         }
       },
       "src/client/admin/MealsManagement.tsx": {
-        "sha256": "583bcf9666f53accae967a3a90b04a4dfca9a94ec36677cbdf7902a50dc606e4",
+        "sha256": "194c7b8e24caa254e388a28bc7c1913094cee580b628ec42e9d83b0b47607aef",
         "layer": "client",
         "minimumTotals": {
           "lines": 368,
@@ -5269,7 +5280,7 @@
         }
       },
       "src/client/calendar/CalendarView.tsx": {
-        "sha256": "79b2375346c57d9875ceb21395f5eb7ed326740617f2434893df6859b601eb0c",
+        "sha256": "57711c0c913bdbd46c84a419764a24a35b58b83653546313dcf06030c872cc1e",
         "layer": "client",
         "minimumTotals": {
           "lines": 273,
@@ -6021,7 +6032,7 @@
         }
       },
       "src/client/lib/logger.ts": {
-        "sha256": "b05f1423a5f6c03914c7ad6bc27231d1740ee300a7fb98a202d2fccb4bd0b1da",
+        "sha256": "4a7f41ff464483dab051b2ab72754fa806a904ef147e6dd6bfaa61d6614e471b",
         "layer": "client",
         "minimumTotals": {
           "lines": 73,
@@ -6069,7 +6080,7 @@
         }
       },
       "src/client/main.tsx": {
-        "sha256": "17432e3cab8c227338b95b3d2d8be340cf807be386faae84878c8683d0b86191",
+        "sha256": "5ee1a254f2345077b7084772431756b5c237da3a7d545e3ab0b2380ba3f3a063",
         "layer": "client",
         "minimumTotals": {
           "lines": 16,
@@ -6133,7 +6144,7 @@
         }
       },
       "src/client/meals/MealsBoard.tsx": {
-        "sha256": "79f0c93cd2085629c4169da58edcf304a581e2b452fe50e5ceda537fe21672cd",
+        "sha256": "94918fe3ee239c3f7fd6343717ca1acf35a6673e80c515b2c8a79f74fea0de3e",
         "layer": "client",
         "minimumTotals": {
           "lines": 11,
@@ -6389,7 +6400,7 @@
         }
       },
       "src/client/printing/transport.ts": {
-        "sha256": "d5fd993827c5302e905354cb193da223af9e72c31535ec7b6cf1ca1bb2025ac4",
+        "sha256": "18d7129c42647ad98ca7151eb325040e816b33ee8d7d1a583d4a10e2538dcc70",
         "layer": "client",
         "minimumTotals": {
           "lines": 129,
@@ -6421,7 +6432,7 @@
         }
       },
       "src/client/shell/HouseholdChrome.tsx": {
-        "sha256": "027ae361061d524179e33fae3bf1cdd47580f2d3be399a314cd964f999ffc674",
+        "sha256": "a492ebdfa9d13e248ac55273d84abc191390d904e092a0911b78dd00c4f6a811",
         "layer": "client",
         "minimumTotals": {
           "lines": 81,
@@ -6565,7 +6576,7 @@
         }
       },
       "src/client/time-announcements/seams.ts": {
-        "sha256": "88eeda106f4ca004fdee0d5b2273be8dec66abb76f8b4f2825a531ada41b8dd4",
+        "sha256": "63b20880a65472ad0aa2cd5dbeb9a37ca6613d28f4bc6111136d83bda1312b51",
         "layer": "client",
         "minimumTotals": {
           "lines": 16,
@@ -6661,7 +6672,7 @@
         }
       },
       "src/server/auth/capability.ts": {
-        "sha256": "e446db6bad7e9d0f968dbbd3fced15799efe1b577157399dea94a9ef2bb93147",
+        "sha256": "e6d1a95cf78d57857ee51d6c84b0478b54045937303a34b68a6d3e0f245c5106",
         "layer": "server",
         "minimumTotals": {
           "lines": 43,
@@ -6997,7 +7008,7 @@
         }
       },
       "src/server/index.ts": {
-        "sha256": "ed7d65dcd47ab016dd5878e27c80e4d978764460105eb3e1538fa0467504e9fd",
+        "sha256": "7b506d2e8b6149f97215c23e9b0efa7eeb0d5e7a60415c75e5cba0299923a357",
         "layer": "server",
         "minimumTotals": {
           "lines": 84,
@@ -7013,7 +7024,7 @@
         }
       },
       "src/server/lib/event-bus.ts": {
-        "sha256": "ccecaec3a2a4213fe0555938983ddf231595d586d9bba091f7ce06ae8c07aaeb",
+        "sha256": "a27f95701a25b60e09c1a75c64c31b04787963805c4c57a3304bb5ac015d9f91",
         "layer": "server",
         "minimumTotals": {
           "lines": 19,
@@ -9158,7 +9169,7 @@
         }
       },
       "src/shared/index.ts": {
-        "sha256": "65cac45a4790106d14a37ddf729f7c396719e39cf28435c1606738ba4493d3e8",
+        "sha256": "5a77353f31c392c93777638190b458650506bf7693d76f9100da90f39723fced",
         "layer": "shared",
         "minimumTotals": {
           "lines": 5,
@@ -9257,6 +9268,7 @@
   },
   "productFiles": [
     ".dockerignore",
+    ".editorconfig",
     ".env.example",
     ".github/dependabot.yml",
     ".github/runtime-paths.regex",
@@ -10231,6 +10243,8 @@
     "tools/fresh-local.test.mjs",
     "tools/gen-openapi.mjs",
     "tools/gen-openapi.test.mjs",
+    "tools/lint-policy.test.mjs",
+    "tools/lint.mjs",
     "tools/local-env.test.mjs",
     "tools/local-runtime.test.mjs",
     "tools/member-colors.test.mjs",
