@@ -28,8 +28,8 @@ import {
   CompletionValidationError,
 } from "../modules/routines/index";
 
-/** Thin routines-chores route handlers (— wiring implementation).
- * All 17 routes from `openapi.planned.yaml` are implemented here, calling
+/** Thin routines-chores route handlers (wiring implementation).
+ * All 17 routes from `docs/api/chores/openapi.yaml` are implemented here, calling
  * the module functions from `src/server/modules/routines/index.ts`.
  * Error mapping follows the Members/Calendar precedent: typed errors → HTTP status.
  */

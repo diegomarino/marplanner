@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "../../src/server/db/client";
 import { runSeedProfile } from "../../src/server/db/seeds/runner";
 import { listExternalSources } from "../../src/server/modules/calendar";
@@ -16,6 +16,12 @@ const RAW_URLS = [
 
 describe("Calendar demo seed integration", () => {
   useIsolatedDb();
+  // Keep fixed Calendar fixtures inside the production rolling window; leave async timers real.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-23T12:00:00Z"));
+  });
+  afterEach(() => vi.useRealTimers());
 
   it("runs through the seed runner and exposes only masked source URLs", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
