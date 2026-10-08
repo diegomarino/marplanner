@@ -40,7 +40,7 @@ test("database lifecycle skeleton boots, reads publicly, and reports its declare
   expect(stdout).toContain("mode=public");
   expect(stdout).toContain("as-of=2026-09-23");
   expect(stdout).toContain(
-    "modules=[public:settings,members:demo,calendar:demo,routines:demo,reminders:demo,meals:demo,daily:content:demo,time:announcements:demo]"
+    "modules=[public:settings,members:demo,calendar:demo,routines:demo,reminders:demo,meals:demo,daily:content:demo,time:announcements:demo,plugins:demo]"
   );
   expect(stdout).toContain("status=complete");
 });
