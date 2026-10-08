@@ -9,7 +9,7 @@ const NOW = 1_790_121_600_000;
 const AS_OF_DATE = "2026-09-23";
 
 describe("public settings seed", () => {
-  useIsolatedDb();
+  useIsolatedDb({ pluginState: "inactive" });
 
   it("runs through the seed runner and exposes only portable settings through authenticated GET", async () => {
     const report = await runSettingsSeed();
@@ -23,6 +23,7 @@ describe("public settings seed", () => {
         "meals:demo",
         "daily:content:demo",
         "time:announcements:demo",
+        "plugins:demo",
       ],
       asOfDate: AS_OF_DATE,
       status: "complete",
@@ -37,7 +38,7 @@ describe("public settings seed", () => {
         locale: { timezone: "Europe/Madrid", language: "en", weekStartDay: 1 },
         weather: { lat: 39.7817, lon: -89.6501, label: "Springfield" },
         printer: { paperWidthDots: 576 },
-        // Printing active → AC-06 default-fills unpaired transport (not seeded as a row).
+        // Lifecycle activation inserts the unpaired transport default.
         printerTransport: {
           deviceId: "",
           name: "",
@@ -45,7 +46,7 @@ describe("public settings seed", () => {
           characteristicUuid: "",
         },
       });
-      // Seed persists no printerTransport row and no printer runtime/capability state.
+      // Activation adds no pairing or printer runtime/capability state.
       expect(JSON.stringify(JSON.parse(response.body))).not.toMatch(
         /capabilit|connect|pair|job|activit/i
       );
@@ -62,6 +63,10 @@ describe("public settings seed", () => {
       {
         object_name: "printer",
         data: JSON.stringify({ paperWidthDots: 576 }),
+      },
+      {
+        object_name: "printerTransport",
+        data: JSON.stringify({ deviceId: "", name: "", serviceUuid: "", characteristicUuid: "" }),
       },
       {
         object_name: "weather",
@@ -86,7 +91,12 @@ describe("public settings seed", () => {
     ).toEqual(firstRows);
     expect(
       getDb().prepare("SELECT object_name FROM settings_objects ORDER BY object_name").all()
-    ).toEqual([{ object_name: "locale" }, { object_name: "printer" }, { object_name: "weather" }]);
+    ).toEqual([
+      { object_name: "locale" },
+      { object_name: "printer" },
+      { object_name: "printerTransport" },
+      { object_name: "weather" },
+    ]);
     expect(getDb().prepare("SELECT COUNT(*) AS count FROM printer_capabilities").get()).toEqual({
       count: 0,
     });

@@ -55,6 +55,7 @@ describe("database lifecycle aggregate recovery journey", () => {
         "meals:demo",
         "daily:content:demo",
         "time:announcements:demo",
+        "plugins:demo",
       ],
     });
 

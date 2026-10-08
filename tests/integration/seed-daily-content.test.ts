@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { hashKey } from "../../src/server/auth/credentials";
 import { getDb } from "../../src/server/db/client";
 import { runSeedProfile } from "../../src/server/db/seeds/runner";
+import { createServerPluginLifecycle } from "../../src/server/plugins/http";
 import { useIsolatedDb } from "../helpers/db";
 
 const AS_OF_DATE = "2026-09-23";
@@ -11,7 +12,83 @@ const NOW_MS = Date.parse("2026-09-23T12:00:00.000Z");
 const SEEDS_DIRECTORY = resolve(process.cwd(), "seeds");
 
 describe("daily content demo seed integration", () => {
-  useIsolatedDb();
+  useIsolatedDb({ pluginState: "inactive" });
+
+  it("rolls back failed demo activation and repairs the same-date profile", async () => {
+    const db = getDb();
+    db.exec(`CREATE TRIGGER reject_demo_activation BEFORE UPDATE ON plugin_activation_registry
+      WHEN NEW.plugin_id = 'printing' AND NEW.state = 'active'
+      BEGIN SELECT RAISE(ABORT, 'synthetic activation failure'); END`);
+    const request = {
+      mode: "public" as const,
+      asOfDate: AS_OF_DATE,
+      nowMs: NOW_MS,
+      disposableTarget: true,
+      seedsDirectory: SEEDS_DIRECTORY,
+    };
+
+    await expect(runSeedProfile(request)).rejects.toThrow("Seed module failed: plugins:demo");
+    expect(
+      db
+        .prepare("SELECT count(*) AS count FROM plugin_activation_registry WHERE state = 'active'")
+        .get()
+    ).toEqual({ count: 0 });
+    expect(db.prepare("SELECT count(*) AS count FROM plugin_lifecycle_operations").get()).toEqual({
+      count: 0,
+    });
+    expect(db.prepare("SELECT status FROM seed_profile_state").get()).toEqual({
+      status: "running",
+    });
+
+    db.exec("DROP TRIGGER reject_demo_activation");
+    expect((await runSeedProfile(request)).markerAction).toBe("repair");
+    expect(
+      db
+        .prepare("SELECT count(*) AS count FROM plugin_activation_registry WHERE state = 'active'")
+        .get()
+    ).toEqual({ count: 9 });
+    expect(db.prepare("SELECT status FROM seed_profile_state").get()).toEqual({
+      status: "complete",
+    });
+  });
+
+  it("activates every demo plugin and restores deactivated plugins on a public profile rerun", async () => {
+    const request = {
+      mode: "public" as const,
+      asOfDate: AS_OF_DATE,
+      nowMs: NOW_MS,
+      disposableTarget: true,
+      seedsDirectory: SEEDS_DIRECTORY,
+    };
+    expect(
+      getDb()
+        .prepare("SELECT count(*) AS count FROM plugin_activation_registry WHERE state = 'active'")
+        .get()
+    ).toEqual({ count: 0 });
+
+    await runSeedProfile(request);
+    const lifecycle = createServerPluginLifecycle();
+    const catalog = await lifecycle.listCatalog();
+    expect(catalog).toHaveLength(9);
+    expect(catalog.every((plugin) => plugin.state === "active" && plugin.operation === null)).toBe(
+      true
+    );
+    await lifecycle.deactivate("meals-recipes");
+    expect(lifecycle.isActive("meals-recipes")).toBe(false);
+
+    const report = await runSeedProfile(request);
+    expect(report.markerAction).toBe("rerun");
+    expect((await lifecycle.listCatalog()).every((plugin) => plugin.state === "active")).toBe(true);
+    expect(
+      getDb().prepare("SELECT count(*) AS count FROM plugin_lifecycle_operations").get()
+    ).toEqual({ count: 0 });
+    expect(getDb().prepare("SELECT count(*) AS count FROM recipes").get()).toEqual({ count: 10 });
+    expect(
+      getDb().prepare("SELECT data FROM settings_objects WHERE object_name = 'weather'").get()
+    ).toEqual({
+      data: JSON.stringify({ lat: 39.7817, lon: -89.6501, label: "Springfield" }),
+    });
+  });
 
   it("exposes messages, briefing settings, opt-ins, and announcements through public HTTP reads", async () => {
     await runSeedProfile({

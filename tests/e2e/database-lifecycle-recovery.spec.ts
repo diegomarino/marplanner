@@ -51,7 +51,7 @@ test("database recovery journey uses the existing Backups UI without a product r
     expect(seed.stdout).toContain("mode=public");
     expect(seed.stdout).toContain(`as-of=${AS_OF_DATE}`);
     expect(seed.stdout).toContain(
-      "modules=[public:settings,members:demo,calendar:demo,routines:demo,reminders:demo,meals:demo,daily:content:demo,time:announcements:demo]"
+      "modules=[public:settings,members:demo,calendar:demo,routines:demo,reminders:demo,meals:demo,daily:content:demo,time:announcements:demo,plugins:demo]"
     );
     expect(seed.stdout).toContain("status=complete");
 
