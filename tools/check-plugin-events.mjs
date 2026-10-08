@@ -4,6 +4,18 @@ import { pathToFileURL } from "node:url";
 import { PLUGIN_MANIFESTS } from "../src/server/plugins/manifest.ts";
 import { EVENT_NAMESPACE_OWNERS } from "../src/shared/events.ts";
 
+export const PLUGIN_ROUTE_OWNERS = Object.freeze({
+  "src/server/routes/daily-briefing.ts": "daily-briefing",
+  "src/server/routes/printing.ts": "printing",
+  "src/server/routes/weather.ts": "weather",
+  "src/server/routes/time-announcements.ts": "time-announcements",
+  "src/server/routes/backups.ts": "backups",
+  "src/server/routes/network-devices.ts": "network-devices",
+  "src/server/routes/meals.ts": "meals-recipes",
+  "src/server/routes/reminders.ts": "reminders",
+  "src/server/routes/daily-messages.ts": "daily-messages",
+});
+
 export function loadEventProgram(root = process.cwd()) {
   const file = resolve(root, "tsconfig.server.json");
   const config = ts.readConfigFile(file, ts.sys.readFile);
@@ -95,7 +107,7 @@ export function auditPluginEvents(program, manifests) {
   for (const file of program.getSourceFiles()) {
     const path = relative(root, file.fileName).replaceAll("\\", "/");
     const directory = /^src\/server\/(?:modules\/)?([^/]+)\//.exec(path)?.[1];
-    const id = directory === "meals" ? "meals-recipes" : directory;
+    const id = PLUGIN_ROUTE_OWNERS[path] ?? (directory === "meals" ? "meals-recipes" : directory);
     const manifest = manifests.find((entry) => entry.id === id);
     if (!manifest || file.isDeclarationFile) continue;
     function visit(node) {
