@@ -4,6 +4,10 @@ Status: accepted
 Owner: architecture + ops
 Decision date: 2026-06-28
 
+## Reconciliation (2026-10-08)
+
+Restore compatibility is narrowed to the supported baseline lineage for the installed launch scope (`ADR-056`, launch amendment). The gate reads the baseline sentinel and migration-file set inside the candidate at execution time: unsupported lineage is refused; an unknown migration is rejected as a downgrade; a supported equal/subset set can restore and migrate. Arbitrary historical/legacy upgrade compatibility is deferred. Uploading a SQLite file does not make it restorable or authorize legacy-data migration (`ADR-026`). Safety, quiescence and rollback requirements below remain in force.
+
 ## Decision
 
 Restore is the only operation that replaces all-domains database state at once, so
@@ -33,20 +37,20 @@ it is treated as destructive and rare — safety beats convenience. Restore is a
    because browser-local session/cache no longer matches the restored DB. No process
    restart is needed — force-close + reopen achieves the same effect.
 
-**Compatibility (version-checked, not schema-diffed — YAGNI-calibrated):**
+**Compatibility (migration-lineage checked, not schema-diffed):**
 
 Cross-version restore is a tail case (≈all restores are recent = same version), so
 no bespoke migrate-on-restore engine is built now.
 
-4. Restore reads a **migration-version stamp** from inside the backup file (its own
+4. Restore reads the **baseline sentinel and migration-file set** from inside the backup file (its own
    migrations table), **re-read at restore-execution time, not from the list cache**
    (per-action re-validation, consistent with the path-safety invariant in ADR-042).
-   Compatibility is decided on the **monotonic version number**, never on a
+   Compatibility is decided on the **supported baseline and migration-file set**, never on a
    field-by-field schema comparison (an unused/drifted table or column must not
    false-positive as "incompatible").
-5. **Only hard rule: reject downgrade** — a backup newer than the running code is
+5. **Reject unsupported lineage and downgrade** — a backup without the supported baseline or with migrations unknown to the running code is
    refused (no supported backward migration path; prevents real corruption).
-6. **Same-or-older version is allowed and is migrated current within the restore
+6. **A supported equal/subset migration set is allowed and migrated current within the restore
    sequence.** The restore flow **invokes the migration runner directly** — after the
    force-close/reopen (#3) and before unquiescing — never relying on a future process
    restart to migrate (without a restart, nothing else would). It is the same runner
@@ -65,7 +69,7 @@ _probability_ of the error; the pre-restore snapshot lowers its _impact_. Both a
 nearly free given snapshot machinery already exists. #3 fixes the technical
 incoherence (new DB + stale client state), not human error.
 
-On compatibility, comparing the migration version (a _path_ token) rather than the
+On compatibility, comparing supported migration lineage (a _path_ token) rather than the
 schema (a _state_ description) is what dissolves the "unused field/table drift"
 concern: the migration chain already defines old→new, including dropped/ignored
 objects, so structural drift is solved work, not ambiguity to detect. Forward
@@ -84,8 +88,8 @@ the pre-restore snapshot covers.
 
 A `pre-restore`-prefixed snapshot is created on every restore and retained outside
 normal prune. No new active-DB table is introduced (see ADR-042). No legacy DB
-migration (ADR-026); a legacy backup file is only ingested via the ADR-042 `.db`
-upload path and is subject to the same version check.
+migration (ADR-026); the ADR-042 `.db`
+upload path stores candidate files, but unsupported legacy lineage is rejected at restore.
 
 ## Acceptance Criteria
 
@@ -103,7 +107,7 @@ upload path and is subject to the same version check.
   snapshot it depends on, then the delete is refused (restore-in-progress lock).
 - Given a backup whose migration version is **newer** than the running code, when
   restore is attempted, then it is rejected with a clear downgrade error.
-- Given a backup whose migration version is same-or-older, when restored, then the
+- Given a backup with the supported baseline and an equal/subset migration set, when restored, then the
   migration runner is invoked directly within the restore sequence (before
   unquiescing) and the DB is current without any process restart.
 - Given a forward migration fails on restored old/dirty data, when it errors, then

@@ -4,6 +4,10 @@ Status: accepted
 Owner: architecture / security
 Decision date: 2026-06-28
 
+## Reconciliation (2026-10-08)
+
+Key-management issuance/revocation/rotation and the anti-lockout mutation gate remain deferred in the installed release. Their future invariant must protect operator-usable credentials, not merely count device keys. A device cookie cannot supply the raw header credential required below. `ADR-032` retirement must preserve both future management access and replacement-device provisioning.
+
 ## Decision
 
 The system replaces the single deployment API key with **multiple named API keys**, each with capability scopes and a managed lifecycle. This narrows `ADR-007`: a valid API key no longer implies full access — it authorizes exactly its granted capabilities.
@@ -55,7 +59,7 @@ The system replaces the single deployment API key with **multiple named API keys
 
 1. **Key-management and key-creation endpoints never accept cookie authentication.** They require the raw `*` key in a header. Rationale: otherwise an XSS in the kiosk origin could `POST` a key-creation request using the httpOnly cookie and exfiltrate the returned raw key, converting an ephemeral browser compromise into a durable bearer credential. (Device provisioning is exempt from this concern because it never returns a raw key — the minted key goes only into the httpOnly cookie.)
 2. **Fail-closed enforcement.** If an endpoint does not declare a required capability, the middleware rejects all requests with 403 regardless of key type. Capability declaration is mandatory, not a convention.
-3. **Anti-lockout.** The system refuses to revoke or expire the last active `*` key, so the household can never lock itself out of full-access management.
+3. **Anti-lockout (future key lifecycle).** Refuse a mutation that removes the last active operator-usable raw `*` credential. A cookie-only device key does not satisfy this invariant. Bootstrap retirement also requires an operator-held replacement credential admitted by the provisioning flow (`ADR-032`); existing device access alone is insufficient.
 4. **Fail-closed always; no environment-conditional bypass.** Enforcement is identical in every environment; a missing credential locks the system (never opens it). See `ADR-033`.
 
 ## Rationale
@@ -87,7 +91,7 @@ Peer review (codex blind-debate, 2026-06-28) confirmed the per-domain `read/writ
 - Given any key presented via cookie, when it calls the key-management create endpoint, then the request is rejected (management requires a raw `*` header key).
 - Given an endpoint with no declared capability, when any key calls it, then the request is rejected 403 (fail-closed).
 - Given a `*` device key is revoked, when its cookie is used on the next request, then the request is rejected.
-- Given only one active `*` key remains, when a caller tries to revoke it, then the system refuses.
+- Given only one operator-usable raw `*` credential remains, when a caller tries to revoke or expire it, then the future lifecycle gate refuses, even if active device `*` keys remain.
 - Given a first kiosk connect with a raw `*` key, when provisioning runs, then a new `*` device key with `expiresAt = null` is minted and bound to the httpOnly cookie, and no raw key value appears in the response body.
 
 ## Open Questions

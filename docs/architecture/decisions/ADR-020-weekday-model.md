@@ -4,6 +4,10 @@ Status: accepted
 Owner: architecture
 Decision date: 2026-06-29
 
+## Reconciliation (2026-10-08)
+
+The canonical weekday model remains required. API paths validate tokens, but separate domain validators and the absence of the specified startup persisted-token check leave the shared-validation/integrity requirement below incomplete. Track it as implementation work; no direct-data corruption probe was executed during the coherence review.
+
 ## Decision
 
 The canonical weekday representation for this system (Routines assignments and Reminders

@@ -52,11 +52,7 @@ date)` host API, which also **resets Printing's per-output idempotency** so the
 ### Which artefact prints
 
 The print job binds to the _output_ (subject/date); the executing browser
-**fetches the artefact at send time** ("fetch-at-execute"). A print therefore
-never emits something older than what is current at the moment it prints. This is
-race-free precisely because the artefact is immutable until explicit
-regeneration, and regeneration cancels the pending job (so a superseded version
-has no live job pointing at it).
+**fetches the artefact at send time** ("fetch-at-execute"). The server selects the current artefact when serving the payload. Regeneration cancels pending and claimed-not-yet-fetched work, but already-fetched bytes may finish transmitting after regeneration. That older paper is an accepted residual, recovered by manual reprint; its acknowledgement must not mark the new generation printed. Fetch-at-execute does not guarantee currentness at physical send time.
 
 ### Shared block cache
 
@@ -68,8 +64,7 @@ no-staleness-tracking.
 ## Rationale
 
 The snapshot model and ADR-019's "success = transmitted" reinforce each other:
-immutability-until-explicit-regen makes fetch-at-execute safe and removes any
-"which version was queued?" race, which is why versioning is unnecessary. Keeping
+fetch-at-execute selects the current payload without retaining historical content versions. It does not make physical transmission atomic with regeneration; already-fetched work can survive, while generation-aware acknowledgement prevents stale success from marking the replacement printed. Keeping
 regeneration and printing orthogonal honors "no surprise paper" and matches a
 family kiosk where the admin is present to reprint when they regenerate.
 
@@ -92,7 +87,7 @@ payload version table; no staleness metadata. No legacy import (ADR-026).
 - Given a regeneration, then `printedAt` is cleared and any pending print job for
   that output is cancelled.
 - Given a regeneration, then no print is automatically enqueued.
-- Given a print executes, then it emits the artefact current at send time.
+- Given a payload fetch, then the server selects the current artefact; already-fetched transmission may finish after regeneration, without acknowledging the new generation as printed.
 - Given the system, then it exposes no staleness flag or "source changed" signal.
 
 ## Open Questions

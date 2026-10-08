@@ -38,8 +38,8 @@ Fresh deployment Daily Briefing setup should expose opt-in/configuration per act
 
 ## Open Questions
 
-- Whether new members default Daily Briefing opt-in to off, on for children, or a creation-time choice remains open under Daily Briefing/member lifecycle design.
-- Whether printing follows Daily Briefing opt-in for all members or remains child-oriented remains open under Printing Pipeline.
+- Resolved by `ADR-009`/`ADR-027`: creating a member creates no briefing configuration or eligibility; opt-in is owned by Daily Briefing.
+- Producer print triggers are owned by Daily Briefing and Printing; this superseded migration record defines no role-specific printing rule.
 
 ## Traceability
 

@@ -124,5 +124,4 @@ full distribution acceptance.
 - ~~**OPEN (parked, structural):** `BASE_PATH` × Vite — build-time `base` vs single prebuilt
   image.~~ **RESOLVED at spec level (2026-06-30):** `BASE_PATH` is a **runtime** env (build-arg
   excluded — it would break this image's pull-one-prebuilt distribution); the SPA base path is
-  injected at runtime. ADR-056's erroneous "Vite `base` = it" is corrected. Residual = bounded impl
-  choice of injection mechanism only. See ADR-056 dev-loop section + DX contract.
+  injected at runtime. ADR-056's erroneous "Vite `base` = it" is corrected. The injection mechanism is now implemented with Fastify HTML base/meta injection; see the implementation status above, ADR-056 and operations. Acceptance still requires candidate-specific evidence.

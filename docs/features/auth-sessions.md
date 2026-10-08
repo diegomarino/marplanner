@@ -60,13 +60,13 @@ session row is created, and backend authorization never consults PIN state.
 
 - **FR-006 (deferred, not this release)**: Given a future key-management operation (create/list/revoke), when it is authorized, then it MUST require a `*` key presented as a raw header value, MUST reject a cookie, and MUST NOT be delegable to a scoped key. _(Realizes: AUTH-SESSIONS-INV-06)_
 
-- **FR-007 (deferred, not this release)**: Given a future revoke/expire mutation and only one active `*` key, when revoke is attempted, then the system MUST refuse it (anti-lockout). _(Realizes: AUTH-SESSIONS-INV-07)_
+- **FR-007 (deferred, not this release)**: Given a future revoke/expire mutation removing the last operator-usable raw `*` credential, when it is attempted, then the system MUST refuse it even if device keys remain; bootstrap retirement MUST also preserve an operator-held credential admitted for future provisioning (anti-lockout, `ADR-030`/`ADR-032`). _(Realizes: AUTH-SESSIONS-INV-07)_
 
 - **FR-008**: Given the trust model, when an operation is authorized, then there MUST be no second server-side privilege tier — a provisioned device's `*` cookie confers full household trust — and key-management MUST be the sole server-side operator boundary (with the `ADR-053` device-block as the lone pre-existing carve-out); every other operation — backups, plugins, telemetry-read, settings — MUST be household-tier (device-`*` cookie + client-side PIN), and any future operation that appears to need an ad-hoc per-endpoint "admin scope" carve-out MUST instead be treated as a signal to re-examine the threat model rather than add a tier. _(Realizes: AUTH-SESSIONS-INV-08)_
 
 - **FR-009**: Given any authenticated request, when it is validated, then it MUST validate both the credential and that the referenced key record is active (not revoked, not expired), and revocation or expiry MUST take effect on the next request. _(Realizes: AUTH-SESSIONS-INV-09)_
 
-- **FR-010**: Given raw credential values, when a key or PIN is handled, then device keys MUST never be exposed, integration keys MUST be shown exactly once at creation, and raw PINs MUST never be persisted or returned. _(Realizes: AUTH-SESSIONS-INV-10)_
+- **FR-010**: Given raw credential values, when a key or PIN is handled, then device keys MUST never be exposed, future generated integration keys MUST be shown exactly once at creation; current management credentials are operator-supplied deployment configuration, and raw PINs MUST never be persisted or returned. _(Realizes: AUTH-SESSIONS-INV-10)_
 
 - **FR-011**: Given any auth state, when it is stored, then credential/authorization state MUST live in the database, with no in-memory sessions or cached authority. Transient failed-attempt counters under ADR-037 are not authentication state. _(Realizes: AUTH-SESSIONS-INV-11)_
 

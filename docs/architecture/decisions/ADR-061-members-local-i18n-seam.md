@@ -25,6 +25,10 @@ guarantees **owned by the `i18n-localization` domain** (`I18N-LOCALIZATION-INV-0
 This surfaced mechanically: `tools/check-issues.mjs` rejected work item 2's task ("the i18n parity
 gate must pass") because its DoD named a gate that does not exist — no runnable per-task criterion.
 
+## Reconciliation (2026-10-08)
+
+This record describes the original transitional members-local seam. It has since become shared shell-wide infrastructure in `src/client/i18n`; the shell consumes the household settings context. `tests/client/member-i18n-parity.test.ts` compares the entire shared English/Spanish catalog despite its historical name. Do not introduce another seam or infer missing parity from that name. Canonical dynamic-key registry/plugin declarations and region-to-language fallback reconciliation remain outstanding; the current resolver accepts exact en/es. This evolution does not ratify the Spanish initial default against `ADR-015`. The absorption checklist below remains a target, not a claim that all canonical guarantees are complete.
+
 ## Decision
 
 Introduce a **minimal, client-only, members-domain-local i18n seam** that satisfies Principle X for

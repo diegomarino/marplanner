@@ -50,8 +50,8 @@ New v2 writes must reject archived targets. Child-facing writes/generation must 
 
 ## Open Questions
 
-- The exact treatment of parent-linked historical Daily Briefing rows/settings is handled under `ADR-003`.
-- Whether orphan-like references can occur inside product-created data remains open under `ADR-004`.
+- Parent-linked legacy briefing migration is superseded by `ADR-026`; current opt-in eligibility is governed by `ADR-027`.
+- Orphan-reference policy is resolved by `ADR-054`: archive-only members, strict writes and tolerant historical reads.
 
 ## Traceability
 

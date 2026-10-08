@@ -4,6 +4,10 @@ Status: accepted
 Owner: architecture
 Decision date: 2026-06-28
 
+## Reconciliation (2026-10-08)
+
+`ADR-066` closes conversion placement: server-side raster decode and ESC/POS wrapping; the browser only fetches final bytes, transports and acknowledges. Producer raster ownership, the device context and fetch-at-execute remain unchanged. The original browser-placement clause is partially superseded.
+
 ## Decision
 
 Rendering is split **at the device boundary**, and the printable hand-off carries
@@ -19,7 +23,7 @@ a producer-agnostic **device render context**.
 - **Printing owns raster → device bytes + delivery.** The pipeline performs the
   printer-specific step — ESC/POS wrapping for the paired printer's paper
   width/transport — then the Bluetooth send (ADR-035 UI-bound execution). Printing
-  owns printer config (ADR-021).
+  owns printer config (`ADR-028` and the Printing contract).
 - **Hand-off = fetch-at-execute.** At send time, Printing fetches the producer's
   current artefact through the producer's host-mediated interface (ADR-022,
   ADR-039 absence-tolerant). Printing never reads a foreign table and holds no
@@ -43,7 +47,7 @@ declares render constraints; producers adapt or bow out.
 
 - Content → raster is **server-side generation** (Daily Briefing is a server-side
   global service).
-- Raster → device bytes → Bluetooth send is the **UI-bound executor**.
+- Raster → device bytes is **server-side Printing conversion** (`ADR-066`); Bluetooth send is the **UI-bound executor**.
 
 ## Rationale
 
@@ -81,14 +85,13 @@ it converts and delivers. No legacy import (ADR-026).
 
 ## Open Questions
 
-- Exact location of ESC/POS conversion (server vs browser within the UI-bound
-  executor) — implementation detail; ownership (Printing) is fixed here.
+- Resolved by `ADR-066`: ESC/POS conversion runs server-side; ownership remains Printing.
 - Full device-context schema beyond `paperWidthDots` — added when a second
   device/format exists.
 
 ## Traceability
 
-- Related prior: relates to `ADR-019`, `ADR-021` (printer config), `ADR-015` (render/i18n)
+- Related prior: relates to `ADR-019`, `ADR-028` (printer config registry), `ADR-015` (render/i18n)
 - Related: `ADR-035` (decision/execution split, capability registration),
   `ADR-039` (namespace ownership, absence-tolerance), `ADR-022` (fetch-at-execute)
 - Domain grill: `../domain-grills/daily-briefing-printing.md` (Q4)

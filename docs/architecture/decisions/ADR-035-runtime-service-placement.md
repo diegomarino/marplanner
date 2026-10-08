@@ -25,8 +25,8 @@ For server-dispatched hardware work such as printing, a connected browser regist
 
 ### Principle 4 — Coordination and queuing
 
-- **Exactly-once dispatch via atomic claim.** The server hands out each unit of work once using an atomic compare-and-swap claim (`UPDATE ... WHERE claimed_by IS NULL RETURNING ...`). Two connected tabs cannot both claim the same job.
-- **At-least-once execution, made safe per behavior.** A browser can execute a side effect and then crash before acknowledging, causing re-issue after lease expiry. Printing tolerates this via idempotency/dedup by job id (or a server-side "side-effect executed" flag before ack). Time announcements do not use this server queue; the browser drops stale local slots under ADR-065.
+- **One claimant per active lease.** The server serializes claims for each unit of work using an atomic compare-and-swap claim (`UPDATE ... WHERE claimed_by IS NULL RETURNING ...`). Two connected tabs cannot both claim the same job.
+- **At-least-once execution with an accepted duplicate risk.** A browser can execute a side effect and then crash before acknowledging, causing re-issue after lease expiry. Server-side enqueue/ack deduplication prevents duplicate records, but cannot atomically cover a Bluetooth side effect. A crash after send and before acknowledgement can cause a duplicate physical print; this is accepted. A pre-send flag would instead risk a lost print and is not an exactly-once solution. Time announcements do not use this server queue; the browser drops stale local slots under ADR-065.
 - **Zero connected browsers.** Printing work waits in a server queue. On reconnect, a capable browser drains it, subject to staleness. Announcements have no server backlog.
 - **Server-side staleness expiry and compaction.** A periodic server cleanup removes stale queued printing work. After the kiosk is off, its browser must not replay old announcement slots.
 
@@ -54,11 +54,11 @@ Printing uses the server decision and browser hardware execution split. Daily Br
 
 ## Relationship to ADR-014
 
-This decision substantially shapes `ADR-014` (background job singleton/status ownership): server-side printing jobs use a persisted queue with atomic claim/lease and server-side staleness compaction. `ADR-014` remains open for non-hardware background job details, but the hardware-bound dispatch model is settled here.
+This decision substantially shapes `ADR-014` (background job singleton/status ownership): server-side printing jobs use a persisted queue with atomic claim/lease and server-side staleness compaction. `ADR-014` governs process-local concurrency and domain-owned status; this ADR specifies the hardware-bound claim/lease model.
 
 ## Acceptance Criteria
 
-- Given two connected tabs, when a print job is queued, then exactly one tab executes it (atomic claim).
+- Given two connected tabs, when a print job is queued, then only one holds its active lease. Expiry and reclaim after an unacknowledged send may repeat physical transmission.
 - Given a phone session without the paired printer and a tablet session with it, when a print job is queued, then only the tablet session is offered the job (capability registration).
 - Given no connected browser, a missed announcement slot is not replayed late when a browser reconnects.
 - Given the kiosk was off for two weeks, its browser does not replay a backlog of stale announcements.

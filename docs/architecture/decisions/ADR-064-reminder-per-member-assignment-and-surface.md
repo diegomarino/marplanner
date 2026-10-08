@@ -4,6 +4,10 @@ Status: accepted
 Owner: product + architecture
 Decision date: 2026-08-13
 
+## Reconciliation (2026-10-08)
+
+The scheduled-first rollout recorded here is historical: calendar-gated rule implementation and tests now exist. Current assignment storage and eligibility are specified by the maintained Reminders contract and schema; the original open implementation choices do not reopen the per-member product model.
+
 ## Decision
 
 Refines the Reminders targeting model (`ADR-049` / `ADR-018` / `reminders.md`) and fixes

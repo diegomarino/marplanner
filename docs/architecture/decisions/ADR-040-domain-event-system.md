@@ -4,6 +4,10 @@ Status: accepted
 Owner: architecture
 Decision date: 2026-06-28
 
+## Reconciliation (2026-10-08)
+
+Typed best-effort delivery and fault containment exist, but `src/server/lib/event-bus.ts` currently swallows subscriber failures without the failure counters/health exposure required below. That is an outstanding implementation gap, not a relaxation of this requirement.
+
 ## Decision
 
 v2 modules (core domains and plugins) communicate across boundaries in exactly

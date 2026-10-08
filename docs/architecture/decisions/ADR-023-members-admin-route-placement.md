@@ -41,7 +41,7 @@ No legacy route behavior should be copied as a v2 permission model. The old `/me
 
 ## Open Questions
 
-- The exact admin credential/session enforcement model remains open under Auth & Sessions.
+- Resolved by `ADR-013`/`ADR-058`: admin UI uses a client-only PIN gate; backend API credentials carry household authority, with no backend admin session.
 - Whether a read-only members route is useful in this system remains a Kiosk/navigation design question.
 
 ## Traceability

@@ -3,6 +3,10 @@
 Status: maintained contract
 Depends on decisions: `ADR-005`, `ADR-008`, `ADR-019`, `ADR-022`, `ADR-027`, `ADR-028`, `ADR-035`, `ADR-039`, `ADR-040`, `ADR-041`, `ADR-044`, `ADR-015`
 
+## Implementation reconciliation (2026-10-08)
+
+The common local-DB read snapshot required by `ADR-043` is not yet established by asynchronous block gathering; an interleaved-edit reproduction remains pending. Meal snapshot lists also remain flattened in the current producer (`ADR-045`). Snapshot write atomicity does not itself prove input-read consistency. These are implementation gaps, not weaker replacement guarantees.
+
 ## Purpose
 
 Daily Briefing is a **plugin** (ADR-029) that generates a per-member/date
@@ -75,7 +79,7 @@ it does not own delivery.
   `supersedePrintRecord(outputRef, date)` host API** so the regenerated output is
   re-printable (resets Printing's per-output idempotency). Also **cancel any
   pending OR claimed-not-yet-fetched print job** for the output (revoke the
-  claim) so an in-flight job cannot print the regenerated raster (ADR-022). Does
+  claim). Already-fetched work may finish with the older raster, but its acknowledgement cannot mark the replacement generation printed (ADR-022). Does
   **not** auto-print.
 - **Read (view/history):** pure; a missing briefing returns "not generated / not
   scheduled", never a side effect. Derived printed-status: if the local derived

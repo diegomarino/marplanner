@@ -4,6 +4,10 @@ Status: accepted
 Owner: architecture
 Decision date: 2026-06-29
 
+## Reconciliation (2026-10-08)
+
+Core event names and payloads are constrained by the shared typed catalog. Plugin manifests currently lack the emits/subscribes declarations and owner-namespace checks required below. This is a partial implementation, not evidence that the plugin declaration gate exists; reconcile that gate explicitly without introducing third-party infrastructure.
+
 ## Decision
 
 Refines `ADR-040` (domain event bus): event names and payloads are a **declared, typed
