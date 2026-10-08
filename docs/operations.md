@@ -134,7 +134,7 @@ There is no `set-pin` endpoint. To replace a forgotten advisory PIN, set `ADMIN_
 
 ## Synthetic seed and checks
 
-`npm run seed` selects the public seed mode. Run it only against a disposable data directory, with synthetic values and the required configuration. The private seed mode is for local overlays; never include its data in a public artifact. See [verification](quality/verification.md) before interpreting test results. Run the full verification tier on isolated synthetic data before accepting a release.
+`npm run seed:public` selects only the public seed mode. Run it only against a disposable data directory, with synthetic values and the required configuration. `npm run seed` and `npm run seed:all` run public then private profiles. The private seed mode is for local overlays; never include its data in a public artifact. See [verification](quality/verification.md) before interpreting test results. Run the full verification tier on isolated synthetic data before accepting a release.
 
 ## Plugins and integrations
 

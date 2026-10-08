@@ -16,12 +16,12 @@ Decision date: 2026-06-27
 
 ### Canonical object registry (v2 initial)
 
-| Object name        | Fields                                 | Notes                                                                                                                                                                                                                                                             |
-| ------------------ | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `locale`           | `timezone`, `language`, `weekStartDay` | Grouped as household display identity. Timezone must be a valid IANA timezone name. Language constrained to supported locales. weekStartDay is 0 (Sunday) or 1 (Monday).                                                                                          |
-| `weather`          | `lat`, `lon`                           | Coordinate pair written and cleared as a unit. Both must be finite numbers within valid lat/lon ranges, or both must be null/empty to clear.                                                                                                                      |
-| `printer`          | `paperWidthDots`                       | Transport-independent base config. (`enabled`/`autoprint` removed by ADR-038/Printing contract: "printing available" = plugin active; "automatic" = an active automatic trigger bound, not a flag.)                                                               |
-| `printerTransport` | `type`, `config`                       | Nested discriminated union. `type` selects the transport (`bluetooth` in this system). `config` is validated against the schema for that type. Only `bluetooth` is a valid type in this system; `wifi` and `usb` are added when those transports are implemented. |
+| Object name        | Fields                                                  | Notes                                                                                                                                                                                                                                                                    |
+| ------------------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `locale`           | `timezone`, `language`, `weekStartDay`                  | Grouped as household display identity. Timezone must be a valid IANA timezone name. Language constrained to supported locales. weekStartDay is 0 (Sunday) or 1 (Monday).                                                                                                 |
+| `weather`          | `lat`, `lon`                                            | Coordinate pair written and cleared as a unit. Both must be finite numbers within valid lat/lon ranges, or both must be null/empty to clear.                                                                                                                             |
+| `printer`          | `paperWidthDots`                                        | Transport-independent base config. (`enabled`/`autoprint` removed by ADR-038/Printing contract: "printing available" = plugin active; "automatic" = an active automatic trigger bound, not a flag.)                                                                      |
+| `printerTransport` | `deviceId`, `name`, `serviceUuid`, `characteristicUuid` | Flat Bluetooth local-pairing fields (not a nested `type`/`config` union). All-empty = unpaired default; otherwise non-empty deviceId/name plus UUID-shaped service/characteristic ids. Unknown keys rejected. Wi-Fi/USB are not schema arms until those transports ship. |
 
 ## Plugin Settings Extension
 
@@ -52,12 +52,12 @@ Fresh setup seeds canonical default values for all object fields. The effective 
 - Given a `weather` object with only `lat` and no `lon`, when a client submits `PUT /settings`, then the server rejects the request.
 - Given a valid `locale` object, when a client submits `PUT /settings`, then timezone, language, and weekStartDay are all persisted in a single transaction; a storage failure leaves all three at their prior values.
 - Given `GET /settings`, the response includes all canonical objects with all fields, using defaults for any field without a persisted value.
-- Given `printerTransport` with `type: "wifi"` (not yet implemented), when a client submits `PUT /settings`, then the server rejects the request with an unsupported transport error.
-- Given `printerTransport` with `type: "bluetooth"` and a partial `config` missing required pairing fields, when a client submits `PUT /settings`, then the server rejects the request.
+- Given `printerTransport` with a nested `{ "type": "wifi", "config": {} }` (or any unknown keys / non-Bluetooth shape), when a client submits `PUT /settings`, then the server rejects the request as schema-invalid.
+- Given `printerTransport` with a partial pairing payload (e.g. deviceId set without valid UUIDs), when a client submits `PUT /settings`, then the server rejects the request.
 
 ## Open Questions
 
-- None for this decision. Printer object granularity resolved: `printer` + `printerTransport` discriminated union. WiFi/USB resolved: not in registry until transport is implemented.
+- None for this decision. Printer object granularity resolved: `printer` + flat Bluetooth `printerTransport` pairing fields. WiFi/USB resolved: not in registry until transport is implemented.
 
 ## Traceability
 

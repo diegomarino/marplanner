@@ -1,6 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { createElement } from "react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { formatWeekEventTime } from "@/calendar/ScheduleXWeekView";
+import { ScheduleXWeekView, formatWeekEventTime } from "@/calendar/ScheduleXWeekView";
 import type { FeedItem } from "../../src/shared";
 
 describe("ScheduleXWeekView event projection", () => {
@@ -21,4 +23,29 @@ describe("ScheduleXWeekView event projection", () => {
 
     expect(formatWeekEventTime(event, "Europe/Madrid")).toBe("10:00");
   });
+});
+
+const localeState = vi.hoisted(() => ({ language: "en" }));
+vi.mock("@/i18n", () => ({ useTranslation: () => localeState }));
+afterEach(() => {
+  cleanup();
+  localeState.language = "en";
+});
+
+it("updates actual week headings when the household language changes", async () => {
+  const props = {
+    selectedDate: "2026-09-21",
+    timezone: "Europe/Madrid",
+    weekStartDay: 1 as const,
+    events: [],
+    members: [],
+    onEventClick: vi.fn(),
+    scrollToNowKey: 0,
+  };
+  const { rerender } = render(createElement(ScheduleXWeekView, props));
+  await waitFor(() => expect(screen.getByTestId("calendar-week-grid")).toHaveTextContent("Mon"));
+  localeState.language = "es";
+  rerender(createElement(ScheduleXWeekView, props));
+  await waitFor(() => expect(screen.getByTestId("calendar-week-grid")).toHaveTextContent("lun"));
+  expect(screen.getByTestId("calendar-week-grid")).not.toHaveTextContent("Mon");
 });

@@ -38,68 +38,62 @@ describe("key-lifecycle: revoked / expired key is refused on next request (FR-00
     const { rawKey, keyId } = insertActiveKey();
 
     const app = await buildApp();
+    try {
+      // Request 1: key is active → 200.
+      const res1 = await app.inject({
+        method: "GET",
+        url: "/api/settings",
+        cookies: { mp_device_key: rawKey },
+      });
+      expect(res1.statusCode).toBe(200);
 
-    // Request 1: key is active → 200.
-    const res1 = await app.inject({
-      method: "GET",
-      url: "/api/settings",
-      cookies: { mp_device_key: rawKey },
-    });
-    expect(res1.statusCode).toBe(200);
-    await app.close();
+      // ---- Now revoke the key directly in the database ----
+      const now = Date.now();
+      const db = getDb();
+      db.prepare(`UPDATE api_keys SET revoked_at = ? WHERE id = ?`).run(now, keyId);
 
-    // ---- Now revoke the key directly in the database ----
-    const now = Date.now();
-    const db = getDb();
-    db.prepare(`UPDATE api_keys SET revoked_at = ? WHERE id = ?`).run(now, keyId);
+      // Request 2: the same key is now revoked → 403 forbidden (FR-004).
+      const res2 = await app.inject({
+        method: "GET",
+        url: "/api/settings",
+        cookies: { mp_device_key: rawKey },
+      });
 
-    // Build a fresh app so the boundary hook picks up the updated DB.
-    const app2 = await buildApp();
-
-    // Request 2: the same key is now revoked → 403 forbidden (FR-004).
-    const res2 = await app2.inject({
-      method: "GET",
-      url: "/api/settings",
-      cookies: { mp_device_key: rawKey },
-    });
-
-    expect([401, 403]).toContain(res2.statusCode);
-
-    await app2.close();
+      expect(res2.statusCode).toBe(403);
+    } finally {
+      await app.close();
+    }
   });
 
   it("a valid key succeeds, then the SAME key is REFUSED after expires_at is set to the past (FR-004)", async () => {
     const { rawKey, keyId } = insertActiveKey();
 
     const app = await buildApp();
+    try {
+      // Request 1: key is active (no expiry) → 200.
+      const res1 = await app.inject({
+        method: "GET",
+        url: "/api/settings",
+        cookies: { mp_device_key: rawKey },
+      });
+      expect(res1.statusCode).toBe(200);
 
-    // Request 1: key is active (no expiry) → 200 (once /api/settings route lands).
-    const res1 = await app.inject({
-      method: "GET",
-      url: "/api/settings",
-      cookies: { mp_device_key: rawKey },
-    });
-    expect(res1.statusCode).toBe(200);
-    await app.close();
+      // ---- Now set expires_at to 1ms in the past ----
+      const expiredAt = Date.now() - 1;
+      const db = getDb();
+      db.prepare(`UPDATE api_keys SET expires_at = ? WHERE id = ?`).run(expiredAt, keyId);
 
-    // ---- Now set expires_at to 1ms in the past ----
-    const expiredAt = Date.now() - 1;
-    const db = getDb();
-    db.prepare(`UPDATE api_keys SET expires_at = ? WHERE id = ?`).run(expiredAt, keyId);
+      // Request 2: the same key is now expired → 403 forbidden (FR-004).
+      const res2 = await app.inject({
+        method: "GET",
+        url: "/api/settings",
+        cookies: { mp_device_key: rawKey },
+      });
 
-    // Build a fresh app so the boundary hook re-reads.
-    const app2 = await buildApp();
-
-    // Request 2: the same key is now expired → 403 forbidden (FR-004).
-    const res2 = await app2.inject({
-      method: "GET",
-      url: "/api/settings",
-      cookies: { mp_device_key: rawKey },
-    });
-
-    expect([401, 403]).toContain(res2.statusCode);
-
-    await app2.close();
+      expect(res2.statusCode).toBe(403);
+    } finally {
+      await app.close();
+    }
   });
 
   it("a key with expires_at in the future is accepted, then refused after expires_at is moved to the past (FR-004)", async () => {
@@ -111,37 +105,35 @@ describe("key-lifecycle: revoked / expired key is refused on next request (FR-00
 
     const db = getDb();
 
-    // Insert with a future expiry — should be accepted (200 once route lands).
+    // Insert with a future expiry — should be accepted (200).
     db.prepare(
       `INSERT INTO api_keys (id, key_hash, scope, kind, created_at, expires_at) VALUES (?, ?, '*', 'device', ?, ?)`
     ).run(keyId, keyHash, now, futureExpiry);
 
     const app = await buildApp();
+    try {
+      // Request 1: key has a future expiry → 200.
+      const res1 = await app.inject({
+        method: "GET",
+        url: "/api/settings",
+        cookies: { mp_device_key: rawKey },
+      });
+      expect(res1.statusCode).toBe(200);
 
-    // Request 1: key has a future expiry → 200.
-    const res1 = await app.inject({
-      method: "GET",
-      url: "/api/settings",
-      cookies: { mp_device_key: rawKey },
-    });
-    expect(res1.statusCode).toBe(200);
-    await app.close();
+      // ---- Move expires_at to the past ----
+      const expiredAt = now - 1;
+      db.prepare(`UPDATE api_keys SET expires_at = ? WHERE id = ?`).run(expiredAt, keyId);
 
-    // ---- Move expires_at to the past ----
-    const expiredAt = now - 1;
-    db.prepare(`UPDATE api_keys SET expires_at = ? WHERE id = ?`).run(expiredAt, keyId);
+      // Request 2: same key, now expired → 403.
+      const res2 = await app.inject({
+        method: "GET",
+        url: "/api/settings",
+        cookies: { mp_device_key: rawKey },
+      });
 
-    const app2 = await buildApp();
-
-    // Request 2: same key, now expired → 403.
-    const res2 = await app2.inject({
-      method: "GET",
-      url: "/api/settings",
-      cookies: { mp_device_key: rawKey },
-    });
-
-    expect([401, 403]).toContain(res2.statusCode);
-
-    await app2.close();
+      expect(res2.statusCode).toBe(403);
+    } finally {
+      await app.close();
+    }
   });
 });

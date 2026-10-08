@@ -142,7 +142,7 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
     fireEvent.click(screen.getByTestId("daily-briefing-admin-settings-save"));
 
     expect(await screen.findByTestId("daily-briefing-admin-settings-error")).toHaveTextContent(
-      'Invalid generationTime "99:99"'
+      "Failed to save Daily Briefing settings."
     );
     assertNoImplicitRegenerate(mockFetch);
   });
@@ -447,3 +447,57 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
     ).toHaveLength(0);
   });
 });
+
+it.each(["en", "es"] as const)(
+  "translates block and parameter labels without changing persisted identifiers (%s)",
+  async (language) => {
+    let saved: unknown;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input, init) => {
+        const url = String(input);
+        if (url === "/api/settings")
+          return jsonResponse({ locale: { language, timezone: "UTC", weekStartDay: 1 } });
+        if (url === "/api/members") return jsonResponse(activeMembers);
+        if (url === "/api/daily-briefing/opt-in") return jsonResponse([]);
+        if (url === "/api/daily-briefing/settings")
+          return jsonResponse(
+            defaultSettings({ blockOrder: [{ type: "animalFact" }, { type: "trivia" }] })
+          );
+        if (url.endsWith("/member-ada/trivia") && init?.method === "PUT") {
+          saved = JSON.parse(init.body as string);
+          return jsonResponse({
+            memberId: "member-ada",
+            blockType: "trivia",
+            enabled: true,
+            weekdays: null,
+            params: { difficulty: "hard" },
+            updatedAt: 1,
+          });
+        }
+        throw new Error(`Unexpected request ${url}`);
+      })
+    );
+    try {
+      renderManagement();
+      const select = await screen.findByTestId("daily-briefing-admin-block-order-add-select");
+      await waitFor(() =>
+        expect(select.querySelector('option[value="animalFact"]')).toHaveTextContent(
+          language === "es" ? "Curiosidad animal" : "Animal fact"
+        )
+      );
+      expect(select.querySelector('option[value="shotgun"]')).toHaveTextContent(
+        language === "es" ? "Copiloto" : "Shotgun"
+      );
+      const difficulty = screen.getByTestId("daily-briefing-admin-block-difficulty-trivia");
+      expect(difficulty.querySelector('option[value="hard"]')).toHaveTextContent(
+        language === "es" ? "Difícil" : "Hard"
+      );
+      fireEvent.change(difficulty, { target: { value: "hard" } });
+      await waitFor(() => expect(saved).toEqual({ params: { difficulty: "hard" } }));
+    } finally {
+      cleanup();
+      vi.unstubAllGlobals();
+    }
+  }
+);

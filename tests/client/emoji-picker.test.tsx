@@ -31,3 +31,26 @@ it("clears an existing icon to null", () => {
   fireEvent.click(screen.getByRole("button", { name: "Clear icon" }));
   expect(onChange).toHaveBeenCalledWith(null);
 });
+
+it("uses Spanish labels for search and accessibility while preserving keyword aliases and Unicode values", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => new Response(JSON.stringify({ locale: { language: "es" } })))
+  );
+  try {
+    const onChange = renderPicker(null);
+    fireEvent.click(await screen.findByRole("button", { name: "Seleccionar icono de tarea" }));
+    expect(screen.getByRole("heading", { name: "Rutinas diarias" })).toBeInTheDocument();
+    const search = screen.getByRole("textbox", { name: "Buscar iconos" });
+    fireEvent.change(search, { target: { value: "cepillo de dientes" } });
+    expect(screen.getByRole("button", { name: "Seleccionar Cepillo de dientes" })).toHaveAttribute(
+      "title",
+      "Cepillo de dientes"
+    );
+    fireEvent.change(search, { target: { value: "wake" } });
+    fireEvent.click(screen.getByRole("button", { name: "Seleccionar Alarma" }));
+    expect(onChange).toHaveBeenCalledWith("⏰");
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});

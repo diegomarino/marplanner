@@ -1,3 +1,4 @@
+import { LocalizedApiError, responseMessage } from "@/lib/api-error";
 import { useEffect, useState } from "react";
 import { authFetch } from "@/lib/credential";
 import { useT } from "@/i18n";
@@ -15,29 +16,6 @@ import { LABEL_INLINE_CLASSES } from "@/lib/recipes";
  * A stale context would seed an empty form and could overwrite the saved location.
  * Clear is immediate; unavailable geolocation disables Locate.
  */
-
-type ApiErrorBody = { message?: unknown };
-
-async function responseMessage(response: Response, fallback: string): Promise<string> {
-  const data = (await response.json().catch(() => null)) as ApiErrorBody | null;
-  return typeof data?.message === "string" ? data.message : fallback;
-}
-
-/** Thrown ONLY after a non-ok response body has been parsed (P2): its
- * `.message` is either the server's own parsed error message, or an already-localized
- * fallback (`t(fallbackErrorKey)`) when the body carried none — either way, safe to render
- * verbatim. Any OTHER exception reaching `writeWeather`'s catch — most notably `authFetch`
- * itself REJECTING before a response exists (offline/transport failure, a native
- * `TypeError` with the browser's own English message) — is distinguished structurally by
- * NOT being this type, so it always renders the localized fallback key instead of a raw,
- * unlocalized `TypeError` message.
- */
-class WeatherSaveError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "WeatherSaveError";
-  }
-}
 
 interface WeatherFormState {
   lat: string;
@@ -133,7 +111,7 @@ export function WeatherManagement() {
         body: JSON.stringify({ object: "weather", settings }),
       });
       if (!response.ok) {
-        throw new WeatherSaveError(await responseMessage(response, t(fallbackErrorKey)));
+        throw new LocalizedApiError(await responseMessage(response, t(fallbackErrorKey)));
       }
       const data = (await response.json()) as EffectiveSettings;
       const nextForm = toFormState(data.weather);
@@ -141,10 +119,7 @@ export function WeatherManagement() {
       setPersistedForm(nextForm);
       return true;
     } catch (cause) {
-      // Only a WeatherSaveError's message is a deliberately parsed/localized string safe to
-      // show verbatim — anything else (e.g. authFetch REJECTING pre-response on a transport
-      // failure) falls back to the localized key, never a raw native exception message.
-      setError(cause instanceof WeatherSaveError ? cause.message : t(fallbackErrorKey));
+      setError(cause instanceof LocalizedApiError ? cause.message : t(fallbackErrorKey));
       return false;
     } finally {
       setSaving(false);

@@ -10,7 +10,7 @@ npm run build
 npm run check:fast
 ```
 
-For a running local server, use a writable persistent `DATA_DIR` and unique credentials as described in [operations](docs/operations.md). Copy `.env.example` to ignored `.env.local` only for local development, replace its placeholders, and never commit secrets. The public seed command is `npm run seed` and uses synthetic data. The private seed command is for local overlays and must not be used for public fixtures or committed data.
+For a running local server, use a writable persistent `DATA_DIR` and unique credentials as described in [operations](docs/operations.md). Copy `.env.example` to ignored `.env.local` only for local development, replace its placeholders, and never commit secrets. The public-only seed command is `npm run seed:public` and uses synthetic data. `npm run seed` and `npm run seed:all` run public then private profiles. The private seed command is for local overlays and must not be used for public fixtures or committed data.
 
 ## Change and verify
 

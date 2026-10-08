@@ -19,7 +19,9 @@ than one block per type:
 - **The per-block `language` override exists ONLY for corpus-backed blocks** (the block
   catalogue declares a block as corpus-backed with language variants). For such a block
   the selector **only offers languages for which a corpus exists**; the override selects
-  which corpus variant to use (default household).
+  which corpus variant to use. Without an override, generation uses the household
+  language when that corpus variant exists, otherwise English. An explicit unavailable
+  override remains a validation error.
 - **Blocks without a corpus have no language override** and render in the household
   language. There is **no English degradation for "no corpus"** — the generic English
   fallback (ADR-015) applies only to a genuinely missing translation _key_ (a build
@@ -55,7 +57,9 @@ Daily Briefing's block configuration stores an ordered list of block instances (
 - Given two instances of the same block type with different `language`, when a
   briefing generates, then each renders in its own language.
 - Given a block instance with no `language`, when it generates, then it uses the
-  household language.
+  household language when that corpus variant exists, otherwise English.
+- Given an explicit unavailable corpus language, configuration is rejected rather than
+  silently falling back.
 - Given a household-language change after generation, the per-block languages of the
   existing snapshot are unchanged (ADR-022).
 - Given block ordering/repetition, Daily Briefing owns it (ADR-008), never an App

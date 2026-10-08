@@ -1,4 +1,4 @@
-import { startWeatherFixtureServer } from "./weather-fixture-server";
+import { startWeatherFixtureServer, stopWeatherFixtureServer } from "./weather-fixture-server";
 import { startQuoteOnThisDayFixtureServer } from "./quote-onthisday-fixture-server";
 
 /** docs/features/weather.md — repo-FIRST Playwright `globalSetup`:
@@ -11,5 +11,10 @@ import { startQuoteOnThisDayFixtureServer } from "./quote-onthisday-fixture-serv
  */
 export default async function globalSetup(): Promise<void> {
   await startWeatherFixtureServer();
-  await startQuoteOnThisDayFixtureServer();
+  try {
+    await startQuoteOnThisDayFixtureServer();
+  } catch (error) {
+    await stopWeatherFixtureServer();
+    throw error;
+  }
 }

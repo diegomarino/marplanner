@@ -174,17 +174,15 @@ function DayPeriodsManagementContent() {
       if (err instanceof PeriodOrderError) {
         const thisLabel = t(DAY_PERIOD_LABEL_KEYS[err.periodId]);
         const prevLabel = t(DAY_PERIOD_LABEL_KEYS[err.prevPeriodId]);
-        message =
-          language === "es"
-            ? `${thisLabel} debe empezar después de ${prevLabel}.`
-            : `${thisLabel} must start after ${prevLabel}.`;
+        message = t("dayPeriods.action.orderError")
+          .replace("{period}", thisLabel)
+          .replace("{previous}", prevLabel);
       } else if (err instanceof PeriodUniquenessError) {
         const id1Label = t(DAY_PERIOD_LABEL_KEYS[err.periodId1]);
         const id2Label = t(DAY_PERIOD_LABEL_KEYS[err.periodId2]);
-        message =
-          language === "es"
-            ? `${id1Label} y ${id2Label} no pueden empezar al mismo tiempo.`
-            : `${id1Label} and ${id2Label} cannot start at the same time.`;
+        message = t("dayPeriods.action.sameTimeError")
+          .replace("{first}", id1Label)
+          .replace("{second}", id2Label);
       }
 
       setError(message);

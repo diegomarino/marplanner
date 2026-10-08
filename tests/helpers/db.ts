@@ -24,7 +24,8 @@ export function useIsolatedDb({ pluginState = "active" }: IsolatedDbOptions = {}
   });
   afterEach(() => {
     resetDb();
-    process.env.DATA_DIR = prev;
+    if (prev === undefined) delete process.env.DATA_DIR;
+    else process.env.DATA_DIR = prev;
     try {
       rmSync(dir, { recursive: true, force: true });
     } catch {
