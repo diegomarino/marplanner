@@ -26,7 +26,7 @@ jobs:
     env:
       CI: "true"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           path: ci-${{ github.run_id }}-${{ github.run_attempt }}-standard
@@ -38,7 +38,7 @@ jobs:
         run: |-
           printf 'Runner: %s; OS: %s\n' "$MACHINE" "$MACHINE_OS"
           uname -m
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24.21.0
       - name: Prepare job-owned tools and caches
@@ -72,7 +72,7 @@ jobs:
           tar --format=pax -czf "$RUNNER_TEMP/standard-evidence.tar.gz" "${paths[@]}"
       - name: Retain raw discovery, results and V8 coverage
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: standard-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/standard-evidence.tar.gz
@@ -92,7 +92,7 @@ jobs:
     env:
       CI: "true"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           path: ci-${{ github.run_id }}-${{ github.run_attempt }}-native
@@ -104,7 +104,7 @@ jobs:
         run: |-
           printf 'Runner: %s; OS: %s\n' "$MACHINE" "$MACHINE_OS"
           uname -m
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24.21.0
       - name: Prepare job-owned tools and caches
@@ -127,7 +127,7 @@ jobs:
           echo "MP_CANDIDATE_ID=$MP_CANDIDATE_ID" >> "$GITHUB_ENV"
       - run: npx playwright install --with-deps --only-shell chromium
       - name: Download standard evidence from this workflow run
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: standard-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/standard-evidence
@@ -136,7 +136,7 @@ jobs:
       - run: npm run check:aggregate-only
       - name: Retain raw discovery, results, V8 coverage and browser report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: native-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           include-hidden-files: true
@@ -156,7 +156,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           path: ci-${{ github.run_id }}-${{ github.run_attempt }}-container
@@ -168,7 +168,7 @@ jobs:
         run: |-
           printf 'Runner: %s; OS: %s\n' "$MACHINE" "$MACHINE_OS"
           uname -m
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24.21.0
       - name: Prepare job-owned tools and caches
@@ -196,7 +196,7 @@ jobs:
         run: npm run check:container -- --image marplanner:review
       - name: Retain container acceptance evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: container-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           include-hidden-files: true
