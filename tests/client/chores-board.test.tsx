@@ -19,7 +19,7 @@
  * prove.
  */
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ChoresBoard } from "@/chores/ChoresBoard";
 import { HouseholdSettingsProvider } from "@/lib/householdSettings";
@@ -151,6 +151,12 @@ function countInteractiveControls(container: Document | Element): number {
     return element.getAttribute("aria-hidden") !== "true";
   }).length;
 }
+
+beforeEach(() => {
+  // The fixture's chores are in morning; freeze the business clock, not async timers.
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-09-25T06:00:00.000Z"));
+});
 
 afterEach(() => {
   vi.unstubAllGlobals();
