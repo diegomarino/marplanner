@@ -1,7 +1,7 @@
 # Printing Domain Contract
 
 Status: maintained contract
-Depends on decisions: `ADR-019`, `ADR-021`, `ADR-022`, `ADR-028`, `ADR-035`, `ADR-038`, `ADR-039`, `ADR-040`, `ADR-041`
+Depends on decisions: `ADR-019`, `ADR-021`, `ADR-022`, `ADR-028`, `ADR-035`, `ADR-038`, `ADR-039`, `ADR-040`, `ADR-041`, `ADR-066`
 
 ## Purpose
 
@@ -21,11 +21,11 @@ additive.
 - **Device render context** — Printing-owned descriptor of the target device's
   capabilities/constraints (`paperWidthDots` now; extensible; ADR-041), passed to
   producers at render time.
-- **Transport** — delivery channel (Bluetooth now; wifi/usb future union arms).
+- **Transport** — delivery channel (Bluetooth now; additional transports are undecided).
 - **printedAt** — server-stamped timestamp of a successful transmission.
-- **errorCode** — `configuration | reauthorization | offline_or_connect |
-unsupported_transport | secure_context | write_failure | render_failure |
-output_unavailable`.
+- **errorCode** — closed permanent-failure vocabulary:
+  `render_failure | unsupported_transport | secure_context`. Recoverable failures
+  carry a free-text reason and an attempt count, not a permanent code.
 
 ## Invariants
 
@@ -56,12 +56,20 @@ output_unavailable`.
 - **Enqueue:** a trigger (time/manual/event; Q1) calls the producer-agnostic
   `enqueue(outputRef)`. At most one pending job per output (invariant 5).
 - **Deliver (UI-bound, ADR-035):** a capability-registered browser claims a job,
-  **fetches the producer's current raster at execute** (ADR-041/ADR-022), wraps
-  it to device bytes (ESC/POS for the configured paper width/transport), and
-  sends over the established connection.
+  fetches final printer-ready bytes from the server and sends them over the
+  established connection. At payload fetch, the server obtains the producer's
+  **current raster** through its registered provider (ADR-041/ADR-022) and
+  Printing wraps it as ESC/POS (ADR-066).
 - **Acknowledge:** on successful transmission the server stamps `printedAt` and
-  emits `printing.completed`. On failure it records `errorCode`/`attempts`.
-- **Retry / dead-letter:** recoverable failures retry up to a bounded budget;
+  emits `printing.completed`. Permanent failures carry `errorCode`; recoverable
+  failures accepted by `/fail` record their reason and increment `attempts`.
+- **Retry / dead-letter:** a recoverable report accepted by `/fail` releases the
+  lease and increments `attempts`; the current-date job is immediately claimable
+  again, without a numeric attempt limit. A network failure while fetching the
+  payload does not call `/fail`; if a failure report cannot reach the server, it
+  cannot release the lease either. In these cases the job remains claimed until
+  its 120-second lease expires, without updating the reason or attempt count.
+  Jobs from earlier household dates become dead-lettered;
   permanent failures (`render_failure`, `unsupported_transport`,
   `secure_context`) dead-letter immediately; `attempts` increments on recoverable
   failure only. Queued jobs are **delivery work, not history** — pruned by
@@ -80,8 +88,9 @@ output_unavailable`.
   about _why_, only that the record is superseded).
 - Provide the **device render context** to producers at render time (ADR-041).
 - Settings objects (ADR-028): `printer` (`paperWidthDots`) + `printerTransport`
-  (discriminated union: `type` = `bluetooth` now, `wifi`/`usb` future; `config`
-  per type). No master/autoPrint keys.
+  (flat Bluetooth pairing fields: `deviceId`, `name`, `serviceUuid`,
+  `characteristicUuid`; all-empty means unpaired). Nested `type`/`config`
+  payloads are rejected as `invalid_settings`. No master/autoPrint keys.
 - Admin: pair device, test print, print attempt log / history.
 
 ## Events
@@ -90,7 +99,8 @@ output_unavailable`.
 
 - **Emits:**
   - `printing.completed { jobId, outputRef, printedAt }`.
-  - `printing.failed { jobId, outputRef, errorCode }`.
+  - `printing.failed { jobId, outputRef, errorCode }` on permanent failure only.
+    Recoverable failures persist their reason and attempt count without an event.
 - **Subscribes:**
   - None required in this system (triggers call `enqueue` directly; a future event-based
     trigger has the _producer_ subscribe and enqueue, not Printing — ADR-040).
@@ -124,8 +134,6 @@ drops Printing's tables incl. print history (ADR-039). No legacy import (ADR-026
 
 ## Open Decisions
 
-- ESC/POS conversion location (server vs browser within the UI-bound executor) —
-  implementation detail; ownership fixed (ADR-041).
 - Full device-context + transport-union schema beyond Bluetooth/`paperWidthDots`
   — added when a second device/transport exists.
 

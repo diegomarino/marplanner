@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import Fastify from "fastify";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "../../src/server/db/client";
 import { listExternalSources } from "../../src/server/modules/calendar/external-sources";
 import { reconcileExternalCalendar } from "../../src/server/modules/calendar/reconcile";
@@ -36,6 +36,12 @@ function parsed(...occurrences: ParsedExternalOccurrence[]): ParsedCalendar {
 
 describe("calendar sync publication", () => {
   useIsolatedDb();
+  // Keep fixed Calendar fixtures inside the production rolling window; leave async timers real.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-28T12:00:00Z"));
+  });
+  afterEach(() => vi.useRealTimers());
 
   function insertSource(): void {
     getDb()
@@ -125,6 +131,46 @@ describe("calendar sync publication", () => {
     expect(getDb().prepare("SELECT COUNT(*) AS count FROM calendar_events").get()).toEqual({
       count: 0,
     });
+  });
+
+  it("keeps a manual non-ext assignment when title-derived would claim the same member", () => {
+    insertSource();
+    getDb()
+      .prepare(
+        "INSERT INTO members (id, display_name, role, created_at, updated_at) VALUES ('member-bart', 'Bart', 'child', 1, 1)"
+      )
+      .run();
+
+    reconcileExternalCalendar(sourceId, parsed(occurrence("one", "Bart school")));
+    const eventId = (
+      getDb()
+        .prepare(
+          "SELECT event_id AS id FROM calendar_external_event_meta WHERE external_uid = 'one'"
+        )
+        .get() as { id: string }
+    ).id;
+
+    getDb().prepare("DELETE FROM calendar_assignments WHERE event_id = ?").run(eventId);
+    getDb()
+      .prepare(
+        "INSERT INTO calendar_assignments (id, event_id, member_id, created_at) VALUES ('manual-uuid', ?, 'member-bart', 1)"
+      )
+      .run(eventId);
+
+    expect(() =>
+      reconcileExternalCalendar(sourceId, parsed(occurrence("one", "Bart school")))
+    ).not.toThrow();
+
+    expect(
+      getDb()
+        .prepare("SELECT id, member_id FROM calendar_assignments WHERE event_id = ? ORDER BY id")
+        .all(eventId)
+    ).toEqual([{ id: "manual-uuid", member_id: "member-bart" }]);
+    expect(
+      getDb()
+        .prepare("SELECT last_error_code FROM calendar_external_sources WHERE id = ?")
+        .get(sourceId)
+    ).toEqual({ last_error_code: null });
   });
 
   it("starts manual sync for an enabled source and rejects missing or disabled sources", async () => {

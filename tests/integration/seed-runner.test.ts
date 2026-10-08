@@ -83,15 +83,32 @@ describe("seed runner integration", () => {
   it("repairs and completes a same-date rerun after a prior running marker", async () => {
     const seedsDirectory = makeSeedsDirectory({
       "seed-010-public.mjs": idempotentModule("public:first", "public-first"),
+      "seed-020-public.mjs": failingModule("public:failure", "synthetic failure"),
     });
 
-    await runSeedProfile({
-      mode: "public",
-      asOfDate: AS_OF_DATE,
-      nowMs: NOW,
-      disposableTarget: true,
-      seedsDirectory,
+    await expect(
+      runSeedProfile({
+        mode: "public",
+        asOfDate: AS_OF_DATE,
+        nowMs: NOW,
+        disposableTarget: true,
+        seedsDirectory,
+      })
+    ).rejects.toThrow("Seed module failed: public:failure");
+    expect(getDb().prepare("SELECT status, completed_at FROM seed_profile_state").get()).toEqual({
+      status: "running",
+      completed_at: null,
     });
+    expect(getDb().prepare("SELECT id FROM members").all()).toEqual([
+      { id: "demo:member:public-first" },
+    ]);
+
+    // Replace the failed module at a fresh path: ESM caches previously imported modules.
+    rmSync(join(seedsDirectory, "seed-020-public.mjs"));
+    writeFileSync(
+      join(seedsDirectory, "seed-021-public.mjs"),
+      idempotentModule("public:repaired", "public-repaired")
+    );
     const report = await runSeedProfile({
       mode: "public",
       asOfDate: AS_OF_DATE,
@@ -100,10 +117,14 @@ describe("seed runner integration", () => {
       seedsDirectory,
     });
 
-    expect(report.markerAction).toBe("rerun");
-    expect(getDb().prepare("SELECT COUNT(*) AS count FROM members").get()).toEqual({ count: 1 });
-    expect(getDb().prepare("SELECT status FROM seed_profile_state").get()).toEqual({
+    expect(report.markerAction).toBe("repair");
+    expect(getDb().prepare("SELECT id FROM members ORDER BY id").all()).toEqual([
+      { id: "demo:member:public-first" },
+      { id: "demo:member:public-repaired" },
+    ]);
+    expect(getDb().prepare("SELECT status, completed_at FROM seed_profile_state").get()).toEqual({
       status: "complete",
+      completed_at: NOW + 1,
     });
   });
 
@@ -193,11 +214,13 @@ describe("seed runner integration", () => {
     const publicResult = spawnSync("npm", ["run", "seed", "--", "--as-of", AS_OF_DATE], {
       cwd: process.cwd(),
       encoding: "utf8",
+      timeout: 30_000,
       env: environment,
     });
     const privateResult = spawnSync("npm", ["run", "seed:private", "--", "--as-of", AS_OF_DATE], {
       cwd: process.cwd(),
       encoding: "utf8",
+      timeout: 30_000,
       env: environment,
     });
 
@@ -219,6 +242,7 @@ describe("seed runner integration", () => {
     const result = spawnSync("npm", ["run", "seed", "--", "--as-of", AS_OF_DATE], {
       cwd: process.cwd(),
       encoding: "utf8",
+      timeout: 30_000,
       env: { ...process.env, DATA_DIR: dataDirectory, SEED_DIRECTORY: seedsDirectory },
     });
 
@@ -237,6 +261,7 @@ describe("seed runner integration", () => {
     const result = spawnSync("npm", ["run", "seed", "--", "--mode", "private"], {
       cwd: process.cwd(),
       encoding: "utf8",
+      timeout: 30_000,
       env: { ...process.env, DATA_DIR: dataDirectory, SEED_DIRECTORY: seedsDirectory },
     });
 

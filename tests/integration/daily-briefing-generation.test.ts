@@ -43,11 +43,16 @@ import {
   deriveStatus,
   generateAllBriefings,
   generateBriefing,
+  readBriefing,
 } from "../../src/server/modules/daily-briefing/index";
 import {
   writeBlockOrder,
   writeMemberBlockSettings,
 } from "../../src/server/modules/daily-briefing/settings";
+import { generateAnimalFact } from "../../src/server/modules/daily-briefing/blocks/animal-fact";
+import { generateNumberFact } from "../../src/server/modules/daily-briefing/blocks/number-fact";
+import { generateWouldYouRather } from "../../src/server/modules/daily-briefing/blocks/would-you-rather";
+import { generateDrawingPrompt } from "../../src/server/modules/daily-briefing/blocks/drawing-prompt";
 import { ALL_BLOCK_TYPES } from "../../src/server/modules/daily-briefing/corpora/index";
 import { getLabels } from "../../src/server/modules/daily-briefing/render/labels";
 import { useIsolatedDb } from "../helpers/db";
@@ -266,20 +271,20 @@ describe("daily-briefing full generation", () => {
     seedMember("m1", { optedIn: true });
 
     const first = await generateBriefing("m1", DATE_FRI);
-    const second = await generateBriefing("m1", DATE_FRI);
-
-    expect(second.payload.blocks).toEqual(first.payload.blocks);
-
     const rows = getDb()
       .prepare("SELECT raster_bits FROM daily_briefing WHERE member_id = ? AND date = ?")
       .get("m1", DATE_FRI) as { raster_bits: Buffer | null };
     expect(rows.raster_bits).not.toBeNull();
+    const firstRaster = Buffer.from(rows.raster_bits as Buffer);
+    const second = await generateBriefing("m1", DATE_FRI);
+    expect(second.payload.blocks).toEqual(first.payload.blocks);
+
     // Regenerating in place replaces the raster with a byte-identical one (same content, same
     // rendering engine, same fonts — SC-003's "identical raster" guarantee).
     const secondRow = getDb()
       .prepare("SELECT raster_bits FROM daily_briefing WHERE id = ?")
       .get(second.id) as { raster_bits: Buffer };
-    expect(Buffer.compare(rows.raster_bits as Buffer, secondRow.raster_bits)).toBe(0);
+    expect(Buffer.compare(firstRaster, secondRow.raster_bits)).toBe(0);
   });
 
   it(": editing a member colour does not alter the monochrome briefing raster", async () => {
@@ -312,6 +317,7 @@ describe("daily-briefing full generation", () => {
 
   it("FR-009/INV-06: a corpus-backed block instance's language is resolved, frozen, and reflected in content", async () => {
     seedMember("m1", { optedIn: true });
+    seedHouseholdLanguage("en");
     writeMemberBlockSettings("m1", "animalFact", { params: { language: "es" } });
 
     const briefing = await generateBriefing("m1", DATE_FRI);
@@ -326,6 +332,70 @@ describe("daily-briefing full generation", () => {
     const englishAnimalFact = englishBriefing.payload.blocks.find((b) => b.type === "animalFact");
     expect(englishAnimalFact).toMatchObject({ status: "ok", language: "en" });
     expect(animalFact?.data).not.toEqual(englishAnimalFact?.data);
+  });
+
+  it.each(["es", "en"] as const)(
+    "corpus defaults follow the %s household with English-only fallback",
+    async (language) => {
+      seedHouseholdLanguage(language);
+      seedMember("m1", { optedIn: true });
+      const briefing = await generateBriefing("m1", DATE_FRI);
+      const generators = {
+        animalFact: generateAnimalFact,
+        numberFact: generateNumberFact,
+        wouldYouRather: generateWouldYouRather,
+        drawingPrompt: generateDrawingPrompt,
+      };
+      for (const [type, generate] of Object.entries(generators)) {
+        const block = briefing.payload.blocks.find((b) => b.type === type);
+        expect(block).toMatchObject({
+          status: "ok",
+          language,
+          params: { language },
+          data: generate({ date: DATE_FRI, memberId: "m1", params: { language } }),
+        });
+      }
+      for (const type of ["dadJoke", "wordOfDay", "trivia", "riddle", "wordSearch"]) {
+        expect(briefing.payload.blocks.find((b) => b.type === type)).toMatchObject({
+          status: "ok",
+          language: "en",
+          params: { language: "en" },
+        });
+      }
+    }
+  );
+
+  it("explicit corpus overrides win while household changes leave stored snapshots intact", async () => {
+    seedHouseholdLanguage("es");
+    seedMember("m1", { optedIn: true });
+    writeBlockOrder([{ type: "animalFact", params: { language: "en" } }, { type: "animalFact" }]);
+    const briefing = await generateBriefing("m1", DATE_FRI);
+    const animals = briefing.payload.blocks.filter((b) => b.type === "animalFact");
+    expect(animals[0]).toMatchObject({
+      language: "en",
+      params: { language: "en" },
+      data: generateAnimalFact({ date: DATE_FRI, memberId: "m1", params: { language: "en" } }),
+    });
+    expect(animals[1]).toMatchObject({
+      language: "es",
+      params: { language: "es" },
+      data: generateAnimalFact({ date: DATE_FRI, memberId: "m1", params: { language: "es" } }),
+    });
+    expect(animals[0].title).toMatch(/ DATO ANIMAL$/);
+    const stored = getDb()
+      .prepare("SELECT payload, raster_bits FROM daily_briefing WHERE id = ?")
+      .get(briefing.id);
+    getDb()
+      .prepare("UPDATE settings_objects SET data = ? WHERE object_name = 'locale'")
+      .run(JSON.stringify({ language: "en" }));
+    const read = readBriefing("m1", DATE_FRI);
+    expect(read.generated).toBe(true);
+    if (read.generated) expect(read.briefing.payload).toEqual(briefing.payload);
+    expect(
+      getDb()
+        .prepare("SELECT payload, raster_bits FROM daily_briefing WHERE id = ?")
+        .get(briefing.id)
+    ).toEqual(stored);
   });
 
   it("FR-011/INV-07: null-omit vs recorded-failed — a generator resolving null is ABSENT, a generator throwing is RECORDED failed, status is partial", async () => {

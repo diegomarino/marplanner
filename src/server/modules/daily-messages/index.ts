@@ -97,6 +97,9 @@ function addDaysToDate(date: string, days: number): string {
  * stays readable — only a non-existent member throws.
  */
 export function getMessage(memberId: string, date: string): DailyMessage | null {
+  if (!isStrictCalendarDate(date)) {
+    throw new DailyMessageValidationError(`Invalid date "${date}"; expected strict YYYY-MM-DD`);
+  }
   if (!memberExists(memberId)) {
     throw new DailyMessageNotFoundError(`Member "${memberId}" does not exist`);
   }

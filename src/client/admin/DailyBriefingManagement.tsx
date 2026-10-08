@@ -1,3 +1,4 @@
+import { LocalizedApiError, responseMessage } from "@/lib/api-error";
 import { useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/credential";
 import { appUrl } from "@/lib/base-path";
@@ -55,13 +56,6 @@ import type { MessageKey } from "@/i18n/messages";
 /* delete action) — `ConfirmDialog` does not apply. `StatusToggle` */
 /* does not apply either — no pressed-state toggle is rendered here. */
 /* ------------------------------------------------------------------ */
-
-type ApiError = { message?: unknown };
-
-async function responseMessage(response: Response, fallback: string): Promise<string> {
-  const data = (await response.json().catch(() => null)) as ApiError | null;
-  return typeof data?.message === "string" ? data.message : fallback;
-}
 
 // ── Settings-layer types (contracts/openapi.yaml `DailyBriefingSettingsView` et al.) ──────────
 // Hand-mirrored here (not imported from src/shared) because the settings-layer DTOs are new
@@ -165,6 +159,30 @@ const ALL_BLOCK_TYPES = [
 
 type BlockRegistryType = (typeof ALL_BLOCK_TYPES)[number];
 
+export const BLOCK_LABEL_KEYS: Record<BlockRegistryType, MessageKey> = {
+  shotgun: "dailyBriefing.admin.blockType.shotgun",
+  message: "dailyBriefing.admin.blockType.message",
+  streak: "dailyBriefing.admin.blockType.streak",
+  today: "dailyBriefing.admin.blockType.today",
+  weather: "dailyBriefing.admin.blockType.weather",
+  meals: "dailyBriefing.admin.blockType.meals",
+  birthday: "dailyBriefing.admin.blockType.birthday",
+  reminders: "dailyBriefing.admin.blockType.reminders",
+  dadJoke: "dailyBriefing.admin.blockType.dadJoke",
+  wordOfDay: "dailyBriefing.admin.blockType.wordOfDay",
+  animalFact: "dailyBriefing.admin.blockType.animalFact",
+  numberFact: "dailyBriefing.admin.blockType.numberFact",
+  onThisDay: "dailyBriefing.admin.blockType.onThisDay",
+  quoteOfDay: "dailyBriefing.admin.blockType.quoteOfDay",
+  trivia: "dailyBriefing.admin.blockType.trivia",
+  riddle: "dailyBriefing.admin.blockType.riddle",
+  wouldYouRather: "dailyBriefing.admin.blockType.wouldYouRather",
+  wordSearch: "dailyBriefing.admin.blockType.wordSearch",
+  drawingPrompt: "dailyBriefing.admin.blockType.drawingPrompt",
+  streakText: "dailyBriefing.admin.blockType.streakText",
+  weatherText: "dailyBriefing.admin.blockType.weatherText",
+};
+
 function effectiveMatrixBlockTypes(blockOrder: BlockOrderInstance[]): BlockRegistryType[] {
   const configured = blockOrder
     .map((entry) => entry.type)
@@ -210,6 +228,11 @@ const LEVELS = ["L1", "L2", "L3", "L4"] as const;
 /** Mirrors `DIFFICULTY`-taking block types — `trivia` and `wordSearch` (FR-022). */
 const DIFFICULTY_BLOCK_TYPES: ReadonlySet<BlockRegistryType> = new Set(["trivia", "wordSearch"]);
 const DIFFICULTIES = ["easy", "medium", "hard"] as const;
+export const DIFFICULTY_LABEL_KEYS: Record<(typeof DIFFICULTIES)[number], MessageKey> = {
+  easy: "dailyBriefing.admin.difficulty.easy",
+  medium: "dailyBriefing.admin.difficulty.medium",
+  hard: "dailyBriefing.admin.difficulty.hard",
+};
 
 /** Mirrors `CORPUS_LANGUAGE_AVAILABILITY` in block-types.ts (FR-008/FR-009) — the ONLY types
  * offering a `params.language` override, each restricted to the languages with an on-disk
@@ -364,7 +387,7 @@ export function DailyBriefingManagement() {
         body: JSON.stringify(input),
       });
       if (!response.ok) {
-        throw new Error(
+        throw new LocalizedApiError(
           await responseMessage(response, t("dailyBriefing.admin.settingsSaveError"))
         );
       }
@@ -374,7 +397,9 @@ export function DailyBriefingManagement() {
       setAutoPrintBound(snapshot.autoPrintTrigger === "morning_complete");
     } catch (cause) {
       setSettingsError(
-        cause instanceof Error ? cause.message : t("dailyBriefing.admin.settingsSaveError")
+        cause instanceof LocalizedApiError
+          ? cause.message
+          : t("dailyBriefing.admin.settingsSaveError")
       );
     } finally {
       setSettingsSaving(false);
@@ -418,7 +443,7 @@ export function DailyBriefingManagement() {
         body: JSON.stringify(nextBlockOrder),
       });
       if (!response.ok) {
-        throw new Error(
+        throw new LocalizedApiError(
           await responseMessage(response, t("dailyBriefing.admin.blockOrderSaveError"))
         );
       }
@@ -427,7 +452,9 @@ export function DailyBriefingManagement() {
       setBlockOrder(data.blockOrder);
     } catch (cause) {
       setBlockOrderError(
-        cause instanceof Error ? cause.message : t("dailyBriefing.admin.blockOrderSaveError")
+        cause instanceof LocalizedApiError
+          ? cause.message
+          : t("dailyBriefing.admin.blockOrderSaveError")
       );
     } finally {
       setBlockOrderSaving(false);
@@ -465,7 +492,7 @@ export function DailyBriefingManagement() {
         }
       );
       if (!response.ok) {
-        throw new Error(
+        throw new LocalizedApiError(
           await responseMessage(response, t("dailyBriefing.admin.blockSettingsSaveError"))
         );
       }
@@ -479,7 +506,9 @@ export function DailyBriefingManagement() {
       ]);
     } catch (cause) {
       setBlockSettingsError(
-        cause instanceof Error ? cause.message : t("dailyBriefing.admin.blockSettingsSaveError")
+        cause instanceof LocalizedApiError
+          ? cause.message
+          : t("dailyBriefing.admin.blockSettingsSaveError")
       );
     } finally {
       setBlockSettingsSavingKey((previous) => (previous === key ? null : previous));
@@ -591,7 +620,9 @@ export function DailyBriefingManagement() {
         body: JSON.stringify(input),
       });
       if (!response.ok) {
-        throw new Error(await responseMessage(response, t("dailyBriefing.management.optInError")));
+        throw new LocalizedApiError(
+          await responseMessage(response, t("dailyBriefing.management.optInError"))
+        );
       }
 
       const state = (await response.json()) as OptInState;
@@ -621,7 +652,11 @@ export function DailyBriefingManagement() {
         setError(null);
       }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t("dailyBriefing.management.optInError"));
+      setError(
+        cause instanceof LocalizedApiError
+          ? cause.message
+          : t("dailyBriefing.management.optInError")
+      );
     } finally {
       setPendingOptInMemberIds((previous) => {
         const next = new Set(previous);
@@ -651,7 +686,7 @@ export function DailyBriefingManagement() {
         body: JSON.stringify(input),
       });
       if (!response.ok) {
-        throw new Error(
+        throw new LocalizedApiError(
           await responseMessage(response, t("dailyBriefing.management.generateError"))
         );
       }
@@ -664,7 +699,9 @@ export function DailyBriefingManagement() {
     } catch (cause) {
       if (generationRequestId.current === requestId) {
         setError(
-          cause instanceof Error ? cause.message : t("dailyBriefing.management.generateError")
+          cause instanceof LocalizedApiError
+            ? cause.message
+            : t("dailyBriefing.management.generateError")
         );
       }
     } finally {
@@ -689,7 +726,7 @@ export function DailyBriefingManagement() {
         body: JSON.stringify({}),
       });
       if (!response.ok) {
-        throw new Error(
+        throw new LocalizedApiError(
           await responseMessage(response, t("dailyBriefing.management.generateAllError"))
         );
       }
@@ -707,7 +744,9 @@ export function DailyBriefingManagement() {
     } catch (cause) {
       if (generationRequestId.current === requestId) {
         setError(
-          cause instanceof Error ? cause.message : t("dailyBriefing.management.generateAllError")
+          cause instanceof LocalizedApiError
+            ? cause.message
+            : t("dailyBriefing.management.generateAllError")
         );
       }
     } finally {
@@ -1064,7 +1103,12 @@ export function DailyBriefingManagement() {
                       data-testid={`daily-briefing-admin-block-order-item-${index}`}
                       className="flex items-center justify-between gap-3 rounded-md border p-2 text-sm"
                     >
-                      <span>{instance.type}</span>
+                      <span>
+                        {t(
+                          BLOCK_LABEL_KEYS[instance.type as BlockRegistryType] ??
+                            "dailyBriefing.block.failed"
+                        )}
+                      </span>
                       <span className="flex items-center gap-2">
                         <Button
                           type="button"
@@ -1115,7 +1159,7 @@ export function DailyBriefingManagement() {
                   <option value="">{t("dailyBriefing.admin.blockOrderAddPlaceholder")}</option>
                   {ALL_BLOCK_TYPES.map((type) => (
                     <option key={type} value={type}>
-                      {type}
+                      {t(BLOCK_LABEL_KEYS[type])}
                     </option>
                   ))}
                 </select>
@@ -1242,7 +1286,7 @@ export function DailyBriefingManagement() {
                                   size="icon"
                                   draggable={!blockOrderSaving}
                                   disabled={blockOrderSaving}
-                                  aria-label={`${t("dailyBriefing.admin.blockOrderTitle")}: ${blockType}`}
+                                  aria-label={`${t("dailyBriefing.admin.blockOrderTitle")}: ${t(BLOCK_LABEL_KEYS[blockType])}`}
                                   data-testid={`daily-briefing-admin-block-drag-${blockType}`}
                                   onDragStart={(event) => {
                                     setDraggedBlockType(blockType);
@@ -1263,7 +1307,9 @@ export function DailyBriefingManagement() {
                                 >
                                   <span aria-hidden="true">⠿</span>
                                 </Button>
-                                <span className="font-medium">{blockType}</span>
+                                <span className="font-medium">
+                                  {t(BLOCK_LABEL_KEYS[blockType])}
+                                </span>
                                 <CheckboxField
                                   data-testid={`daily-briefing-admin-block-enabled-${blockType}`}
                                   checked={current.enabled}
@@ -1327,7 +1373,7 @@ export function DailyBriefingManagement() {
                                     <option value="">—</option>
                                     {DIFFICULTIES.map((difficulty) => (
                                       <option key={difficulty} value={difficulty}>
-                                        {difficulty}
+                                        {t(DIFFICULTY_LABEL_KEYS[difficulty])}
                                       </option>
                                     ))}
                                   </select>
@@ -1351,7 +1397,11 @@ export function DailyBriefingManagement() {
                                     <option value="">—</option>
                                     {languages.map((language) => (
                                       <option key={language} value={language}>
-                                        {language}
+                                        {t(
+                                          language === "es"
+                                            ? "dailyBriefing.admin.language.es"
+                                            : "dailyBriefing.admin.language.en"
+                                        )}
                                       </option>
                                     ))}
                                   </select>
