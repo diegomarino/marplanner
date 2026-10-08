@@ -175,7 +175,10 @@ test("preflight accepts source edits and rejects toolchain drift before runners"
     const staleEvidence = { ...observed, toolchain: { ...observed.toolchain, vitest: "5.0.2" } };
     assert.throws(() => verifyCoverage(expected, staleEvidence), /vitest toolchain/);
     fs.rmSync(join(root, "a.ts"));
-    assert.throws(() => preflightCoverage(policy, pkg, runtime, root), /missing from coverage cohort/);
+    assert.throws(
+      () => preflightCoverage(policy, pkg, runtime, root),
+      /missing from coverage cohort/
+    );
     assert.throws(
       () => preflightCoverage(policy, pkg, { ...runtime, node: "26.9.0" }, root),
       /node toolchain/
@@ -191,8 +194,9 @@ test("preflight accepts source edits and rejects toolchain drift before runners"
 
 test("coverage policy keeps minima without per-file source hashes", async () => {
   const { readFileSync } = await import("node:fs");
-  const policy = JSON.parse(readFileSync("tests/fixtures/assembly-cohort.json", "utf8"))
-    .coveragePolicy;
+  const policy = JSON.parse(
+    readFileSync("tests/fixtures/assembly-cohort.json", "utf8")
+  ).coveragePolicy;
   const files = Object.entries(policy.files);
   assert.ok(files.length > 0);
   for (const [file, review] of files) {
