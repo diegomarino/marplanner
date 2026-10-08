@@ -62,7 +62,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
      * the raw, un-stripped text unchanged.
      */
     it("preserves the injected daily-message's text VERBATIM (emojis included) at generation, adapter-compatible (FR-013, AC-07)", async () => {
-      const result = await messageBlock.generate({
+      const result = messageBlock.generate({
         memberId: "m1",
         date: DATE,
         readDailyMessage: () => ({ text: "Have a wonderful day! 🎉" }),
@@ -72,12 +72,12 @@ describe("daily-briefing domain blocks (FR-013)", () => {
     });
 
     it("returns null (no block) when no port is injected — the current unwired production state", async () => {
-      const result = await messageBlock.generate({ memberId: "m1", date: DATE });
+      const result = messageBlock.generate({ memberId: "m1", date: DATE });
       expect(result).toBeNull();
     });
 
     it("returns null ONLY when no message row exists for the date — never because the text is empty/emoji-only (AC-07)", async () => {
-      const result = await messageBlock.generate({
+      const result = messageBlock.generate({
         memberId: "m1",
         date: DATE,
         readDailyMessage: () => null,
@@ -91,7 +91,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
      * the AC-07 violation flagged.
      */
     it("an emoji-only message still yields a block, with the raw (unstripped) text in the snapshot (AC-07)", async () => {
-      const result = await messageBlock.generate({
+      const result = messageBlock.generate({
         memberId: "m1",
         date: DATE,
         readDailyMessage: () => ({ text: "🎉🎊" }),
@@ -137,8 +137,8 @@ describe("daily-briefing domain blocks (FR-013)", () => {
 
     it("ranks opted-in active members, cap 4, deterministic for the same date, adapter-compatible (FR-013)", async () => {
       const ctx = { date: DATE, listActiveMembers: () => members };
-      const first = await shotgunBlock.generate(ctx);
-      const second = await shotgunBlock.generate(ctx);
+      const first = shotgunBlock.generate(ctx);
+      const second = shotgunBlock.generate(ctx);
       expect(first).not.toBeNull();
       expect(first?.ranking.length).toBe(4);
       // Determinism: same date -> same selection AND order.
@@ -151,7 +151,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
       // seed the real row so the settings write itself isn't what's under test here.
       seedMember("s1", "Alice");
       writeMemberBlockSettings("s1", "shotgun", { enabled: false });
-      const result = await shotgunBlock.generate({ date: DATE, listActiveMembers: () => members });
+      const result = shotgunBlock.generate({ date: DATE, listActiveMembers: () => members });
       expect(result?.ranking).not.toContain("Alice");
     });
 
@@ -159,12 +159,12 @@ describe("daily-briefing domain blocks (FR-013)", () => {
       // DATE (2026-08-21) is a Friday ("fri"); restrict s2 to Mondays only.
       seedMember("s2", "Bob");
       writeMemberBlockSettings("s2", "shotgun", { weekdays: ["mon"] });
-      const result = await shotgunBlock.generate({ date: DATE, listActiveMembers: () => members });
+      const result = shotgunBlock.generate({ date: DATE, listActiveMembers: () => members });
       expect(result?.ranking).not.toContain("Bob");
     });
 
     it("returns null when no member-listing port is injected (host-api gap — see module doc)", async () => {
-      const result = await shotgunBlock.generate({ date: DATE });
+      const result = shotgunBlock.generate({ date: DATE });
       expect(result).toBeNull();
     });
   });
@@ -205,7 +205,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
       // only member shape it never returns a column for is a non-child (or archived/unknown)
       // member, which is what this block's own "not tracked at all" gate actually guards against.
       seedMember(memberId, memberId, "parent");
-      const result = await streakBlock.generate({ memberId, date: DATE });
+      const result = streakBlock.generate({ memberId, date: DATE });
       expect(result).toBeNull();
     });
 
@@ -230,7 +230,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
       // (DAILY-BRIEFING-INV-06) — pin "en" explicitly since this test's own subject is the
       // streak/last7 COMPUTATION, not the label's language (that's covered by dedicated
       // es/en label tests elsewhere).
-      const result = await streakBlock.generate({ memberId, date: DATE, language: "en" });
+      const result = streakBlock.generate({ memberId, date: DATE, language: "en" });
       expect(result).not.toBeNull();
       expect(result?.last7).toEqual([false, false, false, false, true, true, true]);
       // getStreak walks backward from DATE (not itself completed) through the 3 consecutive
@@ -240,7 +240,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
       expect(() => adaptBlockData("streak", result)).not.toThrow();
 
       // streakText is a pure delegate — identical data for the identical context (same "en" pin).
-      const textResult = await streakTextBlock.generate({ memberId, date: DATE, language: "en" });
+      const textResult = streakTextBlock.generate({ memberId, date: DATE, language: "en" });
       expect(textResult).toEqual(result);
       expect(() => adaptBlockData("streakText", textResult)).not.toThrow();
     });
@@ -260,7 +260,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
       completeChoreOn(choreId, "2026-08-19");
       completeChoreOn(choreId, "2026-08-20");
 
-      const result = await streakBlock.generate({ memberId, date: DATE, language: "es" });
+      const result = streakBlock.generate({ memberId, date: DATE, language: "es" });
       expect(result?.days).toBe(3);
       expect(result?.label).toBe("3 días de racha");
     });
@@ -299,7 +299,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
 
     it("returns null when no events are assigned to the member that day", async () => {
       seedMember(memberId);
-      const result = await todayBlock.generate({ memberId, date: DATE });
+      const result = todayBlock.generate({ memberId, date: DATE });
       expect(result).toBeNull();
     });
 
@@ -322,7 +322,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
         endDate: "2026-08-22",
       });
 
-      const result = await todayBlock.generate({ memberId, date: DATE });
+      const result = todayBlock.generate({ memberId, date: DATE });
       expect(result).not.toBeNull();
       expect(result?.bullets.length).toBe(2);
       // All-day first, regardless of any time.
@@ -362,7 +362,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
         endDate: "2026-08-22",
       });
 
-      const result = await todayBlock.generate({ memberId, date: DATE });
+      const result = todayBlock.generate({ memberId, date: DATE });
       expect(result?.bullets[0]).toBe("A very long all-day event title tha…");
       expect(result?.bullets[1]).toMatch(/^00:05 Doctor appointment$/);
     });
@@ -378,7 +378,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
           endDate: "2026-08-22",
         });
       }
-      const result = await todayBlock.generate({ memberId, date: DATE });
+      const result = todayBlock.generate({ memberId, date: DATE });
       expect(result?.bullets.length).toBe(10);
     });
 
@@ -401,7 +401,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
         tzid: "America/New_York",
       });
 
-      const result = await todayBlock.generate({ memberId, date: DATE });
+      const result = todayBlock.generate({ memberId, date: DATE });
       expect(result).not.toBeNull();
       expect(result?.bullets).toEqual(["23:30 Late night snack"]);
     });
@@ -420,7 +420,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
     }
 
     it("returns null when nothing is planned that day", async () => {
-      const result = await mealsBlock.generate({ date: DATE });
+      const result = mealsBlock.generate({ date: DATE });
       expect(result).toBeNull();
     });
 
@@ -428,7 +428,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
       seedOneOffMeal("lunch", "Soup 🍲");
       seedOneOffMeal("dinner", "Pasta");
 
-      const result = await mealsBlock.generate({ date: DATE });
+      const result = mealsBlock.generate({ date: DATE });
       expect(result).toEqual({ lunch: "Soup", dinner: "Pasta" });
       expect(result).not.toHaveProperty("snack");
       expect(() => adaptBlockData("meals", result)).not.toThrow();
@@ -447,14 +447,14 @@ describe("daily-briefing domain blocks (FR-013)", () => {
       seedOneOffMeal("lunch", "Tacos", DATE, "meal-lunch-b");
       seedOneOffMeal("dinner", "Pasta");
 
-      const result = await mealsBlock.generate({ date: DATE });
+      const result = mealsBlock.generate({ date: DATE });
       expect(result).toEqual({ lunch: "Soup, Tacos", dinner: "Pasta" });
       expect(() => adaptBlockData("meals", result)).not.toThrow();
     });
 
     it("excludes breakfast (v1 parity — the envelope shape has no breakfast field)", async () => {
       seedOneOffMeal("breakfast", "Toast");
-      const result = await mealsBlock.generate({ date: DATE });
+      const result = mealsBlock.generate({ date: DATE });
       expect(result).toBeNull();
     });
   });
@@ -463,7 +463,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
 
   describe("birthday", () => {
     it("returns null when no member-listing port is injected (host-api gap — see module doc)", async () => {
-      const result = await birthdayBlock.generate({ memberId: "b1", date: DATE });
+      const result = birthdayBlock.generate({ memberId: "b1", date: DATE });
       expect(result).toBeNull();
     });
 
@@ -481,7 +481,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
       // (DAILY-BRIEFING-INV-06) — pin "en" explicitly since this test's own subject is the
       // days-until COMPUTATION, not the label's language (that's covered by dedicated es/en label
       // tests elsewhere).
-      const result = await birthdayBlock.generate({
+      const result = birthdayBlock.generate({
         memberId: "b1",
         date: DATE,
         listActiveMembers,
@@ -504,7 +504,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
       const listActiveMembers = () => [
         { id: "b1", displayName: "Self", birthDate: { month: 8, day: 25, year: 2015 } }, // 4 days away
       ];
-      const result = await birthdayBlock.generate({
+      const result = birthdayBlock.generate({
         memberId: "b1",
         date: DATE,
         listActiveMembers,
@@ -515,7 +515,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
       const todayListActiveMembers = () => [
         { id: "b1", displayName: "Self", birthDate: { month: 8, day: 21, year: 2015 } }, // today
       ];
-      const todayResult = await birthdayBlock.generate({
+      const todayResult = birthdayBlock.generate({
         memberId: "b1",
         date: DATE,
         listActiveMembers: todayListActiveMembers,
@@ -539,7 +539,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
         { id: "b3", displayName: "LeapDay", birthDate: { month: 2, day: 29, year: 2012 } },
       ];
 
-      const result = await birthdayBlock.generate({
+      const result = birthdayBlock.generate({
         memberId: "b1",
         date: DATE,
         listActiveMembers,
@@ -553,7 +553,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
       ];
       // P1 fold addendum: pin "en" explicitly (see the comment on the days-until test
       // above — this test's subject is the daysUntilOwn===0 branch, not the label's language).
-      const result = await birthdayBlock.generate({
+      const result = birthdayBlock.generate({
         memberId: "b1",
         date: DATE,
         listActiveMembers,
@@ -571,7 +571,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
 
     it("returns null when no reminder rule emits that day", async () => {
       seedMember(memberId);
-      const result = await remindersBlock.generate({ memberId, date: DATE });
+      const result = remindersBlock.generate({ memberId, date: DATE });
       expect(result).toBeNull();
     });
 
@@ -585,7 +585,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
         )
         .run(now, now);
 
-      const result = await remindersBlock.generate({ memberId, date: DATE });
+      const result = remindersBlock.generate({ memberId, date: DATE });
       expect(result).toEqual({ groups: [{ items: [{ value: "Pack the school bag" }] }] });
       expect(() => adaptBlockData("reminders", result)).not.toThrow();
     });
@@ -611,7 +611,7 @@ describe("daily-briefing domain blocks (FR-013)", () => {
         "INSERT INTO calendar_assignments (id, event_id, member_id, created_at) VALUES ('assign-cg', 'event-cg', ?, ?)"
       ).run(memberId, now);
 
-      const result = await remindersBlock.generate({ memberId, date: DATE });
+      const result = remindersBlock.generate({ memberId, date: DATE });
       expect(result).toEqual({ groups: [{ items: [{ value: "Bring your kit" }] }] });
     });
   });

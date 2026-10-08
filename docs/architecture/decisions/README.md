@@ -29,7 +29,6 @@ documentation does not satisfy a missing check or establish runtime acceptance.
 | Decision | Remaining work                                                                                                                                                                         |
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ADR-040  | Subscriber failures are persisted and searchable in admin; counters and automatic health degradation remain follow-up work.                                                            |
-| ADR-043  | Generation gathers local reads around asynchronous external work; reproduce the inferred mixed-state risk and realize the required common read snapshot.                               |
 | ADR-045  | Briefing snapshots flatten the required structured meal lists; preserve the list or explicitly approve a contract amendment.                                                           |
 | ADR-050  | Plugin manifest event declarations and owner-namespace build checks remain absent; core event typing exists.                                                                           |
 | ADR-056  | Production onboarding examples and their DB protections are not implemented; their launch disposition needs an explicit decision. Current synthetic seeds require a disposable target. |
