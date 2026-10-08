@@ -227,6 +227,13 @@ describe("daily-briefing full generation", () => {
     __setOnThisDaySourceForTests(undefined);
   });
 
+  it("rejects an empty member before generation or persistence", async () => {
+    await expect(generateBriefing("", DATE_FRI)).rejects.toThrow("memberId is required");
+    expect(getDb().prepare("SELECT COUNT(*) AS count FROM daily_briefing").get()).toEqual({
+      count: 0,
+    });
+  });
+
   it("FR-014: effective order merge — configured instances (incl. a repeated type with distinct params) first, then unlisted registry types in registry order", async () => {
     seedMember("m1", { optedIn: true });
     // "wordOfDay" appears TWICE with distinct params (INV-05/ADR-044); "message" is configured
@@ -802,6 +809,7 @@ describe("daily-briefing full generation", () => {
         JSON.stringify({ language: "es", timezone: "invalid" }),
         JSON.stringify({ language: "es", unknown: true }),
         JSON.stringify({ language: "es", weekStartDay: 9 }),
+        "{invalid-json",
       ]) {
         getDb()
           .prepare(
