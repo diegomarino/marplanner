@@ -38,7 +38,7 @@ on the kiosk dashboard and the Daily Briefing. Replaces the v1 weekly-window pla
    whose `weekday = weekdayOf(date, householdTz)` and (b) one-off entries for that exact
    date. No occurrence rows are stored.
 4. **MEALS-RECIPES-INV-04** **Canonical order** (`ADR-045`): recurring entries before one-off, then `meal_plan`
-   name ASC, then `createdAt` ASC. The same logical menu always renders identically;
+   name ASC, `mealPlanId` ASC (tie-breaking equal names), `createdAt` ASC, then entry ID ASC. The same logical menu always renders identically;
    briefing snapshots are reproducible.
 5. **MEALS-RECIPES-INV-05** **No per-occurrence skip (Option A, `ADR-045`):** a recurring entry never skips a
    single date; editing/deactivating the entry or plan changes every matching weekday
