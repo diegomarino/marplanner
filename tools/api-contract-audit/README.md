@@ -20,12 +20,12 @@ Direct execution without arguments also works:
 node tools/api-contract-audit/audit.mjs
 ```
 
-By default the auditor copies only `productFiles` from
-`tests/fixtures/assembly-cohort.json` into a fresh temporary directory, links the
-installed dependencies, builds the isolated product, and runs synthetic tests there.
+By default the auditor copies the git-tracked files into a fresh temporary
+directory, links the installed dependencies, builds the isolated product, and runs
+synthetic tests there.
 The build precedes the tests so built-entrypoint checks do not depend on test order.
 Local environment files,
-databases, logs and unlisted files are not copied. Tests create their own fixture
+databases, logs and untracked files are not copied. Tests create their own fixture
 databases and local listeners. The output path is printed before execution and
 retained for inspection. No server needs to be running.
 
@@ -33,7 +33,7 @@ Use `--product <directory>` to select another installed source checkout, or
 `--out <new-directory>` to choose where the isolated copy and reports are kept.
 Without `--observations`, running tests is the default; `--run-tests` remains an
 optional explicit spelling. Replaying observations also uses an isolated copy.
-When adding maintained files, update the inventory's `productFiles` list.
+Commit a new maintained file for the isolated copy to include it.
 
 Fastify's `fastify.initialization` diagnostics channel adds observational
 `preValidation` and `onSend` hooks. Tests keep their assertions and original

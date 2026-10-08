@@ -62,10 +62,10 @@ Fresh captures, per-finding classification, RED/GREEN logs and validation receip
 remain ignored in the implementation worktree. A replay is useful for diagnosis
 but cannot establish runtime provenance. Zero observed conflicts does not close
 unobserved body variants, state-dependent invariants or transport exclusions.
-Coverage-policy source hashes and inventory are reconciled separately against the
-current maintained files and real V8 measurements. Existing per-file minima and
-layer floors remain unchanged; newly maintained modules receive explicit measured
-policies. Calendar edit regressions cover successful rescheduling and merged-state
+The coverage-policy file inventory, per-file minima and layer floors are
+reconciled separately against the current maintained files and real V8
+measurements. Existing per-file minima and layer floors remain unchanged; newly
+maintained modules receive explicit measured policies. Calendar edit regressions cover successful rescheduling and merged-state
 rejection instead of lowering its retained minima. Historical baseline measurements
 above remain historical evidence.
 

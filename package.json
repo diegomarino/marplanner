@@ -59,6 +59,7 @@
     "test:cohorts:vitest": "vitest run tests/client tests/boundary tests/integration --coverage --reporter=json --outputFile=.quality/vitest-results.json",
     "test:coverage": "vitest run tests/client tests/boundary tests/integration --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:time-announcements": "MP_E2E_TIME_ANNOUNCEMENTS=1 playwright test tests/e2e/time-announcements.spec.ts",
     "test:integration": "vitest run tests/integration --environment node",
     "test:unit": "vitest run tests/client",
     "test": "node --test tools/*.test.mjs",
