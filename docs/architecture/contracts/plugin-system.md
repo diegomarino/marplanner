@@ -82,13 +82,13 @@ future third-party plugins ("declare-now, enforce-later").
 
 ## Events
 
-Manifest event declarations and owner-namespace checks remain unimplemented (ADR-050), as do subscriber failure counters/health exposure (ADR-040). Core catalog typing does not satisfy those requirements.
+Manifests declare immutable, typed `events.emits` and `events.subscribes` lists. `npm run check:plugin-events` runs before build and lint, rejecting unknown/duplicate declarations, undeclared domain-bus calls and foreign/core namespace emission. Published prefix aliases have fixed owners in `EVENT_NAMESPACE_OWNERS` (ADR-050). Subscriber failure counters/health exposure remain follow-up work (ADR-040).
 
 (ADR-040 / ADR-050.) **The Plugin System domain** itself **emits: none, subscribes: none**
 (for this system) — but it **owns the manifest where each plugin declares the events it emits and
-subscribes to** (`ADR-050`): namespaced by plugin ID, build-validated, dropped on
-uninstall; emitting/subscribing an undeclared name (or under another namespace) is a build
-error. So plugins _may_ participate in the bus via declared events; the lifecycle of the
+subscribes to** (`ADR-050`): owner-namespaced and build-validated. Emitting an
+undeclared name or under another owner's namespace is a build error. Subscribing to
+another domain's event is allowed when declared; undeclared subscriptions fail. So plugins _may_ participate in the bus via declared events; the lifecycle of the
 Plugin System domain does not.
 
 Activation/deactivation is a

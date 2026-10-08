@@ -29,7 +29,6 @@ documentation does not satisfy a missing check or establish runtime acceptance.
 | Decision | Remaining work                                                                                                                                                                         |
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ADR-040  | Subscriber failures are persisted and searchable in admin; counters and automatic health degradation remain follow-up work.                                                            |
-| ADR-050  | Plugin manifest event declarations and owner-namespace build checks remain absent; core event typing exists.                                                                           |
 | ADR-056  | Production onboarding examples and their DB protections are not implemented; their launch disposition needs an explicit decision. Current synthetic seeds require a disposable target. |
 | ADR-061  | The shared client runtime has catalog-wide parity; canonical dynamic-key declarations and locale resolution remain incomplete.                                                         |
 | ADR-003  | Plugin lifecycle/lineage ISO TEXT timestamps diverge from the integer convention; choose a bounded exception or a safe migration.                                                      |

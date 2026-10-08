@@ -688,6 +688,8 @@
             "runtime classifier cannot waive product checks for any changed path",
             "check-openapi-drift.mjs negative-test home (tools/check-openapi-drift.test.mjs) exists",
             "every check-*.mjs tool (repo-wide) is classified: break-recipe or documented exclusion",
+            "check-plugin-events.mjs — synthetic violation → NON-ZERO exit (not false-green)",
+            "check-plugin-events.mjs — clean fixture → exit 0 (not always-red)",
             "check-exception-list.mjs — synthetic violation → NON-ZERO exit (not false-green)",
             "check-exception-list.mjs — clean fixture → exit 0 (not always-red)"
           ],
@@ -827,6 +829,16 @@
             "rejects a Node-only modifier even when the runner executes all cases",
             "standard gate checks Node and Vitest without a Playwright artifact",
             "transferred standard evidence uses its producing checkout root"
+          ],
+          "tools/plugin-events.test.mjs": [
+            "plugin route ownership matches the application registrar inventory",
+            "plugin event gate checks registered route emits and subscriptions",
+            "plugin event gate rejects a typed foreign-owner emit and an undeclared subscription",
+            "plugin event gate accepts owned emits without subscribers and declared cross-owner subscriptions",
+            "plugin event gate follows imported, local and namespace aliases through type assertions",
+            "plugin event gate checks every conditional event name and rejects opaque names",
+            "plugin event gate rejects missing, duplicate, unknown and foreign-owner manifest declarations",
+            "plugin event gate ignores unrelated methods and rejects a missing typed catalog"
           ]
         }
       },
@@ -2104,6 +2116,7 @@
             "first-party plugin manifest inventory matches the canonical contribution, requirement, and settings matrix exactly",
             "first-party plugin manifest inventory projects every internal contribution exactly once into the closed public shape",
             "first-party plugin manifest inventory fails closed on the complete TypeScript export surface",
+            "first-party plugin manifest inventory declares typed events with explicit published namespace owners",
             "first-party plugin manifest inventory cannot be expanded or rewritten through runtime registration"
           ],
           "tests/boundary/plugin-routes.test.ts": [
