@@ -99,13 +99,16 @@ const { tmpdir } = await import("node:os");
 const root = mkdtempSync(resolve(tmpdir(), "api-audit-self-check-"));
 let prepared;
 try {
-  mkdirSync(resolve(root, "tests/fixtures"), { recursive: true });
   mkdirSync(resolve(root, "node_modules"));
-  writeFileSync(
-    resolve(root, "tests/fixtures/assembly-cohort.json"),
-    JSON.stringify({ productFiles: ["kept.txt", "tests/fixtures/assembly-cohort.json"] })
-  );
   writeFileSync(resolve(root, "kept.txt"), "maintained");
+  const { spawnSync } = await import("node:child_process");
+  for (const args of [
+    ["init", "-b", "main"],
+    ["add", "kept.txt"],
+  ]) {
+    const result = spawnSync("git", args, { cwd: root, encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr);
+  }
   writeFileSync(resolve(root, ".env.local"), "private");
   writeFileSync(resolve(root, "marplanner.db"), "private");
   prepared = prepareRun({}, root);

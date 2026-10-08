@@ -31,6 +31,28 @@ test("candidate identity binds bytes, modes and exact maintained inventory", asy
   }
 });
 
+test("tracked checkout inventory comes from git and rejects untracked files", async () => {
+  const { candidateIdentity } = await import("./candidate-identity.mjs");
+  const root = mkdtempSync(join(tmpdir(), "candidate-git-"));
+  const git = (args) => {
+    const result = spawnSync("git", args, { cwd: root, encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr);
+  };
+  try {
+    git(["init", "-b", "main"]);
+    writeFileSync(join(root, "tracked.txt"), "tracked");
+    git(["add", "tracked.txt"]);
+    const original = candidateIdentity(root);
+    assert.match(original, /^[a-f0-9]{64}$/);
+    writeFileSync(join(root, "notes.txt"), "untracked");
+    assert.throws(() => candidateIdentity(root), /tracked files/i);
+    rmSync(join(root, "notes.txt"));
+    assert.equal(candidateIdentity(root), original);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("CI binds the checked-out tree instead of a stale embedded candidate hash", async () => {
   const { readFileSync, existsSync } = await import("node:fs");
   const { load } = await import("js-yaml");
@@ -62,12 +84,15 @@ test("CI binds the checked-out tree instead of a stale embedded candidate hash",
   const root = mkdtempSync(join(tmpdir(), "candidate-ci-"));
   try {
     mkdirSync(join(root, "tools"));
-    mkdirSync(join(root, "tests/fixtures"), { recursive: true });
     copyFileSync("tools/candidate-identity.mjs", join(root, "tools/candidate-identity.mjs"));
-    writeFileSync(
-      join(root, "tests/fixtures/assembly-cohort.json"),
-      JSON.stringify({ productFiles: ["missing.txt"] })
-    );
+    const git = (args) => {
+      const result = spawnSync("git", args, { cwd: root, encoding: "utf8" });
+      assert.equal(result.status, 0, result.stderr);
+    };
+    git(["init", "-b", "main"]);
+    writeFileSync(join(root, "tracked.txt"), "tracked");
+    git(["add", "tracked.txt"]);
+    writeFileSync(join(root, "extra.txt"), "untracked");
     for (const job of ["standard", "native", "container"]) {
       const run = commands(job).find((run) => run.includes("node tools/candidate-identity.mjs"));
       assert.ok(run);

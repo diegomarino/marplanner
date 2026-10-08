@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { pathToFileURL } from "node:url";
 
@@ -25,10 +26,24 @@ const sorted = (value) =>
         )
       : value;
 
+export function trackedProductFiles(root = process.cwd()) {
+  let output;
+  try {
+    output = execFileSync("git", ["-C", root, "ls-files", "-z"], {
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+  } catch (error) {
+    const detail = error.stderr?.toString("utf8").trim();
+    throw new Error(detail || "Candidate inventory requires a git checkout");
+  }
+  const files = output.toString("utf8").split("\0").filter(Boolean);
+  if (!files.length || new Set(files).size !== files.length)
+    throw new Error("Candidate inventory missing or duplicated");
+  return files;
+}
+
 export function candidateIdentity(root = process.cwd(), expected) {
-  expected ??= JSON.parse(
-    fs.readFileSync(path.join(root, "tests/fixtures/assembly-cohort.json"))
-  ).productFiles;
+  expected ??= trackedProductFiles(root);
   if (!Array.isArray(expected) || !expected.length || new Set(expected).size !== expected.length)
     throw new Error("Candidate inventory missing or duplicated");
   const files = {},
@@ -51,7 +66,7 @@ export function candidateIdentity(root = process.cwd(), expected) {
   }
   walk();
   if (JSON.stringify(Object.keys(files).sort()) !== JSON.stringify([...expected].sort()))
-    throw new Error("Candidate inventory differs from reviewed product files");
+    throw new Error("Candidate inventory differs from tracked files");
   return digest(
     JSON.stringify(sorted({ schema: 1, files, directories: directories.sort() })) + "\n"
   );
