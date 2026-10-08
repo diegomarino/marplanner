@@ -55,7 +55,7 @@ test("daily-messages admin author→read: PUT then GET window + current (#462)",
   await page.getByRole("button", { name: "Provision Device" }).click();
   await expect(page.getByTestId("home-surface")).toBeVisible({ timeout: 15_000 });
 
-  // --- 2) Resolve the active locale (default es, ADR-061) for post-unlock t lookups ---
+  // --- 2) Resolve the active locale (default en, ADR-015) for post-unlock t lookups ---
   const settingsResp = await page.request.get("/api/settings");
   expect(settingsResp.status()).toBe(200);
   const settings = (await settingsResp.json()) as { locale?: { language?: string } };

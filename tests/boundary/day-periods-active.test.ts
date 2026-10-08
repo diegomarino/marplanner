@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import { useIsolatedDb } from "../helpers/db";
+import { getDb } from "../../src/server/db/client";
 
 /** / — Day Periods active-endpoint boundary test (RED first, before implementation).
  * BLACK-BOX: Uses buildApp + Fastify.inject only.
@@ -87,6 +88,24 @@ describe("day-periods-active (RED boundary test)", () => {
         const body = JSON.parse(res.payload);
         expect(body).toHaveProperty("activeId");
         expect(body.activeId).toBe("afternoon");
+        for (const rawLocale of [
+          "{invalid-json",
+          "null",
+          JSON.stringify({ timezone: "invalid" }),
+        ]) {
+          getDb()
+            .prepare(
+              "INSERT INTO settings_objects (object_name, data, updated_at) VALUES ('locale', ?, ?) ON CONFLICT(object_name) DO UPDATE SET data = excluded.data"
+            )
+            .run(rawLocale, Date.now());
+          const recovered = await app.inject({
+            method: "GET",
+            url: "/api/day-periods/active",
+            cookies: { mp_device_key: rawKey },
+          });
+          expect(recovered.statusCode).toBe(200);
+          expect(recovered.json()).toEqual({ activeId: "afternoon" });
+        }
       } finally {
         await app.close();
       }

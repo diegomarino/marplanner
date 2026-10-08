@@ -6,10 +6,7 @@ import {
   listDayPeriods,
   resolveActive,
 } from "../modules/day-periods";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { eq } from "drizzle-orm";
-import { getDb } from "../db/client";
-import { settingsObjects } from "../db/schema";
+import { readHouseholdTimezone } from "../lib/household-date";
 
 export async function dayPeriodsRoutes(app: FastifyInstance): Promise<void> {
   app.get("/api/day-periods", async (request: FastifyRequest, reply: FastifyReply) => {
@@ -34,27 +31,7 @@ export async function dayPeriodsRoutes(app: FastifyInstance): Promise<void> {
   });
 
   app.get("/api/day-periods/active", async (request: FastifyRequest, reply: FastifyReply) => {
-    const db = getDb();
-    const orm = drizzle(db);
-
-    const rows = await orm
-      .select()
-      .from(settingsObjects)
-      .where(eq(settingsObjects.objectName, "locale"))
-      .limit(1);
-
-    let persisted: Record<string, unknown> = {};
-    if (rows.length > 0) {
-      persisted = JSON.parse(rows[0].data);
-    }
-
-    const DEFAULT_LOCALE = {
-      timezone: "Europe/Madrid",
-      language: "es",
-      weekStartDay: 1,
-    };
-
-    const timezone = (persisted.timezone as string) ?? DEFAULT_LOCALE.timezone;
+    const timezone = readHouseholdTimezone();
 
     const nowFormatter = new Intl.DateTimeFormat("en-US", {
       timeZone: timezone,

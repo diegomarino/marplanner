@@ -40,7 +40,7 @@ export interface StreakBlockContext {
   /** Household language for the `label` snapshot string (P1 fold addendum,
    * DAILY-BRIEFING-INV-06) — resolved by the caller (`index.ts`'s generator dispatch) via the same
    * settings read `../render/labels.ts#getLabels` documents. Optional — `getLabels` defaults to the
-   * household's system-wide default ("es") when absent. */
+   * household's system-wide default ("en") when absent. */
   language?: string;
 }
 

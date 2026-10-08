@@ -36,7 +36,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 const LOCALE_DEFAULTS: LocaleObject = {
   timezone: "Europe/Madrid",
-  language: "es",
+  language: "en",
   weekStartDay: 1,
 };
 const PRINTER_DEFAULTS: PrinterSettings = DEFAULT_PRINTER_SETTINGS;
@@ -193,7 +193,8 @@ export function readEffectiveSettings(
     }
   }
   const activePlugins = activePluginIds(db);
-  const locale = validateLocale(persisted.get("locale")) ?? LOCALE_DEFAULTS;
+  const locale =
+    validateLocale({ ...LOCALE_DEFAULTS, ...persisted.get("locale") }) ?? LOCALE_DEFAULTS;
   const weather = activePlugins.has("weather")
     ? (validateWeather(persisted.get("weather")) ?? WEATHER_DEFAULTS)
     : null;
