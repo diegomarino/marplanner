@@ -28,7 +28,6 @@ documentation does not satisfy a missing check or establish runtime acceptance.
 
 | Decision | Remaining work                                                                                                                                                                         |
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ADR-020  | Shared weekday write validation and startup persisted-token integrity check remain incomplete.                                                                                         |
 | ADR-040  | Subscriber failure counters and health exposure are missing.                                                                                                                           |
 | ADR-043  | Generation gathers local reads around asynchronous external work; reproduce the inferred mixed-state risk and realize the required common read snapshot.                               |
 | ADR-045  | Briefing snapshots flatten the required structured meal lists; preserve the list or explicitly approve a contract amendment.                                                           |

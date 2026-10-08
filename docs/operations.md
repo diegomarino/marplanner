@@ -256,3 +256,12 @@ server and do not set `PW_REUSE_SERVER=1` against household data. Tests must run
 sequentially with other commands that rebuild `dist`. Provider fixtures use local
 ports; physical printing, audible speech and controller writes need separate
 operator verification.
+
+## Weekday integrity at startup
+
+Before serving requests or starting scheduled jobs, the server validates persisted
+weekday codes (`mon` through `sun`) and their JSON masks. A `Weekday integrity failed`
+error names the table, column and row. Startup stops without modifying that row; inspect
+and correct the recurrence data before restarting. Invalid masks are never silently
+converted into rules that match no days. Seed modules undergo the same check before
+commit and roll back if they introduce invalid weekday data.

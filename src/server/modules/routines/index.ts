@@ -1,3 +1,4 @@
+import { validateWeekdays as validateWeekdayTokens } from "../../../shared/weekdays";
 import { randomUUID } from "node:crypto";
 import { getDb } from "../../db/client";
 import type { Routine, Chore } from "../../../shared";
@@ -606,8 +607,6 @@ export function listRoutines(): Routine[] {
 
 // ── Assignment helpers ─────────────────────────────────────────────────────
 
-const VALID_WEEKDAYS = new Set(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]);
-
 function rowToAssignment(row: {
   id: string;
   routine_id: string;
@@ -627,14 +626,7 @@ function validateWeekdays(weekdays: unknown): string[] {
   if (!Array.isArray(weekdays)) {
     throw new AssignmentValidationError("weekdays must be an array");
   }
-  for (const day of weekdays) {
-    if (typeof day !== "string" || !VALID_WEEKDAYS.has(day)) {
-      throw new AssignmentValidationError(
-        `Invalid weekday "${day}": must be one of mon, tue, wed, thu, fri, sat, sun`
-      );
-    }
-  }
-  return weekdays as string[];
+  return validateWeekdayTokens(weekdays, AssignmentValidationError);
 }
 
 // ── Assignment CRUD ────────────────────────────────────────────────────────

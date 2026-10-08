@@ -1,3 +1,4 @@
+import { validateWeekdays } from "../src/shared/weekdays";
 import type { SeedModule } from "../src/server/db/seeds/types";
 
 const DAILY_MESSAGES = [
@@ -157,7 +158,7 @@ const seedDailyContent: SeedModule = {
         setting.memberId,
         setting.blockType,
         setting.enabled ? 1 : 0,
-        setting.weekdays === null ? null : JSON.stringify(setting.weekdays),
+        setting.weekdays === null ? null : JSON.stringify(validateWeekdays(setting.weekdays)),
         setting.params === null ? null : JSON.stringify(setting.params),
         nowMs,
         nowMs
