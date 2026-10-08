@@ -99,6 +99,11 @@ Essential/system values are established through ordered data migrations. Public
 and private synthetic seed profiles require an explicitly disposable target; they
 must not run at container startup or overwrite active household data.
 
+The public disposable demo profile activates all nine installed plugins through
+the normal lifecycle after seeding domain content and before private overlays.
+Rerunning the profile reactivates disabled demo plugins. Activation retains
+configured settings and does not execute scheduled jobs or external work.
+
 Production onboarding examples are not implemented and their release disposition
 remains undecided. A future design must decide whether examples are useful and
 define deterministic identity, idempotence, archival/deletion behavior and
