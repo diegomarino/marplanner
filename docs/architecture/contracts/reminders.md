@@ -55,9 +55,10 @@ during briefing generation, do not notify in real time, and schedule no backgrou
    matched). Calendar owns merge + text normalization. The gate passes `assignedTo:
 member`, and per ADR-018 only events explicitly assigned to that member match
    (unassigned events do not gate a member's reminder).
-5. **REMINDERS-INV-06** **Consistent generation snapshot:** the gate's `getEvents` call uses the briefing
-   generation's read-transaction context, and events are fetched once per member/date
-   and reused across that member's rules (ADR-018/ADR-043 I1).
+5. **REMINDERS-INV-06** **Consistent generation snapshot:** the gate's `getEvents` call runs on the briefing
+   generation's shared connection inside its synchronous read transaction. Its
+   `CalendarReadContext` reuses events and private query metadata once per member/date
+   across that member's rules (ADR-018/ADR-043 I1).
 6. **REMINDERS-INV-07** **Rule changes do not regenerate existing briefings** (ADR-022): a generated briefing
    is an immutable snapshot; edits/deletes affect future generation only. Reflecting a
    change in today's briefing uses the explicit regenerate path.

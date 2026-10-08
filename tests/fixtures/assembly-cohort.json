@@ -1069,6 +1069,7 @@
             "Calendar highlight rules decorates local titles and external descriptions by first active accent-insensitive match without writes"
           ],
           "tests/boundary/calendar-merged-feed.test.ts": [
+            "Calendar merged feed read ADR-043: reuses one event read while preserving private query fields and transaction scope",
             "Calendar merged feed read merges local and active external occurrences with masked, stable provenance",
             "Calendar merged feed read excludes disabled, cancelled, and orphaned external rows from every source filter",
             "Calendar merged feed read requires an explicit active assignment for member-scoped external reads",
@@ -4450,7 +4451,8 @@
             "daily-briefing EXTERNAL blocks + shared cache production adapters (zenQuotesSource / wikipediaOnThisDaySource) wikipediaOnThisDaySource a non-2xx response throws",
             "daily-briefing EXTERNAL blocks + shared cache production adapters (zenQuotesSource / wikipediaOnThisDaySource) wikipediaOnThisDaySource honors an operator-overridden endpoint (ONTHISDAY_ENDPOINT), replacing the language-prefixed origin",
             "daily-briefing EXTERNAL blocks + shared cache production adapters (zenQuotesSource / wikipediaOnThisDaySource) wikipediaOnThisDaySource pickThirds: fewer than 6 items returns all of them; six or more returns the recent/middle/old trio",
-            "daily-briefing EXTERNAL blocks + shared cache production adapters (zenQuotesSource / wikipediaOnThisDaySource) wikipediaOnThisDaySource empty categories are omitted from the result entirely (all-empty resolves null)"
+            "daily-briefing EXTERNAL blocks + shared cache production adapters (zenQuotesSource / wikipediaOnThisDaySource) wikipediaOnThisDaySource empty categories are omitted from the result entirely (all-empty resolves null)",
+            "daily-briefing EXTERNAL blocks + shared cache captured weather input failures omit without poisoning the external cache"
           ],
           "tests/integration/daily-briefing-catchup-e2e.test.ts": [
             "daily-briefing catch-up — built-bundle process boot DAILY-BRIEFING-AC-10 / BACKGROUND-JOBS-SCHEDULER-AC-03 / -AC-04 / -INV-04 / -INV-03: a scheduler-enabled boot catches up today's briefing for an opted-in member"
@@ -4504,6 +4506,8 @@
             "daily-briefing corpora corpus-availability map (FR-008/FR-009) isKnownBlockType recognizes all 21 registry types and rejects garbage"
           ],
           "tests/integration/daily-briefing-generation.test.ts": [
+            "daily-briefing full generation ADR-043: freezes local content before a concurrent edit during external work",
+            "daily-briefing full generation ADR-043: freezes local settings before a concurrent edit during external work",
             "daily-briefing full generation rejects an empty member before generation or persistence",
             "daily-briefing full generation FR-014: effective order merge — configured instances (incl. a repeated type with distinct params) first, then unlisted registry types in registry order",
             "daily-briefing full generation SC-003: generating the same member/date twice produces identical block selections and an identical raster",
@@ -4531,7 +4535,9 @@
             "daily-briefing full generation deriveStatus: every block failed settles the briefing failed (no survivors)",
             "daily-briefing full generation corpus defaults follow the es household with English-only fallback",
             "daily-briefing full generation corpus defaults follow the en household with English-only fallback",
-            "daily-briefing full generation explicit corpus overrides win while household changes leave stored snapshots intact"
+            "daily-briefing full generation explicit corpus overrides win while household changes leave stored snapshots intact",
+            "daily-briefing full generation contains malformed persisted external cache entries as block failures",
+            "daily-briefing full generation generates an enabled onThisDay block and contains its external failure"
           ],
           "tests/integration/daily-briefing-job.test.ts": [
             "daily-briefing job registration (research D8/D9) isMissed predicate truth table (Codex review F1: per-member, never COUNT(*)==0) DAILY-BRIEFING-AC-10: no daily_briefing row for an opted-in active member — missed",

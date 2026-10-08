@@ -88,7 +88,7 @@ export const birthdayBlock = {
   type: TYPE,
   scope: "member" as const,
   source: "ctx.listActiveMembers (host-api member-listing gap, see module doc — same as shotgun)",
-  async generate(ctx: BirthdayBlockContext): Promise<BirthdayBlockData | null> {
+  generate(ctx: BirthdayBlockContext): BirthdayBlockData | null {
     if (!ctx.listActiveMembers) return null;
     const all = ctx.listActiveMembers();
 

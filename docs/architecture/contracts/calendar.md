@@ -55,8 +55,7 @@ ON`** per connection as a baseline net (ADR-043 C1).
 9. **CALENDAR-INV-09** **`assignedTo` returns only events with an explicit assignment for that member;**
    unassigned events match only when `assignedTo` is omitted (ADR-018 I3) — prevents
    reminder gates firing on unassigned family events.
-10. **CALENDAR-INV-10** **Generation reads accept a caller read-transaction context** for a consistent
-    snapshot; per-member/date events fetched once (ADR-018/ADR-043 I1).
+10. **CALENDAR-INV-10** **Generation reads use the shared DB connection inside the caller's synchronous read transaction.** A request-scoped `CalendarReadContext` reuses per-member/date event entries and their private query metadata across reminder rules; it requires an active transaction and is discarded after gathering (ADR-018/ADR-043 I1).
 
 ## Behaviors
 
