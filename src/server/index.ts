@@ -128,6 +128,8 @@ export async function main(): Promise<void> {
 
     const { runMigrations } = await import("./db/migrate");
     runMigrations();
+    const { assertWeekdayIntegrity } = await import("./db/weekday-integrity");
+    assertWeekdayIntegrity();
 
     const { reconcileBootstrap, reconcileManagement } = await import("./auth/reconcile");
     reconcileBootstrap();

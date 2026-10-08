@@ -1,3 +1,4 @@
+import { validateWeekdays } from "../src/shared/weekdays";
 import type { SeedModule } from "../src/server/db/seeds/types";
 
 const WEEKDAYS = ["mon", "tue", "wed", "thu", "fri"] as const;
@@ -134,7 +135,7 @@ const seedRoutines: SeedModule = {
       );
     }
 
-    const weekdays = JSON.stringify(WEEKDAYS);
+    const weekdays = JSON.stringify(validateWeekdays(WEEKDAYS));
     const upsertAssignment = db.prepare(
       `INSERT INTO routine_assignments
          (id, routine_id, member_id, weekdays, active, created_at, updated_at)

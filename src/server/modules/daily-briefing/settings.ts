@@ -1,3 +1,7 @@
+import {
+  CANONICAL_WEEKDAY_ORDER,
+  validateWeekdays as validateWeekdayTokens,
+} from "../../../shared/weekdays";
 /** Daily Briefing settings layer — reads/writes for
  * the three plugin-namespaced settings tables: `daily_briefing_settings` (schedule + the
  * auto-print trigger BINDING), `daily_briefing_block_order` (the ordered block-instance list),
@@ -34,17 +38,6 @@ export class CorpusLanguageUnavailableError extends DailyBriefingValidationError
 
 // Strict 24h HH:MM, `00:00`-`23:59`. Reject, never normalize.
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
-
-const CANONICAL_WEEKDAY_ORDER: readonly Weekday[] = [
-  "mon",
-  "tue",
-  "wed",
-  "thu",
-  "fri",
-  "sat",
-  "sun",
-];
-const VALID_WEEKDAYS = new Set<string>(CANONICAL_WEEKDAY_ORDER);
 
 const VALID_LEVELS = new Set(["L1", "L2", "L3", "L4"]);
 const VALID_DIFFICULTIES = new Set(["easy", "medium", "hard"]);
@@ -87,12 +80,7 @@ function validateWeekdays(value: unknown): Weekday[] | null {
     throw new DailyBriefingValidationError("weekdays must be an array or null");
   }
   const seen = new Set<string>();
-  for (const day of value) {
-    if (typeof day !== "string" || !VALID_WEEKDAYS.has(day)) {
-      throw new DailyBriefingValidationError(
-        `Invalid weekday "${String(day)}": must be one of mon, tue, wed, thu, fri, sat, sun`
-      );
-    }
+  for (const day of validateWeekdayTokens(value, DailyBriefingValidationError)) {
     seen.add(day);
   }
   return CANONICAL_WEEKDAY_ORDER.filter((day) => seen.has(day));
