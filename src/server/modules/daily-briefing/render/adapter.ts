@@ -4,10 +4,8 @@
 // (v1-study, unwrap-or-throw discipline) — verbatim per block-type case;
 // only the envelope's own field names changed (v1's `BriefingEnvelope`
 // carries `.version`/`.blocks[].id`, dropped here — see RenderEnvelope,
-//./types.ts). Every case below is ported now even though the render
-// REGISTRY (./registry.ts) registers only "message" this module (adds
-// the remaining render-defs) — the adapter's job is pure data-shape
-// dispatch/validation, independent of which render-defs are wired.
+// ./types.ts). Every case below is pure data-shape dispatch/validation
+// for the full 21-type registry (`./registry.ts`).
 //
 // BOUNDARY (v1 spec §2 unwrap-or-throw, preserved verbatim):
 // - Reads ONLY block.type/title/data — no defaults, no coalescing, no

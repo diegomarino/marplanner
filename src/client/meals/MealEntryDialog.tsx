@@ -104,7 +104,7 @@ export function MealEntryDialog({
           if (!next && !saving) onClose();
         }}
       >
-        <DialogContent>
+        <DialogContent closeLabel={t("meals.recipes.detailClose")}>
           <DialogHeader>
             <DialogTitle>
               {editing ? t("meals.entries.editTitle") : t("meals.entries.title")}

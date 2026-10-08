@@ -583,8 +583,8 @@ describe("meals-menu boundary tests", () => {
       expect(weekdayOf(dates[6], "Europe/Madrid")).toBe("sun");
       expect(dates).toContain(refDate);
 
-      // Per-slot buckets (date -> slot -> MenuItem[]), matching the approved design
-      // (openapi.planned.yaml WeekMenu), not a flat date -> MenuItem[] list.
+      // Per-slot buckets (date -> slot -> MenuItem[]), matching
+      // docs/api/meals/openapi.yaml WeekMenu, not a flat date -> MenuItem[] list.
       expect(week[refDate].lunch).toHaveLength(1);
       expect(week[refDate].breakfast).toEqual([]);
       expect(week[refDate].snack).toEqual([]);

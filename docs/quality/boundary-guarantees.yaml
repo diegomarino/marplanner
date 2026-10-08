@@ -977,7 +977,7 @@ guarantees:
     disposition: active
     owner: app-settings-registry
     spec: app-settings-registry
-    note: "PUT printerTransport type=wifi returns unsupported-transport error in this system"
+    note: "PUT printerTransport with nested type/config or unknown keys returns invalid_settings; flat Bluetooth pairing fields only"
 
   # ── Client Logging / Telemetry domain — design (Tier-0 platform; active, locally owned) ──
   # 22 in-G CLIENT-LOGGING-TELEMETRY guarantees (14 INV + 8 AC) realized by docs/features/client-logging-telemetry.md.

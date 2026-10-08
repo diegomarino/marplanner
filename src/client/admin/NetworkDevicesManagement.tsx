@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { authFetch } from "@/lib/credential";
-import { useT } from "@/i18n";
+import { useTranslation } from "@/i18n";
 import type { MessageKey } from "@/i18n/messages";
 import type {
   LiveCacheState,
@@ -46,8 +46,8 @@ function controllerErrorMessageKey(code: string | undefined): MessageKey {
   return "networkDevices.error.controllerGeneric";
 }
 
-function formatLastSeen(lastSeenAt: number): string {
-  return new Date(lastSeenAt).toLocaleString();
+function formatLastSeen(lastSeenAt: number, language: string): string {
+  return new Date(lastSeenAt).toLocaleString(language === "es" ? "es-ES" : "en-GB");
 }
 
 interface EditDraft {
@@ -56,7 +56,7 @@ interface EditDraft {
 }
 
 export function NetworkDevicesManagement() {
-  const t = useT();
+  const { t } = useTranslation();
 
   const [devices, setDevices] = useState<RegisteredDevice[]>([]);
   const [cacheState, setCacheState] = useState<LiveCacheState | null>(null);
@@ -472,6 +472,7 @@ function DeviceStatusBadges({
    * See `attemptedBlockTarget` state in the parent for the full rationale. */
   attemptedBlockTarget?: boolean;
 }) {
+  const { language } = useTranslation();
   const liveStatusKey: MessageKey =
     device.liveStatus === "online"
       ? "networkDevices.liveStatus.online"
@@ -513,7 +514,7 @@ function DeviceStatusBadges({
         ) : (
           <span>
             {" "}
-            · {t("networkDevices.row.lastSeenLabel")} {formatLastSeen(device.lastSeenAt)}
+            · {t("networkDevices.row.lastSeenLabel")} {formatLastSeen(device.lastSeenAt, language)}
           </span>
         ))}
       {/* "unknown" is derived from a NON-fresh cache (the liveStatus derivation) — naming WHY it's unknown (cache unconfigured/cold/stale)

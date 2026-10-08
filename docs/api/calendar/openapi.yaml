@@ -187,7 +187,7 @@ components:
           enum:
             - local
             - external
-          description: only 'local' today
+          description: local household-managed or external imported occurrence
         title:
           type: string
         allDay:
@@ -206,19 +206,17 @@ components:
           type:
             - string
             - "null"
-          description: RESERVED (highlights, later slice) — equals title today.
+          description: Read-time highlight decoration (emoji prefix); never rewrites stored title.
         provider:
           type:
             - string
             - "null"
-          description: RESERVED external provenance — null today.
+          description: Display-only external provider when source=external; null for local.
         sourceRef:
           type:
             - string
             - "null"
-          description: >-
-            RESERVED external source reference (masked) — null today. *(data-model.md
-            provider/sourceRef; slice B)*
+          description: Masked external source origin (`protocol//host/***`); null for local.
     AssignmentReplace:
       type: object
       required:
@@ -425,12 +423,20 @@ paths:
           in: query
           schema:
             type: string
-          description: RESERVED — supplying it is rejected 400 (FR-010)
+          description: >-
+            Optional case/diacritic-insensitive substring match performed inside Calendar
+            (default fields title+description; override with queryFields).
         - name: queryFields
           in: query
           schema:
-            type: string
-          description: RESERVED — supplying it is rejected 400 (FR-010)
+            type: array
+            items:
+              type: string
+              enum: [title, description, location]
+          style: form
+          explode: true
+          description: >-
+            Optional non-empty subset of title|description|location. Invalid entries → 400.
       responses:
         "429":
           $ref: "#/components/responses/AuthenticationBackoff"
@@ -443,9 +449,9 @@ paths:
                 items:
                   $ref: "#/components/schemas/FeedItem"
         "400":
-          description: >
-            Fail-loud (FR-010/FR-013): `query`/`queryFields` supplied (reserved, unimplemented), OR
-            `range` extends beyond the fixed −30d/+365d window, OR a malformed date/range.
+          description: >-
+            Missing/malformed range, range outside the fixed −30d/+365d window, invalid source,
+            or invalid queryFields entries.
           content:
             application/json:
               schema:

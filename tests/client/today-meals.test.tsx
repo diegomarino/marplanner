@@ -9,6 +9,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
   cleanup();
+  vi.restoreAllMocks();
 });
 
 function menuItem(entryId: string, label: string, isTombstone = false) {
@@ -183,6 +184,7 @@ it("clears an initial load error when the next interval successfully loads meals
 });
 
 it("refetches today's meals after a successful workspace mutation event", async () => {
+  const addEventListener = vi.spyOn(window, "addEventListener");
   let resolveRefresh!: (response: Response) => void;
   const refreshed = new Promise<Response>((resolve) => {
     resolveRefresh = resolve;
@@ -196,9 +198,14 @@ it("refetches today's meals after a successful workspace mutation event", async 
   });
   renderTodayMeals();
   expect(await screen.findByTestId("today-meals-item")).toHaveTextContent("Old");
+  // Visible items precede the date commit that installs the mutation-event subscription.
+  await waitFor(() =>
+    expect(addEventListener).toHaveBeenCalledWith("marplanner:meals-changed", expect.any(Function))
+  );
   await act(async () => {
     window.dispatchEvent(new Event("marplanner:meals-changed"));
   });
+  await waitFor(() => expect(requests).toBe(2));
   expect(screen.getByTestId("today-meals-item")).toHaveTextContent("Old");
   await act(async () => {
     resolveRefresh(new Response(JSON.stringify([menuItem("new", "New")])));

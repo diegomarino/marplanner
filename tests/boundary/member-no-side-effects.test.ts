@@ -11,8 +11,7 @@ import { useIsolatedDb } from "../helpers/db";
  * 2. Seed a bootstrap key row + a device key into api_keys.
  * 3. POST /api/members with a valid device key and valid body (displayName + role).
  * 4. Assert exactly one members row exists.
- * 5. Assert zero rows on any Daily Briefing table/config (none exist this module,
- * but the contract demands the assertion: no DB-level side effects of any kind).
+ * 5. Assert protected table counts captured before creation remain unchanged.
  */
 describe("member-no-side-effects (red-by-design, + turn green)", () => {
   useIsolatedDb();
@@ -36,10 +35,28 @@ describe("member-no-side-effects (red-by-design, + turn green)", () => {
       "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
     ).run(`${Date.now()}-device`, deviceHash, now);
 
-    // Build the app (authBoundary registered; /health only).
+    // Build the app before capturing counts to exclude startup reconciliation.
     const app = await buildApp();
 
     try {
+      const protectedTables = [
+        "api_keys",
+        "settings_objects",
+        "admin_config",
+        "daily_briefing",
+        "daily_briefing_block_cache",
+        "daily_briefing_block_order",
+        "daily_briefing_member_block_settings",
+        "daily_briefing_optin",
+        "daily_briefing_settings",
+      ];
+      const preCounts = Object.fromEntries(
+        protectedTables.map((table) => [
+          table,
+          (db.prepare(`SELECT count(*) as cnt FROM ${table}`).get() as { cnt: number }).cnt,
+        ])
+      );
+
       // POST /api/members with a valid device key and valid member body.
       // FR-022/023: A successful member create MUST create only the member profile
       // and have no Daily Briefing side effects / no Daily Briefing configuration.
@@ -76,35 +93,8 @@ describe("member-no-side-effects (red-by-design, + turn green)", () => {
       };
       expect(membersCount.cnt).toBe(1);
 
-      // --- ASSERTION: no side effects on existing tables ---
-      // Capture row counts on all tables that exist in this module's schema BEFORE
-      // the create. After a successful create, these counts MUST NOT change (no side
-      // effects). This is the real no-side-effect property: member create touches ONLY members.
-      const preCounts: Record<string, number> = {};
-      for (const table of ["members", "api_keys", "settings_objects", "admin_config"]) {
-        preCounts[table] = (
-          db.prepare(`SELECT count(*) as cnt FROM ${table}`).get() as { cnt: number }
-        ).cnt;
-      }
-
-      // Existence-gated Daily Briefing check: if/when briefing tables ever land,
-      // assert they receive zero rows from member create. Right now they don't exist
-      // so this is a no-op — it activates automatically when the tables appear.
-      const briefTables = db
-        .prepare(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('briefing_schedules','briefing_config')"
-        )
-        .all() as { name: string }[];
-      for (const bt of briefTables) {
-        const btCount = db.prepare(`SELECT count(*) as cnt FROM ${bt.name}`).get() as {
-          cnt: number;
-        };
-        expect(btCount.cnt).toBe(0);
-      }
-
-      // Compare post-create counts against the pre-snapshot — must match for every
-      // non-members table (this is the no-side-effect guarantee on tables that exist).
-      for (const table of ["api_keys", "settings_objects", "admin_config"]) {
+      // Member creation must leave the current protected tables unchanged.
+      for (const table of protectedTables) {
         const postCount = db.prepare(`SELECT count(*) as cnt FROM ${table}`).get() as {
           cnt: number;
         };

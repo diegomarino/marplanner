@@ -5,8 +5,8 @@
   (render ownership and device context) deliberately left one decision open: where the
   raster→ESC/POS conversion runs. The v1 predecessor performs BOTH the raster decode
   (canvas, browser-bound) and the ESC/POS wrap in the kiosk browser; the server only
-  serves a PNG. `docs/architecture/contracts/printing.md`'s own open-decision note mirrors
-  ADR-041's.
+  serves a PNG. At decision time the Printing contract also left this placement
+  open, mirroring ADR-041.
 
 ## Decision
 
@@ -36,15 +36,15 @@ B-lite / B / C / D — C and D eliminated by Bluetooth-only hardware).
 
 - The job payload transported over HTTP is the final ESC/POS byte stream (~360 KB
   worst case at 3-5 jobs/day — negligible).
-- The final artifact never exists client-side before transmission; client-side
-  golden-file assertions are not possible (accepted — the server-side ones replace
-  them).
+- The browser holds fetched printer-ready bytes transiently for transmission; it
+  does not construct or persist the artifact. Conversion golden-file assertions
+  run server-side.
 - **Artifact ownership is NOT moved**: per ADR-041/PRINTING-INV-03 the producer
   keeps the raster; Printing fetches the CURRENT artifact via the producer's
   registered server-side interface at execute time (fetch-at-execute preserved).
-  This ADR relocates only the CONVERSION (decode + ESC/POS wrap) — both now run in
-  Printing, server-side, on the freshly fetched raster. Any producer-side format
-  (PNG from pressedslip) is decoded by that producer's own registered provider.
+  This ADR relocates only the CONVERSION (decode + ESC/POS wrap) server-side.
+  Any producer-side format (PNG from pressedslip) is decoded by that producer's
+  registered provider; Printing wraps the returned raster as ESC/POS.
 - ADR-041's open decision is closed WITHOUT superseding its ownership split;
   ADR-035's placement model is unchanged (the executor remains the UI-bound
   capability holder; only the artifact's byte-form conversion moved server-side).

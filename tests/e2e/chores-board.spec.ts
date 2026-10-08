@@ -285,11 +285,10 @@ test("chores board critical flow: configure → board → complete → streak (#
   // side (already proven above for yesterday) has no UI equivalent to
   // check: the board has no date-navigation UI at all (by design,
   // "today-only view", ChoresBoard.tsx), so it necessarily stays API-only.
-  const todayBoardFetch = page.waitForResponse(
-    (r) => r.url().includes("/api/chores/board") && r.request().method() === "GET"
-  );
   await page.reload();
-  const todayBoardRes = await todayBoardFetch;
+  // Read through the device-authenticated API context: a browser response from
+  // the old document can lose its body when reload destroys it.
+  const todayBoardRes = await page.request.get(`/api/chores/board?date=${todayStr}`);
   expect(todayBoardRes.status()).toBe(200);
   const todayCols = (await todayBoardRes.json()) as BoardColumnLike[];
   const todayCol = todayCols.find((c) => c.memberId === memberId);
