@@ -165,3 +165,15 @@ external-sink egress restricted to enumerated envelope fields (`data` never forw
 without an allowlist); named `telemetry:write`/`telemetry:admin` capabilities for the
 fail-closed model. `ADR-050` (typed event catalog) reviewed sound (separate; governs the
 bus, not telemetry).
+
+### Internal subscriber diagnostics
+
+Server event-handler failures use the same redacted store and admin read surface.
+The `event-bus` component is reserved for trusted server writes; browser entries
+using it are dropped. Internal writes retain validation, bounding, redaction,
+retention and sink projection, but bypass browser flood admission. Administration
+provides a Subscriber failures filter shortcut (`error`, `event-bus`). A stable
+`event-bus.subscriber-failed` message and unique `failureId` identify each failure;
+diagnostic data names the event and subscriber without including event payloads.
+If persistence fails, redacted stderr is the fallback and the failed insert is
+unavailable in the admin database query. Subscriber actions are never retried.
