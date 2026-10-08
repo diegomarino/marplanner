@@ -90,6 +90,19 @@ describe("day-periods-edit (RED boundary test)", () => {
     const { derivedEndMinutes } = await import("../../src/shared/dayPeriods");
     const morningEnd = derivedEndMinutes(after as any, "morning");
     expect(morningEnd).toBe(hhmmToMinutes("11:30"));
+
+    const { getDb } = await import("../../src/server/db/client");
+    getDb().exec(
+      "CREATE TEMP TRIGGER reject_period_write BEFORE UPDATE ON day_periods BEGIN SELECT RAISE(ABORT, 'synthetic write failure'); END"
+    );
+    const failedWrite = await app.inject({
+      method: "PATCH",
+      url: "/api/day-periods/afternoon",
+      cookies: { mp_device_key: rawKey },
+      payload: { start: "11:45" },
+    });
+    expect(failedWrite.statusCode).toBe(500);
+    expect(await getDayPeriods(app, rawKey)).toEqual(after);
   });
 
   it("PATCH /api/day-periods/afternoon {start:'18:00'} (equals evening's start) → 400 uniqueness; re-GET shows value UNCHANGED", async () => {
