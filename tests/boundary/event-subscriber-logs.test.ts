@@ -72,6 +72,60 @@ describe("event subscriber diagnostics", () => {
     }
   });
 
+  it("preserves failure identity when oversized errors are persisted or sent to stderr", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const ids = new Set<string>();
+    try {
+      for (const storageFails of [false, true]) {
+        if (storageFails)
+          getDb().exec(
+            "CREATE TEMP TRIGGER reject_log BEFORE INSERT ON client_log BEGIN SELECT RAISE(ABORT, 'unavailable'); END"
+          );
+        const bus = createEventBus();
+        const peer = vi.fn();
+        bus.subscribe(
+          "routines.completion_changed",
+          () => {
+            throw new Error(" oversized ".repeat(2000));
+          },
+          "test.large-sync"
+        );
+        bus.subscribe(
+          "routines.completion_changed",
+          async () => {
+            throw " oversized ".repeat(2000);
+          },
+          "test.large-async"
+        );
+        bus.subscribe("routines.completion_changed", peer, "test.healthy");
+        bus.emit("routines.completion_changed", payload);
+        await vi.waitFor(() =>
+          expect(
+            storageFails ? spy.mock.calls : getClientLogPage({ component: "event-bus" })!.rows
+          ).toHaveLength(2)
+        );
+        expect(peer).toHaveBeenCalledOnce();
+        const data = storageFails
+          ? spy.mock.calls.map(([line]) => JSON.parse(line as string).data)
+          : getClientLogPage({ component: "event-bus" })!.rows.map((row) => JSON.parse(row.data!));
+        expect(data.map((row) => row.subscriber).sort()).toEqual([
+          "test.large-async",
+          "test.large-sync",
+        ]);
+        for (const row of data) {
+          expect(row.failureId).toMatch(/^[0-9a-f-]{36}$/);
+          ids.add(row.failureId);
+          expect(row.event).toBe("routines.completion_changed");
+          expect(row.error).toBe("[truncated]");
+          expect(Buffer.byteLength(JSON.stringify(row), "utf8")).toBeLessThanOrEqual(8192);
+        }
+      }
+      expect(ids.size).toBe(4);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it("deduplicates anonymous registrations and preserves their identity across deliveries", async () => {
     const bus = createEventBus();
     const handler = () => {

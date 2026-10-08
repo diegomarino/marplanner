@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { CoreEventCatalog } from "../../shared/events.js";
 import { writeServerLog } from "../telemetry/index";
-import { boundAndRedact } from "../telemetry/redact";
+import { boundAndRedact, DEFAULT_LIMITS } from "../telemetry/redact";
 
 type Handler<P> = (payload: P) => unknown;
 
@@ -26,6 +26,11 @@ function logSubscriberFailure(event: string, subscriber: string, error: unknown)
             code: (error as Error & { code?: unknown }).code,
           }
         : String(error);
+    // Reserve envelope budget so oversized error details cannot erase failure identity.
+    entry.data.error = boundAndRedact(
+      { message: "", component: "", data: entry.data.error },
+      { ...DEFAULT_LIMITS, maxBytes: 4096, maxDepth: 5, maxKeys: 60 }
+    ).data;
     if (writeServerLog(entry).accepted === 1) return;
   } catch {
     // Storage or error serialization must never escape subscriber fault containment.

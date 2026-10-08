@@ -4895,7 +4895,8 @@
             "event subscriber diagnostics keeps internal failures queryable beyond the client flood bound and rejects client impersonation",
             "event subscriber diagnostics falls back to redacted stderr when storage is unavailable while containing the fault",
             "event subscriber diagnostics deduplicates anonymous registrations and preserves their identity across deliveries",
-            "event subscriber diagnostics contains diagnostic serialization failures and retains a unique stderr breadcrumb"
+            "event subscriber diagnostics contains diagnostic serialization failures and retains a unique stderr breadcrumb",
+            "event subscriber diagnostics preserves failure identity when oversized errors are persisted or sent to stderr"
           ]
         }
       },
