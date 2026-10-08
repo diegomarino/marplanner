@@ -2,9 +2,10 @@ import path from "node:path";
 import { existsSync } from "node:fs";
 import Database from "better-sqlite3";
 import { type Page, type APIRequestContext } from "@playwright/test";
-import { test, expect } from "./printer-session";
+import { test as base, expect } from "./printer-session";
 import { messages, resolveLang } from "../../src/client/i18n/messages";
 import { unlockAdmin } from "./admin-unlock";
+import { hashKey } from "../../src/server/auth/credentials";
 
 /** docs/features/printing.md — end-to-end through the REAL built app (real
  * server + real browser), using the fake-transport seam exposed at `window.__mpPrintTransport`
@@ -40,34 +41,14 @@ import { unlockAdmin } from "./admin-unlock";
  * Two paired executors must therefore NEVER run concurrently against this server — enforced, not
  * just documented, by importing `test`/`expect` from `./printer-session` (a filesystem mutex
  * fixture) instead of `@playwright/test` directly; see that module's own doc comment.
- * State hygiene: this spec creates exactly ONE global `print_jobs`/`print_records`
- * row (the `"test-print"` record for the REAL household-today date) against the SHARED
- * `webServer` + run-scoped DATA_DIR every other spec in this file's process also uses. Playwright's
- * `retries: 1` (playwright.config.ts) re-runs a FAILED spec against that SAME server/DB — a
- * failure occurring after this spec's own ack would leave `"test-print"` marked printed, so the
- * retry's first trigger would deterministically get `alreadyPrinted: true` and fail before
- * exercising anything, defeating the retry for exactly the late-failure class it exists for. Same
- * problem for a same-day local rerun. the own requirement — "state cleaned setup AND
- * teardown" — is restored below via `cleanTestPrintState`: no HTTP delete route exists
- * (correctly out of scope for a tests-only ), so this opens the shared SQLite file directly
- * (WAL mode — a second process making a few small writes between test runs is safe) and deletes
- * the `"test-print"` record's rows plus every `printer_capabilities` row (orphaned rows from dead
- * device keys; harmless to clear — see that function's own doc for why they can't interfere
- * anyway). The loud diagnostic on the first trigger assertion below stays as a safety net; with
- * this cleanup in place it should now be unreachable in practice.
+ * State hygiene: cleanup runs inside the printer-session mutex and removes only this spec's
+ * test-print records and its freshly provisioned device's capability. CI uses one worker and
+ * zero retries; concurrent stress receipts show interaction, without identifying one cause.
  */
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
 const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
-
-//: declared here, at the top level, rather than as an in-body
-// `test.setTimeout(...)` call — `test.describe.configure({ timeout })` is resolved at
-// test-collection time, BEFORE the `printerSession` fixture (./printer-session) ever runs, so
-// this budget is already in effect for the WHOLE test including a slow fixture setup (e.g. a
-// lock wait). An in-body call would be too late for exactly that case — see printer-session.ts's
-// own "TIMEOUT ORDERING" doc comment for the full reasoning.
-test.describe.configure({ timeout: 90_000 });
 
 /** DB PATH: derived exactly the way the server itself resolves it (`src/server/db/client.ts`'s * `resolveDbPath`: `path.resolve(DATA_DIR, DATABASE_PATH ?? "marplanner.db")`), from the SAME
  * env vars `playwright.config.ts` publishes for the shared `webServer` and test process
@@ -82,50 +63,57 @@ function resolveE2eDbPath(): string {
   return path.resolve(process.cwd(), dataDir, dbFile);
 }
 
-/** Deletes the fixed `"test-print"` record's rows (child `print_jobs` first, matching the schema's
- * `ON DELETE CASCADE` FK direction, drizzle/0015_printing.sql) plus every `printer_capabilities`
- * row, by opening the shared e2e SQLite file directly (better-sqlite3, WAL mode — concurrent
- * access from a second process is safe for these tiny, infrequent writes; see this file's own
- * module doc for why this exists — P1).
- * `printer_capabilities` rows are keyed to `api_keys.id` (drizzle/0016_printer_capability.sql);
- * `claimJob`'s `hasPrinterCapability` check (src/server/modules/printing/index.ts) can only ever
- * match THIS run's freshly-provisioned device key, so a leftover row from a previous run is an
- * orphan that can never interfere with a match — clearing the whole table anyway is cheap
- * hygiene, not a correctness fix.
- * ORDERING: this is called from `test.beforeAll`/`test.afterAll` below, which run strictly AFTER
- * Playwright's `webServer` readiness gate (the `GET /health` check `playwright.config.ts` waits
- * on) — and the real server's own boot sequence (`src/server/index.ts`'s `main`) runs
- * `runMigrations` BEFORE `app.listen`, i.e. before `/health` can ever answer. So by
- * construction the DB file (full schema, every printing table included) already exists the FIRST
- * time this function runs; the `existsSync` guard below is defensive tolerance for running this
- * spec file outside the shared `webServer` (not a case this ordering is expected to actually hit),
- * not a "clean right before the trigger step" fallback.
- */
-function cleanTestPrintState(): void {
+/** Remove only the test-print records owned by this spec and, at teardown, its device capability. */
+function cleanTestPrintState(deviceKey?: string): void {
   const dbPath = resolveE2eDbPath();
   if (!existsSync(dbPath)) return;
   const db = new Database(dbPath);
   try {
-    const record = db
-      .prepare("SELECT id FROM print_records WHERE record_key = ?")
-      .get("test-print") as { id: string } | undefined;
-    if (record) {
-      db.prepare("DELETE FROM print_jobs WHERE record_id = ?").run(record.id);
-      db.prepare("DELETE FROM print_records WHERE id = ?").run(record.id);
+    db.prepare(
+      "DELETE FROM print_jobs WHERE record_id IN (SELECT id FROM print_records WHERE record_key = ?)"
+    ).run("test-print");
+    db.prepare("DELETE FROM print_records WHERE record_key = ?").run("test-print");
+    if (deviceKey) {
+      db.prepare(
+        "DELETE FROM printer_capabilities WHERE key_id IN (SELECT id FROM api_keys WHERE key_hash = ?)"
+      ).run(hashKey(deviceKey));
     }
-    db.prepare("DELETE FROM printer_capabilities").run();
   } finally {
     db.close();
   }
 }
 
-test.beforeAll(() => {
-  cleanTestPrintState();
+const test = base.extend<{ printState: void }>({
+  printState: [
+    async ({ page, printerSession }, use) => {
+      cleanTestPrintState();
+      try {
+        await use();
+      } finally {
+        let deviceKey: string | undefined;
+        try {
+          deviceKey = (await page.context().cookies()).find(
+            (cookie) => cookie.name === "mp_device_key"
+          )?.value;
+          // Stop this page's executor before removing its rows, while the session lock is held.
+          if (!page.isClosed()) await page.goto("about:blank");
+        } finally {
+          cleanTestPrintState(deviceKey);
+        }
+      }
+    },
+    { auto: true },
+  ],
 });
 
-test.afterAll(() => {
-  cleanTestPrintState();
-});
+//: declared here, at the top level, rather than as an in-body
+// `test.setTimeout(...)` call — `test.describe.configure({ timeout })` is resolved at
+// test-collection time, BEFORE the `printerSession` fixture (./printer-session) ever runs, so
+// this budget is already in effect for the WHOLE test including a slow fixture setup (e.g. a
+// lock wait). An in-body call would be too late for exactly that case — see printer-session.ts's
+// own "TIMEOUT ORDERING" doc comment for the full reasoning.
+
+test.describe.configure({ timeout: 90_000 });
 
 interface PrintJobDto {
   id: string;
@@ -226,13 +214,13 @@ test("admin test-print → claim → degrade → retry → ack → printed; re-t
     jobId: string | null;
     alreadyPrinted?: boolean;
   };
-  // Safety net (should be unreachable in practice — `beforeAll`'s `cleanTestPrintState` above
+  // Safety net (should be unreachable in practice — `printState`'s `cleanTestPrintState` above
   // already cleared any prior "test-print" record before this test body ever ran). Fail loudly
   // with the exact diagnosis rather than silently, in case that cleanup itself regresses.
   expect(
     firstTriggerBody.enqueued,
     "expected a fresh enqueue — cleanTestPrintState() should have cleared any stale " +
-      "'test-print' record in beforeAll; if this fires, that cleanup itself likely regressed"
+      "'test-print' record in printState; if this fires, that cleanup itself likely regressed"
   ).toBe(true);
   expect(firstTriggerBody.alreadyPrinted).toBeFalsy();
   const jobId = firstTriggerBody.jobId;

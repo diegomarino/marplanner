@@ -149,6 +149,12 @@ export function reconcileExternalCalendar(
 
       db.prepare("DELETE FROM calendar_assignments WHERE event_id = ? AND id LIKE 'ext:%'").run(id);
       for (const memberId of memberIds) {
+        // Manual (non-ext:) assignments from PUT /assignments survive title-derived refresh.
+        // Skip re-insert when any row already claims this member to avoid UNIQUE(event_id, member_id).
+        const alreadyAssigned = db
+          .prepare("SELECT 1 AS ok FROM calendar_assignments WHERE event_id = ? AND member_id = ?")
+          .get(id, memberId) as { ok: number } | undefined;
+        if (alreadyAssigned) continue;
         db.prepare(
           "INSERT INTO calendar_assignments (id, event_id, member_id, created_at) VALUES (?, ?, ?, ?)"
         ).run(`ext:${id}:${memberId}`, id, memberId, now);

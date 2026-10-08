@@ -13,7 +13,7 @@ interface EmojiPickerProps {
 }
 
 export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const filteredCategories = useMemo(() => {
@@ -22,10 +22,10 @@ export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
     return EMOJI_CATEGORIES.map((category) => ({
       ...category,
       items: category.items.filter((item) =>
-        `${item.label} ${item.keywords.join(" ")}`.toLowerCase().includes(normalized)
+        `${t(item.label)} ${item.keywords.join(" ")}`.toLowerCase().includes(normalized)
       ),
     })).filter((category) => category.items.length > 0);
-  }, [search]);
+  }, [search, language, t]);
 
   const choose = (emoji: string | null) => {
     onChange(emoji);
@@ -68,7 +68,7 @@ export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
             {filteredCategories.map((category) => (
               <section key={category.id}>
                 <h4 className="text-muted-foreground mb-1 text-xs font-semibold uppercase tracking-wide">
-                  {category.name}
+                  {t(category.name)}
                 </h4>
                 <div className="grid grid-cols-[repeat(8,var(--control-height))] gap-1">
                   {category.items.map((item) => (
@@ -77,9 +77,9 @@ export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
                       type="button"
                       variant={value === item.emoji ? "secondary" : "ghost"}
                       size="icon"
-                      aria-label={`${t("routines.emojiPicker.choose")} ${item.label}`}
+                      aria-label={`${t("routines.emojiPicker.choose")} ${t(item.label)}`}
                       aria-pressed={value === item.emoji}
-                      title={`${item.label} (${item.keywords.join(", ")})`}
+                      title={t(item.label)}
                       onClick={() => choose(item.emoji)}
                     >
                       <NotoEmoji emoji={item.emoji} size={20} />

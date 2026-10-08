@@ -299,7 +299,9 @@ describe("TimeAnnouncementsManagement — error states are announced (SC-011)", 
     const alert = await screen.findByTestId("time-announcements-error");
     expect(alert).toHaveAttribute("role", "alert");
     expect(alert).toHaveAttribute("aria-live", "assertive");
-    expect(alert).toHaveTextContent("overlap detected");
+    expect(alert).toHaveTextContent(
+      "An active rule already announces at this time on an overlapping weekday."
+    );
   });
 });
 
@@ -656,7 +658,7 @@ describe("DailyBriefingManagement — error states are announced (SC-011)", () =
     expect(alert).toHaveAttribute("role", "alert");
     expect(alert).toHaveAttribute("aria-live", "assertive");
     expect(alert).toHaveClass("text-destructive");
-    expect(alert).toHaveTextContent('Invalid generationTime "99:99"');
+    expect(alert).toHaveTextContent("Failed to save Daily Briefing settings.");
   });
 
   it("announces the settings-load failure through the block-order AND block-settings cards' own ErrorNotice (routed off the shared component now, closing #758's per-site debt)", async () => {

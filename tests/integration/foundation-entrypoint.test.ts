@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { createServer } from "node:net";
+import { createConnection, createServer } from "node:net";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -31,7 +31,7 @@ async function freePort(): Promise<number> {
   });
 }
 
-function signal(child: ChildProcess, name: "SIGINT" | "SIGKILL") {
+function signal(child: ChildProcess, name: "SIGINT" | "SIGTERM" | "SIGKILL") {
   if (child.pid === undefined) return;
   try {
     process.kill(-child.pid, name);
@@ -196,4 +196,22 @@ describe("built foundation entrypoint", () => {
     await hardKill(running.child);
     child = undefined;
   }, 30_000);
+  it("SIGTERM closes a never-requested TCP connection without reaching the shutdown watchdog", async () => {
+    const prepared = await prepare();
+    const running = await boot(prepared.dataDir, prepared.port, { SCHEDULER_DISABLED: "1" });
+    child = running.child;
+    await running.waitLog("scheduler disabled");
+    const socket = createConnection({ host: "127.0.0.1", port: prepared.port });
+    socket.on("error", () => {});
+    try {
+      await new Promise<void>((done) => socket.once("connect", done));
+      expect(socket.bytesWritten).toBe(0);
+      signal(running.child, "SIGTERM");
+      expect(await running.exit).toEqual({ code: 0, signal: null });
+      expect(running.log()).toContain("scheduler drained");
+      expect(running.log()).not.toContain("Shutdown timed out");
+    } finally {
+      socket.destroy();
+    }
+  }, 15_000);
 });
