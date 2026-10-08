@@ -1,6 +1,6 @@
 /** Shared parameters and language resolution for deterministic corpus generators.
  * These generators are synchronous and perform no I/O. A requested corpus language
- * must exist; missing variants fail explicitly rather than falling back to English.
+ * must exist; an unset override uses the available household variant, then English.
  */
 import { isCorpusLanguageAvailable } from "../corpora";
 import type { CorpusBlockType, CorpusLanguage } from "../corpora";
@@ -25,7 +25,7 @@ export interface CorpusGenerationContext {
  * value for a block type. settings.ts already rejects an illegal write at the boundary
  * (400 `corpus_language_unavailable`) — this is defense in depth for a generator invoked directly
  * (e.g. a future caller that bypasses settings validation), so an illegal request fails LOUDLY
- * rather than silently degrading — in particular, FR-009/INV-06 forbid falling back to English.
+ * rather than silently replacing an explicit override with English.
  */
 export class CorpusBlockParamError extends Error {
   constructor(message: string) {
@@ -34,16 +34,21 @@ export class CorpusBlockParamError extends Error {
   }
 }
 
-/** Resolve the corpus language variant for `type`. Absent `params.language` defaults to "en";
+/** Resolve the corpus language variant for `type`. Absent `params.language` uses the household variant when available, then "en";
  * a present-but-unavailable language throws `CorpusBlockParamError` rather than falling back
- * ("Determinism guard" / FR-009: "corpus absence never degrades to English").
+ * (fallback applies only to an unset override).
  */
 export function resolveCorpusLanguage(
   type: CorpusBlockType,
-  params: CorpusBlockParams | undefined
+  params: CorpusBlockParams | undefined,
+  householdLanguage = "en"
 ): CorpusLanguage {
   const requested = params?.language;
-  if (requested === undefined) return "en";
+  if (requested === undefined) {
+    return isCorpusLanguageAvailable(type, householdLanguage)
+      ? (householdLanguage as CorpusLanguage)
+      : "en";
+  }
   if (!isCorpusLanguageAvailable(type, requested)) {
     throw new CorpusBlockParamError(
       `daily-briefing corpus block "${type}": language "${requested}" has no on-disk corpus ` +

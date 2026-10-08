@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { messages } from "@/i18n/messages";
 
-/** — per-domain i18n parity for the backups admin panel chrome (server-provided error
- * `message` text stays English by design, FR-014's "English operational messages" — only this
+/** — per-domain i18n parity for the backups admin panel chrome (historical operational diagnostics
+ * stay English by design; action failures use localized code messages. Only this
  * panel chrome is localized, mirroring telemetry-i18n-parity's `Out of Scope` precedent).
  */
 const isBackupsKey = (key: string) => key.startsWith("backups.") || key === "admin.nav.backups";

@@ -88,14 +88,14 @@ describe("BackupsManagement", () => {
   it("formats a backup's createdAt in the HOUSEHOLD timezone from context, not the browser default", async () => {
     const HOUSEHOLD_TIMEZONE = "Pacific/Kiritimati";
     const createdAt = Date.parse("2026-01-15T20:00:00.000Z");
-    const expected = new Intl.DateTimeFormat(undefined, {
+    const expected = new Intl.DateTimeFormat("en-GB", {
       timeZone: HOUSEHOLD_TIMEZONE,
       dateStyle: "medium",
       timeStyle: "medium",
     }).format(new Date(createdAt));
     // Sanity: the household-timezone formatting must actually differ from a UTC rendering,
     // or this test would pass vacuously even with the context wire-up removed.
-    const utcRendering = new Intl.DateTimeFormat(undefined, {
+    const utcRendering = new Intl.DateTimeFormat("en-GB", {
       timeZone: "UTC",
       dateStyle: "medium",
       timeStyle: "medium",
@@ -391,4 +391,72 @@ describe("BackupsManagement", () => {
       "nothing was written to disk"
     );
   });
+});
+
+it.each(["en", "es"] as const)(
+  "shows localized recovery guidance for a terminal restore failure (%s)",
+  async (language) => {
+    const backup = ONE_BACKUP_LIST.backups[0];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input, init) => {
+        if (String(input) === "/api/settings")
+          return jsonResponse({ locale: { language, timezone: "UTC" } });
+        if (String(input) === "/api/backups/restore")
+          return jsonResponse(
+            { status: "rollback_failed", message: "Private English recovery diagnostics" },
+            503
+          );
+        if (String(input) === "/api/backups") return jsonResponse(ONE_BACKUP_LIST);
+        throw new Error("Unexpected request");
+      })
+    );
+    try {
+      renderManagement();
+      await screen.findByRole("button", { name: language === "es" ? "Restaurar" : "Restore" });
+      fireEvent.click(screen.getByTestId(`backups-restore-select-${backup.filename}`));
+      fireEvent.change(screen.getByTestId("backups-restore-confirm-input"), {
+        target: { value: backup.filename },
+      });
+      fireEvent.click(screen.getByTestId("backups-restore-submit"));
+      const alert = await screen.findByTestId("backups-restore-error");
+      expect(alert).toHaveTextContent(
+        language === "es" ? "requiere recuperación manual" : "requires manual recovery"
+      );
+      expect(alert).not.toHaveTextContent("Private English");
+    } finally {
+      cleanup();
+      vi.unstubAllGlobals();
+    }
+  }
+);
+
+it("formats backup dates with Spanish household locale and timezone", async () => {
+  const createdAt = Date.parse("2026-01-15T20:00:00Z");
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input) => {
+      if (String(input) === "/api/settings")
+        return jsonResponse({ locale: { language: "es", timezone: "Pacific/Kiritimati" } });
+      if (String(input) === "/api/backups")
+        return jsonResponse({
+          ...ONE_BACKUP_LIST,
+          backups: [{ ...ONE_BACKUP_LIST.backups[0], createdAt }],
+        });
+      throw new Error("Unexpected request");
+    })
+  );
+  try {
+    renderManagement();
+    const row = await screen.findByTestId(`backups-row-${ONE_BACKUP_LIST.backups[0].filename}`);
+    const expected = new Intl.DateTimeFormat("es-ES", {
+      timeZone: "Pacific/Kiritimati",
+      dateStyle: "medium",
+      timeStyle: "medium",
+    }).format(new Date(createdAt));
+    await waitFor(() => expect(row).toHaveTextContent(expected));
+  } finally {
+    cleanup();
+    vi.unstubAllGlobals();
+  }
 });

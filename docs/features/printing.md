@@ -13,16 +13,21 @@ producer-specific knowledge. Daily Briefing is its only producer in this system.
 
 ### User Story 1 — Print an output to a connected printer
 
-A trigger enqueues an output; a capability-registered browser claims the job, fetches
-the producer's current raster, wraps it to device bytes, and sends it over the
-established connection. On a successful byte write the server stamps `printedAt` and
+A trigger enqueues an output; a capability-registered browser claims the job and
+fetches printer-ready bytes. The server obtains the producer's current raster and
+wraps it as ESC/POS (ADR-066); the browser sends the bytes over the established
+connection. On a successful byte write the server stamps `printedAt` and
 emits `printing.completed`, so "did this print" has a single server-side answer.
 
 ### User Story 2 — Tolerate an absent or unready printer
 
-With no connected/ready printer, the job retries within a bounded budget and
-dead-letters when exhausted (or immediately for permanent failures); no `printedAt`
-is stamped. Physical paper outcomes (jam / out) are out of scope and recovered by a
+With no connected/ready printer, a recoverable report accepted by `/fail` releases
+the lease and increments `attempts`. Network failures during payload fetch, or
+failure reports that cannot reach the server, instead wait for the 120-second
+lease to expire without updating the reason or incrementing `attempts`. The
+current-date job can retry without a numeric attempt limit; earlier household
+dates and permanent failures are dead-lettered. No
+`printedAt` is stamped. Physical paper outcomes (jam / out) are out of scope and recovered by a
 human manual reprint, which re-enqueues the current output.
 
 ### User Story 3 — Regenerate and re-print a superseded output

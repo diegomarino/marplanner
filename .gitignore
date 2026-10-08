@@ -20,6 +20,8 @@ tools/dev/.noto-emoji-cache/
 *.db
 *.db-wal
 *.db-shm
+*.instance-lock.sqlite
+*.instance-lock.sqlite-journal
 
 # Env & secrets
 .env

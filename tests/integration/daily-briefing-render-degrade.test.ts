@@ -82,6 +82,9 @@ describe("daily-briefing generateBriefing — render-outcome persistence (review
   const date = "2026-09-08";
 
   beforeEach(() => {
+    // Freeze only the business clock so Calendar gathering cannot age out of its rolling window.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(`${date}T12:00:00Z`));
     seedMember(memberId);
     // gatherBlocks only PUSHES a block when its read returns non-empty data (see `gather` in
     // index.ts) — with zero seeded domain content, `blocks` would stay empty and
@@ -102,6 +105,7 @@ describe("daily-briefing generateBriefing — render-outcome persistence (review
 
   afterEach(() => {
     __setPrintingPluginActiveForTests(undefined);
+    vi.useRealTimers();
   });
 
   it("P1-3: a structurally invalid render (bad width) degrades to render-failed, never propagates, data stays intact", async () => {
