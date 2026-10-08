@@ -4959,10 +4959,6 @@
             "d52575aebaf5180e5f75-990374b5befcaebf9c02",
             "d52575aebaf5180e5f75-c9d6222685f4b7444f83"
           ],
-          "tests/e2e/time-announcements.spec.ts": [
-            "04bcd8d2b3c5433fa791-db5905637266d4b32ff9",
-            "04bcd8d2b3c5433fa791-26afd185bbffb8871c6a"
-          ],
           "tests/e2e/weather.spec.ts": [
             "d5f1906f292cab0ebdcd-89f4250569c3e2076408",
             "d5f1906f292cab0ebdcd-470ca95a4a0d7439403e"

@@ -3,6 +3,7 @@ import { RULES_CHANGED_EVENT } from "../../src/client/time-announcements/events"
 import { openAdminPinGate, unlockAdmin } from "./admin-unlock";
 
 /** — Time Announcements audio-free e2e (quickstart §3).
+ * Not part of CI acceptance. Run with `npm run test:e2e:time-announcements`.
  * Shared `webServer` (no own-server need) — `VITE_E2E_HOOKS=true` is already set in that
  * webServer's `env` (playwright.config.ts, 013), so `window.__mpAnnouncements` (the
  * seams.ts sink) exists in this real, built-and-started process.
