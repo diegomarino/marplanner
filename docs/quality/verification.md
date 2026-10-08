@@ -8,7 +8,7 @@ Boundary guarantees in [boundary-guarantees.yaml](boundary-guarantees.yaml) reco
 
 - `npm run check:fast` runs formatting, generated member-color and emoji freshness, types, lint, all `tools/*.test.mjs` Node tests and client unit tests. It is not static-only and does not produce standard acceptance evidence.
 - `npm run check:standard` first runs `check:preflight`, then stamps the maintained candidate, checks formatting/generated artifacts/types/lint, builds it, executes the discovered Node and client/boundary/integration Vitest cohorts with coverage, and verifies OpenAPI, UI debt, exception lists, accessible names, coverage and runner evidence.
-- `npm run check:full` runs standard followed by `check:aggregate-only`: browser preflight, build, built-render smoke, full Playwright discovery/execution and aggregate cohort verification.
+- `npm run check:full` runs standard followed by `check:aggregate-only`: browser preflight, build, built-render smoke, Playwright discovery/execution for the acceptance cohort, and aggregate cohort verification. The real-clock time-announcements browser spec is not in that cohort; run it with `npm run test:e2e:time-announcements`.
 
 Apply the required tier to the same reviewed candidate bytes. Changes after a pass invalidate affected evidence. `npm run build` alone produces a distributable build; it does not accept the candidate.
 
@@ -24,7 +24,7 @@ main) forces hosted native acceptance.
 
 `standard` runs the complete standard tier. `native` independently installs the
 same candidate, restores the standard tar archive with its original timestamps,
-verifies coverage and cohorts, then builds and runs every Playwright check. Raw
+verifies coverage and cohorts, then builds and runs the Playwright acceptance cohort. The real-clock time-announcements spec stays out of that cohort. Raw
 Node/Vitest/V8 absolute paths use the producing checkout root recorded in the
 candidate stamp. The consuming checkout recomputes candidate identity and accepts
 the archive only when that identity matches the stamp. Artifact

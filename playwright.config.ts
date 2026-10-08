@@ -16,9 +16,14 @@ process.env.E2E_DATA_DIR = e2eDataDir.dataDir;
 if (e2eDataDir.owned) process.env.MP_E2E_OWNED_DATA_DIR = e2eDataDir.dataDir;
 else delete process.env.MP_E2E_OWNED_DATA_DIR;
 
+const includeRealClockAnnouncements = process.env.MP_E2E_TIME_ANNOUNCEMENTS === "1";
+
 export default defineConfig({
   testDir: "./tests/e2e",
   testMatch: "**/*.spec.{ts,js}",
+  // The announcements spec waits on the household wall clock for several minutes.
+  // Acceptance runs omit it; `npm run test:e2e:time-announcements` opts in.
+  ...(includeRealClockAnnouncements ? {} : { testIgnore: ["**/time-announcements.spec.ts"] }),
   globalSetup: "./tests/e2e/global-setup.ts",
   globalTeardown: "./tests/e2e/global-teardown.ts",
   fullyParallel: true,
