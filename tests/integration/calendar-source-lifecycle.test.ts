@@ -1,5 +1,5 @@
 import Fastify from "fastify";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "../../src/server/db/client";
 import { calendarRoutes } from "../../src/server/routes/calendar";
 import { startExternalSourceSynchronization } from "../../src/server/modules/calendar/sync-coordinator";
@@ -21,6 +21,12 @@ const feed = [
 
 describe("calendar source lifecycle routes", () => {
   useIsolatedDb();
+  // Keep fixed Calendar fixtures inside the production rolling window; leave async timers real.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-15T12:00:00Z"));
+  });
+  afterEach(() => vi.useRealTimers());
 
   it("serializes URL replacement with an active sync and removes the old feed snapshot", async () => {
     const sourceId = "replacement-source";
@@ -63,10 +69,13 @@ describe("calendar source lifecycle routes", () => {
       replacementSettled = true;
       return source;
     });
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(replacementSettled).toBe(false);
-
-    releaseTransport();
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(replacementSettled).toBe(false);
+    } finally {
+      releaseTransport();
+      await Promise.allSettled([activeSync, replacement]);
+    }
     await activeSync;
     await replacement;
 
