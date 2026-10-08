@@ -43,6 +43,7 @@ export {
  * `src/server/modules/* ` (ADR-039 Rule B / INV-07).
  */
 export { readSettingsObject } from "../lib/settings-objects";
+export { readEffectiveSettings } from "../modules/settings";
 export { getDb } from "../db/client";
 export { emit } from "../lib/event-bus";
 /** Producer-subscribe seam ( ADR-040 "producer-subscribes"): the event
