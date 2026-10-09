@@ -1,5 +1,6 @@
 import { validateWeekdays } from "../src/shared/weekdays";
 import type { SeedModule } from "../src/server/db/seeds/types";
+import { ALL_BLOCK_TYPES } from "../src/server/modules/daily-briefing/corpora/block-types";
 
 const DAILY_MESSAGES = [
   {
@@ -43,13 +44,9 @@ const BRIEFING_OPT_INS = [
   { memberId: "demo:member:marge", enabled: true },
 ] as const;
 
-const BRIEFING_BLOCK_ORDER = [
-  { type: "today" },
-  { type: "message" },
-  { type: "meals" },
-  { type: "reminders" },
-  { type: "dadJoke", params: { difficulty: "easy" } },
-] as const;
+const BRIEFING_BLOCK_ORDER = ALL_BLOCK_TYPES.map((type) =>
+  type === "dadJoke" ? { type, params: { difficulty: "easy" } } : { type }
+);
 
 const MEMBER_BLOCK_SETTINGS = [
   {
@@ -73,6 +70,13 @@ const MEMBER_BLOCK_SETTINGS = [
     weekdays: null,
     params: null,
   },
+  ...BRIEFING_OPT_INS.filter(({ enabled }) => enabled).map(({ memberId }) => ({
+    memberId,
+    blockType: "onThisDay",
+    enabled: true,
+    weekdays: null,
+    params: null,
+  })),
 ] as const;
 
 /**

@@ -134,6 +134,11 @@ There is no `set-pin` endpoint. To replace a forgotten advisory PIN, set `ADMIN_
 
 ## Synthetic seed and checks
 
+The public demo configures all 21 Daily Briefing block types, including `onThisDay`
+for its opted-in members, and supplies Calendar highlights for music lessons and
+pharmacy visits. Blocks use their normal data/provider requirements when a briefing
+is later generated; seeding itself creates no generated snapshots or provider cache.
+
 `npm run seed:public` selects only the public seed mode. Run it only against a disposable data directory, with synthetic values and the required configuration. Its final module activates all nine installed plugins through the normal lifecycle, preserving configured settings. Repeating the profile reactivates plugins disabled in the demo; it does not generate briefings, print, fetch feeds or execute scheduled jobs. `npm run seed` and `npm run seed:all` run public then private profiles, so private overlays run after demo activation. The private seed mode is for local overlays; never include its data in a public artifact. See [verification](quality/verification.md) before interpreting test results. Run the full verification tier on isolated synthetic data before accepting a release.
 
 ## Plugins and integrations

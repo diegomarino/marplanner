@@ -1,4 +1,5 @@
 import { upsertExternalSource, upsertSeedEvent } from "../src/server/modules/calendar";
+import { upsertSeedHighlightRule } from "../src/server/modules/calendar/highlights";
 import { wallClockToInstant } from "../src/server/modules/calendar/recurrence";
 import type { SeedContext, SeedModule } from "../src/server/db/seeds/types";
 
@@ -134,6 +135,18 @@ const seedCalendar: SeedModule = {
   id: "calendar:demo",
 
   async run(context) {
+    upsertSeedHighlightRule({
+      id: "demo:calendar:highlight:music",
+      emoji: "🎵",
+      keywords: ["music lesson"],
+      nowMs: context.nowMs,
+    });
+    upsertSeedHighlightRule({
+      id: "demo:calendar:highlight:pharmacy",
+      emoji: "💊",
+      keywords: ["pharmacy"],
+      nowMs: context.nowMs,
+    });
     for (const source of SOURCES) {
       if (isCanonicalSource(context, source)) continue;
       await upsertExternalSource(

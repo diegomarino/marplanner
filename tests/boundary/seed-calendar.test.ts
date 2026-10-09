@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "../../src/server/db/client";
 import { runSeedProfile } from "../../src/server/db/seeds/runner";
 import { createEvent, getEvents } from "../../src/server/modules/calendar";
+import {
+  createHighlightRule,
+  listHighlightRules,
+} from "../../src/server/modules/calendar/highlights";
 import { useIsolatedDb } from "../helpers/db";
 
 const AS_OF_DATE = "2026-09-23";
@@ -21,6 +25,92 @@ describe("Calendar demo seed boundary", () => {
     vi.setSystemTime(new Date("2026-09-23T12:00:00Z"));
   });
   afterEach(() => vi.useRealTimers());
+
+  it("validates seed highlight identity and content without altering ordinary rules", async () => {
+    const highlights = await import("../../src/server/modules/calendar/highlights");
+    const upsert = (
+      highlights as typeof highlights & {
+        upsertSeedHighlightRule?: (input: {
+          id: string;
+          emoji: string;
+          keywords: string[];
+          nowMs: number;
+        }) => void;
+      }
+    ).upsertSeedHighlightRule;
+    expect(upsert).toBeTypeOf("function");
+    if (!upsert) throw new Error("Missing seed highlight upsert");
+    const ordinary = createHighlightRule({ emoji: "🏠", keywords: ["Home"] });
+    const input = {
+      id: "demo:calendar:highlight:music",
+      emoji: "🎵",
+      keywords: ["music lesson"],
+      nowMs: NOW,
+    };
+    expect(() => upsert({ ...input, id: ordinary.id })).toThrow(/seed-owned/i);
+    expect(() => upsert({ ...input, nowMs: -1 })).toThrow(/timestamp/i);
+    expect(() => upsert({ ...input, nowMs: 1.5 })).toThrow(/timestamp/i);
+    expect(() => upsert({ ...input, emoji: "invalid" })).toThrow(/highlight/i);
+    upsert(input);
+    upsert({ ...input, keywords: ["music", "lesson"], nowMs: NOW + 1 });
+    expect(listHighlightRules()).toEqual([
+      ordinary,
+      { id: input.id, emoji: "🎵", keywords: ["music", "lesson"], enabled: true, priority: 1 },
+    ]);
+    expect(
+      getDb()
+        .prepare("SELECT created_at, updated_at FROM calendar_highlight_rules WHERE id = ?")
+        .get(input.id)
+    ).toEqual({ created_at: NOW, updated_at: NOW + 1 });
+  });
+
+  it("seeds read-time music and pharmacy highlights idempotently and refuses ordinary rules", async () => {
+    const request = {
+      mode: "public" as const,
+      asOfDate: AS_OF_DATE,
+      nowMs: NOW,
+      disposableTarget: true,
+    };
+    await runSeedProfile(request);
+    expect(listHighlightRules()).toEqual([
+      {
+        id: "demo:calendar:highlight:music",
+        emoji: "🎵",
+        keywords: ["music lesson"],
+        enabled: true,
+        priority: 0,
+      },
+      {
+        id: "demo:calendar:highlight:pharmacy",
+        emoji: "💊",
+        keywords: ["pharmacy"],
+        enabled: true,
+        priority: 1,
+      },
+    ]);
+    const events = getEvents({ source: "all", range: { from: "2026-09-22", to: "2026-09-24" } });
+    expect(events.find(({ id }) => id === "demo:calendar:event:lisa-music-lesson")).toMatchObject({
+      title: "Lisa music lesson",
+      decoratedTitle: "🎵 Lisa music lesson",
+    });
+    expect(events.find(({ id }) => id === "demo:calendar:event:pharmacy-stop")).toMatchObject({
+      title: "Bart pharmacy stop",
+      decoratedTitle: "💊 Bart pharmacy stop",
+    });
+    const first = getDb().prepare("SELECT * FROM calendar_highlight_rules ORDER BY priority").all();
+    await runSeedProfile({ ...request, nowMs: NOW + 1 });
+    expect(
+      getDb().prepare("SELECT * FROM calendar_highlight_rules ORDER BY priority").all()
+    ).toEqual(first);
+    createHighlightRule({ emoji: "🏠", keywords: ["Ordinary household"] });
+    const beforeRefusal = getDb()
+      .prepare("SELECT * FROM calendar_highlight_rules ORDER BY priority")
+      .all();
+    await expect(runSeedProfile(request)).rejects.toThrow(/calendar_highlight_rules/);
+    expect(
+      getDb().prepare("SELECT * FROM calendar_highlight_rules ORDER BY priority").all()
+    ).toEqual(beforeRefusal);
+  });
 
   it("creates four enabled normalized source configurations without fetching or external events", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");

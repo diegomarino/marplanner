@@ -21,6 +21,7 @@ describe("seed ownership integration", () => {
       "calendar_events",
       "calendar_assignments",
       "calendar_external_sources",
+      "calendar_highlight_rules",
       "routines",
       "chores",
       "routine_assignments",
