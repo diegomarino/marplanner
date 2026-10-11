@@ -65,7 +65,7 @@ jobs:
   verify:
     needs: select
     runs-on: ${{ fromJSON(needs.select.outputs.runner) }}
-    timeout-minutes: 10
+    timeout-minutes: ${{ contains(needs.select.outputs.runner, 'self-hosted') && 300 || 10 }}
     steps:
       - name: Show runner environment
         env:
