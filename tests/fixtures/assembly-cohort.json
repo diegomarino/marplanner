@@ -653,7 +653,7 @@
             "tracked checkout inventory comes from git and rejects untracked files",
             "CI binds the checked-out tree instead of a stale embedded candidate hash",
             "time-announcements browser check runs only when requested and stays off the mac mini",
-            "runner selector admits only trusted online idle macmini and falls back safely"
+            "runner selector queues trusted jobs and requires explicit hosted execution"
           ],
           "tools/check-openapi-drift.test.mjs": [
             "discoverContracts: finds contracts under slices that have one, skips slices that don't",
