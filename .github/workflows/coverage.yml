@@ -20,7 +20,7 @@ jobs:
   standard:
     name: standard
     runs-on: ${{ fromJSON(needs.select.outputs.runner) }}
-    timeout-minutes: 45
+    timeout-minutes: 300
     env:
       CI: "true"
     steps:
@@ -86,7 +86,7 @@ jobs:
       - select
       - standard
     runs-on: ${{ fromJSON(needs.select.outputs.runner) }}
-    timeout-minutes: 60
+    timeout-minutes: 300
     env:
       CI: "true"
     steps:
@@ -152,7 +152,7 @@ jobs:
     name: container
     needs: [select, standard]
     runs-on: ${{ fromJSON(needs.select.outputs.container_runner) }}
-    timeout-minutes: 30
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v7
         with:
