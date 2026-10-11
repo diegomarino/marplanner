@@ -38,7 +38,7 @@ jobs:
         env:
           LOCAL_RUNNER_LABELS: '["self-hosted", "macOS", "macmini"]'
           FORCE_HOSTED: ${{ inputs.force_hosted || false }}
-          TRUSTED: ${{ !github.event.pull_request || github.event.pull_request.head.repo.full_name == github.repository }}
+          TRUSTED: ${{ github.actor != 'dependabot[bot]' && (!github.event.pull_request || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')) }}
         run: |
           python3 - <<'PY'
           import json
