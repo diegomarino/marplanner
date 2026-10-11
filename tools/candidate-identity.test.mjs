@@ -188,6 +188,22 @@ test("runner selector queues trusted jobs and requires explicit hosted execution
   const coverage = load(readFileSync(".github/workflows/coverage.yml", "utf8"));
   const step = selector.jobs.select.steps[0];
   assert.match(step.env.TRUSTED, /head.repo.full_name == github.repository/);
+  const trust = (actor, author, repository = "test/repo") => {
+    const github = {
+      actor,
+      repository: "test/repo",
+      event: author
+        ? { pull_request: { user: { login: author }, head: { repo: { full_name: repository } } } }
+        : {},
+    };
+    return Function("github", `return ${step.env.TRUSTED.slice(3, -2)}`)(github);
+  };
+  assert.equal(trust("maintainer", "maintainer"), true);
+  assert.equal(trust("maintainer"), true);
+  assert.equal(trust("contributor", "contributor", "fork/repo"), false);
+  assert.equal(trust("dependabot[bot]", "dependabot[bot]"), false);
+  assert.equal(trust("maintainer", "dependabot[bot]"), false);
+  assert.equal(trust("dependabot[bot]"), false);
   assert.equal(step.env.FORCE_HOSTED, "${{ inputs.force_hosted || false }}");
   assert.equal(step.env.RUNNER_READ_TOKEN, undefined);
   assert.equal(coverage.jobs.select.secrets, undefined);
@@ -212,6 +228,26 @@ test("runner selector queues trusted jobs and requires explicit hosted execution
       ["no credentials", {}, "true", "false", "", true, local, local],
       ["fork", {}, "false", "false", "", true, ["macos-15"], ["ubuntu-latest"]],
       ["unknown trust", {}, "", "false", "", true, ["macos-15"], ["ubuntu-latest"]],
+      [
+        "dependabot",
+        {},
+        String(trust("dependabot[bot]", "dependabot[bot]")),
+        "false",
+        "",
+        true,
+        ["macos-15"],
+        ["ubuntu-latest"],
+      ],
+      [
+        "dependabot rerun",
+        {},
+        String(trust("maintainer", "dependabot[bot]")),
+        "false",
+        "",
+        true,
+        ["macos-15"],
+        ["ubuntu-latest"],
+      ],
       ["forced", {}, "true", "true", "", true, ["macos-15"], ["ubuntu-latest"]],
       ["forced fork", {}, "false", "true", "", true, ["macos-15"], ["ubuntu-latest"]],
     ]) {
