@@ -20,7 +20,7 @@ jobs:
   standard:
     name: standard
     runs-on: ${{ fromJSON(needs.select.outputs.runner) }}
-    timeout-minutes: 300
+    timeout-minutes: ${{ contains(needs.select.outputs.runner, 'self-hosted') && 300 || 45 }}
     env:
       CI: "true"
     steps:
@@ -86,7 +86,7 @@ jobs:
       - select
       - standard
     runs-on: ${{ fromJSON(needs.select.outputs.runner) }}
-    timeout-minutes: 300
+    timeout-minutes: ${{ contains(needs.select.outputs.runner, 'self-hosted') && 300 || 60 }}
     env:
       CI: "true"
     steps:
@@ -152,7 +152,7 @@ jobs:
     name: container
     needs: [select, standard]
     runs-on: ${{ fromJSON(needs.select.outputs.container_runner) }}
-    timeout-minutes: 300
+    timeout-minutes: ${{ contains(needs.select.outputs.container_runner, 'self-hosted') && 300 || 30 }}
     steps:
       - uses: actions/checkout@v7
         with:
