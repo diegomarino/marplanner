@@ -70,7 +70,11 @@ test("CI binds the checked-out tree instead of a stale embedded candidate hash",
   ]);
   assert.deepEqual(config.jobs.full.needs, ["select", "standard", "native", "container"]);
   assert.equal(config.jobs.full.if, "${{ always() }}");
-  assert.equal(config.jobs.container["runs-on"], "ubuntu-latest");
+  assert.equal(
+    config.jobs.container["runs-on"],
+    "${{ fromJSON(needs.select.outputs.container_runner) }}"
+  );
+  assert.deepEqual(config.jobs.container.needs, ["select", "standard"]);
   for (const job of ["standard", "native"]) {
     assert.equal(config.jobs[job]["runs-on"], "${{ fromJSON(needs.select.outputs.runner) }}");
     assert.ok(config.jobs[job].needs.includes("select"));
@@ -177,38 +181,93 @@ test("time-announcements browser check runs only when requested and stays off th
   assert.equal(JSON.stringify(workflow).includes("macmini"), false);
 });
 
-test("runner selector admits only trusted online idle macmini and falls back safely", async () => {
-  const { readFileSync } = await import("node:fs");
+test("runner selector queues trusted jobs and requires explicit hosted execution", async () => {
+  const { readFileSync, existsSync } = await import("node:fs");
   const { load } = await import("js-yaml");
   const selector = load(readFileSync(".github/workflows/mac-mini-ci.yml", "utf8"));
-  assert.match(
-    selector.jobs.select.steps[0].env.TRUSTED,
-    /head.repo.full_name == github.repository/
+  const coverage = load(readFileSync(".github/workflows/coverage.yml", "utf8"));
+  const step = selector.jobs.select.steps[0];
+  assert.match(step.env.TRUSTED, /head.repo.full_name == github.repository/);
+  const trust = (actor, author, repository = "test/repo") => {
+    const github = {
+      actor,
+      repository: "test/repo",
+      event: author
+        ? { pull_request: { user: { login: author }, head: { repo: { full_name: repository } } } }
+        : {},
+    };
+    return Function("github", `return ${step.env.TRUSTED.slice(3, -2)}`)(github);
+  };
+  assert.equal(trust("maintainer", "maintainer"), true);
+  assert.equal(trust("maintainer"), true);
+  assert.equal(trust("contributor", "contributor", "fork/repo"), false);
+  assert.equal(trust("dependabot[bot]", "dependabot[bot]"), false);
+  assert.equal(trust("maintainer", "dependabot[bot]"), false);
+  assert.equal(trust("dependabot[bot]"), false);
+  assert.equal(step.env.FORCE_HOSTED, "${{ inputs.force_hosted || false }}");
+  assert.equal(step.env.RUNNER_READ_TOKEN, undefined);
+  assert.equal(coverage.jobs.select.secrets, undefined);
+  for (const workflow of [selector, coverage]) {
+    assert.equal(workflow.on.workflow_dispatch.inputs.force_hosted.type, "boolean");
+    assert.equal(workflow.on.workflow_dispatch.inputs.force_hosted.default, false);
+  }
+  assert.equal(
+    selector.on.workflow_call.outputs.container_runner.value,
+    "${{ jobs.select.outputs.container_runner }}"
   );
-  const script = selector.jobs.select.steps[0].run.split("python3 - <<'PY'\n")[1].split("\nPY")[0];
+  const script = step.run.split("python3 - <<'PY'\n")[1].split("\nPY")[0];
+  const local = ["self-hosted", "macOS", "macmini"];
   const root = mkdtempSync(join(tmpdir(), "runner-selector-"));
   try {
-    const runner = {
-      name: "macmini",
-      status: "online",
-      busy: false,
-      labels: ["self-hosted", "macOS", "macmini"].map((name) => ({ name })),
-    };
-    for (const [label, changes, trusted, forced, expected] of [
-      ["idle", {}, "true", "false", ["self-hosted", "macOS", "macmini"]],
-      ["busy", { busy: true }, "true", "false", ["macos-15"]],
-      ["offline", { status: "offline" }, "true", "false", ["macos-15"]],
-      ["wrong name", { name: "other" }, "true", "false", ["macos-15"]],
-      ["missing label", { labels: [] }, "true", "false", ["macos-15"]],
-      ["fork", {}, "false", "false", ["macos-15"]],
-      ["forced", {}, "true", "true", ["macos-15"]],
+    for (const [label, changes, trusted, forced, token, throws, expected, container] of [
+      ["idle", {}, "true", "false", "test", false, local, local],
+      ["busy", { busy: true }, "true", "false", "test", false, local, local],
+      ["offline", { status: "offline" }, "true", "false", "test", false, local, local],
+      ["disconnected", { runners: [] }, "true", "false", "test", false, local, local],
+      ["lookup failure", {}, "true", "false", "test", true, local, local],
+      ["no credentials", {}, "true", "false", "", true, local, local],
+      ["fork", {}, "false", "false", "", true, ["macos-15"], ["ubuntu-latest"]],
+      ["unknown trust", {}, "", "false", "", true, ["macos-15"], ["ubuntu-latest"]],
+      [
+        "dependabot",
+        {},
+        String(trust("dependabot[bot]", "dependabot[bot]")),
+        "false",
+        "",
+        true,
+        ["macos-15"],
+        ["ubuntu-latest"],
+      ],
+      [
+        "dependabot rerun",
+        {},
+        String(trust("maintainer", "dependabot[bot]")),
+        "false",
+        "",
+        true,
+        ["macos-15"],
+        ["ubuntu-latest"],
+      ],
+      ["forced", {}, "true", "true", "", true, ["macos-15"], ["ubuntu-latest"]],
+      ["forced fork", {}, "false", "true", "", true, ["macos-15"], ["ubuntu-latest"]],
     ]) {
       const output = join(root, label);
-      const setup = `import io, urllib.request\nurllib.request.urlopen = lambda *args, **kwargs: io.StringIO(${JSON.stringify(JSON.stringify({ runners: [{ ...runner, ...changes }] }))})\n`;
+      const runner = {
+        name: "macmini",
+        status: "online",
+        busy: false,
+        labels: local.map((name) => ({ name })),
+        ...changes,
+      };
+      const response = changes.runners ? changes : { runners: [runner] };
+      const setup = throws
+        ? "import urllib.request\ndef unavailable(*args, **kwargs):\n    raise OSError('lookup unavailable')\nurllib.request.urlopen = unavailable\n"
+        : `import io, urllib.request\nurllib.request.urlopen = lambda *args, **kwargs: io.StringIO(${JSON.stringify(JSON.stringify(response))})\n`;
       const result = spawnSync("python3", ["-c", setup + script], {
         env: {
           ...process.env,
-          RUNNER_READ_TOKEN: "test",
+          ...step.env,
+          RUNNER_READ_TOKEN: token,
           REPOSITORY: "test/repo",
           TRUSTED: trusted,
           FORCE_HOSTED: forced,
@@ -216,12 +275,54 @@ test("runner selector admits only trusted online idle macmini and falls back saf
         },
         encoding: "utf8",
       });
-      assert.equal(result.status, 0, result.stderr);
-      assert.deepEqual(
-        JSON.parse(readFileSync(output, "utf8").trim().slice("runner=".length)),
-        expected,
-        label
+      assert.equal(result.status, 0, `${label}: ${result.stderr}`);
+      const outputs = Object.fromEntries(
+        readFileSync(output, "utf8")
+          .trim()
+          .split("\n")
+          .map((line) => {
+            const [key, value] = line.split("=");
+            return [key, JSON.parse(value)];
+          })
       );
+      assert.deepEqual(outputs.runner, expected, label);
+      assert.deepEqual(outputs.container_runner, container, label);
+    }
+    const dockerCheck = coverage.jobs.container.steps.find(
+      (step) => step.name === "Require a configured Linux Docker engine"
+    ).run;
+    mkdirSync(join(root, "bin"));
+    for (const [name, command, status] of [
+      ["linux", "echo linux", 0],
+      ["wrong engine", "echo windows", 1],
+      ["unavailable", "exit 1", 1],
+    ]) {
+      writeFileSync(join(root, "bin", "docker"), `#!/bin/sh\n${command}\n`, { mode: 0o755 });
+      const result = spawnSync("bash", ["-e", "-c", dockerCheck], {
+        env: { ...process.env, PATH: `${join(root, "bin")}:${process.env.PATH}` },
+        encoding: "utf8",
+      });
+      assert.equal(result.status, status, name);
+      if (status) assert.match(result.stdout, /::error::.*Linux Docker engine.*force_hosted=true/);
+    }
+    for (const labels of ["", "[]", "invalid", '["self-hosted"]', '["self-hosted","macOS",null]']) {
+      const output = join(root, `missing-${labels.length}`);
+      const result = spawnSync("python3", ["-c", script], {
+        env: {
+          ...process.env,
+          TRUSTED: "true",
+          FORCE_HOSTED: "false",
+          LOCAL_RUNNER_LABELS: labels,
+          GITHUB_OUTPUT: output,
+        },
+        encoding: "utf8",
+      });
+      assert.notEqual(result.status, 0);
+      assert.match(
+        result.stdout + result.stderr,
+        /LOCAL_RUNNER_LABELS.*self-hosted.*macOS.*macmini/
+      );
+      assert.equal(existsSync(output), false);
     }
   } finally {
     rmSync(root, { recursive: true, force: true });

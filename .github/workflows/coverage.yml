@@ -7,7 +7,7 @@ name: Product quality and coverage
   workflow_dispatch:
     inputs:
       force_hosted:
-        description: Use GitHub-hosted macOS for native product checks
+        description: Use GitHub-hosted execution for product checks
         type: boolean
         default: false
 permissions:
@@ -17,8 +17,6 @@ jobs:
     uses: ./.github/workflows/mac-mini-ci.yml
     with:
       force_hosted: ${{ inputs.force_hosted || false }}
-    secrets:
-      RUNNER_READ_TOKEN: ${{ secrets.RUNNER_READ_TOKEN }}
   standard:
     name: standard
     runs-on: ${{ fromJSON(needs.select.outputs.runner) }}
@@ -152,8 +150,8 @@ jobs:
         working-directory: ci-${{ github.run_id }}-${{ github.run_attempt }}-native
   container:
     name: container
-    needs: standard
-    runs-on: ubuntu-latest
+    needs: [select, standard]
+    runs-on: ${{ fromJSON(needs.select.outputs.container_runner) }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
@@ -190,6 +188,12 @@ jobs:
           MP_CANDIDATE_ID=$(node tools/candidate-identity.mjs)
           echo "MP_CANDIDATE_ID=$MP_CANDIDATE_ID" >> "$GITHUB_ENV"
       - run: npx playwright install --with-deps --only-shell chromium
+      - name: Require a configured Linux Docker engine
+        run: |-
+          if ! test "$(docker info --format '{{.OSType}}')" = linux; then
+            echo "::error::Container checks require a running Linux Docker engine accessible to the runner account. Restore the existing Docker configuration or dispatch with force_hosted=true."
+            exit 1
+          fi
       - name: Build production container (runner architecture only)
         run: docker build -f infra/docker/Dockerfile --label org.marplanner.candidate="$MP_CANDIDATE_ID" --label org.opencontainers.image.revision="$GITHUB_SHA" -t marplanner:review .
       - name: Accept built container lifecycle and browser flow
