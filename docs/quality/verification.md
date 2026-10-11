@@ -14,13 +14,28 @@ Apply the required tier to the same reviewed candidate bytes. Changes after a pa
 
 `npm run check:preflight` checks that the checkout matches the git-tracked file list, that every coverage-policy file is present, and the pinned Node/npm/Vitest toolchain without running tests. Standard runs it before the destructive stamp. `npm run check:preflight:browser` also checks the retained candidate stamp and standard coverage/cohort artifacts, rejects inherited `SCHEDULER_DISABLED=1` and acceptance server reuse (`PW_REUSE_SERVER=1`), and checks local `BASE_URL`/`PORT` consistency before the aggregate build. These early checks do not establish browser execution or a complete environment/build fingerprint; the browser runner still owns browser availability, synthetic data and server startup.
 
-CI calls the existing selector in `mac-mini-ci.yml`. Trusted repository changes use
-`macmini` when the named runner is online, idle and has the required labels;
-otherwise native jobs use `macos-15`. Fork PRs always use hosted macOS. The lookup
-is an availability snapshot, not a reservation: a disconnect after selection does
-not migrate a queued or running job. `force_hosted` on workflow dispatch (or the
-repository variable `MP_FORCE_HOSTED=true` for reruns before this workflow reaches
-main) forces hosted native acceptance.
+CI calls the existing selector in `mac-mini-ci.yml`. Trusted internal pushes and
+same-repository PRs use the existing `[self-hosted, macOS, macmini]` labels for
+`standard`, `native` and `container`. GitHub queues jobs while the runner is busy,
+offline or temporarily disconnected; there is no availability lookup or automatic
+hosted fallback. Local outages leave CI waiting. GitHub currently cancels
+self-hosted jobs after [24 hours in the queue](https://docs.github.com/en/actions/reference/limits),
+so the required checks can fail without execution.
+
+Fork PRs and events without established trust retain hosted execution: macOS for
+native checks and Ubuntu for containers. The `force_hosted` workflow-dispatch
+boolean defaults to false and explicitly selects those hosted routes. The old
+`MP_FORCE_HOSTED` variable no longer affects routing. `RUNNER_READ_TOKEN` is no
+longer consumed; missing credentials and API lookup failures cannot trigger paid
+fallback. Existing remote secrets and variables need not be removed.
+
+Runner configuration remains the existing label array in `mac-mini-ci.yml`,
+validated before trusted jobs are scheduled. Missing or invalid labels fail with
+an actionable error. An unregistered runner or a runner with mismatched labels
+leaves jobs queued: the selector deliberately does not query registration or
+availability. Operators must check repository Settings > Actions > Runners for
+all required labels. Recover the existing runner or explicitly dispatch with
+`force_hosted=true`; rerunning an ordinary push/PR does not enable hosted execution.
 
 `standard` runs the complete standard tier. `native` independently installs the
 same candidate, restores the standard tar archive with its original timestamps,
@@ -32,8 +47,14 @@ names include run ID and attempt to prevent mixing retries. Each job has a fresh
 checkout path, job-owned npm configuration/cache/prefix and browser installation;
 no personal environment files, desktop session or existing browser cache is used.
 
-`container` builds and accepts the Docker image on GitHub-hosted Ubuntu, including
-its browser flow. The required `full` check always runs on Ubuntu and succeeds
+`container` builds and accepts the Docker image on the selected runner, including
+its browser flow. Local execution requires an already configured Linux Docker
+engine accessible to the runner service account; its prerequisite check fails
+with recovery instructions when that configuration is unavailable. This routing
+change does not install Docker, start host services or add runners. Builds retain
+the runner architecture and existing image/evidence identity checks. The single
+registered Mac mini serializes local jobs; job-owned checkout/cache paths and
+browser/printer locking remain unchanged. The required `full` check always runs on Ubuntu and succeeds
 only when `select`, `standard`, `native` and `container` all succeeded. Failure,
 cancellation, missing constituents or unexpected skips fail the aggregate gate.
 The required status names remain `standard` and `full`.
