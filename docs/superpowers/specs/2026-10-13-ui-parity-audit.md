@@ -180,3 +180,12 @@ it into the named screen.
 ## Progress log
 
 - Audit written. Tokens phase next.
+- Tokens committed (`globals.css` only): radius 2xl–4xl, font stacks, card, popover and modal
+  shadows, body dot grid and font smoothing. Target baselines recaptured afterwards. Inter is
+  installed on the capture machine, so target captures now render body text in Inter like the
+  reference; a device without it keeps the system font (see Deferred decisions). Outfit is not
+  installed here, so `font-display` falls back on both the captures and the kiosk.
+- Gate note: `npm run test:unit` reported one unhandled "window is not defined" error from
+  `tests/client/foundation-settings.test.tsx` in one run (all 1,132 tests passing) and was clean on
+  two immediate reruns and on the baseline. It is a teardown race in that test, not related to
+  the styling changes; a run that shows it is repeated before committing.
