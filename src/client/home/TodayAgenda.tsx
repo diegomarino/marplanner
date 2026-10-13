@@ -180,7 +180,9 @@ export function TodayAgenda(): React.JSX.Element {
       <li
         key={`${item.event.id}@${item.event.occurrenceStart}`}
         className={cn(
-          "rounded-md border-l-4 px-3 py-2",
+          // `relative` keeps the visually hidden details inside the row, so rows scrolled out
+          // of the list do not extend the page.
+          "relative rounded-md border-l-4 px-3 py-2",
           // Member identity wins; only an all-day event nobody owns takes the all-day surface.
           item.kind === "all-day" && !accent
             ? "bg-event-all-day border-l-event-all-day-border"

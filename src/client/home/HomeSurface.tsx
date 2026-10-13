@@ -17,7 +17,7 @@ export function HomeSurface(): React.JSX.Element {
       <h1 className="sr-only">Marplanner</h1>
       <div
         data-testid="home-dashboard-grid"
-        className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(16rem,25%)_minmax(0,1fr)] lg:grid-rows-[minmax(0,4fr)_minmax(7rem,1fr)]"
+        className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(16rem,25%)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)_auto]"
       >
         <div data-testid="home-agenda-region" className="min-h-0 lg:row-span-2 lg:overflow-hidden">
           <HomeWidgetBoundary title={t("agenda.title")} errorMessage={t("home.widgetError")}>
