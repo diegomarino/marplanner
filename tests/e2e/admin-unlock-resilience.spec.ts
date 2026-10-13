@@ -96,10 +96,6 @@ const adminDestinations: ReadonlyArray<{
     primary: (page, m) => page.getByTestId("members-add-member"),
   },
   {
-    path: "/admin/day-periods",
-    primary: (page) => page.getByTestId(/^day-periods-edit-/).first(),
-  },
-  {
     path: "/admin/routines",
     primary: (page, m) =>
       page.getByRole("button", { name: m["routines.action.create"], exact: true }),
@@ -138,16 +134,16 @@ const adminDestinations: ReadonlyArray<{
     primary: (page: Page) => page.getByTestId("time-announcements-create"),
   },
   {
-    path: "/admin/weather",
-    primary: (page: Page) => page.getByTestId("weather-save"),
-  },
-  {
     path: "/admin/network-devices",
     primary: (page: Page) => page.getByTestId("network-devices-open-picker"),
   },
   {
     path: "/admin/printing",
     primary: (page: Page) => page.getByTestId("printing-trigger-test-print"),
+  },
+  {
+    path: "/admin/settings",
+    primary: (page: Page) => page.getByTestId("settings-save"),
   },
 ] as const;
 

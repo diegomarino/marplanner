@@ -41,7 +41,7 @@ test("day periods critical-flow: view → edit → active now (US1, US2, US3)", 
   const m = messages[resolveLang(settings.locale.language)];
 
   // --- Navigate to Períodos Diarios screen ---
-  await openAdminSection(page, "admin-nav-day-periods");
+  await openAdminSection(page, "admin-nav-settings");
 
   // --- US1 (view): exactly FOUR periods render, with their i18n labels ---
   await expect(page.getByText(m["dayPeriods.management.loading"])).toHaveCount(0, {
