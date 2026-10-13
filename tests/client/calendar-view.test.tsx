@@ -684,6 +684,132 @@ describe("CalendarView — editing a local event", () => {
   });
 });
 
+describe("CalendarView — timed events and saved details", () => {
+  const TIMED = {
+    ...EVENT,
+    allDay: false,
+    occurrenceStart: `${TOMORROW}T10:00:00.000Z`,
+    occurrenceEnd: `${TOMORROW}T11:00:00.000Z`,
+    tzid: "UTC",
+    location: "Old hall",
+    description: "Old notes",
+  };
+  const sent = (mockFetch: ReturnType<typeof mockBackend>, method: string) => {
+    const call = (mockFetch.mock.calls as FetchCall[]).find(([, init]) => init?.method === method);
+    return call ? (JSON.parse(String(call[1]?.body)) as Record<string, unknown>) : undefined;
+  };
+
+  it("creates a timed event with its place and notes", async () => {
+    const mockFetch = mockBackend({ createEvent: () => json({ id: "new-3" }, 201) });
+    renderSurface();
+    await screen.findByTestId("calendar-event-row");
+
+    fireEvent.click(screen.getByTestId("calendar-create-btn"));
+    const dialog = within(await screen.findByRole("dialog", { name: "New Event" }));
+    fireEvent.change(dialog.getByTestId("calendar-create-title-input"), {
+      target: { value: "Match" },
+    });
+    fireEvent.click(dialog.getByRole("checkbox", { name: "All-day event" }));
+    fireEvent.change(dialog.getByLabelText("Start time"), {
+      target: { value: `${TOMORROW}T17:00` },
+    });
+    fireEvent.change(dialog.getByLabelText("End time"), { target: { value: `${TOMORROW}T18:30` } });
+    fireEvent.change(dialog.getByLabelText("Location"), { target: { value: " Pitch 2 " } });
+    fireEvent.click(dialog.getByTestId("calendar-create-submit"));
+
+    await waitFor(() =>
+      expect(sent(mockFetch, "POST")).toEqual({
+        title: "Match",
+        allDay: false,
+        startUtc: expect.stringMatching(/T\d{2}:00:00\.000Z$/) as string,
+        endUtc: expect.stringMatching(/T\d{2}:30:00\.000Z$/) as string,
+        tzid: expect.any(String) as string,
+        location: " Pitch 2 ",
+      })
+    );
+  });
+
+  it("sends only what changed when a timed event is edited", async () => {
+    const mockFetch = mockBackend({ events: () => json([TIMED]) });
+    renderSurface();
+
+    await activateFirstEvent();
+    fireEvent.click(screen.getByTestId("calendar-edit-btn"));
+    const end = await screen.findByLabelText("End time");
+    fireEvent.change(end, {
+      target: { value: (end as HTMLInputElement).value.replace(/..$/, "45") },
+    });
+    fireEvent.change(screen.getByLabelText("Location"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Description"), { target: { value: "New notes" } });
+    fireEvent.click(screen.getByTestId("calendar-edit-save-btn"));
+
+    await waitFor(() => expect(sent(mockFetch, "PATCH")).toBeDefined());
+    expect(sent(mockFetch, "PATCH")).toEqual({
+      endUtc: expect.stringMatching(/:45:00\.000Z$/) as string,
+      location: "",
+      description: "New notes",
+    });
+  });
+
+  it("turns a timed event into an all-day one on its own day", async () => {
+    const mockFetch = mockBackend({ events: () => json([TIMED]) });
+    renderSurface();
+
+    await activateFirstEvent();
+    fireEvent.click(screen.getByTestId("calendar-edit-btn"));
+    fireEvent.click(await screen.findByRole("checkbox", { name: "All-day event" }));
+    expect(screen.getByLabelText("Start date")).toHaveValue(TOMORROW);
+    fireEvent.click(screen.getByTestId("calendar-edit-save-btn"));
+
+    await waitFor(() => expect(sent(mockFetch, "PATCH")).toBeDefined());
+    expect(sent(mockFetch, "PATCH")).toMatchObject({
+      allDay: true,
+      startDate: TOMORROW,
+      endDate: DAY_AFTER,
+    });
+  });
+
+  it("moves an all-day event's last day without touching anything else", async () => {
+    const mockFetch = mockBackend();
+    renderSurface();
+
+    await activateFirstEvent();
+    fireEvent.click(screen.getByTestId("calendar-edit-btn"));
+    fireEvent.change(await screen.findByLabelText("End date"), { target: { value: DAY_AFTER } });
+    fireEvent.click(screen.getByTestId("calendar-edit-save-btn"));
+
+    await waitFor(() => expect(sent(mockFetch, "PATCH")).toBeDefined());
+    const body = sent(mockFetch, "PATCH") as { startDate: string; endDate: string };
+    expect(Object.keys(body).sort()).toEqual(["endDate", "startDate"]);
+    expect(body.startDate).toBe(TOMORROW);
+    // The stored end is the day after the last day shown.
+    expect(body.endDate > DAY_AFTER).toBe(true);
+  });
+
+  it("keeps the event and reports the people that could not be saved at creation", async () => {
+    mockBackend({
+      createEvent: () => json({ id: "new-4" }, 201),
+      assignments: () => json(null, 500),
+    });
+    renderSurface();
+    await screen.findByTestId("calendar-event-row");
+
+    fireEvent.click(screen.getByTestId("calendar-create-btn"));
+    const dialog = within(await screen.findByRole("dialog", { name: "New Event" }));
+    fireEvent.change(dialog.getByTestId("calendar-create-title-input"), {
+      target: { value: "Swim" },
+    });
+    fireEvent.change(dialog.getByLabelText("Start date"), { target: { value: TOMORROW } });
+    fireEvent.click(dialog.getByRole("checkbox", { name: "Alice" }));
+    fireEvent.click(dialog.getByRole("checkbox", { name: "Alice" }));
+    fireEvent.click(dialog.getByRole("checkbox", { name: "Alice" }));
+    fireEvent.click(dialog.getByTestId("calendar-create-submit"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Failed to update assignment.");
+    expect(screen.queryByRole("dialog", { name: "New Event" })).not.toBeInTheDocument();
+  });
+});
+
 describe("CalendarView — adopts the AdminPanel L2 frame", () => {
   it("wraps the surface in a landmark region labelled by its own title", async () => {
     mockBackend();

@@ -105,6 +105,10 @@
     },
     {
       "method": "GET",
+      "path": "/api/telemetry/system-status"
+    },
+    {
+      "method": "GET",
       "path": "/health"
     },
     {
@@ -495,7 +499,7 @@
   "familyRouteIds": ["home", "calendar", "chores", "meals"],
   "adminRouteIds": [
     "calendar",
-    "member-create",
+    "overview",
     "members",
     "day-periods",
     "routines",
@@ -2969,7 +2973,10 @@
             "AdminOverview announces an unreadable status without inventing a deploy",
             "Admin shell navigation keeps Overview and Lock in the sidebar on every admin page",
             "Admin shell navigation marks Overview as the current page on the landing page and lists every section there",
-            "Admin shell navigation builds the breadcrumb trail from every registered page on the way"
+            "Admin shell navigation builds the breadcrumb trail from every registered page on the way",
+            "Admin shell navigation navigates from the overview's section buttons, the telemetry shortcut and the sidebar",
+            "Admin shell navigation offers the overview from an unknown admin page",
+            "Admin shell navigation shows an item's subsections only while that item or one of them is open"
           ],
           "tests/client/admin-routes.test.tsx": [
             "AdminRoutes renders the directly requested printing destination instead of the member-create default",
@@ -3108,6 +3115,8 @@
             "CalendarView — provisioned Calendar authoring keeps create, assign, edit, and delete plus their member load available when the obsolete admin-unlock branch is false",
             "CalendarView — kiosk density (SC-001, SC-002, FR-009) meets kiosk density across every rendered control — default state, then create form + edit panel + delete confirm all open, across two phases",
             "CalendarView — kiosk density (SC-001, SC-002, FR-009) DELIBERATE NEGATIVE — forcing one of this surface's own controls below the kiosk minimum makes the assertion fail",
+            "CalendarView — error states are announced (SC-011) announces invalid date conversion during create and releases the submit button",
+            "CalendarView — error states are announced (SC-011) announces invalid date conversion during edit and releases the submit button",
             "CalendarView — error states are announced (SC-011) announces the events-load failure",
             "CalendarView — error states are announced (SC-011) announces the members-load failure once the edit form is opened",
             "CalendarView — error states are announced (SC-011) announces an assignment-update failure",
@@ -3121,15 +3130,18 @@
             "CalendarView — editing a local event turns an all-day event into a timed one, carrying its day across",
             "CalendarView — editing a local event closes the dialog after a successful save and reopens on the summary",
             "CalendarView — editing a local event shows a same-day timed event as one date with start and end times and no time zone",
+            "CalendarView — timed events and saved details creates a timed event with its place and notes",
+            "CalendarView — timed events and saved details sends only what changed when a timed event is edited",
+            "CalendarView — timed events and saved details turns a timed event into an all-day one on its own day",
+            "CalendarView — timed events and saved details moves an all-day event's last day without touching anything else",
+            "CalendarView — timed events and saved details keeps the event and reports the people that could not be saved at creation",
             "CalendarView — adopts the AdminPanel L2 frame wraps the surface in a landmark region labelled by its own title",
             "CalendarView — adopts the AdminPanel L2 frame renders an h1, not h2 — the page-level heading for the whole /calendar route (review, PR #777, finding F6)",
             "CalendarView — the assignment row is a real, keyboard-operable control (FR-013, SC-012) is reachable by Tab, activated by Space (via a native click), and its checked state is announced through an accessible name — not a non-focusable <li onClick> wrapping a readOnly checkbox",
             "CalendarView — the assignment row is a real, keyboard-operable control (FR-013, SC-012) meets kiosk density on the per-member checkbox row (the row that used to be a non-focusable <li>)",
             "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) submits the toggled member id in the PUT payload",
-            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) excludes archived members from assignment choices",
             "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) makes the whole member pill the tap target ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)",
-            "CalendarView — error states are announced (SC-011) announces invalid date conversion during create and releases the submit button",
-            "CalendarView — error states are announced (SC-011) announces invalid date conversion during edit and releases the submit button"
+            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) excludes archived members from assignment choices"
           ],
           "tests/client/calendar-week-integration.test.tsx": [
             "CalendarView — Week integration keeps recurrence occurrences distinct and activates local/external and all-day events",
@@ -3775,7 +3787,8 @@
           "tests/client/recipe-dialog.test.tsx": [
             "RecipeDialog normalizes the form at the UI seam and preserves values after a failed save",
             "sends an explicit empty slots patch when an edited recipe is made valid for every slot",
-            "localizes recipe field accessibility names from the household language"
+            "localizes recipe field accessibility names from the household language",
+            "grows a long field to its content and closes on request"
           ],
           "tests/client/reminders-calendar-gated-i18n-parity.test.ts": [
             "reminders-calendar-gated-i18n-parity reminders.calendarGated.*/reminders.dryRun.* keys have identical coverage in en and es (both directions)",
@@ -5086,6 +5099,21 @@
           "branches": 91.3
         }
       },
+      "src/client/admin/AdminOverview.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 51,
+          "statements": 54,
+          "functions": 11,
+          "branches": 53
+        },
+        "minimumRates": {
+          "lines": 90.19,
+          "statements": 85.18,
+          "functions": 90.9,
+          "branches": 71.69
+        }
+      },
       "src/client/admin/AdminRoutes.tsx": {
         "layer": "client",
         "minimumTotals": {
@@ -5098,7 +5126,7 @@
           "lines": 89.47,
           "statements": 90.9,
           "functions": 87.5,
-          "branches": 100
+          "branches": 95.65
         }
       },
       "src/client/admin/BackupsManagement.tsx": {
@@ -5121,13 +5149,13 @@
         "minimumTotals": {
           "lines": 162,
           "statements": 184,
-          "functions": 52,
+          "functions": 51,
           "branches": 92
         },
         "minimumRates": {
           "lines": 95.67,
           "statements": 89.13,
-          "functions": 94.23,
+          "functions": 94.11,
           "branches": 77.17
         }
       },
@@ -5206,27 +5234,12 @@
           "branches": 69.15
         }
       },
-      "src/client/admin/MemberCreateForm.tsx": {
-        "layer": "client",
-        "minimumTotals": {
-          "lines": 78,
-          "statements": 82,
-          "functions": 16,
-          "branches": 69
-        },
-        "minimumRates": {
-          "lines": 83.33,
-          "statements": 81.7,
-          "functions": 93.75,
-          "branches": 71.01
-        }
-      },
       "src/client/admin/MembersManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
           "lines": 149,
           "statements": 160,
-          "functions": 55,
+          "functions": 51,
           "branches": 105
         },
         "minimumRates": {
@@ -5344,16 +5357,16 @@
       "src/client/calendar/CalendarMonthView.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 22,
-          "statements": 23,
+          "lines": 21,
+          "statements": 22,
           "functions": 9,
-          "branches": 20
+          "branches": 18
         },
         "minimumRates": {
           "lines": 100,
           "statements": 100,
           "functions": 100,
-          "branches": 95
+          "branches": 94.44
         }
       },
       "src/client/calendar/CalendarView.tsx": {
@@ -5369,6 +5382,21 @@
           "statements": 90.1,
           "functions": 85.89,
           "branches": 84
+        }
+      },
+      "src/client/calendar/EventDescription.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 44,
+          "statements": 50,
+          "functions": 9,
+          "branches": 42
+        },
+        "minimumRates": {
+          "lines": 90.9,
+          "statements": 86,
+          "functions": 100,
+          "branches": 76.19
         }
       },
       "src/client/calendar/ScheduleXWeekView.tsx": {
@@ -5626,6 +5654,21 @@
           "branches": 100
         }
       },
+      "src/client/components/PillToggle.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 2,
+          "statements": 2,
+          "functions": 2,
+          "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/client/components/RadioField.tsx": {
         "layer": "client",
         "minimumTotals": {
@@ -5866,6 +5909,21 @@
           "branches": 100
         }
       },
+      "src/client/home/WeatherIcon.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 11,
+          "statements": 11,
+          "functions": 3,
+          "branches": 9
+        },
+        "minimumRates": {
+          "lines": 81.81,
+          "statements": 81.81,
+          "functions": 100,
+          "branches": 77.77
+        }
+      },
       "src/client/home/WeatherPill.tsx": {
         "layer": "client",
         "minimumTotals": {
@@ -5894,6 +5952,21 @@
           "statements": 100,
           "functions": 100,
           "branches": 96.42
+        }
+      },
+      "src/client/home/weather-icons/paths.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 1,
+          "statements": 1,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/client/home/weatherCache.ts": {
@@ -5999,6 +6072,21 @@
           "statements": 100,
           "functions": 100,
           "branches": 100
+        }
+      },
+      "src/client/lib/build-info.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 1,
+          "statements": 1,
+          "functions": 1,
+          "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 50
         }
       },
       "src/client/lib/credential.ts": {
@@ -6184,31 +6272,16 @@
       "src/client/meals/RecipeCatalogue.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 18,
-          "statements": 18,
-          "functions": 11,
-          "branches": 10
+          "lines": 14,
+          "statements": 14,
+          "functions": 9,
+          "branches": 8
         },
         "minimumRates": {
           "lines": 66.66,
           "statements": 66.66,
           "functions": 45.45,
           "branches": 60
-        }
-      },
-      "src/client/meals/RecipeDetailDialog.tsx": {
-        "layer": "client",
-        "minimumTotals": {
-          "lines": 5,
-          "statements": 7,
-          "functions": 3,
-          "branches": 6
-        },
-        "minimumRates": {
-          "lines": 80,
-          "statements": 71.42,
-          "functions": 66.66,
-          "branches": 66.66
         }
       },
       "src/client/meals/RecipeDialog.tsx": {
@@ -6961,6 +7034,21 @@
           "branches": 100
         }
       },
+      "src/server/db/weekday-integrity.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 12,
+          "statements": 15,
+          "functions": 1,
+          "branches": 12
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/server/host-api/index.ts": {
         "layer": "server",
         "minimumTotals": {
@@ -6989,6 +7077,21 @@
           "statements": 65.71,
           "functions": 60,
           "branches": 37.5
+        }
+      },
+      "src/server/lib/build-info.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 7,
+          "statements": 8,
+          "functions": 2,
+          "branches": 12
+        },
+        "minimumRates": {
+          "lines": 85.71,
+          "statements": 75,
+          "functions": 100,
+          "branches": 66.66
         }
       },
       "src/server/lib/event-bus.ts": {
@@ -7045,8 +7148,8 @@
           "branches": 137
         },
         "minimumRates": {
-          "lines": 91.66,
-          "statements": 83.01,
+          "lines": 91.04,
+          "statements": 82.6,
           "functions": 96.29,
           "branches": 75.91
         }
@@ -7069,16 +7172,16 @@
       "src/server/modules/calendar/highlights.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 69,
-          "statements": 80,
+          "lines": 67,
+          "statements": 79,
           "functions": 20,
-          "branches": 52
+          "branches": 49
         },
         "minimumRates": {
           "lines": 100,
           "statements": 93.82,
           "functions": 100,
-          "branches": 92.3
+          "branches": 91.83
         }
       },
       "src/server/modules/calendar/index.ts": {
@@ -7136,9 +7239,9 @@
         },
         "minimumRates": {
           "lines": 100,
-          "statements": 100,
+          "statements": 97.93,
           "functions": 100,
-          "branches": 91.3
+          "branches": 91.17
         }
       },
       "src/server/modules/calendar/recurrence.ts": {
@@ -8942,6 +9045,21 @@
           "branches": 100
         }
       },
+      "src/shared/calendar-provider.ts": {
+        "layer": "shared",
+        "minimumTotals": {
+          "lines": 7,
+          "statements": 9,
+          "functions": 2,
+          "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/shared/dailyBriefing.ts": {
         "layer": "shared",
         "minimumTotals": {
@@ -8964,6 +9082,21 @@
           "statements": 55,
           "functions": 13,
           "branches": 26
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/shared/emoji.ts": {
+        "layer": "shared",
+        "minimumTotals": {
+          "lines": 5,
+          "statements": 6,
+          "functions": 1,
+          "branches": 6
         },
         "minimumRates": {
           "lines": 100,
@@ -9084,21 +9217,6 @@
           "statements": 5,
           "functions": 2,
           "branches": 4
-        },
-        "minimumRates": {
-          "lines": 100,
-          "statements": 100,
-          "functions": 100,
-          "branches": 100
-        }
-      },
-      "src/server/db/weekday-integrity.ts": {
-        "layer": "server",
-        "minimumTotals": {
-          "lines": 12,
-          "statements": 15,
-          "functions": 1,
-          "branches": 12
         },
         "minimumRates": {
           "lines": 100,
