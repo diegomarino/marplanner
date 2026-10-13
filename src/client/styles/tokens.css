@@ -32,8 +32,8 @@
   --input: oklch(0.91 0.01 60);
   --ring: #5a5a40;
   /* Surface of an all-day calendar event that belongs to no member. */
-  --event-all-day: oklch(0.98 0.016 73.684);
-  --event-all-day-border: oklch(0.837 0.128 66.29);
+  --event-all-day: #ffd578;
+  --event-all-day-border: oklch(0.78 0.18 55);
   /* Weather icon tints: graphics and their rain figures on card/muted surfaces. */
   --weather-sun: oklch(0.66 0.14 75);
   --weather-rain: oklch(0.5 0.11 245);
