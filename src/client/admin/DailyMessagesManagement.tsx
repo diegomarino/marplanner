@@ -324,7 +324,7 @@ export function DailyMessagesManagement() {
                           event.currentTarget.rows = 1;
                           void saveMessage(date);
                         }}
-                        className="bg-background flex-1 resize-none"
+                        className="flex-1 resize-none"
                       />
                       {existing && (
                         <Button
