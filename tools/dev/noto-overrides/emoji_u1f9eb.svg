@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" aria-hidden="true">
+  <defs>
+    <linearGradient id="dwBody" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#eef2f7" />
+      <stop offset="1" stop-color="#ccd6e4" />
+    </linearGradient>
+    <linearGradient id="dwDoor" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f8fbff" />
+      <stop offset="1" stop-color="#d9e3ef" />
+    </linearGradient>
+    <linearGradient id="rack" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#8fa3bc" />
+      <stop offset="1" stop-color="#6d839f" />
+    </linearGradient>
+  </defs>
+
+  <rect x="18" y="14" width="92" height="100" rx="12" fill="url(#dwBody)" />
+  <rect x="18" y="14" width="92" height="18" rx="10" fill="#c2cddd" />
+  <circle cx="29" cy="23" r="2" fill="#5e6f86" />
+  <rect x="38" y="20" width="42" height="6" rx="3" fill="#8ea2bb" />
+
+  <path d="M24 44h80l-6 50H30z" fill="url(#dwDoor)" stroke="#a8b7ca" stroke-width="1.5" />
+  <rect x="34" y="52" width="60" height="8" rx="3" fill="url(#rack)" />
+  <rect x="34" y="64" width="60" height="8" rx="3" fill="url(#rack)" />
+
+  <circle cx="46" cy="68" r="6" fill="#ffffff" stroke="#9fb2c9" stroke-width="1.5" />
+  <circle cx="64" cy="68" r="6" fill="#ffffff" stroke="#9fb2c9" stroke-width="1.5" />
+  <circle cx="82" cy="68" r="6" fill="#ffffff" stroke="#9fb2c9" stroke-width="1.5" />
+
+  <path d="M28 93h72" stroke="#8ea2bb" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M36 101h56" stroke="#8ea2bb" stroke-width="2" stroke-linecap="round" />
+</svg>
