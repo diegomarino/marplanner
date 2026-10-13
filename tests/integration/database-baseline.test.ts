@@ -11,6 +11,11 @@ import { useIsolatedDb } from "../helpers/db";
 const PROJECT_ROOT = process.cwd();
 const BASELINE_FILE = join(PROJECT_ROOT, "drizzle", "0000_current_baseline.sql");
 const CALENDAR_FEED_SYNC_MIGRATION = join(PROJECT_ROOT, "drizzle", "0001_calendar_feed_sync.sql");
+const CALENDAR_EVENT_DETAILS_MIGRATION = join(
+  PROJECT_ROOT,
+  "drizzle",
+  "0003_calendar_event_details.sql"
+);
 const DRIZZLE_KIT = join(PROJECT_ROOT, "node_modules", "drizzle-kit", "bin.cjs");
 const SCHEMA_FILE = join(PROJECT_ROOT, "src", "server", "db", "schema.ts");
 const LIFECYCLE_TABLES = new Set([
@@ -181,7 +186,7 @@ describe("database lifecycle fresh current baseline", () => {
     try {
       const generated = generateCurrentSchemaCatalog(tempDir);
       const committed = instantiateCatalog(
-        [BASELINE_FILE, CALENDAR_FEED_SYNC_MIGRATION],
+        [BASELINE_FILE, CALENDAR_FEED_SYNC_MIGRATION, CALENDAR_EVENT_DETAILS_MIGRATION],
         join(tempDir, "baseline.sqlite")
       );
 
@@ -193,7 +198,7 @@ describe("database lifecycle fresh current baseline", () => {
     }
   });
 
-  it("installs the re-derived schema, applies both reviewed migrations, and preserves foreign keys", () => {
+  it("installs the re-derived schema, applies the reviewed migrations, and preserves foreign keys", () => {
     const db = getDb();
     const tables = db
       .prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
@@ -209,6 +214,7 @@ describe("database lifecycle fresh current baseline", () => {
       { fileName: "0000_current_baseline.sql" },
       { fileName: "0001_calendar_feed_sync.sql" },
       { fileName: "0002_plugin_lifecycle.sql" },
+      { fileName: "0003_calendar_event_details.sql" },
     ]);
 
     const foreignKeys = ALL_SCHEMA_TABLES.flatMap((table) =>

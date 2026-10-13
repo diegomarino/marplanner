@@ -1081,11 +1081,11 @@
             "Calendar highlight rules decorates local titles and external descriptions by first active accent-insensitive match without writes"
           ],
           "tests/boundary/calendar-merged-feed.test.ts": [
-            "Calendar merged feed read ADR-043: reuses one event read while preserving private query fields and transaction scope",
+            "Calendar merged feed read ADR-043: reuses one event read while preserving query fields and transaction scope",
             "Calendar merged feed read merges local and active external occurrences with masked, stable provenance",
             "Calendar merged feed read excludes disabled, cancelled, and orphaned external rows from every source filter",
             "Calendar merged feed read requires an explicit active assignment for member-scoped external reads",
-            "Calendar merged feed read matches external description internally without exposing it on FeedItem",
+            "Calendar merged feed read matches an external description and serves it on the FeedItem",
             "Calendar merged feed read keeps distinct recurrence identities and the household date range"
           ],
           "tests/boundary/calendar-mutate.test.ts": [
@@ -1102,7 +1102,9 @@
             "calendar-mutate (RED by design, turns green) PATCH /api/calendar/events/:id with explicit-null non-nullable field returns 400 and preserves prior state",
             "calendar-mutate (RED by design, turns green) PATCH /api/calendar/events/:id with title=null returns 400",
             "calendar-mutate (RED by design, turns green) PATCH /api/calendar/events/:id with exdates=null returns 400 and preserves prior state",
-            "calendar-mutate (RED by design, turns green) PATCH /api/calendar/events/:id with rrule=null clears recurrence and returns 200"
+            "calendar-mutate (RED by design, turns green) PATCH /api/calendar/events/:id with rrule=null clears recurrence and returns 200",
+            "calendar-mutate (RED by design, turns green) stores a local event's description and location, serves them, and clears them when blanked",
+            "calendar-mutate (RED by design, turns green) PATCH switches an all-day event to timed and back, dropping the other shape's dates"
           ],
           "tests/boundary/calendar-parse.test.ts": [
             "Calendar ICS parser adapter normalizes RRULE, RDATE, EXDATE, overrides, cancellations, and DST instants",
@@ -1370,7 +1372,7 @@
             "data-ownership — 0 forbidden imports per plugin module root (INV-07/FR-002) printing: every relative import resolves into its own subtree, the host-API barrel, or src/shared"
           ],
           "tests/boundary/database-baseline.test.ts": [
-            "database lifecycle current baseline keeps the current baseline plus both reviewed forward migrations",
+            "database lifecycle current baseline keeps the current baseline plus the reviewed forward migrations",
             "database lifecycle current baseline keeps the reviewed sentinel, both tables, and canonical day-period rows in SQL",
             "database lifecycle current baseline uses a table oracle re-derived from the current TypeScript schema"
           ],
@@ -3079,21 +3081,27 @@
             "CalendarView — provisioned Calendar authoring bounds period navigation without issuing another Calendar request",
             "CalendarView — provisioned Calendar authoring renders assigned member colours as diagonal event bands",
             "CalendarView — provisioned Calendar authoring keeps create, assign, edit, and delete plus their member load available when the obsolete admin-unlock branch is false",
-            "CalendarView — kiosk density (SC-001, SC-002, FR-009) meets kiosk density across every rendered control — default state, then create form + assign panel + edit panel + delete confirm all open, across two phases",
+            "CalendarView — kiosk density (SC-001, SC-002, FR-009) meets kiosk density across every rendered control — default state, then create form + edit panel + delete confirm all open, across two phases",
             "CalendarView — kiosk density (SC-001, SC-002, FR-009) DELIBERATE NEGATIVE — forcing one of this surface's own controls below the kiosk minimum makes the assertion fail",
             "CalendarView — error states are announced (SC-011) announces the events-load failure",
-            "CalendarView — error states are announced (SC-011) announces the members-load failure once the assign panel is opened",
+            "CalendarView — error states are announced (SC-011) announces the members-load failure once the edit form is opened",
             "CalendarView — error states are announced (SC-011) announces an assignment-update failure",
             "CalendarView — error states are announced (SC-011) announces an edit-save failure",
             "CalendarView — error states are announced (SC-011) announces a delete failure",
             "CalendarView — error states are announced (SC-011) announces a create failure",
+            "CalendarView — New Event dialog stores the inclusive end date of an all-day event as the exclusive day after",
+            "CalendarView — New Event dialog assigns the people picked in the dialog to the event it just created",
+            "CalendarView — event detail dialog shows an imported event's place and description, read only",
+            "CalendarView — editing a local event turns an all-day event into a timed one, carrying its day across",
+            "CalendarView — editing a local event closes the dialog after a successful save and reopens on the summary",
+            "CalendarView — editing a local event shows a same-day timed event as one date with start and end times and no time zone",
             "CalendarView — adopts the AdminPanel L2 frame wraps the surface in a landmark region labelled by its own title",
             "CalendarView — adopts the AdminPanel L2 frame renders an h1, not h2 — the page-level heading for the whole /calendar route (review, PR #777, finding F6)",
             "CalendarView — the assignment row is a real, keyboard-operable control (FR-013, SC-012) is reachable by Tab, activated by Space (via a native click), and its checked state is announced through an accessible name — not a non-focusable <li onClick> wrapping a readOnly checkbox",
             "CalendarView — the assignment row is a real, keyboard-operable control (FR-013, SC-012) meets kiosk density on the per-member checkbox row (the row that used to be a non-focusable <li>)",
             "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) submits the toggled member id in the PUT payload",
             "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) excludes archived members from assignment choices",
-            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) gives the assign row's label a full-width, pointer-cursor hit area ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)",
+            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) makes the whole member pill the tap target ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)",
             "CalendarView — error states are announced (SC-011) announces invalid date conversion during create and releases the submit button",
             "CalendarView — error states are announced (SC-011) announces invalid date conversion during edit and releases the submit button"
           ],
@@ -3319,6 +3327,11 @@
             "ErrorNotice removes the live region entirely once the error clears — deliberate negative: a stale error notice would fail this",
             "ErrorNotice wires a caller-supplied id onto the live region so a Field's aria-describedby can reach it",
             "ErrorNotice meets kiosk density alongside a real control (this component itself renders no interactive control)"
+          ],
+          "tests/client/event-description.test.tsx": [
+            "EventDescription keeps plain text as text and links a bare web address without its trailing full stop",
+            "EventDescription rebuilds basic HTML from the allowlist",
+            "EventDescription drops scripts, styles, handlers, embedded frames and non-web link targets"
           ],
           "tests/client/family-surfaces.test.tsx": [
             "MealsBoard — workspace density and family authoring renders the interactive weekly grid and recipe catalogue",
@@ -4711,7 +4724,7 @@
           ],
           "tests/integration/database-baseline.test.ts": [
             "database lifecycle fresh current baseline is semantically equivalent to a clean Drizzle generation from the current TypeScript schema",
-            "database lifecycle fresh current baseline installs the re-derived schema, applies both reviewed migrations, and preserves foreign keys",
+            "database lifecycle fresh current baseline installs the re-derived schema, applies the reviewed migrations, and preserves foreign keys",
             "database lifecycle fresh current baseline contains only canonical fixed rows and no legacy development data"
           ],
           "tests/integration/database-lifecycle-aggregate.test.ts": [

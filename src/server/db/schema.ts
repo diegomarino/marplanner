@@ -197,6 +197,9 @@ export const calendarEvents = sqliteTable(
     exdates: text("exdates").notNull().default("[]"),
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
+    // Household-authored text for local events; imported text lives in the external meta row.
+    description: text("description"),
+    location: text("location"),
   },
   (table) => ({
     sourceCheck: check(

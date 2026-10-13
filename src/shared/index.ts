@@ -177,6 +177,9 @@ export interface EventInput {
   tzid?: string;
   rrule?: string | null;
   exdates?: string[];
+  /** Free text; blank or null clears it on edit. */
+  description?: string | null;
+  location?: string | null;
 }
 
 /** FeedItem — one EXPANDED occurrence (not a master) returned by `getEvents`.
@@ -196,6 +199,11 @@ export interface FeedItem {
   decoratedTitle?: string | null;
   provider?: string | null;
   sourceRef?: string | null;
+  /** Plain text: household-authored for a local event, as the feed sent it for an external one.
+   * Present only when there is some.
+   */
+  description?: string;
+  location?: string;
 }
 
 export type ExternalSourceProvider = "google" | "microsoft" | "apple" | "ics_generic";

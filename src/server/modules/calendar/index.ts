@@ -55,8 +55,16 @@ const eventFieldsSchema = z
     tzid: z.string().optional(),
     rrule: z.string().nullable().optional(),
     exdates: z.array(z.string()).max(1000).optional(),
+    description: z.string().max(4000).nullable().optional(),
+    location: z.string().max(300).nullable().optional(),
   })
   .strict();
+
+/** Free text is stored trimmed; blank and null both mean "none". */
+function storedText(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
 
 function validateEventShape(input: Partial<EventInput>): void {
   if (!input.title) {
@@ -368,8 +376,8 @@ function readEventEntries(
         calendar_events.tzid,
         calendar_events.rrule,
         calendar_events.exdates,
-        external_meta.description,
-        external_meta.location,
+        COALESCE(external_meta.description, calendar_events.description) AS description,
+        COALESCE(external_meta.location, calendar_events.location) AS location,
         external_source.provider,
         external_source.feed_url,
         GROUP_CONCAT(CASE WHEN members.lifecycle = 'active' THEN calendar_assignments.member_id END) AS assigned_members
@@ -402,8 +410,8 @@ function readEventEntries(
         calendar_events.tzid,
         calendar_events.rrule,
         calendar_events.exdates,
-        external_meta.description,
-        external_meta.location,
+        COALESCE(external_meta.description, calendar_events.description) AS description,
+        COALESCE(external_meta.location, calendar_events.location) AS location,
         external_source.provider,
         external_source.feed_url,
         GROUP_CONCAT(CASE WHEN members.lifecycle = 'active' THEN calendar_assignments.member_id END) AS assigned_members
@@ -516,6 +524,8 @@ function readEventEntries(
         if (!occ.allDay && row.tzid) {
           item.tzid = row.tzid;
         }
+        if (row.description) item.description = row.description;
+        if (row.location) item.location = row.location;
 
         entries.push({ item, description: row.description ?? "", location: row.location ?? "" });
       }
@@ -543,8 +553,8 @@ export function createEvent(input: EventInput): { id: string } {
   db.prepare(
     `
       INSERT INTO calendar_events 
-        (id, source, title, all_day, start_date, end_date, start_utc, end_utc, tzid, rrule, exdates, created_at, updated_at)
-      VALUES (?, 'local', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, source, title, all_day, start_date, end_date, start_utc, end_utc, tzid, rrule, exdates, description, location, created_at, updated_at)
+      VALUES (?, 'local', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
   ).run(
     id,
@@ -557,6 +567,8 @@ export function createEvent(input: EventInput): { id: string } {
     input.tzid || null,
     input.rrule || null,
     JSON.stringify(input.exdates || []),
+    storedText(input.description),
+    storedText(input.location),
     now,
     now
   );
@@ -839,16 +851,24 @@ export function editEvent(id: string, fields: Partial<EventInput>): FeedItem {
 
   const existingExdates = JSON.parse(existing.exdates || "[]") as string[];
 
+  // Switching between all-day and timed replaces the date shape outright: the stored values of
+  // the old shape are dropped (never merged in), and so are exclusions written in its format.
+  const wasAllDay = existing.all_day === 1;
+  const allDay = fields.allDay ?? wasAllDay;
+  const shapeChanged = allDay !== wasAllDay;
+  const kept = <T>(stored: T | null): T | undefined =>
+    shapeChanged ? undefined : (stored ?? undefined);
+
   const mergedEvent: EventInput = {
     title: fields.title ?? existing.title,
-    allDay: fields.allDay ?? existing.all_day === 1,
-    startDate: fields.startDate ?? existing.start_date ?? undefined,
-    endDate: fields.endDate ?? existing.end_date ?? undefined,
-    startUtc: fields.startUtc ?? existing.start_utc ?? undefined,
-    endUtc: fields.endUtc ?? existing.end_utc ?? undefined,
-    tzid: fields.tzid ?? existing.tzid ?? undefined,
+    allDay,
+    startDate: fields.startDate ?? kept(existing.start_date),
+    endDate: fields.endDate ?? kept(existing.end_date),
+    startUtc: fields.startUtc ?? kept(existing.start_utc),
+    endUtc: fields.endUtc ?? kept(existing.end_utc),
+    tzid: fields.tzid ?? kept(existing.tzid),
     rrule: fields.rrule !== undefined ? fields.rrule : existing.rrule,
-    exdates: fields.exdates !== undefined ? fields.exdates : existingExdates,
+    exdates: fields.exdates !== undefined ? fields.exdates : shapeChanged ? [] : existingExdates,
   };
 
   validateEventShape(mergedEvent);
@@ -899,6 +919,26 @@ export function editEvent(id: string, fields: Partial<EventInput>): FeedItem {
   if (fields.exdates !== undefined) {
     updates.push("exdates = ?");
     params.push(JSON.stringify(fields.exdates));
+  } else if (shapeChanged) {
+    updates.push("exdates = '[]'");
+  }
+
+  if (shapeChanged) {
+    updates.push(
+      allDay
+        ? "start_utc = NULL, end_utc = NULL, tzid = NULL"
+        : "start_date = NULL, end_date = NULL"
+    );
+  }
+
+  if (fields.description !== undefined) {
+    updates.push("description = ?");
+    params.push(storedText(fields.description));
+  }
+
+  if (fields.location !== undefined) {
+    updates.push("location = ?");
+    params.push(storedText(fields.location));
   }
 
   const now = Date.now();
@@ -921,10 +961,14 @@ export function editEvent(id: string, fields: Partial<EventInput>): FeedItem {
         calendar_events.end_utc,
         calendar_events.tzid,
         calendar_events.rrule,
-        calendar_events.exdates
+        calendar_events.exdates,
+        calendar_events.description,
+        calendar_events.location
       FROM calendar_events WHERE calendar_events.id = ?`
     )
     .get(id) as {
+    description: string | null;
+    location: string | null;
     id: string;
     source: string;
     title: string;
@@ -1008,6 +1052,8 @@ export function editEvent(id: string, fields: Partial<EventInput>): FeedItem {
   if (!occ.allDay && row.tzid) {
     feedItem.tzid = row.tzid;
   }
+  if (row.description) feedItem.description = row.description;
+  if (row.location) feedItem.location = row.location;
 
   return feedItem;
 }

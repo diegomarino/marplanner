@@ -148,7 +148,7 @@ function HouseholdChromeContent({
                   <a
                     href={appUrl(route.path)}
                     aria-current={currentPath === route.path ? "page" : undefined}
-                    className="aria-[current=page]:bg-muted aria-[current=page]:font-semibold"
+                    className="aria-[current=page]:bg-primary/10 aria-[current=page]:font-semibold"
                     onClick={(event) => {
                       // Preserve native open-in-new-tab/window behavior for modified clicks.
                       if (!isUnmodifiedPrimaryClick(event)) return;
