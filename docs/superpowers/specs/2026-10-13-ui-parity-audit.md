@@ -64,6 +64,25 @@ end-to-end helper sets up.
    `ConfirmDialog` and `Sheet`. `dialog` here is compared against `ModalOverlay` and
    `ConfirmDialog`.
 
+## Reviewer requirements beyond source parity
+
+Corrections relayed by the reviewing session during execution. They take precedence over what the
+reference source does.
+
+1. **Form field surfaces (2026-10-13).** The background of a form field must read lighter than
+   the surface it sits on. In the reference, `input` and `textarea` are `bg-transparent`, but its
+   forms sit inside `bg-card` modals, so fields look lighter than the page. Here forms often sit
+   directly on the beige page, where a transparent field looks the same as the page. `input`,
+   `textarea` and the `select` trigger therefore get a surface that is visibly lighter than the
+   page background and not darker than a card or dialog surface. Diego chose a dedicated
+   semantic token, `--field`, over reusing `--popover`: a warm off-white closer to pure white
+   than to the page background and at least as light as `--card`. It is added in its own commit
+   and applied by the `input`, `textarea` and `select` components. `Field` and the dialog forms
+   are re-checked against this.
+2. **Comparison crops (2026-10-13).** Full-page captures do not show small changes. Every
+   component from `card` onwards has tight crops of the component itself, composed into one
+   image per state: target before, target after, reference. `button` is not redone.
+
 ## Components
 
 Screens are given as route, then the interaction that reveals the component. "Story" is the
@@ -74,7 +93,7 @@ reference Storybook id, used only for states the reference app does not show on 
 | Component  | File here                               | Reference file and story                                                                     | Target screen                                                                                                            | Reference screen                                                    | Visible differences (source and paired captures)                                                                                                                                                                                                                                        | Files a fix would touch | Status  |
 | ---------- | --------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ------- |
 | `button`   | `src/client/components/ui/button.tsx`   | `apps/web/src/components/ui/button.tsx`; `ui-buttons--variants`, `ui-buttons--sizes`         | `/admin` (default, outline nav), `/admin/routines` → Delete (outline, destructive), `/admin/reminders` (ghost, disabled) | `/admin/members`, `/admin/routines` → trash icon, `/admin/settings` | Same radius (14px), padding, weight and colours. Here the filled variants (default, destructive, secondary) carry `shadow-xs`; the reference's are flat. Height and text size are density tokens here (see finding 3). The narrower `transition-[color,box-shadow]` here is deliberate. | `button.tsx`            | matched |
-| `card`     | `src/client/components/ui/card.tsx`     | `apps/web/src/components/ui/card.tsx`; `ui-cards--basic`, `ui-cards--with-action`            | `/admin` while locked (PIN card), `/admin/plugins`                                                                       | `/auth/login` (PIN card), connection screen                         | Radius 20px here, 28px there (`rounded-3xl`). Shadow `shadow-sm` here, the softer `--shadow-card` there, plus a hover shadow. Header gap 6px here, 8px there. Title uses the display font there.                                                                                        | `card.tsx`              | pending |
+| `card`     | `src/client/components/ui/card.tsx`     | `apps/web/src/components/ui/card.tsx`; `ui-cards--basic`, `ui-cards--with-action`            | `/admin` while locked (PIN card), `/admin/plugins`                                                                       | `/auth/login` (PIN card), connection screen                         | Radius 20px here, 28px there (`rounded-3xl`). Shadow `shadow-sm` here, the softer `--shadow-card` there, plus a hover shadow. Header gap 6px here, 8px there. Title uses the display font there.                                                                                        | `card.tsx`              | matched |
 | `dialog`   | `src/client/components/ui/dialog.tsx`   | `apps/web/src/components/ui/ModalOverlay.tsx`; `ui-modaloverlay--default`                    | `/admin/members` → Edit                                                                                                  | `/admin/members` → Añadir miembro                                   | Content radius 16px with a 1px border and `shadow-lg` here; 28px, no border and `--shadow-modal` there. Surface is `bg-background` here, `bg-card` there. Backdrop is 50% black on both; the reference also blurs it. Title has `leading-none` here.                                    | `dialog.tsx`            | pending |
 | `input`    | `src/client/components/ui/input.tsx`    | `apps/web/src/components/ui/input.tsx`; `ui-inputs--text`, `ui-inputs--types`                | `/admin` (member create), `/admin/routines`                                                                              | `/admin/members` → Añadir miembro                                   | Computed radius, padding, border, shadow and focus ring are the same. Only height (density token here, call-site `h-12` there) and font family differ. Hover and disabled still to be compared.                                                                                         | `input.tsx`             | pending |
 | `label`    | `src/client/components/ui/label.tsx`    | `apps/web/src/components/ui/label.tsx`; `ui-label--default`, `ui-label--disabled`            | `/admin` (member create)                                                                                                 | `/admin/members` → Añadir miembro                                   | Class strings are identical; computed styles differ only in font family.                                                                                                                                                                                                                | `label.tsx`             | pending |
@@ -100,6 +119,7 @@ reference Storybook id, used only for states the reference app does not show on 
 One line per component, added by the agent after verifying the subagent's report.
 
 - **`button` — matched.** One round. Removed `shadow-xs` from the default, destructive and secondary variants; outline keeps it, as in the reference. Measured after the change on both apps: default, default hover, destructive, destructive hover and outline have the same radius, padding, colours and shadow; focus-visible is the same 3px ring; disabled is 50% opacity. Secondary and disabled have no seeded reference instance and were compared from source. Left as is: height and text size (density contract), the narrower transition, and the reference's extra sizes (an API change).
+- **`card` — matched.** One round. Radius 20px → 28px (`rounded-3xl`), `shadow-sm` → `shadow-card`, header gap 6px → 8px, `font-display` on the title. Checked on the locked PIN card, the nine plugin cards (which clip correctly at the larger radius) and the daily-briefing cards. The reference's hover lift (`transition-all`, `hover:shadow-xl`) is left out on purpose: the cards here are not clickable, and a lifting shadow would suggest they are. `CardAction` and `CardFooter` are not on a seeded screen. Comparison: `shots/card/compare-pin-card.png`.
 
 ## Token map
 
