@@ -6,7 +6,8 @@
 **Reference commit:** `f4c1c46` (`~/Dev/marplanner`, `main`)
 
 Status values: `pending` (not started), `matched`, `skipped`, `deferred`. The agent updates this
-column after each component; a component is never left `pending` at wrap-up.
+column after each component; a component is never left `pending` at wrap-up. "Matched" rows may
+still list deliberate differences; the Results section says what was left and why.
 
 ## How both apps run
 
@@ -39,7 +40,7 @@ Answers to the spec's open points:
 
 Captures are taken with Playwright (the version already installed here) at 1280×800, comfortable
 density, reduced motion. The capture scripts and screenshots live in the session scratchpad and
-are not committed. The target is unlocked through the access gate, device provisioning and the
+are not committed, apart from the few crops under `ui-parity-shots/` that this file embeds. The target is unlocked through the access gate, device provisioning and the
 admin PIN keypad; the reference through its connection screen and the admin session its own
 end-to-end helper sets up.
 
@@ -184,17 +185,17 @@ reference Storybook id, used only for states the reference app does not show on 
 
 ### Shared composites and `NotoEmoji`
 
-| Component       | File here                                 | Reference file and story                                                                                               | Target screen                                                            | Reference screen                                                           | Visible differences (source and paired captures)                                                                                                                                                                                                                                         | Files a fix would touch                  | Status   |
-| --------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- | -------- |
-| `AdminPanel`    | `src/client/components/AdminPanel.tsx`    | `apps/web/src/components/layout/AdminPageHeader.tsx` and the page titles in `features/*`; no story                     | Every `/admin/*` route                                                   | `/admin/time-announcements`, `/admin/members`                              | Heading is 20px bold in the body font here; 24–30px bold in the display font there. Description is control text here, 14px muted there (same size at comfortable density). Panel padding 16px here, 24px page padding there.                                                             | `AdminPanel.tsx`                         | matched  |
-| `CheckboxField` | `src/client/components/CheckboxField.tsx` | Native checkboxes in `features/reminders/ReminderRuleForm.tsx`, `features/calendar/EventForm.tsx`; no story            | `/admin/reminders` (weekday row), `/admin/telemetry`                     | `/admin/reminders` → Add rule                                              | The native box is 36px here (density floor, protected by lint rule G3) and 13px there, so the box dominates its label here. Label gap (8px) and text size match. The box uses `accent-primary` here and the browser default there.                                                       | `CheckboxField.tsx`                      | matched  |
-| `ConfirmDialog` | `src/client/components/ConfirmDialog.tsx` | `apps/web/src/components/ui/ConfirmDialog.tsx`; `ui-confirmdialog--default`, `ui-confirmdialog--destructive`           | `/admin/routines` → Delete                                               | `/admin/routines` → trash icon                                             | Inherits `dialog` content styling here: 16px radius, border, `shadow-lg`. There: 28px radius, no border, `--shadow-modal`, and 24px above the footer instead of the 16px grid gap. Title 18px semibold on both, with normal line height there. Buttons match.                            | `ConfirmDialog.tsx` (after `dialog.tsx`) | matched  |
-| `ErrorNotice`   | `src/client/components/ErrorNotice.tsx`   | Inline error text in `features/auth/PinEntry.tsx`, `components/ui/FormField.tsx`; `ui-formfield--with-error`           | `/admin` while locked → wrong PIN                                        | `/auth/login` → wrong PIN                                                  | A bordered, tinted box with 14px radius here. There, errors are plain destructive text (14px, medium weight in forms), or a borderless tinted box in `EventForm`.                                                                                                                        | `ErrorNotice.tsx`                        | deferred |
-| `Field`         | `src/client/components/Field.tsx`         | `apps/web/src/components/ui/FormField.tsx`; `ui-formfield--default`, `ui-formfield--with-error`                        | `/admin/day-periods` → Edit, `/admin/telemetry`, `/admin/daily-messages` | `/admin/members` → Añadir miembro                                          | Stack gap 6px here, 8px there. The hint sits between label and control here; the reference has no hint slot and puts helper text under the control. Error rendering follows `ErrorNotice`.                                                                                               | `Field.tsx`                              | matched  |
-| `RadioField`    | `src/client/components/RadioField.tsx`    | Native radios in `features/printer/PrinterDevicesPanel.tsx`; no story                                                  | `/admin/reminders` (kind, audience)                                      | `/admin/printer/devices`                                                   | Same as `CheckboxField`: 36px native control here, 13px there; gap and text match.                                                                                                                                                                                                       | `RadioField.tsx`                         | matched  |
-| `StatusToggle`  | `src/client/components/StatusToggle.tsx`  | Segmented choices in `features/settings/SettingsAdmin.tsx`, weekday toggles in `TimeAnnouncementForm.tsx`; no story    | `/admin/meals` (Deactivate)                                              | `/admin/settings` (week start, language)                                   | Pressed is the `secondary` button and unpressed the `outline` button here. There, the selected choice is the filled primary button and the unselected one is `secondary`.                                                                                                                | `StatusToggle.tsx`                       | matched  |
-| `WeekdayPicker` | `src/client/components/WeekdayPicker.tsx` | Weekday checkboxes in `features/reminders/ReminderRuleForm.tsx`, round toggles in `TimeAnnouncementForm.tsx`; no story | `/admin/reminders`, `/admin/time-announcements`                          | `/admin/reminders` → Add rule, `/admin/time-announcements` → Nuevo anuncio | A wrapping row of `CheckboxField`s with 12px gaps here. The reference has two renderings: a row of small native checkboxes (reminders) and 40px round toggle buttons (time announcements). The checkbox row is the like-for-like counterpart; the round toggles are a different element. | `WeekdayPicker.tsx`                      | deferred |
-| `NotoEmoji`     | `src/client/chores/noto-emoji.tsx`        | `apps/web/src/components/ui/NotoEmoji.tsx`; `ui-notoemoji--task-emojis`, `ui-notoemoji--sizes`                         | `/admin/routines` → View Chores                                          | `/admin/routines` → select a routine                                       | Both render the same Noto SVG in an `<img>` at 20px on this screen. The fallback differs (the reference sets an inline font size, which the debt rules here forbid), and it is not reachable with seeded emoji.                                                                          | `noto-emoji.tsx`                         | matched  |
+| Component       | File here                                 | Reference file and story                                                                                                                                                     | Target screen                                                            | Reference screen                                                           | Visible differences (source and paired captures)                                                                                                                                                                                                              | Files a fix would touch                  | Status   |
+| --------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- | -------- |
+| `AdminPanel`    | `src/client/components/AdminPanel.tsx`    | `apps/web/src/components/layout/AdminPageHeader.tsx` and the page titles in `features/*`; no story                                                                           | Every `/admin/*` route                                                   | `/admin/time-announcements`, `/admin/members`                              | Heading is 20px bold in the body font here; 24–30px bold in the display font there. Description is control text here, 14px muted there (same size at comfortable density). Panel padding 16px here, 24px page padding there.                                  | `AdminPanel.tsx`                         | matched  |
+| `CheckboxField` | `src/client/components/CheckboxField.tsx` | Native checkboxes in `features/reminders/ReminderRuleForm.tsx`, `features/calendar/EventForm.tsx`; no story                                                                  | `/admin/reminders` (weekday row), `/admin/telemetry`                     | `/admin/reminders` → Add rule                                              | The native box is 36px here (density floor, protected by lint rule G3) and 13px there, so the box dominates its label here. Label gap (8px) and text size match. The box uses `accent-primary` here and the browser default there.                            | `CheckboxField.tsx`                      | matched  |
+| `ConfirmDialog` | `src/client/components/ConfirmDialog.tsx` | `apps/web/src/components/ui/ConfirmDialog.tsx`; `ui-confirmdialog--default`, `ui-confirmdialog--destructive`                                                                 | `/admin/routines` → Delete                                               | `/admin/routines` → trash icon                                             | Inherits `dialog` content styling here: 16px radius, border, `shadow-lg`. There: 28px radius, no border, `--shadow-modal`, and 24px above the footer instead of the 16px grid gap. Title 18px semibold on both, with normal line height there. Buttons match. | `ConfirmDialog.tsx` (after `dialog.tsx`) | matched  |
+| `ErrorNotice`   | `src/client/components/ErrorNotice.tsx`   | Inline error text in `features/auth/PinEntry.tsx`, `components/ui/FormField.tsx`; `ui-formfield--with-error`                                                                 | `/admin` while locked → wrong PIN                                        | `/auth/login` → wrong PIN                                                  | A bordered, tinted box with 14px radius here. There, errors are plain destructive text (14px, medium weight in forms), or a borderless tinted box in `EventForm`.                                                                                             | `ErrorNotice.tsx`                        | deferred |
+| `Field`         | `src/client/components/Field.tsx`         | `apps/web/src/components/ui/FormField.tsx`; `ui-formfield--default`, `ui-formfield--with-error`                                                                              | `/admin/day-periods` → Edit, `/admin/telemetry`, `/admin/daily-messages` | `/admin/members` → Añadir miembro                                          | Stack gap 6px here, 8px there. The hint sits between label and control here; the reference has no hint slot and puts helper text under the control. Error rendering follows `ErrorNotice`.                                                                    | `Field.tsx`                              | matched  |
+| `RadioField`    | `src/client/components/RadioField.tsx`    | Native radios in `features/printer/PrinterDevicesPanel.tsx`; no story                                                                                                        | `/admin/reminders` (kind, audience)                                      | `/admin/printer/devices`                                                   | Same as `CheckboxField`: 36px native control here, 13px there; gap and text match.                                                                                                                                                                            | `RadioField.tsx`                         | matched  |
+| `StatusToggle`  | `src/client/components/StatusToggle.tsx`  | Segmented choices in `features/settings/SettingsAdmin.tsx`, weekday toggles in `TimeAnnouncementForm.tsx`; no story                                                          | `/admin/meals` (Deactivate)                                              | `/admin/settings` (week start, language)                                   | Pressed is the `secondary` button and unpressed the `outline` button here. There, the selected choice is the filled primary button and the unselected one is `secondary`.                                                                                     | `StatusToggle.tsx`                       | matched  |
+| `WeekdayPicker` | `src/client/components/WeekdayPicker.tsx` | Pill buttons in `features/reminders/ReminderRuleForm.tsx`, round toggles in `TimeAnnouncementForm.tsx`, round buttons in `features/routines/AssignmentManager.tsx`; no story | `/admin/reminders`, `/admin/time-announcements`                          | `/admin/reminders` → Add rule, `/admin/time-announcements` → Nuevo anuncio | A wrapping row of `CheckboxField`s here. Corrected after the component pass: every weekday picker in the reference is a row of buttons (pills or round `aria-pressed` toggles), not checkboxes, so there is no like-for-like counterpart.                     | `WeekdayPicker.tsx`                      | deferred |
+| `NotoEmoji`     | `src/client/chores/noto-emoji.tsx`        | `apps/web/src/components/ui/NotoEmoji.tsx`; `ui-notoemoji--task-emojis`, `ui-notoemoji--sizes`                                                                               | `/admin/routines` → View Chores                                          | `/admin/routines` → select a routine                                       | Both render the same Noto SVG in an `<img>` at 20px on this screen. The fallback differs (the reference sets an inline font size, which the debt rules here forbid), and it is not reachable with seeded emoji.                                               | `noto-emoji.tsx`                         | matched  |
 
 ## Results
 
@@ -274,7 +275,10 @@ feature surfaces move from 16px to 24px and from 24px to 28px. That shift is int
 | `CardAction`, `CardFooter`                                                    | Not rendered on any seeded screen found during the audit.                                                                                                                                                                                                                                                    |
 | `NotoEmoji` text fallback                                                     | Needs an emoji with no bundled SVG; the seeds only use bundled ones.                                                                                                                                                                                                                                         |
 | Load-failure `ErrorNotice` states (home, calendar, meals, admin lists)        | Need a failing API; not reachable on seeded data. The wrong-PIN notice is the captured state.                                                                                                                                                                                                                |
-| `WeekdayPicker` single mode (`select` and `radio` renderings)                 | To be confirmed by the component's subagent; if no seeded screen reaches it, it stays skipped.                                                                                                                                                                                                               |
+| `WeekdayPicker` single mode as radios                                         | No call site passes `renderAs="radio"`. Single mode as a native select is reachable on `/admin/meals` and was captured.                                                                                                                                                                                      |
+| `Field` hint slot                                                             | No call site passes `hint`, so it is not on any screen. Its styling is unchanged.                                                                                                                                                                                                                            |
+| `Dialog` in `printing/PrinterAttention.tsx`                                   | Needs a printer-attention state that the seeds do not produce.                                                                                                                                                                                                                                               |
+| `AdminPanel` as the provisioning-gate `h1` (`shell/Shell.tsx`)                | The capture helper has to pass the gate before it can take a screenshot. It receives the same heading change as every other call site.                                                                                                                                                                       |
 | Screens populated on one side only                                            | Reference `/admin/time-announcements` and `/admin/network-devices` are empty in its seed; target `/admin/telemetry`, `/admin/plugins`, `/admin/weather` and `/admin/day-periods` have no reference counterpart. They are used only for the target half of a pair that has a reference counterpart elsewhere. |
 
 ## Port candidates
@@ -298,6 +302,79 @@ it into the named screen.
   self-hosted files) is needed before typography can match. It touches `index.html` or adds font
   assets, so it is outside "only `globals.css`" and outside "no new dependencies". The font tokens
   are in place so that serving the fonts is the only step left.
+
+## Wrap-up report
+
+**Outcome.** Every in-scope component has a final status: 14 matched, 2 deferred, none pending.
+
+| Component       | Status   | Commit    | Change                                                                |
+| --------------- | -------- | --------- | --------------------------------------------------------------------- |
+| `button`        | matched  | `2f2a851` | No shadow on filled variants                                          |
+| `card`          | matched  | `7ba40b6` | 28px radius, card shadow, header gap, display title                   |
+| `dialog`        | matched  | `3a4356b` | Card surface, 28px radius, no border, modal shadow, title line height |
+| `input`         | matched  | `ebc3503` | Field surface                                                         |
+| `label`         | matched  | `557e11f` | None (already equal)                                                  |
+| `select`        | matched  | `2396042` | Field surface on the trigger                                          |
+| `textarea`      | matched  | `9040022` | Field surface, shadow, focus ring, invalid styling                    |
+| `AdminPanel`    | matched  | `c79ba99` | 24px display-font title                                               |
+| `CheckboxField` | matched  | `668657c` | Drawn 18px box and check mark inside the 36px native input            |
+| `ConfirmDialog` | matched  | `09d1740` | 24px above the actions                                                |
+| `ErrorNotice`   | deferred | `7431ce5` | Medium weight; the tinted box is pinned by a test                     |
+| `Field`         | matched  | `13b897c` | 8px stack gap                                                         |
+| `RadioField`    | matched  | `a59955f` | Drawn 18px circle and dot inside the 36px native input                |
+| `StatusToggle`  | matched  | `595b837` | None (the reference mapping was tried and read worse)                 |
+| `WeekdayPicker` | deferred | `2ec21b2` | Option spacing; the reference uses buttons, not checkboxes            |
+| `NotoEmoji`     | matched  | `595b837` | None (already equal)                                                  |
+
+Supporting commits: `d981270` audit, `24f6f92` tokens (`globals.css` only), `4aaa2b4` the `--field`
+token, `d2fda26` the daily-messages call-site override.
+
+**Gates.** `format:check`, `lint`, `typecheck`, `test:unit`, `check:ui-catalog`, `check:ui-debt` and
+`check:accessible-names` passed before every commit and again on the final tree. `test:unit` showed
+the `foundation-settings` teardown race described in the progress log on three runs across the
+session; each time all 1,132 tests passed and an immediate rerun was clean.
+
+**Props and behaviour.** No prop, export, role, element type, `data-slot`, `data-testid` or
+dependency changed. Every source change is a class string. `CheckboxField` and `RadioField` are the
+largest: the native input stays, and its drawing is replaced; reviewer requirement 3 records what
+was verified.
+
+**Reference.** `apps/api/sqlite.db` has the same SHA-256, size and mtime as before setup, and the
+reference working tree shows the same untracked files as at the start and no modified ones. It ran
+throughout on a disposable database outside the repository. Nothing was pushed and no pull request
+was opened.
+
+**Last capture pass.** Both apps were swept again on every route after the final commit. The target
+admin screens now show the reference's surface language: rounder cards and modals with the soft
+shadows, flat filled buttons, lighter fields, display-font page titles, and label-sized checkboxes
+and radios.
+
+**Open for Diego.** None of these blocks the goal as written; each is outside the files or rules
+this goal allowed.
+
+1. `ErrorNotice`: keep the bordered tinted box, or allow the test that pins it to change so errors
+   can be plain text like the reference.
+2. `WeekdayPicker`: keep labelled checkboxes, or approve a change of element type to the
+   reference's button toggles.
+3. Fonts: serve Inter and Outfit from this app. Captures show them only because they are installed
+   on the capture machine.
+4. `NATIVE_SELECT_CLASSES` (`src/client/lib/recipes.ts`): move native selects to `bg-field`. Today
+   they read darker than the input beside them (`/admin/telemetry`, `/admin/meals`).
+5. Old-style 36px native checkboxes remain in `BARE_CHECKBOX_INPUT_CLASSES` (the reminders
+   assignment matrix) and in the calendar filter chips (`calendar/CalendarView.tsx`).
+6. Hand-built label stacks in `MemberCreateForm.tsx` and `MembersManagement.tsx` keep a 6px gap
+   where `Field` now uses 8px.
+
+**Found along the way, not caused by this work, not fixed.**
+
+- The weather dialog on the home screen is about 4,360px tall with no maximum height, so its close
+  button is off screen (`src/client/home/WeatherPill.tsx`).
+- With a mouse, hovering an unpressed chore row turns it saturated yellow, because the button
+  variant's hover background replaces the member tint (`src/client/chores/ChoreColumns.tsx`).
+- One emoji image in the emoji picker grid renders 20×26 instead of 20×20
+  (`src/client/chores/EmojiPicker.tsx`).
+- `tests/client/foundation-settings.test.tsx` has a teardown race that intermittently reports an
+  unhandled "window is not defined" error.
 
 ## Progress log
 
