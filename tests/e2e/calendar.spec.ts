@@ -118,6 +118,8 @@ test("calendar critical flow: create/read (recurrence-expanded) → assign+membe
   await createForm().locator('input[type="datetime-local"]').first().fill(`${today}T10:00`);
   await createForm().locator('input[type="datetime-local"]').nth(1).fill(`${today}T11:00`);
   await createForm().getByTestId("calendar-create-submit").click();
+  // The dialog closes on success; wait for it to be gone before opening it again.
+  await expect(createForm()).toHaveCount(0);
   await expect(page.getByText(timedTitle).first()).toBeVisible({ timeout: 8000 });
 
   // 5) Create an ALL-DAY event via the UI.
@@ -128,6 +130,7 @@ test("calendar critical flow: create/read (recurrence-expanded) → assign+membe
   if (!(await allDay2.isChecked())) await allDay2.check();
   await createForm().locator('input[type="date"]').first().fill(today);
   await createForm().getByTestId("calendar-create-submit").click();
+  await expect(createForm()).toHaveCount(0);
   await expect(page.getByText(allDayTitle).first()).toBeVisible({ timeout: 8000 });
 
   // 6) Assign the timed event to the member via the UI affordance, then confirm the
@@ -138,15 +141,18 @@ test("calendar critical flow: create/read (recurrence-expanded) → assign+membe
   const timedRow = rowOf(timedTitle);
   await timedRow.click();
   const detail = page.getByTestId("calendar-event-detail");
-  await detail.getByTestId("calendar-assign-btn").click();
+  // People are chosen inside the edit form and saved with it.
+  await detail.getByTestId("calendar-edit-btn").click();
   await detail.getByTestId(`calendar-assign-member-${memberId}`).check();
   // Await the PUT itself (not just the click) so the scoped read below cannot
   // race the assignment write — the click only dispatches the async submit.
   const assignResp = page.waitForResponse(
     (r) => r.url().includes("/assignments") && r.request().method() === "PUT"
   );
-  await detail.getByTestId("calendar-assign-save-btn").click();
+  await detail.getByTestId("calendar-edit-save-btn").click();
   expect((await assignResp).status()).toBe(200);
+  // Saving closes the dialog.
+  await expect(detail).toBeHidden();
 
   const scoped = await page.request.get(
     `/api/calendar/events?source=all&from=${encodeURIComponent(
@@ -184,7 +190,8 @@ test("calendar critical flow: create/read (recurrence-expanded) → assign+membe
   // household uses Europe/Madrid, so the 10:00 wall-clock label also proves the event is
   // projected in the configured household timezone. The all-day event must use Schedule-X's
   // date grid, while the timed event must use its time grid.
-  await detail.getByRole("button", { name: /cerrar|close/i }).click();
+  // The dialog already closed when the assignment was saved.
+  await expect(detail).toBeHidden();
   await page.getByRole("button", { name: /^(semana|week)$/i }).click();
   await expect(page.getByTestId("calendar-week-grid")).toBeVisible();
 

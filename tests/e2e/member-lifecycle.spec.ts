@@ -1,4 +1,5 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
+import { createMember, openAdminSection } from "./admin-nav";
 import { messages, resolveLang } from "../../src/client/i18n/messages";
 import { unlockAdmin } from "./admin-unlock";
 
@@ -94,34 +95,27 @@ test("member lifecycle preserves active choices, historical reads, and colour id
 
   await unlockAdmin(page, ADMIN_PIN);
 
-  await page.locator("#member-display-name").fill(originalName);
-  await page.locator("#member-role").click();
-  await page.getByRole("option", { name: m["members.create.child"] }).click();
-  await page.locator("#member-color").click();
-  await page.getByRole("option", { name: m["members.color.indigo"] }).click();
-  await page.locator('form button[type="submit"]').click();
-  await expect(page.getByTestId("member-create-success")).toBeVisible();
+  // The server picks the first free colour; which one depends on the members other specs have
+  // created in this shared database, so the spec reads colours back instead of naming them.
+  await createMember(page, originalName, { roleOption: m["members.create.child"] });
 
   const created = (await activeMembers(page)).find((member) => member.displayName === originalName);
   expect(created).toMatchObject({
     displayName: originalName,
-    colorKey: "indigo",
     role: "child",
     lifecycle: "active",
   });
   expect(created?.id).toBeTruthy();
   const memberId = created!.id;
 
-  await page.getByTestId("admin-nav-members-management").click();
-  await page.getByRole("button", { name: m["members.management.refresh"] }).click();
+  await openAdminSection(page, "admin-nav-members-management");
   const originalCard = page.getByTestId(`member-card-${memberId}`);
   await expect(originalCard).toContainText(originalName);
-  await originalCard.getByRole("button", { name: m["members.action.edit"] }).click();
+  await originalCard.click();
   const editDialog = page.getByRole("dialog", {
     name: `${m["members.action.edit"]} ${originalName}`,
   });
   await editDialog.getByLabel(m["members.create.displayName"]).fill(editedName);
-  await editDialog.getByRole("radio", { name: m["members.color.rose"] }).click();
   const editResponse = page.waitForResponse(
     (response) =>
       response.url().endsWith(`/api/members/${memberId}`) && response.request().method() === "PATCH"
@@ -129,14 +123,18 @@ test("member lifecycle preserves active choices, historical reads, and colour id
   await editDialog.getByRole("button", { name: m["members.action.save"] }).click();
   expect((await editResponse).status()).toBe(200);
 
+  // The colour is left as the server assigned it. Changing it here would race the other specs
+  // that create members in this shared database; member-management.spec.ts covers the change on
+  // a server of its own.
   const edited = (await activeMembers(page)).find((member) => member.id === memberId);
   expect(edited).toMatchObject({
     id: memberId,
     displayName: editedName,
-    colorKey: "rose",
     role: "child",
     lifecycle: "active",
   });
+  const memberColour = edited!.colorKey;
+  expect(memberColour).toBe(created!.colorKey);
   await expect(page.getByTestId(`member-card-${memberId}`)).toContainText(editedName);
 
   const messageResponse = await page.request.put("/api/daily-messages", {
@@ -174,7 +172,7 @@ test("member lifecycle preserves active choices, historical reads, and colour id
   );
   expect(routineAssignmentResponse.status()).toBe(200);
 
-  await page.getByTestId("admin-nav-daily-messages-management").click();
+  await openAdminSection(page, "admin-nav-daily-messages-management");
   const messagePicker = page.getByTestId("daily-messages-select-member");
   await expect(messagePicker.locator(`option[value="${memberId}"]`)).toHaveText(editedName);
 
@@ -185,19 +183,21 @@ test("member lifecycle preserves active choices, historical reads, and colour id
   const memberFilter = page.getByRole("checkbox", { name: editedName });
   await expect(memberFilter).toBeVisible();
   await memberFilter.check();
-  const memberFilterLabel = memberFilter.locator("xpath=..");
-  expect(await inlineStyle(memberFilterLabel, "border-color")).toBe("var(--color-member-rose-500)");
   const eventRow = page.getByTestId("calendar-event-row").filter({ hasText: eventTitle });
   await expect(eventRow).toBeVisible();
-  expect(await inlineStyle(eventRow, "--member-event-border")).toBe("var(--color-member-rose-500)");
+  expect(await inlineStyle(eventRow, "--member-event-border")).toBe(
+    `var(--color-member-${memberColour}-500)`
+  );
 
   await page.goto("/chores");
   const choreColumn = page.getByTestId(`chores-board-column-${memberId}`);
   await expect(choreColumn).toBeVisible({ timeout: 15_000 });
-  expect(await inlineStyle(choreColumn, "--member-color")).toBe("var(--color-member-rose-500)");
+  expect(await inlineStyle(choreColumn, "--member-color")).toBe(
+    `var(--color-member-${memberColour}-500)`
+  );
 
   await unlockAdmin(page, ADMIN_PIN);
-  await page.getByTestId("admin-nav-members-management").click();
+  await openAdminSection(page, "admin-nav-members-management");
   const activeCard = page.getByTestId(`member-card-${memberId}`);
   await expect(activeCard).toContainText(editedName);
   const archiveResponse = page.waitForResponse(
@@ -205,11 +205,14 @@ test("member lifecycle preserves active choices, historical reads, and colour id
       response.url().endsWith(`/api/members/${memberId}/archive`) &&
       response.request().method() === "POST"
   );
-  await activeCard.getByRole("button", { name: m["members.action.archive"] }).click();
+  // Archive lives in the member's form and asks once more.
+  await activeCard.click();
+  await page.getByTestId("member-archive").click();
+  await page.getByTestId("member-lifecycle-confirm").click();
   expect((await archiveResponse).status()).toBe(200);
   await expect(activeCard).toHaveCount(0);
 
-  await page.getByRole("button", { name: m["members.tab.archived"] }).click();
+  await page.getByTestId("members-tab-archived").click();
   const archivedCard = page.getByTestId(`member-card-${memberId}`);
   await expect(archivedCard).toContainText(editedName);
   const archivedResponse = await page.request.get("/api/members?lifecycle=archived");
@@ -218,12 +221,12 @@ test("member lifecycle preserves active choices, historical reads, and colour id
     expect.objectContaining({
       id: memberId,
       displayName: editedName,
-      colorKey: "rose",
+      colorKey: memberColour,
       lifecycle: "archived",
     })
   );
 
-  await page.getByTestId("admin-nav-daily-messages-management").click();
+  await openAdminSection(page, "admin-nav-daily-messages-management");
   await expect(messagePicker.locator(`option[value="${memberId}"]`)).toHaveCount(0);
   const historicalMessageResponse = await page.request.get(
     `/api/daily-messages/current?memberId=${memberId}&date=${today}`
@@ -252,8 +255,8 @@ test("member lifecycle preserves active choices, historical reads, and colour id
   });
 
   await unlockAdmin(page, ADMIN_PIN);
-  await page.getByTestId("admin-nav-members-management").click();
-  await page.getByRole("button", { name: m["members.tab.archived"] }).click();
+  await openAdminSection(page, "admin-nav-members-management");
+  await page.getByTestId("members-tab-archived").click();
   const restoreCard = page.getByTestId(`member-card-${memberId}`);
   await expect(restoreCard).toContainText(editedName);
   const restoreResponse = page.waitForResponse(
@@ -261,18 +264,23 @@ test("member lifecycle preserves active choices, historical reads, and colour id
       response.url().endsWith(`/api/members/${memberId}/restore`) &&
       response.request().method() === "POST"
   );
-  await restoreCard.getByRole("button", { name: m["members.action.restore"] }).click();
+  await restoreCard.click();
+  await page.getByTestId("member-restore").click();
+  await page.getByTestId("member-lifecycle-confirm").click();
   expect((await restoreResponse).status()).toBe(200);
 
+  // An archived member holds no colour, so another spec's member may have taken it meanwhile.
+  // The restored member then has the first free one; either way it is one colour everywhere.
   const restored = (await activeMembers(page)).find((member) => member.id === memberId);
   expect(restored).toMatchObject({
     id: memberId,
     displayName: editedName,
-    colorKey: "rose",
     lifecycle: "active",
   });
+  const restoredColour = restored!.colorKey;
+  expect(restoredColour).toBeTruthy();
 
-  await page.getByTestId("admin-nav-daily-messages-management").click();
+  await openAdminSection(page, "admin-nav-daily-messages-management");
   await expect(messagePicker.locator(`option[value="${memberId}"]`)).toHaveText(editedName);
 
   const restoredScopedResponse = await page.request.get(
@@ -288,6 +296,6 @@ test("member lifecycle preserves active choices, historical reads, and colour id
   const restoredChoreColumn = page.getByTestId(`chores-board-column-${memberId}`);
   await expect(restoredChoreColumn).toBeVisible({ timeout: 15_000 });
   expect(await inlineStyle(restoredChoreColumn, "--member-color")).toBe(
-    "var(--color-member-rose-500)"
+    `var(--color-member-${restoredColour}-500)`
   );
 });

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { openAdminSection } from "./admin-nav";
 import { spawn, type ChildProcess } from "node:child_process";
 import { createServer } from "node:net";
 import { createHash } from "node:crypto";
@@ -268,7 +269,7 @@ test("network devices lifecycle: seed live client -> register from picker -> blo
     // --- Admin unlock (long-press affordance + PIN, AdminGate.tsx) ---
     await unlockAdmin(page, ADMIN_PIN);
 
-    await page.getByTestId("admin-nav-network-devices").click();
+    await openAdminSection(page, "admin-nav-network-devices");
     await expect(page.getByTestId("network-devices-management")).toBeVisible();
 
     // --- Register from the seeded picker (US1) ---

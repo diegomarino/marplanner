@@ -98,7 +98,10 @@ test("family Meals workspace authors and refreshes entries without Admin", async
   await expect(page.getByText(recipeName)).toBeVisible();
 
   const recipeCard = page.locator("article", { hasText: recipeName });
-  await recipeCard.getByRole("button", { name: m["meals.action.edit"] }).click();
+  // The card's detail action opens the editable recipe.
+  await recipeCard
+    .getByRole("button", { name: `${m["meals.recipes.openDetail"]}: ${recipeName}` })
+    .click();
   await page.getByLabel(m["meals.recipes.nameLabel"]).fill(editedRecipeName);
   await page.getByRole("button", { name: m["meals.action.save"] }).click();
   await expect(page.getByText(editedRecipeName)).toBeVisible();

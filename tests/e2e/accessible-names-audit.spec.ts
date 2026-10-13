@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { openAdminSection } from "./admin-nav";
 import { unlockAdmin } from "./admin-unlock";
 import { messages, resolveLang } from "../../src/client/i18n/messages";
 
@@ -135,7 +136,7 @@ test("runtime accessible-name audit: Day Periods list (default view) has no unna
   page,
 }) => {
   await reachAdmin(page);
-  await page.getByTestId("admin-nav-day-periods").click();
+  await openAdminSection(page, "admin-nav-day-periods");
   await expect(page.getByTestId(/^day-period-/)).toHaveCount(4, { timeout: 10_000 });
 
   const tree = (await page.locator("body").ariaSnapshotJSON()) as AriaNode[];
@@ -161,7 +162,7 @@ test("runtime accessible-name audit: Day Periods edit mode has no unnamed contro
   page,
 }) => {
   await reachAdmin(page);
-  await page.getByTestId("admin-nav-day-periods").click();
+  await openAdminSection(page, "admin-nav-day-periods");
   await expect(page.getByTestId(/^day-period-/)).toHaveCount(4, { timeout: 10_000 });
 
   const settingsResp = await page.request.get("/api/settings");

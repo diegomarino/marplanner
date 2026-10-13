@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { openAdminSection } from "./admin-nav";
 import { unlockAdmin } from "./admin-unlock";
 import { messages, resolveLang } from "../../src/client/i18n/messages";
 
@@ -40,7 +41,7 @@ test("day periods critical-flow: view → edit → active now (US1, US2, US3)", 
   const m = messages[resolveLang(settings.locale.language)];
 
   // --- Navigate to Períodos Diarios screen ---
-  await page.getByTestId("admin-nav-day-periods").click();
+  await openAdminSection(page, "admin-nav-day-periods");
 
   // --- US1 (view): exactly FOUR periods render, with their i18n labels ---
   await expect(page.getByText(m["dayPeriods.management.loading"])).toHaveCount(0, {
