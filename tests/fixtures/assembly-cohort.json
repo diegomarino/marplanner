@@ -3744,14 +3744,22 @@
             "RadioField deliberate negative — each field reports ITS OWN value, never a sibling's",
             "RadioField meets kiosk density"
           ],
+          "tests/client/pill-toggle.test.tsx": [
+            "PillToggle is a native checkbox named by its label and reports the new state",
+            "PillToggle wears the caller's selected style only while selected",
+            "PillToggle does not report a change while disabled",
+            "PillToggle meets kiosk density: the hidden checkbox spans the full control height"
+          ],
           "tests/client/recipe-catalogue.test.tsx": [
-            "RecipeCatalogue adapts the v1 divided catalogue with icon search, slot badges, and icon actions"
+            "RecipeCatalogue adapts the v1 divided catalogue with icon search, slot badges, and icon actions",
+            "RecipeCatalogue says once that a recipe with no stored slots suits every meal",
+            "RecipeCatalogue gives every meal slot its own colour",
+            "RecipeCatalogue opens the editable recipe from the card's detail action, not from its title"
           ],
           "tests/client/recipe-dialog.test.tsx": [
             "RecipeDialog normalizes the form at the UI seam and preserves values after a failed save",
             "sends an explicit empty slots patch when an edited recipe is made valid for every slot",
-            "localizes recipe field accessibility names from the household language",
-            "localizes the recipe detail dialog's accessible close action"
+            "localizes recipe field accessibility names from the household language"
           ],
           "tests/client/reminders-calendar-gated-i18n-parity.test.ts": [
             "reminders-calendar-gated-i18n-parity reminders.calendarGated.*/reminders.dryRun.* keys have identical coverage in en and es (both directions)",

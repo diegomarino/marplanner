@@ -11,6 +11,7 @@ export * from "./components/CheckboxField";
 export * from "./components/ConfirmDialog";
 export * from "./components/ErrorNotice";
 export * from "./components/Field";
+export * from "./components/PillToggle";
 export * from "./components/RadioField";
 export * from "./components/StatusToggle";
 export * from "./components/WeekdayPicker";
