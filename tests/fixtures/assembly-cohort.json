@@ -4047,6 +4047,8 @@
             "time-announcements speech TIME-ANNOUNCEMENTS-INV-08: an absent speechSynthesis API is a swallowed no-op + logged miss, never a throw",
             "time-announcements speech TIME-ANNOUNCEMENTS-INV-08: an unprimed fire is a swallowed no-op + logged miss (no speechSynthesis touch)",
             "time-announcements speech primeOnFirstGesture: fires once on the first gesture, then detaches (no double-prime speak)",
+            "time-announcements speech primeOnFirstGesture: warms the lazily-loaded voice list on install, so the primer finds the voice and logs no voice-miss",
+            "time-announcements speech primeOnFirstGesture: the silent primer never logs a voice-miss, a real announcement still does",
             "time-announcements speech testVoice speaks the unsaved time and doubles as a manual primer",
             "time-announcements speech sink mirror gate (D9 — window.__mpAnnouncements, DEV/e2e-gated) mirrors + dispatches a CustomEvent when DEV is on",
             "time-announcements speech sink mirror gate (D9 — window.__mpAnnouncements, DEV/e2e-gated) stays gated off (no window hook, no event) when DEV is off and VITE_E2E_HOOKS is unset",
