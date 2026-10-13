@@ -17,6 +17,8 @@
   --card-foreground: oklch(0.21 0.006 60);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.21 0.006 60);
+  /* Form field surface: lighter than the page and at least as light as a card. */
+  --field: #fefdfb;
   --primary: #5a5a40;
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.95 0.008 60);
