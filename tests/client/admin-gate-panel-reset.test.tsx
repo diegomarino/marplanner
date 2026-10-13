@@ -68,11 +68,6 @@ const PANELS: PanelSpec[] = [
     heading: "Members Management",
   },
   {
-    nav: "admin-nav-day-periods",
-    path: "/admin/day-periods",
-    text: "Configure the four fixed day periods (morning, afternoon, evening, night).",
-  },
-  {
     nav: "admin-nav-routines-management",
     path: "/admin/routines",
     text: "Configure routines, chores, and weekday assignments.",
@@ -104,7 +99,6 @@ const PANELS: PanelSpec[] = [
     path: "/admin/time-announcements",
     testId: "time-announcements-management",
   },
-  { nav: "admin-nav-weather", path: "/admin/weather", testId: "weather-management" },
   {
     nav: "admin-nav-network-devices",
     path: "/admin/network-devices",
@@ -112,6 +106,7 @@ const PANELS: PanelSpec[] = [
   },
   { nav: "admin-nav-plugins", path: "/admin/plugins", testId: "plugin-catalog" },
   { nav: "admin-nav-printing", path: "/admin/printing", testId: "printing-management" },
+  { nav: "admin-nav-settings", path: "/admin/settings", testId: "settings-management" },
 ];
 
 async function findMounted(panel: PanelSpec) {
@@ -229,7 +224,6 @@ describe("AdminGate — hideAllPanels resets every panel on switch (review P1-1,
     }
     // If a new admin-nav-* button exists that ISN'T in PANELS, this repo has grown a
     // another panel without updating this fence — fail loudly rather than silently skip it.
-    // Buttons on the overview's temporary list, links once a page has moved to the sidebar.
     const renderedNavCount = document.querySelectorAll('[data-testid^="admin-nav-"]').length;
     expect(renderedNavCount).toBe(PANELS.length);
   });
@@ -248,7 +242,6 @@ describe("AdminGate — hideAllPanels resets every panel on switch (review P1-1,
       fireEvent.click(screen.getByTestId(from.nav));
       await findMounted(from);
 
-      // The list of every page lives on the overview until the sidebar covers them.
       fireEvent.click(screen.getByRole("link", { name: "Overview" }));
       fireEvent.click(await screen.findByTestId(to.nav));
       await findMounted(to);

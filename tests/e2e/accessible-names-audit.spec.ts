@@ -136,7 +136,7 @@ test("runtime accessible-name audit: Day Periods list (default view) has no unna
   page,
 }) => {
   await reachAdmin(page);
-  await openAdminSection(page, "admin-nav-day-periods");
+  await openAdminSection(page, "admin-nav-settings");
   await expect(page.getByTestId(/^day-period-/)).toHaveCount(4, { timeout: 10_000 });
 
   const tree = (await page.locator("body").ariaSnapshotJSON()) as AriaNode[];
@@ -162,7 +162,7 @@ test("runtime accessible-name audit: Day Periods edit mode has no unnamed contro
   page,
 }) => {
   await reachAdmin(page);
-  await openAdminSection(page, "admin-nav-day-periods");
+  await openAdminSection(page, "admin-nav-settings");
   await expect(page.getByTestId(/^day-period-/)).toHaveCount(4, { timeout: 10_000 });
 
   const settingsResp = await page.request.get("/api/settings");
