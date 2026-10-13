@@ -1,9 +1,12 @@
 -- The member palette shrinks from sixteen colours to ten. Each member on a retired colour moves
 -- to its nearest survivor, unless another active member already has that one: then the member
 -- takes the first colour no active member uses. Archived members hold no colour, so they are
--- simply moved to the survivor. A database created before the baseline's CHECK was narrowed
--- to the ten still accepts the retired names, which is what lets this run there; on a fresh
--- database there is nothing to move.
+-- simply moved to the survivor.
+--
+-- The table is then rebuilt, because a CHECK cannot be altered in place: an upgraded database
+-- must refuse the retired names exactly as a fresh one does. The migration runner switches
+-- foreign keys off around the batch, so dropping the old table does not touch the rows that
+-- reference a member, and it verifies every foreign key before committing.
 WITH
   retired(old_key, new_key) AS (
     VALUES ('cyan', 'teal'), ('yellow', 'amber'), ('rose', 'red'),
@@ -42,3 +45,33 @@ SET `color_key` = CASE
   )
 END
 WHERE `color_key` IN ('cyan', 'yellow', 'rose', 'fuchsia', 'purple', 'indigo');
+--> statement-breakpoint
+CREATE TABLE `members_new` (
+	`id` text PRIMARY KEY NOT NULL,
+	`display_name` text NOT NULL,
+	`color_key` text DEFAULT 'blue' NOT NULL,
+	`role` text NOT NULL,
+	`lifecycle` text DEFAULT 'active' NOT NULL,
+	`created_at` integer NOT NULL,
+	`updated_at` integer NOT NULL,
+	`birth_month` integer,
+	`birth_day` integer,
+	`birth_year` integer,
+	CONSTRAINT `members_display_name_check` CHECK(length(trim(`display_name`)) > 0),
+	CONSTRAINT `members_role_check` CHECK(`role` IN ('parent', 'child')),
+	CONSTRAINT `members_color_key_check` CHECK(`color_key` IN ('blue', 'sky', 'teal', 'green', 'lime', 'amber', 'orange', 'red', 'pink', 'violet')),
+	CONSTRAINT `members_lifecycle_check` CHECK(`lifecycle` IN ('active', 'archived'))
+);
+--> statement-breakpoint
+INSERT INTO `members_new` (
+	`id`, `display_name`, `color_key`, `role`, `lifecycle`,
+	`created_at`, `updated_at`, `birth_month`, `birth_day`, `birth_year`
+)
+SELECT
+	`id`, `display_name`, `color_key`, `role`, `lifecycle`,
+	`created_at`, `updated_at`, `birth_month`, `birth_day`, `birth_year`
+FROM `members`;
+--> statement-breakpoint
+DROP TABLE `members`;
+--> statement-breakpoint
+ALTER TABLE `members_new` RENAME TO `members`;
