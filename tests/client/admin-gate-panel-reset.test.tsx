@@ -64,7 +64,7 @@ const PANELS: PanelSpec[] = [
   },
   {
     nav: "admin-nav-member-create",
-    path: "/admin",
+    path: "/admin/members/new",
     text: "Add a new member to the household. Admin role is not available.",
   },
   {
@@ -254,7 +254,9 @@ describe("AdminGate — hideAllPanels resets every panel on switch (review P1-1,
       fireEvent.click(screen.getByTestId(from.nav));
       await findMounted(from);
 
-      fireEvent.click(screen.getByTestId(to.nav));
+      // The list of every page lives on the overview until the sidebar covers them.
+      fireEvent.click(screen.getByRole("link", { name: "Overview" }));
+      fireEvent.click(await screen.findByTestId(to.nav));
       await findMounted(to);
 
       expect(window.location.pathname).toBe(to.path);

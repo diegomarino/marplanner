@@ -4,6 +4,7 @@
  */
 import { build } from "esbuild";
 import { cpSync, mkdirSync } from "node:fs";
+import { resolveBuildInfo } from "./build-info.mjs";
 
 const RESVG_EXTERNALS = ["@resvg/resvg-js", "@resvg/resvg-wasm"];
 const NATIVE_EXTERNALS = ["argon2", "better-sqlite3", ...RESVG_EXTERNALS];
@@ -23,6 +24,8 @@ await build({
   target: "node24",
   external: NATIVE_EXTERNALS,
   banner: REQUIRE_SHIM_BANNER,
+  // The admin overview compares this with the commit stamped into the client bundle.
+  define: { __MP_BUILD__: JSON.stringify(resolveBuildInfo()) },
 });
 
 mkdirSync("dist/server/fonts/jetbrains-mono", { recursive: true });
