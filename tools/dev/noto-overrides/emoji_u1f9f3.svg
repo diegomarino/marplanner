@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" aria-hidden="true">
+  <defs>
+    <linearGradient id="bagBody" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ff7a70" />
+      <stop offset="1" stop-color="#d9413c" />
+    </linearGradient>
+    <linearGradient id="bagShade" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#c1322e" />
+      <stop offset="1" stop-color="#8f2523" />
+    </linearGradient>
+  </defs>
+  <path d="M44 34c0-11 9-20 20-20s20 9 20 20h-10c0-6-4-10-10-10s-10 4-10 10z" fill="#3b3f4a" />
+  <rect x="12" y="38" width="104" height="66" rx="20" fill="url(#bagBody)" />
+  <path d="M12 72h104v22c0 11-9 20-20 20H32c-11 0-20-9-20-20z" fill="url(#bagShade)" opacity="0.45" />
+  <rect x="54" y="38" width="20" height="66" rx="8" fill="#b22f2c" opacity="0.55" />
+  <rect x="20" y="54" width="88" height="8" rx="4" fill="#ffd6d3" opacity="0.45" />
+  <circle cx="30" cy="106" r="4" fill="#3a2430" />
+  <circle cx="98" cy="106" r="4" fill="#3a2430" />
+</svg>

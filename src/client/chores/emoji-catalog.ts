@@ -12,6 +12,24 @@ export interface EmojiCategory {
   items: EmojiCatalogItem[];
 }
 
+/**
+ * Chore icons the app renders without offering them in the picker: the fallback shown
+ * when a chore has no icon, and icons used by the bundled seeds that are not curated
+ * picker entries. They are listed here (the generator reads every `emoji:` literal in
+ * this file) so `npm run generate:noto-emojis` vendors an SVG for each and NotoEmoji
+ * never falls back to the system emoji font for them. Not part of EMOJI_CATEGORIES.
+ */
+export const NON_PICKER_ICON_EMOJIS: ReadonlyArray<{ emoji: string; usedBy: string }> = [
+  { emoji: "📋", usedBy: "default icon for a chore with no icon" },
+  { emoji: "🐈", usedBy: "seeds/seed-040-routines.ts" },
+  { emoji: "☀️", usedBy: "chores carried over from the original app's seed" },
+  { emoji: "💧", usedBy: "chores carried over from the original app's seed" },
+  { emoji: "🏫", usedBy: "chores carried over from the original app's seed" },
+  { emoji: "🎮", usedBy: "chores carried over from the original app's seed" },
+  { emoji: "📦", usedBy: "chores carried over from the original app's seed" },
+  { emoji: "🛁", usedBy: "chores carried over from the original app's seed" },
+];
+
 /** Curated catalog of emojis grouped by semantic category for chore and routine assignment.
  * Categories are ordered from most-used to least-used, so the first options presented to
  * the user are the most relevant for everyday family planner tasks.
