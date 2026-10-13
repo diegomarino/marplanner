@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Flame, Loader2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { StatusToggle } from "@/components/StatusToggle";
 import { Button } from "@/components/ui/button";
+import { NotoEmoji } from "./noto-emoji";
 import { useTodayChores } from "@/chores/useTodayChores";
 import { useTranslation } from "@/i18n";
 import type { MessageKey } from "@/i18n/messages";
@@ -373,45 +374,46 @@ function ChoreColumn({
       // eslint-disable-next-line ui-policy/debt -- The configured member identity is passed through one CSS custom property into the token layer.
       style={{ "--member-color": scale.colorVar } as CSSProperties}
     >
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <span
-            data-testid="today-chores-member-badge"
-            className={cn("rounded-full px-3 py-1 text-lg font-semibold", scale.badge)}
-          >
-            {column.displayName}
-          </span>
+      <div className="mb-3 flex items-center gap-2">
+        <span
+          data-testid="today-chores-member-badge"
+          className={cn("min-w-0 rounded-full px-3 py-1 text-lg font-semibold", scale.badge)}
+        >
+          {column.displayName}
+        </span>
+        <div className="ml-auto flex shrink-0 items-center gap-2 text-sm font-semibold tabular-nums">
           {column.streak !== null && (
-            <span className="rounded-full border bg-card px-2 py-1 text-sm">
-              {t("chores.board.streakLabel")} {column.streak}
+            <span className="inline-flex items-center gap-1 rounded-full border px-2 py-1 [background:color-mix(in_oklch,var(--member-color)_12%,var(--member-mix-ground))] [border-color:color-mix(in_oklch,var(--member-color)_34%,var(--member-mix-ground))]">
+              <Flame aria-hidden="true" className="size-4 fill-current text-accent" />
+              <span className="sr-only">{t("chores.board.streakLabel")}</span> {column.streak}
+            </span>
+          )}
+          {column.todayProgress !== null && (
+            <span className="relative inline-flex min-w-16 items-center justify-center gap-1 overflow-hidden rounded-full border px-2 py-1 [background:color-mix(in_oklch,var(--member-color)_12%,var(--member-mix-ground))] [border-color:color-mix(in_oklch,var(--member-color)_34%,var(--member-mix-ground))]">
+              <span
+                aria-hidden="true"
+                className="absolute inset-y-0 left-0 w-[var(--today-chores-progress)] rounded-full [background:color-mix(in_oklch,var(--member-color)_50%,var(--member-mix-ground))]"
+                // eslint-disable-next-line ui-policy/debt -- Dynamic progress is passed through a CSS custom property into the token layer.
+                style={
+                  {
+                    "--today-chores-progress": `${Math.min(
+                      100,
+                      column.todayProgress.total > 0
+                        ? (column.todayProgress.completed / column.todayProgress.total) * 100
+                        : 0
+                    )}%`,
+                  } as CSSProperties
+                }
+              />
+              <Check aria-hidden="true" className="relative size-4" />
+              <span className="relative">
+                <span className="sr-only">{t("chores.board.progressLabel")}</span>{" "}
+                {column.todayProgress.completed}/{column.todayProgress.total}
+              </span>
             </span>
           )}
         </div>
-        {column.todayProgress !== null && (
-          <span className="shrink-0 rounded-full border bg-card px-2 py-1 text-sm font-medium">
-            {t("chores.board.progressLabel")} {column.todayProgress.completed}/
-            {column.todayProgress.total}
-          </span>
-        )}
       </div>
-      {column.todayProgress !== null && (
-        <div className="mb-3 h-2 overflow-hidden rounded-full bg-background" aria-hidden="true">
-          <div
-            className={cn("h-full w-[var(--today-chores-progress)] rounded-full", scale.progress)}
-            // eslint-disable-next-line ui-policy/debt -- Dynamic progress is passed through a CSS custom property into the token layer.
-            style={
-              {
-                "--today-chores-progress": `${Math.min(
-                  100,
-                  column.todayProgress.total > 0
-                    ? (column.todayProgress.completed / column.todayProgress.total) * 100
-                    : 0
-                )}%`,
-              } as CSSProperties
-            }
-          />
-        </div>
-      )}
       {period && (
         <div className="mt-3 flex flex-col gap-2">
           {canGoUp && (
@@ -450,32 +452,66 @@ function ChoreColumn({
                       }
                       pressed={chore.completed}
                       label={
-                        <span className="grid w-full grid-cols-[3rem_minmax(0,1fr)_2rem] items-center gap-2">
+                        <span className="flex w-full flex-1 flex-col self-stretch">
                           <span
-                            aria-hidden="true"
-                            data-testid={`today-chore-icon-${column.memberId}-${chore.id}`}
-                            className={cn("text-3xl", chore.completed && "line-through opacity-55")}
-                          >
-                            {chore.icon ?? "📋"}
-                          </span>
-                          <span
-                            data-testid={`today-chore-name-${column.memberId}-${chore.id}`}
                             className={cn(
-                              "text-left font-semibold",
-                              chore.completed && "text-muted-foreground line-through"
+                              "flex flex-1 items-center justify-center px-4 py-3",
+                              chore.completed
+                                ? "[background:color-mix(in_oklch,var(--member-color)_30%,var(--member-mix-ground))]"
+                                : "[background:color-mix(in_oklch,var(--member-color)_14%,var(--member-mix-ground))]"
                             )}
                           >
-                            {chore.name}
+                            <span
+                              aria-hidden="true"
+                              data-testid={`today-chore-icon-${column.memberId}-${chore.id}`}
+                              data-emoji={chore.icon ?? "📋"}
+                              className={cn(
+                                "relative flex size-12 items-center justify-center text-5xl leading-none",
+                                chore.completed && "line-through opacity-55"
+                              )}
+                            >
+                              <NotoEmoji
+                                emoji={chore.icon ?? "📋"}
+                                size={48}
+                                className="block size-12"
+                              />
+                              {chore.completed && (
+                                <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-foreground" />
+                              )}
+                            </span>
                           </span>
                           <span
-                            aria-hidden="true"
                             className={cn(
-                              "flex size-8 items-center justify-center rounded-full border-2",
-                              chore.completed &&
-                                "[background:color-mix(in_oklch,var(--member-color)_58%,var(--member-mix-ground))]"
+                              "flex min-h-12 items-center gap-3 px-4 py-2",
+                              chore.completed
+                                ? "[background:color-mix(in_oklch,var(--member-color)_50%,var(--member-mix-ground))]"
+                                : "[background:color-mix(in_oklch,var(--member-color)_26%,var(--member-mix-ground))]"
                             )}
                           >
-                            {chore.completed && <Check />}
+                            <span
+                              data-testid={`today-chore-name-${column.memberId}-${chore.id}`}
+                              className={cn(
+                                "flex-1 text-left font-serif text-lg leading-tight font-semibold",
+                                chore.completed && "text-muted-foreground line-through"
+                              )}
+                            >
+                              {chore.name}
+                            </span>
+                            <span
+                              aria-hidden="true"
+                              className={cn(
+                                "flex size-7 shrink-0 items-center justify-center rounded-full border-2",
+                                chore.completed
+                                  ? "text-primary-foreground [background:color-mix(in_oklch,var(--member-color)_58%,var(--member-mix-ground))] [border-color:color-mix(in_oklch,var(--member-color)_66%,var(--member-mix-ground))]"
+                                  : "[background:color-mix(in_oklch,var(--member-color)_10%,var(--member-mix-ground))] [border-color:color-mix(in_oklch,var(--member-color)_34%,var(--member-mix-ground))]"
+                              )}
+                            >
+                              {pending.has(chore.id) ? (
+                                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                              ) : (
+                                chore.completed && <Check className="size-4" strokeWidth={3} />
+                              )}
+                            </span>
                           </span>
                         </span>
                       }
@@ -484,10 +520,10 @@ function ChoreColumn({
                       onPress={() => onToggleChore(chore, column.memberId)}
                       wrap
                       className={cn(
-                        "min-h-[80px] w-full rounded-2xl border-2 px-3",
+                        "min-h-[120px] w-full items-stretch overflow-hidden rounded-2xl border p-0",
                         chore.completed
-                          ? "[background:color-mix(in_oklch,var(--member-color)_46%,var(--member-mix-ground))] [border-color:color-mix(in_oklch,var(--member-color)_58%,var(--member-mix-ground))]"
-                          : "[background:color-mix(in_oklch,var(--member-color)_16%,var(--member-mix-ground))] [border-color:color-mix(in_oklch,var(--member-color)_24%,var(--member-mix-ground))]"
+                          ? "[border-color:color-mix(in_oklch,var(--member-color)_48%,var(--member-mix-ground))]"
+                          : "[border-color:color-mix(in_oklch,var(--member-color)_26%,var(--member-mix-ground))]"
                       )}
                     />
                   </li>
