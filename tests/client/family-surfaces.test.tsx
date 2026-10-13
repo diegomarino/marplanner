@@ -266,7 +266,7 @@ describe("HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-styl
     expect(screen.getByLabelText("Today's meals")).toBeInTheDocument();
     expect(screen.getByTestId("home-dashboard-grid")).toHaveClass(
       "lg:grid-cols-[minmax(16rem,25%)_minmax(0,1fr)]",
-      "lg:grid-rows-[minmax(0,4fr)_minmax(7rem,1fr)]"
+      "lg:grid-rows-[minmax(0,1fr)_auto]"
     );
     expect(screen.getByTestId("home-agenda-region")).toHaveClass("lg:row-span-2");
     expect(screen.getByTestId("home-chores-region")).toHaveClass("lg:col-start-2");
