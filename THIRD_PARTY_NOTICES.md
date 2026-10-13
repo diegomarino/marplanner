@@ -11,6 +11,14 @@ licensed under the SIL Open Font License 1.1; the complete [license and notice](
 is included next to the fonts and copied into both render distributions.
 [Upstream project](https://github.com/JetBrains/JetBrainsMono).
 
+## Weather Icons
+
+The weather pill and forecast dialog draw their condition icons from path data taken
+from Weather Icons by Erik Flowers. The icons are licensed under the SIL Open Font
+License 1.1; the complete [license and notice](src/client/home/weather-icons/OFL.txt)
+is included next to the vendored path data.
+[Upstream project](https://github.com/erikflowers/weather-icons).
+
 ## Dependencies
 
 `package-lock.json` records the installed versions and declared package licenses.

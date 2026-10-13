@@ -167,6 +167,51 @@ describe("weather forecast port", () => {
       expect(clientLogRows()).toHaveLength(0);
     });
 
+    it("carries day/night, humidity, wind and today's sun times when the provider reports them", async () => {
+      const { buildForecastPort } = await import("../../src/server/modules/weather/port");
+      const raw = healthyRawForecast() as {
+        current: Record<string, unknown>;
+        hourly: Record<string, unknown>;
+        daily: Record<string, unknown>;
+      };
+      Object.assign(raw.current, { is_day: 0, relative_humidity_2m: 87.6, wind_speed_10m: 3.4 });
+      raw.hourly.is_day = [1, 0, "dusk"];
+      raw.daily.sunrise = ["2026-09-04T07:41", "2026-09-05T07:42", "2026-09-06T07:43"];
+      raw.daily.sunset = ["not a time", "2026-09-05T20:39", "2026-09-06T20:37"];
+      let capturedUrl: URL | undefined;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((input: string | URL) => {
+          capturedUrl = new URL(String(input));
+          return Promise.resolve(new Response(JSON.stringify(raw), { status: 200 }));
+        })
+      );
+
+      const port = buildForecastPort({ endpoint: "https://fixture.example", enabled: undefined });
+      const result = await port({ lat: 40.4, lon: -3.7 }, "Europe/Madrid");
+
+      expect(capturedUrl!.searchParams.get("current")).toContain("is_day");
+      expect(capturedUrl!.searchParams.get("current")).toContain("relative_humidity_2m");
+      expect(capturedUrl!.searchParams.get("current")).toContain("wind_speed_10m");
+      expect(capturedUrl!.searchParams.get("hourly")).toContain("is_day");
+      expect(capturedUrl!.searchParams.get("daily")).toContain("sunrise,sunset");
+      // A malformed optional value is left out, never defaulted.
+      expect(JSON.parse(JSON.stringify(result!.current))).toEqual({
+        conditionKey: "mostlyClear",
+        tempC: 24.1,
+        rainPct: 12,
+        isDay: false,
+        humidityPct: 88,
+        windKmh: 3.4,
+        sunrise: "2026-09-04T07:41",
+      });
+      expect(result!.hourly.map((hour) => hour.isDay)).toEqual([true, false, undefined]);
+      expect(Object.keys(result!.hourly[2])).not.toContain("isDay");
+      expect(Object.keys(result!.daily[0]).sort()).toEqual(
+        ["conditionKey", "date", "rainPct", "tempMaxC", "tempMinC"].sort()
+      );
+    });
+
     it("PR review P1-1: current.rainPct matches the CURRENT hour, not midnight — current.time is 15-min-snapped while hourly.time is on-the-hour", async () => {
       const { buildForecastPort } = await import("../../src/server/modules/weather/port");
       vi.stubGlobal(

@@ -22,10 +22,10 @@ const FETCH_TIMEOUT_MS = 5000;
 // values are lat/lon/timezone (FR-012) — these three lists are NOT user- or household-
 // supplied, so they carry no SSRF/abuse surface; without them Open-Meteo returns no weather
 // fields at all and a healthy deployment would render permanent absence.
-const CURRENT_VARS = "temperature_2m,weather_code";
-const HOURLY_VARS = "temperature_2m,precipitation_probability,weather_code";
+const CURRENT_VARS = "temperature_2m,weather_code,is_day,relative_humidity_2m,wind_speed_10m";
+const HOURLY_VARS = "temperature_2m,precipitation_probability,weather_code,is_day";
 const DAILY_VARS =
-  "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max";
+  "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset";
 
 /** Telemetry producer identity — a synthetic, hand-written string that can
  * never collide with a real device/API key id (those are DB-generated UUIDs). `writeClientLog`
