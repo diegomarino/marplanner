@@ -1177,7 +1177,12 @@
             "calendar sync publication rolls back every event, assignment, and success-health write when publication fails",
             "calendar sync publication purges a cancelled occurrence after it leaves the supported retention window",
             "calendar sync publication starts manual sync for an enabled source and rejects missing or disabled sources",
-            "calendar sync publication keeps a manual non-ext assignment when title-derived would claim the same member"
+            "calendar sync publication keeps a manual non-ext assignment when title-derived would claim the same member",
+            "calendar sync publication assigns members named anywhere in the title, by first name unless it is shared",
+            "calendar sync publication assigns initials only as an uppercase title prefix or dash suffix",
+            "calendar sync publication leaves a shared initial unassigned unless it is repeated once per member",
+            "calendar sync publication re-derives title assignments on an unchanged feed and keeps manual ones",
+            "calendar sync publication leaves title assignments untouched on an unchanged feed while the household is unchanged"
           ],
           "tests/boundary/credentials.test.ts": [
             "credentials — mpk- diceware generateKey keys start with 'mpk-'",
