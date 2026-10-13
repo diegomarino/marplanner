@@ -32,7 +32,7 @@ test("day periods critical-flow: view → edit → active now (US1, US2, US3)", 
 
   await unlockAdmin(page, ADMIN_PIN);
 
-  await expect(page.getByTestId("admin-nav-member-create")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 
   const settingsResp = await page.request.get("/api/settings");
   expect(settingsResp.ok()).toBeTruthy();

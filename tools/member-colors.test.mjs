@@ -11,25 +11,21 @@ const GENERATOR_PATH = join(ROOT, "tools/dev/generate-member-colors.mjs");
 const GENERATED_PATH = join(ROOT, "src/client/styles/member-colors.generated.css");
 
 const EXPECTED_PALETTE = [
-  { key: "blue", name: "blue", base500: { l: 0.58, c: 0.18, h: 240 } },
-  { key: "sky", name: "sky", base500: { l: 0.58, c: 0.17, h: 215 } },
-  { key: "cyan", name: "cyan", base500: { l: 0.58, c: 0.16, h: 195 } },
-  { key: "teal", name: "teal", base500: { l: 0.58, c: 0.16, h: 170 } },
-  { key: "green", name: "green", base500: { l: 0.58, c: 0.19, h: 145 } },
-  { key: "lime", name: "lime", base500: { l: 0.58, c: 0.2, h: 120 } },
-  { key: "yellow", name: "yellow", base500: { l: 0.58, c: 0.17, h: 85 } },
-  { key: "amber", name: "amber", base500: { l: 0.58, c: 0.18, h: 65 } },
-  { key: "orange", name: "orange", base500: { l: 0.58, c: 0.18, h: 55 } },
-  { key: "red", name: "red", base500: { l: 0.58, c: 0.22, h: 25 } },
-  { key: "rose", name: "rose", base500: { l: 0.58, c: 0.22, h: 10 } },
-  { key: "pink", name: "pink", base500: { l: 0.58, c: 0.22, h: 340 } },
-  { key: "fuchsia", name: "fuchsia", base500: { l: 0.58, c: 0.24, h: 320 } },
-  { key: "purple", name: "purple", base500: { l: 0.58, c: 0.2, h: 310 } },
-  { key: "violet", name: "violet", base500: { l: 0.58, c: 0.2, h: 285 } },
-  { key: "indigo", name: "indigo", base500: { l: 0.58, c: 0.2, h: 265 } },
+  { key: "blue", name: "blue", base500: { l: 0.48, c: 0.19, h: 262 } },
+  { key: "sky", name: "sky", base500: { l: 0.64, c: 0.13, h: 232 } },
+  { key: "teal", name: "teal", base500: { l: 0.6, c: 0.1, h: 195 } },
+  { key: "green", name: "green", base500: { l: 0.5, c: 0.14, h: 155 } },
+  { key: "lime", name: "lime", base500: { l: 0.6, c: 0.17, h: 128 } },
+  { key: "amber", name: "amber", base500: { l: 0.62, c: 0.13, h: 85 } },
+  { key: "orange", name: "orange", base500: { l: 0.65, c: 0.17, h: 52 } },
+  { key: "red", name: "red", base500: { l: 0.56, c: 0.21, h: 25 } },
+  { key: "pink", name: "pink", base500: { l: 0.6, c: 0.21, h: 350 } },
+  { key: "violet", name: "violet", base500: { l: 0.56, c: 0.21, h: 298 } },
 ];
 
-const EXPECTED_LIGHTNESS = new Map([
+// The reference scale for a 0.58 base. Every colour keeps its own 500 and spreads the other
+// shades towards the same two ends in these proportions.
+const REFERENCE_LIGHTNESS = new Map([
   [100, 0.93],
   [200, 0.87],
   [300, 0.78],
@@ -41,23 +37,26 @@ const EXPECTED_LIGHTNESS = new Map([
   [900, 0.28],
 ]);
 
+function expectedLightness(base, step) {
+  const reference = REFERENCE_LIGHTNESS.get(step);
+  const scaled =
+    reference >= 0.58
+      ? base + ((reference - 0.58) * (0.93 - base)) / (0.93 - 0.58)
+      : base - ((0.58 - reference) * (base - 0.28)) / (0.58 - 0.28);
+  return Math.round(scaled * 1000) / 1000;
+}
+
 const EXPECTED_FOREGROUND_OKLCH = {
-  blue: "0 0 0",
+  blue: "1 0 0",
   sky: "0 0 0",
-  cyan: "0 0 0",
   teal: "0 0 0",
-  green: "0 0 0",
+  green: "1 0 0",
   lime: "0 0 0",
-  yellow: "0 0 0",
   amber: "0 0 0",
   orange: "0 0 0",
   red: "1 0 0",
-  rose: "1 0 0",
-  pink: "1 0 0",
-  fuchsia: "1 0 0",
-  purple: "1 0 0",
+  pink: "0 0 0",
   violet: "1 0 0",
-  indigo: "0 0 0",
 };
 
 function runGenerator(...args) {
@@ -84,7 +83,7 @@ async function findCssImports(directory) {
   return imports;
 }
 
-test("palette source is exactly the approved sixteen base-500 OKLCH references", async () => {
+test("palette source is exactly the approved ten base-500 OKLCH references", async () => {
   const palette = JSON.parse(await readFile(PALETTE_PATH, "utf8"));
   assert.deepEqual(palette, EXPECTED_PALETTE);
 });
@@ -100,10 +99,10 @@ test("generator emits a deterministic complete 100-900 scale for every key", asy
   assert.equal(checkedIn, first);
 
   const scaleTokens = [...first.matchAll(/--color-member-([a-z]+)-(\d{3}): oklch\(([^)]+)\);/g)];
-  assert.equal(scaleTokens.length, 144);
+  assert.equal(scaleTokens.length, 90);
 
   for (const entry of EXPECTED_PALETTE) {
-    for (const [step, expectedLightness] of EXPECTED_LIGHTNESS) {
+    for (const step of REFERENCE_LIGHTNESS.keys()) {
       const token = scaleTokens.find(
         ([, key, actualStep]) => key === entry.key && Number(actualStep) === step
       );
@@ -111,7 +110,7 @@ test("generator emits a deterministic complete 100-900 scale for every key", asy
       const [l, c, h] = token[3].split(/\s+/).map(Number);
       assert.deepEqual(
         { l, c, h },
-        { l: expectedLightness, c: entry.base500.c, h: entry.base500.h },
+        { l: expectedLightness(entry.base500.l, step), c: entry.base500.c, h: entry.base500.h },
         `unexpected --color-member-${entry.key}-${step}`
       );
     }

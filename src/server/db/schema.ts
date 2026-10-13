@@ -75,7 +75,7 @@ export const members = sqliteTable(
     roleCheck: check("members_role_check", sql`${table.role} IN ('parent', 'child')`),
     colorKeyCheck: check(
       "members_color_key_check",
-      sql`${table.colorKey} IN ('blue', 'sky', 'cyan', 'teal', 'green', 'lime', 'yellow', 'amber', 'orange', 'red', 'rose', 'pink', 'fuchsia', 'purple', 'violet', 'indigo')`
+      sql`${table.colorKey} IN ('blue', 'sky', 'teal', 'green', 'lime', 'amber', 'orange', 'red', 'pink', 'violet')`
     ),
     lifecycleCheck: check(
       "members_lifecycle_check",

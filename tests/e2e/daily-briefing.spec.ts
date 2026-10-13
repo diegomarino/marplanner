@@ -937,7 +937,8 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   // mount, exactly like printing.spec.ts's `reopenPrintingPanel`, since `loadJobs` only
   // runs on mount.
   await unlockAdmin(page, ADMIN_PIN);
-  await page.getByTestId("admin-nav-member-create").click();
+  await page.getByTestId("admin-nav-members-management").click();
+  await page.getByTestId("members-add-member").click();
   await page.getByTestId("admin-nav-printing").click();
   await expect(page.getByTestId("printing-management")).toBeVisible();
   await expect(page.getByTestId(`printing-job-state-${firstJobId}`)).toHaveText(
@@ -978,7 +979,8 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   // panel switch remounts DailyBriefingManagement (AdminContent's ternary chain fully
   // unmounts the previous panel), so the member has to be reselected from the dropdown.
   await unlockAdmin(page, ADMIN_PIN);
-  await page.getByTestId("admin-nav-member-create").click();
+  await page.getByTestId("admin-nav-members-management").click();
+  await page.getByTestId("members-add-member").click();
   await page.getByTestId("admin-nav-daily-briefing-management").click();
   const managementAgain = page.getByTestId("daily-briefing-management");
   await managementAgain.getByTestId("daily-briefing-tab-preview").click();
@@ -1023,7 +1025,8 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   await waitForPrinted(page.request, secondJobId);
 
   await unlockAdmin(page, ADMIN_PIN);
-  await page.getByTestId("admin-nav-member-create").click();
+  await page.getByTestId("admin-nav-members-management").click();
+  await page.getByTestId("members-add-member").click();
   await page.getByTestId("admin-nav-printing").click();
   await expect(page.getByTestId("printing-management")).toBeVisible();
   await expect(page.getByTestId(`printing-job-state-${secondJobId}`)).toHaveText(

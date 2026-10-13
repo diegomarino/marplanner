@@ -77,7 +77,7 @@ test("daily-messages admin author→read: PUT then GET window + current (#462)",
 
   // --- 4) Admin unlock (long-press → PIN) ---
   await unlockAdmin(page, ADMIN_PIN);
-  await expect(page.getByTestId("admin-nav-member-create")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 
   // --- 5) Daily Messages tab ---
   await page.getByTestId("admin-nav-daily-messages-management").click();

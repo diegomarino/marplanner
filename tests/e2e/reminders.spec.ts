@@ -114,7 +114,7 @@ test("reminders admin author→read: apply_to_all + specific-with-matrix (US1/US
 
   // --- 5) Admin unlock (long-press → PIN) ---
   await unlockAdmin(page, ADMIN_PIN);
-  await expect(page.getByTestId("admin-nav-member-create")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 
   // --- 6) Reminders tab ---
   await page.getByTestId("admin-nav-reminders-management").click();

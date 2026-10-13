@@ -1,21 +1,17 @@
-/** Closed screen-identity vocabulary, in assignment order. */
+/** Closed screen-identity vocabulary, in assignment order. Ten colours chosen to stay apart
+ * from one another on a card or a calendar chip.
+ */
 export const MEMBER_COLOR_KEYS = [
   "blue",
   "sky",
-  "cyan",
   "teal",
   "green",
   "lime",
-  "yellow",
   "amber",
   "orange",
   "red",
-  "rose",
   "pink",
-  "fuchsia",
-  "purple",
   "violet",
-  "indigo",
 ] as const;
 
 export type MemberColorKey = (typeof MEMBER_COLOR_KEYS)[number];
@@ -28,3 +24,13 @@ export function chooseMemberColorKey(activeKeys: readonly MemberColorKey[]): Mem
     MEMBER_COLOR_KEYS[activeKeys.length % MEMBER_COLOR_KEYS.length]
   );
 }
+
+/** Names the palette once had, and the colour each became (migration 0004). */
+export const RETIRED_MEMBER_COLOR_KEYS = {
+  cyan: "teal",
+  yellow: "amber",
+  rose: "red",
+  fuchsia: "pink",
+  purple: "violet",
+  indigo: "blue",
+} as const satisfies Record<string, MemberColorKey>;

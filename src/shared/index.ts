@@ -5,7 +5,11 @@ import type { LiveCacheState, LiveClient, RegisteredDevice } from "./networkDevi
 import type { PrintJobState, DerivedPrintJobState } from "./printing.js";
 import type { MemberColorKey } from "./member-color.js";
 
-export { MEMBER_COLOR_KEYS, chooseMemberColorKey } from "./member-color.js";
+export {
+  MEMBER_COLOR_KEYS,
+  RETIRED_MEMBER_COLOR_KEYS,
+  chooseMemberColorKey,
+} from "./member-color.js";
 export type { MemberColorKey } from "./member-color.js";
 
 /** Role enum — exactly `parent` | `child`.

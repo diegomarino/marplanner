@@ -25,11 +25,13 @@ const CALENDAR_FEED_SYNC_MIGRATION_PATH = path.resolve(
   CALENDAR_FEED_SYNC_MIGRATION_FILE
 );
 const CALENDAR_EVENT_DETAILS_FILE = "0003_calendar_event_details.sql";
+const MEMBER_PALETTE_FILE = "0004_member_palette.sql";
 const CURRENT_MIGRATION_FILES = [
   BASELINE_FILE,
   CALENDAR_FEED_SYNC_MIGRATION_FILE,
   LIFECYCLE_FILE,
   CALENDAR_EVENT_DETAILS_FILE,
+  MEMBER_PALETTE_FILE,
 ];
 
 type Member = { id: string; displayName: string; lifecycle: string };
@@ -174,7 +176,11 @@ function makeMigrationsDirectory(laterMigrationSql: string): string {
     path.resolve(process.cwd(), "drizzle", CALENDAR_EVENT_DETAILS_FILE),
     path.join(directory, CALENDAR_EVENT_DETAILS_FILE)
   );
-  fs.writeFileSync(path.join(directory, "0004_recovery_journey_probe.sql"), laterMigrationSql);
+  fs.copyFileSync(
+    path.resolve(process.cwd(), "drizzle", MEMBER_PALETTE_FILE),
+    path.join(directory, MEMBER_PALETTE_FILE)
+  );
+  fs.writeFileSync(path.join(directory, "0005_recovery_journey_probe.sql"), laterMigrationSql);
   return directory;
 }
 

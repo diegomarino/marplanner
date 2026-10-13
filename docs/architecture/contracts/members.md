@@ -151,7 +151,7 @@ Fresh setup starts with clean member data created through v2 flows.
 
 - **MEMBERS-AC-08** Given a member-management route, when it is accessed outside admin protection, then profile mutation controls are unavailable.
 - **MEMBERS-AC-09** Given v2 route design, when ordinary kiosk routes are defined, then old `/members` member management is absent.
-- **MEMBERS-AC-10** Given the curated palette contains sixteen identity colours, when a member colour is assigned, then an unused active-member colour is preferred; when all sixteen are already in use, reuse remains allowed rather than rejecting the member.
+- **MEMBERS-AC-10** Given the curated palette contains ten identity colours, when a member colour is assigned, then an unused active-member colour is preferred; when all ten are already in use, reuse remains allowed rather than rejecting the member. An explicitly requested colour that another active member holds is rejected while any colour is still free; keeping one's own colour is never a conflict. Archived members hold no colour, so a restored member keeps theirs only if it is still free and otherwise takes the first free one.
 
 ## Open Decisions
 

@@ -20,7 +20,7 @@ const members: Member[] = [
   {
     id: "b",
     displayName: "Blair",
-    colorKey: "rose",
+    colorKey: "pink",
     role: Role.parent,
     lifecycle: "active",
     createdAt: 0,
@@ -149,7 +149,7 @@ describe("household-day range and projection", () => {
   it("retains assignment order and readable archived/missing references without active identity", () => {
     const item = presentAgenda([events[1]], members, "UTC", NOW)[0];
     expect(item.activeAssignees).toEqual([
-      { memberId: "b", label: "Blair", colorKey: "rose" },
+      { memberId: "b", label: "Blair", colorKey: "pink" },
       { memberId: "a", label: "Alex", colorKey: "blue" },
     ]);
     expect(item.fallbackAssigneeLabels).toEqual(["Casey", "missing"]);
@@ -404,13 +404,13 @@ describe("TodayAgenda", () => {
     expect(
       screen.getAllByRole("listitem").map((item) => item.querySelector("h4")?.textContent)
     ).toEqual(["All day", "Past", "First tie", "Second tie", "Starting now", "Later"]);
-    expect(row("First tie")).toHaveClass("border-l-4", "border-l-member-rose-500");
+    expect(row("First tie")).toHaveClass("border-l-4", "border-l-member-pink-500");
     expect(row("First tie").style.getPropertyValue("--member-event-background")).toContain(
       "repeating-linear-gradient(135deg"
     );
     expect(row("First tie")).toHaveClass("member-event-surface");
     expect(row("First tie").style.getPropertyValue("--member-event-background")).toContain(
-      "--color-member-rose-500"
+      "--color-member-pink-500"
     );
     expect(row("First tie").style.getPropertyValue("--member-event-background")).toContain(
       "--color-member-blue-500"

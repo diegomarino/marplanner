@@ -16,7 +16,6 @@ describe("AdminRoutes", () => {
   it("keeps the complete ordered fifteen-destination inventory", () => {
     expect(adminRoutes.map((route) => route.path)).toEqual([
       "/admin/calendar",
-      "/admin/members/new",
       "/admin/members",
       "/admin/day-periods",
       "/admin/routines",

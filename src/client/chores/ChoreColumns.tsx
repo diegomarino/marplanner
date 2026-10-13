@@ -54,14 +54,6 @@ const MEMBER_SCALES: Record<MemberColorKey, MemberScale> = {
     completeCard: "border-member-sky-500 bg-member-sky-300 text-member-sky-foreground",
     progress: "bg-member-sky-500",
   },
-  cyan: {
-    column: "bg-member-cyan-100 border-member-cyan-200",
-    badge: "bg-member-cyan-500 text-member-cyan-foreground",
-    period: "bg-member-cyan-200 border-member-cyan-300",
-    card: "border-member-cyan-200 bg-member-cyan-100",
-    completeCard: "border-member-cyan-500 bg-member-cyan-300 text-member-cyan-foreground",
-    progress: "bg-member-cyan-500",
-  },
   teal: {
     column: "bg-member-teal-100 border-member-teal-200",
     badge: "bg-member-teal-500 text-member-teal-foreground",
@@ -85,14 +77,6 @@ const MEMBER_SCALES: Record<MemberColorKey, MemberScale> = {
     card: "border-member-lime-200 bg-member-lime-100",
     completeCard: "border-member-lime-500 bg-member-lime-300 text-member-lime-foreground",
     progress: "bg-member-lime-500",
-  },
-  yellow: {
-    column: "bg-member-yellow-100 border-member-yellow-200",
-    badge: "bg-member-yellow-500 text-member-yellow-foreground",
-    period: "bg-member-yellow-200 border-member-yellow-300",
-    card: "border-member-yellow-200 bg-member-yellow-100",
-    completeCard: "border-member-yellow-500 bg-member-yellow-300 text-member-yellow-foreground",
-    progress: "bg-member-yellow-500",
   },
   amber: {
     column: "bg-member-amber-100 border-member-amber-200",
@@ -118,14 +102,6 @@ const MEMBER_SCALES: Record<MemberColorKey, MemberScale> = {
     completeCard: "border-member-red-500 bg-member-red-300 text-member-red-foreground",
     progress: "bg-member-red-500",
   },
-  rose: {
-    column: "bg-member-rose-100 border-member-rose-200",
-    badge: "bg-member-rose-500 text-member-rose-foreground",
-    period: "bg-member-rose-200 border-member-rose-300",
-    card: "border-member-rose-200 bg-member-rose-100",
-    completeCard: "border-member-rose-500 bg-member-rose-300 text-member-rose-foreground",
-    progress: "bg-member-rose-500",
-  },
   pink: {
     column: "bg-member-pink-100 border-member-pink-200",
     badge: "bg-member-pink-500 text-member-pink-foreground",
@@ -134,22 +110,6 @@ const MEMBER_SCALES: Record<MemberColorKey, MemberScale> = {
     completeCard: "border-member-pink-500 bg-member-pink-300 text-member-pink-foreground",
     progress: "bg-member-pink-500",
   },
-  fuchsia: {
-    column: "bg-member-fuchsia-100 border-member-fuchsia-200",
-    badge: "bg-member-fuchsia-500 text-member-fuchsia-foreground",
-    period: "bg-member-fuchsia-200 border-member-fuchsia-300",
-    card: "border-member-fuchsia-200 bg-member-fuchsia-100",
-    completeCard: "border-member-fuchsia-500 bg-member-fuchsia-300 text-member-fuchsia-foreground",
-    progress: "bg-member-fuchsia-500",
-  },
-  purple: {
-    column: "bg-member-purple-100 border-member-purple-200",
-    badge: "bg-member-purple-500 text-member-purple-foreground",
-    period: "bg-member-purple-200 border-member-purple-300",
-    card: "border-member-purple-200 bg-member-purple-100",
-    completeCard: "border-member-purple-500 bg-member-purple-300 text-member-purple-foreground",
-    progress: "bg-member-purple-500",
-  },
   violet: {
     column: "bg-member-violet-100 border-member-violet-200",
     badge: "bg-member-violet-500 text-member-violet-foreground",
@@ -157,14 +117,6 @@ const MEMBER_SCALES: Record<MemberColorKey, MemberScale> = {
     card: "border-member-violet-200 bg-member-violet-100",
     completeCard: "border-member-violet-500 bg-member-violet-300 text-member-violet-foreground",
     progress: "bg-member-violet-500",
-  },
-  indigo: {
-    column: "bg-member-indigo-100 border-member-indigo-200",
-    badge: "bg-member-indigo-500 text-member-indigo-foreground",
-    period: "bg-member-indigo-200 border-member-indigo-300",
-    card: "border-member-indigo-200 bg-member-indigo-100",
-    completeCard: "border-member-indigo-500 bg-member-indigo-300 text-member-indigo-foreground",
-    progress: "bg-member-indigo-500",
   },
 };
 

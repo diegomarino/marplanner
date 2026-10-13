@@ -24,7 +24,7 @@ export const familyRoutes = [
 // Destination identities; AdminShell owns the protected panel-to-destination mapping.
 const adminDestinations = [
   { id: "calendar", path: "/admin/calendar" },
-  { id: "member-create", path: "/admin" },
+  { id: "overview", path: "/admin" },
   { id: "members", path: "/admin/members" },
   { id: "day-periods", path: "/admin/day-periods" },
   { id: "routines", path: "/admin/routines" },

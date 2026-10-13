@@ -68,20 +68,14 @@ components:
       enum:
         - blue
         - sky
-        - cyan
         - teal
         - green
         - lime
-        - yellow
         - amber
         - orange
         - red
-        - rose
         - pink
-        - fuchsia
-        - purple
         - violet
-        - indigo
     BirthDate:
       type: object
       required:
@@ -162,8 +156,9 @@ components:
           $ref: "#/components/schemas/MemberColorKey"
           description: >-
             Optional explicit key. If omitted, choose the first unused active-member key in palette
-            order, or active-member count modulo sixteen after exhaustion. Archived members do not
-            reserve keys.
+            order, or active-member count modulo ten after exhaustion. Archived members do not
+            reserve keys. An explicit key that another active member holds is rejected (400) while
+            any key is still unused.
         role:
           type: string
           enum:
@@ -392,7 +387,9 @@ paths:
         - deviceKeyCookie: []
       description: >
         Reverses archive (FR-004). Re-restoring an already active member is a no-op success (returns
-        current state without updating updated_at).
+        current state without updating updated_at). An archived member holds no colour key: if
+        another active member took theirs meanwhile, the restored member's `colorKey` becomes the
+        first unused one.
       parameters:
         - in: path
           name: id

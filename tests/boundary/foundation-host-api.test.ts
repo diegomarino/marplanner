@@ -153,7 +153,7 @@ describe("foundation host API", () => {
     expect(isDateOnly("2026-09-29")).toBe(true);
     expect(isDateOnly("2026-9-29")).toBe(false);
     expect(chooseMemberColorKey([])).toBe("blue");
-    expect(chooseMemberColorKey(["blue", "sky"])).toBe("cyan");
+    expect(chooseMemberColorKey(["blue", "sky"])).toBe("teal");
     expect(chooseMemberColorKey(MEMBER_COLOR_KEYS)).toBe("blue");
     expect(conditionKeyForCode(0)).toBe("clear");
     expect(conditionKeyForCode(99)).toBe("thunderstormHail");

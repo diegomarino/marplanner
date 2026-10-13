@@ -1,6 +1,6 @@
 import { appUrl, appPathname } from "@/lib/base-path";
 import type { ComponentType } from "react";
-import { Lock, Monitor, type LucideIcon } from "lucide-react";
+import { Lock, Monitor, Users, type LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n";
@@ -12,7 +12,6 @@ import { DailyBriefingManagement } from "./DailyBriefingManagement";
 import { DailyMessagesManagement } from "./DailyMessagesManagement";
 import { DayPeriodsManagement } from "./DayPeriodsManagement";
 import { MealsManagement } from "./MealsManagement";
-import { MemberCreateForm } from "./MemberCreateForm";
 import { MembersManagement } from "./MembersManagement";
 import { NetworkDevicesManagement } from "./NetworkDevicesManagement";
 import { PrintingManagement } from "./PrintingManagement";
@@ -41,12 +40,6 @@ export const adminRoutes: readonly AdminRoute[] = [
     label: "admin.nav.calendar",
     testId: "admin-nav-calendar",
     Component: CalendarManagement,
-  },
-  {
-    path: "/admin/members/new",
-    label: "admin.nav.memberCreate",
-    testId: "admin-nav-member-create",
-    Component: MemberCreateForm,
   },
   {
     path: "/admin/members",
@@ -164,6 +157,7 @@ type SidebarItem = {
   path: string;
   label: AdminRoute["label"];
   Icon: LucideIcon;
+  testId?: string;
   /** Subsections, shown under the item while it or one of them is open. */
   children?: readonly { path: string; label: AdminRoute["label"] }[];
 };
@@ -177,7 +171,25 @@ export const adminSidebar: readonly SidebarSection[] = [
     id: "general",
     items: [{ path: OVERVIEW_PATH, label: "admin.nav.overview", Icon: Monitor }],
   },
+  {
+    id: "household",
+    label: "admin.sidebar.household",
+    items: [
+      {
+        path: "/admin/members",
+        label: "admin.sidebar.members",
+        Icon: Users,
+        testId: "admin-nav-members-management",
+      },
+    ],
+  },
 ];
+
+const sidebarPaths = new Set(
+  adminSidebar.flatMap((section) =>
+    section.items.flatMap((item) => [item.path, ...(item.children ?? []).map((c) => c.path)])
+  )
+);
 
 /** The trail for the admin top bar: every registered page on the way to `pathname`. */
 export function adminBreadcrumb(pathname: string): { path: string; label: AdminRoute["label"] }[] {
@@ -193,17 +205,20 @@ function SidebarLink({
   current,
   nested,
   Icon,
+  testId,
 }: {
   path: string;
   label: string;
   current: boolean;
   nested?: boolean;
   Icon?: LucideIcon;
+  testId?: string;
 }) {
   return (
     <a
       href={appUrl(path)}
       aria-current={current ? "page" : undefined}
+      data-testid={testId}
       className={cn(
         "text-control text-muted-foreground hover:bg-primary/10 hover:text-foreground flex min-h-[var(--control-height)] items-center gap-3 rounded-xl px-3 font-medium",
         "aria-[current=page]:bg-primary/10 aria-[current=page]:text-foreground aria-[current=page]:font-semibold",
@@ -248,6 +263,7 @@ function AdminSidebar({ pathname, onLock }: { pathname: string; onLock: () => vo
                     path={item.path}
                     label={t(item.label)}
                     Icon={item.Icon}
+                    testId={item.testId}
                     current={pathname === item.path}
                   />
                   {open &&
@@ -284,20 +300,22 @@ function AdminSectionLinks() {
   const t = useT();
   return (
     <>
-      {adminRoutes.map((candidate) =>
-        candidate.pluginId && candidate.contributionId ? (
-          <PluginAdminNavigation key={candidate.path} route={candidate} />
-        ) : (
-          <Button
-            key={candidate.path}
-            variant="outline"
-            data-testid={candidate.testId}
-            onClick={() => navigateAdmin(candidate.path)}
-          >
-            {t(candidate.label)}
-          </Button>
-        )
-      )}
+      {adminRoutes
+        .filter((candidate) => !sidebarPaths.has(candidate.path))
+        .map((candidate) =>
+          candidate.pluginId && candidate.contributionId ? (
+            <PluginAdminNavigation key={candidate.path} route={candidate} />
+          ) : (
+            <Button
+              key={candidate.path}
+              variant="outline"
+              data-testid={candidate.testId}
+              onClick={() => navigateAdmin(candidate.path)}
+            >
+              {t(candidate.label)}
+            </Button>
+          )
+        )}
     </>
   );
 }

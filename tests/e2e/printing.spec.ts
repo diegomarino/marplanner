@@ -138,7 +138,8 @@ async function fetchJob(
 /** Force `PrintingManagement` to unmount+remount (its own `loadJobs` only runs on mount) so its
  * admin-list DOM reflects the CURRENT server state, not a stale render from an earlier click. */
 async function reopenPrintingPanel(page: Page): Promise<void> {
-  await page.getByTestId("admin-nav-member-create").click();
+  await page.getByTestId("admin-nav-members-management").click();
+  await page.getByTestId("members-add-member").click();
   await page.getByTestId("admin-nav-printing").click();
   await expect(page.getByTestId("printing-management")).toBeVisible();
 }

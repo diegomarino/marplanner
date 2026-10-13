@@ -200,7 +200,7 @@ test("calendar_gated admin author → dry-run → emit: query + membership assig
 
   // --- 5) Admin unlock (long-press → PIN) ---
   await unlockAdmin(page, ADMIN_PIN);
-  await expect(page.getByTestId("admin-nav-member-create")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 
   // --- 6) Reminders tab ---
   await page.getByTestId("admin-nav-reminders-management").click();
