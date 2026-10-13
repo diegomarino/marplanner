@@ -49,7 +49,7 @@ test("admin date defaults use the household timezone, not the browser timezone (
   expect(reminderResponse.status()).toBe(201);
 
   await unlockAdmin(page, ADMIN_PIN);
-  await expect(page.getByTestId("admin-nav-member-create")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 
   // Freeze the browser after unlock. The assertion only proves that this device
   // sees the previous day; expected business-date values below are fixed from

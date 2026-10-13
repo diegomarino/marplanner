@@ -114,15 +114,12 @@ describe("Admin shell navigation", () => {
       within(screen.getByTestId("admin-sidebar")).getByRole("link", { name: "Overview" })
     ).toHaveAttribute("aria-current", "page");
     expect(await screen.findByTestId("admin-nav-members-management")).toBeInTheDocument();
-    expect(screen.getByTestId("admin-nav-member-create")).toBeInTheDocument();
+    expect(screen.getByTestId("admin-nav-calendar")).toBeInTheDocument();
   });
 
   it("builds the breadcrumb trail from every registered page on the way", () => {
     expect(adminBreadcrumb("/admin")).toEqual([]);
     expect(adminBreadcrumb("/admin/members").map((step) => step.path)).toEqual(["/admin/members"]);
-    expect(adminBreadcrumb("/admin/members/new").map((step) => step.path)).toEqual([
-      "/admin/members",
-      "/admin/members/new",
-    ]);
+    expect(adminBreadcrumb("/admin/not-a-page")).toEqual([]);
   });
 });

@@ -1,4 +1,4 @@
-/** MembersManagement + MemberCreateForm spec (FR-009).
+/** MembersManagement spec (FR-009).
  * This is the executable evidence for the per-change DoD (the component acceptance criteria): it CALLS
  * the frozen density assertion over each surface's rendered control set with kiosk density
  * active (not merely imports it), records a deliberate negative proving the assertion can fail
@@ -16,7 +16,6 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { MembersManagement } from "@/admin/MembersManagement";
-import { MemberCreateForm } from "@/admin/MemberCreateForm";
 import { HouseholdSettingsProvider } from "@/lib/householdSettings";
 import { LanguageProvider } from "@/i18n";
 import { Role } from "../../src/shared";
@@ -67,7 +66,7 @@ const MEMBER_JUNE = {
 const MEMBER_DECEMBER = {
   id: "m3",
   displayName: "Kai",
-  colorKey: "cyan" as const,
+  colorKey: "teal" as const,
   role: Role.child,
   lifecycle: "active" as const,
   createdAt: 0,
@@ -80,7 +79,7 @@ const MEMBER_DECEMBER = {
 const MEMBER_ARCHIVED = {
   id: "m4",
   displayName: "Robin",
-  colorKey: "teal" as const,
+  colorKey: "green" as const,
   role: Role.child,
   lifecycle: "archived" as const,
   createdAt: 0,
@@ -168,16 +167,6 @@ function renderManagement() {
   );
 }
 
-function renderCreateForm() {
-  return render(
-    <HouseholdSettingsProvider>
-      <LanguageProvider>
-        <MemberCreateForm />
-      </LanguageProvider>
-    </HouseholdSettingsProvider>
-  );
-}
-
 afterEach(() => {
   vi.unstubAllGlobals();
   cleanup();
@@ -192,7 +181,8 @@ describe("MembersManagement — v1-like member workspace", () => {
     const grid = await screen.findByTestId("members-card-grid");
     const cards = within(grid).getAllByTestId(/^member-card-/);
     expect(cards).toHaveLength(3);
-    expect(within(grid).getByTestId("member-card-m1")).toHaveStyle({
+    // The full name is the identity, drawn on the member's own colour.
+    expect(within(within(grid).getByTestId("member-card-m1")).getByText("Ari")).toHaveStyle({
       "--member-color": "var(--color-member-blue-500)",
     });
 
@@ -202,12 +192,12 @@ describe("MembersManagement — v1-like member workspace", () => {
     fireEvent.keyDown(createDialog, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
 
-    fireEvent.click(within(grid).getAllByRole("button", { name: "Edit" })[0]);
+    fireEvent.click(within(grid).getAllByTestId(/^member-card-/)[0]);
     const editDialog = await screen.findByRole("dialog", { name: "Edit Ari" });
     expect(within(editDialog).getByLabelText("Display Name")).toHaveValue("Ari");
     const palette = within(editDialog).getByTestId("member-edit-color-palette");
-    expect(palette).toHaveClass("sm:grid-cols-8");
-    expect(within(palette).getAllByRole("radio")).toHaveLength(16);
+    expect(palette).toHaveClass("grid-cols-5");
+    expect(within(palette).getAllByRole("radio")).toHaveLength(10);
     const radios = within(palette).getAllByRole("radio");
     expect(radios.filter((radio) => radio.tabIndex === 0)).toHaveLength(1);
     radios[0].focus();
@@ -217,9 +207,15 @@ describe("MembersManagement — v1-like member workspace", () => {
     fireEvent.keyDown(radios.at(-1)!, { key: "Home" });
     expect(radios[0]).toHaveFocus();
     expect(radios[0]).toHaveAttribute("aria-checked", "true");
+    // Sky and Teal belong to the other two active members: they cannot be picked, and the
+    // arrow keys step over them to Green.
+    expect(radios[1]).toBeDisabled();
+    expect(radios[1]).toHaveAccessibleName(expect.stringMatching(/ — used by another member$/));
+    expect(radios[2]).toBeDisabled();
     fireEvent.keyDown(radios[0], { key: "ArrowDown" });
-    expect(radios[1]).toHaveFocus();
-    fireEvent.keyDown(radios[1], { key: "ArrowUp" });
+    expect(radios[3]).toHaveFocus();
+    expect(radios[3]).toHaveAttribute("aria-checked", "true");
+    fireEvent.keyDown(radios[3], { key: "ArrowUp" });
     expect(radios[0]).toHaveFocus();
     fireEvent.keyDown(radios[0], { key: "End" });
     expect(radios.at(-1)).toHaveFocus();
@@ -232,6 +228,74 @@ describe("MembersManagement — v1-like member workspace", () => {
       "aria-checked",
       "true"
     );
+  });
+
+  it("creates a member from the same form, starting empty, and lets the server pick a colour", async () => {
+    const mockFetch = mockBackend({
+      create: () => json({ ...MEMBER_JANUARY, id: "new", colorKey: "teal" }, 201),
+    });
+    renderManagement();
+    await screen.findByTestId("members-card-grid");
+
+    fireEvent.click(screen.getByTestId("members-add-member"));
+    const dialog = within(await screen.findByRole("dialog", { name: "Create Member" }));
+    expect(dialog.getByLabelText("Display Name")).toHaveValue("");
+    expect(
+      dialog.getAllByRole("radio").filter((r) => r.getAttribute("aria-checked") === "true")
+    ).toHaveLength(0);
+    // No archive action on a member that does not exist yet.
+    expect(dialog.queryByTestId("member-archive")).not.toBeInTheDocument();
+    expect(dialog.getByTestId("member-save")).toBeDisabled();
+
+    fireEvent.change(dialog.getByLabelText("Display Name"), { target: { value: " Sam " } });
+    await selectComboboxOption("Role", "Child");
+    fireEvent.click(dialog.getByRole("button", { name: "Create Member" }));
+
+    await waitFor(() => {
+      const postCall = (mockFetch.mock.calls as FetchCall[]).find(
+        ([reqInput, init]) => String(reqInput) === "/api/members" && init?.method === "POST"
+      );
+      expect(parseJsonBody(postCall)).toEqual({ displayName: "Sam", role: "child" });
+    });
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  it("announces a failed create inside the form and keeps what was typed", async () => {
+    mockBackend({ create: () => json({ error: "boom" }, 500) });
+    renderManagement();
+    await screen.findByTestId("members-card-grid");
+
+    fireEvent.click(screen.getByTestId("members-add-member"));
+    const dialog = within(await screen.findByRole("dialog", { name: "Create Member" }));
+    fireEvent.change(dialog.getByLabelText("Display Name"), { target: { value: "Sam" } });
+    await selectComboboxOption("Role", "Child");
+    fireEvent.click(dialog.getByRole("button", { name: "Create Member" }));
+
+    expect(await dialog.findByRole("alert")).toHaveTextContent("boom");
+    expect(dialog.getByLabelText("Display Name")).toHaveValue("Sam");
+  });
+
+  it("opens an archived member read-only, with restoring as the only action", async () => {
+    const mockFetch = mockBackend({ archived: () => json([MEMBER_ARCHIVED]) });
+    renderManagement();
+    await screen.findByText("Ari");
+
+    fireEvent.click(screen.getByTestId("members-tab-archived"));
+    fireEvent.click(await screen.findByText("Robin"));
+    const dialog = within(await screen.findByRole("dialog", { name: "Robin" }));
+    expect(dialog.getByLabelText("Display Name")).toBeDisabled();
+    dialog.getAllByRole("radio").forEach((radio) => expect(radio).toBeDisabled());
+    expect(dialog.queryByTestId("member-save")).not.toBeInTheDocument();
+    expect(dialog.queryByTestId("member-archive")).not.toBeInTheDocument();
+
+    fireEvent.click(dialog.getByTestId("member-restore"));
+    const restores = () =>
+      (mockFetch.mock.calls as FetchCall[]).filter(([reqInput]) =>
+        String(reqInput).endsWith("/restore")
+      );
+    expect(restores()).toHaveLength(0);
+    fireEvent.click(await screen.findByTestId("member-lifecycle-confirm"));
+    await waitFor(() => expect(restores()).toHaveLength(1));
   });
 });
 
@@ -250,7 +314,7 @@ describe("MembersManagement — kiosk density (SC-001, SC-002)", () => {
       // Opening an edit row adds a display-name input, a role select, two birthdate selects,
       // a year input, and clear/save/cancel buttons — every one of them must ALSO meet the
       // kiosk minimum, not just the tab/refresh/list-action controls already rendered.
-      fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0]);
+      fireEvent.click(screen.getAllByTestId(/^member-card-/)[0]);
       await screen.findByRole("button", { name: "Save" });
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
@@ -265,7 +329,7 @@ describe("MembersManagement — kiosk density (SC-001, SC-002)", () => {
 
     try {
       const { container } = renderManagement();
-      const refreshButton = await screen.findByRole("button", { name: "Refresh Members" });
+      const refreshButton = await screen.findByRole("button", { name: "New Member" });
 
       // A real control from this surface, not a synthetic fixture.
       refreshButton.style.height = "10px";
@@ -306,25 +370,9 @@ describe("MembersManagement — kiosk density (SC-001, SC-002)", () => {
       await screen.findByText("Ari");
 
       fireEvent.click(screen.getByRole("button", { name: "Archived" }));
-      await screen.findByText("Robin");
+      fireEvent.click(await screen.findByText("Robin"));
       expect(await screen.findByRole("button", { name: "Restore" })).toBeInTheDocument();
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
-    } finally {
-      uninject();
-    }
-  });
-});
-
-describe("MemberCreateForm — kiosk density (SC-001, SC-002)", () => {
-  it("meets kiosk density across its rendered control set", async () => {
-    mockBackend();
-    const uninject = await injectDensityStyles();
-    document.documentElement.setAttribute("data-density", "kiosk");
-
-    try {
-      const { container } = renderCreateForm();
-      await screen.findByLabelText("Display Name");
-      expect(() => assertKioskDensityCompliant(container)).not.toThrow();
     } finally {
       uninject();
     }
@@ -338,7 +386,7 @@ describe("MemberCreateForm — kiosk density (SC-001, SC-002)", () => {
 //
 // Select popovers render their options only when opened. These tests open each popover, pin its
 // option count, and assert that every rendered option meets kiosk density.
-describe("MembersManagement / MemberCreateForm — open Select popover items meet kiosk density (#790, fixed in select.tsx)", () => {
+describe("MembersManagement — open Select popover items meet kiosk density (#790, fixed in select.tsx)", () => {
   it("MembersManagement: the edit row's Month/Day/Role popovers are density-compliant when open", async () => {
     mockBackend();
     const uninject = await injectDensityStyles();
@@ -347,7 +395,7 @@ describe("MembersManagement / MemberCreateForm — open Select popover items mee
     try {
       renderManagement();
       await screen.findByText("Ari");
-      fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0]);
+      fireEvent.click(screen.getAllByTestId(/^member-card-/)[0]);
       await screen.findByRole("button", { name: "Save" });
 
       // `toBeInstanceOf` alone does not pin how many controls are unresolvable. A new popover-only
@@ -385,51 +433,9 @@ describe("MembersManagement / MemberCreateForm — open Select popover items mee
       uninject();
     }
   });
-
-  it(
-    "MemberCreateForm: the Month/Day/Role popovers are density-compliant when open",
-    { timeout: 15_000 },
-    async () => {
-      mockBackend();
-      const uninject = await injectDensityStyles();
-      document.documentElement.setAttribute("data-density", "kiosk");
-
-      try {
-        renderCreateForm();
-        await screen.findByLabelText("Display Name");
-
-        const expected: Array<[string, number]> = [
-          ["Month", 12],
-          ["Day", 31],
-          ["Role", 2],
-        ];
-        for (const [triggerName, expectedCount] of expected) {
-          fireEvent.click(screen.getByRole("combobox", { name: triggerName }));
-          await screen.findAllByRole("option");
-
-          // The option COUNT is still asserted, and it is what keeps this non-vacuous: compliance
-          // over an EMPTY popover would pass trivially, so the population must be pinned
-          // independently of the density check. The expected sizes are checked separately below.
-          expect(
-            screen.getAllByRole("option"),
-            `expected exactly ${triggerName}'s own ${expectedCount} popover items to render`
-          ).toHaveLength(expectedCount);
-          expect(
-            () => assertKioskDensityCompliant(document.body),
-            `${triggerName}'s popover items must meet kiosk density now that #790 is fixed`
-          ).not.toThrow();
-
-          fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
-          await waitFor(() => expect(screen.queryAllByRole("option")).toHaveLength(0));
-        }
-      } finally {
-        uninject();
-      }
-    }
-  );
 });
 
-describe("MembersManagement / MemberCreateForm — adopt the AdminPanel L2 frame (F2, independent review on)", () => {
+describe("MembersManagement — adopts the AdminPanel L2 frame (F2, independent review on)", () => {
   it("MembersManagement wraps the surface in a landmark region labelled by its own title", async () => {
     mockBackend();
     renderManagement();
@@ -444,36 +450,17 @@ describe("MembersManagement / MemberCreateForm — adopt the AdminPanel L2 frame
     // substitute would have to reproduce the component to satisfy (per-change DoD).
     expect(screen.getByRole("heading", { name: "Members Management" })).toBeInTheDocument();
   });
-
-  it("MemberCreateForm wraps the surface in a landmark region labelled by its own title", async () => {
-    mockBackend();
-    renderCreateForm();
-
-    expect(await screen.findByRole("region", { name: "Create Member" })).toBeInTheDocument();
-    // Region alone is bypassable: `AdminPanel` names its region via `aria-labelledby` pointing
-    // at its own heading, so a hand-rolled `<section aria-label="Create Member">` with NO
-    // heading reproduces the landmark and its name and passes. The heading is the half a
-    // substitute would have to reproduce the component to satisfy (per-change DoD).
-    expect(screen.getByRole("heading", { name: "Create Member" })).toBeInTheDocument();
-  });
 });
 
 // Check that the birthdate group label is visible; an accessible-name query alone could pass
 // even when the visible label text is absent.
-describe("MembersManagement / MemberCreateForm — the birthdate group label is VISIBLE, not just accessible (F5 regression guard)", () => {
+describe("MembersManagement — the birthdate group label is VISIBLE, not just accessible (F5 regression guard)", () => {
   it("MembersManagement's edit row renders the visible 'Birth Date (optional)' label", async () => {
     mockBackend();
     renderManagement();
 
-    fireEvent.click((await screen.findAllByRole("button", { name: "Edit" }))[0]);
+    fireEvent.click((await screen.findAllByTestId(/^member-card-/))[0]);
     await screen.findByRole("button", { name: "Save" });
-
-    expect(await screen.findByText("Birth Date (optional)")).toBeInTheDocument();
-  });
-
-  it("MemberCreateForm renders the visible 'Birth Date (optional)' label", async () => {
-    mockBackend();
-    renderCreateForm();
 
     expect(await screen.findByText("Birth Date (optional)")).toBeInTheDocument();
   });
@@ -497,11 +484,12 @@ describe("MembersManagement — error states are announced (SC-011)", () => {
     renderManagement();
 
     await screen.findByText("Ari");
-    const archiveButton = screen.getAllByRole("button", { name: "Archive" })[0];
-    fireEvent.click(archiveButton);
+    fireEvent.click(screen.getAllByTestId(/^member-card-/)[0]);
+    fireEvent.click(await screen.findByTestId("member-archive"));
+    fireEvent.click(await screen.findByTestId("member-lifecycle-confirm"));
 
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Failed to load members.");
+    expect(alert).toHaveTextContent("Failed to update the member.");
     expect(alert).toHaveAttribute("aria-live", "assertive");
   });
 
@@ -509,7 +497,7 @@ describe("MembersManagement — error states are announced (SC-011)", () => {
     mockBackend();
     renderManagement();
 
-    fireEvent.click((await screen.findAllByRole("button", { name: "Edit" }))[0]);
+    fireEvent.click((await screen.findAllByTestId(/^member-card-/))[0]);
     // The edit row starts with MEMBER_JANUARY's month+day+year all set (FR-009 preserves the
     // pre-migration prefill behaviour). Clearing resets all three; re-setting ONLY the year
     // reproduces the "partial birthdate" case (year set, month/day absent) via the surface's
@@ -522,44 +510,6 @@ describe("MembersManagement — error states are announced (SC-011)", () => {
 
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("Enter both a month and a day, or leave the birth date empty.");
-    expect(alert).toHaveAttribute("aria-live", "assertive");
-  });
-});
-
-describe("MemberCreateForm — error states are announced (SC-011)", () => {
-  it("announces a partial-birthdate validation error through ErrorNotice's live region", async () => {
-    mockBackend();
-    renderCreateForm();
-
-    fireEvent.change(screen.getByLabelText("Display Name"), { target: { value: "Sam" } });
-    fireEvent.click(screen.getByRole("combobox", { name: "Role" }));
-    fireEvent.click(await screen.findByRole("option", { name: "Child" }));
-
-    fireEvent.change(screen.getByPlaceholderText("Year"), { target: { value: "2010" } });
-    fireEvent.click(screen.getByRole("button", { name: "Create Member" }));
-
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Enter both a month and a day, or leave the birth date empty.");
-    expect(alert).toHaveAttribute("aria-live", "assertive");
-  });
-
-  it("announces a failed submit (500) through ErrorNotice's live region", async () => {
-    mockBackend({ create: () => json(null, 500) });
-    renderCreateForm();
-
-    fireEvent.change(screen.getByLabelText("Display Name"), { target: { value: "Sam" } });
-    fireEvent.click(screen.getByRole("combobox", { name: "Role" }));
-    fireEvent.click(await screen.findByRole("option", { name: "Child" }));
-
-    fireEvent.click(screen.getByRole("button", { name: "Create Member" }));
-
-    const alert = await screen.findByRole("alert");
-    // Pre-existing (unchanged by this migration) behaviour: a non-401 failure that isn't a
-    // parseable `ApiError` body throws a plain `Error`, and the `.catch` below surfaces ITS
-    // `message` (`apiErr?.message ||...`) rather than falling through to
-    // `members.create.errorGeneric` — that fallback is reached only when the thrown value has
-    // no usable `message`/`error` at all.
-    expect(alert).toHaveTextContent("POST /api/members: 500");
     expect(alert).toHaveAttribute("aria-live", "assertive");
   });
 });
@@ -596,7 +546,15 @@ describe("MembersManagement — archive/restore round-trip (unchanged behaviour,
     renderManagement();
 
     await screen.findByText("Ari");
-    fireEvent.click(screen.getAllByRole("button", { name: "Archive" })[0]);
+    fireEvent.click(screen.getAllByTestId(/^member-card-/)[0]);
+    fireEvent.click(await screen.findByTestId("member-archive"));
+    // Opening the form and pressing Archive is not enough: nothing is sent until confirmed.
+    expect(
+      (mockFetch.mock.calls as FetchCall[]).filter(([reqInput]) =>
+        String(reqInput).endsWith("/archive")
+      )
+    ).toHaveLength(0);
+    fireEvent.click(await screen.findByTestId("member-lifecycle-confirm"));
 
     await waitFor(() => {
       expect(
@@ -631,7 +589,7 @@ describe("MembersManagement — the edit row's Day select submits the VALUE matc
     const mockFetch = mockBackend();
     renderManagement();
 
-    fireEvent.click((await screen.findAllByRole("button", { name: "Edit" }))[0]);
+    fireEvent.click((await screen.findAllByTestId(/^member-card-/))[0]);
     await screen.findByRole("button", { name: "Save" });
 
     await selectComboboxOption("Day", dayLabel as string);
@@ -659,7 +617,7 @@ describe("MembersManagement — the edit row's Month select submits the VALUE ma
       const mockFetch = mockBackend();
       renderManagement();
 
-      fireEvent.click((await screen.findAllByRole("button", { name: "Edit" }))[0]);
+      fireEvent.click((await screen.findAllByTestId(/^member-card-/))[0]);
       await screen.findByRole("button", { name: "Save" });
 
       await selectComboboxOption("Month", monthLabel as string);
@@ -676,172 +634,62 @@ describe("MembersManagement — the edit row's Month select submits the VALUE ma
   );
 });
 
-describe("MemberCreateForm — the Month select submits the VALUE matching the selected LABEL (F3)", () => {
-  it.each([
-    ["January", 1],
-    ["June", 6],
-    ["December", 12],
-  ])(
-    "selecting month label %s submits birthDate.month === %i",
-    async (monthLabel, expectedMonth) => {
-      cleanup();
-      const mockFetch = mockBackend();
-      renderCreateForm();
-
-      fireEvent.change(screen.getByLabelText("Display Name"), { target: { value: "Sam" } });
-      await selectComboboxOption("Role", "Child");
-      await selectComboboxOption("Month", monthLabel as string);
-      await selectComboboxOption("Day", "15");
-
-      fireEvent.click(screen.getByRole("button", { name: "Create Member" }));
-
-      await waitFor(() => {
-        const postCall = (mockFetch.mock.calls as FetchCall[]).find(
-          ([reqInput, init]) => String(reqInput) === "/api/members" && init?.method === "POST"
-        );
-        expect(postCall).toBeDefined();
-        expect(parseJsonBody(postCall).birthDate).toMatchObject({ month: expectedMonth, day: 15 });
-      });
-    }
-  );
-});
-
-describe("MemberCreateForm — the Day select submits the VALUE matching the selected LABEL (F3)", () => {
-  it.each([
-    ["1", 1],
-    ["15", 15],
-    ["31", 31],
-  ])("selecting day label %s submits birthDate.day === %i", async (dayLabel, expectedDay) => {
-    cleanup();
-    const mockFetch = mockBackend();
-    renderCreateForm();
-
-    fireEvent.change(screen.getByLabelText("Display Name"), { target: { value: "Sam" } });
-    await selectComboboxOption("Role", "Child");
-    await selectComboboxOption("Month", "June");
-    await selectComboboxOption("Day", dayLabel as string);
-
-    fireEvent.click(screen.getByRole("button", { name: "Create Member" }));
-
-    await waitFor(() => {
-      const postCall = (mockFetch.mock.calls as FetchCall[]).find(
-        ([reqInput, init]) => String(reqInput) === "/api/members" && init?.method === "POST"
-      );
-      expect(postCall).toBeDefined();
-      expect(parseJsonBody(postCall).birthDate).toMatchObject({ month: 6, day: expectedDay });
-    });
-  });
-});
-
-describe("MemberCreateForm and MembersManagement — curated member colours", () => {
-  it("creates with the server's unused-first assignment by default, while offering exactly sixteen named keyboard choices", async () => {
-    const mockFetch = mockBackend({
-      create: () => json({ ...MEMBER_JANUARY, id: "new", colorKey: "blue" }, 201),
-    });
-    renderCreateForm();
-
-    fireEvent.change(screen.getByLabelText("Display Name"), { target: { value: "Sam" } });
-    await selectComboboxOption("Role", "Child");
-
-    const colorTrigger = screen.getByRole("combobox", { name: "Identity colour" });
-    const automaticOption = "Server assignment (first unused)";
-    const curatedColorOptions = [
-      "Blue",
-      "Sky blue",
-      "Cyan",
-      "Teal",
-      "Green",
-      "Lime",
-      "Yellow",
-      "Amber",
-      "Orange",
-      "Red",
-      "Rose",
-      "Pink",
-      "Fuchsia",
-      "Purple",
-      "Violet",
-      "Indigo",
-    ];
-    expect(colorTrigger).toHaveTextContent(automaticOption);
-    fireEvent.keyDown(colorTrigger, { key: "ArrowDown" });
-    const options = await screen.findAllByRole("option");
-    expect(options.map((option) => option.textContent)).toEqual([
-      automaticOption,
-      ...curatedColorOptions,
-    ]);
-    expect(curatedColorOptions).toHaveLength(16);
-    expect(screen.queryByRole("textbox", { name: "Identity colour" })).not.toBeInTheDocument();
-    expect(document.querySelector('input[type="color"]')).toBeNull();
-    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
-
-    fireEvent.click(screen.getByRole("button", { name: "Create Member" }));
-    await waitFor(() => {
-      const postCall = (mockFetch.mock.calls as FetchCall[]).find(
-        ([reqInput, init]) => String(reqInput) === "/api/members" && init?.method === "POST"
-      );
-      expect(parseJsonBody(postCall)).not.toHaveProperty("colorKey");
-    });
-  });
-
+describe("MembersManagement — curated member colours", () => {
   it("sends an explicitly selected curated colour when creating and editing, without a free-form colour input", async () => {
     const mockFetch = mockBackend({
-      create: () => json({ ...MEMBER_JANUARY, id: "new", colorKey: "indigo" }, 201),
-      patch: () => json({ ...MEMBER_JANUARY, colorKey: "indigo" }),
+      create: () => json({ ...MEMBER_JANUARY, id: "new", colorKey: "violet" }, 201),
+      patch: () => json({ ...MEMBER_JANUARY, colorKey: "violet" }),
     });
-    renderCreateForm();
+    renderManagement();
+    await screen.findByTestId("members-card-grid");
 
-    fireEvent.change(screen.getByLabelText("Display Name"), { target: { value: "Sam" } });
+    fireEvent.click(screen.getByTestId("members-add-member"));
+    const createDialog = within(await screen.findByRole("dialog", { name: "Create Member" }));
+    fireEvent.change(createDialog.getByLabelText("Display Name"), { target: { value: "Sam" } });
     await selectComboboxOption("Role", "Child");
-    await selectComboboxOption("Identity colour", "Indigo");
-    fireEvent.click(screen.getByRole("button", { name: "Create Member" }));
+    fireEvent.click(createDialog.getByRole("radio", { name: "Violet" }));
+    fireEvent.click(createDialog.getByRole("button", { name: "Create Member" }));
 
     await waitFor(() => {
       const postCall = (mockFetch.mock.calls as FetchCall[]).find(
         ([reqInput, init]) => String(reqInput) === "/api/members" && init?.method === "POST"
       );
-      expect(parseJsonBody(postCall)).toMatchObject({ colorKey: "indigo" });
+      expect(parseJsonBody(postCall)).toMatchObject({ colorKey: "violet" });
     });
     expect(document.querySelector('input[type="color"]')).toBeNull();
 
     cleanup();
     renderManagement();
-    fireEvent.click((await screen.findAllByRole("button", { name: "Edit" }))[0]);
+    fireEvent.click((await screen.findAllByTestId(/^member-card-/))[0]);
     expect(screen.getByRole("radio", { name: "Blue" })).toHaveAttribute("aria-checked", "true");
-    fireEvent.click(screen.getByRole("radio", { name: "Indigo" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Violet" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => {
       const patchCall = (mockFetch.mock.calls as FetchCall[]).find(
         ([reqInput, init]) => String(reqInput) === "/api/members/m1" && init?.method === "PATCH"
       );
-      expect(parseJsonBody(patchCall)).toMatchObject({ colorKey: "indigo" });
+      expect(parseJsonBody(patchCall)).toMatchObject({ colorKey: "violet" });
     });
   });
 
-  it("keeps a curated choice controllable for a seventeenth member after every colour is in use", async () => {
+  it("keeps a curated choice controllable for an eleventh member after every colour is in use", async () => {
     const palette = [
       "blue",
       "sky",
-      "cyan",
       "teal",
       "green",
       "lime",
-      "yellow",
       "amber",
       "orange",
       "red",
-      "rose",
       "pink",
-      "fuchsia",
-      "purple",
       "violet",
-      "indigo",
     ];
-    const seventeenth = {
+    const eleventh = {
       ...MEMBER_JANUARY,
-      id: "m17",
-      displayName: "Seventeen",
+      id: "m11",
+      displayName: "Eleven",
       colorKey: "blue" as const,
     };
     const mockFetch = mockBackend({
@@ -853,20 +701,20 @@ describe("MemberCreateForm and MembersManagement — curated member colours", ()
             displayName: `Member ${index + 1}`,
             colorKey,
           })),
-          seventeenth,
+          eleventh,
         ]),
-      patch: () => json({ ...seventeenth, colorKey: "blue" }),
+      patch: () => json({ ...eleventh, colorKey: "blue" }),
     });
     renderManagement();
 
-    fireEvent.click((await screen.findAllByRole("button", { name: "Edit" }))[16]);
+    fireEvent.click((await screen.findAllByTestId(/^member-card-/))[10]);
     expect(screen.getByRole("radio", { name: "Blue" })).toHaveAttribute("aria-checked", "true");
     fireEvent.click(screen.getByRole("radio", { name: "Blue" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => {
       const patchCall = (mockFetch.mock.calls as FetchCall[]).find(
-        ([reqInput, init]) => String(reqInput) === "/api/members/m17" && init?.method === "PATCH"
+        ([reqInput, init]) => String(reqInput) === "/api/members/m11" && init?.method === "PATCH"
       );
       expect(parseJsonBody(patchCall)).toMatchObject({ colorKey: "blue" });
     });

@@ -293,7 +293,7 @@ describe("closed route resolver", () => {
   });
 
   it.each([
-    ["/admin", "member-create"],
+    ["/admin", "overview"],
     ["/admin/members", "members"],
     ["/admin/day-periods", "day-periods"],
     ["/admin/routines", "routines"],

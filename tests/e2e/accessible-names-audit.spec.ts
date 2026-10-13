@@ -109,7 +109,7 @@ async function reachAdmin(page: Page): Promise<void> {
 
   await unlockAdmin(page, ADMIN_PIN);
 
-  await expect(page.getByTestId("admin-nav-member-create")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 }
 
 // FIXED by (token-dialect migration of MembersManagement.tsx/

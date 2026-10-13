@@ -83,7 +83,7 @@ describe("AdminGate — local development PIN bypass", () => {
     vi.stubEnv("VITE_DEV_BYPASS_ADMIN_PIN", "1");
     renderSurface();
 
-    expect(await screen.findByTestId("admin-nav-member-create")).toBeInTheDocument();
+    expect(await screen.findByTestId("admin-nav-calendar")).toBeInTheDocument();
     expect(screen.queryByTestId("admin-pin-keypad")).not.toBeInTheDocument();
     expect(
       mockFetch.mock.calls.some(([input]) => String(input).includes("/api/auth/verify-pin"))
@@ -114,9 +114,9 @@ describe("AdminGate — kiosk density across reachable states", () => {
       }
       enterPin(CORRECT_PIN);
       fireEvent.click(screen.getByTestId("admin-pin-unlock"));
-      await screen.findByTestId("admin-nav-member-create");
-      // Overview: sidebar link + Lock, sixteen section buttons, Check now, Open telemetry.
-      expect(countInteractiveControls(document.body)).toBe(20);
+      await screen.findByTestId("admin-nav-calendar");
+      // Overview: two sidebar links + Lock, fourteen section buttons, Check now, Open telemetry.
+      expect(countInteractiveControls(document.body)).toBe(19);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
       fireEvent.click(screen.getByTestId("admin-lock-button"));
@@ -202,7 +202,7 @@ describe("AdminGate — panel re-lock", () => {
 
     fireEvent.click(screen.getByTestId("admin-lock-button"));
     expect(screen.getByTestId("admin-pin-keypad")).toBeInTheDocument();
-    expect(screen.queryByTestId("admin-nav-member-create")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("admin-nav-calendar")).not.toBeInTheDocument();
   });
 
   it("auto-locks after five minutes of admin inactivity", async () => {
@@ -224,11 +224,11 @@ describe("AdminGate — panel re-lock", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(5 * 60 * 1000 - 1_000);
     });
-    fireEvent.keyDown(screen.getByTestId("admin-nav-member-create"), { key: "Tab" });
+    fireEvent.keyDown(screen.getByTestId("admin-nav-calendar"), { key: "Tab" });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2_000);
     });
-    expect(screen.getByTestId("admin-nav-member-create")).toBeInTheDocument();
+    expect(screen.getByTestId("admin-nav-calendar")).toBeInTheDocument();
   });
 
   it("activity outside the admin subtree does not reset the timer", async () => {
@@ -260,7 +260,7 @@ describe("AdminGate — panel re-lock", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2_000);
     });
-    expect(screen.getByTestId("admin-nav-member-create")).toBeInTheDocument();
+    expect(screen.getByTestId("admin-nav-calendar")).toBeInTheDocument();
   });
 
   it("capture-phase activity survives a descendant stopping propagation", async () => {
@@ -274,11 +274,11 @@ describe("AdminGate — panel re-lock", () => {
       await act(async () => {
         await vi.advanceTimersByTimeAsync(5 * 60 * 1000 - 1_000);
       });
-      fireEvent.keyDown(screen.getByTestId("admin-nav-member-create"), { key: "Tab" });
+      fireEvent.keyDown(screen.getByTestId("admin-nav-calendar"), { key: "Tab" });
       await act(async () => {
         await vi.advanceTimersByTimeAsync(2_000);
       });
-      expect(screen.getByTestId("admin-nav-member-create")).toBeInTheDocument();
+      expect(screen.getByTestId("admin-nav-calendar")).toBeInTheDocument();
     } finally {
       document.body.removeEventListener("keydown", stopPropagation);
     }

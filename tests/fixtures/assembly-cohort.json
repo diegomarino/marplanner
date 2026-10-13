@@ -762,7 +762,7 @@
             "invalid ports, early API failure, readiness timeout, and occupied listeners fail cleanly"
           ],
           "tools/member-colors.test.mjs": [
-            "palette source is exactly the approved sixteen base-500 OKLCH references",
+            "palette source is exactly the approved ten base-500 OKLCH references",
             "generator emits a deterministic complete 100-900 scale for every key",
             "generated base shades match the reviewed foreground outcome for every key",
             "globals.css is the single generated-stylesheet import site",
@@ -1798,8 +1798,10 @@
             "isBirthdayToday proves purity: February 29 (leap-agnostic), proves no internal clock"
           ],
           "tests/boundary/member-color.test.ts": [
-            "member colour public boundary assigns all sixteen unused keys in order, then cycles by active count",
-            "member colour public boundary accepts every explicit curated key, including reuse before exhaustion",
+            "member colour public boundary assigns all ten unused keys in order, then cycles by active count",
+            "member colour public boundary accepts every explicit curated key once, and a repeat only after all are held",
+            "member colour public boundary refuses an explicit colour another active member holds while a free one remains",
+            "member colour public boundary frees an archived member's colour for others to take",
             "member colour public boundary rejects invalid create and patch key \"#ff0000\" without writing",
             "member colour public boundary rejects invalid create and patch key \"oklch(50% 0.2 40)\" without writing",
             "member colour public boundary rejects invalid create and patch key \"BLUE\" without writing",
@@ -1807,8 +1809,15 @@
             "member colour public boundary rejects invalid create and patch key \" blue \" without writing",
             "member colour public boundary rejects invalid create and patch key null without writing",
             "member colour public boundary rejects invalid create and patch key 5 without writing",
-            "member colour public boundary preserves colour on archive, restore, no-ops and unrelated edits; archived keys are reusable",
+            "member colour public boundary preserves colour on archive, no-ops and unrelated edits; a restore keeps it only while it is free",
             "member colour public boundary keeps database keys required and closed while supporting omitted raw-SQL inserts"
+          ],
+          "tests/boundary/member-palette-migration.test.ts": [
+            "member palette migration moves every retired colour to its survivor and leaves current colours alone",
+            "member palette migration gives the first free colour when another active member already has the survivor",
+            "member palette migration does not hand out a colour that a retired colour is about to become",
+            "member palette migration moves an archived member straight to the survivor, since archived members hold no colour",
+            "member palette migration leaves only current colours behind"
           ],
           "tests/boundary/member-create.test.ts": [
             "member-create (red-by-design, + turn green) role=parent accepted with lifecycle=active (FR-019)",
@@ -3497,21 +3506,18 @@
           ],
           "tests/client/members-admin.test.tsx": [
             "MembersManagement — v1-like member workspace renders semantic-colour cards and opens create and edit dialogs",
+            "MembersManagement — v1-like member workspace creates a member from the same form, starting empty, and lets the server pick a colour",
+            "MembersManagement — v1-like member workspace announces a failed create inside the form and keeps what was typed",
+            "MembersManagement — v1-like member workspace opens an archived member read-only, with restoring as the only action",
             "MembersManagement — kiosk density (SC-001, SC-002) meets kiosk density across the active list AND an open edit row",
             "MembersManagement — kiosk density (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own Refresh button below the kiosk minimum makes the assertion fail",
             "MembersManagement — kiosk density (SC-001, SC-002) also meets kiosk density on the archived tab, where Restore is the only reachable control of its kind",
-            "MemberCreateForm — kiosk density (SC-001, SC-002) meets kiosk density across its rendered control set",
-            "MembersManagement / MemberCreateForm — open Select popover items meet kiosk density (#790, fixed in select.tsx) MembersManagement: the edit row's Month/Day/Role popovers are density-compliant when open",
-            "MembersManagement / MemberCreateForm — open Select popover items meet kiosk density (#790, fixed in select.tsx) MemberCreateForm: the Month/Day/Role popovers are density-compliant when open",
-            "MembersManagement / MemberCreateForm — adopt the AdminPanel L2 frame (F2, independent review on) MembersManagement wraps the surface in a landmark region labelled by its own title",
-            "MembersManagement / MemberCreateForm — adopt the AdminPanel L2 frame (F2, independent review on) MemberCreateForm wraps the surface in a landmark region labelled by its own title",
-            "MembersManagement / MemberCreateForm — the birthdate group label is VISIBLE, not just accessible (F5 regression guard) MembersManagement's edit row renders the visible 'Birth Date (optional)' label",
-            "MembersManagement / MemberCreateForm — the birthdate group label is VISIBLE, not just accessible (F5 regression guard) MemberCreateForm renders the visible 'Birth Date (optional)' label",
+            "MembersManagement — open Select popover items meet kiosk density (#790, fixed in select.tsx) MembersManagement: the edit row's Month/Day/Role popovers are density-compliant when open",
+            "MembersManagement — adopts the AdminPanel L2 frame (F2, independent review on) MembersManagement wraps the surface in a landmark region labelled by its own title",
+            "MembersManagement — the birthdate group label is VISIBLE, not just accessible (F5 regression guard) MembersManagement's edit row renders the visible 'Birth Date (optional)' label",
             "MembersManagement — error states are announced (SC-011) announces a members-list load failure through ErrorNotice's live region",
             "MembersManagement — error states are announced (SC-011) announces an archive failure through ErrorNotice's live region",
             "MembersManagement — error states are announced (SC-011) announces an invalid-birthdate save through ErrorNotice's live region without a server round-trip",
-            "MemberCreateForm — error states are announced (SC-011) announces a partial-birthdate validation error through ErrorNotice's live region",
-            "MemberCreateForm — error states are announced (SC-011) announces a failed submit (500) through ErrorNotice's live region",
             "MembersManagement — the typed birthdate month/day lookup (SC-007) maps each 1-based value to its OWN key, through i18n formats a January, a June, and a December birth date in Spanish word order with the correct month name",
             "MembersManagement — archive/restore round-trip (unchanged behaviour, migration regression guard) archives a member and refreshes the active list",
             "MembersManagement — the edit row's Day select submits the VALUE matching the selected LABEL (F3) selecting day label 1 submits birthDate.day === 1",
@@ -3520,15 +3526,8 @@
             "MembersManagement — the edit row's Month select submits the VALUE matching the selected LABEL (F3) selecting month label January submits birthDate.month === 1",
             "MembersManagement — the edit row's Month select submits the VALUE matching the selected LABEL (F3) selecting month label June submits birthDate.month === 6",
             "MembersManagement — the edit row's Month select submits the VALUE matching the selected LABEL (F3) selecting month label December submits birthDate.month === 12",
-            "MemberCreateForm — the Month select submits the VALUE matching the selected LABEL (F3) selecting month label January submits birthDate.month === 1",
-            "MemberCreateForm — the Month select submits the VALUE matching the selected LABEL (F3) selecting month label June submits birthDate.month === 6",
-            "MemberCreateForm — the Month select submits the VALUE matching the selected LABEL (F3) selecting month label December submits birthDate.month === 12",
-            "MemberCreateForm — the Day select submits the VALUE matching the selected LABEL (F3) selecting day label 1 submits birthDate.day === 1",
-            "MemberCreateForm — the Day select submits the VALUE matching the selected LABEL (F3) selecting day label 15 submits birthDate.day === 15",
-            "MemberCreateForm — the Day select submits the VALUE matching the selected LABEL (F3) selecting day label 31 submits birthDate.day === 31",
-            "MemberCreateForm and MembersManagement — curated member colours creates with the server's unused-first assignment by default, while offering exactly sixteen named keyboard choices",
-            "MemberCreateForm and MembersManagement — curated member colours sends an explicitly selected curated colour when creating and editing, without a free-form colour input",
-            "MemberCreateForm and MembersManagement — curated member colours keeps a curated choice controllable for a seventeenth member after every colour is in use"
+            "MembersManagement — curated member colours sends an explicitly selected curated colour when creating and editing, without a free-form colour input",
+            "MembersManagement — curated member colours keeps a curated choice controllable for an eleventh member after every colour is in use"
           ],
           "tests/client/members-management-mount.test.tsx": [
             "MembersManagement — loads on mount (#683) renders the members list without clicking Refresh"
@@ -4087,6 +4086,8 @@
             "time-announcements speech TIME-ANNOUNCEMENTS-INV-08: an absent speechSynthesis API is a swallowed no-op + logged miss, never a throw",
             "time-announcements speech TIME-ANNOUNCEMENTS-INV-08: an unprimed fire is a swallowed no-op + logged miss (no speechSynthesis touch)",
             "time-announcements speech primeOnFirstGesture: fires once on the first gesture, then detaches (no double-prime speak)",
+            "time-announcements speech primeOnFirstGesture: warms the lazily-loaded voice list on install, so the primer finds the voice and logs no voice-miss",
+            "time-announcements speech primeOnFirstGesture: the silent primer never logs a voice-miss, a real announcement still does",
             "time-announcements speech testVoice speaks the unsaved time and doubles as a manual primer",
             "time-announcements speech sink mirror gate (D9 — window.__mpAnnouncements, DEV/e2e-gated) mirrors + dispatches a CustomEvent when DEV is on",
             "time-announcements speech sink mirror gate (D9 — window.__mpAnnouncements, DEV/e2e-gated) stays gated off (no window hook, no event) when DEV is off and VITE_E2E_HOOKS is unset",

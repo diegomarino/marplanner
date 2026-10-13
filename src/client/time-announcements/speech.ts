@@ -55,8 +55,23 @@ function pickVoice(synth: SpeechSynthesis, lang: string): SpeechSynthesisVoice |
   }
 }
 
-/** Cancel-then-speak `text` at `volume` (0-1), tagged `lang`. Every step try/caught. */
-function attemptSpeak(text: string, lang: string, volume: number): void {
+/** Start the browser's voice load. Chrome fills `getVoices()` lazily: the first call on a
+ * page returns `[]` and only kicks off the load, so a lookup made cold would report a
+ * spurious `"voice-miss"` on a device that does have the voice. Best-effort, never throws.
+ */
+function warmVoices(): void {
+  try {
+    getSynth()?.getVoices();
+  } catch {
+    // best-effort warm-up only — a blocked API is reported by the real speak path
+  }
+}
+
+/** Cancel-then-speak `text` at `volume` (0-1), tagged `lang`. Every step try/caught.
+ * `reportVoiceMiss` is false for the silent primer: it is not an announcement, so it
+ * must not emit the pronunciation health signal.
+ */
+function attemptSpeak(text: string, lang: string, volume: number, reportVoiceMiss = true): void {
   const synth = getSynth();
   if (!synth) {
     logSpeechMiss("api-missing", { lang });
@@ -70,7 +85,7 @@ function attemptSpeak(text: string, lang: string, volume: number): void {
     const voice = pickVoice(synth, lang);
     if (voice) {
       utterance.voice = voice;
-    } else {
+    } else if (reportVoiceMiss) {
       logSpeechMiss("voice-miss", { lang });
     }
     synth.speak(utterance);
@@ -100,18 +115,21 @@ export function speak(phrase: string, lang: Language): void {
  * always defaulting to en-US (which would log a spurious `"voice-miss"` on every prime
  * in an es household). Defaults to `"en"` for callers that don't have a language source
  * (e.g. calling this directly outside the service).
+ * Installing also warms the voice list (`warmVoices`), so it is loaded long before the
+ * first gesture, the Test-voice button or a real fire looks a voice up.
  */
 export function primeOnFirstGesture(getLang: () => Language = () => "en"): () => void {
   if (typeof window === "undefined") return () => {};
   const handler = () => {
     markPrimed();
-    attemptSpeak(" ", UTTERANCE_LANG[getLang()], 0);
+    attemptSpeak(" ", UTTERANCE_LANG[getLang()], 0, false);
     detach();
   };
   function detach() {
     window.removeEventListener("pointerdown", handler, true);
     window.removeEventListener("keydown", handler, true);
   }
+  warmVoices();
   window.addEventListener("pointerdown", handler, true);
   window.addEventListener("keydown", handler, true);
   return detach;

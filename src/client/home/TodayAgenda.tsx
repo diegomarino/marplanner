@@ -16,24 +16,18 @@ import {
   type AgendaPresentationItem,
 } from "./agenda-presentation";
 
-// Literal generated-token utilities keep all sixteen identities visible to Tailwind.
+// Literal generated-token utilities keep every identity colour visible to Tailwind.
 const accentTokens: Record<MemberColorKey, string> = {
   blue: "border-l-member-blue-500",
   sky: "border-l-member-sky-500",
-  cyan: "border-l-member-cyan-500",
   teal: "border-l-member-teal-500",
   green: "border-l-member-green-500",
   lime: "border-l-member-lime-500",
-  yellow: "border-l-member-yellow-500",
   amber: "border-l-member-amber-500",
   orange: "border-l-member-orange-500",
   red: "border-l-member-red-500",
-  rose: "border-l-member-rose-500",
   pink: "border-l-member-pink-500",
-  fuchsia: "border-l-member-fuchsia-500",
-  purple: "border-l-member-purple-500",
   violet: "border-l-member-violet-500",
-  indigo: "border-l-member-indigo-500",
 };
 const temporalLabels: Record<AgendaPresentationItem["temporalState"], MessageKey> = {
   past: "agenda.past",

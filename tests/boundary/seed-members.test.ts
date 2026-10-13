@@ -54,7 +54,7 @@ const EXPECTED_MEMBERS = [
   {
     id: "demo:member:maggie",
     displayName: "Maggie",
-    colorKey: "cyan",
+    colorKey: "teal",
     role: "child",
     lifecycle: "active",
     birthDate: { month: 1, day: 12, year: null },

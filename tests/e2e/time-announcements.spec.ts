@@ -187,7 +187,7 @@ test.describe("time-announcements audio-free e2e", () => {
     // shell-mounted at the US0 hoist, present on every route, so it must keep
     // firing there too (KIOSK-SHELL-NAVIGATION-AC-07 — announcements half).
     await unlockAdmin(page, ADMIN_PIN);
-    await expect(page.getByTestId("admin-nav-member-create")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 
     await expect
       .poll(async () => (await mirrorEntries(page)).some((e) => e.ruleId === secondRule.id), {
@@ -197,7 +197,7 @@ test.describe("time-announcements audio-free e2e", () => {
       .toBe(true);
 
     // Still on the admin route — the fire neither navigated away nor crashed the surface.
-    await expect(page.getByTestId("admin-nav-member-create")).toBeVisible();
+    await expect(page.getByTestId("admin-overview")).toBeVisible();
 
     const afterSecond = await mirrorEntries(page);
     const secondEntry = afterSecond.find((e) => e.ruleId === secondRule.id)!;

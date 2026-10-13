@@ -42,7 +42,7 @@ const CANONICAL_MEMBERS: readonly DemoMember[] = [
     id: "demo:member:maggie",
     displayName: "Maggie",
     role: "child",
-    colorKey: "cyan",
+    colorKey: "teal",
     birthDate: { month: 1, day: 12, year: null },
   },
 ];

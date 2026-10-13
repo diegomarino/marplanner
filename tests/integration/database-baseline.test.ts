@@ -215,6 +215,7 @@ describe("database lifecycle fresh current baseline", () => {
       { fileName: "0001_calendar_feed_sync.sql" },
       { fileName: "0002_plugin_lifecycle.sql" },
       { fileName: "0003_calendar_event_details.sql" },
+      { fileName: "0004_member_palette.sql" },
     ]);
 
     const foreignKeys = ALL_SCHEMA_TABLES.flatMap((table) =>

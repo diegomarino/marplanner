@@ -1,18 +1,12 @@
 [
-  { "key": "blue", "name": "blue", "base500": { "l": 0.58, "c": 0.18, "h": 240 } },
-  { "key": "sky", "name": "sky", "base500": { "l": 0.58, "c": 0.17, "h": 215 } },
-  { "key": "cyan", "name": "cyan", "base500": { "l": 0.58, "c": 0.16, "h": 195 } },
-  { "key": "teal", "name": "teal", "base500": { "l": 0.58, "c": 0.16, "h": 170 } },
-  { "key": "green", "name": "green", "base500": { "l": 0.58, "c": 0.19, "h": 145 } },
-  { "key": "lime", "name": "lime", "base500": { "l": 0.58, "c": 0.2, "h": 120 } },
-  { "key": "yellow", "name": "yellow", "base500": { "l": 0.58, "c": 0.17, "h": 85 } },
-  { "key": "amber", "name": "amber", "base500": { "l": 0.58, "c": 0.18, "h": 65 } },
-  { "key": "orange", "name": "orange", "base500": { "l": 0.58, "c": 0.18, "h": 55 } },
-  { "key": "red", "name": "red", "base500": { "l": 0.58, "c": 0.22, "h": 25 } },
-  { "key": "rose", "name": "rose", "base500": { "l": 0.58, "c": 0.22, "h": 10 } },
-  { "key": "pink", "name": "pink", "base500": { "l": 0.58, "c": 0.22, "h": 340 } },
-  { "key": "fuchsia", "name": "fuchsia", "base500": { "l": 0.58, "c": 0.24, "h": 320 } },
-  { "key": "purple", "name": "purple", "base500": { "l": 0.58, "c": 0.2, "h": 310 } },
-  { "key": "violet", "name": "violet", "base500": { "l": 0.58, "c": 0.2, "h": 285 } },
-  { "key": "indigo", "name": "indigo", "base500": { "l": 0.58, "c": 0.2, "h": 265 } }
+  { "key": "blue", "name": "blue", "base500": { "l": 0.48, "c": 0.19, "h": 262 } },
+  { "key": "sky", "name": "sky", "base500": { "l": 0.64, "c": 0.13, "h": 232 } },
+  { "key": "teal", "name": "teal", "base500": { "l": 0.6, "c": 0.1, "h": 195 } },
+  { "key": "green", "name": "green", "base500": { "l": 0.5, "c": 0.14, "h": 155 } },
+  { "key": "lime", "name": "lime", "base500": { "l": 0.6, "c": 0.17, "h": 128 } },
+  { "key": "amber", "name": "amber", "base500": { "l": 0.62, "c": 0.13, "h": 85 } },
+  { "key": "orange", "name": "orange", "base500": { "l": 0.65, "c": 0.17, "h": 52 } },
+  { "key": "red", "name": "red", "base500": { "l": 0.56, "c": 0.21, "h": 25 } },
+  { "key": "pink", "name": "pink", "base500": { "l": 0.6, "c": 0.21, "h": 350 } },
+  { "key": "violet", "name": "violet", "base500": { "l": 0.56, "c": 0.21, "h": 298 } }
 ]
