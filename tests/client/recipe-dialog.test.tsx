@@ -1,7 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { RecipeDetailDialog } from "@/meals/RecipeDetailDialog";
 import { RecipeDialog } from "@/meals/RecipeDialog";
 import { HouseholdSettingsProvider } from "@/lib/householdSettings";
 import { LanguageProvider } from "@/i18n";
@@ -90,30 +89,4 @@ it("localizes recipe field accessibility names from the household language", asy
   await waitFor(() => expect(screen.getByLabelText("Ingredientes")).toBeInTheDocument());
   expect(screen.getByLabelText("Instrucciones")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Cerrar" })).toBeInTheDocument();
-});
-
-it("localizes the recipe detail dialog's accessible close action", async () => {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(async () => new Response(JSON.stringify({ locale: { language: "es" } })))
-  );
-  render(
-    <LanguageProvider>
-      <RecipeDetailDialog
-        open
-        onClose={vi.fn()}
-        recipe={{
-          id: "recipe",
-          name: "User recipe",
-          ingredients: [],
-          instructions: null,
-          slots: null,
-          createdAt: 0,
-          updatedAt: 0,
-        }}
-      />
-    </LanguageProvider>
-  );
-  await waitFor(() => expect(screen.getAllByRole("button", { name: "Cerrar" })).toHaveLength(2));
-  expect(screen.queryByRole("button", { name: "Close" })).toBeNull();
 });

@@ -171,11 +171,10 @@ export function MealEntryDialog({
                 </Field>
               )}
               <ErrorNotice message={error} />
-              {!hasContent && (
-                <p className="text-muted-foreground text-sm">
-                  {t("meals.entries.contentRequired")}
-                </p>
-              )}
+              {/* The line stays reserved once there is content, so the dialog keeps its height. */}
+              <p className="text-muted-foreground min-h-5 text-sm">
+                {!hasContent && t("meals.entries.contentRequired")}
+              </p>
             </div>
           )}
           <DialogFooter>

@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { AdminPanel } from "@/components/AdminPanel";
 import { CheckboxField } from "@/components/CheckboxField";
 import { ErrorNotice } from "@/components/ErrorNotice";
+import { PillToggle } from "@/components/PillToggle";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -44,45 +45,9 @@ import {
   type CalendarMode,
   type WeekStartDay,
 } from "@/calendar/calendar-presentation";
-import type { AssignmentReplace, EventInput, FeedItem, Member, MemberColorKey } from "../../shared";
+import type { AssignmentReplace, EventInput, FeedItem, Member } from "../../shared";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-/** A filter drawn like the Month/Week buttons. It stays a native checkbox for keyboard and
- * assistive tech, laid invisibly over the whole label so the touch target is the full control.
- */
-function FilterToggle({
-  checked,
-  onChange,
-  label,
-  colorKey,
-  "data-testid": testId,
-}: {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  label: string;
-  /** When set, the selected state wears that member's colour instead of the accent. */
-  colorKey?: MemberColorKey;
-  "data-testid"?: string;
-}) {
-  return (
-    <label
-      // eslint-disable-next-line ui-policy/debt -- Selected member identity is rendered through the generated semantic colour token.
-      style={checked && colorKey ? memberFilterStyle(colorKey) : undefined}
-      className="border-input bg-background text-muted-foreground text-control not-has-[:checked]:hover:bg-primary/10 not-has-[:checked]:hover:text-foreground has-[:checked]:bg-accent has-[:checked]:text-accent-foreground has-[:focus-visible]:ring-ring/50 relative inline-flex h-[var(--control-height)] cursor-pointer items-center rounded-lg border px-4 font-medium has-[:focus-visible]:ring-[3px]"
-    >
-      {/* eslint-disable-next-line ui-policy/raw-controls -- Invisible native checkbox stretched over the token-sized label, which draws its state. */}
-      <input
-        type="checkbox"
-        checked={checked}
-        data-testid={testId}
-        onChange={(event) => onChange(event.target.checked)}
-        className="absolute inset-0 h-[var(--control-height)] w-full cursor-pointer opacity-0"
-      />
-      {label}
-    </label>
-  );
-}
 
 /** The event was created but its people could not be saved. */
 class AssignmentAfterCreateError extends Error {}
@@ -636,13 +601,13 @@ export function CalendarView() {
         </h2>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap gap-2" aria-label={t("calendar.filters")}>
-            <FilterToggle
+            <PillToggle
               checked={showAllDay}
               onChange={setShowAllDay}
               label={t("calendar.allDayFilter")}
             />
             {activeMembers.map((member) => (
-              <FilterToggle
+              <PillToggle
                 key={member.id}
                 checked={selectedFilterMemberIds.has(member.id)}
                 onChange={() => toggleFilterMember(member.id)}
@@ -816,12 +781,12 @@ export function CalendarView() {
                 </legend>
                 <div className="flex flex-wrap gap-2">
                   {activeMembers.map((member) => (
-                    <FilterToggle
+                    <PillToggle
                       key={member.id}
                       checked={createMemberIds.has(member.id)}
                       onChange={() => toggleCreateMember(member.id)}
                       label={member.displayName}
-                      colorKey={member.colorKey}
+                      selectedStyle={memberFilterStyle(member.colorKey)}
                     />
                   ))}
                 </div>
@@ -1041,11 +1006,11 @@ export function CalendarView() {
                                 <ul className="flex list-none flex-wrap gap-2 p-0">
                                   {activeMembers.map((member) => (
                                     <li key={member.id}>
-                                      <FilterToggle
+                                      <PillToggle
                                         checked={editMemberIds.has(member.id)}
                                         onChange={() => toggleEditMember(member.id)}
                                         label={member.displayName}
-                                        colorKey={member.colorKey}
+                                        selectedStyle={memberFilterStyle(member.colorKey)}
                                         data-testid={`calendar-assign-member-${member.id}`}
                                       />
                                     </li>

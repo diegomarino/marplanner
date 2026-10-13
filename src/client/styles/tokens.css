@@ -40,6 +40,11 @@
   --weather-frost: oklch(0.58 0.08 220);
   --weather-storm: oklch(0.5 0.12 295);
   --weather-cloud: oklch(0.55 0.015 60);
+  /* Meal slots: one hue each, dark enough to read as text on its own light tint. */
+  --meal-breakfast: oklch(0.55 0.13 75);
+  --meal-lunch: oklch(0.5 0.11 150);
+  --meal-snack: oklch(0.55 0.17 25);
+  --meal-dinner: oklch(0.48 0.12 275);
   /* Comfortable density — kiosk overrides live in globals.css. */
   --control-height: 36px;
   --control-font-size: 14px;
