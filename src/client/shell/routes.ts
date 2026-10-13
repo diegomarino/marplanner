@@ -26,7 +26,6 @@ const adminDestinations = [
   { id: "calendar", path: "/admin/calendar" },
   { id: "overview", path: "/admin" },
   { id: "members", path: "/admin/members" },
-  { id: "day-periods", path: "/admin/day-periods" },
   { id: "routines", path: "/admin/routines" },
   { id: "reminders", path: "/admin/reminders" },
   { id: "meals", path: "/admin/meals" },
@@ -35,10 +34,10 @@ const adminDestinations = [
   { id: "telemetry", path: "/admin/telemetry" },
   { id: "backups", path: "/admin/backups" },
   { id: "time-announcements", path: "/admin/time-announcements" },
-  { id: "weather", path: "/admin/weather" },
   { id: "network-devices", path: "/admin/network-devices" },
   { id: "plugins", path: "/admin/plugins" },
   { id: "printing", path: "/admin/printing" },
+  { id: "settings", path: "/admin/settings" },
 ] as const;
 
 type KnownHouseholdPath = FamilyRoute["path"] | (typeof adminDestinations)[number]["path"];

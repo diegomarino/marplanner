@@ -501,7 +501,6 @@
     "calendar",
     "overview",
     "members",
-    "day-periods",
     "routines",
     "reminders",
     "meals",
@@ -510,10 +509,10 @@
     "telemetry",
     "backups",
     "time-announcements",
-    "weather",
     "network-devices",
     "plugins",
-    "printing"
+    "printing",
+    "settings"
   ],
   "apiContracts": [
     "docs/api/backups/openapi.yaml",
@@ -2922,8 +2921,7 @@
           "tests/client/admin-gate-panel-reset.test.tsx": [
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) covers every registered admin-nav-* destination (fence would silently pass for an unregistered route)",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/calendar to /admin/members removes the first panel entirely",
-            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/members to /admin/day-periods removes the first panel entirely",
-            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/day-periods to /admin/routines removes the first panel entirely",
+            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/members to /admin/routines removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/routines to /admin/reminders removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/reminders to /admin/meals removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/meals to /admin/daily-messages removes the first panel entirely",
@@ -2931,11 +2929,11 @@
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/daily-briefing to /admin/telemetry removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/telemetry to /admin/backups removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/backups to /admin/time-announcements removes the first panel entirely",
-            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/time-announcements to /admin/weather removes the first panel entirely",
-            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/weather to /admin/network-devices removes the first panel entirely",
+            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/time-announcements to /admin/network-devices removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/network-devices to /admin/plugins removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/plugins to /admin/printing removes the first panel entirely",
-            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/printing to /admin/calendar removes the first panel entirely"
+            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/printing to /admin/settings removes the first panel entirely",
+            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/settings to /admin/calendar removes the first panel entirely"
           ],
           "tests/client/admin-gate-printing-nav.test.tsx": [
             "AdminGate — admin-nav-printing stays visible regardless of plugin state (FR-013) renders admin-nav-printing immediately — no async gate, no /api/printing/status read at all",
@@ -2970,7 +2968,7 @@
             "Admin shell navigation keeps Overview and Lock in the sidebar on every admin page",
             "Admin shell navigation marks Overview as the current page on the landing page and lists every section there",
             "Admin shell navigation builds the breadcrumb trail from every registered page on the way",
-            "Admin shell navigation navigates from the overview's section buttons, the telemetry shortcut and the sidebar",
+            "Admin shell navigation navigates from the telemetry shortcut and the sidebar",
             "Admin shell navigation offers the overview from an unknown admin page",
             "Admin shell navigation shows an item's subsections only while that item or one of them is open"
           ],
@@ -2994,7 +2992,7 @@
           ],
           "tests/client/admin-routes.test.tsx": [
             "AdminRoutes renders the directly requested printing destination instead of the member-create default",
-            "AdminRoutes keeps the complete ordered fifteen-destination inventory",
+            "AdminRoutes keeps the complete ordered fourteen-destination inventory",
             "AdminRoutes shows the localized unknown-admin outcome without mounting a management panel"
           ],
           "tests/client/announcements-briefing-admin.test.tsx": [
@@ -3649,6 +3647,7 @@
             "active plugin contribution projection renders active contributions only while core and active siblings remain",
             "active plugin contribution projection withdraws the inactive Meals home widget while preserving core widgets",
             "active plugin contribution projection maps the family Meals route to its declared route contribution",
+            "active plugin contribution projection leaves the weather location out of Settings while the weather plugin is inactive",
             "active plugin contribution projection keeps inactive plugins catalog-only and fails direct admin loads closed",
             "active plugin contribution projection keeps canonical-active contributions visible during a busy deactivation",
             "active plugin contribution projection contains a rendering fault, reports only its safe code, and preserves siblings",
@@ -3868,11 +3867,20 @@
             "SelectItem — kiosk density on the rendered popover options (#790) tracks data-density rather than being hardcoded to the kiosk value — comfortable renders the comfortable token, kiosk renders the kiosk one, both via the SAME var() reference",
             "SelectItem — kiosk density on the rendered popover options (#790) DELIBERATE NEGATIVE — forcing a rendered option below the kiosk minimum makes the assertion fail, and reverting restores compliance"
           ],
+          "tests/client/settings-management.test.tsx": [
+            "SettingsManagement shows the stored language, time zone and week start, with nothing to save yet",
+            "SettingsManagement hosts the day periods and the weather location on the same page",
+            "SettingsManagement saves the three values as one locale object and asks the app to reload them",
+            "SettingsManagement announces a refused save in its own words, never the server's, and keeps the edit",
+            "SettingsManagement falls back to its own message when the save never reaches the server",
+            "SettingsManagement announces a failed load and offers no form to save"
+          ],
           "tests/client/shell-routes.test.tsx": [
             "household shell routes keeps all four named family links at /",
             "household shell routes keeps all four named family links at /calendar",
             "household shell routes keeps all four named family links at /chores",
             "household shell routes keeps all four named family links at /meals",
+            "household shell routes keeps nested runtime mount links and navigation on the requested family route",
             "household shell routes navigates from Home to the real Calendar surface without reloading the chrome",
             "household shell routes renders a recoverable not-found outcome at /daily-briefing",
             "household shell routes renders a recoverable not-found outcome at /missing",
@@ -3893,7 +3901,6 @@
             "closed route resolver resolves family destination /meals",
             "closed route resolver recognizes protected destination /admin without unlock state",
             "closed route resolver recognizes protected destination /admin/members without unlock state",
-            "closed route resolver recognizes protected destination /admin/day-periods without unlock state",
             "closed route resolver recognizes protected destination /admin/routines without unlock state",
             "closed route resolver recognizes protected destination /admin/reminders without unlock state",
             "closed route resolver recognizes protected destination /admin/meals without unlock state",
@@ -3902,9 +3909,9 @@
             "closed route resolver recognizes protected destination /admin/telemetry without unlock state",
             "closed route resolver recognizes protected destination /admin/backups without unlock state",
             "closed route resolver recognizes protected destination /admin/time-announcements without unlock state",
-            "closed route resolver recognizes protected destination /admin/weather without unlock state",
             "closed route resolver recognizes protected destination /admin/network-devices without unlock state",
             "closed route resolver recognizes protected destination /admin/printing without unlock state",
+            "closed route resolver recognizes protected destination /admin/settings without unlock state",
             "closed route resolver classifies unknown pathname /admin/ without prefix leakage",
             "closed route resolver classifies unknown pathname /admin/missing without prefix leakage",
             "closed route resolver classifies unknown pathname /admin/printing/extra without prefix leakage",
@@ -3912,8 +3919,7 @@
             "closed route resolver classifies unknown pathname /administrator without prefix leakage",
             "closed route resolver classifies unknown pathname /calendar/ without prefix leakage",
             "closed route resolver classifies unknown pathname /Calendar without prefix leakage",
-            "closed route resolver classifies unknown pathname /missing without prefix leakage",
-            "household shell routes keeps nested runtime mount links and navigation on the requested family route"
+            "closed route resolver classifies unknown pathname /missing without prefix leakage"
           ],
           "tests/client/shell-service-mount.test.tsx": [
             "Shell — US0 service mount point mounted on the /chores branch (family) renders the registered probe with language context (household language: es)",
@@ -5308,6 +5314,21 @@
           "statements": 76.75,
           "functions": 79.68,
           "branches": 62.5
+        }
+      },
+      "src/client/admin/SettingsManagement.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 45,
+          "statements": 51,
+          "functions": 15,
+          "branches": 37
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 96.07,
+          "functions": 100,
+          "branches": 83.78
         }
       },
       "src/client/admin/TelemetryManagement.tsx": {

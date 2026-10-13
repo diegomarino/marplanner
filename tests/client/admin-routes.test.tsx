@@ -13,11 +13,10 @@ describe("AdminRoutes", () => {
     expect(screen.queryByText("Create Member")).not.toBeInTheDocument();
   });
 
-  it("keeps the complete ordered fifteen-destination inventory", () => {
+  it("keeps the complete ordered fourteen-destination inventory", () => {
     expect(adminRoutes.map((route) => route.path)).toEqual([
       "/admin/calendar",
       "/admin/members",
-      "/admin/day-periods",
       "/admin/routines",
       "/admin/reminders",
       "/admin/meals",
@@ -26,10 +25,10 @@ describe("AdminRoutes", () => {
       "/admin/telemetry",
       "/admin/backups",
       "/admin/time-announcements",
-      "/admin/weather",
       "/admin/network-devices",
       "/admin/plugins",
       "/admin/printing",
+      "/admin/settings",
     ]);
   });
 

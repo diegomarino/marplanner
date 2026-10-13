@@ -52,7 +52,7 @@ afterEach(() => {
 describe("AdminOverview", () => {
   it("shows what the server runs and lists warnings and errors newest first", async () => {
     mockBackend();
-    render(<AdminOverview sections={null} onOpenTelemetry={vi.fn()} />);
+    render(<AdminOverview onOpenTelemetry={vi.fn()} />);
 
     expect(await screen.findByText("abc1234")).toBeInTheDocument();
     expect(screen.getByText("fix: deliver briefings")).toBeInTheDocument();
@@ -70,7 +70,7 @@ describe("AdminOverview", () => {
   it("reads the status again on Check now and opens telemetry on request", async () => {
     const fetchMock = mockBackend();
     const onOpenTelemetry = vi.fn();
-    render(<AdminOverview sections={null} onOpenTelemetry={onOpenTelemetry} />);
+    render(<AdminOverview onOpenTelemetry={onOpenTelemetry} />);
     await screen.findByText("abc1234");
     const statusReads = () =>
       fetchMock.mock.calls.filter(([input]) => String(input).includes("system-status")).length;
@@ -85,7 +85,7 @@ describe("AdminOverview", () => {
 
   it("announces an unreadable status without inventing a deploy", async () => {
     mockBackend({ status: [], statusCode: 200 });
-    render(<AdminOverview sections={null} onOpenTelemetry={vi.fn()} />);
+    render(<AdminOverview onOpenTelemetry={vi.fn()} />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not read the system status.");
     expect(screen.getByText("unreachable")).toBeInTheDocument();
@@ -123,13 +123,13 @@ describe("Admin shell navigation", () => {
     expect(adminBreadcrumb("/admin/not-a-page")).toEqual([]);
   });
 
-  it("navigates from the overview's section buttons, the telemetry shortcut and the sidebar", async () => {
+  it("navigates from the telemetry shortcut and the sidebar", async () => {
     mockBackend();
     window.history.replaceState({}, "", "/admin");
     render(<AdminRoutes pathname="/admin" onLock={vi.fn()} />);
 
-    fireEvent.click(await screen.findByTestId("admin-nav-day-periods"));
-    expect(window.location.pathname).toBe("/admin/day-periods");
+    fireEvent.click(await screen.findByTestId("admin-nav-settings"));
+    expect(window.location.pathname).toBe("/admin/settings");
 
     fireEvent.click(screen.getByRole("button", { name: "Open telemetry" }));
     expect(window.location.pathname).toBe("/admin/telemetry");

@@ -295,7 +295,6 @@ describe("closed route resolver", () => {
   it.each([
     ["/admin", "overview"],
     ["/admin/members", "members"],
-    ["/admin/day-periods", "day-periods"],
     ["/admin/routines", "routines"],
     ["/admin/reminders", "reminders"],
     ["/admin/meals", "meals"],
@@ -304,9 +303,9 @@ describe("closed route resolver", () => {
     ["/admin/telemetry", "telemetry"],
     ["/admin/backups", "backups"],
     ["/admin/time-announcements", "time-announcements"],
-    ["/admin/weather", "weather"],
     ["/admin/network-devices", "network-devices"],
     ["/admin/printing", "printing"],
+    ["/admin/settings", "settings"],
   ])("recognizes protected destination %s without unlock state", (path, id) => {
     expect(resolveHouseholdRoute(path)).toEqual({ kind: "admin", id, path });
   });
