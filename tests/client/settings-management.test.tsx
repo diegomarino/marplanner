@@ -52,8 +52,8 @@ vi.mock("@/components/ui/select", async () => {
       );
     },
     SelectValue: () => null,
-    SelectContent: () => null,
-    SelectItem: () => null,
+    SelectContent: ({ children }: Props) => <ul>{children}</ul>,
+    SelectItem: ({ value }: Props) => <li data-option={value as string} />,
   };
 });
 
@@ -81,6 +81,7 @@ describe("SettingsManagement", () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
     cleanup();
   });
@@ -93,6 +94,21 @@ describe("SettingsManagement", () => {
     expect(screen.getByLabelText("Time zone")).toHaveValue("Europe/Madrid");
     expect(screen.getByLabelText("Week starts on")).toHaveValue("1");
     expect(screen.getByTestId("settings-save")).toBeDisabled();
+  });
+
+  it("offers UTC and the stored zone even when the runtime's list has neither", async () => {
+    vi.spyOn(Intl, "supportedValuesOf").mockReturnValue(["Europe/Lisbon", "Europe/Madrid"]);
+    vi.mocked(globalThis.fetch).mockResolvedValue(
+      jsonResponse({ ...SETTINGS, locale: { ...SETTINGS.locale, timezone: "Etc/GMT+3" } })
+    );
+    renderSettings();
+
+    await screen.findByTestId("settings-save");
+    const options = [...document.querySelectorAll("[data-option]")].map((option) =>
+      option.getAttribute("data-option")
+    );
+    expect(options).toEqual(expect.arrayContaining(["UTC", "Etc/GMT+3", "Europe/Lisbon"]));
+    expect(options.filter((option) => option === "UTC")).toHaveLength(1);
   });
 
   it("hosts the day periods and the weather location on the same page", async () => {

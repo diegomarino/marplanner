@@ -3869,6 +3869,7 @@
           ],
           "tests/client/settings-management.test.tsx": [
             "SettingsManagement shows the stored language, time zone and week start, with nothing to save yet",
+            "SettingsManagement offers UTC and the stored zone even when the runtime's list has neither",
             "SettingsManagement hosts the day periods and the weather location on the same page",
             "SettingsManagement saves the three values as one locale object and asks the app to reload them",
             "SettingsManagement announces a refused save in its own words, never the server's, and keeps the edit",
@@ -5322,7 +5323,7 @@
           "lines": 45,
           "statements": 51,
           "functions": 15,
-          "branches": 37
+          "branches": 35
         },
         "minimumRates": {
           "lines": 100,

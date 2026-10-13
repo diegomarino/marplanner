@@ -27,10 +27,13 @@ import { WeatherManagement } from "./WeatherManagement";
  * app follows.
  */
 
+/** Every zone the picker offers. The runtime's list leaves out UTC, which the server accepts,
+ * and may not know a zone that was stored some other way, so both are added.
+ */
 function timeZones(current: string): string[] {
   const known =
     typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [];
-  return known.includes(current) ? known : [current, ...known];
+  return [...new Set(["UTC", current, ...known])].sort();
 }
 
 export function SettingsManagement() {
