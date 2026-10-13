@@ -141,7 +141,7 @@ export function WeekdayPicker(props: WeekdayPickerProps) {
       <div
         role="radiogroup"
         aria-label={groupLabel}
-        className={cn("flex flex-wrap gap-3", className)}
+        className={cn("flex flex-wrap gap-x-4 gap-y-1", className)}
       >
         {CANONICAL_WEEKDAY_ORDER.map((day) => (
           <RadioField
@@ -173,7 +173,11 @@ export function WeekdayPicker(props: WeekdayPickerProps) {
   };
 
   return (
-    <div role="group" aria-label={groupLabel} className={cn("flex flex-wrap gap-3", className)}>
+    <div
+      role="group"
+      aria-label={groupLabel}
+      className={cn("flex flex-wrap gap-x-4 gap-y-1", className)}
+    >
       {CANONICAL_WEEKDAY_ORDER.map((day) => (
         <CheckboxField
           key={day}
