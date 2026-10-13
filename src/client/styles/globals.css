@@ -77,6 +77,7 @@
      system font until they are served. */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Gelasio", Georgia, Cambria, "Times New Roman", serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   /* Soft, warm elevation for surfaces: resting card, popover, modal. */

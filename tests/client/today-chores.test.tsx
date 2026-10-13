@@ -455,9 +455,15 @@ describe("TodayChores", () => {
       "bg-member-rose-500",
       "text-member-rose-foreground"
     );
-    expect(within(child).getByText("Streak: 4")).toBeInTheDocument();
-    expect(within(child).getByText("Progress: 1/3")).toBeInTheDocument();
-    expect(within(child).getByTestId("today-chore-icon-ari-brush")).toHaveTextContent("🪥");
+    // The labels are visually hidden behind the flame and check icons, but still read out.
+    expect(child).toHaveTextContent("Streak: 4");
+    expect(child).toHaveTextContent("Progress: 1/3");
+    expect(within(child).getByText("Streak:")).toHaveClass("sr-only");
+    expect(within(child).getByText("Progress:")).toHaveClass("sr-only");
+    expect(within(child).getByTestId("today-chore-icon-ari-brush")).toHaveAttribute(
+      "data-emoji",
+      "🪥"
+    );
   });
 
   it("uses member IDs and persisted keys, with neutral fallback for an unknown key", async () => {

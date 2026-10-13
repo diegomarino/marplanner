@@ -168,7 +168,7 @@ afterEach(() => {
 describe("ChoresBoard — kiosk density (SC-001, SC-002, SC-003)", () => {
   it("meets kiosk density across every rendered control — the default board and an open ConfirmDialog, across two phases", async () => {
     mockBackend();
-    const uninject = await injectDensityStyles({ extraCandidates: ["min-h-[80px]"] });
+    const uninject = await injectDensityStyles({ extraCandidates: ["min-h-[120px]"] });
     document.documentElement.setAttribute("data-density", "kiosk");
 
     try {
@@ -203,7 +203,7 @@ describe("ChoresBoard — kiosk density (SC-001, SC-002, SC-003)", () => {
 
   it("DELIBERATE NEGATIVE — forcing this surface's own toggle below the kiosk minimum makes the assertion fail", async () => {
     mockBackend();
-    const uninject = await injectDensityStyles({ extraCandidates: ["min-h-[80px]"] });
+    const uninject = await injectDensityStyles({ extraCandidates: ["min-h-[120px]"] });
     document.documentElement.setAttribute("data-density", "kiosk");
 
     try {
@@ -381,7 +381,7 @@ describe("ChoresBoard — StatusToggle's accessible name is state-invariant (MED
     const toggle = await screen.findByTestId("chore-toggle-c2");
 
     // The visible SVG check has no text node; the accessible name stays stable.
-    expect(toggle).toHaveTextContent("📖Read a book");
+    expect(toggle).toHaveTextContent(/^Read a book$/);
     expect(toggle).toHaveAccessibleName("Read a book");
     expect(toggle).toHaveAttribute("aria-pressed", "true");
   });
@@ -392,7 +392,7 @@ describe("ChoresBoard — StatusToggle's accessible name is state-invariant (MED
 
     const toggle = await screen.findByTestId("chore-toggle-c1");
 
-    expect(toggle).toHaveTextContent("🪥Brush teeth");
+    expect(toggle).toHaveTextContent(/^Brush teeth$/);
     expect(toggle).toHaveAccessibleName("Brush teeth");
     expect(toggle).toHaveAttribute("aria-pressed", "false");
   });
@@ -462,8 +462,14 @@ describe("ChoresBoard — chore presentation", () => {
     mockBackend();
     renderSurface();
 
-    expect(await screen.findByText("🪥")).toBeInTheDocument();
-    expect(screen.getByText("📖")).toBeInTheDocument();
+    // Icons are drawn from the vendored Noto set, so the emoji itself is not a text node.
+    const brush = (await screen.findByTestId("chore-toggle-c1")).querySelector("[data-emoji]");
+    expect(brush).toHaveAttribute("data-emoji", "🪥");
+    expect(brush).not.toHaveClass("line-through");
+    expect(brush?.querySelector("img")).toHaveAttribute("src", expect.stringContaining("1faa5"));
+    const book = screen.getByTestId("chore-toggle-c2").querySelector("[data-emoji]");
+    expect(book).toHaveAttribute("data-emoji", "📖");
+    expect(book).toHaveClass("line-through");
     expect(screen.getByText("Read a book")).toHaveClass("line-through", "text-muted-foreground");
   });
 });
