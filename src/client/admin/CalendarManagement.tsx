@@ -1,7 +1,6 @@
-import { cn } from "@/lib/utils";
-import { NATIVE_SELECT_CLASSES } from "@/lib/recipes";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import type { ExternalSourceProvider, ExternalSourcePublic, HighlightRule } from "../../shared";
+import { isSingleEmoji } from "../../shared";
+import type { ExternalSourcePublic, HighlightRule } from "../../shared";
 import {
   closestCenter,
   DndContext,
@@ -42,7 +41,6 @@ export function CalendarManagement() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [feedUrl, setFeedUrl] = useState("");
-  const [provider, setProvider] = useState<ExternalSourceProvider>("ics_generic");
   const [rules, setRules] = useState<HighlightRule[]>([]);
   const rulesRef = useRef<HighlightRule[]>([]);
   const [rulesLoading, setRulesLoading] = useState(true);
@@ -82,6 +80,9 @@ export function CalendarManagement() {
     void loadRules();
   }, []);
 
+  const emojiValid = isSingleEmoji(ruleEmoji);
+  // Nothing typed yet is not an error; something that is not one emoji is.
+  const emojiRejected = ruleEmoji.trim().length > 0 && !emojiValid;
   const keywords = [
     ...new Set(
       ruleKeywords
@@ -236,7 +237,6 @@ export function CalendarManagement() {
         body: JSON.stringify({
           name: name.trim(),
           feedUrl: feedUrl.trim(),
-          provider,
           pollIntervalMin: 15,
         }),
       });
@@ -283,7 +283,7 @@ export function CalendarManagement() {
   }
 
   return (
-    <div className="w-full space-y-6 p-4" data-testid="calendar-management">
+    <div className="w-full space-y-6" data-testid="calendar-management">
       <h1 className="text-2xl font-semibold">{t("calendar.admin.title")}</h1>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2" data-testid="calendar-admin-grid">
         <section aria-labelledby="external-calendars-heading" className="min-w-0 space-y-4">
@@ -292,7 +292,7 @@ export function CalendarManagement() {
           </h2>
           <form
             onSubmit={(event) => void createSource(event)}
-            className="space-y-3 rounded-2xl border bg-card p-4 shadow-sm"
+            className="bg-card grid items-end gap-3 rounded-2xl border p-4 shadow-sm sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto]"
           >
             <div className="space-y-1">
               <Label htmlFor="calendar-source-name">{t("calendar.admin.sourceName")}</Label>
@@ -308,22 +308,9 @@ export function CalendarManagement() {
                 id="calendar-source-url"
                 type="url"
                 value={feedUrl}
+                placeholder="https://…"
                 onChange={(event) => setFeedUrl(event.target.value)}
               />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="calendar-source-provider">{t("calendar.admin.provider")}</Label>
-              <select
-                id="calendar-source-provider"
-                className={cn(NATIVE_SELECT_CLASSES, "w-full bg-background")}
-                value={provider}
-                onChange={(event) => setProvider(event.target.value as ExternalSourceProvider)}
-              >
-                <option value="ics_generic">{t("calendar.admin.providerGeneric")}</option>
-                <option value="google">{t("calendar.admin.providerGoogle")}</option>
-                <option value="microsoft">{t("calendar.admin.providerMicrosoft")}</option>
-                <option value="apple">{t("calendar.admin.providerApple")}</option>
-              </select>
             </div>
             <Button type="submit" disabled={!!busyId || !name.trim() || !feedUrl.trim()}>
               {t("calendar.admin.addSource")}
@@ -352,28 +339,52 @@ export function CalendarManagement() {
           </h2>
           <form
             onSubmit={(event) => void createRule(event)}
-            className="space-y-3 rounded-2xl border bg-card p-4 shadow-sm"
+            className="bg-card relative space-y-2 rounded-2xl border p-4 shadow-sm"
           >
-            <div className="space-y-1">
-              <Label htmlFor="calendar-rule-emoji">{t("calendar.admin.emoji")}</Label>
-              <Input
-                ref={ruleEmojiRef}
-                id="calendar-rule-emoji"
-                value={ruleEmoji}
-                onChange={(event) => setRuleEmoji(event.target.value)}
-              />
+            <div className="grid items-end gap-3 grid-cols-[auto_minmax(0,1fr)] sm:grid-cols-[auto_minmax(0,1fr)_auto]">
+              <div className="space-y-1">
+                <Label htmlFor="calendar-rule-emoji">{t("calendar.admin.emoji")}</Label>
+                <Input
+                  ref={ruleEmojiRef}
+                  id="calendar-rule-emoji"
+                  className="w-20 text-center"
+                  value={ruleEmoji}
+                  aria-invalid={emojiRejected || undefined}
+                  aria-describedby="calendar-rule-emoji-hint"
+                  onChange={(event) => setRuleEmoji(event.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="calendar-rule-keywords">{t("calendar.admin.keywords")}</Label>
+                <Input
+                  id="calendar-rule-keywords"
+                  value={ruleKeywords}
+                  placeholder={t("calendar.admin.keywordsPlaceholder")}
+                  aria-describedby="calendar-rule-keywords-hint"
+                  onChange={(event) => setRuleKeywords(event.target.value)}
+                />
+              </div>
+              <Button
+                type="submit"
+                className="col-span-2 justify-self-start sm:col-span-1"
+                disabled={ruleBusy || !emojiValid || keywords.length === 0}
+              >
+                {t("calendar.admin.addRule")}
+              </Button>
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="calendar-rule-keywords">{t("calendar.admin.keywords")}</Label>
-              <Input
-                id="calendar-rule-keywords"
-                value={ruleKeywords}
-                onChange={(event) => setRuleKeywords(event.target.value)}
+            {emojiRejected ? (
+              <ErrorNotice
+                id="calendar-rule-emoji-hint"
+                message={t("calendar.admin.emojiInvalid")}
               />
-            </div>
-            <Button type="submit" disabled={ruleBusy || !ruleEmoji.trim() || keywords.length === 0}>
-              {t("calendar.admin.addRule")}
-            </Button>
+            ) : (
+              <p id="calendar-rule-emoji-hint" className="sr-only">
+                {t("calendar.admin.emojiHint")}
+              </p>
+            )}
+            <p id="calendar-rule-keywords-hint" className="text-muted-foreground text-sm">
+              {t("calendar.admin.keywordsHint")}
+            </p>
           </form>
           {rulesLoading && <p role="status">{t("calendar.admin.loadingRules")}</p>}
           {rulesError && <ErrorNotice message={t("calendar.admin.loadRulesError")} />}

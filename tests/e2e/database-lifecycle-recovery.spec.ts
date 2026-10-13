@@ -1,10 +1,12 @@
 import { execFile } from "node:child_process";
+import { openAdminSection } from "./admin-nav";
 import {
   copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -23,9 +25,6 @@ const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
 const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
 const AS_OF_DATE = "2026-09-23";
 const SERVER_ENTRY = resolve(process.cwd(), "dist", "server", "index.js");
-const BASELINE_FILE = "0000_current_baseline.sql";
-const CALENDAR_FEED_SYNC_MIGRATION_FILE = "0001_calendar_feed_sync.sql";
-const PLUGIN_LIFECYCLE_FILE = "0002_plugin_lifecycle.sql";
 const HEALTH_TIMEOUT_MS = 30_000;
 
 type Backup = { filename: string; type: "scheduled" | "snapshot" | "pre-restore" | "upload" };
@@ -76,7 +75,7 @@ test("database recovery journey uses the existing Backups UI without a product r
       ])
     );
 
-    await page.getByTestId("admin-nav-backups").click();
+    await openAdminSection(page, "admin-nav-backups");
     await expect(page.getByTestId("backups-management")).toBeVisible();
     await expect(page.getByTestId("backups-snapshot-now")).toBeVisible();
     await expect(page.getByTestId("backups-upload-input")).toBeVisible();
@@ -123,7 +122,7 @@ test("database recovery journey uses the existing Backups UI without a product r
       displayName: "Migrated recovery probe",
     });
 
-    await page.getByTestId("admin-nav-backups").click();
+    await openAdminSection(page, "admin-nav-backups");
     await page.getByTestId(`backups-restore-select-${snapshot.filename}`).click();
     await page.getByTestId("backups-restore-confirm-input").fill(snapshot.filename);
     let restoreResult: { status: string; migrated?: boolean } | undefined;
@@ -166,11 +165,12 @@ async function provisionAndUnlock(page: Page, base: string): Promise<void> {
 }
 
 async function mutateHomerThroughMembersUi(page: Page): Promise<void> {
-  await page.getByTestId("admin-nav-members-management").click();
+  await openAdminSection(page, "admin-nav-members-management");
   const homer = page.locator("li").filter({ hasText: "Homer" });
   await expect(homer).toBeVisible();
-  await homer.getByRole("button", { name: /edit|editar/i }).click();
-  await page.getByRole("textbox").fill("Homer MUTATED");
+  // The card is the control: opening it is editing the member.
+  await homer.getByRole("button").click();
+  await page.locator("#member-edit-display-name").fill("Homer MUTATED");
   await page.getByRole("button", { name: /save|guardar/i }).click();
   await expect(page.getByText("Homer MUTATED", { exact: true })).toBeVisible();
 }
@@ -210,21 +210,14 @@ function makeTemporaryMigrationRuntime(): string {
   const migrationsDirectory = join(runtimeDirectory, "drizzle");
   mkdirSync(migrationsDirectory);
   symlinkSync(resolve(process.cwd(), "dist"), join(runtimeDirectory, "dist"), "dir");
-  const baseline = resolve(process.cwd(), "drizzle", BASELINE_FILE);
-  copyFileSync(baseline, join(migrationsDirectory, BASELINE_FILE));
-  const pluginLifecycle = resolve(process.cwd(), "drizzle", PLUGIN_LIFECYCLE_FILE);
-  copyFileSync(pluginLifecycle, join(migrationsDirectory, PLUGIN_LIFECYCLE_FILE));
-  const calendarFeedSyncMigration = resolve(
-    process.cwd(),
-    "drizzle",
-    CALENDAR_FEED_SYNC_MIGRATION_FILE
-  );
-  copyFileSync(
-    calendarFeedSyncMigration,
-    join(migrationsDirectory, CALENDAR_FEED_SYNC_MIGRATION_FILE)
-  );
+  // Every shipped migration, whatever their number, so a new one never needs adding here; the
+  // probe sorts after them all.
+  const shipped = resolve(process.cwd(), "drizzle");
+  for (const file of readdirSync(shipped).filter((name) => name.endsWith(".sql"))) {
+    copyFileSync(join(shipped, file), join(migrationsDirectory, file));
+  }
   writeFileSync(
-    join(migrationsDirectory, "0003_recovery_ui_probe.sql"),
+    join(migrationsDirectory, "9999_recovery_ui_probe.sql"),
     "INSERT INTO members (id, display_name, color_key, role, lifecycle, created_at, updated_at) VALUES ('migration:recovery:probe', 'Migrated recovery probe', 'blue', 'parent', 'active', 0, 0);"
   );
   return runtimeDirectory;

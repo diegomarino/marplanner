@@ -182,6 +182,7 @@ const GET_ROUTE_TEMPLATES = [
   "/api/routines/:id/chores",
   "/api/settings",
   "/api/telemetry/client-log",
+  "/api/telemetry/system-status",
   "/api/time-announcements",
   "/api/weather",
   "/health",

@@ -82,7 +82,7 @@ describe("CalendarView — membersError clears on successful retry (#339)", () =
     );
 
     fireEvent.click(await screen.findByTestId("calendar-event-row"));
-    const assignBtn = await screen.findByTestId("calendar-assign-btn");
+    const assignBtn = await screen.findByTestId("calendar-edit-btn");
     fireEvent.click(assignBtn);
 
     await waitFor(() => {

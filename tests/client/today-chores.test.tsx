@@ -430,7 +430,7 @@ describe("TodayChores", () => {
         if (url.startsWith("/api/chores/board")) return Promise.resolve(json([ari]));
         if (url.includes("/api/day-periods")) return Promise.resolve(json(PERIODS));
         if (url.includes("/api/members"))
-          return Promise.resolve(json([{ id: "ari", displayName: "Ari", colorKey: "rose" }]));
+          return Promise.resolve(json([{ id: "ari", displayName: "Ari", colorKey: "pink" }]));
         throw new Error(`unexpected fetch: ${url}`);
       })
     );
@@ -450,14 +450,20 @@ describe("TodayChores", () => {
     const child = screen.getByTestId("today-chores-column-ari");
     expect(screen.getByRole("region", { name: "Today's chores" })).toHaveClass("h-full");
     expect(screen.getByRole("heading", { name: "Today's chores" })).toBeVisible();
-    expect(child.style.getPropertyValue("--member-color")).toBe("var(--color-member-rose-500)");
+    expect(child.style.getPropertyValue("--member-color")).toBe("var(--color-member-pink-500)");
     expect(within(child).getByTestId("today-chores-member-badge")).toHaveClass(
-      "bg-member-rose-500",
-      "text-member-rose-foreground"
+      "bg-member-pink-500",
+      "text-member-pink-foreground"
     );
-    expect(within(child).getByText("Streak: 4")).toBeInTheDocument();
-    expect(within(child).getByText("Progress: 1/3")).toBeInTheDocument();
-    expect(within(child).getByTestId("today-chore-icon-ari-brush")).toHaveTextContent("🪥");
+    // The labels are visually hidden behind the flame and check icons, but still read out.
+    expect(child).toHaveTextContent("Streak: 4");
+    expect(child).toHaveTextContent("Progress: 1/3");
+    expect(within(child).getByText("Streak:")).toHaveClass("sr-only");
+    expect(within(child).getByText("Progress:")).toHaveClass("sr-only");
+    expect(within(child).getByTestId("today-chore-icon-ari-brush")).toHaveAttribute(
+      "data-emoji",
+      "🪥"
+    );
   });
 
   it("uses member IDs and persisted keys, with neutral fallback for an unknown key", async () => {

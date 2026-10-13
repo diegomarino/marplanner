@@ -3,7 +3,10 @@ import Fastify from "fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "../../src/server/db/client";
 import { listExternalSources } from "../../src/server/modules/calendar/external-sources";
-import { reconcileExternalCalendar } from "../../src/server/modules/calendar/reconcile";
+import {
+  reconcileExternalCalendar,
+  recordUnchangedSynchronization,
+} from "../../src/server/modules/calendar/reconcile";
 import type {
   ParsedCalendar,
   ParsedExternalOccurrence,
@@ -207,5 +210,180 @@ describe("calendar sync publication", () => {
     } finally {
       await app.close();
     }
+  });
+
+  function assignedByTitle(memberNames: string[], titles: string[]): Record<string, string[]> {
+    insertSource();
+    memberNames.forEach((name, index) => {
+      getDb()
+        .prepare(
+          "INSERT INTO members (id, display_name, role, created_at, updated_at) VALUES (?, ?, 'child', ?, ?)"
+        )
+        .run(`member-${index}`, name, index, index);
+    });
+    reconcileExternalCalendar(
+      sourceId,
+      parsed(...titles.map((title, index) => occurrence(`uid-${index}`, title)))
+    );
+    const rows = getDb()
+      .prepare(
+        `SELECT events.title, members.display_name FROM calendar_events events
+         LEFT JOIN calendar_assignments assignments ON assignments.event_id = events.id
+         LEFT JOIN members ON members.id = assignments.member_id
+         ORDER BY members.created_at`
+      )
+      .all() as Array<{ title: string; display_name: string | null }>;
+    const result: Record<string, string[]> = {};
+    for (const row of rows) {
+      result[row.title] ??= [];
+      if (row.display_name) result[row.title].push(row.display_name);
+    }
+    return result;
+  }
+
+  it("assigns members named anywhere in the title, by first name unless it is shared", () => {
+    expect(
+      assignedByTitle(
+        ["Lucas García", "Nico", "María", "Pablo Ruiz", "Pablo Sanz"],
+        [
+          "⚽️ Lucas: Fútbol",
+          "Cumple de maria",
+          "Coro con Nico y Lucas",
+          "Pablo: Trompeta",
+          "Pablo Sanz: Trompeta",
+          "Nicolas: dentista",
+        ]
+      )
+    ).toEqual({
+      "⚽️ Lucas: Fútbol": ["Lucas García"],
+      "Cumple de maria": ["María"],
+      "Coro con Nico y Lucas": ["Lucas García", "Nico"],
+      "Pablo: Trompeta": [],
+      "Pablo Sanz: Trompeta": ["Pablo Sanz"],
+      "Nicolas: dentista": [],
+    });
+  });
+
+  it("assigns initials only as an uppercase title prefix or dash suffix", () => {
+    expect(
+      assignedByTitle(
+        ["Pablo", "Nico", "Lucas", "María"],
+        [
+          "NL: Lenguaje Musical",
+          "🎺 PNLM: Concierto",
+          "P, N: Dentista",
+          "N y L - Coro",
+          "Concierto - PN",
+          "Partido NL en casa",
+          "nl: minúsculas",
+          "ITV: revisión",
+          "PE: gimnasia",
+          "AFC Bournemouth 0:1 Liverpool FC",
+        ]
+      )
+    ).toEqual({
+      "NL: Lenguaje Musical": ["Nico", "Lucas"],
+      "🎺 PNLM: Concierto": ["Pablo", "Nico", "Lucas", "María"],
+      "P, N: Dentista": ["Pablo", "Nico"],
+      "N y L - Coro": ["Nico", "Lucas"],
+      "Concierto - PN": ["Pablo", "Nico"],
+      "Partido NL en casa": [],
+      "nl: minúsculas": [],
+      "ITV: revisión": [],
+      "PE: gimnasia": [],
+      "AFC Bournemouth 0:1 Liverpool FC": [],
+    });
+  });
+
+  it("leaves a shared initial unassigned unless it is repeated once per member", () => {
+    expect(
+      assignedByTitle(
+        ["Marge", "Maggie", "Bart"],
+        ["M: Check-up", "MM: Check-up", "MB: Bowling", "MMB: Bowling", "BB: Skate", "MMM: Party"]
+      )
+    ).toEqual({
+      "M: Check-up": [],
+      "MM: Check-up": ["Marge", "Maggie"],
+      "MB: Bowling": [],
+      "MMB: Bowling": ["Marge", "Maggie", "Bart"],
+      "BB: Skate": [],
+      "MMM: Party": [],
+    });
+  });
+
+  it("re-derives title assignments on an unchanged feed and keeps manual ones", () => {
+    insertSource();
+    reconcileExternalCalendar(
+      sourceId,
+      parsed(
+        occurrence("one", "Bart school"),
+        occurrence("two", "Lisa: Coro"),
+        occurrence("gone", "Bart: Skate", "cancelled")
+      )
+    );
+    expect(getDb().prepare("SELECT id FROM calendar_assignments").all()).toEqual([]);
+
+    for (const [id, name] of [
+      ["member-bart", "Bart"],
+      ["member-lisa", "Lisa"],
+    ]) {
+      getDb()
+        .prepare(
+          "INSERT INTO members (id, display_name, role, created_at, updated_at) VALUES (?, ?, 'child', ?, ?)"
+        )
+        .run(id, name, Date.now(), Date.now());
+    }
+    const lisaEvent = getDb()
+      .prepare("SELECT id FROM calendar_events WHERE title = 'Lisa: Coro'")
+      .get() as { id: string };
+    getDb()
+      .prepare(
+        "INSERT INTO calendar_assignments (id, event_id, member_id, created_at) VALUES ('manual-uuid', ?, 'member-bart', 1)"
+      )
+      .run(lisaEvent.id);
+
+    recordUnchangedSynchronization(sourceId);
+
+    expect(
+      getDb()
+        .prepare(
+          `SELECT events.title, assignments.member_id, assignments.id LIKE 'ext:%' AS derived
+           FROM calendar_assignments assignments
+           JOIN calendar_events events ON events.id = assignments.event_id
+           ORDER BY events.title, assignments.member_id`
+        )
+        .all()
+    ).toEqual([
+      { title: "Bart school", member_id: "member-bart", derived: 1 },
+      { title: "Lisa: Coro", member_id: "member-bart", derived: 0 },
+      { title: "Lisa: Coro", member_id: "member-lisa", derived: 1 },
+    ]);
+  });
+
+  it("leaves title assignments untouched on an unchanged feed while the household is unchanged", () => {
+    insertSource();
+    getDb()
+      .prepare(
+        "INSERT INTO members (id, display_name, role, created_at, updated_at) VALUES ('member-bart', 'Bart', 'child', 1, 1)"
+      )
+      .run();
+    reconcileExternalCalendar(sourceId, parsed(occurrence("one", "Bart school")));
+    const derivedRows = () =>
+      getDb()
+        .prepare("SELECT member_id, created_at FROM calendar_assignments WHERE id LIKE 'ext:%'")
+        .all();
+    const published = derivedRows();
+    expect(published).toHaveLength(1);
+
+    vi.setSystemTime(new Date("2026-09-28T12:05:00Z"));
+    recordUnchangedSynchronization(sourceId);
+    expect(derivedRows()).toEqual(published);
+
+    getDb()
+      .prepare("UPDATE members SET display_name = 'Bartholomew', updated_at = ? WHERE id = ?")
+      .run(Date.now(), "member-bart");
+    vi.setSystemTime(new Date("2026-09-28T12:10:00Z"));
+    recordUnchangedSynchronization(sourceId);
+    expect(derivedRows()).toEqual([]);
   });
 });

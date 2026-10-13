@@ -25,8 +25,10 @@ Visible fields:
 
 - Name
 - Feed URL
-- Provider: Generic ICS, Google, Microsoft, Apple
 - Add source
+
+The provider is not asked for. The server reads it from the feed's host (Google, Microsoft,
+Apple, otherwise generic ICS) and shows it as a label on the source.
 
 The UI submits the supported 15-minute polling interval and has no visible interval control. The API
 may accept other bounded intervals for non-UI clients. A successful submit clears name/URL,

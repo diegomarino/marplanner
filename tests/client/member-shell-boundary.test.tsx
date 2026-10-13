@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
 import expected from "../fixtures/assembly-cohort.json";
 import { Shell } from "@/shell/Shell";
@@ -31,7 +31,7 @@ describe("B1 shell boundary", () => {
     expect(expected.batch).toBe("BFULL");
     expect(expected.installedPluginIds).toHaveLength(9);
     expect(familyRoutes.map((route) => route.id)).toEqual(expected.familyRouteIds);
-    expect(resolveHouseholdRoute("/admin")).toMatchObject({ kind: "admin", id: "member-create" });
+    expect(resolveHouseholdRoute("/admin")).toMatchObject({ kind: "admin", id: "overview" });
     expect(resolveHouseholdRoute("/admin/members")).toMatchObject({ kind: "admin", id: "members" });
     for (const path of ["/calendar", "/chores", "/meals"]) {
       expect(resolveHouseholdRoute(path).kind).toBe("family");
@@ -185,20 +185,31 @@ describe("B1 shell boundary", () => {
       </LanguageProvider>
     );
     const card = await screen.findByTestId("member-card-synthetic-member");
-    fireEvent.click(within(card).getByRole("button", { name: "Edit" }));
+    // The card is the control: opening it is editing it.
+    fireEvent.click(card);
     fireEvent.change(document.getElementById("member-edit-display-name")!, {
       target: { value: "Ava Edited" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
-    await waitFor(() => expect(card).toHaveTextContent("Ava Edited"));
-    fireEvent.click(within(card).getByRole("button", { name: "Archive" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("member-card-synthetic-member")).toHaveTextContent("Ava Edited")
+    );
+    // Archiving sits inside the edit form and asks once more.
+    fireEvent.click(screen.getByTestId("member-card-synthetic-member"));
+    fireEvent.click(await screen.findByTestId("member-archive"));
+    fireEvent.click(await screen.findByTestId("member-lifecycle-confirm"));
     await waitFor(() =>
       expect(screen.queryByTestId("member-card-synthetic-member")).not.toBeInTheDocument()
     );
     fireEvent.click(screen.getByRole("button", { name: "Archived" }));
     const archived = await screen.findByTestId("member-card-synthetic-member");
     expect(archived).toHaveTextContent("Ava Edited");
-    fireEvent.click(within(archived).getByRole("button", { name: "Restore" }));
+    // An archived member opens read-only: the name cannot be changed, only restored.
+    fireEvent.click(archived);
+    expect(document.getElementById("member-edit-display-name")).toBeDisabled();
+    expect(screen.queryByTestId("member-save")).not.toBeInTheDocument();
+    fireEvent.click(await screen.findByTestId("member-restore"));
+    fireEvent.click(await screen.findByTestId("member-lifecycle-confirm"));
     await waitFor(() => expect(member.lifecycle).toBe("active"));
     expect(fetchMock.mock.calls.map(([input]) => String(input))).toContain(
       "/api/members/synthetic-member/restore"

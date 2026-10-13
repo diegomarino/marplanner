@@ -196,6 +196,24 @@ components:
           type: integer
           minimum: 0
           maximum: 100
+        isDay:
+          type: boolean
+          description: Absent when the provider omits it.
+        humidityPct:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Relative humidity. Absent when the provider omits it.
+        windKmh:
+          type: number
+          minimum: 0
+          description: Absent when the provider omits it.
+        sunrise:
+          type: string
+          description: Today's sunrise, ISO datetime in household tz. Absent when the provider omits it.
+        sunset:
+          type: string
+          description: Today's sunset, ISO datetime in household tz. Absent when the provider omits it.
     ForecastHour:
       type: object
       required:
@@ -216,6 +234,9 @@ components:
           type: integer
           minimum: 0
           maximum: 100
+        isDay:
+          type: boolean
+          description: Absent when the provider omits it.
     ForecastDay:
       type: object
       required:

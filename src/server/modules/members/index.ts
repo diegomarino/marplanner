@@ -83,6 +83,30 @@ export function archiveMember(id: string): MemberDTO {
  * @returns {MemberDTO} The current member state (id, displayName, role, lifecycle, birthDate, createdAt, updatedAt).
  * @throws MemberNotFoundError if the member doesn't exist.
  */
+/** Colours held by active members, optionally leaving one member out. Archived members hold
+ * none.
+ */
+function activeColorKeys(exceptId?: string): MemberColorKey[] {
+  return (
+    getDb().prepare("SELECT id, color_key FROM members WHERE lifecycle = 'active'").all() as {
+      id: string;
+      color_key: MemberColorKey;
+    }[]
+  )
+    .filter((row) => row.id !== exceptId)
+    .map((row) => row.color_key);
+}
+
+/** An explicit colour must be free while any colour still is. Once every colour is held a
+ * repeat is unavoidable, so any colour is accepted again.
+ */
+function assertColorAvailable(colorKey: MemberColorKey, exceptId?: string): void {
+  const held = new Set(activeColorKeys(exceptId));
+  if (!held.has(colorKey)) return;
+  if (MEMBER_COLOR_KEYS.every((key) => held.has(key))) return;
+  throw new MemberValidationError(`Colour "${colorKey}" is already used by another active member.`);
+}
+
 export function restoreMember(id: string): MemberDTO {
   const db = getDb();
 
@@ -127,14 +151,24 @@ export function restoreMember(id: string): MemberDTO {
     };
   }
 
-  // Update lifecycle to active and bump updated_at
+  // An archived member holds no colour, so someone may have taken theirs meanwhile. They come
+  // back with it if it is still free, and with the first free colour otherwise.
   const now = Date.now();
-  db.prepare("UPDATE members SET lifecycle = 'active', updated_at = ? WHERE id = ?").run(now, id);
+  const colorKey = db
+    .transaction(() => {
+      const held = activeColorKeys(id);
+      const restored = held.includes(row.color_key) ? chooseMemberColorKey(held) : row.color_key;
+      db.prepare(
+        "UPDATE members SET lifecycle = 'active', color_key = ?, updated_at = ? WHERE id = ?"
+      ).run(restored, now, id);
+      return restored;
+    })
+    .immediate();
 
   return {
     id: row.id,
     displayName: row.display_name,
-    colorKey: row.color_key,
+    colorKey,
     role: row.role as Role,
     lifecycle: "active" as MemberDTO["lifecycle"],
     birthDate:
@@ -225,6 +259,11 @@ export function editMember(
 
   if (!row) {
     throw new MemberNotFoundError(id);
+  }
+
+  // Keeping one's own colour is always allowed, and an archived member reserves nothing.
+  if (colorKey !== undefined && colorKey !== row.color_key && row.lifecycle === "active") {
+    assertColorAvailable(colorKey, id);
   }
 
   const now = Date.now();
@@ -324,6 +363,7 @@ export async function createMember(input: unknown): Promise<MemberDTO> {
       const activeKeys = db
         .prepare("SELECT color_key FROM members WHERE lifecycle = 'active'")
         .all() as { color_key: MemberColorKey }[];
+      if (parsed.data.colorKey) assertColorAvailable(parsed.data.colorKey);
       const assigned =
         parsed.data.colorKey ?? chooseMemberColorKey(activeKeys.map((row) => row.color_key));
       db.prepare(

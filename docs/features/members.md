@@ -90,7 +90,7 @@ so member management cannot be reached or mutated outside admin protection.
 
 - **FR-020**: Given a member's on-screen identity colour, when it is stored or displayed, then it MUST be represented by a key from a closed curated palette and MUST NOT accept a free colour value; it MUST remain presentation identity only and MUST NOT alter monochrome printed output. _(Realizes: MEMBERS-INV-14)_
 
-- **FR-021**: Given the curated palette contains sixteen identity colours, when a member colour is assigned, then the system MUST prefer a colour unused by another active member, and when all sixteen are already in use it MUST allow reuse rather than reject the member. _(Realizes: MEMBERS-AC-10)_
+- **FR-021**: Given the curated palette contains ten identity colours, when a member colour is assigned, then the system MUST prefer a colour unused by another active member, and when all ten are already in use it MUST allow reuse rather than reject the member. An explicitly requested colour held by another active member MUST be rejected while any colour is still free, and a restored member MUST keep their colour only if it is still free, taking the first free one otherwise. _(Realizes: MEMBERS-AC-10)_
 
 ### Key Entities
 

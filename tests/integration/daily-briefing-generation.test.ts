@@ -467,7 +467,7 @@ describe("daily-briefing full generation", () => {
       .prepare("SELECT raster_bits FROM daily_briefing WHERE member_id = ? AND date = ?")
       .get("m1", DATE_FRI) as { raster_bits: Buffer };
 
-    getDb().prepare("UPDATE members SET color_key = ? WHERE id = ?").run("indigo", "m1");
+    getDb().prepare("UPDATE members SET color_key = ? WHERE id = ?").run("violet", "m1");
     await generateBriefing("m1", DATE_FRI);
     const after = getDb()
       .prepare("SELECT raster_bits FROM daily_briefing WHERE member_id = ? AND date = ?")

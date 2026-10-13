@@ -63,11 +63,6 @@ const PANELS: PanelSpec[] = [
     testId: "calendar-management",
   },
   {
-    nav: "admin-nav-member-create",
-    path: "/admin",
-    text: "Add a new member to the household. Admin role is not available.",
-  },
-  {
     nav: "admin-nav-members-management",
     path: "/admin/members",
     heading: "Members Management",
@@ -234,9 +229,8 @@ describe("AdminGate — hideAllPanels resets every panel on switch (review P1-1,
     }
     // If a new admin-nav-* button exists that ISN'T in PANELS, this repo has grown a
     // another panel without updating this fence — fail loudly rather than silently skip it.
-    const renderedNavCount = screen
-      .getAllByRole("button")
-      .filter((el) => el.getAttribute("data-testid")?.startsWith("admin-nav-")).length;
+    // Buttons on the overview's temporary list, links once a page has moved to the sidebar.
+    const renderedNavCount = document.querySelectorAll('[data-testid^="admin-nav-"]').length;
     expect(renderedNavCount).toBe(PANELS.length);
   });
 
@@ -254,7 +248,9 @@ describe("AdminGate — hideAllPanels resets every panel on switch (review P1-1,
       fireEvent.click(screen.getByTestId(from.nav));
       await findMounted(from);
 
-      fireEvent.click(screen.getByTestId(to.nav));
+      // The list of every page lives on the overview until the sidebar covers them.
+      fireEvent.click(screen.getByRole("link", { name: "Overview" }));
+      fireEvent.click(await screen.findByTestId(to.nav));
       await findMounted(to);
 
       expect(window.location.pathname).toBe(to.path);

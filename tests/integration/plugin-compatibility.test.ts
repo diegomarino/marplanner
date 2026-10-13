@@ -33,6 +33,8 @@ const MIGRATIONS_DIR = path.resolve(process.cwd(), "drizzle");
 const BASELINE_FILE = "0000_current_baseline.sql";
 const CALENDAR_FEED_SYNC_FILE = "0001_calendar_feed_sync.sql";
 const LIFECYCLE_FILE = "0002_plugin_lifecycle.sql";
+const CALENDAR_EVENT_DETAILS_FILE = "0003_calendar_event_details.sql";
+const MEMBER_PALETTE_FILE = "0004_member_palette.sql";
 const FROZEN_NOW = "2026-09-27T10:15:30.000Z";
 const FROZEN_NOW_MS = Date.parse(FROZEN_NOW);
 const DEVICE_KEY = "plugin-compatibility-device";
@@ -218,6 +220,10 @@ function buildBackupFixture(
       applyRealMigration(db, LIFECYCLE_FILE);
       db.exec("DROP TABLE temp.plugin_lifecycle_migration_context");
       recordMigration(db, LIFECYCLE_FILE);
+      applyRealMigration(db, CALENDAR_EVENT_DETAILS_FILE);
+      recordMigration(db, CALENDAR_EVENT_DETAILS_FILE);
+      applyRealMigration(db, MEMBER_PALETTE_FILE);
+      recordMigration(db, MEMBER_PALETTE_FILE);
       applyFixture("migrated-prior", db);
       if (options.interruptedDeactivation) {
         db.prepare(

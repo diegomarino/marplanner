@@ -1,8 +1,8 @@
 import { Textarea } from "@/components/ui/textarea";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ComponentProps } from "react";
 
 import { Button } from "@/components/ui/button";
-import { CheckboxField } from "@/components/CheckboxField";
+import { PillToggle } from "@/components/PillToggle";
 import { Field } from "@/components/Field";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,6 +17,22 @@ import { useTranslation } from "@/i18n";
 import type { Recipe, RecipeEditInput, RecipeInput, Slot } from "../../shared";
 
 const SLOTS: Slot[] = ["breakfast", "lunch", "snack", "dinner"];
+
+/** A textarea that starts at its usual size and grows with its text, so a long ingredient list
+ * or method is read in full. The caller caps the height; past the cap the field scrolls inside
+ * itself, which keeps the dialog's own buttons on screen.
+ */
+function GrowingTextarea({ value, ...props }: ComponentProps<typeof Textarea>) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    // Collapse first: scrollHeight never reports less than the current height.
+    element.style.height = "auto";
+    if (element.scrollHeight > 0) element.style.height = `${element.scrollHeight + 2}px`;
+  }, [value]);
+  return <Textarea ref={ref} value={value} {...props} />;
+}
 
 interface RecipeDialogProps {
   open: boolean;
@@ -69,7 +85,10 @@ export function RecipeDialog({ open, mode, recipe, onClose, onSave }: RecipeDial
         if (!next && !saving) onClose();
       }}
     >
-      <DialogContent closeLabel={t("meals.recipes.detailClose")}>
+      <DialogContent
+        closeLabel={t("meals.recipes.detailClose")}
+        className="max-h-[calc(100dvh-2rem)] overflow-y-auto"
+      >
         <DialogHeader>
           <DialogTitle>
             {mode === "create" ? t("meals.recipes.createTitle") : t("meals.action.edit")}
@@ -80,26 +99,26 @@ export function RecipeDialog({ open, mode, recipe, onClose, onSave }: RecipeDial
             <Input value={name} onChange={(event) => setName(event.target.value)} />
           </Field>
           <Field label={t("meals.recipes.ingredientsLabel")}>
-            <Textarea
+            <GrowingTextarea
               aria-label={t("meals.recipes.ingredientsInputLabel")}
               value={ingredients}
               onChange={(event) => setIngredients(event.target.value)}
-              className="min-h-24"
+              className="max-h-[25dvh] min-h-24 resize-none overflow-y-auto"
             />
           </Field>
           <Field label={t("meals.recipes.instructionsLabel")}>
-            <Textarea
+            <GrowingTextarea
               aria-label={t("meals.recipes.instructionsInputLabel")}
               value={instructions}
               onChange={(event) => setInstructions(event.target.value)}
-              className="min-h-24"
+              className="max-h-[25dvh] min-h-24 resize-none overflow-y-auto"
             />
           </Field>
           <fieldset>
             <legend className="mb-2 text-sm font-medium">{t("meals.recipes.slotsLabel")}</legend>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
               {SLOTS.map((slot) => (
-                <CheckboxField
+                <PillToggle
                   key={slot}
                   label={t(
                     `meals.slot.${slot}` as

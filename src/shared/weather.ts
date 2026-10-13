@@ -105,6 +105,15 @@ export interface ForecastCurrent {
   conditionKey: WeatherConditionKey;
   tempC: number;
   rainPct: number;
+  /** The optional fields below are absent when the provider omits them; a consumer renders
+   * without them rather than treating the forecast as failed. */
+  isDay?: boolean;
+  /** Relative humidity, integer percent. */
+  humidityPct?: number;
+  windKmh?: number;
+  /** Today's sunrise/sunset, ISO datetime, household tz. */
+  sunrise?: string;
+  sunset?: string;
 }
 
 /** One hourly entry of a normalized forecast. */
@@ -114,6 +123,8 @@ export interface ForecastHour {
   conditionKey: WeatherConditionKey;
   tempC: number;
   rainPct: number;
+  /** Absent when the provider omits it. */
+  isDay?: boolean;
 }
 
 /** One daily entry of a normalized forecast. */

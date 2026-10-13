@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Apple, ChefHat, Coffee, Edit2, Plus, Search, Utensils } from "lucide-react";
+import { Apple, ChefHat, ChevronRight, Coffee, Plus, Search, Utensils } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ErrorNotice } from "@/components/ErrorNotice";
@@ -8,16 +8,13 @@ import { Input } from "@/components/ui/input";
 import { useTranslation } from "@/i18n";
 import { cn } from "@/lib/utils";
 import type { Recipe, RecipeEditInput, RecipeInput, Slot } from "../../shared";
-import { RecipeDetailDialog } from "./RecipeDetailDialog";
 import { RecipeDialog } from "./RecipeDialog";
 
-const SLOTS: Slot[] = ["breakfast", "lunch", "snack", "dinner"];
-
 const SLOT_BADGES: Record<Slot, { Icon: LucideIcon; className: string }> = {
-  breakfast: { Icon: Coffee, className: "bg-accent/20 text-accent-foreground" },
-  lunch: { Icon: Utensils, className: "bg-primary/10 text-primary" },
-  snack: { Icon: Apple, className: "bg-destructive/10 text-destructive" },
-  dinner: { Icon: ChefHat, className: "bg-secondary text-secondary-foreground" },
+  breakfast: { Icon: Coffee, className: "bg-meal-breakfast/15 text-meal-breakfast" },
+  lunch: { Icon: Utensils, className: "bg-meal-lunch/15 text-meal-lunch" },
+  snack: { Icon: Apple, className: "bg-meal-snack/15 text-meal-snack" },
+  dinner: { Icon: ChefHat, className: "bg-meal-dinner/15 text-meal-dinner" },
 };
 
 interface RecipeCatalogueProps {
@@ -38,7 +35,6 @@ export function RecipeCatalogue({
   onRetry,
 }: RecipeCatalogueProps) {
   const { t } = useTranslation();
-  const [selected, setSelected] = useState<Recipe | null>(null);
   const [editing, setEditing] = useState<Recipe | null>(null);
   const [creating, setCreating] = useState(false);
   return (
@@ -85,44 +81,44 @@ export function RecipeCatalogue({
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <Button
-                    type="button"
-                    variant="link"
-                    wrap
-                    className="justify-start p-0 text-left font-semibold"
-                    onClick={() => setSelected(recipe)}
-                  >
-                    {recipe.name}
-                  </Button>
-                  <div className="mt-2 flex flex-wrap gap-1 text-xs">
-                    {(recipe.slots?.length ? recipe.slots : SLOTS).map((slot) => {
-                      const { Icon, className } = SLOT_BADGES[slot];
-                      return (
-                        <span
-                          key={slot}
-                          data-testid={`recipe-slot-badge-${slot}`}
-                          className={cn(
-                            "inline-flex items-center gap-1 rounded-full border border-current/15 px-2 py-1",
-                            className
-                          )}
-                        >
-                          <Icon
-                            aria-hidden="true"
-                            data-testid="recipe-slot-icon"
-                            className="size-3"
-                          />
-                          {recipe.slots?.length
-                            ? t(
-                                `meals.slot.${slot}` as
-                                  | "meals.slot.breakfast"
-                                  | "meals.slot.lunch"
-                                  | "meals.slot.snack"
-                                  | "meals.slot.dinner"
-                              )
-                            : t("meals.recipes.allSlots")}
-                        </span>
-                      );
-                    })}
+                  <h3 className="text-control font-semibold break-words">{recipe.name}</h3>
+                  <div className="mt-1 flex flex-wrap gap-1 text-xs">
+                    {recipe.slots?.length ? (
+                      recipe.slots.map((slot) => {
+                        const { Icon, className } = SLOT_BADGES[slot];
+                        return (
+                          <span
+                            key={slot}
+                            data-testid={`recipe-slot-badge-${slot}`}
+                            className={cn(
+                              "inline-flex items-center gap-1 rounded-full border border-current/15 px-2 py-1",
+                              className
+                            )}
+                          >
+                            <Icon
+                              aria-hidden="true"
+                              data-testid="recipe-slot-icon"
+                              className="size-3"
+                            />
+                            {t(
+                              `meals.slot.${slot}` as
+                                | "meals.slot.breakfast"
+                                | "meals.slot.lunch"
+                                | "meals.slot.snack"
+                                | "meals.slot.dinner"
+                            )}
+                          </span>
+                        );
+                      })
+                    ) : (
+                      // No slots stored means the recipe suits every meal: say so once.
+                      <span
+                        data-testid="recipe-slot-badge-all"
+                        className="bg-muted text-muted-foreground inline-flex items-center rounded-full border border-current/15 px-2 py-1"
+                      >
+                        {t("meals.recipes.allSlots")}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <Button
@@ -130,22 +126,17 @@ export function RecipeCatalogue({
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground"
-                  title={t("meals.action.edit")}
-                  aria-label={t("meals.action.edit")}
+                  title={t("meals.recipes.openDetail")}
+                  aria-label={`${t("meals.recipes.openDetail")}: ${recipe.name}`}
                   onClick={() => setEditing(recipe)}
                 >
-                  <Edit2 aria-hidden="true" />
+                  <ChevronRight aria-hidden="true" />
                 </Button>
               </div>
             </article>
           ))
         )}
       </div>
-      <RecipeDetailDialog
-        recipe={selected}
-        open={selected !== null}
-        onClose={() => setSelected(null)}
-      />
       <RecipeDialog
         open={creating}
         mode="create"

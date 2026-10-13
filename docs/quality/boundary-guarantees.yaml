@@ -510,7 +510,7 @@ guarantees:
     disposition: active
     owner: members
     spec: members
-    note: "sixteen colours; prefer unused among active members and allow reuse after exhaustion"
+    note: "ten colours; prefer unused among active members, reject a held colour while one is free, allow reuse after exhaustion"
 
   # ── Calendar domain — design (active, locally owned) ────────────────────────────
   # 17 in-G CALENDAR guarantees realized by calendar feature contract (deferred). The moved-in

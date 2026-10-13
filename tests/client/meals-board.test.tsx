@@ -112,7 +112,7 @@ describe("MealsBoard weekly planner", () => {
     );
     await screen.findByTestId("meal-plan-grid");
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "ham" } });
-    expect(await screen.findByRole("button", { name: "Steamed Hams" })).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Steamed Hams" })).toBeVisible();
   });
 
   it("renders seven dates, fixed slot rows, duplicate labels, and an add affordance", async () => {

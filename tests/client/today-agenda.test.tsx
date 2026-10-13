@@ -20,7 +20,7 @@ const members: Member[] = [
   {
     id: "b",
     displayName: "Blair",
-    colorKey: "rose",
+    colorKey: "pink",
     role: Role.parent,
     lifecycle: "active",
     createdAt: 0,
@@ -149,7 +149,7 @@ describe("household-day range and projection", () => {
   it("retains assignment order and readable archived/missing references without active identity", () => {
     const item = presentAgenda([events[1]], members, "UTC", NOW)[0];
     expect(item.activeAssignees).toEqual([
-      { memberId: "b", label: "Blair", colorKey: "rose" },
+      { memberId: "b", label: "Blair", colorKey: "pink" },
       { memberId: "a", label: "Alex", colorKey: "blue" },
     ]);
     expect(item.fallbackAssigneeLabels).toEqual(["Casey", "missing"]);
@@ -225,7 +225,7 @@ function mount() {
   );
 }
 function row(title: string): HTMLElement {
-  const element = screen.getByRole("heading", { name: title, level: 3 }).closest("li");
+  const element = screen.getByRole("heading", { name: title, level: 4 }).closest("li");
   if (!element) throw new Error(`Missing agenda row: ${title}`);
   return element;
 }
@@ -400,17 +400,17 @@ describe("TodayAgenda", () => {
       "/calendar"
     );
     expect(within(agenda).getByText("Tuesday, September 22")).toBeVisible();
-    expect(within(agenda).getByRole("list")).toHaveClass("overflow-y-auto");
+    expect(within(agenda).getByTestId("agenda-groups")).toHaveClass("overflow-y-auto");
     expect(
-      screen.getAllByRole("listitem").map((item) => item.querySelector("h3")?.textContent)
+      screen.getAllByRole("listitem").map((item) => item.querySelector("h4")?.textContent)
     ).toEqual(["All day", "Past", "First tie", "Second tie", "Starting now", "Later"]);
-    expect(row("First tie")).toHaveClass("border-l-4", "border-l-member-rose-500");
+    expect(row("First tie")).toHaveClass("border-l-4", "border-l-member-pink-500");
     expect(row("First tie").style.getPropertyValue("--member-event-background")).toContain(
       "repeating-linear-gradient(135deg"
     );
     expect(row("First tie")).toHaveClass("member-event-surface");
     expect(row("First tie").style.getPropertyValue("--member-event-background")).toContain(
-      "--color-member-rose-500"
+      "--color-member-pink-500"
     );
     expect(row("First tie").style.getPropertyValue("--member-event-background")).toContain(
       "--color-member-blue-500"
@@ -424,13 +424,9 @@ describe("TodayAgenda", () => {
     expect(within(row("Past")).getAllByText("Past")).toHaveLength(2);
     expect(row("Past")).toHaveClass("text-muted-foreground");
     expect(screen.queryByText("Next")).not.toBeInTheDocument();
-    expect(within(row("First tie")).getByText("Blair")).toHaveClass("bg-member-rose-500");
-    expect(within(row("First tie")).getByText("Alex")).toHaveClass("bg-member-blue-500");
-    expect(within(row("First tie")).getByText("Casey")).not.toHaveClass("bg-member-green-500");
-    expect(within(row("First tie")).getByText("missing")).toBeVisible();
-    expect(within(row("All day")).getByText("Alex")).toHaveClass("bg-member-blue-500");
-    expect(within(row("All day")).getByText("Blair")).toHaveClass("bg-member-rose-500");
-    expect(within(row("Starting now")).getByText("Alex")).toHaveClass("bg-member-blue-500");
+    expect(row("First tie")).toHaveTextContent("Blair, Alex, Casey, missing");
+    expect(row("All day")).toHaveTextContent("Alex, Blair");
+    expect(row("Starting now")).toHaveTextContent("Alex");
     const url = new URL(
       requests.find((url) => url.startsWith("/api/calendar/events?"))!,
       "http://localhost"
@@ -440,6 +436,114 @@ describe("TodayAgenda", () => {
       from: "2026-09-21T22:00:00.000Z",
       to: "2026-09-23T00:00:00.000Z",
     });
+  });
+
+  it("groups all-day and scheduled events under their own labelled lists", async () => {
+    backend();
+    mount();
+    await screen.findByText("First tie");
+    const titles = (name: string) =>
+      within(screen.getByRole("list", { name }))
+        .getAllByRole("listitem")
+        .map((item) => item.querySelector("h4")?.textContent);
+    expect(screen.getAllByRole("heading", { level: 3 }).map((item) => item.textContent)).toEqual([
+      "All day",
+      "Scheduled",
+    ]);
+    expect(titles("All day")).toEqual(["All day"]);
+    expect(titles("Scheduled")).toEqual([
+      "Past",
+      "First tie",
+      "Second tie",
+      "Starting now",
+      "Later",
+    ]);
+    expect(within(row("All day")).queryByTestId("agenda-time")).not.toBeInTheDocument();
+  });
+
+  it("omits a group that has no events", async () => {
+    backend({ calendar: async () => json(events.filter((item) => item.allDay)) });
+    mount();
+    await screen.findByRole("heading", { name: "All day", level: 4 });
+    expect(screen.getByRole("list", { name: "All day" })).toBeVisible();
+    expect(screen.queryByRole("list", { name: "Scheduled" })).not.toBeInTheDocument();
+  });
+
+  it("stacks the start time over the end time and omits a missing end", async () => {
+    backend({
+      calendar: async () =>
+        json([
+          event("Bounded", "2026-09-22T13:00:00Z", "2026-09-22T16:00:00Z"),
+          event("Point", "2026-09-22T17:00:00Z"),
+          event("Overnight", "2026-09-22T21:00:00Z", "2026-09-22T23:30:00Z"),
+        ]),
+    });
+    mount();
+    await screen.findByText("Bounded");
+    const times = (title: string) =>
+      [...within(row(title)).getByTestId("agenda-time").querySelectorAll("time")].map((item) => [
+        item.textContent,
+        item.dateTime,
+      ]);
+    expect(times("Bounded")).toEqual([
+      ["15:00", "2026-09-22T13:00:00Z"],
+      ["18:00", "2026-09-22T16:00:00Z"],
+    ]);
+    expect(within(row("Bounded")).getByText("18:00")).toHaveClass("text-muted-foreground");
+    expect(within(row("Bounded")).getByText("15:00")).not.toHaveClass("text-muted-foreground");
+    expect(times("Point")).toEqual([["19:00", "2026-09-22T17:00:00Z"]]);
+    // An end past household midnight shows its clock time; the instant stays in dateTime.
+    expect(times("Overnight")).toEqual([
+      ["23:00", "2026-09-22T21:00:00Z"],
+      ["01:30", "2026-09-22T23:30:00Z"],
+    ]);
+  });
+
+  it("paints an unowned all-day event with the all-day surface and an owned one with member identity", async () => {
+    backend({
+      calendar: async () =>
+        json([
+          event("Birthday", "2026-09-22", undefined, { allDay: true }),
+          event("Archived only", "2026-09-22", undefined, { allDay: true, assignedTo: ["c"] }),
+          event("PE", "2026-09-22", undefined, { allDay: true, assignedTo: ["a"] }),
+          event("Trip", "2026-09-22", undefined, { allDay: true, assignedTo: ["a", "b"] }),
+          event("Errand", "2026-09-22T14:00:00Z", "2026-09-22T15:00:00Z"),
+        ]),
+    });
+    mount();
+    await screen.findByText("Birthday");
+    for (const title of ["Birthday", "Archived only"]) {
+      expect(row(title)).toHaveClass("bg-event-all-day", "border-l-event-all-day-border");
+      expect(row(title)).not.toHaveClass("member-event-surface");
+    }
+    expect(row("PE")).toHaveClass("member-event-surface", "border-l-member-blue-500");
+    expect(row("PE")).not.toHaveClass("bg-event-all-day");
+    expect(row("PE").style.getPropertyValue("--member-event-background")).toContain(
+      "--color-member-blue-500"
+    );
+    expect(row("Trip")).not.toHaveClass("bg-event-all-day");
+    expect(row("Trip").style.getPropertyValue("--member-event-background")).toContain(
+      "repeating-linear-gradient(135deg"
+    );
+    expect(row("Errand")).toHaveClass("member-event-surface", "border-l-transparent");
+    expect(row("Errand")).not.toHaveClass("bg-event-all-day");
+  });
+
+  it("keeps status and assignee names out of sight but present for assistive technology", async () => {
+    backend();
+    mount();
+    await screen.findByText("First tie");
+    const details = (title: string) => within(row(title)).getByTestId("agenda-details");
+    expect(details("First tie")).toHaveClass("sr-only");
+    expect(details("First tie")).toHaveTextContent("In progress, Blair, Alex, Casey, missing");
+    expect(details("All day")).toHaveTextContent("Alex, Blair");
+    expect(details("Later")).toHaveTextContent("Later, Unassigned");
+    for (const name of ["Blair", "Alex", "Casey", "missing", "Unassigned", "In progress"]) {
+      for (const node of screen.getAllByText(name)) {
+        expect(node.closest(".sr-only")).not.toBeNull();
+      }
+    }
+    expect(document.querySelector("[class*='bg-member-']")).toBeNull();
   });
 
   it("keeps a pending agenda local and shows an explicit empty state on success", async () => {
@@ -498,7 +602,10 @@ describe("TodayAgenda", () => {
     mount();
     await screen.findByText("First tie");
     expect(await screen.findByRole("region", { name: "Agenda de hoy" })).toBeVisible();
-    expect(within(row("All day")).getByText("Todo el día")).toBeVisible();
+    expect(
+      within(screen.getByRole("list", { name: "Todo el día" })).getAllByRole("listitem")
+    ).toHaveLength(1);
+    expect(screen.getByRole("list", { name: "Programado" })).toBeVisible();
     expect(within(row("Past")).getByText("A continuación")).toBeVisible();
     expect(row("Past")).toHaveClass("font-semibold");
     expect(screen.queryByText("In progress")).not.toBeInTheDocument();

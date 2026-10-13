@@ -381,7 +381,7 @@ describe("Shell — unprovisioned gate", () => {
     fireEvent.pointerDown(admin, { pointerId: 1 });
 
     expect(window.location.pathname).toBe("/admin");
-    expect(await screen.findByTestId("admin-nav-member-create")).toBeInTheDocument();
+    expect(await screen.findByTestId("admin-nav-calendar")).toBeInTheDocument();
     expect(screen.queryByTestId("admin-pin-keypad")).not.toBeInTheDocument();
     expect(screen.queryByRole("group", { name: "Options" })).not.toBeInTheDocument();
   });

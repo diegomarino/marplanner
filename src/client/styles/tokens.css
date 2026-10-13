@@ -28,9 +28,24 @@
   --accent: oklch(0.78 0.17 85);
   --accent-foreground: oklch(0.28 0.17 85);
   --destructive: oklch(0.58 0.22 25);
+  --success: oklch(0.5 0.11 150);
   --border: oklch(0.91 0.01 60);
   --input: oklch(0.91 0.01 60);
   --ring: #5a5a40;
+  /* Surface of an all-day calendar event that belongs to no member. */
+  --event-all-day: #ffd578;
+  --event-all-day-border: oklch(0.78 0.18 55);
+  /* Weather icon tints: graphics and their rain figures on card/muted surfaces. */
+  --weather-sun: oklch(0.66 0.14 75);
+  --weather-rain: oklch(0.5 0.11 245);
+  --weather-frost: oklch(0.58 0.08 220);
+  --weather-storm: oklch(0.5 0.12 295);
+  --weather-cloud: oklch(0.55 0.015 60);
+  /* Meal slots: one hue each, dark enough to read as text on its own light tint. */
+  --meal-breakfast: oklch(0.55 0.13 75);
+  --meal-lunch: oklch(0.5 0.11 150);
+  --meal-snack: oklch(0.55 0.17 25);
+  --meal-dinner: oklch(0.48 0.12 275);
   /* Comfortable density — kiosk overrides live in globals.css. */
   --control-height: 36px;
   --control-font-size: 14px;
