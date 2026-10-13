@@ -60,6 +60,11 @@
   --color-ring: var(--ring);
   --color-event-all-day: var(--event-all-day);
   --color-event-all-day-border: var(--event-all-day-border);
+  --color-weather-sun: var(--weather-sun);
+  --color-weather-rain: var(--weather-rain);
+  --color-weather-frost: var(--weather-frost);
+  --color-weather-storm: var(--weather-storm);
+  --color-weather-cloud: var(--weather-cloud);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

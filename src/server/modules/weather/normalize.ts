@@ -45,6 +45,28 @@ function asNumber(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
 
+/** Optional provider fields: a missing or malformed value is left out of the normalized
+ * entry, never defaulted to a number or flag the provider did not report.
+ */
+function optionalNumber(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function optionalIsDay(value: unknown): boolean | undefined {
+  return value === 1 ? true : value === 0 ? false : undefined;
+}
+
+function optionalDateTime(value: unknown): string | undefined {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)
+    ? value
+    : undefined;
+}
+
+/** Drops `undefined` members so an absent optional field is absent on the wire too. */
+function compact<T extends object>(entry: T): T {
+  return Object.fromEntries(Object.entries(entry).filter(([, value]) => value !== undefined)) as T;
+}
+
 /** WMO code field may arrive as `weather_code` (current API) — malformed/absent -> "unknown". */
 function conditionKeyFromRaw(value: unknown): ForecastCurrent["conditionKey"] {
   return typeof value === "number" ? conditionKeyForCode(value) : conditionKeyForCode(NaN);
@@ -52,7 +74,8 @@ function conditionKeyFromRaw(value: unknown): ForecastCurrent["conditionKey"] {
 
 function normalizeCurrent(
   raw: unknown,
-  hourly: { time: string[]; precipitationProbability: number[] }
+  hourly: { time: string[]; precipitationProbability: number[] },
+  today: { sunrise?: string; sunset?: string }
 ): ForecastCurrent {
   if (!isRecord(raw)) throw new WeatherNormalizeError("missing_current");
   const time = typeof raw.time === "string" ? raw.time : undefined;
@@ -71,11 +94,18 @@ function normalizeCurrent(
       ? hourly.precipitationProbability[hourIndex]
       : (hourly.precipitationProbability[0] ?? 0);
 
-  return {
+  const humidity = optionalNumber(raw.relative_humidity_2m);
+  const wind = optionalNumber(raw.wind_speed_10m);
+  return compact({
     conditionKey: conditionKeyFromRaw(raw.weather_code),
     tempC: asNumber(raw.temperature_2m),
     rainPct: clampRainPct(asNumber(rainSource)),
-  };
+    isDay: optionalIsDay(raw.is_day),
+    humidityPct: humidity === undefined ? undefined : clampRainPct(humidity),
+    windKmh: wind === undefined ? undefined : Math.max(0, wind),
+    sunrise: today.sunrise,
+    sunset: today.sunset,
+  });
 }
 
 function normalizeHourlyBlock(raw: unknown): {
@@ -92,18 +122,22 @@ function normalizeHourlyBlock(raw: unknown): {
     ? (raw.precipitation_probability as unknown[])
     : [];
   const weatherCode = Array.isArray(raw.weather_code) ? (raw.weather_code as unknown[]) : [];
+  const isDay = Array.isArray(raw.is_day) ? (raw.is_day as unknown[]) : [];
 
   const timeStrings = time.map((t) => (typeof t === "string" ? t : ""));
   const rainPcts = timeStrings.map((_, i) => asNumber(precipitationProbability[i]));
 
   const entries: ForecastHour[] = timeStrings
     .filter((t) => t.length > 0)
-    .map((t, i) => ({
-      time: t,
-      conditionKey: conditionKeyFromRaw(weatherCode[i]),
-      tempC: asNumber(temperature[i]),
-      rainPct: clampRainPct(rainPcts[i]),
-    }));
+    .map((t, i) =>
+      compact({
+        time: t,
+        conditionKey: conditionKeyFromRaw(weatherCode[i]),
+        tempC: asNumber(temperature[i]),
+        rainPct: clampRainPct(rainPcts[i]),
+        isDay: optionalIsDay(isDay[i]),
+      })
+    );
 
   return { time: timeStrings, precipitationProbability: rainPcts, entries };
 }
@@ -136,6 +170,16 @@ function normalizeDaily(raw: unknown): ForecastDay[] {
     }));
 }
 
+/** Today's sunrise/sunset from the daily block. They travel on `current`, not on
+ * `ForecastDay`: the Daily Briefing persists `ForecastDay` under a closed contract.
+ */
+function todaySun(raw: unknown): { sunrise?: string; sunset?: string } {
+  if (!isRecord(raw)) return {};
+  const sunrise = Array.isArray(raw.sunrise) ? (raw.sunrise as unknown[]) : [];
+  const sunset = Array.isArray(raw.sunset) ? (raw.sunset as unknown[]) : [];
+  return { sunrise: optionalDateTime(sunrise[0]), sunset: optionalDateTime(sunset[0]) };
+}
+
 /** Normalize a raw Open-Meteo `/v1/forecast` response into the closed `ForecastResult` shape.
  * Throws `WeatherNormalizeError` when `current`, `hourly`, or `daily` is absent/malformed —
  * the port catches this and treats it exactly like any other fetch failure (null + one
@@ -145,10 +189,11 @@ export function normalizeForecast(raw: unknown): ForecastResult {
   if (!isRecord(raw)) throw new WeatherNormalizeError("missing_current");
 
   const hourlyBlock = normalizeHourlyBlock(raw.hourly);
-  const current = normalizeCurrent(raw.current, {
-    time: hourlyBlock.time,
-    precipitationProbability: hourlyBlock.precipitationProbability,
-  });
+  const current = normalizeCurrent(
+    raw.current,
+    { time: hourlyBlock.time, precipitationProbability: hourlyBlock.precipitationProbability },
+    todaySun(raw.daily)
+  );
   const daily = normalizeDaily(raw.daily);
 
   return {

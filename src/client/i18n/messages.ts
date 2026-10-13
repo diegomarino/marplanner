@@ -1007,6 +1007,11 @@ export const messages = {
     "weather.modal.now": "Now",
     "weather.modal.hourly": "Next hours",
     "weather.modal.daily": "Coming days",
+    "weather.modal.rain": "Rain",
+    "weather.modal.humidity": "Humidity",
+    "weather.modal.wind": "Wind",
+    "weather.modal.sun": "Sunrise and sunset",
+    "weather.pill.range": "Today's low and high",
 
     // Weather admin panel chrome (location set/clear + optional
     // geolocation prefill, FR-005..FR-010).
@@ -2228,6 +2233,11 @@ export const messages = {
     "weather.modal.now": "Ahora",
     "weather.modal.hourly": "Próximas horas",
     "weather.modal.daily": "Próximos días",
+    "weather.modal.rain": "Lluvia",
+    "weather.modal.humidity": "Humedad",
+    "weather.modal.wind": "Viento",
+    "weather.modal.sun": "Amanecer y atardecer",
+    "weather.pill.range": "Mínima y máxima de hoy",
 
     // Weather admin panel chrome, Spanish mirror of the en block above
     // (same key set — parity test).

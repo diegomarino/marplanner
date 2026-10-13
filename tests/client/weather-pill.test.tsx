@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HouseholdSettingsProvider } from "@/lib/householdSettings";
 import { LanguageProvider } from "@/i18n";
@@ -503,6 +503,133 @@ describe("WeatherPillView — modal content (PR review P1-2/P2-3)", () => {
     await screen.findByTestId("weather-modal");
     expect(screen.getByText("Cerrar")).toBeInTheDocument();
     expect(screen.queryByText("Close")).not.toBeInTheDocument();
+  });
+
+  it("draws a tinted condition icon and today's range, and the rain chance only from 20%", async () => {
+    const dry: ForecastResult = {
+      current: { conditionKey: "clear", tempC: 20, rainPct: 10, isDay: false },
+      hourly: [],
+      daily: [
+        { date: "2026-09-04", conditionKey: "clear", tempMinC: 14.6, tempMaxC: 26.2, rainPct: 10 },
+      ],
+    };
+    writeWeatherCache(41.1, -3.1, { fetchedAt: Date.now(), result: dry });
+    const { unmount } = render(<WeatherPillView lat={41.1} lon={-3.1} />);
+
+    const condition = await screen.findByTestId("weather-pill-condition");
+    const icon = condition.querySelector("svg");
+    expect(icon).toHaveAttribute("data-weather-icon", "wi-night-clear");
+    expect(icon).toHaveClass("text-weather-sun");
+    expect(icon).toHaveAttribute("aria-hidden", "true");
+    expect(condition).toHaveTextContent("Clear");
+    expect(screen.getByTestId("weather-pill-range")).toHaveTextContent("15–26°");
+    // Still announced, not drawn.
+    expect(screen.getByTestId("weather-pill-rain")).toHaveTextContent("10%");
+    expect(screen.getByTestId("weather-pill-rain")).toHaveClass("sr-only");
+    unmount();
+
+    const wet: ForecastResult = {
+      current: { conditionKey: "rainShowers", tempC: 12, rainPct: 20, isDay: true },
+      hourly: [],
+      daily: [],
+    };
+    writeWeatherCache(42.2, -3.2, { fetchedAt: Date.now(), result: wet });
+    render(<WeatherPillView lat={42.2} lon={-3.2} />);
+
+    const rain = await screen.findByTestId("weather-pill-rain");
+    expect(rain).toHaveTextContent("20%");
+    expect(rain).not.toHaveClass("sr-only");
+    expect(rain.querySelector("svg")).toHaveAttribute("data-weather-icon", "wi-raindrop");
+    expect(screen.getByTestId("weather-pill-condition").querySelector("svg")).toHaveClass(
+      "text-weather-rain"
+    );
+    expect(screen.queryByTestId("weather-pill-range")).not.toBeInTheDocument();
+  });
+
+  it("shows humidity, wind and sun times only when the forecast carries them", async () => {
+    const full: ForecastResult = {
+      current: {
+        conditionKey: "partlyCloudy",
+        tempC: 19,
+        rainPct: 0,
+        isDay: true,
+        humidityPct: 88,
+        windKmh: 3.4,
+        sunrise: "2026-09-04T07:41",
+        sunset: "2026-09-04T20:39",
+      },
+      hourly: [],
+      daily: [],
+    };
+    writeWeatherCache(43.3, -3.3, { fetchedAt: Date.now(), result: full });
+    const { unmount } = render(<WeatherPillView lat={43.3} lon={-3.3} />);
+    fireEvent.click(await screen.findByTestId("weather-pill"));
+
+    const modal = await screen.findByTestId("weather-modal");
+    expect(within(modal).getByText("Humidity").nextElementSibling).toHaveTextContent("88%");
+    expect(within(modal).getByText("Wind").nextElementSibling).toHaveTextContent("3 km/h");
+    expect(within(modal).getByText("Sunrise and sunset").nextElementSibling).toHaveTextContent(
+      "07:41 – 20:39"
+    );
+    expect(within(modal).getByText("Rain").nextElementSibling).toHaveTextContent("0%");
+    unmount();
+
+    const bare: ForecastResult = {
+      current: { conditionKey: "partlyCloudy", tempC: 19, rainPct: 0, sunrise: "2026-09-04T07:41" },
+      hourly: [],
+      daily: [],
+    };
+    writeWeatherCache(44.4, -3.4, { fetchedAt: Date.now(), result: bare });
+    render(<WeatherPillView lat={44.4} lon={-3.4} />);
+    fireEvent.click(await screen.findByTestId("weather-pill"));
+
+    const bareModal = await screen.findByTestId("weather-modal");
+    expect(within(bareModal).getByText("Rain")).toBeInTheDocument();
+    expect(within(bareModal).queryByText("Humidity")).not.toBeInTheDocument();
+    expect(within(bareModal).queryByText("Wind")).not.toBeInTheDocument();
+    expect(within(bareModal).queryByText("Sunrise and sunset")).not.toBeInTheDocument();
+  });
+
+  it("caps the hourly strip at 24 hours and draws night hours with the moon icon", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-04T18:10:00"));
+
+    const twoDays: ForecastHour[] = ["2026-09-04", "2026-09-05"].flatMap((date) =>
+      fullDayHourly().map((hour, h) => ({
+        ...hour,
+        time: `${date}T${String(h).padStart(2, "0")}:00`,
+        isDay: h >= 8 && h < 20,
+      }))
+    );
+    const forecast: ForecastResult = {
+      current: { conditionKey: "clear", tempC: 20, rainPct: 0, isDay: true },
+      hourly: twoDays,
+      daily: [{ date: "2026-09-04", conditionKey: "snow", tempMinC: -2, tempMaxC: 3, rainPct: 70 }],
+    };
+    writeWeatherCache(45.5, -3.5, { fetchedAt: Date.now(), result: forecast });
+    render(<WeatherPillView lat={45.5} lon={-3.5} />);
+    fireEvent.click(await screen.findByTestId("weather-pill"));
+
+    const hourRows = await screen.findAllByTestId("weather-modal-hour");
+    expect(hourRows).toHaveLength(24);
+    expect(hourRows[0]).toHaveTextContent("18:00");
+    expect(hourRows[23]).toHaveTextContent("17:00");
+    const icons = hourRows.map((row) =>
+      row.querySelector("svg")?.getAttribute("data-weather-icon")
+    );
+    expect(icons[1]).toBe("wi-day-sunny");
+    expect(icons[2]).toBe("wi-night-clear");
+    // A hidden label is absolutely positioned: unanchored, the ones scrolled out of the strip
+    // would widen the dialog itself.
+    for (const row of hourRows) expect(row).toHaveClass("relative");
+
+    const dayRow = screen.getByTestId("weather-modal-day");
+    expect(dayRow.querySelector("svg")).toHaveAttribute("data-weather-icon", "wi-snow");
+    expect(dayRow.querySelector("svg")).toHaveClass("text-weather-frost");
+    expect(dayRow).toHaveTextContent("Snow");
+    expect(dayRow).toHaveTextContent("3°");
+    expect(dayRow).toHaveTextContent("-2°");
+    expect(within(dayRow).getByText("70%")).not.toHaveClass("sr-only");
   });
 });
 
