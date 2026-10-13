@@ -1,5 +1,5 @@
 import { appUrl } from "@/lib/base-path";
-import { Activity, CircleCheck, TriangleAlert } from "lucide-react";
+import { Activity, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n";
@@ -40,14 +40,16 @@ export function PluginHealthIndicator() {
     );
   }
 
+  // Healthy and idle shows nothing. The polite live region stays mounted so a change that
+  // starts later is announced from an element assistive technology already knows.
   return (
     <span
       data-testid="plugin-health-indicator"
-      className="text-muted-foreground inline-flex items-center gap-2 text-sm"
+      className={busy ? "text-muted-foreground inline-flex items-center gap-2 text-sm" : "sr-only"}
       aria-live="polite"
     >
-      {busy ? <Activity aria-hidden="true" /> : <CircleCheck aria-hidden="true" />}
-      {busy ? t("plugins.health.activity") : t("plugins.health.neutral")}
+      {busy && <Activity aria-hidden="true" />}
+      {busy && t("plugins.health.activity")}
     </span>
   );
 }
