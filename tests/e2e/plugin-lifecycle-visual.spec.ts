@@ -448,9 +448,9 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
 
       await test.step("inactive direct route returns to catalog without mounting the contribution", async () => {
         seedFixture(server.dataDir, "prior_baseline", "active", {
-          weather: { state: "inactive" },
+          backups: { state: "inactive" },
         });
-        await openAdminRoute(page, server.origin, "/admin/weather");
+        await openAdminRoute(page, server.origin, "/admin/backups");
         const settings = (await (
           await page.request.get(`${server.origin}/api/settings`)
         ).json()) as {
@@ -460,11 +460,11 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
         await expect(
           page.getByRole("heading", { name: copy["plugins.unavailable.title"], exact: true })
         ).toBeVisible();
-        await expect(page.getByTestId("weather-management")).toHaveCount(0);
+        await expect(page.getByTestId("backups-management")).toHaveCount(0);
         await expect(page.getByTestId("admin-nav-members-management")).toBeVisible();
         await expectNoHorizontalPageOverflow(page);
         await maybePauseForHumanReview(page);
-        await expectAdminSectionListed(page, "admin-nav-weather", false);
+        await expectAdminSectionListed(page, "admin-nav-backups", false);
         await expectAdminSectionListed(page, "admin-nav-printing", true, "back");
         await expect(
           page.getByRole("heading", { name: copy["plugins.unavailable.title"], exact: true })

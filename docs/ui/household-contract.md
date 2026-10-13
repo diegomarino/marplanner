@@ -57,18 +57,21 @@ The ordered capability table is:
 
 1. `/admin` — overview
 2. `/admin/members` — members
-3. `/admin/day-periods` — day periods
-4. `/admin/routines` — routines and chores
-5. `/admin/reminders` — reminders
-6. `/admin/meals` — meals and recipes
-7. `/admin/daily-messages` — daily messages
-8. `/admin/daily-briefing` — briefing configuration/generation/preview
-9. `/admin/telemetry` — client telemetry
-10. `/admin/backups` — backup/restore
-11. `/admin/time-announcements` — time announcements
-12. `/admin/weather` — weather
-13. `/admin/network-devices` — network devices
-14. `/admin/printing` — pair/re-pair, test print, print history
+3. `/admin/routines` — routines and chores
+4. `/admin/reminders` — reminders
+5. `/admin/meals` — meals and recipes
+6. `/admin/daily-messages` — daily messages
+7. `/admin/daily-briefing` — briefing configuration/generation/preview
+8. `/admin/telemetry` — client telemetry
+9. `/admin/backups` — backup/restore
+10. `/admin/time-announcements` — time announcements
+11. `/admin/network-devices` — network devices
+12. `/admin/printing` — pair/re-pair, test print, print history
+13. `/admin/settings` — language, time zone and week start, plus the day periods and, while the
+    weather plugin is active, the weather location
+
+Every destination is reached from the admin sidebar, grouped as Household, Daily briefing and
+System.
 
 While locked, the existing long-press and PIN flow is the only route to content. The pathname is
 retained through unlock and refresh. Explicit lock, established inactivity, refresh, and leaving

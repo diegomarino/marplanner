@@ -67,16 +67,9 @@ async function readLevel(level: "warn" | "error"): Promise<ClientLogRow[]> {
 }
 
 /** The admin landing page: what is deployed, what this device runs, and what recently went
- * wrong. `sections` is the temporary list of every admin page, shown until each one has a
- * place in the sidebar.
+ * wrong.
  */
-export function AdminOverview({
-  sections,
-  onOpenTelemetry,
-}: {
-  sections: ReactNode;
-  onOpenTelemetry: () => void;
-}) {
+export function AdminOverview({ onOpenTelemetry }: { onOpenTelemetry: () => void }) {
   const { t, language } = useTranslation();
   const locale = language === "es" ? "es-ES" : "en-GB";
   const device = clientBuildInfo();
@@ -130,14 +123,6 @@ export function AdminOverview({
   return (
     <div className="flex flex-col gap-6" data-testid="admin-overview">
       <h1 className="font-display text-2xl font-bold">{t("admin.overview.title")}</h1>
-
-      <section className="flex flex-col gap-2" aria-labelledby="admin-overview-sections">
-        <h2 id="admin-overview-sections" className="text-lg font-semibold">
-          {t("admin.overview.sections")}
-        </h2>
-        <p className="text-muted-foreground text-sm">{t("admin.overview.sectionsHint")}</p>
-        <div className="flex flex-wrap gap-2">{sections}</div>
-      </section>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
         <div className="flex flex-col gap-6">

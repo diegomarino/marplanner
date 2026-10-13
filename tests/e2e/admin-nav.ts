@@ -1,11 +1,8 @@
 import { expect, type Page } from "@playwright/test";
 
-/** Admin pages are reached from the sidebar once they have an entry there, and from the
- * overview's list of all sections until then. These helpers hide which of the two a page is
- * on today, so a spec keeps working when a page moves into the sidebar.
- */
+/** Admin pages are reached from the sidebar. These helpers keep that detail out of the specs. */
 
-/** Shows the overview, where every admin section that is not in the sidebar is listed. */
+/** Shows the admin overview. */
 export async function showAdminOverview(page: Page): Promise<void> {
   if (await page.getByTestId("admin-overview").isVisible()) return;
   await page.getByTestId("admin-sidebar").getByRole("link").first().click();
@@ -44,8 +41,14 @@ export async function createMember(
   await expect(page.getByTestId("members-card-grid")).toContainText(displayName);
 }
 
-/** Checks whether a section is offered in admin (sidebar or overview list), then goes back to
- * `returnTo` (a section id, or "back" for the previous page) so the spec carries on where it was.
+/** Sections that are part of another page: where they are shown, and the panel to look for. */
+const EMBEDDED_SECTIONS: Record<string, { host: string; panel: string }> = {
+  "admin-nav-weather": { host: "admin-nav-settings", panel: "weather-management" },
+};
+
+/** Checks whether a section is offered in admin (a sidebar entry, or a panel on the page that
+ * hosts it), then goes back to `returnTo` (a section id, or "back" for the previous page) so the
+ * spec carries on where it was.
  */
 export async function expectAdminSectionListed(
   page: Page,
@@ -53,8 +56,17 @@ export async function expectAdminSectionListed(
   listed: boolean,
   returnTo?: string
 ): Promise<void> {
-  await showAdminOverview(page);
-  await expect(page.getByTestId(testId)).toHaveCount(listed ? 1 : 0);
+  const embedded = EMBEDDED_SECTIONS[testId];
+  if (embedded) {
+    await openAdminSection(page, embedded.host);
+    await expect(page.getByTestId("settings-management")).toBeVisible();
+    // The host page loads its own values first; the hosted panel follows.
+    await expect(page.getByTestId("settings-save")).toBeVisible();
+    await expect(page.getByTestId(embedded.panel)).toHaveCount(listed ? 1 : 0);
+  } else {
+    await showAdminOverview(page);
+    await expect(page.getByTestId(testId)).toHaveCount(listed ? 1 : 0);
+  }
   if (returnTo === "back") await page.goBack();
   else if (returnTo) await openAdminSection(page, returnTo);
 }

@@ -168,15 +168,38 @@ describe("active plugin contribution projection", () => {
     });
   });
 
-  it("keeps inactive plugins catalog-only and fails direct admin loads closed", async () => {
+  it("leaves the weather location out of Settings while the weather plugin is inactive", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => response({ plugins: catalog({ weather: "inactive" }) }))
+      vi.fn(async (input: Parameters<typeof globalThis.fetch>[0]) =>
+        String(input) === "/api/plugins"
+          ? response({ plugins: catalog({ weather: "inactive" }) })
+          : String(input) === "/api/settings"
+            ? response({ locale: { timezone: "Europe/Madrid", language: "en", weekStartDay: 1 } })
+            : response([])
+      )
     );
 
     render(
       <PluginCatalogProvider>
-        <AdminRoutes pathname="/admin/weather" onLock={() => {}} />
+        <AdminRoutes pathname="/admin/settings" onLock={() => {}} />
+      </PluginCatalogProvider>
+    );
+
+    expect(await screen.findByTestId("settings-save")).toBeInTheDocument();
+    expect(screen.queryByTestId("weather-management")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Plugin unavailable" })).not.toBeInTheDocument();
+  });
+
+  it("keeps inactive plugins catalog-only and fails direct admin loads closed", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => response({ plugins: catalog({ backups: "inactive" }) }))
+    );
+
+    render(
+      <PluginCatalogProvider>
+        <AdminRoutes pathname="/admin/backups" onLock={() => {}} />
       </PluginCatalogProvider>
     );
 
@@ -185,9 +208,9 @@ describe("active plugin contribution projection", () => {
       "href",
       "/admin/plugins"
     );
-    expect(screen.queryByTestId("weather-management")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("backups-management")).not.toBeInTheDocument();
 
-    // The list of sections lives on the overview; the inactive plugin has no entry there.
+    // The inactive plugin has no entry in the sidebar.
     cleanup();
     render(
       <PluginCatalogProvider>
@@ -195,7 +218,7 @@ describe("active plugin contribution projection", () => {
       </PluginCatalogProvider>
     );
     expect(await screen.findByTestId("admin-nav-plugins")).toBeInTheDocument();
-    expect(screen.queryByTestId("admin-nav-weather")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("admin-nav-backups")).not.toBeInTheDocument();
     expect(screen.getByTestId("admin-nav-members-management")).toBeInTheDocument();
     expect(screen.getByTestId("admin-nav-printing")).toBeInTheDocument();
     expect(screen.getByTestId("admin-nav-plugins")).toBeInTheDocument();

@@ -189,7 +189,7 @@ async function provision(page: Page, baseUrl = ""): Promise<void> {
 /** Unlock, then wait for this suite's own entry point. The unlock itself is shared. */
 async function unlockAdminAndAwaitWeatherNav(page: Page): Promise<void> {
   await unlockAdmin(page, ADMIN_PIN);
-  await expect(page.getByTestId("admin-nav-weather")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId("admin-nav-settings")).toBeVisible({ timeout: 10_000 });
 }
 
 /** Return through persistent family navigation so assertions observe the family-only weather pill. */
@@ -207,7 +207,7 @@ async function saveWeatherLocation(
   page: Page,
   location: { lat: number; lon: number } | null
 ): Promise<void> {
-  await openAdminSection(page, "admin-nav-weather");
+  await openAdminSection(page, "admin-nav-settings");
   await expect(page.getByTestId("weather-management")).toBeVisible();
 
   const responsePromise = page.waitForResponse(

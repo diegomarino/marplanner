@@ -1,6 +1,24 @@
 import { appUrl, appPathname } from "@/lib/base-path";
 import type { ComponentType } from "react";
-import { CalendarDays, Lock, Monitor, Users, type LucideIcon } from "lucide-react";
+import {
+  Bell,
+  CalendarDays,
+  Clock,
+  Database,
+  ListChecks,
+  Lock,
+  MessageSquare,
+  Monitor,
+  Newspaper,
+  Printer,
+  Puzzle,
+  ScrollText,
+  Settings,
+  Users,
+  Utensils,
+  Wifi,
+  type LucideIcon,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n";
@@ -10,16 +28,15 @@ import { BackupsManagement } from "./BackupsManagement";
 import { CalendarManagement } from "./CalendarManagement";
 import { DailyBriefingManagement } from "./DailyBriefingManagement";
 import { DailyMessagesManagement } from "./DailyMessagesManagement";
-import { DayPeriodsManagement } from "./DayPeriodsManagement";
 import { MealsManagement } from "./MealsManagement";
 import { MembersManagement } from "./MembersManagement";
 import { NetworkDevicesManagement } from "./NetworkDevicesManagement";
 import { PrintingManagement } from "./PrintingManagement";
 import { RemindersManagement } from "./RemindersManagement";
 import { RoutinesManagement } from "./RoutinesManagement";
+import { SettingsManagement } from "./SettingsManagement";
 import { TelemetryManagement } from "./TelemetryManagement";
 import { TimeAnnouncementsManagement } from "./TimeAnnouncementsManagement";
-import { WeatherManagement } from "./WeatherManagement";
 import { PluginManagement } from "@/plugins/PluginManagement";
 import { PluginContribution, usePluginContributionActive } from "@/plugins/contributions";
 import type { PluginId } from "../../shared/plugins";
@@ -46,12 +63,6 @@ export const adminRoutes: readonly AdminRoute[] = [
     label: "admin.nav.membersManagement",
     testId: "admin-nav-members-management",
     Component: MembersManagement,
-  },
-  {
-    path: "/admin/day-periods",
-    label: "admin.nav.dayPeriods",
-    testId: "admin-nav-day-periods",
-    Component: DayPeriodsManagement,
   },
   {
     path: "/admin/routines",
@@ -114,14 +125,6 @@ export const adminRoutes: readonly AdminRoute[] = [
     contributionId: "time-announcements",
   },
   {
-    path: "/admin/weather",
-    label: "admin.nav.weather",
-    testId: "admin-nav-weather",
-    Component: WeatherManagement,
-    pluginId: "weather",
-    contributionId: "weather",
-  },
-  {
     path: "/admin/network-devices",
     label: "admin.nav.networkDevices",
     testId: "admin-nav-network-devices",
@@ -143,6 +146,12 @@ export const adminRoutes: readonly AdminRoute[] = [
     pluginId: "printing",
     contributionId: "printing",
   },
+  {
+    path: "/admin/settings",
+    label: "admin.nav.settings",
+    testId: "admin-nav-settings",
+    Component: SettingsManagement,
+  },
 ];
 
 export function navigateAdmin(path: string): void {
@@ -163,9 +172,7 @@ type SidebarItem = {
 };
 type SidebarSection = { id: string; label?: AdminRoute["label"]; items: readonly SidebarItem[] };
 
-/** The sidebar's sections, in order. A page gets an entry here once it has been redesigned;
- * until then it is reached from the overview's temporary list.
- */
+/** The sidebar's sections, in order. */
 export const adminSidebar: readonly SidebarSection[] = [
   {
     id: "general",
@@ -175,27 +182,35 @@ export const adminSidebar: readonly SidebarSection[] = [
     id: "household",
     label: "admin.sidebar.household",
     items: [
-      {
-        path: "/admin/members",
-        label: "admin.sidebar.members",
-        Icon: Users,
-        testId: "admin-nav-members-management",
-      },
-      {
-        path: "/admin/calendar",
-        label: "admin.sidebar.calendar",
-        Icon: CalendarDays,
-        testId: "admin-nav-calendar",
-      },
+      { path: "/admin/members", label: "admin.sidebar.members", Icon: Users },
+      { path: "/admin/network-devices", label: "admin.sidebar.networkDevices", Icon: Wifi },
+      { path: "/admin/calendar", label: "admin.sidebar.calendar", Icon: CalendarDays },
+      { path: "/admin/routines", label: "admin.sidebar.routines", Icon: ListChecks },
+      { path: "/admin/time-announcements", label: "admin.sidebar.timeAnnouncements", Icon: Clock },
+      { path: "/admin/meals", label: "admin.sidebar.meals", Icon: Utensils },
+    ],
+  },
+  {
+    id: "daily-briefing",
+    label: "admin.sidebar.dailyBriefing",
+    items: [
+      { path: "/admin/daily-briefing", label: "admin.sidebar.briefing", Icon: Newspaper },
+      { path: "/admin/daily-messages", label: "admin.sidebar.messages", Icon: MessageSquare },
+      { path: "/admin/reminders", label: "admin.sidebar.reminders", Icon: Bell },
+      { path: "/admin/printing", label: "admin.sidebar.printer", Icon: Printer },
+    ],
+  },
+  {
+    id: "system",
+    label: "admin.sidebar.system",
+    items: [
+      { path: "/admin/settings", label: "admin.sidebar.settings", Icon: Settings },
+      { path: "/admin/backups", label: "admin.sidebar.backups", Icon: Database },
+      { path: "/admin/plugins", label: "admin.sidebar.plugins", Icon: Puzzle },
+      { path: "/admin/telemetry", label: "admin.sidebar.logs", Icon: ScrollText },
     ],
   },
 ];
-
-const sidebarPaths = new Set(
-  adminSidebar.flatMap((section) =>
-    section.items.flatMap((item) => [item.path, ...(item.children ?? []).map((c) => c.path)])
-  )
-);
 
 /** The trail for the admin top bar: every registered page on the way to `pathname`. */
 export function adminBreadcrumb(pathname: string): { path: string; label: AdminRoute["label"] }[] {
@@ -243,6 +258,42 @@ function SidebarLink({
   );
 }
 
+/** One sidebar item with its subsections. An entry owned by a plugin disappears with it. */
+function SidebarEntry({ item, pathname }: { item: SidebarItem; pathname: string }) {
+  const t = useT();
+  const route = adminRoutes.find((candidate) => candidate.path === item.path);
+  // The hook needs a contribution either way; a core page is always shown.
+  const pluginActive = usePluginContributionActive(
+    route?.pluginId ?? "printing",
+    "admin",
+    route?.contributionId ?? ""
+  );
+  if (route?.pluginId && route.contributionId && !pluginActive) return null;
+  const open =
+    pathname === item.path || (item.children?.some((child) => child.path === pathname) ?? false);
+  return (
+    <div className="flex flex-col gap-1">
+      <SidebarLink
+        path={item.path}
+        label={t(item.label)}
+        Icon={item.Icon}
+        testId={item.testId ?? route?.testId}
+        current={pathname === item.path}
+      />
+      {open &&
+        item.children?.map((child) => (
+          <SidebarLink
+            key={child.path}
+            path={child.path}
+            label={t(child.label)}
+            current={pathname === child.path}
+            nested
+          />
+        ))}
+    </div>
+  );
+}
+
 export function AdminSidebar({
   pathname,
   onLock,
@@ -257,43 +308,21 @@ export function AdminSidebar({
   return (
     <aside
       data-testid="admin-sidebar"
-      // Pinned beside the page on wide screens, so Lock stays reachable on a long page.
-      className="bg-card flex shrink-0 flex-col gap-4 border-b p-3 lg:sticky lg:top-0 lg:h-[calc(100dvh-3.5rem)] lg:w-60 lg:self-start lg:border-r lg:border-b-0"
+      // Pinned beside the page on wide screens, so Lock stays reachable on a long page; a short
+      // screen scrolls the list itself.
+      className="bg-card flex shrink-0 flex-col gap-4 border-b p-3 lg:sticky lg:top-0 lg:h-[calc(100dvh-3.5rem)] lg:w-60 lg:self-start lg:overflow-y-auto lg:border-r lg:border-b-0"
     >
       <nav aria-label={t("admin.sidebar.label")} className="flex flex-col gap-4">
         {sections.map((section) => (
-          <div key={section.id} className="flex flex-col gap-1">
+          <div key={section.id} className="flex flex-col">
             {section.label && (
-              <h2 className="text-muted-foreground px-3 text-xs font-semibold tracking-wider uppercase">
+              <h2 className="text-foreground px-3 pb-1 text-sm font-semibold">
                 {t(section.label)}
               </h2>
             )}
-            {section.items.map((item) => {
-              const open =
-                pathname === item.path ||
-                (item.children?.some((child) => child.path === pathname) ?? false);
-              return (
-                <div key={item.path} className="flex flex-col gap-1">
-                  <SidebarLink
-                    path={item.path}
-                    label={t(item.label)}
-                    Icon={item.Icon}
-                    testId={item.testId}
-                    current={pathname === item.path}
-                  />
-                  {open &&
-                    item.children?.map((child) => (
-                      <SidebarLink
-                        key={child.path}
-                        path={child.path}
-                        label={t(child.label)}
-                        current={pathname === child.path}
-                        nested
-                      />
-                    ))}
-                </div>
-              );
-            })}
+            {section.items.map((item) => (
+              <SidebarEntry key={item.path} item={item} pathname={pathname} />
+            ))}
           </div>
         ))}
       </nav>
@@ -310,31 +339,6 @@ export function AdminSidebar({
   );
 }
 
-/** Every admin page as a button. Temporary: shown on the overview until the sidebar covers them. */
-function AdminSectionLinks() {
-  const t = useT();
-  return (
-    <>
-      {adminRoutes
-        .filter((candidate) => !sidebarPaths.has(candidate.path))
-        .map((candidate) =>
-          candidate.pluginId && candidate.contributionId ? (
-            <PluginAdminNavigation key={candidate.path} route={candidate} />
-          ) : (
-            <Button
-              key={candidate.path}
-              variant="outline"
-              data-testid={candidate.testId}
-              onClick={() => navigateAdmin(candidate.path)}
-            >
-              {t(candidate.label)}
-            </Button>
-          )
-        )}
-    </>
-  );
-}
-
 export function AdminRoutes({ pathname, onLock }: { pathname: string; onLock: () => void }) {
   const t = useT();
   const route = adminRoutes.find((candidate) => candidate.path === pathname);
@@ -345,10 +349,7 @@ export function AdminRoutes({ pathname, onLock }: { pathname: string; onLock: ()
       <AdminSidebar pathname={pathname} onLock={onLock} />
       <div className="min-w-0 flex-1 p-4 lg:p-6">
         {pathname === OVERVIEW_PATH ? (
-          <AdminOverview
-            sections={<AdminSectionLinks />}
-            onOpenTelemetry={() => navigateAdmin("/admin/telemetry")}
-          />
+          <AdminOverview onOpenTelemetry={() => navigateAdmin("/admin/telemetry")} />
         ) : !route || !Panel ? (
           <div className="flex w-full flex-col gap-4" data-testid="admin-route-not-found">
             <div>
@@ -381,16 +382,5 @@ export function AdminRoutes({ pathname, onLock }: { pathname: string; onLock: ()
         )}
       </div>
     </div>
-  );
-}
-
-function PluginAdminNavigation({ route }: { route: AdminRoute }) {
-  const t = useT();
-  const active = usePluginContributionActive(route.pluginId!, "admin", route.contributionId!);
-  if (!active) return null;
-  return (
-    <Button variant="outline" data-testid={route.testId} onClick={() => navigateAdmin(route.path)}>
-      {t(route.label)}
-    </Button>
   );
 }
