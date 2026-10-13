@@ -31,6 +31,9 @@
   --border: oklch(0.91 0.01 60);
   --input: oklch(0.91 0.01 60);
   --ring: #5a5a40;
+  /* Surface of an all-day calendar event that belongs to no member. */
+  --event-all-day: oklch(0.98 0.016 73.684);
+  --event-all-day-border: oklch(0.837 0.128 66.29);
   /* Comfortable density — kiosk overrides live in globals.css. */
   --control-height: 36px;
   --control-font-size: 14px;
