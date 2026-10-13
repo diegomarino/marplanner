@@ -1050,7 +1050,9 @@
             "calendar external-source domain seam rejects unsafe URLs before persistence, including credentials, private literals, and private DNS answers",
             "calendar external-source domain seam rejects numeric special-use literal ranges and DNS results with any unsafe answer",
             "calendar external-source domain seam normalizes unknown providers and imports through provider-agnostic ICS retrieval",
-            "calendar external-source domain seam defaults polling to 15 minutes and rejects out-of-range API values"
+            "calendar external-source domain seam defaults polling to 15 minutes and rejects out-of-range API values",
+            "calendar external-source domain seam detects the provider from the feed host when the caller names none",
+            "calendar external-source domain seam reads a webcal address and falls back to generic for one it cannot parse"
           ],
           "tests/boundary/calendar-feed-sync-contract.test.ts": [
             "calendar feed synchronization contract publishes the implemented OpenAPI contract with source and highlight routes",
@@ -3060,8 +3062,9 @@
             "Admin Calendar sources keeps toggle, sync, and confirmed delete as separate actions",
             "Admin Calendar sources polls only active phases and refreshes Calendar events after success",
             "Admin Calendar sources uses the household language for the durable success time",
-            "Admin Calendar sources keeps native provider, enabled toggles and drag handles at kiosk density",
+            "Admin Calendar sources keeps enabled toggles and drag handles at kiosk density",
             "Admin Calendar highlights creates a trimmed, deduplicated rule and keeps the source policy hidden",
+            "Admin Calendar highlights accepts exactly one emoji and says so before anything is sent",
             "Admin Calendar highlights keeps toggle and confirmed delete independent and restores focus on cancel",
             "Admin Calendar highlights keyboard drag submits one complete order and announces the move",
             "Admin Calendar highlights restores authoritative order and announces a failed reorder",
@@ -3113,6 +3116,7 @@
             "CalendarView — error states are announced (SC-011) announces a create failure",
             "CalendarView — New Event dialog stores the inclusive end date of an all-day event as the exclusive day after",
             "CalendarView — New Event dialog assigns the people picked in the dialog to the event it just created",
+            "CalendarView — event detail dialog shows a highlight emoji on the chip and in the dialog, but edits the stored title",
             "CalendarView — event detail dialog shows an imported event's place and description, read only",
             "CalendarView — editing a local event turns an all-day event into a timed one, carrying its day across",
             "CalendarView — editing a local event closes the dialog after a successful save and reopens on the summary",

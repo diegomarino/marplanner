@@ -575,6 +575,21 @@ describe("CalendarView — New Event dialog", () => {
 });
 
 describe("CalendarView — event detail dialog", () => {
+  it("shows a highlight emoji on the chip and in the dialog, but edits the stored title", async () => {
+    mockBackend({
+      events: () => json([{ ...EVENT, title: "Football", decoratedTitle: "⚽ Football" }]),
+    });
+    renderSurface();
+
+    const chip = await screen.findByTestId("calendar-event-row");
+    expect(chip).toHaveTextContent("⚽ Football");
+    fireEvent.click(chip);
+    expect(await screen.findByRole("dialog", { name: "⚽ Football" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("calendar-edit-btn"));
+    expect(await screen.findByTestId("calendar-edit-title-input")).toHaveValue("Football");
+  });
+
   it("shows an imported event's place and description, read only", async () => {
     mockBackend({
       events: () =>

@@ -7,6 +7,7 @@ import {
   buildCalendarDays,
   getEventsForCalendarDay,
   getHouseholdCalendarDate,
+  displayTitle,
   presentationEventId,
   type WeekStartDay,
 } from "@/calendar/calendar-presentation";
@@ -118,7 +119,7 @@ export function CalendarMonthView({
                       className="member-event-surface focus-visible:ring-primary min-h-[var(--control-height)] w-full cursor-pointer rounded-md border border-l-4 px-2 py-1.5 text-left text-control font-medium shadow-sm hover:brightness-95 outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
                       // eslint-disable-next-line ui-policy/debt -- Dynamic assignment styling passes only semantic member-token CSS custom properties.
                       style={eventStyle(event, members)}
-                      title={event.title}
+                      title={displayTitle(event)}
                     >
                       <span className="line-clamp-2 leading-tight break-words">
                         {time && (
@@ -126,7 +127,7 @@ export function CalendarMonthView({
                             {time}
                           </span>
                         )}
-                        {event.title}
+                        {displayTitle(event)}
                       </span>
                     </button>
                   );

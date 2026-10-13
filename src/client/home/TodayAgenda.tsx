@@ -205,7 +205,9 @@ export function TodayAgenda(): React.JSX.Element {
               )}
             </div>
           )}
-          <h4 className="min-w-0 font-bold break-words">{item.event.title}</h4>
+          <h4 className="min-w-0 font-bold break-words">
+            {item.event.decoratedTitle ?? item.event.title}
+          </h4>
         </div>
         <p className="sr-only" data-testid="agenda-details">
           {details.map((detail, index) => (

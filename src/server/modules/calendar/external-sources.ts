@@ -1,6 +1,7 @@
 import { lookup as dnsLookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import { getDb } from "../../db/client";
+import { detectCalendarProvider } from "../../../shared";
 import type { ExternalSourceProvider, ExternalSourcePublic } from "../../../shared";
 import {
   beginExternalSourceReplacement,
@@ -25,7 +26,7 @@ export class ExternalSourceValidationError extends Error {
 export interface ExternalSourceInput {
   id: string;
   name: string;
-  provider: string;
+  provider?: string;
   feedUrl: string;
   enabled?: boolean;
   pollIntervalMin?: number;
@@ -193,7 +194,11 @@ function toPublic(row: {
   return {
     id: row.id,
     name: row.name,
-    provider: normalizeProvider(row.provider),
+    // A source saved as generic may be a known service after all: the label follows the host.
+    provider:
+      normalizeProvider(row.provider) === "ics_generic"
+        ? detectCalendarProvider(row.feed_url)
+        : normalizeProvider(row.provider),
     maskedUrl: `${url.protocol}//${url.host}/***`,
     enabled: row.enabled === 1,
     pollIntervalMin: row.poll_interval_min,
@@ -255,7 +260,9 @@ function validateInput(input: ExternalSourceInput): void {
     input.name.trim().length > 120
   )
     throw new ExternalSourceValidationError("invalid_external_source");
-  if (typeof input.provider !== "string" || typeof input.feedUrl !== "string")
+  if (typeof input.feedUrl !== "string")
+    throw new ExternalSourceValidationError("invalid_external_source");
+  if (input.provider !== undefined && typeof input.provider !== "string")
     throw new ExternalSourceValidationError("invalid_external_source");
   if (input.enabled !== undefined && typeof input.enabled !== "boolean")
     throw new ExternalSourceValidationError("invalid_external_source");
@@ -284,7 +291,11 @@ export async function upsertExternalSource(
   )
     throw new ExternalSourceValidationError("invalid_external_source");
   const now = Date.now();
-  const provider = normalizeProvider(input.provider);
+  // The provider is a display label. Callers may name it; otherwise the feed's host does.
+  const provider =
+    input.provider === undefined
+      ? detectCalendarProvider(input.feedUrl)
+      : normalizeProvider(input.provider);
   const existing = getDb()
     .prepare("SELECT feed_url FROM calendar_external_sources WHERE id = ?")
     .get(sourceId) as { feed_url: string } | undefined;

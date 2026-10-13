@@ -1,6 +1,6 @@
 import { appUrl, appPathname } from "@/lib/base-path";
 import type { ComponentType } from "react";
-import { Lock, Monitor, Users, type LucideIcon } from "lucide-react";
+import { CalendarDays, Lock, Monitor, Users, type LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n";
@@ -180,6 +180,12 @@ export const adminSidebar: readonly SidebarSection[] = [
         label: "admin.sidebar.members",
         Icon: Users,
         testId: "admin-nav-members-management",
+      },
+      {
+        path: "/admin/calendar",
+        label: "admin.sidebar.calendar",
+        Icon: CalendarDays,
+        testId: "admin-nav-calendar",
       },
     ],
   },
