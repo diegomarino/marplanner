@@ -21,6 +21,8 @@ function installFakeSynth(opts: {
   throwOnSpeak?: boolean;
   throwOnCancel?: boolean;
   throwOnGetVoices?: boolean;
+  /** Chrome's lazy load: the FIRST `getVoices()` call returns `[]` and only starts the load. */
+  lazyVoices?: boolean;
 }) {
   const spoken: FakeUtterance[] = [];
   const fake = {
@@ -29,6 +31,7 @@ function installFakeSynth(opts: {
     }),
     getVoices: vi.fn(() => {
       if (opts.throwOnGetVoices) throw new Error("getVoices blocked");
+      if (opts.lazyVoices && fake.getVoices.mock.calls.length === 1) return [];
       return opts.voices ?? [];
     }),
     speak: vi.fn((utterance: FakeUtterance) => {
@@ -166,6 +169,33 @@ describe("time-announcements speech", () => {
     window.dispatchEvent(new Event("pointerdown"));
     window.dispatchEvent(new Event("keydown"));
     expect(fake.speak).toHaveBeenCalledTimes(1); // one-shot — later gestures are no-ops for the primer
+  });
+
+  it("primeOnFirstGesture: warms the lazily-loaded voice list on install, so the primer finds the voice and logs no voice-miss", async () => {
+    const { fake, spoken } = installFakeSynth({ voices: [{ lang: "en-US" }], lazyVoices: true });
+    const { primeOnFirstGesture, logSpy } = await freshSpeechWithLoggerSpy();
+
+    primeOnFirstGesture();
+    expect(fake.getVoices).toHaveBeenCalledTimes(1); // warm-up at install, before any gesture
+
+    window.dispatchEvent(new Event("pointerdown"));
+    expect(spoken).toHaveLength(1);
+    expect(spoken[0].voice).not.toBeNull();
+    expect(logSpy).not.toHaveBeenCalled();
+  });
+
+  it("primeOnFirstGesture: the silent primer never logs a voice-miss, a real announcement still does", async () => {
+    installFakeSynth({ voices: [{ lang: "fr-FR" }] });
+    const { primeOnFirstGesture, speak, logSpy } = await freshSpeechWithLoggerSpy();
+
+    primeOnFirstGesture();
+    window.dispatchEvent(new Event("pointerdown"));
+    expect(logSpy).not.toHaveBeenCalled();
+
+    speak("It's five o'clock", "en");
+    expect(logSpy).toHaveBeenCalledWith("warn", "time-announcements", "voice-miss", {
+      lang: "en-US",
+    });
   });
 
   it("testVoice speaks the unsaved time and doubles as a manual primer", async () => {
