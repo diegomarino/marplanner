@@ -97,7 +97,8 @@ export function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        <DialogFooter>
+        {/* The grid `gap-4` leaves 16px above the buttons; `mt-2` adds the 8px that makes it 24px. */}
+        <DialogFooter className="mt-2">
           <Button
             type="button"
             variant="outline"

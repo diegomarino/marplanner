@@ -67,7 +67,7 @@ export function AdminPanel({
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <Heading id={headingId} className="text-xl font-bold">
+          <Heading id={headingId} className="font-display text-2xl font-bold">
             {title}
           </Heading>
           {description && <p className="text-muted-foreground text-control">{description}</p>}
