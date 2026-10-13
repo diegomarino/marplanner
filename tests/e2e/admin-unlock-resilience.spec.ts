@@ -89,15 +89,11 @@ const adminDestinations: ReadonlyArray<{
 }> = [
   {
     path: "/admin",
-    primary: (page, m) =>
-      page
-        .getByRole("region", { name: m["members.create.title"], exact: true })
-        .getByRole("button", { name: m["members.create.submit"], exact: true }),
+    primary: (page) => page.getByTestId("admin-overview-check"),
   },
   {
     path: "/admin/members",
-    primary: (page, m) =>
-      page.getByRole("button", { name: m["members.management.refresh"], exact: true }),
+    primary: (page, m) => page.getByTestId("members-add-member"),
   },
   {
     path: "/admin/day-periods",

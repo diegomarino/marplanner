@@ -1,4 +1,5 @@
 import path from "node:path";
+import { leaveAdmin, openAdminSection } from "./admin-nav";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import Database from "better-sqlite3";
 import { type APIRequestContext } from "@playwright/test";
@@ -361,7 +362,7 @@ test("admin opt-in -> Generate -> complete ordered catalogue and raster preview 
 
   await unlockAdmin(page, ADMIN_PIN);
 
-  await page.getByTestId("admin-nav-daily-briefing-management").click();
+  await openAdminSection(page, "admin-nav-daily-briefing-management");
   const management = page.getByTestId("daily-briefing-management");
   await expect(
     management.getByRole("heading", { name: m["dailyBriefing.management.title"], exact: true })
@@ -803,7 +804,7 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   // this panel's setup (steps 6b/6c below), not done here —, this
   // minimizes the real-wall-clock gap between "raster written for household-today" and the
   // chore completions in step 7/8 that depend on that exact day's raster still being current.
-  await page.getByTestId("admin-nav-daily-briefing-management").click();
+  await openAdminSection(page, "admin-nav-daily-briefing-management");
   const management = page.getByTestId("daily-briefing-management");
   await expect(
     management.getByRole("heading", { name: m["dailyBriefing.management.title"], exact: true })
@@ -879,6 +880,7 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   // Authoring is complete. Return through the persistent family navigation to exercise the real
   // Tasks surface; leaving /admin/* deliberately relocks administration but keeps the global
   // printer session mounted.
+  await leaveAdmin(page);
   await page.getByRole("link", { name: m["shell.nav.tasks"], exact: true }).click();
   await expect(page.getByRole("heading", { name: m["chores.board.title"] })).toBeVisible();
 
@@ -937,9 +939,8 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   // mount, exactly like printing.spec.ts's `reopenPrintingPanel`, since `loadJobs` only
   // runs on mount.
   await unlockAdmin(page, ADMIN_PIN);
-  await page.getByTestId("admin-nav-members-management").click();
-  await page.getByTestId("members-add-member").click();
-  await page.getByTestId("admin-nav-printing").click();
+  await openAdminSection(page, "admin-nav-members-management");
+  await openAdminSection(page, "admin-nav-printing");
   await expect(page.getByTestId("printing-management")).toBeVisible();
   await expect(page.getByTestId(`printing-job-state-${firstJobId}`)).toHaveText(
     m["printing.management.state.printed"]
@@ -949,6 +950,7 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   // already-printed chore must NOT enqueue a second job.
   // (FR-008/DP2): un-completing is now gated behind a ConfirmDialog — the
   // tap opens it rather than firing the DELETE immediately.
+  await leaveAdmin(page);
   await page.getByRole("link", { name: m["shell.nav.tasks"], exact: true }).click();
   await showMorningChores(boundMember);
   await expect(boundToggle).toHaveAttribute("aria-pressed", "true");
@@ -979,9 +981,8 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   // panel switch remounts DailyBriefingManagement (AdminContent's ternary chain fully
   // unmounts the previous panel), so the member has to be reselected from the dropdown.
   await unlockAdmin(page, ADMIN_PIN);
-  await page.getByTestId("admin-nav-members-management").click();
-  await page.getByTestId("members-add-member").click();
-  await page.getByTestId("admin-nav-daily-briefing-management").click();
+  await openAdminSection(page, "admin-nav-members-management");
+  await openAdminSection(page, "admin-nav-daily-briefing-management");
   const managementAgain = page.getByTestId("daily-briefing-management");
   await managementAgain.getByTestId("daily-briefing-tab-preview").click();
   await managementAgain.getByTestId(`daily-briefing-preview-member-${boundMember.id}`).click();
@@ -997,6 +998,7 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   // — a fresh wakeup is what drives the actual re-enqueue.
   // (FR-008/DP2): un-completing opens the ConfirmDialog rather than firing the
   // DELETE immediately.
+  await leaveAdmin(page);
   await page.getByRole("link", { name: m["shell.nav.tasks"], exact: true }).click();
   await showMorningChores(boundMember);
   await expect(boundToggle).toHaveAttribute("aria-pressed", "true");
@@ -1025,9 +1027,8 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   await waitForPrinted(page.request, secondJobId);
 
   await unlockAdmin(page, ADMIN_PIN);
-  await page.getByTestId("admin-nav-members-management").click();
-  await page.getByTestId("members-add-member").click();
-  await page.getByTestId("admin-nav-printing").click();
+  await openAdminSection(page, "admin-nav-members-management");
+  await openAdminSection(page, "admin-nav-printing");
   await expect(page.getByTestId("printing-management")).toBeVisible();
   await expect(page.getByTestId(`printing-job-state-${secondJobId}`)).toHaveText(
     m["printing.management.state.printed"]

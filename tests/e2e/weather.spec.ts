@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { leaveAdmin, openAdminSection } from "./admin-nav";
 import { spawn, type ChildProcess } from "node:child_process";
 import { createServer } from "node:net";
 import { mkdtempSync, existsSync } from "node:fs";
@@ -193,7 +194,11 @@ async function unlockAdminAndAwaitWeatherNav(page: Page): Promise<void> {
 
 /** Return through persistent family navigation so assertions observe the family-only weather pill. */
 async function returnToHome(page: Page): Promise<void> {
-  await page.getByRole("link", { name: /home|inicio/i, exact: true }).click();
+  await leaveAdmin(page);
+  // Leaving admin lands on Home; from another household screen, take the nav link.
+  if (!(await page.getByTestId("home-surface").isVisible())) {
+    await page.getByRole("link", { name: /home|inicio/i, exact: true }).click();
+  }
   await expect(page.getByTestId("home-surface")).toBeVisible();
 }
 
@@ -202,7 +207,7 @@ async function saveWeatherLocation(
   page: Page,
   location: { lat: number; lon: number } | null
 ): Promise<void> {
-  await page.getByTestId("admin-nav-weather").click();
+  await openAdminSection(page, "admin-nav-weather");
   await expect(page.getByTestId("weather-management")).toBeVisible();
 
   const responsePromise = page.waitForResponse(

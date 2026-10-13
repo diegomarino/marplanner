@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openAdminSection } from "./admin-nav";
 import { messages, resolveLang } from "../../src/client/i18n/messages";
 import { unlockAdmin } from "./admin-unlock";
 
@@ -61,7 +62,7 @@ test("admin date defaults use the household timezone, not the browser timezone (
     )
   ).toBe("2026-01-15");
 
-  await page.getByTestId("admin-nav-daily-messages-management").click();
+  await openAdminSection(page, "admin-nav-daily-messages-management");
   await expect(
     page.getByRole("heading", { name: m["dailyMessages.management.title"] })
   ).toBeVisible();
@@ -74,12 +75,12 @@ test("admin date defaults use the household timezone, not the browser timezone (
   await expect(page.getByTestId("daily-messages-window-range")).toContainText(HOUSEHOLD_TODAY);
   await expect(page.getByTestId("daily-messages-previous-window")).toBeDisabled();
 
-  await page.getByTestId("admin-nav-meals-management").click();
+  await openAdminSection(page, "admin-nav-meals-management");
   await expect(page.getByTestId("meals-menu-date-input")).toHaveValue(HOUSEHOLD_TODAY);
   await expect(page.getByTestId("meals-week-date-input")).toHaveValue(HOUSEHOLD_TODAY);
   await expect(page.getByTestId("meals-entry-date-input")).toHaveValue(HOUSEHOLD_TODAY);
 
-  await page.getByTestId("admin-nav-reminders-management").click();
+  await openAdminSection(page, "admin-nav-reminders-management");
   const reminderCard = page.locator(".border.rounded-lg.p-4.mb-4", {
     hasText: reminderText,
   });

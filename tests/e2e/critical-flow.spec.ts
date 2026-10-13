@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { createMember } from "./admin-nav";
 import { spawn, type ChildProcess } from "node:child_process";
 import { createServer } from "node:net";
 import { mkdtempSync, existsSync, rmSync } from "node:fs";
@@ -226,13 +227,8 @@ test("critical flow: gate → provision → cold settings → admin → member �
       // Language-agnostic selectors: the admin Members UI localizes to the household
       // locale (default 'en', ADR-015), so target stable ids/roles + a testid, NOT
       // English label text (which flips to Spanish once /api/settings resolves).
-      const createSubmit = page.locator('form button[type="submit"]');
-      await expect(createSubmit).toBeVisible();
-      await page.locator("#member-display-name").fill(MEMBER_NAME);
-      await page.locator("#member-role").click(); // Radix Select trigger
-      await page.getByRole("option").first().click(); // first option = parent
-      await createSubmit.click();
-      await expect(page.getByTestId("member-create-success")).toBeVisible();
+      // Created from the Members page's form; the first role option is parent.
+      await createMember(page, MEMBER_NAME);
 
       // Pre-restart sanity: the member is readable through GET /api/members.
       const before = await page.request.get(`${base}/api/members`);

@@ -1,4 +1,5 @@
 import path from "node:path";
+import { openAdminSection } from "./admin-nav";
 import { existsSync } from "node:fs";
 import Database from "better-sqlite3";
 import { type Page, type APIRequestContext } from "@playwright/test";
@@ -138,9 +139,8 @@ async function fetchJob(
 /** Force `PrintingManagement` to unmount+remount (its own `loadJobs` only runs on mount) so its
  * admin-list DOM reflects the CURRENT server state, not a stale render from an earlier click. */
 async function reopenPrintingPanel(page: Page): Promise<void> {
-  await page.getByTestId("admin-nav-members-management").click();
-  await page.getByTestId("members-add-member").click();
-  await page.getByTestId("admin-nav-printing").click();
+  await openAdminSection(page, "admin-nav-members-management");
+  await openAdminSection(page, "admin-nav-printing");
   await expect(page.getByTestId("printing-management")).toBeVisible();
 }
 
@@ -194,7 +194,7 @@ test("admin test-print → claim → degrade → retry → ack → printed; re-t
   // 5) Enter Admin through the visible family flow, then unlock -> Printing management -> trigger
   // the test print through the REAL UI.
   await unlockAdmin(page, ADMIN_PIN);
-  await page.getByTestId("admin-nav-printing").click();
+  await openAdminSection(page, "admin-nav-printing");
   const management = page.getByTestId("printing-management");
   await expect(management).toBeVisible();
 
@@ -314,7 +314,7 @@ test("printing administration uses the same pair action as printer attention", a
   await page.goto("/admin/printing");
   await expect(page.getByTestId("admin-pin-keypad")).toBeVisible();
   await unlockAdmin(page, ADMIN_PIN);
-  await page.getByTestId("admin-nav-printing").click();
+  await openAdminSection(page, "admin-nav-printing");
   await expect(page.getByTestId("printing-management-pair")).toBeVisible();
   await page.getByTestId("printing-management-pair").click();
   await expect(page.getByTestId("printing-management-pair")).toBeHidden({ timeout: 10_000 });
