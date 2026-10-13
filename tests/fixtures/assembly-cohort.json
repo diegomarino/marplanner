@@ -2616,6 +2616,11 @@
             "static serving — client-only root; backend bundle never leaks serves one client build under a nested runtime mount with injected assets and gated APIs",
             "static serving — client-only root; backend bundle never leaks rejects malformed runtime mount paths before serving routes"
           ],
+          "tests/boundary/system-status.test.ts": [
+            "system status route tells an admin-capable device what is deployed",
+            "system status route refuses a caller without credentials or without the admin capability",
+            "system status route keeps the public health probe free of deploy details"
+          ],
           "tests/boundary/telemetry-capability.test.ts": [
             "telemetry capability seam CLIENT-LOGGING-TELEMETRY-AC-05: a `*` scoped key satisfies BOTH telemetry:write and telemetry:admin",
             "telemetry capability seam CLIENT-LOGGING-TELEMETRY-AC-05: a scoped key that does NOT include the capability is rejected (403)",
@@ -2946,6 +2951,14 @@
             "AdminGate touch PIN keypad accepts hardware keyboard digits, Backspace, and Enter to submit",
             "AdminGate touch PIN keypad keeps modified keys, editing fields, and focused control activation out of global PIN entry",
             "AdminGate touch PIN keypad caps keyboard entry and freezes it while a PIN verification is pending"
+          ],
+          "tests/client/admin-overview.test.tsx": [
+            "AdminOverview shows what the server runs and lists warnings and errors newest first",
+            "AdminOverview reads the status again on Check now and opens telemetry on request",
+            "AdminOverview announces an unreadable status without inventing a deploy",
+            "Admin shell navigation keeps Overview and Lock in the sidebar on every admin page",
+            "Admin shell navigation marks Overview as the current page on the landing page and lists every section there",
+            "Admin shell navigation builds the breadcrumb trail from every registered page on the way"
           ],
           "tests/client/admin-routes.test.tsx": [
             "AdminRoutes renders the directly requested printing destination instead of the member-create default",

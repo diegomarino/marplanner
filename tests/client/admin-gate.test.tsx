@@ -115,7 +115,8 @@ describe("AdminGate — kiosk density across reachable states", () => {
       enterPin(CORRECT_PIN);
       fireEvent.click(screen.getByTestId("admin-pin-unlock"));
       await screen.findByTestId("admin-nav-member-create");
-      expect(countInteractiveControls(document.body)).toBe(25);
+      // Overview: sidebar link + Lock, sixteen section buttons, Check now, Open telemetry.
+      expect(countInteractiveControls(document.body)).toBe(20);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
       fireEvent.click(screen.getByTestId("admin-lock-button"));
@@ -254,7 +255,8 @@ describe("AdminGate — panel re-lock", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(5 * 60 * 1000 - 1_000);
     });
-    fireEvent.click(screen.getByTestId("admin-nav-member-create"), { detail: 0 });
+    // A control that keeps the overview on screen: a section button would navigate away.
+    fireEvent.click(screen.getByTestId("admin-overview-check"), { detail: 0 });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2_000);
     });

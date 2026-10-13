@@ -635,6 +635,22 @@ export type GenerateAllResponse =
 
 // ─── Client Logging / Telemetry DTOs ────────────────────────
 
+/** BuildInfo — the commit a server or client bundle was built from. Any part that could not be
+ * determined is null; `builtAt` is null for a server running from source.
+ */
+export interface BuildInfo {
+  sha: string | null;
+  subject: string | null;
+  builtAt: string | null;
+}
+
+/** SystemStatus — what the admin overview shows about the running server. */
+export interface SystemStatus {
+  status: "ok";
+  checkedAt: string;
+  build: BuildInfo;
+}
+
 /** ClientLogLevel — the four fixed severities.
  */
 export type ClientLogLevel = "debug" | "info" | "warn" | "error";

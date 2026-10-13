@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath } from "node:url";
+import { resolveBuildInfo } from "./scripts/build-info.mjs";
 
 export default defineConfig(({ command }) => {
   const apiPort = process.env.VITE_API_PORT;
@@ -15,6 +16,8 @@ export default defineConfig(({ command }) => {
   }
   return {
     plugins: [react(), tailwindcss()],
+    // The commit this bundle was built from, shown on the admin overview as "This device".
+    define: { __MP_BUILD__: JSON.stringify(resolveBuildInfo()) },
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src/client", import.meta.url)),

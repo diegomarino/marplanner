@@ -150,6 +150,47 @@ components:
           type:
             - string
             - "null"
+    BuildInfo:
+      type: object
+      additionalProperties: false
+      description: The commit a server or client bundle was built from; unknown parts are null.
+      required:
+        - sha
+        - subject
+        - builtAt
+      properties:
+        sha:
+          type:
+            - string
+            - "null"
+        subject:
+          type:
+            - string
+            - "null"
+          description: First line of the commit message.
+        builtAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Build time; null for a server running from source.
+    SystemStatus:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+        - checkedAt
+        - build
+      properties:
+        status:
+          type: string
+          enum:
+            - ok
+        checkedAt:
+          type: string
+          format: date-time
+        build:
+          $ref: "#/components/schemas/BuildInfo"
     ValidationError:
       type: object
       additionalProperties: false
@@ -240,3 +281,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ValidationError"
+  /api/telemetry/system-status:
+    get:
+      operationId: readSystemStatus
+      summary: Report the running server's health and the commit it was built from (telemetry:admin)
+      responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
+        "200":
+          description: The server answered; `build` names what is deployed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemStatus"

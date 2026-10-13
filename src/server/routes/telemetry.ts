@@ -1,7 +1,8 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { registerRoutesWithCapabilities } from "../auth/capability";
 import { writeClientLog, getClientLogPage } from "../telemetry/index";
-import type { ClientLogLevel } from "../../shared";
+import { getBuildInfo } from "../lib/build-info";
+import type { ClientLogLevel, SystemStatus } from "../../shared";
 
 const VALID_LEVELS: ReadonlySet<string> = new Set(["debug", "info", "warn", "error"]);
 
@@ -113,6 +114,20 @@ export async function telemetryRoutes(app: FastifyInstance): Promise<void> {
             .send({ error: "validation_error", message: "Invalid filter or cursor" });
         }
         return reply.code(200).send(page);
+      },
+    },
+    {
+      method: "get",
+      path: "/api/telemetry/system-status",
+      capability: "telemetry:admin",
+      // Admin-only on purpose: the public /health probe must not disclose what is deployed.
+      handler: async (_request: FastifyRequest, reply: FastifyReply) => {
+        const status: SystemStatus = {
+          status: "ok",
+          checkedAt: new Date().toISOString(),
+          build: getBuildInfo(),
+        };
+        return reply.code(200).send(status);
       },
     },
   ]);
