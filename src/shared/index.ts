@@ -5,7 +5,11 @@ import type { LiveCacheState, LiveClient, RegisteredDevice } from "./networkDevi
 import type { PrintJobState, DerivedPrintJobState } from "./printing.js";
 import type { MemberColorKey } from "./member-color.js";
 
-export { MEMBER_COLOR_KEYS, chooseMemberColorKey } from "./member-color.js";
+export {
+  MEMBER_COLOR_KEYS,
+  RETIRED_MEMBER_COLOR_KEYS,
+  chooseMemberColorKey,
+} from "./member-color.js";
 export type { MemberColorKey } from "./member-color.js";
 
 /** Role enum — exactly `parent` | `child`.
@@ -177,6 +181,9 @@ export interface EventInput {
   tzid?: string;
   rrule?: string | null;
   exdates?: string[];
+  /** Free text; blank or null clears it on edit. */
+  description?: string | null;
+  location?: string | null;
 }
 
 /** FeedItem — one EXPANDED occurrence (not a master) returned by `getEvents`.
@@ -196,6 +203,11 @@ export interface FeedItem {
   decoratedTitle?: string | null;
   provider?: string | null;
   sourceRef?: string | null;
+  /** Plain text: household-authored for a local event, as the feed sent it for an external one.
+   * Present only when there is some.
+   */
+  description?: string;
+  location?: string;
 }
 
 export type ExternalSourceProvider = "google" | "microsoft" | "apple" | "ics_generic";
@@ -249,6 +261,8 @@ export interface HighlightRuleOrder {
 }
 
 export * from "./events.js";
+export { detectCalendarProvider } from "./calendar-provider.js";
+export { isSingleEmoji } from "./emoji.js";
 
 /** AssignmentReplace — full replacement set of member ids for an event (atomic
  * replace; each MUST be an active member, FR-006).
@@ -626,6 +640,22 @@ export type GenerateAllResponse =
   | { status: "already_running" };
 
 // ─── Client Logging / Telemetry DTOs ────────────────────────
+
+/** BuildInfo — the commit a server or client bundle was built from. Any part that could not be
+ * determined is null; `builtAt` is null for a server running from source.
+ */
+export interface BuildInfo {
+  sha: string | null;
+  subject: string | null;
+  builtAt: string | null;
+}
+
+/** SystemStatus — what the admin overview shows about the running server. */
+export interface SystemStatus {
+  status: "ok";
+  checkedAt: string;
+  build: BuildInfo;
+}
 
 /** ClientLogLevel — the four fixed severities.
  */

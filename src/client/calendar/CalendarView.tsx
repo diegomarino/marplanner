@@ -1,5 +1,13 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import {
+  CalendarCheck,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { Temporal } from "temporal-polyfill";
 import { useTranslation } from "@/i18n";
 import { authFetch } from "@/lib/credential";
@@ -8,17 +16,28 @@ import { cn } from "@/lib/utils";
 import { AdminPanel } from "@/components/AdminPanel";
 import { CheckboxField } from "@/components/CheckboxField";
 import { ErrorNotice } from "@/components/ErrorNotice";
+import { PillToggle } from "@/components/PillToggle";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { CalendarMonthView } from "@/calendar/CalendarMonthView";
-import { ScheduleXWeekView } from "@/calendar/ScheduleXWeekView";
+import { EventDescription } from "@/calendar/EventDescription";
 import { memberFilterStyle } from "@/calendar/member-event-style";
+import { ScheduleXWeekView } from "@/calendar/ScheduleXWeekView";
 import {
   addCalendarDays,
   buildCalendarDays,
   buildWeekDays,
   dateTimeLocalToUtcInstant,
+  displayTitle,
   filterCalendarEvents,
   formatInstantAsDateTimeLocal,
   getHouseholdCalendarDate,
@@ -30,6 +49,9 @@ import {
 import type { AssignmentReplace, EventInput, FeedItem, Member } from "../../shared";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** The event was created but its people could not be saved. */
+class AssignmentAfterCreateError extends Error {}
 
 export function CalendarView() {
   const { t, language } = useTranslation();
@@ -105,22 +127,23 @@ export function CalendarView() {
     }).format(d);
   };
 
-  const formatTimed = (instant: string): string => {
-    // A true UTC instant (ADR-062): place it in the household Calendar timezone.
+  // A true UTC instant (ADR-062), placed in the household Calendar timezone. The zone itself is
+  // not shown: every time on this screen is household time.
+  const timedParts = (instant: string): { day: string; time: string } => {
     const d = new Date(instant);
-    const day = new Intl.DateTimeFormat(locale, {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      timeZone: timezone,
-    }).format(d);
-    const time = new Intl.DateTimeFormat(locale, {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZoneName: "short",
-      timeZone: timezone,
-    }).format(d);
-    return `${day} ${time}`;
+    return {
+      day: new Intl.DateTimeFormat(locale, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        timeZone: timezone,
+      }).format(d),
+      time: new Intl.DateTimeFormat(locale, {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: timezone,
+      }).format(d),
+    };
   };
 
   const renderWhen = (event: FeedItem): string => {
@@ -129,17 +152,21 @@ export function CalendarView() {
       if (event.occurrenceEnd) {
         // occurrenceEnd is EXCLUSIVE (half-open). Show the inclusive last day, and
         // omit it entirely for a single-day event so it doesn't look like two days.
-        const endExclusive = new Date(`${event.occurrenceEnd}T00:00:00Z`);
-        endExclusive.setUTCDate(endExclusive.getUTCDate() - 1);
-        const inclusiveEnd = endExclusive.toISOString().slice(0, 10);
+        const inclusiveEnd = addCalendarDays(event.occurrenceEnd, -1);
         if (inclusiveEnd !== event.occurrenceStart) {
           return `${start} — ${formatAllDay(inclusiveEnd)}`;
         }
       }
       return start;
     }
-    const start = formatTimed(event.occurrenceStart);
-    return event.occurrenceEnd ? `${start} — ${formatTimed(event.occurrenceEnd)}` : start;
+    const start = timedParts(event.occurrenceStart);
+    if (!event.occurrenceEnd || event.occurrenceEnd === event.occurrenceStart) {
+      return `${start.day} ${start.time}`;
+    }
+    const end = timedParts(event.occurrenceEnd);
+    return end.day === start.day
+      ? `${start.day} ${start.time} — ${end.time}`
+      : `${start.day} ${start.time} — ${end.day} ${end.time}`;
   };
 
   const [members, setMembers] = useState<Member[]>([]);
@@ -181,11 +208,6 @@ export function CalendarView() {
     [activeMembers, events, selectedFilterMemberIds, showAllDay]
   );
 
-  const [showAssign, setShowAssign] = useState<string | null>(null);
-  const [assignmentMemberIds, setAssignmentMemberIds] = useState<Set<string>>(new Set());
-  const [updatingAssignment, setUpdatingAssignment] = useState(false);
-  const [assignmentError, setAssignmentError] = useState<string | null>(null);
-
   const [showEdit, setShowEdit] = useState<string | null>(null);
   const [editingEvent, setEditingEvent] = useState<FeedItem | null>(null);
   const [updatingEvent, setUpdatingEvent] = useState(false);
@@ -195,6 +217,11 @@ export function CalendarView() {
   const [fEditDate, setFEditDate] = useState("");
   const [fEditStart, setFEditStart] = useState("");
   const [fEditEnd, setFEditEnd] = useState("");
+  const [fEditLocation, setFEditLocation] = useState("");
+  const [fEditDescription, setFEditDescription] = useState("");
+  const [fEditAllDay, setFEditAllDay] = useState(true);
+  const [fEditDateEnd, setFEditDateEnd] = useState("");
+  const [editMemberIds, setEditMemberIds] = useState<Set<string>>(() => new Set());
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [deletingEvent, setDeletingEvent] = useState(false);
@@ -204,16 +231,24 @@ export function CalendarView() {
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [createNotice, setCreateNotice] = useState<string | null>(null);
   const [fTitle, setFTitle] = useState("");
   const [fAllDay, setFAllDay] = useState(true);
   const [fDate, setFDate] = useState("");
   const [fStart, setFStart] = useState("");
   const [fEnd, setFEnd] = useState("");
+  const [fDateEnd, setFDateEnd] = useState("");
+  const [fLocation, setFLocation] = useState("");
+  const [fDescription, setFDescription] = useState("");
+  const [createMemberIds, setCreateMemberIds] = useState<Set<string>>(() => new Set());
 
-  const resetAssignment = (): void => {
-    setShowAssign(null);
-    setAssignmentMemberIds(new Set());
-    setAssignmentError(null);
+  const toggleCreateMember = (memberId: string): void => {
+    setCreateMemberIds((current) => {
+      const next = new Set(current);
+      if (next.has(memberId)) next.delete(memberId);
+      else next.add(memberId);
+      return next;
+    });
   };
 
   const resetForm = (): void => {
@@ -222,29 +257,61 @@ export function CalendarView() {
     setFDate("");
     setFStart("");
     setFEnd("");
+    setFDateEnd("");
+    setFLocation("");
+    setFDescription("");
+    setCreateMemberIds(new Set());
     setCreateError(null);
-    resetAssignment();
-  };
-
-  const openAssign = (event: FeedItem): void => {
-    setShowAssign(presentationEventId(event));
-    setAssignmentMemberIds(new Set(event.assignedTo));
-    setAssignmentError(null);
   };
 
   const openEdit = (event: FeedItem): void => {
     setShowEdit(`${event.id}@${event.occurrenceStart}`);
     setEditingEvent(event);
     setFEditTitle(event.title);
+    setFEditLocation(event.location ?? "");
+    setFEditDescription(event.description ?? "");
+    setFEditAllDay(event.allDay);
+    setEditMemberIds(new Set(event.assignedTo));
     if (event.allDay) {
-      setFEditDate(event.occurrenceStart.slice(0, 10));
+      setFEditDate(event.occurrenceStart);
+      // The form shows the last day; the stored end is the day after it.
+      setFEditDateEnd(
+        event.occurrenceEnd ? addCalendarDays(event.occurrenceEnd, -1) : event.occurrenceStart
+      );
+      setFEditStart("");
+      setFEditEnd("");
     } else {
       setFEditStart(formatInstantAsDateTimeLocal(event.occurrenceStart, timezone));
-      if (event.occurrenceEnd) {
-        setFEditEnd(formatInstantAsDateTimeLocal(event.occurrenceEnd, timezone));
-      }
+      setFEditEnd(
+        formatInstantAsDateTimeLocal(event.occurrenceEnd ?? event.occurrenceStart, timezone)
+      );
+      setFEditDate("");
+      setFEditDateEnd("");
     }
     setEventError(null);
+  };
+
+  /** Switching shape in the edit form carries the day across, so the fields are never blank. */
+  const changeEditAllDay = (allDay: boolean): void => {
+    setFEditAllDay(allDay);
+    if (allDay && !fEditDate) {
+      const day = fEditStart.slice(0, 10);
+      setFEditDate(day);
+      setFEditDateEnd(fEditEnd.slice(0, 10) || day);
+    }
+    if (!allDay && !fEditStart && fEditDate) {
+      setFEditStart(`${fEditDate}T09:00`);
+      setFEditEnd(`${fEditDate}T10:00`);
+    }
+  };
+
+  const toggleEditMember = (memberId: string): void => {
+    setEditMemberIds((current) => {
+      const next = new Set(current);
+      if (next.has(memberId)) next.delete(memberId);
+      else next.add(memberId);
+      return next;
+    });
   };
 
   const openDeleteConfirm = (event: FeedItem): void => {
@@ -259,6 +326,10 @@ export function CalendarView() {
     setFEditDate("");
     setFEditStart("");
     setFEditEnd("");
+    setFEditLocation("");
+    setFEditDescription("");
+    setFEditDateEnd("");
+    setEditMemberIds(new Set());
     setEventError(null);
   };
 
@@ -285,18 +356,34 @@ export function CalendarView() {
       if (fEditTitle !== original.title) {
         payload.title = fEditTitle;
       }
+      if (fEditLocation.trim() !== (original.location ?? "")) {
+        payload.location = fEditLocation;
+      }
+      if (fEditDescription.trim() !== (original.description ?? "")) {
+        payload.description = fEditDescription;
+      }
 
-      if (original.allDay) {
-        const newDate = fEditDate !== original.occurrenceStart.slice(0, 10);
-        if (newDate) {
+      // An emptied date field must fail here, as a conversion error, not reach the server.
+      if (fEditAllDay) Temporal.PlainDate.from(fEditDate);
+      const lastDay = fEditDateEnd && fEditDateEnd > fEditDate ? fEditDateEnd : fEditDate;
+      if (fEditAllDay !== original.allDay) {
+        // A new shape is sent whole; the server drops the old one.
+        payload.allDay = fEditAllDay;
+        if (fEditAllDay) {
           payload.startDate = fEditDate;
-          const originalSpanDays = original.occurrenceEnd
-            ? Temporal.PlainDate.from(original.occurrenceStart).until(
-                Temporal.PlainDate.from(original.occurrenceEnd),
-                { largestUnit: "day" }
-              ).days
-            : 1;
-          payload.endDate = addCalendarDays(fEditDate, originalSpanDays);
+          payload.endDate = addCalendarDays(lastDay, 1);
+        } else {
+          payload.startUtc = dateTimeLocalToUtcInstant(fEditStart, timezone);
+          payload.endUtc = dateTimeLocalToUtcInstant(fEditEnd, timezone);
+          payload.tzid = timezone;
+        }
+      } else if (original.allDay) {
+        const originalLastDay = original.occurrenceEnd
+          ? addCalendarDays(original.occurrenceEnd, -1)
+          : original.occurrenceStart;
+        if (fEditDate !== original.occurrenceStart || lastDay !== originalLastDay) {
+          payload.startDate = fEditDate;
+          payload.endDate = addCalendarDays(lastDay, 1);
         }
       } else {
         const originalStartLocal = formatInstantAsDateTimeLocal(original.occurrenceStart, timezone);
@@ -318,7 +405,27 @@ export function CalendarView() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(`edit: ${res.status}`);
+
+      const before = new Set(original.assignedTo);
+      const peopleChanged =
+        before.size !== editMemberIds.size || [...editMemberIds].some((id) => !before.has(id));
+      if (peopleChanged) {
+        const assignment: AssignmentReplace = { memberIds: Array.from(editMemberIds) };
+        const assigned = await authFetch(`/api/calendar/events/${eventId}/assignments`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(assignment),
+        });
+        if (!assigned.ok) {
+          // The other fields are saved; keep the form open on the people that were not.
+          setEventError(t("calendar.assignmentError"));
+          return;
+        }
+      }
+      // Saving ends the visit: the summary behind the form still holds the pre-edit occurrence.
       closeEdit();
+      setSelectedEvent(null);
       setReloadKey((k) => k + 1);
     } catch {
       setEventError(t("calendar.editError"));
@@ -345,39 +452,6 @@ export function CalendarView() {
     }
   };
 
-  const toggleMember = (memberId: string): void => {
-    setAssignmentMemberIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(memberId)) {
-        next.delete(memberId);
-      } else {
-        next.add(memberId);
-      }
-      return next;
-    });
-  };
-
-  const submitAssignment = async (eventId: string): Promise<void> => {
-    setUpdatingAssignment(true);
-    setAssignmentError(null);
-    const payload: AssignmentReplace = { memberIds: Array.from(assignmentMemberIds) };
-    try {
-      const res = await authFetch(`/api/calendar/events/${eventId}/assignments`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error(`assignment: ${res.status}`);
-      resetAssignment();
-      setReloadKey((k) => k + 1);
-    } catch {
-      setAssignmentError(t("calendar.assignmentError"));
-    } finally {
-      setUpdatingAssignment(false);
-    }
-  };
-
   const submitCreate = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
     setCreating(true);
@@ -390,7 +464,8 @@ export function CalendarView() {
           title: fTitle,
           allDay: true,
           startDate: fDate,
-          endDate: addCalendarDays(fDate, 1),
+          // The form's end date is the last day shown; the stored end is exclusive.
+          endDate: addCalendarDays(fDateEnd && fDateEnd > fDate ? fDateEnd : fDate, 1),
         };
       } else {
         input = {
@@ -401,6 +476,8 @@ export function CalendarView() {
           tzid: timezone,
         };
       }
+      if (fLocation.trim()) input.location = fLocation;
+      if (fDescription.trim()) input.description = fDescription;
       const res = await authFetch("/api/calendar/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -408,10 +485,33 @@ export function CalendarView() {
         body: JSON.stringify(input),
       });
       if (!res.ok) throw new Error(`create: ${res.status}`);
+      if (createMemberIds.size > 0) {
+        const { id } = (await res.json()) as { id: string };
+        const assignment: AssignmentReplace = { memberIds: Array.from(createMemberIds) };
+        const assigned = await authFetch(`/api/calendar/events/${id}/assignments`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(assignment),
+        });
+        // The event exists either way; reload so it shows, and say the people were not saved.
+        if (!assigned.ok) {
+          setReloadKey((k) => k + 1);
+          setCreateMemberIds(new Set());
+          throw new AssignmentAfterCreateError();
+        }
+      }
       resetForm();
       setShowCreate(false);
       setReloadKey((k) => k + 1);
-    } catch {
+    } catch (err) {
+      if (err instanceof AssignmentAfterCreateError) {
+        resetForm();
+        setShowCreate(false);
+        // Its own notice: the reload that shows the new event clears the load error.
+        setCreateNotice(t("calendar.assignmentError"));
+        return;
+      }
       setCreateError(t("calendar.error"));
     } finally {
       setCreating(false);
@@ -489,23 +589,35 @@ export function CalendarView() {
   return (
     <AdminPanel
       title={t("calendar.title")}
-      description={t("calendar.description")}
-      // CalendarView is the page-level surface for the whole
-      // `/calendar` route (mounted as sibling content to `AdminGate`, exactly like
-      // `ChoresBoard`/`MealsBoard`/`DailyBriefingView` — see `AdminPanel`'s own `headingLevel` doc)
-      // rather than a nested admin sub-panel (`MealsManagement`'s shape) — so it gets the page's
-      // one `<h1>`, matching those three siblings instead of leaving `/calendar` with zero.
+      // Page-level surface for `/calendar`, so it owns the route's one `<h1>`; hidden because the
+      // selected nav entry already says "Calendar".
       headingLevel="h1"
+      headingHidden
       className="min-h-0"
     >
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col items-start justify-between gap-3 xl:flex-row xl:items-center">
-          <h2
-            className="text-2xl font-bold tracking-tight capitalize"
-            data-testid="calendar-period-title"
-          >
-            {periodTitle}
-          </h2>
+        <h2
+          className="text-2xl font-bold tracking-tight capitalize"
+          data-testid="calendar-period-title"
+        >
+          {periodTitle}
+        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap gap-2" aria-label={t("calendar.filters")}>
+            <PillToggle
+              checked={showAllDay}
+              onChange={setShowAllDay}
+              label={t("calendar.allDayFilter")}
+            />
+            {activeMembers.map((member) => (
+              <PillToggle
+                key={member.id}
+                checked={selectedFilterMemberIds.has(member.id)}
+                onChange={() => toggleFilterMember(member.id)}
+                label={member.displayName}
+              />
+            ))}
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="border-input flex overflow-hidden rounded-lg border">
               <Button
@@ -516,8 +628,8 @@ export function CalendarView() {
                 className={cn(
                   "rounded-none px-4 font-medium",
                   mode === "month"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-background text-muted-foreground hover:bg-muted"
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-background text-muted-foreground hover:bg-primary/10 hover:text-foreground"
                 )}
               >
                 {t("calendar.month")}
@@ -530,8 +642,8 @@ export function CalendarView() {
                 className={cn(
                   "rounded-none px-4 font-medium",
                   mode === "week"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-background text-muted-foreground hover:bg-muted"
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-background text-muted-foreground hover:bg-primary/10 hover:text-foreground"
                 )}
               >
                 {t("calendar.week")}
@@ -540,7 +652,10 @@ export function CalendarView() {
             <Button
               type="button"
               data-testid="calendar-create-btn"
-              onClick={() => setShowCreate(true)}
+              onClick={() => {
+                setCreateNotice(null);
+                setShowCreate(true);
+              }}
             >
               <Plus />
               {t("calendar.newEvent")}
@@ -556,6 +671,7 @@ export function CalendarView() {
               <ChevronLeft />
             </Button>
             <Button type="button" variant="outline" onClick={goToToday}>
+              <CalendarCheck />
               {t("calendar.today")}
             </Button>
             <Button
@@ -570,55 +686,24 @@ export function CalendarView() {
             </Button>
           </div>
         </div>
-
-        <div className="flex flex-wrap gap-2" aria-label={t("calendar.filters")}>
-          <label
-            className={cn(
-              "border-input inline-flex min-h-[var(--control-height)] cursor-pointer items-center gap-2 rounded-full border px-3 font-medium",
-              showAllDay ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-            )}
-          >
-            {/* eslint-disable-next-line ui-policy/raw-controls -- Native checkbox is nested in the token-sized all-day filter label. */}
-            <input
-              type="checkbox"
-              checked={showAllDay}
-              onChange={(event) => setShowAllDay(event.target.checked)}
-              className="size-[var(--control-height)] text-control accent-current"
-            />
-            {t("calendar.allDayFilter")}
-          </label>
-          {activeMembers.map((member) => {
-            const checked = selectedFilterMemberIds.has(member.id);
-            return (
-              <label
-                key={member.id}
-                className={cn(
-                  "border-input inline-flex min-h-[var(--control-height)] cursor-pointer items-center gap-2 rounded-full border px-3 font-medium",
-                  !checked && "bg-muted text-muted-foreground"
-                )}
-                // eslint-disable-next-line ui-policy/debt -- Selected member identity is rendered through the generated semantic colour token.
-                style={checked ? memberFilterStyle(member.colorKey) : undefined}
-              >
-                {/* eslint-disable-next-line ui-policy/raw-controls -- Native checkbox is nested in the token-sized all-day filter label. */}
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => toggleFilterMember(member.id)}
-                  className="size-[var(--control-height)] text-control"
-                />
-                {member.displayName}
-              </label>
-            );
-          })}
-        </div>
       </div>
 
-      {showCreate ? (
-        <div className="mb-2">
-          <form
-            onSubmit={(event) => void submitCreate(event)}
-            className="flex max-w-[360px] flex-col gap-2 rounded-md border p-3"
-          >
+      <Dialog
+        open={showCreate}
+        onOpenChange={(open) => {
+          if (open || creating) return;
+          resetForm();
+          setShowCreate(false);
+        }}
+      >
+        <DialogContent
+          closeLabel={t("calendar.close")}
+          className="max-h-[calc(100dvh-2rem)] overflow-y-auto"
+        >
+          <DialogHeader>
+            <DialogTitle className="text-2xl">{t("calendar.newEvent")}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={(event) => void submitCreate(event)} className="flex flex-col gap-4">
             <Label className="flex flex-col items-start gap-1.5">
               {t("calendar.createTitle")}
               <Input
@@ -629,44 +714,92 @@ export function CalendarView() {
                 required
               />
             </Label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {fAllDay ? (
+                <>
+                  <Label className="flex flex-col items-start gap-1.5">
+                    {t("calendar.startDate")}
+                    <Input
+                      type="date"
+                      value={fDate}
+                      onChange={(e) => setFDate(e.target.value)}
+                      required
+                    />
+                  </Label>
+                  <Label className="flex flex-col items-start gap-1.5">
+                    {t("calendar.endDate")}
+                    <Input
+                      type="date"
+                      value={fDateEnd}
+                      min={fDate || undefined}
+                      onChange={(e) => setFDateEnd(e.target.value)}
+                    />
+                  </Label>
+                </>
+              ) : (
+                <>
+                  <Label className="flex flex-col items-start gap-1.5">
+                    {t("calendar.startTime")}
+                    <Input
+                      type="datetime-local"
+                      value={fStart}
+                      onChange={(e) => setFStart(e.target.value)}
+                      required
+                    />
+                  </Label>
+                  <Label className="flex flex-col items-start gap-1.5">
+                    {t("calendar.endTime")}
+                    <Input
+                      type="datetime-local"
+                      value={fEnd}
+                      min={fStart || undefined}
+                      onChange={(e) => setFEnd(e.target.value)}
+                      required
+                    />
+                  </Label>
+                </>
+              )}
+            </div>
             <CheckboxField checked={fAllDay} onChange={setFAllDay} label={t("calendar.allDay")} />
-            {fAllDay ? (
-              <Label className="flex flex-col items-start gap-1.5">
-                {t("calendar.startDate")}
-                <Input
-                  type="date"
-                  value={fDate}
-                  onChange={(e) => setFDate(e.target.value)}
-                  required
-                />
-              </Label>
-            ) : (
-              <>
-                <Label className="flex flex-col items-start gap-1.5">
-                  {t("calendar.startTime")}
-                  <Input
-                    type="datetime-local"
-                    value={fStart}
-                    onChange={(e) => setFStart(e.target.value)}
-                    required
-                  />
-                </Label>
-                <Label className="flex flex-col items-start gap-1.5">
-                  {t("calendar.endTime")}
-                  <Input
-                    type="datetime-local"
-                    value={fEnd}
-                    onChange={(e) => setFEnd(e.target.value)}
-                    required
-                  />
-                </Label>
-              </>
+            <Label className="flex flex-col items-start gap-1.5">
+              {t("calendar.location")}
+              <Input
+                value={fLocation}
+                maxLength={300}
+                onChange={(e) => setFLocation(e.target.value)}
+                placeholder={t("calendar.addLocation")}
+              />
+            </Label>
+            <Label className="flex flex-col items-start gap-1.5">
+              {t("calendar.description")}
+              <Textarea
+                value={fDescription}
+                maxLength={4000}
+                rows={3}
+                onChange={(e) => setFDescription(e.target.value)}
+                placeholder={t("calendar.addDescription")}
+              />
+            </Label>
+            {activeMembers.length > 0 && (
+              <fieldset className="flex flex-col gap-1.5">
+                <legend className="text-control mb-1.5 font-medium">
+                  {t("calendar.participants")}
+                </legend>
+                <div className="flex flex-wrap gap-2">
+                  {activeMembers.map((member) => (
+                    <PillToggle
+                      key={member.id}
+                      checked={createMemberIds.has(member.id)}
+                      onChange={() => toggleCreateMember(member.id)}
+                      label={member.displayName}
+                      selectedStyle={memberFilterStyle(member.colorKey)}
+                    />
+                  ))}
+                </div>
+              </fieldset>
             )}
             <ErrorNotice message={createError} />
-            <div className="flex gap-2">
-              <Button type="submit" data-testid="calendar-create-submit" disabled={creating}>
-                {creating ? t("calendar.creating") : t("calendar.createEvent")}
-              </Button>
+            <div className="grid grid-cols-2 gap-3">
               <Button
                 type="button"
                 variant="outline"
@@ -678,10 +811,15 @@ export function CalendarView() {
               >
                 {t("calendar.cancel")}
               </Button>
+              <Button type="submit" data-testid="calendar-create-submit" disabled={creating}>
+                {creating ? t("calendar.creating") : t("calendar.createEvent")}
+              </Button>
             </div>
           </form>
-        </div>
-      ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <ErrorNotice message={createNotice} />
 
       {loading ? (
         <div className="text-muted-foreground">{t("calendar.loading")}</div>
@@ -715,116 +853,72 @@ export function CalendarView() {
           {filteredEvents.length === 0 && (
             <div className="text-muted-foreground py-4 text-center">{t("calendar.noEvents")}</div>
           )}
-          {selectedEvent && (
-            <div
-              className="bg-card flex flex-col gap-2 rounded-2xl border p-4 shadow-sm"
+          <Dialog
+            open={selectedEvent !== null}
+            onOpenChange={(open) => {
+              if (open) return;
+              // Reopening an event must start from its summary, not a half-finished panel.
+              closeEdit();
+              closeDeleteConfirm();
+              setSelectedEvent(null);
+            }}
+          >
+            <DialogContent
+              closeLabel={t("calendar.close")}
+              // Anchored by its top edge: opening Edit or the delete confirmation then grows the
+              // dialog downwards, where a centred one would shift its title and buttons.
+              className="top-[12dvh] max-h-[calc(88dvh-1rem)] translate-y-0 overflow-y-auto"
               data-testid="calendar-event-detail"
             >
-              {[selectedEvent].map((event) => (
-                <div key={presentationEventId(event)} className="rounded-md">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="font-semibold">{event.title}</div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedEvent(null)}
+              {(selectedEvent ? [selectedEvent] : []).map((event) => (
+                <div key={presentationEventId(event)} className="flex flex-col gap-3">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl">{displayTitle(event)}</DialogTitle>
+                    <DialogDescription>{renderWhen(event)}</DialogDescription>
+                  </DialogHeader>
+                  {event.location && (
+                    <p className="text-control flex items-start gap-2">
+                      <MapPin className="text-muted-foreground mt-0.5 size-4 shrink-0" />
+                      <span className="sr-only">{t("calendar.location")}: </span>
+                      {event.location}
+                    </p>
+                  )}
+                  {event.description && (
+                    <EventDescription text={event.description} className="text-control" />
+                  )}
+                  {event.assignedTo.length > 0 && showEdit === null && (
+                    <ul
+                      className="flex list-none flex-wrap gap-2 p-0"
+                      aria-label={t("calendar.participants")}
                     >
-                      {t("calendar.close")}
-                    </Button>
-                  </div>
-                  <div className="text-muted-foreground mt-1 text-sm">{renderWhen(event)}</div>
+                      {activeMembers
+                        .filter((member) => event.assignedTo.includes(member.id))
+                        .map((member) => (
+                          <li
+                            key={member.id}
+                            className="text-control rounded-full border px-3 py-1 font-medium"
+                            // eslint-disable-next-line ui-policy/debt -- Member identity is rendered through the generated semantic colour token.
+                            style={memberFilterStyle(member.colorKey)}
+                          >
+                            {member.displayName}
+                          </li>
+                        ))}
+                    </ul>
+                  )}
                   {event.source === "external" ? (
-                    <p className="text-muted-foreground mt-2 text-sm">
+                    <p className="text-muted-foreground text-sm">
                       {t("calendar.externalReadOnly")}
                     </p>
                   ) : (
-                    <>
-                      {showAssign === `${event.id}@${event.occurrenceStart}` ? (
-                        <div className="bg-muted mt-2 rounded-md p-3">
-                          <div className="flex flex-col gap-2">
-                            {loadingMembers ? (
-                              <div className="text-muted-foreground text-sm">
-                                {t("calendar.loadingMembers")}
-                              </div>
-                            ) : membersError ? (
-                              <ErrorNotice message={membersError} />
-                            ) : (
-                              <>
-                                <div className="mb-1 text-xs font-semibold">
-                                  {t("calendar.assignTo")}
-                                </div>
-                                <ul className="my-1 max-h-30 list-none overflow-y-auto p-0">
-                                  {activeMembers.map((member) => (
-                                    <li key={member.id} className="rounded-sm px-2 py-1">
-                                      <CheckboxField
-                                        checked={assignmentMemberIds.has(member.id)}
-                                        onChange={() => toggleMember(member.id)}
-                                        label={member.displayName}
-                                        data-testid={`calendar-assign-member-${member.id}`}
-                                        // removing the `<li
-                                        // onClick>` (the FR-013 fix) shrank the tappable area from
-                                        // the whole row (~1198px measured) to just the label's own
-                                        // content width (~206px) — an ~83% reduction on a
-                                        // wall-mounted kiosk. `w-full` restores a full-row hit area
-                                        // on the (still correctly semantics-only) `<label>` itself,
-                                        // and `cursor-pointer` restores the affordance the `<li>`'s
-                                        // removed `onClick` used to imply. Deliberate: this is NOT
-                                        // a re-add of the `<li>`'s onClick (the row container stays
-                                        // inert; only the label — which already legitimately owns
-                                        // activation — grows to fill it).
-                                        className="w-full cursor-pointer"
-                                      />
-                                    </li>
-                                  ))}
-                                </ul>
-                              </>
-                            )}
-                          </div>
-                          <ErrorNotice message={assignmentError} className="mt-2" />
-                          <div className="mt-2 flex gap-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              data-testid="calendar-assign-save-btn"
-                              onClick={() => void submitAssignment(event.id)}
-                              disabled={updatingAssignment}
-                            >
-                              {updatingAssignment ? t("calendar.updating") : t("calendar.save")}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={resetAssignment}
-                              disabled={updatingAssignment}
-                            >
-                              {t("calendar.cancel")}
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          data-testid="calendar-assign-btn"
-                          className="mt-2"
-                          onClick={() => openAssign(event)}
-                        >
-                          {event.assignedTo.length > 0
-                            ? t("calendar.editAssignment")
-                            : t("calendar.assignTo")}
-                        </Button>
-                      )}
+                    <div className="flex flex-wrap items-start justify-end gap-2">
                       {showEdit === `${event.id}@${event.occurrenceStart}` ? (
-                        <div className="bg-muted mt-2 rounded-md p-3">
+                        <div className="bg-muted w-full rounded-2xl p-3">
                           <form
                             onSubmit={(e) => {
                               e.preventDefault();
                               void submitEdit(event.id);
                             }}
-                            className="flex flex-col gap-2"
+                            className="flex flex-col gap-3"
                           >
                             <Label className="flex flex-col items-start gap-1.5">
                               {t("calendar.editTitle")}
@@ -836,38 +930,102 @@ export function CalendarView() {
                                 required
                               />
                             </Label>
-                            {event.allDay ? (
-                              <Label className="flex flex-col items-start gap-1.5">
-                                {t("calendar.startDate")}
-                                <Input
-                                  type="date"
-                                  value={fEditDate}
-                                  onChange={(e) => setFEditDate(e.target.value)}
-                                  required
-                                />
-                              </Label>
-                            ) : (
-                              <>
-                                <Label className="flex flex-col items-start gap-1.5">
-                                  {t("calendar.startTime")}
-                                  <Input
-                                    type="datetime-local"
-                                    value={fEditStart}
-                                    onChange={(e) => setFEditStart(e.target.value)}
-                                    required
-                                  />
-                                </Label>
-                                <Label className="flex flex-col items-start gap-1.5">
-                                  {t("calendar.endTime")}
-                                  <Input
-                                    type="datetime-local"
-                                    value={fEditEnd}
-                                    onChange={(e) => setFEditEnd(e.target.value)}
-                                    required
-                                  />
-                                </Label>
-                              </>
-                            )}
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              {fEditAllDay ? (
+                                <>
+                                  <Label className="flex flex-col items-start gap-1.5">
+                                    {t("calendar.startDate")}
+                                    <Input
+                                      type="date"
+                                      value={fEditDate}
+                                      onChange={(e) => setFEditDate(e.target.value)}
+                                      required
+                                    />
+                                  </Label>
+                                  <Label className="flex flex-col items-start gap-1.5">
+                                    {t("calendar.endDate")}
+                                    <Input
+                                      type="date"
+                                      value={fEditDateEnd}
+                                      min={fEditDate || undefined}
+                                      onChange={(e) => setFEditDateEnd(e.target.value)}
+                                    />
+                                  </Label>
+                                </>
+                              ) : (
+                                <>
+                                  <Label className="flex flex-col items-start gap-1.5">
+                                    {t("calendar.startTime")}
+                                    <Input
+                                      type="datetime-local"
+                                      value={fEditStart}
+                                      onChange={(e) => setFEditStart(e.target.value)}
+                                      required
+                                    />
+                                  </Label>
+                                  <Label className="flex flex-col items-start gap-1.5">
+                                    {t("calendar.endTime")}
+                                    <Input
+                                      type="datetime-local"
+                                      value={fEditEnd}
+                                      min={fEditStart || undefined}
+                                      onChange={(e) => setFEditEnd(e.target.value)}
+                                      required
+                                    />
+                                  </Label>
+                                </>
+                              )}
+                            </div>
+                            <CheckboxField
+                              checked={fEditAllDay}
+                              onChange={changeEditAllDay}
+                              label={t("calendar.allDay")}
+                            />
+                            <Label className="flex flex-col items-start gap-1.5">
+                              {t("calendar.location")}
+                              <Input
+                                value={fEditLocation}
+                                maxLength={300}
+                                onChange={(e) => setFEditLocation(e.target.value)}
+                                placeholder={t("calendar.addLocation")}
+                              />
+                            </Label>
+                            <Label className="flex flex-col items-start gap-1.5">
+                              {t("calendar.description")}
+                              <Textarea
+                                value={fEditDescription}
+                                maxLength={4000}
+                                rows={3}
+                                onChange={(e) => setFEditDescription(e.target.value)}
+                                placeholder={t("calendar.addDescription")}
+                              />
+                            </Label>
+                            <fieldset className="flex flex-col gap-1.5">
+                              <legend className="text-control mb-1.5 font-medium">
+                                {t("calendar.participants")}
+                              </legend>
+                              {loadingMembers ? (
+                                <div className="text-muted-foreground text-sm">
+                                  {t("calendar.loadingMembers")}
+                                </div>
+                              ) : membersError ? (
+                                <ErrorNotice message={membersError} />
+                              ) : (
+                                <ul className="flex list-none flex-wrap gap-2 p-0">
+                                  {activeMembers.map((member) => (
+                                    <li key={member.id}>
+                                      <PillToggle
+                                        checked={editMemberIds.has(member.id)}
+                                        onChange={() => toggleEditMember(member.id)}
+                                        label={member.displayName}
+                                        selectedStyle={memberFilterStyle(member.colorKey)}
+                                        data-testid={`calendar-assign-member-${member.id}`}
+                                      />
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </fieldset>
                             <ErrorNotice message={eventError} />
                             <div className="flex gap-2">
                               <Button
@@ -894,14 +1052,14 @@ export function CalendarView() {
                           variant="outline"
                           size="sm"
                           data-testid="calendar-edit-btn"
-                          className="mt-2"
                           onClick={() => openEdit(event)}
                         >
+                          <Pencil />
                           {t("calendar.edit")}
                         </Button>
                       )}
                       {showDeleteConfirm === `${event.id}@${event.occurrenceStart}` ? (
-                        <div className="bg-destructive/10 border-destructive/40 mt-2 rounded-md border p-3">
+                        <div className="bg-destructive/10 border-destructive/40 w-full rounded-2xl border p-3">
                           <div className="flex flex-col gap-2">
                             <div className="text-sm">{t("calendar.deleteConfirm")}</div>
                             <ErrorNotice message={deleteError} />
@@ -934,18 +1092,18 @@ export function CalendarView() {
                           variant="outline"
                           size="sm"
                           data-testid="calendar-delete-btn"
-                          className="mt-2"
                           onClick={() => openDeleteConfirm(event)}
                         >
+                          <Trash2 />
                           {t("calendar.delete")}
                         </Button>
                       )}
-                    </>
+                    </div>
                   )}
                 </div>
               ))}
-            </div>
-          )}
+            </DialogContent>
+          </Dialog>
         </>
       )}
     </AdminPanel>

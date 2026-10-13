@@ -1,4 +1,5 @@
 import { test, expect, request } from "@playwright/test";
+import { openAdminSection } from "./admin-nav";
 import { spawn, type ChildProcess } from "node:child_process";
 import { createServer } from "node:net";
 import { mkdtempSync, existsSync } from "node:fs";
@@ -243,17 +244,18 @@ test("B1 members: authorization, edit, archive, restore and restart", async ({ p
     // Language-agnostic selectors: the admin Members UI localizes to the household
     // locale (default 'en', ADR-015), so target stable ids/roles + a testid, NOT
     // English label text (which flips to Spanish once /api/settings resolves).
-    const createSubmit = page.locator('form button[type="submit"]');
-    await expect(createSubmit).toBeVisible();
-    await page.locator("#member-display-name").fill(MEMBER_NAME);
-    await page.locator("#member-role").click(); // Radix Select trigger
+    await openAdminSection(page, "admin-nav-members-management");
+    await page.getByTestId("members-add-member").click();
+    const createForm = page.getByTestId("member-form-dialog");
+    await createForm.locator("#member-edit-display-name").fill(MEMBER_NAME);
+    await createForm.locator("#member-edit-role").click(); // Radix Select trigger
     await page.getByRole("option").first().click(); // first option = parent
-    await page.getByLabel("Year").fill("1800");
-    await createSubmit.click();
-    await expect(page.getByRole("alert")).toContainText(/month.*day/i);
-    await page.getByLabel("Year").fill("");
-    await createSubmit.click();
-    await expect(page.getByTestId("member-create-success")).toBeVisible();
+    await createForm.getByLabel("Year").fill("1800");
+    await createForm.getByTestId("member-save").click();
+    await expect(createForm.getByRole("alert")).toContainText(/month.*day/i);
+    await createForm.getByLabel("Year").fill("");
+    await createForm.getByTestId("member-save").click();
+    await expect(createForm).toBeHidden();
 
     // Pre-restart sanity: the member is readable through GET /api/members.
     const before = await page.request.get(`${base}/api/members`);
@@ -281,22 +283,32 @@ test("B1 members: authorization, edit, archive, restore and restart", async ({ p
       data: { colorKey: "not-a-color" },
     });
     expect(invalidColor.status()).toBe(400);
-    await page.getByTestId("admin-nav-members-management").click();
+    await openAdminSection(page, "admin-nav-members-management");
     const card = page.getByTestId(`member-card-${member!.id}`);
     await expect(card).toBeVisible();
-    await card.getByRole("button", { name: "Edit" }).click();
-    const dialog = page.getByRole("dialog");
+    // The card is the control: opening it is editing it.
+    await card.click();
+    const dialog = page.getByTestId("member-form-dialog");
     await dialog.locator("#member-edit-display-name").fill("B1 Edited Member");
     await dialog.getByRole("radio", { name: "Red" }).click();
     await dialog.getByRole("button", { name: "Save" }).click();
+    await expect(dialog).toBeHidden();
     await expect(card).toContainText("B1 Edited Member");
-    await card.getByRole("button", { name: "Archive" }).click();
+    // Archive lives in the form and asks once more.
+    await card.click();
+    await dialog.getByTestId("member-archive").click();
+    await page.getByTestId("member-lifecycle-confirm").click();
     await expect(card).toHaveCount(0);
-    await page.getByRole("button", { name: "Archived" }).click();
+    await page.getByTestId("members-tab-archived").click();
     const archivedCard = page.getByTestId(`member-card-${member!.id}`);
     await expect(archivedCard).toContainText("B1 Edited Member");
-    await archivedCard.getByRole("button", { name: "Restore" }).click();
-    await page.getByRole("button", { name: "Active" }).click();
+    // An archived member opens read-only; restoring is the only action.
+    await archivedCard.click();
+    await expect(dialog.locator("#member-edit-display-name")).toBeDisabled();
+    await dialog.getByTestId("member-restore").click();
+    await page.getByTestId("member-lifecycle-confirm").click();
+    await expect(dialog).toBeHidden();
+    await page.getByTestId("members-tab-active").click();
     await expect(page.getByTestId(`member-card-${member!.id}`)).toContainText("B1 Edited Member");
     await page.setViewportSize({ width: 320, height: 720 });
     await expect(page.getByTestId(`member-card-${member!.id}`)).toBeVisible();

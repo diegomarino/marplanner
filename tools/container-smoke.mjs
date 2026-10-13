@@ -234,11 +234,14 @@ try {
     await expect(page.getByTestId("admin-pin-keypad")).toBeVisible();
     for (const digit of pin) await page.getByTestId(`admin-pin-digit-${digit}`).click();
     await page.getByTestId("admin-pin-unlock").click();
-    await page.locator("#member-display-name").fill("Container Ada");
-    await page.locator("#member-role").click();
+    await page.getByTestId("admin-nav-members-management").click();
+    await page.getByTestId("members-add-member").click();
+    await page.locator("#member-edit-display-name").fill("Container Ada");
+    await page.locator("#member-edit-role").click();
     await page.getByRole("option").first().click();
-    await page.locator('form button[type="submit"]').click();
-    await expect(page.getByTestId("member-create-success")).toBeVisible();
+    await page.getByTestId("member-save").click();
+    await expect(page.getByTestId("member-form-dialog")).toBeHidden();
+    await expect(page.getByTestId("members-card-grid")).toContainText("Container Ada");
     const response = await page.request.get(`${primary.base}/api/members`);
     assert.equal(response.status(), 200);
     assert((await response.json()).some((member) => member.displayName === "Container Ada"));

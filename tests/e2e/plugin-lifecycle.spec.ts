@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { expectAdminSectionListed, openAdminSection } from "./admin-nav";
 
 import { messages, resolveLang } from "../../src/client/i18n/messages";
 import { PLUGIN_IDS, type PluginCatalogEntry } from "../../src/shared/plugins";
@@ -50,7 +51,7 @@ test("fresh lifecycle catalog keeps API and UI aligned across a repeat activatio
   expect(freshCatalog.some(({ id }) => id === ("external-calendar-sync" as never))).toBe(false);
 
   await unlockAdmin(page, ADMIN_PIN);
-  await page.getByTestId("admin-nav-plugins").click();
+  await openAdminSection(page, "admin-nav-plugins");
   const rows = page.getByTestId(/^plugin-row-/);
   await expect(rows).toHaveCount(9);
   expect(
@@ -61,7 +62,7 @@ test("fresh lifecycle catalog keeps API and UI aligned across a repeat activatio
       copy["plugins.state.inactive"]
     );
   }
-  await expect(page.getByTestId("admin-nav-weather")).toHaveCount(0);
+  await expectAdminSectionListed(page, "admin-nav-weather", false, "admin-nav-plugins");
 
   const weather = page.getByTestId("plugin-row-weather");
   for (let cycle = 0; cycle < 2; cycle += 1) {
@@ -77,7 +78,7 @@ test("fresh lifecycle catalog keeps API and UI aligned across a repeat activatio
       .click();
     expect((await activateResponse).status()).toBe(200);
     await expect(page.getByTestId("plugin-state-weather")).toHaveText(copy["plugins.state.active"]);
-    await expect(page.getByTestId("admin-nav-weather")).toHaveCount(1);
+    await expectAdminSectionListed(page, "admin-nav-weather", true, "admin-nav-plugins");
     await expect(page.getByTestId(/^plugin-row-/)).toHaveCount(9);
     await expect(page.getByTestId("plugin-row-weather")).toHaveCount(1);
     await expect(
@@ -103,7 +104,7 @@ test("fresh lifecycle catalog keeps API and UI aligned across a repeat activatio
     await expect(page.getByTestId("plugin-state-weather")).toHaveText(
       copy["plugins.state.inactive"]
     );
-    await expect(page.getByTestId("admin-nav-weather")).toHaveCount(0);
+    await expectAdminSectionListed(page, "admin-nav-weather", false, "admin-nav-plugins");
     await expect(page.getByTestId(/^plugin-row-/)).toHaveCount(9);
     await expect(page.getByTestId("plugin-row-weather")).toHaveCount(1);
     await expect(

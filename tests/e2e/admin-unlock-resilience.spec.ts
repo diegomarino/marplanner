@@ -77,7 +77,7 @@ test("the hold SURVIVES a layout shift under a stationary pointer (#793 fixed vi
   // A SINGLE press — the helper has no retry. If pointer capture regresses, this throws.
   await unlockAdmin(page, ADMIN_PIN);
 
-  await expect(page.getByTestId("admin-nav-member-create")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
   // The sabotage must actually have fired mid-hold — otherwise this spec proves nothing about
   // shift survival and would pass on any implementation.
   await expect(page.locator("html")).toHaveAttribute(SPACER_ATTR, "fired");
@@ -89,15 +89,11 @@ const adminDestinations: ReadonlyArray<{
 }> = [
   {
     path: "/admin",
-    primary: (page, m) =>
-      page
-        .getByRole("region", { name: m["members.create.title"], exact: true })
-        .getByRole("button", { name: m["members.create.submit"], exact: true }),
+    primary: (page) => page.getByTestId("admin-overview-check"),
   },
   {
     path: "/admin/members",
-    primary: (page, m) =>
-      page.getByRole("button", { name: m["members.management.refresh"], exact: true }),
+    primary: (page, m) => page.getByTestId("members-add-member"),
   },
   {
     path: "/admin/day-periods",

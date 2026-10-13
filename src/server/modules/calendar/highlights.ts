@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getDb } from "../../db/client";
+import { isSingleEmoji } from "../../../shared";
 import type { HighlightRule, HighlightRuleCreate } from "../../../shared";
 
 export class HighlightValidationError extends Error {
@@ -52,15 +53,7 @@ function validateCreate(input: unknown): HighlightRuleCreate {
   const { emoji, keywords } = input as Partial<HighlightRuleCreate>;
   if (typeof emoji !== "string") throw new HighlightValidationError();
   const trimmedEmoji = emoji.trim();
-  const graphemes = [
-    ...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(trimmedEmoji),
-  ];
-  if (
-    trimmedEmoji.length > 32 ||
-    graphemes.length !== 1 ||
-    !/[\p{Extended_Pictographic}\p{Regional_Indicator}\u20e3]/u.test(trimmedEmoji)
-  )
-    throw new HighlightValidationError();
+  if (!isSingleEmoji(trimmedEmoji)) throw new HighlightValidationError();
   if (!Array.isArray(keywords) || keywords.length < 1 || keywords.length > 50)
     throw new HighlightValidationError();
   const normalized: string[] = [];

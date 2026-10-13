@@ -31,11 +31,11 @@ import {
 } from "../modules/calendar/highlights";
 
 const EXTERNAL_SOURCE_UPSERT_KEYS = new Set(["name", "provider", "feedUrl", "pollIntervalMin"]);
-const EXTERNAL_SOURCE_UPSERT_REQUIRED_KEYS = ["name", "provider", "feedUrl"] as const;
+const EXTERNAL_SOURCE_UPSERT_REQUIRED_KEYS = ["name", "feedUrl"] as const;
 
 function isExternalSourceUpsertBody(value: unknown): value is {
   name: unknown;
-  provider: unknown;
+  provider?: unknown;
   feedUrl: unknown;
   pollIntervalMin?: unknown;
 } {
@@ -295,6 +295,8 @@ export async function calendarRoutes(
       tzid?: string;
       rrule?: string | null;
       exdates?: string[];
+      description?: string | null;
+      location?: string | null;
     };
   }>(
     "/api/calendar/events",
@@ -310,6 +312,8 @@ export async function calendarRoutes(
           tzid?: string;
           rrule?: string | null;
           exdates?: string[];
+          description?: string | null;
+          location?: string | null;
         };
       }>,
       reply: FastifyReply

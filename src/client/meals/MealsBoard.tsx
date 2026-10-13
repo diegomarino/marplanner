@@ -36,7 +36,7 @@ export function MealsBoard(): React.JSX.Element {
       )}
       <div
         data-testid="meals-board"
-        className="grid min-h-[calc(100vh-8rem)] grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(20rem,0.95fr)]"
+        className="grid min-h-[calc(100vh-8rem)] grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(14rem,0.55fr)]"
       >
         {workspace.weekMenu === null ? (
           <p className="text-muted-foreground">{t("meals.week.loading")}</p>

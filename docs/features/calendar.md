@@ -44,6 +44,14 @@ assignments — leaving no orphaned rows.
   rows remain readable but read-only.
 - A reconcile that crashes mid-write leaves no partial event set and surfaces the
   failure in the source's status.
+- Manual assignments on an imported event are additive only. A member added by
+  hand survives every later sync, because a sync replaces only the `ext:` rows it
+  derived from the title. A member the title names cannot be removed for good:
+  the removal holds until the next re-derivation (the feed changed, or a
+  household member was edited), which reads the title again and restores them.
+  There is no per-event opt-out from title-derived assignment. The Calendar
+  screen offers people editing on local events only; this applies to callers of
+  the assignment endpoint.
 
 ## Requirements
 

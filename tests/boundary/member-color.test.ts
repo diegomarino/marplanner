@@ -9,20 +9,14 @@ import { useIsolatedDb } from "../helpers/db";
 const PALETTE = [
   "blue",
   "sky",
-  "cyan",
   "teal",
   "green",
   "lime",
-  "yellow",
   "amber",
   "orange",
   "red",
-  "rose",
   "pink",
-  "fuchsia",
-  "purple",
   "violet",
-  "indigo",
 ];
 const cookies = { mp_device_key: "mpk-member-color-test" };
 
@@ -56,9 +50,9 @@ describe("member colour public boundary", () => {
     });
   }
 
-  it("assigns all sixteen unused keys in order, then cycles by active count", async () => {
+  it("assigns all ten unused keys in order, then cycles by active count", async () => {
     const actual = [];
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < PALETTE.length + 2; i++) {
       const response = await create();
       expect(response.statusCode).toBe(201);
       actual.push(response.json().colorKey);
@@ -69,12 +63,59 @@ describe("member colour public boundary", () => {
     expect(listActiveChildren().map((m) => m.colorKey)).toEqual(actual);
   });
 
-  it("accepts every explicit curated key, including reuse before exhaustion", async () => {
-    for (const colorKey of [...PALETTE, "blue"]) {
+  it("accepts every explicit curated key once, and a repeat only after all are held", async () => {
+    for (const colorKey of PALETTE) {
       const response = await create(colorKey);
       expect(response.statusCode).toBe(201);
       expect(response.json().colorKey).toBe(colorKey);
     }
+    // Every colour is held now, so a repeat is the only option left.
+    const eleventh = await create("blue");
+    expect(eleventh.statusCode).toBe(201);
+    expect(eleventh.json().colorKey).toBe("blue");
+  });
+
+  it("refuses an explicit colour another active member holds while a free one remains", async () => {
+    const first = (await create("blue")).json();
+    const second = (await create("sky")).json();
+
+    const duplicate = await create("blue");
+    expect(duplicate.statusCode).toBe(400);
+    expect(duplicate.json()).toMatchObject({ error: "validation_error" });
+
+    const stolen = await app.inject({
+      method: "PATCH",
+      url: `/api/members/${second.id}`,
+      cookies,
+      payload: { displayName: "Must not persist", colorKey: "blue" },
+    });
+    expect(stolen.statusCode).toBe(400);
+
+    // Sending one's own colour back is not a conflict.
+    const unchanged = await app.inject({
+      method: "PATCH",
+      url: `/api/members/${first.id}`,
+      cookies,
+      payload: { displayName: "Renamed", colorKey: "blue" },
+    });
+    expect(unchanged.statusCode).toBe(200);
+
+    const listed = await app.inject({ method: "GET", url: "/api/members", cookies });
+    expect(
+      listed
+        .json()
+        .map((m: { displayName: string; colorKey: string }) => [m.displayName, m.colorKey])
+    ).toEqual([
+      ["Renamed", "blue"],
+      ["Member", "sky"],
+    ]);
+  });
+
+  it("frees an archived member's colour for others to take", async () => {
+    const first = (await create("blue")).json();
+    await app.inject({ method: "POST", url: `/api/members/${first.id}/archive`, cookies });
+
+    expect((await create("blue")).statusCode).toBe(201);
   });
 
   it.each(["#ff0000", "oklch(50% 0.2 40)", "BLUE", "", " blue ", null, 5])(
@@ -95,7 +136,7 @@ describe("member colour public boundary", () => {
     }
   );
 
-  it("preserves colour on archive, restore, no-ops and unrelated edits; archived keys are reusable", async () => {
+  it("preserves colour on archive, no-ops and unrelated edits; a restore keeps it only while it is free", async () => {
     const original = (await create()).json();
     for (let i = 0; i < 2; i++) {
       const archived = await app.inject({
@@ -120,16 +161,18 @@ describe("member colour public boundary", () => {
         url: `/api/members/${original.id}/restore`,
         cookies,
       });
-      expect(restored.json()).toMatchObject({ colorKey: "blue", lifecycle: "active" });
+      // Blue went to the member created while this one was archived, so the restored member
+      // takes the first free colour; restoring again changes nothing.
+      expect(restored.json()).toMatchObject({ colorKey: "sky", lifecycle: "active" });
     }
     const edited = await app.inject({
       method: "PATCH",
       url: `/api/members/${original.id}`,
       cookies,
-      payload: { colorKey: "indigo" },
+      payload: { colorKey: "violet" },
     });
     expect(edited.statusCode).toBe(200);
-    expect(edited.json().colorKey).toBe("indigo");
+    expect(edited.json().colorKey).toBe("violet");
     for (const payload of [
       { displayName: "Renamed" },
       { birthDate: { month: 2, day: 29, year: null } },
@@ -142,12 +185,12 @@ describe("member colour public boundary", () => {
         payload,
       });
       expect(response.statusCode).toBe(200);
-      expect(response.json().colorKey).toBe("indigo");
+      expect(response.json().colorKey).toBe("violet");
     }
     expect((await create()).json().colorKey).toBe("sky");
     const all = await app.inject({ method: "GET", url: "/api/members?lifecycle=all", cookies });
     expect(all.json()).toContainEqual(
-      expect.objectContaining({ id: original.id, colorKey: "indigo" })
+      expect.objectContaining({ id: original.id, colorKey: "violet" })
     );
   });
 

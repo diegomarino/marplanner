@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { expectAdminSectionListed } from "./admin-nav";
 
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import Database from "better-sqlite3";
@@ -187,7 +188,8 @@ async function unlockCurrentAdminRouteWithKeyboard(page: Page): Promise<void> {
   const unlock = page.getByTestId("admin-pin-unlock");
   await tabTo(page, unlock);
   await page.keyboard.press("Enter");
-  await expect(page.getByTestId("admin-nav-plugins")).toBeVisible({ timeout: 10_000 });
+  // Unlocked: the admin sidebar is on every admin page, whichever one was requested.
+  await expect(page.getByTestId("admin-sidebar")).toBeVisible({ timeout: 10_000 });
 }
 
 async function navigateFromHomeToPluginManagementWithKeyboard(
@@ -299,7 +301,6 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
         await expect(page.getByTestId("plugin-state-weather")).toHaveText(
           copy["plugins.state.active"]
         );
-        await expect(page.getByTestId("admin-nav-weather")).toBeVisible();
         await expect
           .soft(
             page.getByRole("button", {
@@ -308,6 +309,8 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
             })
           )
           .toBeFocused({ timeout: 500 });
+        // Checked after the focus assertion: looking at the section list means leaving this page.
+        await expectAdminSectionListed(page, "admin-nav-weather", true, "admin-nav-plugins");
       });
 
       await test.step("supported prior baseline", async () => {
@@ -320,10 +323,10 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
         };
         const copy = messages[resolveLang(settings.locale?.language)];
         await expectCatalogOrderAndActions(page, copy, "active");
-        await expect(page.getByTestId("admin-nav-daily-briefing-management")).toBeVisible();
-        await expect(page.getByTestId("admin-nav-weather")).toBeVisible();
-        await expect(page.getByTestId("admin-nav-printing")).toBeVisible();
         await maybePauseForHumanReview(page);
+        await expectAdminSectionListed(page, "admin-nav-daily-briefing-management", true);
+        await expectAdminSectionListed(page, "admin-nav-weather", true);
+        await expectAdminSectionListed(page, "admin-nav-printing", true, "admin-nav-plugins");
       });
 
       await test.step("busy drain keeps canonical Active and unrelated actions usable", async () => {
@@ -390,8 +393,8 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
             })
           )
           .toBeFocused({ timeout: 500 });
-        await expect(page.getByTestId("admin-nav-weather")).toBeVisible();
         await expectNoHorizontalPageOverflow(page);
+        await expectAdminSectionListed(page, "admin-nav-weather", true, "admin-nav-plugins");
       });
 
       await test.step("errored state exposes only safe text and focuses the affected row", async () => {
@@ -431,11 +434,16 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
         expect(bodyText).not.toMatch(
           /(?:mpk-|mpg-|\/Users\/|https?:\/\/|sqlite|SELECT|INSERT|UPDATE)/i
         );
-        await expect(page.getByTestId("admin-nav-weather")).toHaveCount(0);
-        await expect(page.getByTestId("admin-nav-daily-briefing-management")).toBeVisible();
         await expect(page.getByTestId("admin-nav-members-management")).toBeVisible();
         await expectNoHorizontalPageOverflow(page);
         await maybePauseForHumanReview(page);
+        await expectAdminSectionListed(page, "admin-nav-weather", false);
+        await expectAdminSectionListed(
+          page,
+          "admin-nav-daily-briefing-management",
+          true,
+          "admin-nav-plugins"
+        );
       });
 
       await test.step("inactive direct route returns to catalog without mounting the contribution", async () => {
@@ -453,11 +461,14 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
           page.getByRole("heading", { name: copy["plugins.unavailable.title"], exact: true })
         ).toBeVisible();
         await expect(page.getByTestId("weather-management")).toHaveCount(0);
-        await expect(page.getByTestId("admin-nav-weather")).toHaveCount(0);
-        await expect(page.getByTestId("admin-nav-printing")).toBeVisible();
         await expect(page.getByTestId("admin-nav-members-management")).toBeVisible();
         await expectNoHorizontalPageOverflow(page);
         await maybePauseForHumanReview(page);
+        await expectAdminSectionListed(page, "admin-nav-weather", false);
+        await expectAdminSectionListed(page, "admin-nav-printing", true, "back");
+        await expect(
+          page.getByRole("heading", { name: copy["plugins.unavailable.title"], exact: true })
+        ).toBeVisible();
 
         const returnAction = page.getByRole("link", {
           name: copy["plugins.unavailable.return"],

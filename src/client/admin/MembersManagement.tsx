@@ -1,13 +1,14 @@
 import { useEffect, useState, type CSSProperties } from "react";
+import { Archive, ArchiveRestore, Plus } from "lucide-react";
 import { useAdminUnlock } from "@/lib/adminUnlock";
+import { cn } from "@/lib/utils";
 import { authFetch } from "@/lib/credential";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ErrorNotice } from "@/components/ErrorNotice";
-import { MemberCreateForm } from "@/admin/MemberCreateForm";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -91,20 +92,14 @@ const BIRTH_DAY_LABEL_KEYS: readonly MessageKey[] = [
 const MEMBER_COLOR_LABEL_KEYS: Record<MemberColorKey, MessageKey> = {
   blue: "members.color.blue",
   sky: "members.color.sky",
-  cyan: "members.color.cyan",
   teal: "members.color.teal",
   green: "members.color.green",
   lime: "members.color.lime",
-  yellow: "members.color.yellow",
   amber: "members.color.amber",
   orange: "members.color.orange",
   red: "members.color.red",
-  rose: "members.color.rose",
   pink: "members.color.pink",
-  fuchsia: "members.color.fuchsia",
-  purple: "members.color.purple",
   violet: "members.color.violet",
-  indigo: "members.color.indigo",
 };
 
 /** Formats a member's birth date for display, localized month name + locale-appropriate word
@@ -130,6 +125,14 @@ function formatBirthDate(
     : `${monthName} ${birthDate.day}${birthDate.year !== null ? `, ${birthDate.year}` : ""}`;
 }
 
+type MemberFormMode =
+  | { kind: "create" }
+  | { kind: "edit"; member: Member }
+  // An archived member is shown, not edited: the only action is restoring it.
+  | { kind: "archived"; member: Member };
+
+const COLOR_NAVIGATION_KEYS = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"];
+
 function MembersManagementContent() {
   const { t, language } = useTranslation();
 
@@ -139,18 +142,18 @@ function MembersManagementContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [archivedLoaded, setArchivedLoaded] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editingMember, setEditingMember] = useState<Member | null>(null);
-  const [editDisplayName, setEditDisplayName] = useState("");
-  const [editRole, setEditRole] = useState<Role | "">("");
-  const [editMonth, setEditMonth] = useState<number | "">("");
-  const [editDay, setEditDay] = useState<number | "">("");
-  const [editYear, setEditYear] = useState<string>("");
-  const [editColorKey, setEditColorKey] = useState<MemberColorKey | null>(null);
-  const [savingEdit, setSavingEdit] = useState(false);
 
-  // Load the active-members list when this panel mounts. The Refresh control invokes the same
-  // loader; this panel needs no household-timezone gating.
+  const [form, setForm] = useState<MemberFormMode | null>(null);
+  const [formName, setFormName] = useState("");
+  const [formRole, setFormRole] = useState<Role | "">("");
+  const [formMonth, setFormMonth] = useState<number | "">("");
+  const [formDay, setFormDay] = useState<number | "">("");
+  const [formYear, setFormYear] = useState<string>("");
+  const [formColorKey, setFormColorKey] = useState<MemberColorKey | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [confirming, setConfirming] = useState<"archive" | "restore" | null>(null);
+
   useEffect(() => {
     refreshMembers();
   }, []);
@@ -196,65 +199,63 @@ function MembersManagementContent() {
       });
   };
 
-  const startEditingMember = (member: Member) => {
-    setEditingMember(member);
-    setEditDisplayName(member.displayName);
-    setEditRole(member.role);
-    setEditColorKey(member.colorKey);
-    if (member.birthDate) {
-      setEditMonth(member.birthDate.month);
-      setEditDay(member.birthDate.day);
-      setEditYear(member.birthDate.year !== null ? String(member.birthDate.year) : "");
-    } else {
-      setEditMonth("");
-      setEditDay("");
-      setEditYear("");
-    }
+  const openForm = (mode: MemberFormMode) => {
+    const member = mode.kind === "create" ? null : mode.member;
+    setForm(mode);
+    setFormName(member?.displayName ?? "");
+    setFormRole(member?.role ?? "");
+    setFormColorKey(member?.colorKey ?? null);
+    setFormMonth(member?.birthDate?.month ?? "");
+    setFormDay(member?.birthDate?.day ?? "");
+    setFormYear(
+      member?.birthDate?.year !== null && member?.birthDate?.year !== undefined
+        ? String(member.birthDate.year)
+        : ""
+    );
+    setFormError(null);
   };
 
-  const cancelEditingMember = () => {
-    setEditingMember(null);
-    setEditDisplayName("");
-    setEditRole("");
-    setEditMonth("");
-    setEditDay("");
-    setEditYear("");
-    setEditColorKey(null);
+  const closeForm = () => {
+    setForm(null);
+    setConfirming(null);
+    setFormError(null);
   };
 
-  const clearEditBirthdate = () => {
-    setEditMonth("");
-    setEditDay("");
-    setEditYear("");
+  const clearBirthdate = () => {
+    setFormMonth("");
+    setFormDay("");
+    setFormYear("");
   };
 
-  const handleSaveEdit = () => {
-    if (!editingMember) return;
+  const readOnly = form?.kind === "archived";
+  const formValid = formName.trim().length > 0 && formRole !== "";
+  // A colour identifies one active member. Archived members hold no colour, matching the
+  // server's own first-unused assignment.
+  const takenColors = new Set(
+    members
+      .filter((member) => form?.kind === "create" || member.id !== form?.member.id)
+      .map((member) => member.colorKey)
+  );
+  const unusedColors = MEMBER_COLOR_KEYS.filter((key) => !takenColors.has(key));
+  // With every colour in use a repeat is unavoidable, so the whole palette opens up again.
+  const freeColors = unusedColors.length > 0 ? unusedColors : [...MEMBER_COLOR_KEYS];
 
-    setSavingEdit(true);
-    setError(null);
+  const handleSave = () => {
+    if (!form || form.kind === "archived" || !formValid || saving) return;
+    setFormError(null);
 
-    const updates: Partial<Member> & {
-      birthDate?: { month: number; day: number; year: number | null } | null;
-    } = {
-      displayName: editDisplayName.trim(),
-      role: editRole as Role,
-    };
-    if (editColorKey) updates.colorKey = editColorKey;
-
-    const anySet = editMonth !== "" || editDay !== "" || editYear.trim() !== "";
-    const bothMonthDay = editMonth !== "" && editDay !== "";
+    const anySet = formMonth !== "" || formDay !== "" || formYear.trim() !== "";
+    const bothMonthDay = formMonth !== "" && formDay !== "";
     if (anySet && !bothMonthDay) {
-      setError(t("members.birthdate.errorPartial"));
-      setSavingEdit(false);
+      setFormError(t("members.birthdate.errorPartial"));
       return;
     }
-
+    let birthDate: { month: number; day: number; year: number | null } | null = null;
     if (bothMonthDay) {
-      const birthDate = {
-        month: Number(editMonth),
-        day: Number(editDay),
-        year: editYear.trim() ? parseInt(editYear, 10) : null,
+      birthDate = {
+        month: Number(formMonth),
+        day: Number(formDay),
+        year: formYear.trim() ? parseInt(formYear, 10) : null,
       };
       if (
         birthDate.year !== null &&
@@ -262,86 +263,72 @@ function MembersManagementContent() {
           birthDate.year < 1900 ||
           birthDate.year > new Date().getFullYear())
       ) {
-        setError(t("members.birthdate.errorInvalidYear"));
-        setSavingEdit(false);
+        setFormError(t("members.birthdate.errorInvalidYear"));
         return;
       }
-      updates.birthDate = birthDate;
-    } else {
-      updates.birthDate = null;
     }
 
-    authFetch(`/api/members/${editingMember.id}`, {
-      method: "PATCH",
+    const creating = form.kind === "create";
+    const body: Record<string, unknown> = { displayName: formName.trim(), role: formRole };
+    if (formColorKey) body.colorKey = formColorKey;
+    // Creating omits an unset birthday; editing sends null so a cleared one is removed.
+    if (birthDate || !creating) body.birthDate = birthDate;
+
+    setSaving(true);
+    authFetch(creating ? "/api/members" : `/api/members/${form.member.id}`, {
+      method: creating ? "POST" : "PATCH",
       credentials: "include",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(updates),
+      body: JSON.stringify(body),
     })
-      .then((res) => {
-        if (!res.ok) throw new Error(`update member: ${res.status}`);
-        return res.json() as Promise<Member>;
-      })
-      .then((updatedMember) => {
-        if (tab === "active") {
-          setMembers((prev) => prev.map((m) => (m.id === updatedMember.id ? updatedMember : m)));
-        } else {
-          setArchivedMembers((prev) =>
-            prev.map((m) => (m.id === updatedMember.id ? updatedMember : m))
-          );
+      .then(async (res) => {
+        if (res.ok) {
+          closeForm();
+          refreshMembers();
+          return;
         }
-        cancelEditingMember();
+        const fallback =
+          res.status === 401
+            ? t("members.create.errorAuth")
+            : creating
+              ? t("members.create.errorGeneric")
+              : t("members.management.saveError");
+        const data = (await res.json().catch(() => null)) as {
+          message?: string;
+          error?: string;
+        } | null;
+        setFormError(res.status === 401 ? fallback : data?.message || data?.error || fallback);
       })
-      .catch((err) => {
-        if (err instanceof Error && "response" in err && err["response"] instanceof Response) {
-          const response = err["response"] as Response;
-          if (response.ok) {
-            setError(t("members.management.error"));
-            return;
-          }
-          response
-            .json()
-            .then((data: { message?: string; error?: string }) => {
-              setError(data.message || data.error || t("members.management.error"));
-            })
-            .catch(() => {
-              setError(t("members.management.error"));
-            });
-        } else {
-          setError(t("members.management.error"));
-        }
+      .catch(() => {
+        setFormError(
+          creating ? t("members.create.errorGeneric") : t("members.management.saveError")
+        );
       })
       .finally(() => {
-        setSavingEdit(false);
+        setSaving(false);
       });
   };
 
-  const handleArchive = (id: string) => {
-    authFetch(`/api/members/${id}/archive`, { method: "POST", credentials: "include" })
+  const changeLifecycle = (action: "archive" | "restore") => {
+    if (!form || form.kind === "create") return;
+    setSaving(true);
+    authFetch(`/api/members/${form.member.id}/${action}`, {
+      method: "POST",
+      credentials: "include",
+    })
       .then((res) => {
-        if (!res.ok) throw new Error(`archive member: ${res.status}`);
-        return res.json() as Promise<Member>;
-      })
-      .then(() => {
+        if (!res.ok) throw new Error(`${action} member: ${res.status}`);
+        closeForm();
         refreshMembers();
-        setArchivedLoaded(false);
+        if (action === "restore") refreshArchivedMembers();
+        else setArchivedLoaded(false);
       })
       .catch(() => {
-        setError(t("members.management.error"));
-      });
-  };
-
-  const handleRestore = (id: string) => {
-    authFetch(`/api/members/${id}/restore`, { method: "POST", credentials: "include" })
-      .then((res) => {
-        if (!res.ok) throw new Error(`restore member: ${res.status}`);
-        return res.json() as Promise<Member>;
+        setConfirming(null);
+        setFormError(t("members.management.lifecycleError"));
       })
-      .then(() => {
-        refreshArchivedMembers();
-        refreshMembers();
-      })
-      .catch(() => {
-        setError(t("members.management.error"));
+      .finally(() => {
+        setSaving(false);
       });
   };
 
@@ -353,42 +340,46 @@ function MembersManagementContent() {
   };
 
   const currentMembers = tab === "active" ? members : archivedMembers;
+  const formMember = form && form.kind !== "create" ? form.member : null;
 
   return (
     <>
       <AdminPanel
         title={t("members.management.title")}
-        className="w-full"
+        className="w-full p-0"
         actions={
-          <Button data-testid="members-add-member" onClick={() => setCreateOpen(true)}>
-            {t("members.create.title")}
-          </Button>
+          <>
+            <div
+              role="group"
+              aria-label={t("members.tab.label")}
+              className="border-input flex overflow-hidden rounded-lg border"
+            >
+              {(["active", "archived"] as const).map((option) => (
+                <Button
+                  key={option}
+                  variant="ghost"
+                  type="button"
+                  aria-pressed={tab === option}
+                  data-testid={`members-tab-${option}`}
+                  onClick={() => handleTabChange(option)}
+                  className={cn(
+                    "rounded-none px-4 font-medium",
+                    tab === option
+                      ? "bg-accent text-accent-foreground"
+                      : "bg-background text-muted-foreground hover:bg-primary/10 hover:text-foreground"
+                  )}
+                >
+                  {t(`members.tab.${option}`)}
+                </Button>
+              ))}
+            </div>
+            <Button data-testid="members-add-member" onClick={() => openForm({ kind: "create" })}>
+              <Plus aria-hidden="true" />
+              {t("members.create.new")}
+            </Button>
+          </>
         }
       >
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex gap-2">
-            <Button
-              onClick={() => handleTabChange("active")}
-              variant={tab === "active" ? "default" : "outline"}
-            >
-              {t("members.tab.active")}
-            </Button>
-            <Button
-              onClick={() => handleTabChange("archived")}
-              variant={tab === "archived" ? "default" : "outline"}
-            >
-              {t("members.tab.archived")}
-            </Button>
-          </div>
-          <Button
-            onClick={tab === "active" ? refreshMembers : refreshArchivedMembers}
-            disabled={loading}
-            variant="outline"
-          >
-            {loading ? t("members.management.refreshing") : t("members.management.refresh")}
-          </Button>
-        </div>
-
         <ErrorNotice message={error} />
 
         {tab === "active" && members.length === 0 && !loading && (
@@ -407,118 +398,99 @@ function MembersManagementContent() {
             className="m-0 grid list-none gap-4 p-0 sm:grid-cols-2 xl:grid-cols-3"
           >
             {currentMembers.map((member) => (
-              <li
-                key={member.id}
-                data-testid={`member-card-${member.id}`}
-                className="bg-card flex min-h-48 flex-col justify-between gap-5 rounded-3xl border border-[var(--member-color)] p-5 shadow-sm"
-                // eslint-disable-next-line ui-policy/debt -- Closed member keys select generated semantic token custom properties only.
-                style={
-                  {
-                    "--member-color": `var(--color-member-${member.colorKey}-500)`,
-                  } as CSSProperties
-                }
-              >
-                <div className="flex items-start gap-4">
-                  <div
-                    aria-hidden="true"
-                    className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[var(--member-color)] text-lg font-bold text-member-avatar-foreground shadow-sm"
-                  >
-                    {member.displayName.trim().slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <strong className="block truncate text-lg">{member.displayName}</strong>
-                    <div className="mt-1 flex flex-wrap gap-2 text-sm">
-                      <span className="rounded-full bg-background/80 px-2.5 py-1 font-medium">
-                        {t(`members.create.${member.role}`)}
-                      </span>
-                      <span className="text-muted-foreground rounded-full border px-2.5 py-1">
-                        {t(`members.lifecycle.${member.lifecycle}`)}
-                      </span>
-                    </div>
-                    {member.birthDate && (
-                      <p className="text-muted-foreground mt-3 text-sm">
-                        {formatBirthDate(t, language, member.birthDate)}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => startEditingMember(member)}>
-                    {t("members.action.edit")}
-                  </Button>
-                  {tab === "active" ? (
-                    <Button size="sm" variant="outline" onClick={() => handleArchive(member.id)}>
-                      {t("members.action.archive")}
-                    </Button>
-                  ) : (
-                    <Button size="sm" onClick={() => handleRestore(member.id)}>
-                      {t("members.action.restore")}
-                    </Button>
+              <li key={member.id}>
+                {/* eslint-disable-next-line ui-policy/raw-controls -- The whole card is the control: a multi-line surface the token-sized Button cannot wrap. */}
+                <button
+                  type="button"
+                  data-testid={`member-card-${member.id}`}
+                  onClick={() => openForm({ kind: tab === "active" ? "edit" : "archived", member })}
+                  className="bg-card hover:bg-primary/5 focus-visible:ring-ring/50 text-control flex min-h-[var(--control-height)] w-full cursor-pointer flex-col items-start gap-3 rounded-3xl border p-5 text-left shadow-sm outline-none focus-visible:ring-[3px]"
+                >
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span
+                      className="text-member-avatar-foreground max-w-full truncate rounded-full bg-[var(--member-color)] px-4 py-1 text-lg font-bold shadow-sm"
+                      // eslint-disable-next-line ui-policy/debt -- Closed member keys select generated semantic token custom properties only.
+                      style={
+                        {
+                          "--member-color": `var(--color-member-${member.colorKey}-500)`,
+                        } as CSSProperties
+                      }
+                    >
+                      {member.displayName}
+                    </span>
+                    <span className="bg-muted rounded-full px-2.5 py-1 text-sm font-medium">
+                      {t(`members.create.${member.role}`)}
+                    </span>
+                  </span>
+                  {member.birthDate && (
+                    <span className="text-muted-foreground text-sm">
+                      {formatBirthDate(t, language, member.birthDate)}
+                    </span>
                   )}
-                </div>
+                </button>
               </li>
             ))}
           </ul>
         )}
       </AdminPanel>
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent
-          className="max-h-[calc(100vh-2rem)] overflow-y-auto p-0 sm:max-w-xl"
-          showCloseButton={false}
-        >
-          <DialogHeader className="sr-only">
-            <DialogTitle>{t("members.create.title")}</DialogTitle>
-            <DialogDescription>{t("members.create.description")}</DialogDescription>
-          </DialogHeader>
-          <MemberCreateForm
-            onSuccess={() => {
-              setCreateOpen(false);
-              refreshMembers();
-            }}
-          />
-          <div className="flex justify-end px-4 pb-4">
-            <DialogClose asChild>
-              <Button variant="outline">{t("members.action.cancel")}</Button>
-            </DialogClose>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       <Dialog
-        open={editingMember !== null}
+        open={form !== null}
         onOpenChange={(open) => {
-          if (!open) cancelEditingMember();
+          if (!open && !saving) closeForm();
         }}
       >
         <DialogContent
           className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-xl"
-          showCloseButton={false}
+          closeLabel={t("members.action.cancel")}
+          data-testid="member-form-dialog"
         >
           <DialogHeader>
             <DialogTitle>
-              {t("members.action.edit")} {editingMember?.displayName}
+              {form?.kind === "create"
+                ? t("members.create.title")
+                : form?.kind === "archived"
+                  ? formMember?.displayName
+                  : `${t("members.action.edit")} ${formMember?.displayName ?? ""}`}
             </DialogTitle>
-            <DialogDescription className="sr-only">
-              {t("members.management.description")}
+            <DialogDescription className={form?.kind === "create" ? undefined : "sr-only"}>
+              {form?.kind === "archived"
+                ? t("members.management.archivedHint")
+                : t("members.create.description")}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-col gap-4">
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              handleSave();
+            }}
+          >
+            {readOnly && (
+              <p className="text-muted-foreground text-control">
+                {t("members.management.archivedHint")}
+              </p>
+            )}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="member-edit-display-name">{t("members.create.displayName")}</Label>
                 <Input
                   id="member-edit-display-name"
                   type="text"
-                  value={editDisplayName}
-                  onChange={(e) => setEditDisplayName(e.target.value)}
+                  value={formName}
+                  disabled={readOnly}
+                  onChange={(e) => setFormName(e.target.value)}
                   placeholder={t("members.create.placeholder")}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="member-edit-role">{t("members.create.role")}</Label>
-                <Select value={editRole} onValueChange={(val: Role) => setEditRole(val)}>
+                <Select
+                  value={formRole}
+                  disabled={readOnly}
+                  onValueChange={(val: Role) => setFormRole(val)}
+                >
                   <SelectTrigger id="member-edit-role">
                     <SelectValue placeholder={t("members.create.selectRole")} />
                   </SelectTrigger>
@@ -536,10 +508,13 @@ function MembersManagementContent() {
                 role="radiogroup"
                 aria-labelledby="member-edit-color-label"
                 data-testid="member-edit-color-palette"
-                className="grid w-fit grid-cols-4 gap-3 sm:grid-cols-8"
+                className="grid w-fit grid-cols-5 gap-3"
               >
                 {MEMBER_COLOR_KEYS.map((key) => {
-                  const selected = editColorKey === key;
+                  const selected = formColorKey === key;
+                  const taken = unusedColors.length > 0 && takenColors.has(key);
+                  // One tab stop for the group: the chosen colour, else the first free one.
+                  const tabStop = formColorKey ? selected : key === freeColors[0];
                   return (
                     <Button
                       variant="ghost"
@@ -548,42 +523,36 @@ function MembersManagementContent() {
                       type="button"
                       role="radio"
                       aria-checked={selected}
-                      tabIndex={selected ? 0 : -1}
+                      tabIndex={tabStop ? 0 : -1}
                       onKeyDown={(event) => {
-                        if (
-                          ![
-                            "ArrowLeft",
-                            "ArrowRight",
-                            "ArrowUp",
-                            "ArrowDown",
-                            "Home",
-                            "End",
-                          ].includes(event.key)
-                        )
-                          return;
+                        if (!COLOR_NAVIGATION_KEYS.includes(event.key)) return;
                         event.preventDefault();
-                        const index = MEMBER_COLOR_KEYS.indexOf(key);
+                        if (freeColors.length === 0) return;
+                        // Arrow keys move among the colours still free; taken ones are skipped.
+                        const index = freeColors.indexOf(key);
+                        const step = ["ArrowLeft", "ArrowUp"].includes(event.key) ? -1 : 1;
                         const next =
                           event.key === "Home"
-                            ? 0
+                            ? freeColors[0]
                             : event.key === "End"
-                              ? MEMBER_COLOR_KEYS.length - 1
-                              : (index +
-                                  (["ArrowLeft", "ArrowUp"].includes(event.key) ? -1 : 1) +
-                                  MEMBER_COLOR_KEYS.length) %
-                                MEMBER_COLOR_KEYS.length;
-                        setEditColorKey(MEMBER_COLOR_KEYS[next]);
-                        const radios =
-                          event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
-                            '[role="radio"]'
-                          );
-                        radios?.[next]?.focus();
+                              ? freeColors[freeColors.length - 1]
+                              : freeColors[(index + step + freeColors.length) % freeColors.length];
+                        setFormColorKey(next);
+                        event.currentTarget.parentElement
+                          ?.querySelector<HTMLButtonElement>(`[data-color-key="${next}"]`)
+                          ?.focus();
                       }}
-                      aria-label={t(MEMBER_COLOR_LABEL_KEYS[key])}
+                      aria-label={
+                        taken
+                          ? `${t(MEMBER_COLOR_LABEL_KEYS[key])} — ${t("members.color.taken")}`
+                          : t(MEMBER_COLOR_LABEL_KEYS[key])
+                      }
+                      title={taken ? t("members.color.taken") : undefined}
+                      data-color-key={key}
                       data-state={selected ? "checked" : "unchecked"}
-                      disabled={savingEdit}
-                      onClick={() => setEditColorKey(key)}
-                      className="h-[var(--control-height)] w-[var(--control-height)] rounded-full border-4 border-background text-control shadow-sm transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=checked]:ring-2 data-[state=checked]:ring-[var(--member-color)] data-[state=checked]:ring-offset-2"
+                      disabled={saving || readOnly || taken}
+                      onClick={() => setFormColorKey(key)}
+                      className="h-[var(--control-height)] w-[var(--control-height)] rounded-full border-4 border-background text-control shadow-sm transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-25 data-[state=checked]:opacity-100 data-[state=checked]:ring-2 data-[state=checked]:ring-[var(--member-color)] data-[state=checked]:ring-offset-2"
                       // eslint-disable-next-line ui-policy/debt -- Closed keys select generated semantic token custom properties only.
                       style={
                         {
@@ -595,72 +564,142 @@ function MembersManagementContent() {
                   );
                 })}
               </div>
+              {form?.kind === "create" && !formColorKey && (
+                <p className="text-muted-foreground text-sm">{t("members.color.automatic")}</p>
+              )}
             </div>
 
-            <Label id="members-edit-birthdate-group-label">{t("members.birthdate.label")}</Label>
-            <div
-              role="group"
-              aria-labelledby="members-edit-birthdate-group-label"
-              className="grid gap-2 sm:grid-cols-[1fr_1fr_8rem_auto]"
-            >
-              <Select
-                value={editMonth !== "" ? String(editMonth) : ""}
-                onValueChange={(val: string) => setEditMonth(val === "" ? "" : Number(val))}
+            <div className="flex flex-col gap-2">
+              <Label id="members-edit-birthdate-group-label">{t("members.birthdate.label")}</Label>
+              <div
+                role="group"
+                aria-labelledby="members-edit-birthdate-group-label"
+                className="flex flex-wrap items-center gap-2"
               >
-                <SelectTrigger aria-label={t("members.birthdate.selectMonth")}>
-                  <SelectValue placeholder={t("members.birthdate.selectMonth")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {BIRTH_MONTH_LABEL_KEYS.map((key, i) => (
-                    <SelectItem key={i + 1} value={String(i + 1)}>
-                      {t(key)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <Select
+                  value={formMonth !== "" ? String(formMonth) : ""}
+                  disabled={readOnly}
+                  onValueChange={(val: string) => setFormMonth(val === "" ? "" : Number(val))}
+                >
+                  <SelectTrigger className="w-40" aria-label={t("members.birthdate.selectMonth")}>
+                    <SelectValue placeholder={t("members.birthdate.selectMonth")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BIRTH_MONTH_LABEL_KEYS.map((key, i) => (
+                      <SelectItem key={i + 1} value={String(i + 1)}>
+                        {t(key)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <Select
-                value={editDay !== "" ? String(editDay) : ""}
-                onValueChange={(val: string) => setEditDay(val === "" ? "" : Number(val))}
-              >
-                <SelectTrigger aria-label={t("members.birthdate.selectDay")}>
-                  <SelectValue placeholder={t("members.birthdate.selectDay")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {BIRTH_DAY_LABEL_KEYS.map((key, i) => (
-                    <SelectItem key={i + 1} value={String(i + 1)}>
-                      {t(key)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <Select
+                  value={formDay !== "" ? String(formDay) : ""}
+                  disabled={readOnly}
+                  onValueChange={(val: string) => setFormDay(val === "" ? "" : Number(val))}
+                >
+                  <SelectTrigger className="w-24" aria-label={t("members.birthdate.selectDay")}>
+                    <SelectValue placeholder={t("members.birthdate.selectDay")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BIRTH_DAY_LABEL_KEYS.map((key, i) => (
+                      <SelectItem key={i + 1} value={String(i + 1)}>
+                        {t(key)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <Input
-                type="number"
-                aria-label={t("members.birthdate.yearPlaceholder")}
-                placeholder={t("members.birthdate.yearPlaceholder")}
-                value={editYear}
-                onChange={(e) => setEditYear(e.target.value)}
-              />
+                <Input
+                  type="number"
+                  className="w-24"
+                  aria-label={t("members.birthdate.yearPlaceholder")}
+                  placeholder={t("members.birthdate.yearPlaceholder")}
+                  value={formYear}
+                  disabled={readOnly}
+                  onChange={(e) => setFormYear(e.target.value)}
+                />
 
-              <Button type="button" variant="outline" size="sm" onClick={clearEditBirthdate}>
-                {t("members.birthdate.clear")}
-              </Button>
+                {!readOnly && (
+                  <Button type="button" variant="ghost" size="sm" onClick={clearBirthdate}>
+                    {t("members.birthdate.clear")}
+                  </Button>
+                )}
+              </div>
             </div>
 
-            <ErrorNotice message={error} />
+            <ErrorNotice message={formError} />
 
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={cancelEditingMember}>
-                {t("members.action.cancel")}
-              </Button>
-              <Button onClick={handleSaveEdit} disabled={savingEdit}>
-                {savingEdit ? t("members.management.updating") : t("members.action.save")}
-              </Button>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                {form?.kind === "edit" && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    data-testid="member-archive"
+                    disabled={saving}
+                    onClick={() => setConfirming("archive")}
+                  >
+                    <Archive aria-hidden="true" />
+                    {t("members.action.archive")}
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={closeForm} disabled={saving}>
+                  {t("members.action.cancel")}
+                </Button>
+                {form?.kind === "archived" ? (
+                  <Button
+                    type="button"
+                    data-testid="member-restore"
+                    disabled={saving}
+                    onClick={() => setConfirming("restore")}
+                  >
+                    <ArchiveRestore aria-hidden="true" />
+                    {t("members.action.restore")}
+                  </Button>
+                ) : (
+                  <Button type="submit" data-testid="member-save" disabled={saving || !formValid}>
+                    {form?.kind === "create"
+                      ? saving
+                        ? t("members.create.creating")
+                        : t("members.create.submit")
+                      : saving
+                        ? t("members.management.updating")
+                        : t("members.action.save")}
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={confirming !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirming(null);
+        }}
+        title={
+          confirming === "restore"
+            ? t("members.confirm.restoreTitle")
+            : t("members.confirm.archiveTitle")
+        }
+        description={`${formMember?.displayName ?? ""} — ${
+          confirming === "restore"
+            ? t("members.confirm.restoreDescription")
+            : t("members.confirm.archiveDescription")
+        }`}
+        confirmLabel={
+          confirming === "restore" ? t("members.action.restore") : t("members.action.archive")
+        }
+        cancelLabel={t("members.action.cancel")}
+        confirmTestId="member-lifecycle-confirm"
+        onConfirm={() => {
+          if (confirming) changeLifecycle(confirming);
+        }}
+      />
     </>
   );
 }

@@ -186,6 +186,15 @@ describe("active plugin contribution projection", () => {
       "/admin/plugins"
     );
     expect(screen.queryByTestId("weather-management")).not.toBeInTheDocument();
+
+    // The list of sections lives on the overview; the inactive plugin has no entry there.
+    cleanup();
+    render(
+      <PluginCatalogProvider>
+        <AdminRoutes pathname="/admin" onLock={() => {}} />
+      </PluginCatalogProvider>
+    );
+    expect(await screen.findByTestId("admin-nav-plugins")).toBeInTheDocument();
     expect(screen.queryByTestId("admin-nav-weather")).not.toBeInTheDocument();
     expect(screen.getByTestId("admin-nav-members-management")).toBeInTheDocument();
     expect(screen.getByTestId("admin-nav-printing")).toBeInTheDocument();

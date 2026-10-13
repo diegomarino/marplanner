@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { AdminRoutes, adminRoutes } from "@/admin/AdminRoutes";
@@ -16,7 +16,6 @@ describe("AdminRoutes", () => {
   it("keeps the complete ordered fifteen-destination inventory", () => {
     expect(adminRoutes.map((route) => route.path)).toEqual([
       "/admin/calendar",
-      "/admin",
       "/admin/members",
       "/admin/day-periods",
       "/admin/routines",
@@ -38,7 +37,9 @@ describe("AdminRoutes", () => {
     render(<AdminRoutes pathname="/admin/not-a-route" onLock={() => {}} />);
 
     expect(screen.getByTestId("admin-route-not-found")).toHaveTextContent("Admin page not found");
-    expect(screen.getByRole("link", { name: "Member Create" })).toHaveAttribute("href", "/admin");
+    expect(
+      within(screen.getByTestId("admin-route-not-found")).getByRole("link", { name: "Overview" })
+    ).toHaveAttribute("href", "/admin");
     expect(screen.queryByTestId("printing-management")).not.toBeInTheDocument();
   });
 });

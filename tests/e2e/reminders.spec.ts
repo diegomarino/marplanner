@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { openAdminSection } from "./admin-nav";
 import { messages, resolveLang, type MessageKey } from "../../src/client/i18n/messages";
 import type { Reminder } from "../../src/shared";
 import { unlockAdmin } from "./admin-unlock";
@@ -114,10 +115,10 @@ test("reminders admin author→read: apply_to_all + specific-with-matrix (US1/US
 
   // --- 5) Admin unlock (long-press → PIN) ---
   await unlockAdmin(page, ADMIN_PIN);
-  await expect(page.getByTestId("admin-nav-member-create")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 
   // --- 6) Reminders tab ---
-  await page.getByTestId("admin-nav-reminders-management").click();
+  await openAdminSection(page, "admin-nav-reminders-management");
   await expect(page.getByRole("heading", { name: m["reminders.management.title"] })).toBeVisible({
     timeout: 10_000,
   });

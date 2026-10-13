@@ -1,7 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { RecipeDetailDialog } from "@/meals/RecipeDetailDialog";
 import { RecipeDialog } from "@/meals/RecipeDialog";
 import { HouseholdSettingsProvider } from "@/lib/householdSettings";
 import { LanguageProvider } from "@/i18n";
@@ -92,28 +91,36 @@ it("localizes recipe field accessibility names from the household language", asy
   expect(screen.getByRole("button", { name: "Cerrar" })).toBeInTheDocument();
 });
 
-it("localizes the recipe detail dialog's accessible close action", async () => {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(async () => new Response(JSON.stringify({ locale: { language: "es" } })))
-  );
-  render(
-    <LanguageProvider>
-      <RecipeDetailDialog
+it("grows a long field to its content and closes on request", async () => {
+  const scrollHeight = vi
+    .spyOn(HTMLTextAreaElement.prototype, "scrollHeight", "get")
+    .mockReturnValue(240);
+  const onClose = vi.fn();
+  try {
+    render(
+      <RecipeDialog
         open
-        onClose={vi.fn()}
+        mode="edit"
         recipe={{
-          id: "recipe",
-          name: "User recipe",
-          ingredients: [],
-          instructions: null,
+          id: "recipe-2",
+          name: "Stew",
+          ingredients: ["a", "b", "c"],
+          instructions: "Simmer for hours.",
           slots: null,
           createdAt: 0,
           updatedAt: 0,
         }}
+        onClose={onClose}
+        onSave={vi.fn()}
       />
-    </LanguageProvider>
-  );
-  await waitFor(() => expect(screen.getAllByRole("button", { name: "Cerrar" })).toHaveLength(2));
-  expect(screen.queryByRole("button", { name: "Close" })).toBeNull();
+    );
+    // Height follows the content; the cap and the inner scroll are CSS on the field.
+    expect(screen.getByLabelText("Ingredients")).toHaveStyle({ height: "242px" });
+    expect(screen.getByLabelText("Instructions")).toHaveStyle({ height: "242px" });
+
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+  } finally {
+    scrollHeight.mockRestore();
+  }
 });

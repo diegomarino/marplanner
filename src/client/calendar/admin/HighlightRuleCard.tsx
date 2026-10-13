@@ -1,4 +1,4 @@
-import { CheckboxField } from "@/components/CheckboxField";
+import { PillToggle } from "@/components/PillToggle";
 import { useState, type CSSProperties } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -36,43 +36,41 @@ export function HighlightRuleCard({
             "--drag-transition": transition ?? "none",
           } as CSSProperties
         }
-        className={`space-y-2 rounded-2xl border bg-card p-3 shadow-sm [transform:var(--drag-transform)] [transition:var(--drag-transition)] ${isDragging ? "opacity-70" : ""}`}
+        className={`bg-card flex items-center gap-2 rounded-2xl border py-2 pr-3 pl-1 shadow-sm [transform:var(--drag-transform)] [transition:var(--drag-transition)] ${isDragging ? "opacity-70" : ""}`}
       >
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex min-w-0 items-start gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              type="button"
-              className="cursor-grab touch-none rounded p-1 active:cursor-grabbing"
-              aria-label={t("calendar.admin.dragRule").replace("{emoji}", rule.emoji)}
-              disabled={busy}
-              {...attributes}
-              {...listeners}
-            >
-              <GripVertical aria-hidden="true" className="size-4" />
-            </Button>
-            <p className="min-w-0 break-words font-medium">
-              {rule.emoji} {rule.keywords.join(", ")}
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label={t("calendar.admin.deleteRule")}
-            disabled={busy}
-            onClick={() => setConfirmOpen(true)}
-          >
-            <Trash2 aria-hidden="true" className="size-4" />
-          </Button>
-        </div>
-        <CheckboxField
+        <Button
+          variant="ghost"
+          size="icon"
+          type="button"
+          className="shrink-0 cursor-grab touch-none rounded p-1 active:cursor-grabbing"
+          aria-label={t("calendar.admin.dragRule").replace("{emoji}", rule.emoji)}
+          disabled={busy}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical aria-hidden="true" className="size-4" />
+        </Button>
+        <p className="min-w-0 flex-1 font-medium break-words">
+          {rule.emoji} {rule.keywords.join(", ")}
+        </p>
+        <PillToggle
           checked={rule.enabled}
           disabled={busy}
           onChange={(checked) => onToggle(rule.id, checked)}
           label={t("calendar.admin.enabled")}
         />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="shrink-0"
+          aria-label={t("calendar.admin.deleteRule")}
+          title={t("calendar.admin.deleteRule")}
+          disabled={busy}
+          onClick={() => setConfirmOpen(true)}
+        >
+          <Trash2 aria-hidden="true" className="size-4" />
+        </Button>
       </article>
       <ConfirmDialog
         open={confirmOpen}

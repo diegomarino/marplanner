@@ -105,6 +105,10 @@
     },
     {
       "method": "GET",
+      "path": "/api/telemetry/system-status"
+    },
+    {
+      "method": "GET",
       "path": "/health"
     },
     {
@@ -495,7 +499,7 @@
   "familyRouteIds": ["home", "calendar", "chores", "meals"],
   "adminRouteIds": [
     "calendar",
-    "member-create",
+    "overview",
     "members",
     "day-periods",
     "routines",
@@ -762,7 +766,7 @@
             "invalid ports, early API failure, readiness timeout, and occupied listeners fail cleanly"
           ],
           "tools/member-colors.test.mjs": [
-            "palette source is exactly the approved sixteen base-500 OKLCH references",
+            "palette source is exactly the approved ten base-500 OKLCH references",
             "generator emits a deterministic complete 100-900 scale for every key",
             "generated base shades match the reviewed foreground outcome for every key",
             "globals.css is the single generated-stylesheet import site",
@@ -1050,7 +1054,9 @@
             "calendar external-source domain seam rejects unsafe URLs before persistence, including credentials, private literals, and private DNS answers",
             "calendar external-source domain seam rejects numeric special-use literal ranges and DNS results with any unsafe answer",
             "calendar external-source domain seam normalizes unknown providers and imports through provider-agnostic ICS retrieval",
-            "calendar external-source domain seam defaults polling to 15 minutes and rejects out-of-range API values"
+            "calendar external-source domain seam defaults polling to 15 minutes and rejects out-of-range API values",
+            "calendar external-source domain seam detects the provider from the feed host when the caller names none",
+            "calendar external-source domain seam reads a webcal address and falls back to generic for one it cannot parse"
           ],
           "tests/boundary/calendar-feed-sync-contract.test.ts": [
             "calendar feed synchronization contract publishes the implemented OpenAPI contract with source and highlight routes",
@@ -1081,11 +1087,11 @@
             "Calendar highlight rules decorates local titles and external descriptions by first active accent-insensitive match without writes"
           ],
           "tests/boundary/calendar-merged-feed.test.ts": [
-            "Calendar merged feed read ADR-043: reuses one event read while preserving private query fields and transaction scope",
+            "Calendar merged feed read ADR-043: reuses one event read while preserving query fields and transaction scope",
             "Calendar merged feed read merges local and active external occurrences with masked, stable provenance",
             "Calendar merged feed read excludes disabled, cancelled, and orphaned external rows from every source filter",
             "Calendar merged feed read requires an explicit active assignment for member-scoped external reads",
-            "Calendar merged feed read matches external description internally without exposing it on FeedItem",
+            "Calendar merged feed read matches an external description and serves it on the FeedItem",
             "Calendar merged feed read keeps distinct recurrence identities and the household date range"
           ],
           "tests/boundary/calendar-mutate.test.ts": [
@@ -1102,7 +1108,9 @@
             "calendar-mutate (RED by design, turns green) PATCH /api/calendar/events/:id with explicit-null non-nullable field returns 400 and preserves prior state",
             "calendar-mutate (RED by design, turns green) PATCH /api/calendar/events/:id with title=null returns 400",
             "calendar-mutate (RED by design, turns green) PATCH /api/calendar/events/:id with exdates=null returns 400 and preserves prior state",
-            "calendar-mutate (RED by design, turns green) PATCH /api/calendar/events/:id with rrule=null clears recurrence and returns 200"
+            "calendar-mutate (RED by design, turns green) PATCH /api/calendar/events/:id with rrule=null clears recurrence and returns 200",
+            "calendar-mutate (RED by design, turns green) stores a local event's description and location, serves them, and clears them when blanked",
+            "calendar-mutate (RED by design, turns green) PATCH switches an all-day event to timed and back, dropping the other shape's dates"
           ],
           "tests/boundary/calendar-parse.test.ts": [
             "Calendar ICS parser adapter normalizes RRULE, RDATE, EXDATE, overrides, cancellations, and DST instants",
@@ -1177,7 +1185,12 @@
             "calendar sync publication rolls back every event, assignment, and success-health write when publication fails",
             "calendar sync publication purges a cancelled occurrence after it leaves the supported retention window",
             "calendar sync publication starts manual sync for an enabled source and rejects missing or disabled sources",
-            "calendar sync publication keeps a manual non-ext assignment when title-derived would claim the same member"
+            "calendar sync publication keeps a manual non-ext assignment when title-derived would claim the same member",
+            "calendar sync publication assigns members named anywhere in the title, by first name unless it is shared",
+            "calendar sync publication assigns initials only as an uppercase title prefix or dash suffix",
+            "calendar sync publication leaves a shared initial unassigned unless it is repeated once per member",
+            "calendar sync publication re-derives title assignments on an unchanged feed and keeps manual ones",
+            "calendar sync publication leaves title assignments untouched on an unchanged feed while the household is unchanged"
           ],
           "tests/boundary/credentials.test.ts": [
             "credentials — mpk- diceware generateKey keys start with 'mpk-'",
@@ -1365,7 +1378,7 @@
             "data-ownership — 0 forbidden imports per plugin module root (INV-07/FR-002) printing: every relative import resolves into its own subtree, the host-API barrel, or src/shared"
           ],
           "tests/boundary/database-baseline.test.ts": [
-            "database lifecycle current baseline keeps the current baseline plus both reviewed forward migrations",
+            "database lifecycle current baseline keeps the current baseline plus the reviewed forward migrations",
             "database lifecycle current baseline keeps the reviewed sentinel, both tables, and canonical day-period rows in SQL",
             "database lifecycle current baseline uses a table oracle re-derived from the current TypeScript schema"
           ],
@@ -1483,6 +1496,14 @@
             "event bus — (RED-first unit tests) emitting an event with no registered subscribers does not throw",
             "event bus — (RED-first unit tests) top-level emit/subscribe work with correct CoreEventCatalog types",
             "event bus — (RED-first unit tests) emit() returns BEFORE any handler has run (async dispatch via queueMicrotask)"
+          ],
+          "tests/boundary/event-subscriber-logs.test.ts": [
+            "event subscriber diagnostics persists unique redacted sync and async failures and exposes them through the admin query",
+            "event subscriber diagnostics keeps internal failures queryable beyond the client flood bound and rejects client impersonation",
+            "event subscriber diagnostics falls back to redacted stderr when storage is unavailable while containing the fault",
+            "event subscriber diagnostics deduplicates anonymous registrations and preserves their identity across deliveries",
+            "event subscriber diagnostics contains diagnostic serialization failures and retains a unique stderr breadcrumb",
+            "event subscriber diagnostics preserves failure identity when oversized errors are persisted or sent to stderr"
           ],
           "tests/boundary/fail-closed.test.ts": [
             "fail-closed (FR-002 / FR-003) — black-box FR-002: fail-closed enforcement — /health is the only reachable route GET /health returns 200 with no credential (FR-002)",
@@ -1791,8 +1812,10 @@
             "isBirthdayToday proves purity: February 29 (leap-agnostic), proves no internal clock"
           ],
           "tests/boundary/member-color.test.ts": [
-            "member colour public boundary assigns all sixteen unused keys in order, then cycles by active count",
-            "member colour public boundary accepts every explicit curated key, including reuse before exhaustion",
+            "member colour public boundary assigns all ten unused keys in order, then cycles by active count",
+            "member colour public boundary accepts every explicit curated key once, and a repeat only after all are held",
+            "member colour public boundary refuses an explicit colour another active member holds while a free one remains",
+            "member colour public boundary frees an archived member's colour for others to take",
             "member colour public boundary rejects invalid create and patch key \"#ff0000\" without writing",
             "member colour public boundary rejects invalid create and patch key \"oklch(50% 0.2 40)\" without writing",
             "member colour public boundary rejects invalid create and patch key \"BLUE\" without writing",
@@ -1800,7 +1823,7 @@
             "member colour public boundary rejects invalid create and patch key \" blue \" without writing",
             "member colour public boundary rejects invalid create and patch key null without writing",
             "member colour public boundary rejects invalid create and patch key 5 without writing",
-            "member colour public boundary preserves colour on archive, restore, no-ops and unrelated edits; archived keys are reusable",
+            "member colour public boundary preserves colour on archive, no-ops and unrelated edits; a restore keeps it only while it is free",
             "member colour public boundary keeps database keys required and closed while supporting omitted raw-SQL inserts"
           ],
           "tests/boundary/member-create.test.ts": [
@@ -1825,6 +1848,15 @@
           ],
           "tests/boundary/member-no-side-effects.test.ts": [
             "member-no-side-effects (red-by-design, + turn green) successful create writes exactly one member row and zero Daily Briefing rows/config (FR-022/023)"
+          ],
+          "tests/boundary/member-palette-migration.test.ts": [
+            "member palette migration moves every retired colour to its survivor and leaves current colours alone",
+            "member palette migration gives the first free colour when another active member already has the survivor",
+            "member palette migration does not hand out a colour that a retired colour is about to become",
+            "member palette migration moves an archived member straight to the survivor, since archived members hold no colour",
+            "member palette migration leaves only current colours behind",
+            "member palette migration leaves an upgraded database refusing the retired names, like a fresh one",
+            "member palette migration keeps the rows that reference a member through the rebuild"
           ],
           "tests/boundary/member-referential.test.ts": [
             "member-referential (RED by design, turns green) isActiveMember(activeId) returns true for an active member",
@@ -2609,6 +2641,11 @@
             "static serving — client-only root; backend bundle never leaks serves one client build under a nested runtime mount with injected assets and gated APIs",
             "static serving — client-only root; backend bundle never leaks rejects malformed runtime mount paths before serving routes"
           ],
+          "tests/boundary/system-status.test.ts": [
+            "system status route tells an admin-capable device what is deployed",
+            "system status route refuses a caller without credentials or without the admin capability",
+            "system status route keeps the public health probe free of deploy details"
+          ],
           "tests/boundary/telemetry-capability.test.ts": [
             "telemetry capability seam CLIENT-LOGGING-TELEMETRY-AC-05: a `*` scoped key satisfies BOTH telemetry:write and telemetry:admin",
             "telemetry capability seam CLIENT-LOGGING-TELEMETRY-AC-05: a scoped key that does NOT include the capability is rejected (403)",
@@ -2811,6 +2848,7 @@
             "weather forecast port buildForecastPort — request shape defaults the base URL to https://api.open-meteo.com when no operator endpoint is set",
             "weather forecast port buildForecastPort — request shape honors an operator-overridden endpoint (WEATHER_ENDPOINT)",
             "weather forecast port buildForecastPort — healthy fetch normalizes a healthy response",
+            "weather forecast port buildForecastPort — healthy fetch carries day/night, humidity, wind and today's sun times when the provider reports them",
             "weather forecast port buildForecastPort — healthy fetch PR review P1-1: current.rainPct matches the CURRENT hour, not midnight — current.time is 15-min-snapped while hourly.time is on-the-hour",
             "weather forecast port buildForecastPort — healthy fetch an unrecognized WMO code normalizes to 'unknown' — never a crash",
             "weather forecast port buildForecastPort — failure matrix (WEATHER-INV-10/12, one telemetry row each) a hang aborts at the 5-second budget -> null + exactly one telemetry row",
@@ -2873,13 +2911,17 @@
             "weather-rule-b — config-drift tripwire no-restricted-syntax (the process.env ban under src/server/modules/**) allows getOperatorConfig from the host-API barrel",
             "weather-rule-b — config-drift tripwire no-restricted-syntax (the process.env ban under src/server/modules/**) does not ban process.env OUTSIDE src/server/modules/** (e.g. host-api itself)"
           ],
+          "tests/boundary/weekday-integrity.test.ts": [
+            "canonical weekday integrity rejects integer and noncanonical tokens without coercing or changing domain set policies",
+            "canonical weekday integrity accepts fresh and public-seeded databases including null and empty masks",
+            "canonical weekday integrity identifies corrupt persisted weekday rows in every domain without rewriting data"
+          ],
           "tests/client/admin-gate-no-boot-probe.test.tsx": [
             "AdminGate — ADR-061: no boot-time /api/settings probe pre-unlock shows the PIN keypad directly without issuing GET /api/settings"
           ],
           "tests/client/admin-gate-panel-reset.test.tsx": [
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) covers every registered admin-nav-* destination (fence would silently pass for an unregistered route)",
-            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/calendar to /admin removes the first panel entirely",
-            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin to /admin/members removes the first panel entirely",
+            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/calendar to /admin/members removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/members to /admin/day-periods removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/day-periods to /admin/routines removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/routines to /admin/reminders removes the first panel entirely",
@@ -2920,6 +2962,17 @@
           "tests/client/admin-nav-i18n-parity.test.ts": [
             "admin-nav-i18n-parity en and es catalogs have identical keys (both directions)",
             "admin-nav-i18n-parity admin.nav.* label keys resolve in both languages"
+          ],
+          "tests/client/admin-overview.test.tsx": [
+            "AdminOverview shows what the server runs and lists warnings and errors newest first",
+            "AdminOverview reads the status again on Check now and opens telemetry on request",
+            "AdminOverview announces an unreadable status without inventing a deploy",
+            "Admin shell navigation keeps Overview and Lock in the sidebar on every admin page",
+            "Admin shell navigation marks Overview as the current page on the landing page and lists every section there",
+            "Admin shell navigation builds the breadcrumb trail from every registered page on the way",
+            "Admin shell navigation navigates from the overview's section buttons, the telemetry shortcut and the sidebar",
+            "Admin shell navigation offers the overview from an unknown admin page",
+            "Admin shell navigation shows an item's subsections only while that item or one of them is open"
           ],
           "tests/client/admin-panel.test.tsx": [
             "AdminPanel renders a landmark region whose aria-labelledby points at its own heading",
@@ -3030,8 +3083,9 @@
             "Admin Calendar sources keeps toggle, sync, and confirmed delete as separate actions",
             "Admin Calendar sources polls only active phases and refreshes Calendar events after success",
             "Admin Calendar sources uses the household language for the durable success time",
-            "Admin Calendar sources keeps native provider, enabled toggles and drag handles at kiosk density",
+            "Admin Calendar sources keeps enabled toggles and drag handles at kiosk density",
             "Admin Calendar highlights creates a trimmed, deduplicated rule and keeps the source policy hidden",
+            "Admin Calendar highlights accepts exactly one emoji and says so before anything is sent",
             "Admin Calendar highlights keeps toggle and confirmed delete independent and restores focus on cancel",
             "Admin Calendar highlights keyboard drag submits one complete order and announces the move",
             "Admin Calendar highlights restores authoritative order and announces a failed reorder",
@@ -3073,23 +3127,35 @@
             "CalendarView — provisioned Calendar authoring bounds period navigation without issuing another Calendar request",
             "CalendarView — provisioned Calendar authoring renders assigned member colours as diagonal event bands",
             "CalendarView — provisioned Calendar authoring keeps create, assign, edit, and delete plus their member load available when the obsolete admin-unlock branch is false",
-            "CalendarView — kiosk density (SC-001, SC-002, FR-009) meets kiosk density across every rendered control — default state, then create form + assign panel + edit panel + delete confirm all open, across two phases",
+            "CalendarView — kiosk density (SC-001, SC-002, FR-009) meets kiosk density across every rendered control — default state, then create form + edit panel + delete confirm all open, across two phases",
             "CalendarView — kiosk density (SC-001, SC-002, FR-009) DELIBERATE NEGATIVE — forcing one of this surface's own controls below the kiosk minimum makes the assertion fail",
+            "CalendarView — error states are announced (SC-011) announces invalid date conversion during create and releases the submit button",
+            "CalendarView — error states are announced (SC-011) announces invalid date conversion during edit and releases the submit button",
             "CalendarView — error states are announced (SC-011) announces the events-load failure",
-            "CalendarView — error states are announced (SC-011) announces the members-load failure once the assign panel is opened",
+            "CalendarView — error states are announced (SC-011) announces the members-load failure once the edit form is opened",
             "CalendarView — error states are announced (SC-011) announces an assignment-update failure",
             "CalendarView — error states are announced (SC-011) announces an edit-save failure",
             "CalendarView — error states are announced (SC-011) announces a delete failure",
             "CalendarView — error states are announced (SC-011) announces a create failure",
+            "CalendarView — New Event dialog stores the inclusive end date of an all-day event as the exclusive day after",
+            "CalendarView — New Event dialog assigns the people picked in the dialog to the event it just created",
+            "CalendarView — event detail dialog shows a highlight emoji on the chip and in the dialog, but edits the stored title",
+            "CalendarView — event detail dialog shows an imported event's place and description, read only",
+            "CalendarView — editing a local event turns an all-day event into a timed one, carrying its day across",
+            "CalendarView — editing a local event closes the dialog after a successful save and reopens on the summary",
+            "CalendarView — editing a local event shows a same-day timed event as one date with start and end times and no time zone",
+            "CalendarView — timed events and saved details creates a timed event with its place and notes",
+            "CalendarView — timed events and saved details sends only what changed when a timed event is edited",
+            "CalendarView — timed events and saved details turns a timed event into an all-day one on its own day",
+            "CalendarView — timed events and saved details moves an all-day event's last day without touching anything else",
+            "CalendarView — timed events and saved details keeps the event and reports the people that could not be saved at creation",
             "CalendarView — adopts the AdminPanel L2 frame wraps the surface in a landmark region labelled by its own title",
             "CalendarView — adopts the AdminPanel L2 frame renders an h1, not h2 — the page-level heading for the whole /calendar route (review, PR #777, finding F6)",
             "CalendarView — the assignment row is a real, keyboard-operable control (FR-013, SC-012) is reachable by Tab, activated by Space (via a native click), and its checked state is announced through an accessible name — not a non-focusable <li onClick> wrapping a readOnly checkbox",
             "CalendarView — the assignment row is a real, keyboard-operable control (FR-013, SC-012) meets kiosk density on the per-member checkbox row (the row that used to be a non-focusable <li>)",
             "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) submits the toggled member id in the PUT payload",
-            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) excludes archived members from assignment choices",
-            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) gives the assign row's label a full-width, pointer-cursor hit area ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)",
-            "CalendarView — error states are announced (SC-011) announces invalid date conversion during create and releases the submit button",
-            "CalendarView — error states are announced (SC-011) announces invalid date conversion during edit and releases the submit button"
+            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) makes the whole member pill the tap target ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)",
+            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) excludes archived members from assignment choices"
           ],
           "tests/client/calendar-week-integration.test.tsx": [
             "CalendarView — Week integration keeps recurrence occurrences distinct and activates local/external and all-day events",
@@ -3314,6 +3380,11 @@
             "ErrorNotice wires a caller-supplied id onto the live region so a Field's aria-describedby can reach it",
             "ErrorNotice meets kiosk density alongside a real control (this component itself renders no interactive control)"
           ],
+          "tests/client/event-description.test.tsx": [
+            "EventDescription keeps plain text as text and links a bare web address without its trailing full stop",
+            "EventDescription rebuilds basic HTML from the allowlist",
+            "EventDescription drops scripts, styles, handlers, embedded frames and non-web link targets"
+          ],
           "tests/client/family-surfaces.test.tsx": [
             "MealsBoard — workspace density and family authoring renders the interactive weekly grid and recipe catalogue",
             "MealsBoard — workspace density and family authoring announces a weekly menu read failure",
@@ -3465,21 +3536,18 @@
           ],
           "tests/client/members-admin.test.tsx": [
             "MembersManagement — v1-like member workspace renders semantic-colour cards and opens create and edit dialogs",
+            "MembersManagement — v1-like member workspace creates a member from the same form, starting empty, and lets the server pick a colour",
+            "MembersManagement — v1-like member workspace announces a failed create inside the form and keeps what was typed",
+            "MembersManagement — v1-like member workspace opens an archived member read-only, with restoring as the only action",
             "MembersManagement — kiosk density (SC-001, SC-002) meets kiosk density across the active list AND an open edit row",
             "MembersManagement — kiosk density (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own Refresh button below the kiosk minimum makes the assertion fail",
             "MembersManagement — kiosk density (SC-001, SC-002) also meets kiosk density on the archived tab, where Restore is the only reachable control of its kind",
-            "MemberCreateForm — kiosk density (SC-001, SC-002) meets kiosk density across its rendered control set",
-            "MembersManagement / MemberCreateForm — open Select popover items meet kiosk density (#790, fixed in select.tsx) MembersManagement: the edit row's Month/Day/Role popovers are density-compliant when open",
-            "MembersManagement / MemberCreateForm — open Select popover items meet kiosk density (#790, fixed in select.tsx) MemberCreateForm: the Month/Day/Role popovers are density-compliant when open",
-            "MembersManagement / MemberCreateForm — adopt the AdminPanel L2 frame (F2, independent review on) MembersManagement wraps the surface in a landmark region labelled by its own title",
-            "MembersManagement / MemberCreateForm — adopt the AdminPanel L2 frame (F2, independent review on) MemberCreateForm wraps the surface in a landmark region labelled by its own title",
-            "MembersManagement / MemberCreateForm — the birthdate group label is VISIBLE, not just accessible (F5 regression guard) MembersManagement's edit row renders the visible 'Birth Date (optional)' label",
-            "MembersManagement / MemberCreateForm — the birthdate group label is VISIBLE, not just accessible (F5 regression guard) MemberCreateForm renders the visible 'Birth Date (optional)' label",
+            "MembersManagement — open Select popover items meet kiosk density (#790, fixed in select.tsx) MembersManagement: the edit row's Month/Day/Role popovers are density-compliant when open",
+            "MembersManagement — adopts the AdminPanel L2 frame (F2, independent review on) MembersManagement wraps the surface in a landmark region labelled by its own title",
+            "MembersManagement — the birthdate group label is VISIBLE, not just accessible (F5 regression guard) MembersManagement's edit row renders the visible 'Birth Date (optional)' label",
             "MembersManagement — error states are announced (SC-011) announces a members-list load failure through ErrorNotice's live region",
             "MembersManagement — error states are announced (SC-011) announces an archive failure through ErrorNotice's live region",
             "MembersManagement — error states are announced (SC-011) announces an invalid-birthdate save through ErrorNotice's live region without a server round-trip",
-            "MemberCreateForm — error states are announced (SC-011) announces a partial-birthdate validation error through ErrorNotice's live region",
-            "MemberCreateForm — error states are announced (SC-011) announces a failed submit (500) through ErrorNotice's live region",
             "MembersManagement — the typed birthdate month/day lookup (SC-007) maps each 1-based value to its OWN key, through i18n formats a January, a June, and a December birth date in Spanish word order with the correct month name",
             "MembersManagement — archive/restore round-trip (unchanged behaviour, migration regression guard) archives a member and refreshes the active list",
             "MembersManagement — the edit row's Day select submits the VALUE matching the selected LABEL (F3) selecting day label 1 submits birthDate.day === 1",
@@ -3488,15 +3556,8 @@
             "MembersManagement — the edit row's Month select submits the VALUE matching the selected LABEL (F3) selecting month label January submits birthDate.month === 1",
             "MembersManagement — the edit row's Month select submits the VALUE matching the selected LABEL (F3) selecting month label June submits birthDate.month === 6",
             "MembersManagement — the edit row's Month select submits the VALUE matching the selected LABEL (F3) selecting month label December submits birthDate.month === 12",
-            "MemberCreateForm — the Month select submits the VALUE matching the selected LABEL (F3) selecting month label January submits birthDate.month === 1",
-            "MemberCreateForm — the Month select submits the VALUE matching the selected LABEL (F3) selecting month label June submits birthDate.month === 6",
-            "MemberCreateForm — the Month select submits the VALUE matching the selected LABEL (F3) selecting month label December submits birthDate.month === 12",
-            "MemberCreateForm — the Day select submits the VALUE matching the selected LABEL (F3) selecting day label 1 submits birthDate.day === 1",
-            "MemberCreateForm — the Day select submits the VALUE matching the selected LABEL (F3) selecting day label 15 submits birthDate.day === 15",
-            "MemberCreateForm — the Day select submits the VALUE matching the selected LABEL (F3) selecting day label 31 submits birthDate.day === 31",
-            "MemberCreateForm and MembersManagement — curated member colours creates with the server's unused-first assignment by default, while offering exactly sixteen named keyboard choices",
-            "MemberCreateForm and MembersManagement — curated member colours sends an explicitly selected curated colour when creating and editing, without a free-form colour input",
-            "MemberCreateForm and MembersManagement — curated member colours keeps a curated choice controllable for a seventeenth member after every colour is in use"
+            "MembersManagement — curated member colours sends an explicitly selected curated colour when creating and editing, without a free-form colour input",
+            "MembersManagement — curated member colours keeps a curated choice controllable for an eleventh member after every colour is in use"
           ],
           "tests/client/members-management-mount.test.tsx": [
             "MembersManagement — loads on mount (#683) renders the members list without clicking Refresh"
@@ -3577,6 +3638,12 @@
             "emojiToCodepoint joins multi-codepoint sequences with underscores",
             "NotoEmoji renders an img sourced from the url map for a vendored emoji",
             "NotoEmoji falls back to the literal Unicode glyph when the emoji is not vendored"
+          ],
+          "tests/client/pill-toggle.test.tsx": [
+            "PillToggle is a native checkbox named by its label and reports the new state",
+            "PillToggle wears the caller's selected style only while selected",
+            "PillToggle does not report a change while disabled",
+            "PillToggle meets kiosk density: the hidden checkbox spans the full control height"
           ],
           "tests/client/plugin-contributions.test.tsx": [
             "active plugin contribution projection renders active contributions only while core and active siblings remain",
@@ -3726,13 +3793,16 @@
             "RadioField meets kiosk density"
           ],
           "tests/client/recipe-catalogue.test.tsx": [
-            "RecipeCatalogue adapts the v1 divided catalogue with icon search, slot badges, and icon actions"
+            "RecipeCatalogue adapts the v1 divided catalogue with icon search, slot badges, and icon actions",
+            "RecipeCatalogue says once that a recipe with no stored slots suits every meal",
+            "RecipeCatalogue gives every meal slot its own colour",
+            "RecipeCatalogue opens the editable recipe from the card's detail action, not from its title"
           ],
           "tests/client/recipe-dialog.test.tsx": [
             "RecipeDialog normalizes the form at the UI seam and preserves values after a failed save",
             "sends an explicit empty slots patch when an edited recipe is made valid for every slot",
             "localizes recipe field accessibility names from the household language",
-            "localizes the recipe detail dialog's accessible close action"
+            "grows a long field to its content and closes on request"
           ],
           "tests/client/reminders-calendar-gated-i18n-parity.test.ts": [
             "reminders-calendar-gated-i18n-parity reminders.calendarGated.*/reminders.dryRun.* keys have identical coverage in en and es (both directions)",
@@ -4073,6 +4143,11 @@
             "TodayAgenda updates current/next at event edges without polling the API",
             "TodayAgenda refetches at household midnight using the next household day",
             "TodayAgenda renders sorted rows, temporal text/weight and all active identities with household times",
+            "TodayAgenda groups all-day and scheduled events under their own labelled lists",
+            "TodayAgenda omits a group that has no events",
+            "TodayAgenda stacks the start time over the end time and omits a missing end",
+            "TodayAgenda paints an unowned all-day event with the all-day surface and an owned one with member identity",
+            "TodayAgenda keeps status and assignee names out of sight but present for assistive technology",
             "TodayAgenda keeps a pending agenda local and shows an explicit empty state on success",
             "TodayAgenda reports calendar failure locally and retries without raw diagnostics",
             "TodayAgenda reports profiles failure locally and retries without raw diagnostics",
@@ -4203,6 +4278,9 @@
             "WeatherPillView — modal content (PR review P1-2/P2-3) P1-2: the hourly list starts at the CURRENT hour, not midnight",
             "WeatherPillView — modal content (PR review P1-2/P2-3) P2-3: renders a localized (non-ISO) day label in es, not the raw date string",
             "WeatherPillView — modal content (PR review P1-2/P2-3) localizes the dialog's close-button accessible label and provides a description (Radix a11y, review P3-2)",
+            "WeatherPillView — modal content (PR review P1-2/P2-3) draws a tinted condition icon and today's range, and the rain chance only from 20%",
+            "WeatherPillView — modal content (PR review P1-2/P2-3) shows humidity, wind and sun times only when the forecast carries them",
+            "WeatherPillView — modal content (PR review P1-2/P2-3) caps the hourly strip at 24 hours and draws night hours with the moon icon",
             "WeatherPillView — stale in-flight response discard (PR review P2-1, mutation M3b) a delayed response for OLD coordinates never overwrites a cache-hit render after an A -> B -> A sequence",
             "WeatherPillView — cache-miss clears stale data first (Codex review on #656, P1) switching from a loaded A to an uncached B with a NEVER-RESOLVING fetch shows the empty slot, never A's stale data (WEATHER-AC-06)",
             "WeatherPillView — TTL-expiry recheck (Codex review on #656, P2) a mounted pill refetches once the cached entry passes its 30-minute TTL, and renders the new data",
@@ -4699,7 +4777,7 @@
           ],
           "tests/integration/database-baseline.test.ts": [
             "database lifecycle fresh current baseline is semantically equivalent to a clean Drizzle generation from the current TypeScript schema",
-            "database lifecycle fresh current baseline installs the re-derived schema, applies both reviewed migrations, and preserves foreign keys",
+            "database lifecycle fresh current baseline installs the re-derived schema, applies the reviewed migrations, and preserves foreign keys",
             "database lifecycle fresh current baseline contains only canonical fixed rows and no legacy development data"
           ],
           "tests/integration/database-lifecycle-aggregate.test.ts": [
@@ -4920,19 +4998,6 @@
             "telemetry retention prune (research D7) real registration path — runJobNow(\"telemetry.prune\") CLIENT-LOGGING-TELEMETRY-AC-04/-INV-09: prunes aged rows and keeps fresh rows through the actual registered scheduler job",
             "telemetry retention prune (research D7) real registration path — runJobNow(\"telemetry.prune\") re-running the real registered job after a prune completes without deleting anything further",
             "telemetry retention prune (research D7) CLIENT-LOGGING-TELEMETRY-AC-04: zero-ingest fixture agedClientLogRowsExist() is false on an empty table"
-          ],
-          "tests/boundary/weekday-integrity.test.ts": [
-            "canonical weekday integrity rejects integer and noncanonical tokens without coercing or changing domain set policies",
-            "canonical weekday integrity accepts fresh and public-seeded databases including null and empty masks",
-            "canonical weekday integrity identifies corrupt persisted weekday rows in every domain without rewriting data"
-          ],
-          "tests/boundary/event-subscriber-logs.test.ts": [
-            "event subscriber diagnostics persists unique redacted sync and async failures and exposes them through the admin query",
-            "event subscriber diagnostics keeps internal failures queryable beyond the client flood bound and rejects client impersonation",
-            "event subscriber diagnostics falls back to redacted stderr when storage is unavailable while containing the fault",
-            "event subscriber diagnostics deduplicates anonymous registrations and preserves their identity across deliveries",
-            "event subscriber diagnostics contains diagnostic serialization failures and retains a unique stderr breadcrumb",
-            "event subscriber diagnostics preserves failure identity when oversized errors are persisted or sent to stderr"
           ]
         }
       },
@@ -5035,6 +5100,21 @@
           "branches": 91.3
         }
       },
+      "src/client/admin/AdminOverview.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 51,
+          "statements": 54,
+          "functions": 11,
+          "branches": 53
+        },
+        "minimumRates": {
+          "lines": 90.19,
+          "statements": 85.18,
+          "functions": 90.9,
+          "branches": 71.69
+        }
+      },
       "src/client/admin/AdminRoutes.tsx": {
         "layer": "client",
         "minimumTotals": {
@@ -5047,7 +5127,7 @@
           "lines": 89.47,
           "statements": 90.9,
           "functions": 87.5,
-          "branches": 100
+          "branches": 95.65
         }
       },
       "src/client/admin/BackupsManagement.tsx": {
@@ -5070,13 +5150,13 @@
         "minimumTotals": {
           "lines": 162,
           "statements": 184,
-          "functions": 52,
+          "functions": 51,
           "branches": 92
         },
         "minimumRates": {
           "lines": 95.67,
           "statements": 89.13,
-          "functions": 94.23,
+          "functions": 94.11,
           "branches": 77.17
         }
       },
@@ -5155,27 +5235,12 @@
           "branches": 69.15
         }
       },
-      "src/client/admin/MemberCreateForm.tsx": {
-        "layer": "client",
-        "minimumTotals": {
-          "lines": 78,
-          "statements": 82,
-          "functions": 16,
-          "branches": 69
-        },
-        "minimumRates": {
-          "lines": 83.33,
-          "statements": 81.7,
-          "functions": 93.75,
-          "branches": 71.01
-        }
-      },
       "src/client/admin/MembersManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
           "lines": 149,
           "statements": 160,
-          "functions": 55,
+          "functions": 51,
           "branches": 105
         },
         "minimumRates": {
@@ -5293,16 +5358,16 @@
       "src/client/calendar/CalendarMonthView.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 22,
-          "statements": 23,
+          "lines": 21,
+          "statements": 22,
           "functions": 9,
-          "branches": 20
+          "branches": 18
         },
         "minimumRates": {
           "lines": 100,
           "statements": 100,
           "functions": 100,
-          "branches": 95
+          "branches": 94.44
         }
       },
       "src/client/calendar/CalendarView.tsx": {
@@ -5318,6 +5383,21 @@
           "statements": 90.1,
           "functions": 85.89,
           "branches": 84
+        }
+      },
+      "src/client/calendar/EventDescription.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 44,
+          "statements": 50,
+          "functions": 9,
+          "branches": 42
+        },
+        "minimumRates": {
+          "lines": 90.9,
+          "statements": 86,
+          "functions": 100,
+          "branches": 76.19
         }
       },
       "src/client/calendar/ScheduleXWeekView.tsx": {
@@ -5575,6 +5655,21 @@
           "branches": 100
         }
       },
+      "src/client/components/PillToggle.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 2,
+          "statements": 2,
+          "functions": 2,
+          "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/client/components/RadioField.tsx": {
         "layer": "client",
         "minimumTotals": {
@@ -5815,6 +5910,21 @@
           "branches": 100
         }
       },
+      "src/client/home/WeatherIcon.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 11,
+          "statements": 11,
+          "functions": 3,
+          "branches": 9
+        },
+        "minimumRates": {
+          "lines": 81.81,
+          "statements": 81.81,
+          "functions": 100,
+          "branches": 77.77
+        }
+      },
       "src/client/home/WeatherPill.tsx": {
         "layer": "client",
         "minimumTotals": {
@@ -5843,6 +5953,21 @@
           "statements": 100,
           "functions": 100,
           "branches": 96.42
+        }
+      },
+      "src/client/home/weather-icons/paths.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 1,
+          "statements": 1,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/client/home/weatherCache.ts": {
@@ -5948,6 +6073,21 @@
           "statements": 100,
           "functions": 100,
           "branches": 100
+        }
+      },
+      "src/client/lib/build-info.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 1,
+          "statements": 1,
+          "functions": 1,
+          "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 50
         }
       },
       "src/client/lib/credential.ts": {
@@ -6133,31 +6273,16 @@
       "src/client/meals/RecipeCatalogue.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 18,
-          "statements": 18,
-          "functions": 11,
-          "branches": 10
+          "lines": 14,
+          "statements": 14,
+          "functions": 9,
+          "branches": 8
         },
         "minimumRates": {
           "lines": 66.66,
           "statements": 66.66,
           "functions": 45.45,
           "branches": 60
-        }
-      },
-      "src/client/meals/RecipeDetailDialog.tsx": {
-        "layer": "client",
-        "minimumTotals": {
-          "lines": 5,
-          "statements": 7,
-          "functions": 3,
-          "branches": 6
-        },
-        "minimumRates": {
-          "lines": 80,
-          "statements": 71.42,
-          "functions": 66.66,
-          "branches": 66.66
         }
       },
       "src/client/meals/RecipeDialog.tsx": {
@@ -6910,6 +7035,21 @@
           "branches": 100
         }
       },
+      "src/server/db/weekday-integrity.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 12,
+          "statements": 15,
+          "functions": 1,
+          "branches": 12
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/server/host-api/index.ts": {
         "layer": "server",
         "minimumTotals": {
@@ -6938,6 +7078,21 @@
           "statements": 65.71,
           "functions": 60,
           "branches": 37.5
+        }
+      },
+      "src/server/lib/build-info.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 7,
+          "statements": 8,
+          "functions": 2,
+          "branches": 12
+        },
+        "minimumRates": {
+          "lines": 85.71,
+          "statements": 75,
+          "functions": 100,
+          "branches": 66.66
         }
       },
       "src/server/lib/event-bus.ts": {
@@ -6994,8 +7149,8 @@
           "branches": 137
         },
         "minimumRates": {
-          "lines": 91.66,
-          "statements": 83.01,
+          "lines": 91.04,
+          "statements": 82.6,
           "functions": 96.29,
           "branches": 75.91
         }
@@ -7018,16 +7173,16 @@
       "src/server/modules/calendar/highlights.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 69,
-          "statements": 80,
+          "lines": 67,
+          "statements": 79,
           "functions": 20,
-          "branches": 52
+          "branches": 49
         },
         "minimumRates": {
           "lines": 100,
           "statements": 93.82,
           "functions": 100,
-          "branches": 92.3
+          "branches": 91.83
         }
       },
       "src/server/modules/calendar/index.ts": {
@@ -7085,9 +7240,9 @@
         },
         "minimumRates": {
           "lines": 100,
-          "statements": 100,
+          "statements": 97.93,
           "functions": 100,
-          "branches": 91.3
+          "branches": 91.17
         }
       },
       "src/server/modules/calendar/recurrence.ts": {
@@ -8891,6 +9046,21 @@
           "branches": 100
         }
       },
+      "src/shared/calendar-provider.ts": {
+        "layer": "shared",
+        "minimumTotals": {
+          "lines": 7,
+          "statements": 9,
+          "functions": 2,
+          "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/shared/dailyBriefing.ts": {
         "layer": "shared",
         "minimumTotals": {
@@ -8913,6 +9083,21 @@
           "statements": 55,
           "functions": 13,
           "branches": 26
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/shared/emoji.ts": {
+        "layer": "shared",
+        "minimumTotals": {
+          "lines": 5,
+          "statements": 6,
+          "functions": 1,
+          "branches": 6
         },
         "minimumRates": {
           "lines": 100,
@@ -9033,21 +9218,6 @@
           "statements": 5,
           "functions": 2,
           "branches": 4
-        },
-        "minimumRates": {
-          "lines": 100,
-          "statements": 100,
-          "functions": 100,
-          "branches": 100
-        }
-      },
-      "src/server/db/weekday-integrity.ts": {
-        "layer": "server",
-        "minimumTotals": {
-          "lines": 12,
-          "statements": 15,
-          "functions": 1,
-          "branches": 12
         },
         "minimumRates": {
           "lines": 100,

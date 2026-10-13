@@ -15,7 +15,7 @@ const ics = [
   "DTSTAMP:20261010T120000Z",
   "DTSTART;VALUE=DATE:20261015",
   "SUMMARY:Alex appointment",
-  "DESCRIPTION:Private detail",
+  "DESCRIPTION:Bring the referral letter",
   "END:VEVENT",
   "BEGIN:VEVENT",
   "UID:household-event",
@@ -72,7 +72,7 @@ describe("synchronized Calendar merged feed", () => {
     expect(getEvents({ source: "all", range })).toEqual(first);
     expect(new Set(first.map((item) => `${item.id}:${item.occurrenceStart}`)).size).toBe(3);
     expect(JSON.stringify(first)).not.toContain("secret");
-    expect(JSON.stringify(first)).not.toContain("Private detail");
+    expect(assigned).toMatchObject({ description: "Bring the referral letter" });
   });
 
   it("keeps distinct recurrence IDs and event IDs across an unchanged synchronization", async () => {

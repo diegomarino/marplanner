@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { openAdminSection } from "./admin-nav";
 import { messages, resolveLang } from "../../src/client/i18n/messages";
 import type { DailyMessage } from "../../src/shared";
 import { unlockAdmin } from "./admin-unlock";
@@ -77,10 +78,10 @@ test("daily-messages admin author→read: PUT then GET window + current (#462)",
 
   // --- 4) Admin unlock (long-press → PIN) ---
   await unlockAdmin(page, ADMIN_PIN);
-  await expect(page.getByTestId("admin-nav-member-create")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 
   // --- 5) Daily Messages tab ---
-  await page.getByTestId("admin-nav-daily-messages-management").click();
+  await openAdminSection(page, "admin-nav-daily-messages-management");
   await expect(
     page.getByRole("heading", { name: m["dailyMessages.management.title"] })
   ).toBeVisible({ timeout: 10_000 });

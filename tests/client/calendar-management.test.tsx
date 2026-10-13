@@ -98,13 +98,13 @@ describe("Admin Calendar sources", () => {
     fireEvent.change(screen.getByLabelText("Feed URL"), {
       target: { value: " https://calendar.example/private.ics " },
     });
-    fireEvent.change(screen.getByLabelText("Provider"), { target: { value: "google" } });
+    // The provider is not asked for: the server reads it from the feed's host.
+    expect(screen.queryByLabelText("Provider")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Add source" }));
     await waitFor(() => expect(screen.getByText("School")).toBeInTheDocument());
-    expect(calls.find((call) => call[1] === "PUT")?.[2]).toMatchObject({
+    expect(calls.find((call) => call[1] === "PUT")?.[2]).toEqual({
       name: "School",
       feedUrl: "https://calendar.example/private.ics",
-      provider: "google",
       pollIntervalMin: 15,
     });
     expect(screen.getByLabelText("Name")).toHaveValue("");
@@ -200,7 +200,7 @@ describe("Admin Calendar sources", () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps native provider, enabled toggles and drag handles at kiosk density", async () => {
+  it("keeps enabled toggles and drag handles at kiosk density", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input) =>
@@ -300,7 +300,7 @@ describe("Admin Calendar highlights", () => {
     renderPage();
     await screen.findByText("⚽ football");
     fireEvent.change(screen.getByLabelText("Emoji"), { target: { value: " 🎨 " } });
-    fireEvent.change(screen.getByLabelText("Comma-separated keywords"), {
+    fireEvent.change(screen.getByLabelText("Keywords"), {
       target: { value: " art, , art, craft " },
     });
     fireEvent.click(screen.getByRole("button", { name: "Add rule" }));
@@ -309,6 +309,33 @@ describe("Admin Calendar highlights", () => {
       { emoji: "🎨", keywords: ["art", "craft"] },
     ]);
     expect(screen.queryByLabelText(/poll.*interval/i)).not.toBeInTheDocument();
+  });
+
+  it("accepts exactly one emoji and says so before anything is sent", async () => {
+    renderPage();
+    await screen.findByText("⚽ football");
+    const emoji = screen.getByLabelText("Emoji");
+    const add = screen.getByRole("button", { name: "Add rule" });
+    fireEvent.change(screen.getByLabelText("Keywords"), { target: { value: "art" } });
+
+    // Empty is not an error yet, just not ready.
+    fireEvent.change(emoji, { target: { value: "" } });
+    expect(add).toBeDisabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByText(/Capitals and accents are ignored/)).toBeInTheDocument();
+
+    for (const rejected of ["art", "🎨🎨", "🎨 art"]) {
+      fireEvent.change(emoji, { target: { value: rejected } });
+      expect(add, rejected).toBeDisabled();
+      expect(screen.getByRole("alert")).toHaveTextContent("Use a single emoji");
+      expect(emoji).toHaveAttribute("aria-invalid", "true");
+    }
+
+    // A family is several code points but one emoji.
+    fireEvent.change(emoji, { target: { value: "👨‍👩‍👧" } });
+    expect(add).toBeEnabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(calls.filter((call) => call.method === "POST")).toHaveLength(0);
   });
 
   it("keeps toggle and confirmed delete independent and restores focus on cancel", async () => {

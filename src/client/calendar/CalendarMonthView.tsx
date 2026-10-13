@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 import { memberEventStyle } from "@/calendar/member-event-style";
 import {
   buildCalendarDays,
-  getCalendarRowCount,
   getEventsForCalendarDay,
   getHouseholdCalendarDate,
+  displayTitle,
   presentationEventId,
   type WeekStartDay,
 } from "@/calendar/calendar-presentation";
@@ -58,7 +58,6 @@ export function CalendarMonthView({
   const year = selectedDate.year;
   const month = selectedDate.month - 1;
   const days = buildCalendarDays(year, month, weekStartDay);
-  const rowCount = getCalendarRowCount(year, month, weekStartDay);
   const today = getHouseholdCalendarDate(Date.now(), timezone);
 
   return (
@@ -78,10 +77,9 @@ export function CalendarMonthView({
         ))}
       </div>
       <div
-        className={cn(
-          "bg-border grid min-w-3xl flex-1 grid-cols-7 gap-px",
-          rowCount === 5 ? "grid-rows-5" : "grid-rows-6"
-        )}
+        // Each week is as tall as its own busiest day. Equal `1fr` rows would all take the height
+        // of the busiest day in the month, since nothing bounds the grid's height.
+        className="bg-border grid min-w-3xl flex-1 auto-rows-auto grid-cols-7 gap-px"
       >
         {days.map((dateKey) => {
           const date = Temporal.PlainDate.from(dateKey);
@@ -107,7 +105,7 @@ export function CalendarMonthView({
               >
                 {date.day}
               </span>
-              <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+              <div className="flex flex-col gap-1">
                 {dayEvents.map((event) => {
                   const time = formatTime(event, locale, timezone);
                   return (
@@ -118,18 +116,18 @@ export function CalendarMonthView({
                       data-testid="calendar-event-row"
                       data-presentation-id={presentationEventId(event)}
                       onClick={() => onEventClick(event)}
-                      className="member-event-surface focus:ring-primary min-h-[var(--control-height)] w-full cursor-pointer rounded-md border border-l-4 px-2 py-1.5 text-left text-control font-medium shadow-sm hover:brightness-95 focus:ring-2 focus:ring-offset-1 focus:outline-none"
+                      className="member-event-surface focus-visible:ring-primary min-h-[var(--control-height)] w-full cursor-pointer rounded-md border border-l-4 px-2 py-1.5 text-left text-control font-medium shadow-sm hover:brightness-95 outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
                       // eslint-disable-next-line ui-policy/debt -- Dynamic assignment styling passes only semantic member-token CSS custom properties.
                       style={eventStyle(event, members)}
-                      title={event.title}
+                      title={displayTitle(event)}
                     >
-                      {time && (
-                        <span className="mr-1.5 font-mono text-[10px] whitespace-nowrap opacity-75">
-                          {time}
-                        </span>
-                      )}
-                      <span className="leading-tight break-words whitespace-normal">
-                        {event.title}
+                      <span className="line-clamp-2 leading-tight break-words">
+                        {time && (
+                          <span className="mr-1.5 font-mono text-[10px] whitespace-nowrap opacity-75">
+                            {time}
+                          </span>
+                        )}
+                        {displayTitle(event)}
                       </span>
                     </button>
                   );

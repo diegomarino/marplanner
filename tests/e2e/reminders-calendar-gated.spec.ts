@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { openAdminSection } from "./admin-nav";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -200,10 +201,10 @@ test("calendar_gated admin author → dry-run → emit: query + membership assig
 
   // --- 5) Admin unlock (long-press → PIN) ---
   await unlockAdmin(page, ADMIN_PIN);
-  await expect(page.getByTestId("admin-nav-member-create")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 
   // --- 6) Reminders tab ---
-  await page.getByTestId("admin-nav-reminders-management").click();
+  await openAdminSection(page, "admin-nav-reminders-management");
   await expect(page.getByRole("heading", { name: m["reminders.management.title"] })).toBeVisible({
     timeout: 10_000,
   });

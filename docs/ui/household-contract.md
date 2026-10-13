@@ -38,9 +38,24 @@ Multi-member items render every active assigned identity plus text.
 
 ## Administration
 
+Once unlocked, the top bar becomes the admin bar: a home icon back to the household screens and a
+breadcrumb of the registered admin pages on the way to the current one. The household navigation
+and the Options menu are not shown there. A sidebar holds the admin sections and Lock; a page
+appears in it once it has been redesigned, and until then it is reached from the overview's list
+of all sections.
+
+`/admin` is the overview: the deployed commit and server status, the commit this device runs and
+whether it matches, and the most recent warnings and errors from the client log.
+
+Members are created, edited, archived and restored from `/admin/members` in one form. A card
+opens it. Archiving and restoring ask for confirmation, an archived member opens read-only, and a
+colour held by another active member cannot be picked while a free one remains. The API enforces
+the same rule, and a restored member whose colour was taken meanwhile comes back with the first
+free one.
+
 The ordered capability table is:
 
-1. `/admin` — create member
+1. `/admin` — overview
 2. `/admin/members` — members
 3. `/admin/day-periods` — day periods
 4. `/admin/routines` — routines and chores
