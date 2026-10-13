@@ -243,7 +243,16 @@ function SidebarLink({
   );
 }
 
-function AdminSidebar({ pathname, onLock }: { pathname: string; onLock: () => void }) {
+export function AdminSidebar({
+  pathname,
+  onLock,
+  sections = adminSidebar,
+}: {
+  pathname: string;
+  onLock: () => void;
+  /** The entries to draw; the registered sidebar unless a caller supplies its own. */
+  sections?: readonly SidebarSection[];
+}) {
   const t = useT();
   return (
     <aside
@@ -252,7 +261,7 @@ function AdminSidebar({ pathname, onLock }: { pathname: string; onLock: () => vo
       className="bg-card flex shrink-0 flex-col gap-4 border-b p-3 lg:sticky lg:top-0 lg:h-[calc(100dvh-3.5rem)] lg:w-60 lg:self-start lg:border-r lg:border-b-0"
     >
       <nav aria-label={t("admin.sidebar.label")} className="flex flex-col gap-4">
-        {adminSidebar.map((section) => (
+        {sections.map((section) => (
           <div key={section.id} className="flex flex-col gap-1">
             {section.label && (
               <h2 className="text-muted-foreground px-3 text-xs font-semibold tracking-wider uppercase">

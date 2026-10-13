@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AdminOverview } from "@/admin/AdminOverview";
-import { AdminRoutes, adminBreadcrumb } from "@/admin/AdminRoutes";
+import { AdminRoutes, AdminSidebar, adminBreadcrumb } from "@/admin/AdminRoutes";
 import type { ClientLogRow, SystemStatus } from "../../src/shared";
 
 const STATUS: SystemStatus = {
@@ -121,5 +121,69 @@ describe("Admin shell navigation", () => {
     expect(adminBreadcrumb("/admin")).toEqual([]);
     expect(adminBreadcrumb("/admin/members").map((step) => step.path)).toEqual(["/admin/members"]);
     expect(adminBreadcrumb("/admin/not-a-page")).toEqual([]);
+  });
+
+  it("navigates from the overview's section buttons, the telemetry shortcut and the sidebar", async () => {
+    mockBackend();
+    window.history.replaceState({}, "", "/admin");
+    render(<AdminRoutes pathname="/admin" onLock={vi.fn()} />);
+
+    fireEvent.click(await screen.findByTestId("admin-nav-day-periods"));
+    expect(window.location.pathname).toBe("/admin/day-periods");
+
+    fireEvent.click(screen.getByRole("button", { name: "Open telemetry" }));
+    expect(window.location.pathname).toBe("/admin/telemetry");
+
+    const members = within(screen.getByTestId("admin-sidebar")).getByRole("link", {
+      name: "Members",
+    });
+    // A modified click is left to the browser (open in a new tab), so the app does not navigate.
+    fireEvent.click(members, { metaKey: true });
+    expect(window.location.pathname).toBe("/admin/telemetry");
+    fireEvent.click(members);
+    expect(window.location.pathname).toBe("/admin/members");
+    window.history.replaceState({}, "", "/");
+  });
+
+  it("offers the overview from an unknown admin page", () => {
+    mockBackend();
+    window.history.replaceState({}, "", "/admin/not-a-page");
+    render(<AdminRoutes pathname="/admin/not-a-page" onLock={vi.fn()} />);
+
+    fireEvent.click(
+      within(screen.getByTestId("admin-route-not-found")).getByRole("link", { name: "Overview" })
+    );
+    expect(window.location.pathname).toBe("/admin");
+    window.history.replaceState({}, "", "/");
+  });
+
+  it("shows an item's subsections only while that item or one of them is open", () => {
+    const sections = [
+      {
+        id: "household",
+        label: "admin.sidebar.household",
+        items: [
+          {
+            path: "/admin/members",
+            label: "admin.sidebar.members",
+            Icon: () => null,
+            children: [{ path: "/admin/members/roles", label: "admin.sidebar.calendar" }],
+          },
+        ],
+      },
+    ] as unknown as Parameters<typeof AdminSidebar>[0]["sections"];
+
+    const { rerender } = render(
+      <AdminSidebar pathname="/admin" onLock={vi.fn()} sections={sections} />
+    );
+    expect(screen.getByRole("heading", { name: "Household" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Calendars" })).not.toBeInTheDocument();
+
+    rerender(<AdminSidebar pathname="/admin/members" onLock={vi.fn()} sections={sections} />);
+    expect(screen.getByRole("link", { name: "Calendars" })).not.toHaveAttribute("aria-current");
+
+    rerender(<AdminSidebar pathname="/admin/members/roles" onLock={vi.fn()} sections={sections} />);
+    expect(screen.getByRole("link", { name: "Calendars" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Members" })).not.toHaveAttribute("aria-current");
   });
 });

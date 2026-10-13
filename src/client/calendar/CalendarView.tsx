@@ -231,6 +231,7 @@ export function CalendarView() {
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [createNotice, setCreateNotice] = useState<string | null>(null);
   const [fTitle, setFTitle] = useState("");
   const [fAllDay, setFAllDay] = useState(true);
   const [fDate, setFDate] = useState("");
@@ -507,7 +508,8 @@ export function CalendarView() {
       if (err instanceof AssignmentAfterCreateError) {
         resetForm();
         setShowCreate(false);
-        setError(t("calendar.assignmentError"));
+        // Its own notice: the reload that shows the new event clears the load error.
+        setCreateNotice(t("calendar.assignmentError"));
         return;
       }
       setCreateError(t("calendar.error"));
@@ -650,7 +652,10 @@ export function CalendarView() {
             <Button
               type="button"
               data-testid="calendar-create-btn"
-              onClick={() => setShowCreate(true)}
+              onClick={() => {
+                setCreateNotice(null);
+                setShowCreate(true);
+              }}
             >
               <Plus />
               {t("calendar.newEvent")}
@@ -813,6 +818,8 @@ export function CalendarView() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ErrorNotice message={createNotice} />
 
       {loading ? (
         <div className="text-muted-foreground">{t("calendar.loading")}</div>
