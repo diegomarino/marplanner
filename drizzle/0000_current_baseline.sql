@@ -248,7 +248,7 @@ CREATE TABLE `members` (
 	`birth_year` integer,
 	CONSTRAINT "members_display_name_check" CHECK(length(trim("members"."display_name")) > 0),
 	CONSTRAINT "members_role_check" CHECK("members"."role" IN ('parent', 'child')),
-	CONSTRAINT "members_color_key_check" CHECK("members"."color_key" IN ('blue', 'sky', 'teal', 'green', 'lime', 'amber', 'orange', 'red', 'pink', 'violet')),
+	CONSTRAINT "members_color_key_check" CHECK("members"."color_key" IN ('blue', 'sky', 'cyan', 'teal', 'green', 'lime', 'yellow', 'amber', 'orange', 'red', 'rose', 'pink', 'fuchsia', 'purple', 'violet', 'indigo')),
 	CONSTRAINT "members_lifecycle_check" CHECK("members"."lifecycle" IN ('active', 'archived'))
 );
 --> statement-breakpoint

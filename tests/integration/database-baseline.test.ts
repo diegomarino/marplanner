@@ -16,6 +16,7 @@ const CALENDAR_EVENT_DETAILS_MIGRATION = join(
   "drizzle",
   "0003_calendar_event_details.sql"
 );
+const MEMBER_PALETTE_MIGRATION = join(PROJECT_ROOT, "drizzle", "0004_member_palette.sql");
 const DRIZZLE_KIT = join(PROJECT_ROOT, "node_modules", "drizzle-kit", "bin.cjs");
 const SCHEMA_FILE = join(PROJECT_ROOT, "src", "server", "db", "schema.ts");
 const LIFECYCLE_TABLES = new Set([
@@ -186,7 +187,12 @@ describe("database lifecycle fresh current baseline", () => {
     try {
       const generated = generateCurrentSchemaCatalog(tempDir);
       const committed = instantiateCatalog(
-        [BASELINE_FILE, CALENDAR_FEED_SYNC_MIGRATION, CALENDAR_EVENT_DETAILS_MIGRATION],
+        [
+          BASELINE_FILE,
+          CALENDAR_FEED_SYNC_MIGRATION,
+          CALENDAR_EVENT_DETAILS_MIGRATION,
+          MEMBER_PALETTE_MIGRATION,
+        ],
         join(tempDir, "baseline.sqlite")
       );
 
