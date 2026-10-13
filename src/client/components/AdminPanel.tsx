@@ -42,6 +42,11 @@ export interface AdminPanelProps {
    * such as `CalendarView` should pass `headingLevel="h1"`; nested panels keep the `"h2"` default.
    */
   headingLevel?: "h1" | "h2";
+  /** Keep the title for assistive tech only. For a route whose selected nav entry already names
+   * the page, so the kiosk does not spend screen height repeating it. The description and the
+   * landmark stay as they are; pass no `description` to drop the whole header row.
+   */
+  headingHidden?: boolean;
   "data-testid"?: string;
 }
 
@@ -52,6 +57,7 @@ export function AdminPanel({
   children,
   className,
   headingLevel = "h2",
+  headingHidden = false,
   ...rest
 }: AdminPanelProps) {
   const autoId = React.useId();
@@ -62,18 +68,25 @@ export function AdminPanel({
     <section
       role="region"
       aria-labelledby={headingId}
-      className={cn("flex flex-col gap-4 p-4", className)}
+      // `relative` anchors a hidden heading so it cannot stretch a scrolling ancestor.
+      className={cn("relative flex flex-col gap-4 p-4", className)}
       {...rest}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <Heading id={headingId} className="font-display text-2xl font-bold">
-            {title}
-          </Heading>
-          {description && <p className="text-muted-foreground text-control">{description}</p>}
+      {headingHidden ? (
+        <Heading id={headingId} className="sr-only">
+          {title}
+        </Heading>
+      ) : (
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <Heading id={headingId} className="font-display text-2xl font-bold">
+              {title}
+            </Heading>
+            {description && <p className="text-muted-foreground text-control">{description}</p>}
+          </div>
+          {actions && <div className="flex items-center gap-2">{actions}</div>}
         </div>
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
-      </div>
+      )}
       {children}
     </section>
   );

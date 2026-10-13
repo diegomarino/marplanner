@@ -663,4 +663,133 @@ describe("calendar-mutate (RED by design, turns green)", () => {
       await app.close();
     }
   });
+
+  it("stores a local event's description and location, serves them, and clears them when blanked", async () => {
+    const deviceKey = insertDevice();
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    const feed = async () =>
+      (
+        JSON.parse(
+          (
+            await app.inject({
+              method: "GET",
+              url: "/api/calendar/events?source=local&from=2026-07-14&to=2026-07-16",
+              cookies: { mp_device_key: deviceKey },
+            })
+          ).body
+        ) as { id: string; description?: string; location?: string }[]
+      ).find((item) => item.id === id);
+    let id = "";
+
+    try {
+      const created = await app.inject({
+        method: "POST",
+        url: "/api/calendar/events",
+        cookies: { mp_device_key: deviceKey },
+        payload: {
+          title: "Dentist",
+          allDay: true,
+          startDate: "2026-07-15",
+          endDate: "2026-07-16",
+          description: "  Bring the insurance card  ",
+          location: "Clinic, 2nd floor",
+        },
+      });
+      expect(created.statusCode).toBe(201);
+      id = (JSON.parse(created.body) as { id: string }).id;
+      expect(await feed()).toMatchObject({
+        description: "Bring the insurance card",
+        location: "Clinic, 2nd floor",
+      });
+
+      const edited = await app.inject({
+        method: "PATCH",
+        url: `/api/calendar/events/${id}`,
+        cookies: { mp_device_key: deviceKey },
+        payload: { description: "Fasting required", location: "   " },
+      });
+      expect(edited.statusCode).toBe(200);
+      expect(JSON.parse(edited.body)).toMatchObject({ description: "Fasting required" });
+      const after = await feed();
+      expect(after).toMatchObject({ title: "Dentist", description: "Fasting required" });
+      expect(after).not.toHaveProperty("location");
+
+      const tooLong = await app.inject({
+        method: "PATCH",
+        url: `/api/calendar/events/${id}`,
+        cookies: { mp_device_key: deviceKey },
+        payload: { location: "x".repeat(301) },
+      });
+      expect(tooLong.statusCode).toBe(400);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("PATCH switches an all-day event to timed and back, dropping the other shape's dates", async () => {
+    const deviceKey = insertDevice();
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    const stored = (id: string) =>
+      getDb()
+        .prepare(
+          "SELECT all_day, start_date, end_date, start_utc, end_utc, tzid FROM calendar_events WHERE id = ?"
+        )
+        .get(id);
+
+    try {
+      const created = await app.inject({
+        method: "POST",
+        url: "/api/calendar/events",
+        cookies: { mp_device_key: deviceKey },
+        payload: { title: "Visit", allDay: true, startDate: "2026-07-15", endDate: "2026-07-18" },
+      });
+      const { id } = JSON.parse(created.body) as { id: string };
+      const patch = (payload: Record<string, unknown>) =>
+        app.inject({
+          method: "PATCH",
+          url: `/api/calendar/events/${id}`,
+          cookies: { mp_device_key: deviceKey },
+          payload,
+        });
+
+      // A bare flag flip has no dates for the new shape, so nothing is written.
+      expect((await patch({ allDay: false })).statusCode).toBe(400);
+      expect(stored(id)).toMatchObject({ all_day: 1, start_date: "2026-07-15" });
+
+      const timed = await patch({
+        allDay: false,
+        startUtc: "2026-07-15T09:00:00.000Z",
+        endUtc: "2026-07-15T10:00:00.000Z",
+        tzid: "Europe/Madrid",
+      });
+      expect(timed.statusCode).toBe(200);
+      expect(JSON.parse(timed.body)).toMatchObject({
+        allDay: false,
+        occurrenceStart: "2026-07-15T09:00:00.000Z",
+      });
+      expect(stored(id)).toEqual({
+        all_day: 0,
+        start_date: null,
+        end_date: null,
+        start_utc: "2026-07-15T09:00:00.000Z",
+        end_utc: "2026-07-15T10:00:00.000Z",
+        tzid: "Europe/Madrid",
+      });
+
+      const back = await patch({ allDay: true, startDate: "2026-07-20", endDate: "2026-07-21" });
+      expect(back.statusCode).toBe(200);
+      expect(stored(id)).toEqual({
+        all_day: 1,
+        start_date: "2026-07-20",
+        end_date: "2026-07-21",
+        start_utc: null,
+        end_utc: null,
+        tzid: null,
+      });
+    } finally {
+      await app.close();
+    }
+  });
 });

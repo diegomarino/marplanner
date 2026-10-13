@@ -19,9 +19,7 @@ describe("calendar-i18n-parity", () => {
 
   it("calendar.* label keys resolve in both languages", () => {
     expect(messages.en["calendar.title"]).toBe("Calendar");
-    expect(messages.en["calendar.description"]).toBe(
-      "View and manage household events — timed or all-day, recurring or one-off."
-    );
+    expect(messages.en["calendar.description"]).toBe("Description");
     expect(messages.en["calendar.loading"]).toBe("Loading calendar…");
     expect(messages.en["calendar.error"]).toBe("Failed to load calendar events.");
     expect(messages.en["calendar.noEvents"]).toBe("No events for this period.");
@@ -58,9 +56,7 @@ describe("calendar-i18n-parity", () => {
     expect(messages.en["calendar.allDayFilter"]).toBe("All-day events");
 
     expect(messages.es["calendar.title"]).toBe("Calendario");
-    expect(messages.es["calendar.description"]).toBe(
-      "Ver y gestionar eventos del hogar — programados o de día completo, repetitivos o únicos."
-    );
+    expect(messages.es["calendar.description"]).toBe("Descripción");
     expect(messages.es["calendar.loading"]).toBe("Cargando calendario…");
     expect(messages.es["calendar.error"]).toBe("Error al cargar eventos del calendario.");
     expect(messages.es["calendar.noEvents"]).toBe("No hay eventos para este período.");

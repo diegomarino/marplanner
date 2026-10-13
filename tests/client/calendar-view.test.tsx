@@ -19,7 +19,7 @@
  * component for a NEW surface; an already-testid-scoped inline panel is left as-is here rather
  * than risking a live e2e regression for a purely cosmetic swap.
  */
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CalendarView } from "@/calendar/CalendarView";
@@ -251,10 +251,9 @@ describe("CalendarView — provisioned Calendar authoring", () => {
     renderSurface();
 
     const event = await screen.findByTestId("calendar-event-row");
-    expect(screen.queryByTestId("calendar-assign-btn")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("calendar-edit-btn")).not.toBeInTheDocument();
     fireEvent.click(event);
-    expect(await screen.findByTestId("calendar-assign-btn")).toBeInTheDocument();
-    expect(screen.getByTestId("calendar-edit-btn")).toBeInTheDocument();
+    expect(await screen.findByTestId("calendar-edit-btn")).toBeInTheDocument();
     expect(screen.getByTestId("calendar-delete-btn")).toBeInTheDocument();
   });
 
@@ -264,7 +263,6 @@ describe("CalendarView — provisioned Calendar authoring", () => {
 
     fireEvent.click(await screen.findByTestId("calendar-event-row"));
     expect(await screen.findByText("External event — read only")).toBeInTheDocument();
-    expect(screen.queryByTestId("calendar-assign-btn")).not.toBeInTheDocument();
     expect(screen.queryByTestId("calendar-edit-btn")).not.toBeInTheDocument();
     expect(screen.queryByTestId("calendar-delete-btn")).not.toBeInTheDocument();
   });
@@ -315,17 +313,16 @@ describe("CalendarView — provisioned Calendar authoring", () => {
     const row = await screen.findByTestId("calendar-event-row");
     expect(row).toBeInTheDocument();
     fireEvent.click(row);
-    expect(screen.getByTestId("calendar-assign-btn")).toBeInTheDocument();
     expect(screen.getByTestId("calendar-edit-btn")).toBeInTheDocument();
     expect(screen.getByTestId("calendar-delete-btn")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId("calendar-assign-btn"));
+    fireEvent.click(screen.getByTestId("calendar-edit-btn"));
     await screen.findByTestId(`calendar-assign-member-${MEMBERS[0].id}`);
   });
 });
 
 describe("CalendarView — kiosk density (SC-001, SC-002, FR-009)", () => {
-  it("meets kiosk density across every rendered control — default state, then create form + assign panel + edit panel + delete confirm all open, across two phases", async () => {
+  it("meets kiosk density across every rendered control — default state, then create form + edit panel + delete confirm all open, across two phases", async () => {
     mockBackend();
     // CheckboxField renders a `size-[var(--control-height)]` utility — outside the density
     // helper's base candidate list (`densityStyles.ts` header), same as
@@ -346,9 +343,9 @@ describe("CalendarView — kiosk density (SC-001, SC-002, FR-009)", () => {
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
       // Phase 2 — expand every expandable panel at once (none of them are mutually exclusive —
-      // `showCreate`/`showAssign`/`showEdit`/`showDeleteConfirm` are independent state): the create
-      // form's own fields, the assign panel's two member checkboxes, the edit panel's fields, and
-      // the delete-confirm panel's buttons.
+      // `showCreate`/`showEdit`/`showDeleteConfirm` are independent state): the create form's own
+      // fields, the edit panel's fields with its member toggles, and the delete-confirm panel's
+      // buttons.
       //
       // NOT reached, and not claimed to be (finding — a prior version of
       // this comment overclaimed "every control this surface can render is reachable in a single
@@ -368,11 +365,9 @@ describe("CalendarView — kiosk density (SC-001, SC-002, FR-009)", () => {
 
       await activateFirstEvent();
 
-      fireEvent.click(screen.getByTestId("calendar-assign-btn"));
-      await screen.findByTestId(`calendar-assign-member-${MEMBERS[0].id}`);
-
       fireEvent.click(screen.getByTestId("calendar-edit-btn"));
       await screen.findByTestId("calendar-edit-title-input");
+      await screen.findByTestId(`calendar-assign-member-${MEMBERS[0].id}`);
 
       fireEvent.click(screen.getByTestId("calendar-delete-btn"));
       await screen.findByTestId("calendar-delete-confirm-btn");
@@ -453,13 +448,13 @@ describe("CalendarView — error states are announced (SC-011)", () => {
     expect(alert).toHaveAttribute("aria-live", "assertive");
   });
 
-  it("announces the members-load failure once the assign panel is opened", async () => {
+  it("announces the members-load failure once the edit form is opened", async () => {
     mockBackend({ members: () => json(null, 500) });
     renderSurface();
 
     await screen.findByTestId("calendar-event-row");
     await activateFirstEvent();
-    fireEvent.click(screen.getByTestId("calendar-assign-btn"));
+    fireEvent.click(screen.getByTestId("calendar-edit-btn"));
 
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("Failed to load members.");
@@ -471,9 +466,9 @@ describe("CalendarView — error states are announced (SC-011)", () => {
 
     await screen.findByTestId("calendar-event-row");
     await activateFirstEvent();
-    fireEvent.click(screen.getByTestId("calendar-assign-btn"));
-    await screen.findByTestId(`calendar-assign-member-${MEMBERS[0].id}`);
-    fireEvent.click(screen.getByTestId("calendar-assign-save-btn"));
+    fireEvent.click(screen.getByTestId("calendar-edit-btn"));
+    fireEvent.click(await screen.findByTestId(`calendar-assign-member-${MEMBERS[0].id}`));
+    fireEvent.click(screen.getByTestId("calendar-edit-save-btn"));
 
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("Failed to update assignment.");
@@ -522,6 +517,158 @@ describe("CalendarView — error states are announced (SC-011)", () => {
   });
 });
 
+describe("CalendarView — New Event dialog", () => {
+  function sentBody(mockFetch: ReturnType<typeof mockBackend>, method: string, suffix: RegExp) {
+    const call = (mockFetch.mock.calls as FetchCall[]).find(
+      ([input, init]) => init?.method === method && suffix.test(String(input))
+    );
+    return call ? (JSON.parse(String(call[1]?.body)) as unknown) : undefined;
+  }
+
+  it("stores the inclusive end date of an all-day event as the exclusive day after", async () => {
+    const mockFetch = mockBackend({ createEvent: () => json({ id: "new-1" }, 201) });
+    renderSurface();
+
+    await screen.findByTestId("calendar-event-row");
+    fireEvent.click(screen.getByTestId("calendar-create-btn"));
+    fireEvent.change(screen.getByTestId("calendar-create-title-input"), {
+      target: { value: "Camping" },
+    });
+    fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2026-07-10" } });
+    fireEvent.change(screen.getByLabelText("End date"), { target: { value: "2026-07-12" } });
+    fireEvent.change(screen.getByLabelText("Location"), { target: { value: "Lake cabin" } });
+    fireEvent.change(screen.getByLabelText("Description"), { target: { value: "Bring boots" } });
+    fireEvent.click(screen.getByTestId("calendar-create-submit"));
+
+    await waitFor(() =>
+      expect(sentBody(mockFetch, "POST", /\/api\/calendar\/events$/)).toEqual({
+        title: "Camping",
+        allDay: true,
+        startDate: "2026-07-10",
+        endDate: "2026-07-13",
+        location: "Lake cabin",
+        description: "Bring boots",
+      })
+    );
+  });
+
+  it("assigns the people picked in the dialog to the event it just created", async () => {
+    const mockFetch = mockBackend({ createEvent: () => json({ id: "new-2" }, 201) });
+    renderSurface();
+
+    await screen.findByTestId("calendar-event-row");
+    fireEvent.click(screen.getByTestId("calendar-create-btn"));
+    const dialog = within(await screen.findByRole("dialog", { name: "New Event" }));
+    fireEvent.change(screen.getByTestId("calendar-create-title-input"), {
+      target: { value: "Swimming" },
+    });
+    fireEvent.change(screen.getByLabelText("Start date"), { target: { value: TOMORROW } });
+    fireEvent.click(dialog.getByRole("checkbox", { name: "Alice" }));
+    fireEvent.click(screen.getByTestId("calendar-create-submit"));
+
+    await waitFor(() =>
+      expect(sentBody(mockFetch, "PUT", /\/events\/new-2\/assignments$/)).toEqual({
+        memberIds: [MEMBERS[0].id],
+      })
+    );
+  });
+});
+
+describe("CalendarView — event detail dialog", () => {
+  it("shows an imported event's place and description, read only", async () => {
+    mockBackend({
+      events: () =>
+        json([
+          {
+            ...EVENT,
+            id: "external-1",
+            source: "external",
+            title: "Parents evening",
+            location: "School hall",
+            description: "Room 4\nBring the report",
+          },
+        ]),
+    });
+    renderSurface();
+
+    fireEvent.click(await screen.findByTestId("calendar-event-row"));
+    const dialog = within(await screen.findByRole("dialog", { name: "Parents evening" }));
+    expect(dialog.getByText("School hall")).toBeInTheDocument();
+    expect(dialog.getByText(/Room 4\s+Bring the report/)).toBeInTheDocument();
+    expect(dialog.queryByTestId("calendar-edit-btn")).not.toBeInTheDocument();
+  });
+});
+
+describe("CalendarView — editing a local event", () => {
+  it("turns an all-day event into a timed one, carrying its day across", async () => {
+    const mockFetch = mockBackend();
+    renderSurface();
+
+    await activateFirstEvent();
+    fireEvent.click(screen.getByTestId("calendar-edit-btn"));
+    fireEvent.click(await screen.findByRole("checkbox", { name: "All-day event" }));
+    expect(screen.getByLabelText("Start time")).toHaveValue(`${TOMORROW}T09:00`);
+    expect(screen.getByLabelText("End time")).toHaveValue(`${TOMORROW}T10:00`);
+    fireEvent.click(screen.getByTestId("calendar-edit-save-btn"));
+
+    await waitFor(() => {
+      const patch = (mockFetch.mock.calls as FetchCall[]).find(
+        ([, init]) => init?.method === "PATCH"
+      );
+      expect(patch).toBeDefined();
+      const body = JSON.parse(String(patch?.[1]?.body)) as Record<string, unknown>;
+      expect(body).toEqual({
+        allDay: false,
+        startUtc: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:00:00\.000Z$/) as string,
+        endUtc: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:00:00\.000Z$/) as string,
+        tzid: expect.any(String) as string,
+      });
+    });
+  });
+
+  it("closes the dialog after a successful save and reopens on the summary", async () => {
+    mockBackend();
+    renderSurface();
+
+    await activateFirstEvent();
+    const people = within(screen.getByTestId("calendar-event-detail"));
+    fireEvent.click(screen.getByTestId("calendar-edit-btn"));
+    fireEvent.change(await screen.findByTestId("calendar-edit-title-input"), {
+      target: { value: "Renamed" },
+    });
+    // While the form shows the people, the summary's own list of them is gone.
+    expect(people.queryByRole("list", { name: "Who is it for" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("calendar-edit-save-btn"));
+
+    await waitFor(() =>
+      expect(screen.queryByTestId("calendar-event-detail")).not.toBeInTheDocument()
+    );
+    await activateFirstEvent();
+    expect(screen.getByTestId("calendar-edit-btn")).toBeInTheDocument();
+    expect(screen.queryByTestId("calendar-edit-title-input")).not.toBeInTheDocument();
+  });
+
+  it("shows a same-day timed event as one date with start and end times and no time zone", async () => {
+    mockBackend({
+      events: () =>
+        json([
+          {
+            ...EVENT,
+            allDay: false,
+            occurrenceStart: `${TOMORROW}T10:00:00.000Z`,
+            occurrenceEnd: `${TOMORROW}T10:20:00.000Z`,
+            tzid: "UTC",
+          },
+        ]),
+    });
+    renderSurface();
+
+    await activateFirstEvent();
+    const when = within(screen.getByTestId("calendar-event-detail")).getByText(/—/);
+    expect(when.textContent).toMatch(/^\S+ \d{1,2} \S+ \d{2}:\d{2} — \d{2}:\d{2}$/);
+  });
+});
+
 describe("CalendarView — adopts the AdminPanel L2 frame", () => {
   it("wraps the surface in a landmark region labelled by its own title", async () => {
     mockBackend();
@@ -558,7 +705,7 @@ describe("CalendarView — the assignment row is a real, keyboard-operable contr
 
     await screen.findByTestId("calendar-event-row");
     await activateFirstEvent();
-    fireEvent.click(screen.getByTestId("calendar-assign-btn"));
+    fireEvent.click(screen.getByTestId("calendar-edit-btn"));
 
     // A REAL native checkbox, not `readOnly` — the product's original known offender
     // (quickstart.md S9 row 1, `CalendarView.tsx:644`).
@@ -613,7 +760,7 @@ describe("CalendarView — the assignment row is a real, keyboard-operable contr
       renderSurface();
       await screen.findByTestId("calendar-event-row");
       await activateFirstEvent();
-      fireEvent.click(screen.getByTestId("calendar-assign-btn"));
+      fireEvent.click(screen.getByTestId("calendar-edit-btn"));
       await screen.findByTestId(`calendar-assign-member-${MEMBERS[0].id}`);
 
       const checkbox = screen.getByTestId(`calendar-assign-member-${MEMBERS[0].id}`);
@@ -633,10 +780,10 @@ describe("CalendarView — assignment save round-trips the selected members (reg
 
     await screen.findByTestId("calendar-event-row");
     await activateFirstEvent();
-    fireEvent.click(screen.getByTestId("calendar-assign-btn"));
+    fireEvent.click(screen.getByTestId("calendar-edit-btn"));
     const checkbox = await screen.findByTestId(`calendar-assign-member-${MEMBERS[0].id}`);
     fireEvent.click(checkbox);
-    fireEvent.click(screen.getByTestId("calendar-assign-save-btn"));
+    fireEvent.click(screen.getByTestId("calendar-edit-save-btn"));
 
     await waitFor(() => {
       const putCalls = (mockFetch.mock.calls as FetchCall[]).filter(
@@ -648,13 +795,13 @@ describe("CalendarView — assignment save round-trips the selected members (reg
     });
   });
 
-  it("gives the assign row's label a full-width, pointer-cursor hit area ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)", async () => {
+  it("makes the whole member pill the tap target ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)", async () => {
     mockBackend();
     renderSurface();
 
     await screen.findByTestId("calendar-event-row");
     await activateFirstEvent();
-    fireEvent.click(screen.getByTestId("calendar-assign-btn"));
+    fireEvent.click(screen.getByTestId("calendar-edit-btn"));
     const checkbox = await screen.findByTestId(`calendar-assign-member-${MEMBERS[0].id}`);
 
     // Real gap this guards: removing the `<li>`'s `onClick` (the FR-013 fix) shrank the tappable
@@ -664,8 +811,12 @@ describe("CalendarView — assignment save round-trips the selected members (reg
     // restores the tap affordance the `<li>`'s removed `onClick` used to imply.
     const label = checkbox.closest("label");
     expect(label).not.toBeNull();
-    expect(label?.className).toMatch(/\bw-full\b/);
+    // The member toggle is a pill, not a row: the native checkbox is stretched invisibly over the
+    // whole pill, so every part of the pill that looks tappable is the control.
+    expect(label?.className).toMatch(/\brelative\b/);
     expect(label?.className).toMatch(/\bcursor-pointer\b/);
+    expect(checkbox.className).toMatch(/\babsolute\b/);
+    expect(checkbox.className).toMatch(/\binset-0\b/);
   });
 
   it("excludes archived members from assignment choices", async () => {
@@ -674,7 +825,7 @@ describe("CalendarView — assignment save round-trips the selected members (reg
 
     await screen.findByTestId("calendar-event-row");
     await activateFirstEvent();
-    fireEvent.click(screen.getByTestId("calendar-assign-btn"));
+    fireEvent.click(screen.getByTestId("calendar-edit-btn"));
     await screen.findByTestId(`calendar-assign-member-${MEMBERS[0].id}`);
     expect(screen.queryByTestId(`calendar-assign-member-${MEMBERS[1].id}`)).not.toBeInTheDocument();
   });

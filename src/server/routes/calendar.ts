@@ -295,6 +295,8 @@ export async function calendarRoutes(
       tzid?: string;
       rrule?: string | null;
       exdates?: string[];
+      description?: string | null;
+      location?: string | null;
     };
   }>(
     "/api/calendar/events",
@@ -310,6 +312,8 @@ export async function calendarRoutes(
           tzid?: string;
           rrule?: string | null;
           exdates?: string[];
+          description?: string | null;
+          location?: string | null;
         };
       }>,
       reply: FastifyReply

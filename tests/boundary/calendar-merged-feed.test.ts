@@ -155,20 +155,21 @@ describe("Calendar merged feed read", () => {
     ]);
   });
 
-  it("matches external description internally without exposing it on FeedItem", () => {
+  it("matches an external description and serves it on the FeedItem", () => {
     source("enabled");
     event("external-a", "external", "Ordinary title");
     meta("external-a", "enabled", "active", "Médico privado");
 
     const matches = getEvents({ source: "external", range, query: "medico" });
     expect(matches.map((item) => item.id)).toEqual(["external-a"]);
-    expect(matches[0]).not.toHaveProperty("description");
+    expect(matches[0]).toMatchObject({ description: "Médico privado" });
+    expect(matches[0]).not.toHaveProperty("location");
     expect(
       getEvents({ source: "external", range, query: "medico", queryFields: ["title"] })
     ).toEqual([]);
   });
 
-  it("ADR-043: reuses one event read while preserving private query fields and transaction scope", () => {
+  it("ADR-043: reuses one event read while preserving query fields and transaction scope", () => {
     source("enabled");
     event("external", "external", "Ordinary title");
     meta("external", "enabled", "active", "Médico privado");
@@ -198,7 +199,10 @@ describe("Calendar merged feed read", () => {
         expect(
           getEvents({ source: "all", range, txCtx, query: "medico", queryFields: ["title"] })
         ).toEqual([]);
-        expect(getEvents({ source: "all", range, txCtx })[0]).not.toHaveProperty("description");
+        expect(getEvents({ source: "all", range, txCtx })[0]).toMatchObject({
+          description: "Médico privado",
+          location: "Clínica",
+        });
         expect(() => getEvents({ source: "all", range, txCtx, queryFields: ["invalid"] })).toThrow(
           "Invalid queryFields"
         );
