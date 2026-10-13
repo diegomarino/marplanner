@@ -261,6 +261,8 @@ export interface HighlightRuleOrder {
 }
 
 export * from "./events.js";
+export { detectCalendarProvider } from "./calendar-provider.js";
+export { isSingleEmoji } from "./emoji.js";
 
 /** AssignmentReplace — full replacement set of member ids for an event (atomic
  * replace; each MUST be an active member, FR-006).

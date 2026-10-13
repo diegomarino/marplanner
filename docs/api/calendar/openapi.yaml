@@ -264,7 +264,6 @@ components:
       type: object
       required:
         - name
-        - provider
         - feedUrl
       additionalProperties: false
       properties:
@@ -273,7 +272,9 @@ components:
           minLength: 1
         provider:
           type: string
-          description: Unknown values normalize to ics_generic.
+          description: >-
+            Optional display label. When omitted it is detected from the feed's host (Google,
+            Microsoft, Apple, otherwise ics_generic). Unknown values normalize to ics_generic.
         feedUrl:
           type: string
           format: uri

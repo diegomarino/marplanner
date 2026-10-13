@@ -37,6 +37,7 @@ import {
   buildCalendarDays,
   buildWeekDays,
   dateTimeLocalToUtcInstant,
+  displayTitle,
   filterCalendarEvents,
   formatInstantAsDateTimeLocal,
   getHouseholdCalendarDate,
@@ -865,7 +866,7 @@ export function CalendarView() {
               {(selectedEvent ? [selectedEvent] : []).map((event) => (
                 <div key={presentationEventId(event)} className="flex flex-col gap-3">
                   <DialogHeader>
-                    <DialogTitle className="text-xl">{event.title}</DialogTitle>
+                    <DialogTitle className="text-xl">{displayTitle(event)}</DialogTitle>
                     <DialogDescription>{renderWhen(event)}</DialogDescription>
                   </DialogHeader>
                   {event.location && (

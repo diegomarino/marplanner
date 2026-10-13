@@ -86,6 +86,13 @@ export function buildWeekDays(date: string, weekStartDay: WeekStartDay = 0): str
   return Array.from({ length: 7 }, (_, index) => start.add({ days: index }).toString());
 }
 
+/** The title as shown: with its highlight emoji when a rule matched, the stored title otherwise.
+ * Editing always works on `event.title`, so a highlight is never saved into the title.
+ */
+export function displayTitle(event: FeedItem): string {
+  return event.decoratedTitle ?? event.title;
+}
+
 export function presentationEventId(event: FeedItem): string {
   return `${event.id}@${event.occurrenceStart}`;
 }
@@ -113,14 +120,14 @@ export function toScheduleXEvent(event: FeedItem, timezone: string): CalendarEve
       Temporal.PlainDate.compare(exclusiveEnd, start) > 0
         ? exclusiveEnd.subtract({ days: 1 })
         : start;
-    return { id, title: event.title, start, end };
+    return { id, title: displayTitle(event), start, end };
   }
 
   const start = toZonedDateTime(event.occurrenceStart, timezone);
   const end = event.occurrenceEnd
     ? toZonedDateTime(event.occurrenceEnd, timezone)
     : start.add({ hours: 1 });
-  return { id, title: event.title, start, end };
+  return { id, title: displayTitle(event), start, end };
 }
 
 export function filterCalendarEvents(

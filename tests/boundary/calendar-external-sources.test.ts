@@ -5,6 +5,7 @@ import {
   upsertExternalSource,
 } from "../../src/server/modules/calendar/external-sources";
 import { fetchIcs } from "../../src/server/modules/calendar/fetch-ics";
+import { detectCalendarProvider } from "../../src/shared";
 import { useIsolatedDb } from "../helpers/db";
 
 describe("calendar external-source domain seam", () => {
@@ -201,5 +202,43 @@ describe("calendar external-source domain seam", () => {
         { lookup }
       )
     ).rejects.toMatchObject({ code: "invalid_external_source" });
+  });
+
+  it("detects the provider from the feed host when the caller names none", async () => {
+    const lookup = vi.fn(async () => [{ address: "8.8.8.8", family: 4 }]);
+    const cases: [string, string][] = [
+      ["https://calendar.google.com/calendar/ical/x/basic.ics", "google"],
+      ["https://outlook.office365.com/owa/calendar/x/calendar.ics", "microsoft"],
+      ["https://outlook.live.com/owa/calendar/x/calendar.ics", "microsoft"],
+      ["https://p42-caldav.icloud.com/published/2/x", "apple"],
+      ["https://school.example.test/feed.ics", "ics_generic"],
+      // A look-alike host is not the service it imitates.
+      ["https://notgoogle.com.example.test/feed.ics", "ics_generic"],
+    ];
+    for (const [feedUrl, expected] of cases) {
+      const saved = await upsertExternalSource(
+        { id: `detect-${expected}-${feedUrl.length}`, name: "Feed", feedUrl },
+        { lookup }
+      );
+      expect(saved.provider, feedUrl).toBe(expected);
+    }
+
+    // A provider the caller names still wins over the host.
+    const named = await upsertExternalSource(
+      {
+        id: "named",
+        name: "Feed",
+        provider: "apple",
+        feedUrl: "https://calendar.google.com/calendar/ical/y/basic.ics",
+      },
+      { lookup }
+    );
+    expect(named.provider).toBe("apple");
+  });
+
+  it("reads a webcal address and falls back to generic for one it cannot parse", () => {
+    expect(detectCalendarProvider("webcal://p01-caldav.icloud.com/published/2/x")).toBe("apple");
+    expect(detectCalendarProvider("  HTTPS://Calendar.Google.com/x  ")).toBe("google");
+    expect(detectCalendarProvider("not a url")).toBe("ics_generic");
   });
 });
