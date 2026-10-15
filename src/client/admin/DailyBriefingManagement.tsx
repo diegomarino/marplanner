@@ -29,7 +29,13 @@ import {
   type MemberBlockSettings,
   type MemberResult,
 } from "@/daily-briefing/admin/briefingBlocks";
-import type { BriefingSchedule, GenerateAllResponse, MemberDTO, OptInState } from "../../shared";
+import type {
+  BriefingReadResult,
+  BriefingSchedule,
+  GenerateAllResponse,
+  MemberDTO,
+  OptInState,
+} from "../../shared";
 
 /* DailyBriefingManagement — the Briefing admin page (spec 2026-10-15-admin-briefing-polish).
  * Three scoped tabs: Schedule (household: automatic generation, generate for a date, who gets
@@ -77,6 +83,7 @@ export function DailyBriefingManagement() {
   const [results, setResults] = useState<ScheduleResults | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const generationRequestId = useRef(0);
+  const resultsVersion = useRef(0);
 
   const [blocksError, setBlocksError] = useState<string | null>(null);
   const [savingType, setSavingType] = useState<BlockRegistryType | null>(null);
@@ -190,6 +197,40 @@ export function DailyBriefingManagement() {
 
   const optedIn = members.filter((member) => optIns[member.id]);
   const hasPendingOptIns = pendingOptIns.size > 0;
+  const shownDate = date ?? today;
+  const optedInKey = optedIn.map((member) => member.id).join(",");
+
+  // Schedule's Result column starts from what is stored for the shown date, so a briefing made
+  // earlier (or by the scheduler) is not reported as missing. Reloaded whenever Schedule is
+  // shown; a generate that lands meanwhile wins (resultsVersion).
+  useEffect(() => {
+    if (tab !== "schedule" || !shownDate || optedIn.length === 0) return;
+    const version = ++resultsVersion.current;
+    const schedules = settings?.schedules ?? {};
+    const weekday = weekdayOfDate(shownDate);
+    void Promise.all(
+      optedIn.map(async (member): Promise<[string, MemberResult] | null> => {
+        try {
+          const response = await authFetch(`/api/daily-briefing/${member.id}/${shownDate}`, {
+            credentials: "include",
+          });
+          if (!response.ok) return null;
+          const read = (await response.json()) as BriefingReadResult;
+          if (read.generated) return [member.id, read.briefing.status];
+          const days = schedules[member.id] ?? CANONICAL_WEEKDAY_ORDER;
+          return [member.id, weekday && !days.includes(weekday) ? "paused" : "notGenerated"];
+        } catch {
+          return null;
+        }
+      })
+    ).then((entries) => {
+      if (resultsVersion.current !== version) return;
+      setResults({
+        date: shownDate,
+        statuses: Object.fromEntries(entries.filter((entry) => entry !== null)),
+      });
+    });
+  }, [tab, shownDate, optedInKey]);
   const selected = members.find((member) => member.id === selectedId);
   const selectedOn = Boolean(selected && optIns[selected.id]);
 
@@ -228,6 +269,7 @@ export function DailyBriefingManagement() {
         const days = settings?.schedules[member.id] ?? CANONICAL_WEEKDAY_ORDER;
         statuses[member.id] = weekday && !days.includes(weekday) ? "paused" : "notGenerated";
       }
+      resultsVersion.current += 1;
       setResults({ date: target, statuses });
       setRefreshKey((value) => value + 1);
     } catch (cause) {
@@ -314,7 +356,7 @@ export function DailyBriefingManagement() {
             schedules: { ...previous.schedules, [saved.memberId]: saved.weekdays },
           }
       );
-      setSettingsChanged(true);
+      // A pause only stops future briefings; nothing already generated needs a regenerate.
     } catch (cause) {
       blockWriteFailed(cause, fallback);
     } finally {
@@ -541,6 +583,7 @@ export function DailyBriefingManagement() {
                   // On "today" with no known household today (spec A2), the result belongs to
                   // the shown date, which the Schedule tab keys as null.
                   const resultDate = date === null && today === null ? null : briefing.date;
+                  resultsVersion.current += 1;
                   setResults((previous) =>
                     previous && previous.date === resultDate
                       ? {

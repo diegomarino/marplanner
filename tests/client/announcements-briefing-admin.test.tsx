@@ -536,11 +536,11 @@ describe("DailyBriefingManagement — every opt-in checkbox carries a DISTINCT a
     const ada = await screen.findByTestId("daily-briefing-opt-in-member-ada");
     const ben = await screen.findByTestId("daily-briefing-opt-in-member-ben");
 
-    // Pre-fix, both computed to the bare visible label ("Enabled") — indistinguishable to
+    // Pre-fix, both computed to the bare visible label ("On") — indistinguishable to
     // assistive technology with more than one member listed. The name must compose the two
     // VISIBLE texts (member name + state word), mirroring what sighted users see.
-    expect(ada).toHaveAccessibleName("Ada: Enabled");
-    expect(ben).toHaveAccessibleName("Ben: Enabled");
+    expect(ada).toHaveAccessibleName("Ada: On");
+    expect(ben).toHaveAccessibleName("Ben: On");
   });
 });
 

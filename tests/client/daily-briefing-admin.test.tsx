@@ -350,8 +350,22 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
       if (/^\/api\/daily-briefing\/[^/]+\/[^/]+\/preview\.png/.test(url)) {
         return new Response("{}", { status: 404 });
       }
-      if (/^\/api\/daily-briefing\/[^/]+\/\d{4}-\d{2}-\d{2}$/.test(url)) {
-        return jsonResponse({ generated: false });
+      // A stored briefing for every date: the image frame shows only for a stored briefing.
+      const read = /^\/api\/daily-briefing\/([^/]+)\/(\d{4}-\d{2}-\d{2})$/.exec(url);
+      if (read) {
+        return jsonResponse({
+          generated: true,
+          briefing: {
+            id: `b-${read[2]}`,
+            memberId: read[1],
+            date: read[2],
+            status: "ready",
+            payload: { schemaVersion: 2, blocks: [] },
+            createdAt: 1,
+            updatedAt: 1,
+          },
+          printedStatus: "none",
+        });
       }
       throw new Error(`unexpected fetch: ${url}`);
     });

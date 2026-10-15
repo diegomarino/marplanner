@@ -63,6 +63,11 @@ export function scheduleSummary(
     .join(", ");
 }
 
+/** Below `sm` each member row stacks as a card: cells become label/value lines, the label coming
+ * from the cell's `data-label` (the column header text, which is visually hidden there). */
+const STACKED_CELL =
+  "border-b px-2 py-2 max-sm:flex max-sm:items-center max-sm:justify-between max-sm:gap-4 max-sm:border-0 max-sm:py-1 max-sm:before:text-muted-foreground max-sm:before:content-[attr(data-label)]";
+
 /** Household scope (spec D1/D8/D10): automatic generation, generate for a date, who receives it. */
 export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
   const t = useT();
@@ -71,6 +76,11 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
   const shownDate = props.date ?? props.today;
   const results = props.results && props.results.date === shownDate ? props.results.statuses : null;
   const anyOn = props.members.some((member) => props.optIns[member.id]);
+  const columnBriefing = t("dailyBriefing.admin.columnBriefing");
+  const columnDays = t("dailyBriefing.admin.columnDays");
+  const columnResult = shownDate
+    ? t("dailyBriefing.admin.columnResult").replace("{date}", shownDate)
+    : t("dailyBriefing.admin.columnResultNoDate");
 
   return (
     <div className="flex flex-col gap-6">
@@ -136,31 +146,29 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
           ) : (
             <div className="overflow-x-auto">
               <table
-                className="w-full border-collapse text-sm"
+                className="w-full border-collapse text-sm max-sm:block"
                 data-testid="daily-briefing-members-table"
               >
-                <thead>
+                <thead className="max-sm:sr-only">
                   <tr className="text-left">
                     <th scope="col" className="border-b px-2 py-2">
                       {t("dailyBriefing.admin.memberLabel")}
                     </th>
                     <th scope="col" className="border-b px-2 py-2">
-                      {t("dailyBriefing.admin.columnBriefing")}
+                      {columnBriefing}
                     </th>
                     <th scope="col" className="border-b px-2 py-2">
-                      {t("dailyBriefing.admin.columnDays")}
+                      {columnDays}
                     </th>
                     <th scope="col" className="border-b px-2 py-2">
-                      {shownDate
-                        ? t("dailyBriefing.admin.columnResult").replace("{date}", shownDate)
-                        : t("dailyBriefing.admin.columnResultNoDate")}
+                      {columnResult}
                     </th>
                     <th scope="col" className="border-b px-2 py-2">
                       {t("dailyBriefing.admin.columnOpen")}
                     </th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="max-sm:block">
                   {props.members.map((member) => {
                     const on = Boolean(props.optIns[member.id]);
                     const pending = props.pendingOptInIds.has(member.id);
@@ -169,8 +177,15 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
                       ? t("dailyBriefing.management.optInSaving")
                       : t("dailyBriefing.management.optIn");
                     return (
-                      <tr key={member.id} data-testid={`daily-briefing-member-row-${member.id}`}>
-                        <th scope="row" className="border-b px-2 py-2 text-left font-medium">
+                      <tr
+                        key={member.id}
+                        data-testid={`daily-briefing-member-row-${member.id}`}
+                        className="max-sm:block max-sm:border-b max-sm:py-2"
+                      >
+                        <th
+                          scope="row"
+                          className="border-b px-2 py-2 text-left font-medium max-sm:block max-sm:border-0"
+                        >
                           <span className="inline-flex items-center gap-2">
                             <span
                               aria-hidden="true"
@@ -182,7 +197,7 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
                             {member.displayName}
                           </span>
                         </th>
-                        <td className="border-b px-2 py-2">
+                        <td className={STACKED_CELL} data-label={columnBriefing}>
                           <CheckboxField
                             checked={on}
                             disabled={pending || props.optInLocked}
@@ -193,7 +208,8 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
                           />
                         </td>
                         <td
-                          className="border-b px-2 py-2"
+                          className={STACKED_CELL}
+                          data-label={columnDays}
                           data-testid={`daily-briefing-member-days-${member.id}`}
                         >
                           {on && props.schedules
@@ -201,12 +217,13 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
                             : "—"}
                         </td>
                         <td
-                          className="border-b px-2 py-2"
+                          className={STACKED_CELL}
+                          data-label={columnResult}
                           data-testid={`daily-briefing-member-status-${member.id}`}
                         >
                           {result ? t(RESULT_KEYS[result]) : "—"}
                         </td>
-                        <td className="border-b px-2 py-2">
+                        <td className="border-b px-2 py-2 max-sm:block max-sm:border-0">
                           <span className="flex flex-wrap gap-2">
                             <Button
                               type="button"

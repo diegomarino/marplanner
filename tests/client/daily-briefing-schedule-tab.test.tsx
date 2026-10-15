@@ -62,8 +62,8 @@ describe("scheduleSummary", () => {
 describe("BriefingScheduleTab", () => {
   it("lists every member with the opt-in, days and open buttons", () => {
     const props = renderTab();
-    expect(screen.getByRole("checkbox", { name: "Lisa: Enabled" })).toBeChecked();
-    expect(screen.getByRole("checkbox", { name: "Bart: Enabled" })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Lisa: On" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Bart: On" })).not.toBeChecked();
     expect(screen.getByTestId("daily-briefing-member-days-m-lisa")).toHaveTextContent(
       "Mon, Tue, Wed, Thu, Fri"
     );
@@ -74,6 +74,18 @@ describe("BriefingScheduleTab", () => {
     expect(props.onOpen).toHaveBeenCalledWith("m-bart", "blocks");
     fireEvent.click(screen.getByTestId("daily-briefing-open-briefings-m-lisa"));
     expect(props.onOpen).toHaveBeenCalledWith("m-lisa", "preview");
+  });
+
+  it("labels each cell for the stacked phone layout with its column name", () => {
+    renderTab();
+    expect(screen.getByTestId("daily-briefing-member-days-m-lisa")).toHaveAttribute(
+      "data-label",
+      "Days"
+    );
+    expect(screen.getByTestId("daily-briefing-member-status-m-lisa")).toHaveAttribute(
+      "data-label",
+      "Result for 2026-10-15"
+    );
   });
 
   it("shows the household today in the date input and reports a new date", () => {
@@ -105,7 +117,7 @@ describe("BriefingScheduleTab", () => {
   it("disables Generate for all members when it cannot run, with the hint", () => {
     renderTab({ canGenerateAll: false, optIns: {} });
     expect(screen.getByTestId("daily-briefing-generate-all")).toBeDisabled();
-    expect(screen.getByText("Enable Daily Briefing for a member before generating.")).toBeVisible();
+    expect(screen.getByText("Turn on the daily briefing for a member below to generate.")).toBeVisible();
   });
 
   it("does not render the automation card until settings load", () => {

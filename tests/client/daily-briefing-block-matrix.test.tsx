@@ -103,6 +103,14 @@ describe("BlockMatrix", () => {
     expect(screen.getByRole("button", { name: "Reorder Weather" })).toBeDisabled();
   });
 
+  it("contains the hidden cell labels inside its own scroll box (no page-wide sideways scroll)", () => {
+    renderMatrix();
+    expect(screen.getByTestId("daily-briefing-block-matrix").parentElement).toHaveClass(
+      "relative",
+      "overflow-x-auto"
+    );
+  });
+
   it("meets kiosk density", async () => {
     const uninject = await injectDensityStyles({
       extraCandidates: ["size-[var(--control-height)]"],

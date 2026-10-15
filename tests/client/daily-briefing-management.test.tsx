@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DailyBriefingManagement } from "@/admin/DailyBriefingManagement";
 import type { BlockMatrixProps } from "@/daily-briefing/admin/BlockMatrix";
 import { LanguageProvider } from "@/i18n";
+import { HouseholdSettingsProvider } from "@/lib/householdSettings";
 
 type FetchCall = Parameters<typeof globalThis.fetch>;
 
@@ -346,7 +347,7 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     await waitFor(() => expect(generate).toBeEnabled());
   });
 
-  it("pauses a weekday for the selected member, disables that column and shows the notice", async () => {
+  it("pauses a weekday for the selected member and disables that column without a regenerate notice", async () => {
     let scheduleBody: unknown;
     mockBackend({
       optIns: ["member-ada"],
@@ -357,6 +358,15 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
           ],
         }),
       handle: (url, init) => {
+        if (url === "/api/daily-briefing/block-settings/member-ada/weather") {
+          return jsonResponse({
+            memberId: "member-ada",
+            blockType: "weather",
+            params: null,
+            updatedAt: 2,
+            ...(JSON.parse(String(init?.body)) as object),
+          });
+        }
         if (url !== "/api/daily-briefing/schedule/member-ada" || init?.method !== "PUT") {
           return undefined;
         }
@@ -374,9 +384,15 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
 
     fireEvent.click(screen.getByTestId("daily-briefing-schedule-day-mon"));
     await waitFor(() => expect(scheduleBody).toEqual({ weekdays: ["tue", "wed", "thu", "fri"] }));
-    expect(await screen.findByTestId("daily-briefing-settings-changed")).toBeVisible();
-    expect(screen.getByTestId("daily-briefing-block-cell-weather-mon")).toBeDisabled();
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-block-cell-weather-mon")).toBeDisabled()
+    );
+    // A pause only stops future briefings; nothing generated needs a regenerate.
+    expect(screen.queryByTestId("daily-briefing-settings-changed")).not.toBeInTheDocument();
 
+    // A block change does ask for a regenerate, and links to Briefings.
+    fireEvent.click(screen.getByTestId("daily-briefing-block-cell-weather-tue"));
+    expect(await screen.findByTestId("daily-briefing-settings-changed")).toBeVisible();
     fireEvent.click(screen.getByTestId("daily-briefing-settings-changed-open"));
     expect(screen.getByTestId("daily-briefing-tab-preview")).toHaveAttribute(
       "aria-selected",
@@ -483,6 +499,39 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     fireEvent.click(screen.getByTestId("daily-briefing-settings-retry"));
     fireEvent.click(screen.getByTestId("daily-briefing-tab-blocks"));
     expect(await screen.findByTestId("daily-briefing-block-matrix")).toBeVisible();
+  });
+
+  it("fills the Result column from the briefings already stored for the shown date", async () => {
+    mockBackend({
+      optIns: ["member-ada", "member-ben"],
+      handle: (url) => {
+        const read = /^\/api\/daily-briefing\/member-(ada|ben)\/(\d{4}-\d{2}-\d{2})$/.exec(url);
+        if (!read) return undefined;
+        return read[1] === "ada"
+          ? jsonResponse({
+              generated: true,
+              briefing: { memberId: "member-ada", date: read[2], status: "partial" },
+              printedStatus: "none",
+            })
+          : jsonResponse({ generated: false });
+      },
+    });
+    render(
+      <LanguageProvider>
+        <HouseholdSettingsProvider>
+          <DailyBriefingManagement />
+        </HouseholdSettingsProvider>
+      </LanguageProvider>
+    );
+    expect(await screen.findByTestId("daily-briefing-member-status-member-ada")).toBeVisible();
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-member-status-member-ada")).toHaveTextContent(
+        "Partial"
+      )
+    );
+    expect(screen.getByTestId("daily-briefing-member-status-member-ben")).toHaveTextContent(
+      "Not generated"
+    );
   });
 
   it("titles the page with its sidebar label", async () => {

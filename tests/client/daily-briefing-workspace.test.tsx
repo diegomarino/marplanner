@@ -50,6 +50,8 @@ interface Backend {
   previewStatus?: Record<string, number>;
   generate?: (body: Record<string, unknown>) => Response;
   print?: () => Response;
+  /** Dates with no stored briefing for Ben. */
+  notGenerated?: string[];
   /** Holds the read of a date until the promise resolves. */
   readGate?: Record<string, Promise<void>>;
 }
@@ -95,7 +97,7 @@ function mockBackend(backend: Backend = {}) {
     const read = url.match(/^\/api\/daily-briefing\/member-(ben|cleo)\/(\d{4}-\d{2}-\d{2})$/);
     if (read) {
       await backend.readGate?.[read[2]];
-      return read[1] === "ben"
+      return read[1] === "ben" && !backend.notGenerated?.includes(read[2])
         ? json({
             generated: true,
             // Same status as the history entry for that date.
@@ -299,6 +301,67 @@ describe("BriefingWorkspace", () => {
           )
       ).toBe(true)
     );
+  });
+
+  it("clears the paused notice once the tab is hidden", async () => {
+    mockBackend({
+      generate: () =>
+        json({ skipped: true, reason: "paused", memberId: "member-ben", date: TODAY }),
+    });
+    const props = {
+      member: ben,
+      date: null,
+      today: null,
+      onDateChange: () => {},
+      blocked: false,
+      refreshKey: 0,
+      onGenerated: () => {},
+      onBusyChange: () => {},
+      onOpenBlocks: () => {},
+    };
+    const { rerender } = render(
+      <LanguageProvider>
+        <BriefingWorkspace {...props} active />
+      </LanguageProvider>
+    );
+    await screen.findByTestId(`daily-briefing-history-entry-${TODAY}`);
+    fireEvent.click(screen.getByTestId("daily-briefing-generate"));
+    expect(await screen.findByTestId("daily-briefing-paused-notice")).toBeVisible();
+    rerender(
+      <LanguageProvider>
+        <BriefingWorkspace {...props} active={false} />
+      </LanguageProvider>
+    );
+    rerender(
+      <LanguageProvider>
+        <BriefingWorkspace {...props} active />
+      </LanguageProvider>
+    );
+    expect(screen.queryByTestId("daily-briefing-paused-notice")).not.toBeInTheDocument();
+  });
+
+  it("shows the image first and keeps the raw payload in collapsed technical details", async () => {
+    mockBackend();
+    renderWorkspace();
+    const payload = await screen.findByTestId("daily-briefing-generated-payload");
+    const details = payload.closest("details");
+    expect(details).not.toBeNull();
+    expect(details).not.toHaveAttribute("open");
+    expect(details).toHaveTextContent("Technical details");
+    const image = await screen.findByTestId("daily-briefing-admin-preview-image");
+    expect(image.compareDocumentPosition(payload) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("shows no image frame for a date without a briefing", async () => {
+    const calls = mockBackend({ notGenerated: [PAST] });
+    renderWorkspace();
+    await screen.findByTestId("daily-briefing-generated-payload");
+    fireEvent.change(screen.getByTestId("daily-briefing-admin-preview-date"), {
+      target: { value: PAST },
+    });
+    expect(await screen.findByTestId("daily-briefing-no-briefing")).toBeVisible();
+    expect(screen.queryByTestId("daily-briefing-image-state")).not.toBeInTheDocument();
+    expect(calls.some((c) => c.url.includes(`/${PAST}/preview.png`))).toBe(false);
   });
 
   it("fetches nothing while the tab is hidden", () => {
