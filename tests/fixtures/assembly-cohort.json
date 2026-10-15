@@ -3031,7 +3031,10 @@
             "Admin shell navigation builds the breadcrumb trail from every registered page on the way",
             "Admin shell navigation navigates from the telemetry shortcut and the sidebar",
             "Admin shell navigation offers the overview from an unknown admin page",
-            "Admin shell navigation shows an item's subsections only while that item or one of them is open"
+            "Admin shell navigation shows an item's subsections only while that item or one of them is open",
+            "formatUptime shows the two largest non-zero units",
+            "formatUptime shows seconds below one minute and clamps nonsense to zero",
+            "AdminOverview uptime shows the uptime, or a dash when the server does not report it"
           ],
           "tests/client/admin-panel.test.tsx": [
             "AdminPanel renders a landmark region whose aria-labelledby points at its own heading",
@@ -3113,10 +3116,10 @@
             "BackupsManagement / TelemetryManagement — the shared AdminPanel L2 frame was ADOPTED (FR-009) BackupsManagement wraps the surface in a landmark region labelled by its own title",
             "BackupsManagement / TelemetryManagement — the shared AdminPanel L2 frame was ADOPTED (FR-009) TelemetryManagement wraps the surface in a landmark region labelled by its own title",
             "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) renders the DELIBERATE zero-control census while the initial /api/backups fetch is unresolved",
-            "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with an EMPTY shelf — Snapshot Now + the upload file field + the upload button (3 controls)",
-            "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with ONE backup row — base 3 + the row's 4 action controls (7 total)",
-            "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with the restore-confirm panel OPEN (+3: the typed-confirm input, submit, cancel — 10 total), including while the restore submit is IN-FLIGHT",
-            "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) CENSUS FIRES ON REMOVAL — deleting a backup drops its row's 4 controls from the count (11 -> 7), not a synthetic shrink",
+            "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with an EMPTY shelf — Snapshot Now + the upload file field (2 controls)",
+            "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with ONE backup row — base 2 + the row's 4 action controls (6 total)",
+            "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with the restore-confirm panel OPEN (+3: the typed-confirm input, submit, cancel — 9 total), including while the restore submit is IN-FLIGHT",
+            "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) CENSUS FIRES ON REMOVAL — deleting a backup drops its row's 4 controls from the count (10 -> 6), not a synthetic shrink",
             "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own Snapshot Now button below the kiosk minimum makes the assertion fail, and reverting restores compliance",
             "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density while loading — the filter row (6 controls) is ALWAYS mounted, even before the first page resolves",
             "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with NO rows (still 6 — filters and diagnostic shortcut)",
@@ -3729,12 +3732,10 @@
             "NetworkDevicesManagement — unchanged behaviour after migration (regression guard) still confirms delete before deleting (ConfirmDialog)",
             "NetworkDevicesManagement — unchanged behaviour after migration (regression guard) still locates Block/Unblock by the ACTION word (StatusToggle deliberately NOT adopted, e2e-load-bearing)",
             "WeatherManagement — kiosk density (SC-001, SC-002) meets kiosk density across its single, static control set",
-            "WeatherManagement — kiosk density (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own Save button below the kiosk minimum makes the assertion fail",
+            "WeatherManagement — kiosk density (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own Clear button below the kiosk minimum makes the assertion fail",
             "WeatherManagement — kiosk density (SC-001, SC-002) the census control count reacts to a control's removal (proves the count is not vacuous)",
-            "WeatherManagement — adopts the AdminPanel L2 frame (per-batch DoD) wraps the surface in a landmark region labelled by its own title, anchored on LOADED content",
-            "WeatherManagement — every error state is announced (SC-011) announces a load failure through ErrorNotice's live region",
-            "WeatherManagement — every error state is announced (SC-011) announces a save failure through ErrorNotice's live region",
-            "WeatherManagement — unchanged behaviour after migration (regression guard) still writes the household weather location via PUT /api/settings on Save"
+            "WeatherManagement — adopts the AdminPanel L2 frame (per-batch DoD) wraps the surface in a landmark region labelled by its own title",
+            "WeatherManagement — every error state is announced (SC-011) announces a refused geolocation through ErrorNotice's live region"
           ],
           "tests/client/noto-emoji.test.tsx": [
             "emojiToCodepoint converts a single-codepoint emoji to its lowercase hex codepoint",
@@ -4033,13 +4034,29 @@
             "SelectItem — kiosk density on the rendered popover options (#790) DELIBERATE NEGATIVE — forcing a rendered option below the kiosk minimum makes the assertion fail, and reverting restores compliance"
           ],
           "tests/client/settings-management.test.tsx": [
-            "SettingsManagement shows the stored language, time zone and week start, with nothing to save yet",
-            "SettingsManagement offers UTC and the stored zone even when the runtime's list has neither",
-            "SettingsManagement hosts the day periods and the weather location on the same page",
-            "SettingsManagement saves the three values as one locale object and asks the app to reload them",
+            "SettingsManagement shows the stored values as pills and a time zone, with nothing to save yet",
+            "SettingsManagement offers UTC, the curated groups and a stored zone outside the list, each once",
+            "SettingsManagement saves a pill change as one locale object and asks the app to reload",
+            "SettingsManagement saves only the weather when only the weather changed",
+            "SettingsManagement saves locale then weather on one click",
+            "SettingsManagement keeps the weather edit and still reloads the app when the second request is refused",
             "SettingsManagement announces a refused save in its own words, never the server's, and keeps the edit",
             "SettingsManagement falls back to its own message when the save never reaches the server",
-            "SettingsManagement announces a failed load and offers no form to save"
+            "SettingsManagement stages Clear and writes it on Save",
+            "SettingsManagement blocks Save and says why while only one coordinate is filled",
+            "SettingsManagement leaves weather out when the plugin is inactive",
+            "SettingsManagement hides \"Saved\" by itself",
+            "SettingsManagement clears \"Saved\" as soon as the form is edited again",
+            "SettingsManagement announces a failed load and retries it",
+            "SettingsManagement hosts the day periods on the same page"
+          ],
+          "tests/client/settings-timezones.test.ts": [
+            "timeZoneGroups lists UTC first and the curated groups in order",
+            "timeZoneGroups gives curated zones a friendly label",
+            "timeZoneGroups has no duplicates and only zones the server accepts",
+            "timeZoneGroups keeps a stored zone outside the list selectable, once, in a leading group",
+            "timeZoneGroups does not add a current group for listed zones or UTC",
+            "timeZoneGroups replaces underscores in the label of an unlisted zone"
           ],
           "tests/client/shell-routes.test.tsx": [
             "household shell routes keeps all four named family links at /",
@@ -4426,23 +4443,17 @@
             "weather-i18n-parity render/labels.ts's weather.conditions is an exact uppercased mirror of weather.condition.*, all 16 keys, both languages"
           ],
           "tests/client/weather-management.test.tsx": [
-            "WeatherManagement reports unavailable settings when the weather plugin has no settings contribution",
-            "WeatherManagement loads the persisted location and prefills lat/lon/label",
-            "WeatherManagement renders blank inputs when the location is unset",
-            "WeatherManagement the Locate button is disabled when navigator.geolocation is absent (jsdom default)",
-            "WeatherManagement geolocation prefills lat/lon but issues NO write until Save is clicked (FR-010)",
-            "WeatherManagement the Save button is disabled when only one of lat/lon is filled (partial pair)",
-            "WeatherManagement Save PUTs {object:'weather', settings:{lat,lon,label}} and refreshes the form from the response",
-            "WeatherManagement Clear PUTs {lat:null, lon:null} with NO label key, and empties the label input too (FR-005 clear-as-unit)",
-            "WeatherManagement surfaces the server's error message on a failed save",
-            "WeatherManagement a pre-response transport failure (authFetch REJECTS) renders the localized fallback, never the raw exception message (Codex PR #654 P2)",
-            "localizes unknown and transport save failures (en, malformed)",
-            "localizes unknown and transport save failures (es, malformed)",
-            "localizes unknown and transport save failures (en, network)",
-            "localizes unknown and transport save failures (es, network)",
-            "localizes unknown and transport save failures (en, unknown)",
-            "localizes unknown and transport save failures (es, unknown)",
-            "announces geolocation refusal in Spanish without changing or saving the location"
+            "weather form helpers maps settings to strings and back to a payload without a blank label",
+            "weather form helpers flags a partial or non-numeric pair",
+            "weather form helpers compares forms field by field",
+            "WeatherManagement shows the values it is given and blank inputs when unset",
+            "WeatherManagement reports edits through onChange and never touches the network",
+            "WeatherManagement disables Locate when geolocation is absent",
+            "WeatherManagement geolocation prefills rounded lat/lon and writes nothing (FR-010)",
+            "WeatherManagement announces a refused geolocation without changing the fields",
+            "WeatherManagement Clear empties all three fields locally and is disabled once blank",
+            "WeatherManagement explains a half-filled pair",
+            "WeatherManagement reads typed text as it is, so a non-numeric value is flagged and never becomes a clear"
           ],
           "tests/client/weather-pill.test.tsx": [
             "WeatherPill renders nothing when no location is configured (silent absence, FR-022)",
@@ -5455,10 +5466,10 @@
       "src/client/admin/RemindersManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 251,
-          "statements": 281,
-          "functions": 96,
-          "branches": 180
+          "lines": 196,
+          "statements": 218,
+          "functions": 81,
+          "branches": 178
         },
         "minimumRates": {
           "lines": 64.94,
@@ -5530,10 +5541,10 @@
       "src/client/admin/WeatherManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 81,
-          "statements": 88,
-          "functions": 18,
-          "branches": 59
+          "lines": 35,
+          "statements": 38,
+          "functions": 14,
+          "branches": 44
         },
         "minimumRates": {
           "lines": 97.61,
