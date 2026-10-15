@@ -1002,7 +1002,7 @@ describe("NetworkDevicesManagement — reworked page", () => {
       .getAllByTestId(/^network-devices-picker-client-/)
       .map((el) => el.getAttribute("data-testid")?.replace("network-devices-picker-client-", ""));
 
-  it("a scope-denied 403 on the list shows the management-required message, Retry, and keeps the add button", async () => {
+  it("a 403 on the list shows the generic load error, Retry, and keeps the add button", async () => {
     vi.mocked(globalThis.fetch).mockImplementation(
       mockRouter({
         onDevicesList: () =>
@@ -1011,7 +1011,7 @@ describe("NetworkDevicesManagement — reworked page", () => {
     );
     renderManagement();
     expect(await screen.findByTestId("network-devices-error")).toHaveTextContent(
-      messages.en["networkDevices.error.managementRequired"]
+      messages.en["networkDevices.management.loadError"]
     );
     expect(screen.getByTestId("network-devices-retry")).toBeInTheDocument();
     expect(screen.getByTestId("network-devices-open-picker")).toBeInTheDocument();
@@ -1182,7 +1182,7 @@ describe("NetworkDevicesManagement — reworked page", () => {
     expect(screen.getByTestId("network-devices-alias-dev-new")).toHaveTextContent("Kitchen iPad");
   });
 
-  it("a 403 on live-clients shows the management-required message with Retry", async () => {
+  it("a 403 on live-clients shows the generic picker load error with Retry", async () => {
     vi.mocked(globalThis.fetch).mockImplementation(async (...args: FetchCall) => {
       if (String(args[0]) === "/api/network-devices/live-clients") {
         return jsonResponse({ error: "forbidden", code: AUTH_SCOPE_DENIED_CODE }, 403);
@@ -1193,7 +1193,7 @@ describe("NetworkDevicesManagement — reworked page", () => {
     fireEvent.click(await screen.findByTestId("network-devices-open-picker"));
     await waitFor(() => {
       expect(screen.getByTestId("network-devices-picker-state")).toHaveTextContent(
-        messages.en["networkDevices.error.managementRequired"]
+        messages.en["networkDevices.error.pickerLoadError"]
       );
     });
     expect(screen.getByTestId("network-devices-picker-retry")).toBeInTheDocument();

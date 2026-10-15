@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest, RouteHandlerMethod } from "fastify";
-import { requireManagementKey, requireCapability } from "../auth/capability";
+import { requireCapability } from "../auth/capability";
 import { MemberReferenceError } from "../modules/members/referential";
 import {
   register,
@@ -21,12 +21,11 @@ import {
 import type { EditDeviceInput } from "../modules/network-devices/index";
 
 /** Whole-domain HTTP surface — docs/api/network-devices/openapi.yaml.
- * EVERY route composes `requireManagementKey` (rejects a `kind === 'device'` key, /D1)
- * WITH `requireCapability('network:admin')` — registered fail-closed via
- * `registerNetworkDeviceRoutes` below (mirrors `registerRoutesWithCapabilities`'s uniform-array
- * shape, but composes the extra management-key gate every one of THIS domain's routes needs —
- * NETWORK-DEVICES-INV-09/AC-06: a capability string alone is insufficient, since a device key's
- * `scope: '*'` satisfies any capability check by itself).
+ * EVERY route declares `requireCapability('network:admin')` — registered fail-closed via
+ * `registerNetworkDeviceRoutes` below. A provisioned device `*` cookie satisfies it like every
+ * other household-tier admin endpoint (ADR-058, single household tier; owner decision
+ * 2026-10-15 superseding the ADR-053 device-key carve-out). The Admin PIN is a UI-only gate
+ * and is never evaluated here (FR-002).
  * Error mapping (module error classes -> HTTP): `NetworkDeviceValidationError`/
  * `MemberReferenceError` -> 400; `NetworkDeviceNotFoundError` -> 404;
  * `NetworkDeviceDuplicateError`/`NetworkDeviceReselectRequiredError` -> 409 `{error, code}`;
@@ -54,7 +53,7 @@ interface NetworkDeviceRouteSpec {
 }
 
 function registerNetworkDeviceRoutes(app: FastifyInstance, routes: NetworkDeviceRouteSpec[]): void {
-  const preHandler = [requireManagementKey(), requireCapability(NETWORK_DEVICES_CAPABILITY)];
+  const preHandler = [requireCapability(NETWORK_DEVICES_CAPABILITY)];
   for (const route of routes) {
     app[route.method](route.path, { preHandler }, route.handler);
   }

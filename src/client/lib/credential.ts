@@ -32,9 +32,8 @@ import { appUrl, clientBasePath } from "./base-path";
  * (an await sitting BETWEEN the check and the report would let sibling
  * requests' checks interleave ahead of the first bump and all fire).
  * Scope-403 exception: a live device key
- * can still be denied on grounds OTHER than the credential itself being dead — an admin scope
- * (`requireManagementKey` rejecting it on the Network Devices panel, `code:
- * AUTH_SCOPE_DENIED_CODE`) or a domain-specific state gate (printing's `POST /claim` 403ing a
+ * can still be denied on grounds OTHER than the credential itself being dead — a capability
+ * outside its scope (`requireCapability`, `code: AUTH_SCOPE_DENIED_CODE`) or a domain-specific state gate (printing's `POST /claim` 403ing a
  * session that never registered its printer capability, `code: "printer_capability_missing"` —
  * see src/server/modules/printing/index.ts's `PrintCapabilityMissingError`). Neither is
  * credential loss, and must not de-provision the kiosk merely because SOME feature it lacks

@@ -46,8 +46,9 @@ seen > 7 days). Computed at read time, never persisted.
 - **NETWORK-DEVICES-INV-08** UniFi credentials never live in `network_devices`, `app_settings`, `GET /settings`,
   backups, or telemetry; they are operator env config read only via the host operator-config
   interface.
-- **NETWORK-DEVICES-INV-09** Block/unblock and reads/writes require **management/admin scope** (ADR-030/031); a device
-  `*` kiosk key is rejected at the API capability layer, not only by route placement.
+- **NETWORK-DEVICES-INV-09** Block/unblock and reads/writes require the `network:admin` capability (ADR-030), which a
+  provisioned device `*` key satisfies (ADR-058 single household tier; ADR-053's device-key exclusion removed
+  2026-10-15). The Admin PIN is never evaluated server-side.
 - **NETWORK-DEVICES-INV-10** `lastSeenAt` is stamped only from a real observation (guaranteed by picker-only
   registration); never a creation-time default.
 
@@ -135,8 +136,8 @@ artifacts: real MACs in the backup `.db` only; sanitized everywhere human-facing
 - **NETWORK-DEVICES-AC-04** Deleting any device (blocked or not) performs no UniFi call and always succeeds locally.
 - **NETWORK-DEVICES-AC-05** No IP is ever stored or returned; a MAC never appears un-redacted in telemetry; the UI shows
   the alias.
-- **NETWORK-DEVICES-AC-06** A device `*` kiosk key is rejected by the network endpoints; management/admin scope is
-  required for reads and writes.
+- **NETWORK-DEVICES-AC-06** A provisioned device `*` kiosk key is accepted by the network endpoints; an unauthenticated,
+  unknown or out-of-scope key is rejected.
 - **NETWORK-DEVICES-AC-07** Assigning to an inactive member is rejected; an existing inactive link renders as "inactive
   member" and the device stays editable.
 - **NETWORK-DEVICES-AC-08** A plugin reads UniFi credentials only via the host operator-config interface; the secret
