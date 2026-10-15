@@ -44,7 +44,7 @@ describe("routines-i18n-parity", () => {
   });
 
   it("routines.*/chores.* keys resolve to the expected strings in both languages", () => {
-    expect(messages.en["routines.management.title"]).toBe("Routines Management");
+    expect(messages.en["routines.management.title"]).toBe("Routines & Chores");
     expect(messages.en["routines.management.description"]).toBe(
       "Configure routines, chores, and weekday assignments."
     );
@@ -107,7 +107,7 @@ describe("routines-i18n-parity", () => {
       "Could not update the chore. Please try again."
     );
 
-    expect(messages.es["routines.management.title"]).toBe("Gestión de Rutinas");
+    expect(messages.es["routines.management.title"]).toBe("Rutinas y tareas");
     expect(messages.es["routines.management.description"]).toBe(
       "Configurar rutinas, tareas y asignaciones de días."
     );
@@ -169,6 +169,14 @@ describe("routines-i18n-parity", () => {
     expect(messages.es["chores.board.toggleError"]).toBe(
       "No se pudo actualizar la tarea. Inténtalo de nuevo."
     );
+    expect(messages.en["routines.admin.selectPrompt"]).toBe(
+      "Select a routine to manage its chores"
+    );
+    expect(messages.es["routines.admin.selectPrompt"]).toBe(
+      "Selecciona una rutina para gestionar sus tareas"
+    );
+    expect(messages.en["routines.management.title"]).toBe(messages.en["admin.sidebar.routines"]);
+    expect(messages.es["routines.management.title"]).toBe(messages.es["admin.sidebar.routines"]);
   });
 });
 

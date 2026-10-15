@@ -1,293 +1,270 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/credential";
 import {
-  DayPeriodDTO,
-  Routine,
-  RoutineInput,
-  RoutineEditInput,
-  Chore,
-  ChoreInput,
-  ChoreEditInput,
-  Assignment,
-  Member,
   Role,
-  Weekday,
+  type Assignment,
+  type Chore,
+  type ChoreInput,
+  type DayPeriodDTO,
+  type Member,
+  type Routine,
+  type RoutineInput,
+  type Weekday,
 } from "../../shared";
-import type { MessageKey } from "@/i18n/messages";
-import { useTranslation } from "@/i18n";
+import { useT } from "@/i18n";
 import { DAY_PERIOD_LABEL_KEYS } from "@/lib/day-period-labels";
-import { ChoreOrderControls } from "./ChoreOrderControls";
-import { EmojiPicker } from "@/chores/EmojiPicker";
-import { NotoEmoji } from "@/chores/noto-emoji";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ErrorNotice } from "@/components/ErrorNotice";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { WeekdayPicker, type WeekdayLabels } from "@/components/WeekdayPicker";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { AssignmentDialog } from "@/routines/admin/AssignmentDialog";
+import { ChoreFormDialog } from "@/routines/admin/ChoreFormDialog";
+import { RoutineDetail } from "@/routines/admin/RoutineDetail";
+import { RoutineFormDialog } from "@/routines/admin/RoutineFormDialog";
+import { RoutineList } from "@/routines/admin/RoutineList";
 
 /* ------------------------------------------------------------------ */
-/* RoutinesManagement — CRUD UI for routines, chores and assignments */
-/* */
-/* (token dialect, FR-005/FR-009): migrated to the */
-/* shared L2 components. SC-009: the local `WEEKDAYS` constant */
-/* this file used to declare is replaced by `WeekdayPicker`'s */
-/* canonical order (names this file as one of the five */
-/* call sites carrying its own weekday literal). Every destructive/ */
-/* streak-affecting action (routine delete, chore delete, assignment */
-/* deactivate, and reassigning an already-active assignment) now */
-/* opens a themed `ConfirmDialog` instead of `window.confirm`, */
-/* mirroring `MealsManagement.tsx`'s precedent (*/
-/* FR-005) — the confirmation decision moves to the UI layer, and */
-/* each mutation function below performs its write unconditionally */
-/* once the caller has already confirmed. */
+/* RoutinesManagement — master/detail admin page for routines, chores */
+/* and weekday assignments. Loads data, owns the selection and runs   */
+/* every mutation; the panes and dialogs in src/client/routines/admin */
+/* only render. Every streak-affecting action is confirmed in those   */
+/* components through ConfirmDialog before it reaches this file.      */
 /* ------------------------------------------------------------------ */
 
-const WEEKDAY_LABEL_KEYS: Record<Weekday, MessageKey> = {
-  mon: "routines.assignments.weekday.mon",
-  tue: "routines.assignments.weekday.tue",
-  wed: "routines.assignments.weekday.wed",
-  thu: "routines.assignments.weekday.thu",
-  fri: "routines.assignments.weekday.fri",
-  sat: "routines.assignments.weekday.sat",
-  sun: "routines.assignments.weekday.sun",
-};
+/** Detail of one routine. `routineId` ties it to the routine it was loaded for, so a detail
+ * left over from the previous selection is never rendered under another routine's header. */
+type DetailState =
+  | { status: "idle" }
+  | { status: "loading" | "error"; routineId: string }
+  | { status: "ready"; routineId: string; chores: Chore[]; assignments: Assignment[] };
 
-/** Builds `WeekdayPicker`'s localized label map from this surface's own translation namespace
- * (`routines.assignments.weekday.*`) — call-site-owned, per the component's own doc comment. */
-function weekdayLabels(t: (key: MessageKey) => string): WeekdayLabels {
-  return {
-    mon: t(WEEKDAY_LABEL_KEYS.mon),
-    tue: t(WEEKDAY_LABEL_KEYS.tue),
-    wed: t(WEEKDAY_LABEL_KEYS.wed),
-    thu: t(WEEKDAY_LABEL_KEYS.thu),
-    fri: t(WEEKDAY_LABEL_KEYS.fri),
-    sat: t(WEEKDAY_LABEL_KEYS.sat),
-    sun: t(WEEKDAY_LABEL_KEYS.sun),
-  };
+async function getJson<T>(url: string): Promise<T> {
+  const response = await authFetch(url, { credentials: "include" });
+  if (!response.ok) throw new Error(`GET ${url}: ${response.status}`);
+  return (await response.json()) as T;
+}
+
+async function send(url: string, method: string, body?: unknown): Promise<Response> {
+  const response = await authFetch(url, {
+    method,
+    credentials: "include",
+    ...(body === undefined
+      ? {}
+      : { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
+  });
+  if (!response.ok) throw new Error(`${method} ${url}: ${response.status}`);
+  return response;
 }
 
 export function RoutinesManagement() {
-  const { t } = useTranslation();
-
+  const t = useT();
   const [dayPeriods, setDayPeriods] = useState<DayPeriodDTO[]>([]);
   const [routines, setRoutines] = useState<Routine[]>([]);
-  const [choresByRoutine, setChoresByRoutine] = useState<Record<string, Chore[]>>({});
-  const [assignmentsByRoutine, setAssignmentsByRoutine] = useState<Record<string, Assignment[]>>(
-    {}
-  );
-  const [activeChildren, setActiveChildren] = useState<Member[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedRef = useRef<string | null>(null);
+  const [detail, setDetail] = useState<DetailState>({ status: "idle" });
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [routineForm, setRoutineForm] = useState<{ routine: Routine | null } | null>(null);
+  const [choreForm, setChoreForm] = useState<{ chore: Chore | null } | null>(null);
+  const [assignOpen, setAssignOpen] = useState(false);
 
-  useEffect(() => {
-    void loadData();
-  }, []);
-
-  async function loadData() {
+  async function loadBase() {
     setLoading(true);
-    setError(null);
+    setLoadError(false);
     try {
-      const [dayPeriodsRes, routinesRes, membersRes] = await Promise.all([
-        authFetch("/api/day-periods", { credentials: "include" }),
-        authFetch("/api/routines", { credentials: "include" }),
-        authFetch("/api/members", { credentials: "include" }),
+      const [periods, list, people] = await Promise.all([
+        getJson<DayPeriodDTO[]>("/api/day-periods"),
+        getJson<Routine[]>("/api/routines"),
+        getJson<Member[]>("/api/members"),
       ]);
-
-      if (!dayPeriodsRes.ok) throw new Error("Failed to load day periods");
-      if (!routinesRes.ok) throw new Error("Failed to load routines");
-      if (!membersRes.ok) throw new Error("Failed to load members");
-
-      const [dayPeriodsData, routinesData, membersData] = (await Promise.all([
-        dayPeriodsRes.json(),
-        routinesRes.json(),
-        membersRes.json(),
-      ])) as [DayPeriodDTO[], Routine[], Member[]];
-
-      const choresEntries = await Promise.all(
-        routinesData.map(async (routine): Promise<[string, Chore[]]> => {
-          const res = await authFetch(`/api/routines/${routine.id}/chores`, {
-            credentials: "include",
-          });
-          if (!res.ok) throw new Error("Failed to load chores");
-          return [routine.id, (await res.json()) as Chore[]];
-        })
-      );
-
-      const assignmentsEntries = await Promise.all(
-        routinesData.map(async (routine): Promise<[string, Assignment[]]> => {
-          const res = await authFetch(`/api/routines/${routine.id}/assignments`, {
-            credentials: "include",
-          });
-          if (!res.ok) throw new Error("Failed to load assignments");
-          return [routine.id, (await res.json()) as Assignment[]];
-        })
-      );
-
-      setDayPeriods(dayPeriodsData);
-      setRoutines(routinesData);
-      setActiveChildren(membersData.filter((m) => m.role === Role.child));
-      setChoresByRoutine(Object.fromEntries(choresEntries));
-      setAssignmentsByRoutine(Object.fromEntries(assignmentsEntries));
+      setDayPeriods(periods);
+      setRoutines(list);
+      setMembers(people);
+      setSelectedId((current) => (current && list.some((r) => r.id === current) ? current : null));
     } catch {
-      setError(t("routines.management.error"));
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
   }
 
-  async function createRoutine(name: string, dayPeriodId: string) {
+  async function refreshRoutines() {
+    const list = await getJson<Routine[]>("/api/routines");
+    setRoutines(list);
+    setSelectedId((current) => (current && list.some((r) => r.id === current) ? current : null));
+  }
+
+  /** Loads the selected routine's chores and assignments. A response for a routine that is no
+   * longer selected is dropped. `quiet` keeps the current detail on screen while refreshing. */
+  async function loadDetail(routineId: string, quiet = false) {
+    if (!quiet) setDetail({ status: "loading", routineId });
     try {
-      const input: RoutineInput = { name, dayPeriodId };
-      const res = await authFetch("/api/routines", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-      });
-      if (!res.ok) throw new Error("Failed to create routine");
-      await loadData();
+      const [chores, assignments] = await Promise.all([
+        getJson<Chore[]>(`/api/routines/${routineId}/chores`),
+        getJson<Assignment[]>(`/api/routines/${routineId}/assignments`),
+      ]);
+      if (selectedRef.current === routineId) {
+        setDetail({ status: "ready", routineId, chores, assignments });
+      }
     } catch {
-      setError(t("routines.management.error"));
+      if (selectedRef.current === routineId) setDetail({ status: "error", routineId });
     }
   }
 
-  async function editRoutine(id: string, updates: RoutineEditInput) {
+  useEffect(() => {
+    void loadBase();
+  }, []);
+
+  useEffect(() => {
+    selectedRef.current = selectedId;
+    if (selectedId) void loadDetail(selectedId);
+    else setDetail({ status: "idle" });
+  }, [selectedId]);
+
+  /** Runs one write with the page busy; `fail` reports the error where the user is looking. */
+  async function mutate(work: () => Promise<void>, fail: () => void) {
+    setBusy(true);
+    setActionError(null);
     try {
-      const res = await authFetch(`/api/routines/${id}`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-      });
-      if (!res.ok) throw new Error("Failed to update routine");
-      await loadData();
+      await work();
     } catch {
-      setError(t("routines.management.error"));
+      fail();
+    } finally {
+      setBusy(false);
     }
   }
 
-  /** Confirmation now lives at the UI layer (`RoutineCard`'s `ConfirmDialog`) — this performs the
-   * delete unconditionally once the caller has already confirmed (FR-005). */
-  async function deleteRoutine(id: string) {
-    try {
-      const res = await authFetch(`/api/routines/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to delete routine");
-      await loadData();
-    } catch {
-      setError(t("routines.management.error"));
-    }
-  }
-
-  async function createChore(routineId: string, name: string, icon: string | null) {
-    try {
-      const input: ChoreInput = { name, icon };
-      const res = await authFetch(`/api/routines/${routineId}/chores`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-      });
-      if (!res.ok) throw new Error("Failed to create chore");
-      await loadData();
-    } catch {
-      setError(t("routines.chores.error"));
-    }
-  }
-
-  async function editChore(id: string, updates: ChoreEditInput) {
-    try {
-      const res = await authFetch(`/api/chores/${id}`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-      });
-      if (!res.ok) throw new Error("Failed to update chore");
-      await loadData();
-    } catch {
-      setError(t("routines.chores.error"));
-    }
-  }
-
-  /** See `deleteRoutine` above — confirmation moved to `RoutineCard`'s `ConfirmDialog`. */
-  async function deleteChore(id: string) {
-    try {
-      const res = await authFetch(`/api/chores/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to delete chore");
-      await loadData();
-    } catch {
-      setError(t("routines.chores.error"));
-    }
-  }
-
-  async function refreshAfterReorder() {
-    // ChoreOrderControls already persisted the new order via PUT
-    // /api/routines/:id/chores/order — this only refreshes local state.
-    await loadData();
-  }
-
-  async function saveAssignment(
-    routineId: string,
-    memberId: string,
-    weekdays: Weekday[],
-    active: boolean
-  ) {
-    try {
-      const res = await authFetch(`/api/routines/${routineId}/assignments/${memberId}`, {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ weekdays, active }),
-      });
-      if (!res.ok) throw new Error("Failed to save assignment");
-      await loadData();
-    } catch {
-      setError(t("routines.assignments.error"));
-    }
-  }
-
-  /** See `deleteRoutine` above — confirmation moved to `AssignmentRow`'s `ConfirmDialog`. */
-  async function deactivateAssignment(routineId: string, memberId: string) {
-    try {
-      const res = await authFetch(`/api/routines/${routineId}/assignments/${memberId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to deactivate assignment");
-      await loadData();
-    } catch {
-      setError(t("routines.assignments.error"));
-    }
-  }
-
-  // Indexes the closed `PeriodId` union (`dp.id`, `shared/index.ts`'s `DayPeriodDTO`) through the
-  // shared `DAY_PERIOD_LABEL_KEYS` map (`DailyBriefingView.tsx`, precedent) instead of
-  // casting the server-supplied `labelKey` string to `MessageKey` — the last two SC-007 casts
-  // this file carried.
-  const dayPeriodLabel = (id: string): string => {
-    const dp = dayPeriods.find((d) => d.id === id);
-    return dp ? t(DAY_PERIOD_LABEL_KEYS[dp.id]) : "";
+  const selected = routines.find((routine) => routine.id === selectedId) ?? null;
+  // A detail loaded for another routine is shown as loading until this one's arrives.
+  const shownDetail: DetailState =
+    selected === null
+      ? { status: "idle" }
+      : detail.status !== "idle" && detail.routineId === selected.id
+        ? detail
+        : { status: "loading", routineId: selected.id };
+  const childMembers = members.filter((m) => m.role === Role.child);
+  const periodLabel = (id: string) => {
+    const period = dayPeriods.find((p) => p.id === id);
+    return period ? t(DAY_PERIOD_LABEL_KEYS[period.id]) : "";
   };
 
-  if (loading) {
-    return (
-      <AdminPanel title={t("routines.management.title")}>
-        <p>{t("routines.management.loading")}</p>
-      </AdminPanel>
+  function saveRoutine(input: RoutineInput) {
+    const editing = routineForm?.routine ?? null;
+    setFormError(null);
+    void mutate(
+      async () => {
+        const response = editing
+          ? await send(`/api/routines/${editing.id}`, "PATCH", input)
+          : await send("/api/routines", "POST", input);
+        const saved = (await response.json()) as Routine;
+        setRoutineForm(null);
+        try {
+          await refreshRoutines();
+        } catch {
+          // Saved, but the list is stale: the dialog is closed, so report it on the page.
+          setActionError(t("routines.management.error"));
+          return;
+        }
+        setSelectedId(saved.id);
+      },
+      () => setFormError(t("routines.admin.saveError"))
+    );
+  }
+
+  function deleteRoutine(routineId: string) {
+    void mutate(
+      async () => {
+        await send(`/api/routines/${routineId}`, "DELETE");
+        setSelectedId(null);
+        await refreshRoutines();
+      },
+      () => setActionError(t("routines.management.error"))
+    );
+  }
+
+  function saveChore(input: ChoreInput) {
+    if (!selected) return;
+    const routineId = selected.id;
+    const editing = choreForm?.chore ?? null;
+    setFormError(null);
+    void mutate(
+      async () => {
+        if (editing) await send(`/api/chores/${editing.id}`, "PATCH", input);
+        else await send(`/api/routines/${routineId}/chores`, "POST", input);
+        setChoreForm(null);
+        await loadDetail(routineId, true);
+      },
+      () => setFormError(t("routines.admin.choreSaveError"))
+    );
+  }
+
+  function deleteChore(chore: Chore) {
+    void mutate(
+      async () => {
+        await send(`/api/chores/${chore.id}`, "DELETE");
+        await loadDetail(chore.routineId, true);
+      },
+      () => setActionError(t("routines.chores.error"))
+    );
+  }
+
+  function reorderChores(next: Chore[]) {
+    if (!selected || shownDetail.status !== "ready" || busy) return;
+    const routineId = selected.id;
+    const previous = shownDetail.chores;
+    setDetail({ ...shownDetail, chores: next });
+    void mutate(
+      async () => {
+        const response = await send(`/api/routines/${routineId}/chores/order`, "PUT", {
+          choreIds: next.map((chore) => chore.id),
+        });
+        const saved = (await response.json()) as Chore[];
+        setDetail((current) =>
+          current.status === "ready" && current.routineId === routineId
+            ? { ...current, chores: saved }
+            : current
+        );
+      },
+      () => {
+        setDetail((current) =>
+          current.status === "ready" && current.routineId === routineId
+            ? { ...current, chores: previous }
+            : current
+        );
+        setActionError(t("routines.chores.reorderError"));
+        void loadDetail(routineId, true);
+      }
+    );
+  }
+
+  function saveAssignment(memberId: string, weekdays: Weekday[]) {
+    if (!selected) return;
+    const routineId = selected.id;
+    void mutate(
+      async () => {
+        await send(`/api/routines/${routineId}/assignments/${memberId}`, "PUT", {
+          weekdays,
+          active: true,
+        });
+        await loadDetail(routineId, true);
+      },
+      () => setActionError(t("routines.assignments.error"))
+    );
+  }
+
+  function deactivateAssignment(memberId: string) {
+    if (!selected) return;
+    const routineId = selected.id;
+    void mutate(
+      async () => {
+        await send(`/api/routines/${routineId}/assignments/${memberId}`, "DELETE");
+        await loadDetail(routineId, true);
+      },
+      () => setActionError(t("routines.assignments.error"))
     );
   }
 
@@ -295,455 +272,123 @@ export function RoutinesManagement() {
     <AdminPanel
       title={t("routines.management.title")}
       description={t("routines.management.description")}
+      className="w-full"
+      data-testid="routines-management"
     >
-      <ErrorNotice message={error} />
-
-      <RoutineCreateForm
-        dayPeriods={dayPeriods}
-        t={t}
-        onCreate={(name, dayPeriodId) => void createRoutine(name, dayPeriodId)}
-      />
-
-      <div>
-        <h3 className="text-lg font-semibold mb-2">{t("routines.management.routines")}</h3>
-        {routines.length === 0 && (
-          <p className="text-muted-foreground">{t("routines.management.noRoutines")}</p>
-        )}
-        <div className="space-y-4">
-          {routines.map((routine) => (
-            <RoutineCard
-              key={routine.id}
-              routine={routine}
-              dayPeriodName={dayPeriodLabel(routine.dayPeriodId)}
-              t={t}
-              chores={choresByRoutine[routine.id] ?? []}
-              assignments={assignmentsByRoutine[routine.id] ?? []}
-              activeChildren={activeChildren}
-              onRename={(name) => void editRoutine(routine.id, { name })}
-              onDelete={() => void deleteRoutine(routine.id)}
-              onAddChore={(name, icon) => void createChore(routine.id, name, icon)}
-              onEditChore={(choreId, updates) => void editChore(choreId, updates)}
-              onDeleteChore={(id) => void deleteChore(id)}
-              onReorder={() => void refreshAfterReorder()}
-              onSaveAssignment={(memberId, weekdays, active) =>
-                void saveAssignment(routine.id, memberId, weekdays, active)
-              }
-              onDeactivateAssignment={(memberId) => void deactivateAssignment(routine.id, memberId)}
-            />
-          ))}
+      {loading ? (
+        <p role="status" className="text-muted-foreground text-control">
+          {t("routines.management.loading")}
+        </p>
+      ) : loadError ? (
+        <div className="flex flex-col items-start gap-2">
+          <ErrorNotice message={t("routines.management.error")} />
+          <Button variant="outline" onClick={() => void loadBase()} data-testid="routines-retry">
+            {t("routines.admin.retry")}
+          </Button>
         </div>
-      </div>
-    </AdminPanel>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Sub-components */
-/* ------------------------------------------------------------------ */
-
-interface RoutineCreateFormProps {
-  dayPeriods: DayPeriodDTO[];
-  t: (key: MessageKey) => string;
-  onCreate: (name: string, dayPeriodId: string) => void;
-}
-
-function RoutineCreateForm({ dayPeriods, t, onCreate }: RoutineCreateFormProps) {
-  const [name, setName] = useState("");
-  const [dayPeriodId, setDayPeriodId] = useState("");
-
-  return (
-    <div className="bg-card p-4 rounded-lg shadow mb-6">
-      <h3 className="text-md font-semibold mb-2">{t("routines.management.createTitle")}</h3>
-      <div className="flex gap-2">
-        <Input
-          type="text"
-          placeholder={t("routines.management.createNamePlaceholder")}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          aria-label={t("routines.management.createNamePlaceholder")}
-        />
-        <Select value={dayPeriodId} onValueChange={setDayPeriodId}>
-          <SelectTrigger aria-label={t("routines.management.selectDayPeriod")}>
-            <SelectValue placeholder={t("routines.management.selectDayPeriod")} />
-          </SelectTrigger>
-          <SelectContent>
-            {dayPeriods.map((dp) => (
-              <SelectItem key={dp.id} value={dp.id}>
-                {t(DAY_PERIOD_LABEL_KEYS[dp.id])}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button
-          type="button"
-          onClick={() => {
-            if (name.trim() && dayPeriodId) {
-              onCreate(name.trim(), dayPeriodId);
-              setName("");
-              setDayPeriodId("");
-            }
-          }}
-        >
-          {t("routines.action.create")}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-interface RoutineCardProps {
-  routine: Routine;
-  dayPeriodName: string;
-  t: (key: MessageKey) => string;
-  chores: Chore[];
-  assignments: Assignment[];
-  activeChildren: Member[];
-  onRename: (name: string) => void;
-  onDelete: () => void;
-  onAddChore: (name: string, icon: string | null) => void;
-  onEditChore: (choreId: string, updates: ChoreEditInput) => void;
-  onDeleteChore: (id: string) => void;
-  onReorder: (choreIds: string[]) => void;
-  onSaveAssignment: (memberId: string, weekdays: Weekday[], active: boolean) => void;
-  onDeactivateAssignment: (memberId: string) => void;
-}
-
-function RoutineCard({
-  routine,
-  dayPeriodName,
-  t,
-  chores,
-  assignments,
-  activeChildren,
-  onRename,
-  onDelete,
-  onAddChore,
-  onEditChore,
-  onDeleteChore,
-  onReorder,
-  onSaveAssignment,
-  onDeactivateAssignment,
-}: RoutineCardProps) {
-  const [newChoreName, setNewChoreName] = useState("");
-  const [newChoreIcon, setNewChoreIcon] = useState<string | null>(null);
-  const [showChores, setShowChores] = useState(false);
-  const [showAssignments, setShowAssignments] = useState(false);
-  const [editingName, setEditingName] = useState(false);
-  const [nameDraft, setNameDraft] = useState(routine.name);
-  const [editingChoreId, setEditingChoreId] = useState<string | null>(null);
-  const [choreNameDraft, setChoreNameDraft] = useState("");
-  const [choreIconDraft, setChoreIconDraft] = useState<string | null>(null);
-  // FR-014 (docs/features/routines-chores.md): deleting a routine or a chore changes the live
-  // streak — both directions now go through a themed `ConfirmDialog` instead of `window.confirm`
-  // (FR-005), mirroring `MealsManagement.tsx`'s delete-confirmation split.
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [choreDeleteTarget, setChoreDeleteTarget] = useState<Chore | null>(null);
-
-  const startEditChore = (chore: Chore) => {
-    setEditingChoreId(chore.id);
-    setChoreNameDraft(chore.name);
-    setChoreIconDraft(chore.icon);
-  };
-
-  return (
-    <div className="border rounded-lg p-4 mb-4" data-testid={`routine-${routine.id}`}>
-      <div className="flex justify-between items-start">
-        <div>
-          {editingName ? (
-            <div className="flex gap-2 items-center">
-              <Input
-                type="text"
-                value={nameDraft}
-                onChange={(e) => setNameDraft(e.target.value)}
-                aria-label={t("routines.management.createNamePlaceholder")}
-              />
-              <Button
-                type="button"
-                variant="link"
-                onClick={() => {
-                  if (nameDraft.trim()) {
-                    onRename(nameDraft.trim());
-                    setEditingName(false);
-                  }
-                }}
-                disabled={!nameDraft.trim()}
-              >
-                {t("routines.action.save")}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="text-muted-foreground hover:text-foreground"
-                onClick={() => {
-                  setNameDraft(routine.name);
-                  setEditingName(false);
-                }}
-              >
-                {t("routines.action.cancel")}
-              </Button>
-            </div>
-          ) : (
-            <h4 className="text-md font-semibold flex items-center gap-2">
-              {routine.name}
-              <Button type="button" variant="link" onClick={() => setEditingName(true)}>
-                {t("routines.action.edit")}
-              </Button>
-            </h4>
-          )}
-          <p className="text-muted-foreground text-sm">{dayPeriodName}</p>
-        </div>
-        <Button
-          type="button"
-          variant="link"
-          className="text-destructive hover:text-destructive/80"
-          onClick={() => setShowDeleteConfirm(true)}
-        >
-          {t("routines.action.delete")}
-        </Button>
-      </div>
-
-      <div className="mt-4 flex gap-4">
-        <Button type="button" variant="link" onClick={() => setShowChores(!showChores)}>
-          {showChores ? t("routines.action.close") : t("routines.action.viewChores")}
-        </Button>
-        <Button type="button" variant="link" onClick={() => setShowAssignments(!showAssignments)}>
-          {showAssignments
-            ? t("routines.action.close")
-            : t("routines.management.membersWithAssignments")}
-        </Button>
-      </div>
-
-      {showChores && (
-        <div className="mt-2">
-          <div className="flex gap-2 mb-2">
-            <EmojiPicker value={newChoreIcon} onChange={setNewChoreIcon} />
-            <Input
-              type="text"
-              placeholder={t("routines.chores.placeholder")}
-              value={newChoreName}
-              onChange={(e) => setNewChoreName(e.target.value)}
-              aria-label={t("routines.chores.placeholder")}
-            />
-            <Button
-              type="button"
-              onClick={() => {
-                if (newChoreName.trim()) {
-                  onAddChore(newChoreName.trim(), newChoreIcon);
-                  setNewChoreName("");
-                  setNewChoreIcon(null);
-                }
+      ) : (
+        <>
+          {/* While the assignment dialog is open the page behind it is inert; its errors show inside it. */}
+          {!assignOpen && <ErrorNotice message={actionError} />}
+          <div className="grid items-start gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
+            <RoutineList
+              routines={routines}
+              dayPeriods={dayPeriods}
+              selectedId={selectedId}
+              onSelect={(id) => {
+                setActionError(null);
+                setSelectedId(id);
               }}
-            >
-              {t("routines.action.createChore")}
-            </Button>
-          </div>
-          <ul className="space-y-1">
-            {chores.map((chore) => (
-              <li
-                key={chore.id}
-                className="flex justify-between items-center"
-                data-testid={`chore-${chore.id}`}
-              >
-                {editingChoreId === chore.id ? (
-                  <div className="flex gap-2 items-center flex-1">
-                    <EmojiPicker value={choreIconDraft} onChange={setChoreIconDraft} />
-                    <Input
-                      type="text"
-                      value={choreNameDraft}
-                      onChange={(e) => setChoreNameDraft(e.target.value)}
-                      aria-label={t("routines.chores.placeholder")}
-                    />
-                    <Button
-                      type="button"
-                      variant="link"
-                      onClick={() => {
-                        if (choreNameDraft.trim()) {
-                          onEditChore(chore.id, {
-                            name: choreNameDraft.trim(),
-                            icon: choreIconDraft,
-                          });
-                          setEditingChoreId(null);
-                        }
-                      }}
-                      disabled={!choreNameDraft.trim()}
-                    >
-                      {t("routines.action.save")}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="text-muted-foreground hover:text-foreground"
-                      onClick={() => {
-                        setEditingChoreId(null);
-                        setChoreIconDraft(null);
-                      }}
-                    >
-                      {t("routines.action.cancel")}
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <span className="flex items-center gap-2">
-                      <NotoEmoji emoji={chore.icon ?? "📋"} size={20} className="text-xl" />
-                      {chore.name}
-                    </span>
-                    <div className="flex gap-2">
-                      <Button type="button" variant="link" onClick={() => startEditChore(chore)}>
-                        {t("routines.action.edit")}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="link"
-                        className="text-destructive hover:text-destructive/80"
-                        onClick={() => setChoreDeleteTarget(chore)}
-                      >
-                        {t("routines.action.delete")}
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-          <div className="mt-2">
-            <ChoreOrderControls
-              routineId={routine.id}
-              chores={chores.map((c) => ({ id: c.id, name: c.name }))}
-              onReorder={onReorder}
+              onNew={() => {
+                setFormError(null);
+                setRoutineForm({ routine: null });
+              }}
             />
+            {selected === null ? (
+              <p
+                className="bg-card text-muted-foreground text-control rounded-3xl border p-6 text-center"
+                data-testid="routines-select-prompt"
+              >
+                {t("routines.admin.selectPrompt")}
+              </p>
+            ) : shownDetail.status === "ready" ? (
+              <RoutineDetail
+                routine={selected}
+                periodLabel={periodLabel(selected.dayPeriodId)}
+                chores={shownDetail.chores}
+                assignments={shownDetail.assignments}
+                members={childMembers}
+                busy={busy}
+                onEdit={() => {
+                  setFormError(null);
+                  setRoutineForm({ routine: selected });
+                }}
+                onAssign={() => {
+                  setActionError(null);
+                  setAssignOpen(true);
+                }}
+                onAddChore={() => {
+                  setFormError(null);
+                  setChoreForm({ chore: null });
+                }}
+                onEditChore={(chore) => {
+                  setFormError(null);
+                  setChoreForm({ chore });
+                }}
+                onDelete={() => deleteRoutine(selected.id)}
+                onDeleteChore={deleteChore}
+                onReorder={reorderChores}
+              />
+            ) : shownDetail.status === "error" ? (
+              <div className="bg-card flex flex-col items-start gap-2 rounded-3xl border p-4">
+                <ErrorNotice message={t("routines.admin.detailError")} />
+                <Button
+                  variant="outline"
+                  onClick={() => void loadDetail(selected.id)}
+                  data-testid="routine-detail-retry"
+                >
+                  {t("routines.admin.retry")}
+                </Button>
+              </div>
+            ) : (
+              <p role="status" className="text-muted-foreground text-control">
+                {t("routines.management.loading")}
+              </p>
+            )}
           </div>
-        </div>
+        </>
       )}
 
-      {showAssignments && (
-        <div className="mt-2">
-          {activeChildren.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              {t("routines.assignments.noAssignment")}
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {activeChildren.map((child) => (
-                <AssignmentRow
-                  key={child.id}
-                  child={child}
-                  assignment={assignments.find((a) => a.memberId === child.id)}
-                  t={t}
-                  onSave={(weekdays, active) => onSaveAssignment(child.id, weekdays, active)}
-                  onDeactivate={() => onDeactivateAssignment(child.id)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      <ConfirmDialog
-        open={showDeleteConfirm}
-        onOpenChange={(open) => {
-          if (!open) setShowDeleteConfirm(false);
-        }}
-        title={t("routines.action.delete")}
-        description={`${t("routines.action.deleteConfirm")} ${t("routines.action.streakWarning")}`}
-        confirmLabel={t("routines.action.delete")}
-        cancelLabel={t("routines.action.cancel")}
-        onConfirm={onDelete}
-        confirmTestId={`routine-delete-confirm-${routine.id}`}
-        cancelTestId={`routine-delete-cancel-${routine.id}`}
+      <RoutineFormDialog
+        open={routineForm !== null}
+        routine={routineForm?.routine ?? null}
+        dayPeriods={dayPeriods}
+        saving={busy}
+        error={formError}
+        onClose={() => setRoutineForm(null)}
+        onSubmit={saveRoutine}
       />
-      <ConfirmDialog
-        open={choreDeleteTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) setChoreDeleteTarget(null);
-        }}
-        title={t("routines.action.delete")}
-        description={`${t("routines.chores.deleteConfirm")} ${t("routines.action.streakWarning")}`}
-        confirmLabel={t("routines.action.delete")}
-        cancelLabel={t("routines.action.cancel")}
-        onConfirm={() => {
-          if (choreDeleteTarget) onDeleteChore(choreDeleteTarget.id);
-        }}
-        confirmTestId={`routine-${routine.id}-chore-delete-confirm`}
-        cancelTestId={`routine-${routine.id}-chore-delete-cancel`}
+      <ChoreFormDialog
+        open={choreForm !== null}
+        chore={choreForm?.chore ?? null}
+        saving={busy}
+        error={formError}
+        onClose={() => setChoreForm(null)}
+        onSubmit={saveChore}
       />
-    </div>
-  );
-}
-
-interface AssignmentRowProps {
-  child: Member;
-  assignment: Assignment | undefined;
-  t: (key: MessageKey) => string;
-  onSave: (weekdays: Weekday[], active: boolean) => void;
-  onDeactivate: () => void;
-}
-
-function AssignmentRow({ child, assignment, t, onSave, onDeactivate }: AssignmentRowProps) {
-  const [weekdays, setWeekdays] = useState<Weekday[]>(assignment?.weekdays ?? []);
-  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
-  const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
-  const isActive = assignment?.active ?? false;
-
-  const requestSave = () => {
-    // Reassigning an existing row — active or reactivating a deactivated one — changes the
-    // live streak (FR-014, docs/features/routines-chores.md); a brand-new assignment has no
-    // prior history to affect, so it saves immediately without a confirmation step.
-    if (assignment !== undefined) {
-      setShowSaveConfirm(true);
-    } else {
-      onSave(weekdays, true);
-    }
-  };
-
-  return (
-    <div
-      className="flex items-center gap-2 py-1 flex-wrap"
-      data-testid={`routine-assignment-${child.id}`}
-    >
-      <span className="w-32">{child.displayName}</span>
-      <WeekdayPicker
-        mode="multi"
-        value={weekdays}
-        onChange={(next) => setWeekdays([...next])}
-        labels={weekdayLabels(t)}
-        groupLabel={t("routines.assignments.weekdaysLabel")}
-        testIdPrefix={`routines-weekday-${child.id}`}
-      />
-      <Button type="button" onClick={requestSave} disabled={weekdays.length === 0}>
-        {t("routines.assignments.save")}
-      </Button>
-      {isActive && (
-        <Button type="button" variant="secondary" onClick={() => setShowDeactivateConfirm(true)}>
-          {t("routines.assignments.deactivate")}
-        </Button>
-      )}
-      <ConfirmDialog
-        open={showSaveConfirm}
-        onOpenChange={(open) => {
-          if (!open) setShowSaveConfirm(false);
+      <AssignmentDialog
+        open={assignOpen && shownDetail.status === "ready"}
+        childMembers={childMembers}
+        assignments={shownDetail.status === "ready" ? shownDetail.assignments : []}
+        busy={busy}
+        error={actionError}
+        onClose={() => {
+          setAssignOpen(false);
+          setActionError(null);
         }}
-        title={t("routines.assignments.save")}
-        description={t("routines.action.streakWarning")}
-        confirmLabel={t("routines.assignments.save")}
-        cancelLabel={t("routines.action.cancel")}
-        onConfirm={() => onSave(weekdays, true)}
-        destructive={false}
-        confirmTestId={`routines-assignment-${child.id}-save-confirm`}
-        cancelTestId={`routines-assignment-${child.id}-save-cancel`}
+        onSave={saveAssignment}
+        onDeactivate={deactivateAssignment}
       />
-      <ConfirmDialog
-        open={showDeactivateConfirm}
-        onOpenChange={(open) => {
-          if (!open) setShowDeactivateConfirm(false);
-        }}
-        title={t("routines.assignments.deactivate")}
-        description={`${t("routines.assignments.deactivateConfirm")} ${t("routines.action.streakWarning")}`}
-        confirmLabel={t("routines.assignments.deactivate")}
-        cancelLabel={t("routines.action.cancel")}
-        onConfirm={onDeactivate}
-        confirmTestId={`routines-assignment-${child.id}-deactivate-confirm`}
-        cancelTestId={`routines-assignment-${child.id}-deactivate-cancel`}
-      />
-    </div>
+    </AdminPanel>
   );
 }

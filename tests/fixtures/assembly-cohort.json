@@ -2524,7 +2524,9 @@
             "routines-crud boundary tests (red-by-design) GET /api/routines/:id returns soft-deleted routine (Rule 1 — history read)",
             "routines-crud boundary tests (red-by-design) GET /api/routines/:id 404 for truly unknown id (Rule 1)",
             "routines-crud boundary tests (red-by-design) PATCH /api/routines/:id edits name and active (FR-001)",
-            "routines-crud boundary tests (red-by-design) PATCH /api/routines/:id ignores dayPeriodId — stored value NEVER changes (Rule 2)",
+            "routines-crud boundary tests (red-by-design) PATCH /api/routines/:id moves the routine to another day period (FR-015)",
+            "routines-crud boundary tests (red-by-design) PATCH /api/routines/:id rejects an unknown, blank or non-string dayPeriodId without changing the routine (FR-015)",
+            "routines-crud boundary tests (red-by-design) GET /api/routines lists active routines by day-period start, then name (FR-016)",
             "routines-crud boundary tests (red-by-design) DELETE /api/routines/:id soft-deletes (disappears from active list)",
             "routines-crud boundary tests (red-by-design) POST /api/routines/:id/chores → 201 with sortOrder appended (FR-001)",
             "routines-crud boundary tests (red-by-design) persists a Unicode chore icon and clears it explicitly with null",
@@ -3195,15 +3197,6 @@
             "CheckboxField renders the disabled attribute when disabled is set",
             "CheckboxField meets kiosk density"
           ],
-          "tests/client/chore-order-controls.test.tsx": [
-            "ChoreOrderControls — kiosk density (SC-001, SC-002, SC-003) meets kiosk density in BOTH states — the collapsed Reorder link and the expanded edit view",
-            "ChoreOrderControls — kiosk density (SC-001, SC-002, SC-003) DELIBERATE NEGATIVE — forcing this surface's own Save button below the kiosk minimum makes the assertion fail",
-            "ChoreOrderControls — reorder wiring (research.md R3) move-up/move-down reorder the LOCAL list before saving, with no fetch until Save",
-            "ChoreOrderControls — reorder wiring (research.md R3) Save persists the new order via PUT and calls onReorder with it; the panel collapses",
-            "ChoreOrderControls — reorder wiring (research.md R3) Cancel discards the local reorder — no fetch, order reverts, panel collapses",
-            "ChoreOrderControls — a failed save is announced (SC-011, MEDIUM-1) announces a failed order PUT through ErrorNotice's live region and stays in edit mode",
-            "ChoreOrderControls — a failed save is announced (SC-011, MEDIUM-1) starting a fresh edit, or cancelling, clears a previous save error"
-          ],
           "tests/client/chores-board-empty-state.test.tsx": [
             "ChoresBoard — zero-active-children empty state (#415) renders the noChildren message and omits the board grid"
           ],
@@ -3864,6 +3857,12 @@
             "label maps are transcribed correctly (SC-007's cast removal, pinned) every query field maps to its own key",
             "label maps are transcribed correctly (SC-007's cast removal, pinned) every dry-run reason maps to its own key"
           ],
+          "tests/client/routines-admin-order.test.ts": [
+            "groupRoutinesByPeriod orders groups by period start, keeps arrival order inside a group and drops empty periods",
+            "groupRoutinesByPeriod returns no groups without routines",
+            "moveChore moves a chore onto another's slot and renumbers sortOrder",
+            "moveChore returns null when nothing moves or an id is unknown"
+          ],
           "tests/client/routines-i18n-parity.test.ts": [
             "routines-i18n-parity en and es catalogs have identical keys (both directions)",
             "routines-i18n-parity routines.*/chores.* keys have identical coverage in en and es (both directions)",
@@ -3871,24 +3870,39 @@
             "ChoresBoard — streak/progress suppression on null (SC-005) does not render the streak badge or progress indicator for a null column, but does for a populated one"
           ],
           "tests/client/routines.test.tsx": [
-            "RoutinesManagement — chore icon editing submits a selected icon on create and null when clearing an existing icon",
-            "RoutinesManagement — kiosk density (SC-001, SC-002, SC-003, SC-009) meets kiosk density collapsed, with chores expanded, with an ACTIVE assignment expanded, and with both inline-edit modes open",
-            "RoutinesManagement — kiosk density (SC-001, SC-002, SC-003, SC-009) meets kiosk density with the delete ConfirmDialog open, portalled OUTSIDE this surface's own subtree (SC-003)",
-            "RoutinesManagement — kiosk density (SC-001, SC-002, SC-003, SC-009) DELIBERATE NEGATIVE — forcing this surface's own Create Routine button below the kiosk minimum makes the assertion fail",
-            "RoutinesManagement — error states are announced (SC-011) announces a data-load failure through ErrorNotice's live region",
-            "RoutinesManagement — error states are announced (SC-011) announces a chore-creation failure through ErrorNotice's live region",
-            "RoutinesManagement — error states are announced (SC-011) announces an assignment-save failure through ErrorNotice's live region",
-            "RoutinesManagement — every streak-affecting action opens a themed ConfirmDialog instead of window.confirm (research D3/FR-005) does not delete a routine until the ConfirmDialog is confirmed, and deletes on confirm",
-            "RoutinesManagement — every streak-affecting action opens a themed ConfirmDialog instead of window.confirm (research D3/FR-005) does not delete a chore until the ConfirmDialog is confirmed, and deletes on confirm",
-            "RoutinesManagement — every streak-affecting action opens a themed ConfirmDialog instead of window.confirm (research D3/FR-005) a brand-new assignment saves immediately, with no confirmation",
-            "RoutinesManagement — every streak-affecting action opens a themed ConfirmDialog instead of window.confirm (research D3/FR-005) reassigning an already-active assignment requires confirmation before the PUT fires",
-            "RoutinesManagement — every streak-affecting action opens a themed ConfirmDialog instead of window.confirm (research D3/FR-005) does not deactivate an assignment until the ConfirmDialog is confirmed, and deactivates on confirm",
-            "RoutinesManagement — adopts the AdminPanel L2 frame (c retrofit) wraps the surface in a landmark region labelled by its own title, with a heading of the same name",
-            "RoutinesManagement — WEEKDAY_LABEL_KEYS maps each weekday to its OWN translation key, through the shared WeekdayPicker labels the WeekdayPicker with the household's own Spanish weekday abbreviations, in canonical mon..sun order",
-            "RoutinesManagement — DAY_PERIOD_LABEL_KEYS indexes each routine's OWN day period, through the shared map (#814) renders the morning routine's card with 'Mañana' and the evening routine's card with 'Tarde'",
-            "RoutinesManagement — DAY_PERIOD_LABEL_KEYS indexes each routine's OWN day period, through the shared map (#814) the create form's day-period Select lists each period under its OWN label (the second changed call site — a Radix popover no other test ever opens)",
-            "RoutinesManagement — chore icon editing renders the chore's vendored Noto SVG instead of the literal emoji glyph",
-            "RoutinesManagement — kiosk density (SC-001, SC-002, SC-003, SC-009) meets kiosk density with the chore emoji picker open"
+            "RoutinesManagement — list and selection groups routines by day period in start order, names the page like the sidebar and asks for a selection",
+            "RoutinesManagement — list and selection shows the empty message without routines",
+            "RoutinesManagement — list and selection announces a load failure and Retry loads again",
+            "RoutinesManagement — list and selection shows the selected routine's header and chores in order, with the vendored Noto icon",
+            "RoutinesManagement — list and selection shows the empty chore message for a routine without chores",
+            "RoutinesManagement — list and selection announces a detail load failure and Retry loads it again",
+            "RoutinesManagement — list and selection ignores a stale detail response after switching routines",
+            "RoutinesManagement — list and selection week grid shows only active assignments, per weekday, and opens the assignment dialog",
+            "RoutinesManagement — routine dialog never renders the previous routine's chores under a newly created routine",
+            "RoutinesManagement — routine dialog announces a list refresh that fails after a successful save",
+            "RoutinesManagement — routine dialog creates a routine: first period by default, submit disabled until named, new routine selected",
+            "RoutinesManagement — routine dialog renames a routine without a confirmation",
+            "RoutinesManagement — routine dialog moving a routine to another period asks for the streak confirmation first",
+            "RoutinesManagement — routine dialog keeps the dialog open and announces a failed save",
+            "RoutinesManagement — routine dialog deletes a routine only after confirmation and clears the selection",
+            "RoutinesManagement — chores adds a chore from the dialog: blank disables submit, Enter submits with the icon",
+            "RoutinesManagement — chores Enter twice creates the chore once",
+            "RoutinesManagement — chores edits a chore and clears its icon",
+            "RoutinesManagement — chores announces a failed chore save inside the dialog",
+            "RoutinesManagement — chores deletes a chore only after confirmation",
+            "RoutinesManagement — chores keyboard drag persists the complete new order",
+            "RoutinesManagement — chores a failed reorder restores the order and announces it",
+            "RoutinesManagement — chores a reorder that fails after switching routines leaves the new routine's chores alone",
+            "RoutinesManagement — assignments lists children only, and a brand-new assignment saves without confirmation",
+            "RoutinesManagement — assignments changing an existing assignment asks for the streak confirmation",
+            "RoutinesManagement — assignments deactivates only after confirmation",
+            "RoutinesManagement — assignments a deactivated assignment starts empty and re-saving it asks for confirmation",
+            "RoutinesManagement — assignments announces a failed assignment save inside the dialog",
+            "RoutinesManagement — assignments explains how to add a child when there is none",
+            "RoutinesManagement — Spanish labels renders period groups, the page name, weekday labels and period options in Spanish",
+            "RoutinesManagement — Spanish labels lists each period under its own Spanish label in the routine dialog",
+            "RoutinesManagement — kiosk density (SC-001, SC-002, SC-003) meets kiosk density with a routine selected and with the assignment dialog open",
+            "RoutinesManagement — kiosk density (SC-001, SC-002, SC-003) DELIBERATE NEGATIVE — forcing the New routine button below the kiosk minimum fails"
           ],
           "tests/client/schedule-x-week-view.test.ts": [
             "ScheduleXWeekView event projection does not format a stale portal after its event has been filtered out",
@@ -5060,6 +5074,7 @@
           "tests/e2e/admin-household-timezone-defaults.spec.ts": [
             "d2c923e8dbd7b5ee6d04-0031c1d54f8f4e93fae5"
           ],
+          "tests/e2e/admin-routines.spec.ts": ["9039bdc4f4b37608b18c-2d67652f4c452d3453f0"],
           "tests/e2e/admin-unlock-resilience.spec.ts": [
             "224608ef7363313c2282-9f89fbd41fbab627eca2",
             "224608ef7363313c2282-8d68d3e6e84b83b77ca0"
@@ -5212,21 +5227,6 @@
           "branches": 77.17
         }
       },
-      "src/client/admin/ChoreOrderControls.tsx": {
-        "layer": "client",
-        "minimumTotals": {
-          "lines": 36,
-          "statements": 44,
-          "functions": 14,
-          "branches": 16
-        },
-        "minimumRates": {
-          "lines": 86.11,
-          "statements": 84.09,
-          "functions": 85.71,
-          "branches": 68.75
-        }
-      },
       "src/client/admin/DailyBriefingManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
@@ -5350,9 +5350,9 @@
       "src/client/admin/RoutinesManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 165,
-          "statements": 185,
-          "functions": 64,
+          "lines": 135,
+          "statements": 152,
+          "functions": 53,
           "branches": 80
         },
         "minimumRates": {
@@ -6560,6 +6560,141 @@
           "statements": 66.9,
           "functions": 71.05,
           "branches": 68.85
+        }
+      },
+      "src/client/routines/admin/AssignmentDialog.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 20,
+          "statements": 26,
+          "functions": 14,
+          "branches": 21
+        },
+        "minimumRates": {
+          "lines": 95,
+          "statements": 92.3,
+          "functions": 92.85,
+          "branches": 80.95
+        }
+      },
+      "src/client/routines/admin/ChoreFormDialog.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 18,
+          "statements": 22,
+          "functions": 7,
+          "branches": 22
+        },
+        "minimumRates": {
+          "lines": 94.44,
+          "statements": 86.36,
+          "functions": 85.71,
+          "branches": 77.27
+        }
+      },
+      "src/client/routines/admin/MemberChip.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 1,
+          "statements": 1,
+          "functions": 1,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/client/routines/admin/RoutineDetail.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 20,
+          "statements": 25,
+          "functions": 14,
+          "branches": 16
+        },
+        "minimumRates": {
+          "lines": 95,
+          "statements": 92,
+          "functions": 92.85,
+          "branches": 62.5
+        }
+      },
+      "src/client/routines/admin/RoutineFormDialog.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 23,
+          "statements": 28,
+          "functions": 9,
+          "branches": 28
+        },
+        "minimumRates": {
+          "lines": 95.65,
+          "statements": 89.28,
+          "functions": 88.88,
+          "branches": 82.14
+        }
+      },
+      "src/client/routines/admin/RoutineList.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 7,
+          "statements": 7,
+          "functions": 4,
+          "branches": 6
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/client/routines/admin/RoutineWeekGrid.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 11,
+          "statements": 13,
+          "functions": 9,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/client/routines/admin/SortableChoreRow.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 6,
+          "statements": 7,
+          "functions": 4,
+          "branches": 8
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/client/routines/admin/routineOrder.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 9,
+          "statements": 13,
+          "functions": 9,
+          "branches": 5
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/client/shell/DensityControl.tsx": {
