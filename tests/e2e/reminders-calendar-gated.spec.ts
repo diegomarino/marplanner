@@ -223,7 +223,7 @@ test("calendar_gated admin author → dry-run → emit: query + membership assig
   await createForm.getByLabel(m["reminders.management.targetingSpecific"]).check();
   await createForm.getByPlaceholder(m["reminders.calendarGated.queryPlaceholder"]).fill(queryText);
   // queryFields defaults to [title, description] — the event title match is sufficient, no toggle needed.
-  await createForm.getByLabel(memberName).check();
+  await createForm.getByTestId(`reminders-cg-member-${memberId}`).check();
 
   const [createResp] = await Promise.all([
     page.waitForResponse(

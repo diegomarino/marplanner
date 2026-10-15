@@ -1473,6 +1473,9 @@ export const messages = {
     "timeAnnouncements.weekdayInitial.fri": "F",
     "timeAnnouncements.weekdayInitial.sat": "S",
     "timeAnnouncements.weekdayInitial.sun": "S",
+    // admin-reminders-polish
+    "reminders.specific.membersLabel": "Members and weekdays",
+    "reminders.specific.membersHint": "Pick at least one weekday.",
   },
   es: {
     "backups.error.validation_error": "La solicitud de copia de seguridad no es válida.",
@@ -2935,6 +2938,9 @@ export const messages = {
     "timeAnnouncements.weekdayInitial.fri": "V",
     "timeAnnouncements.weekdayInitial.sat": "S",
     "timeAnnouncements.weekdayInitial.sun": "D",
+    // admin-reminders-polish
+    "reminders.specific.membersLabel": "Miembros y días de la semana",
+    "reminders.specific.membersHint": "Elige al menos un día de la semana.",
   },
 } as const;
 
