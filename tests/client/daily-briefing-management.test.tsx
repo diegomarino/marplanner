@@ -597,16 +597,154 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
       target: { value: "2026-10-18" },
     });
     await waitFor(() =>
-      expect(screen.getByTestId("daily-briefing-member-status-member-ben")).toHaveTextContent(
-        "Not generated"
-      )
+      expect(callsTo("/api/daily-briefing/member-ben/2026-10-18")).toHaveLength(1)
     );
+    // Unknown until the briefing days arrive: no guess.
+    expect(screen.getByTestId("daily-briefing-member-status-member-ben")).toHaveTextContent("—");
     releaseSettings();
     await waitFor(() =>
       expect(screen.getByTestId("daily-briefing-member-status-member-ben")).toHaveTextContent(
         "Paused"
       )
     );
+  });
+
+  it("keeps a row locked until its own save returns, even while another row saves", async () => {
+    const pending: Array<() => void> = [];
+    mockBackend({
+      optIns: ["member-ada"],
+      handle: (url, init) => {
+        const m = /^\/api\/daily-briefing\/block-settings\/member-ada\/(\w+)$/.exec(url);
+        if (!m) return undefined;
+        const body = JSON.parse(String(init?.body)) as object;
+        return new Promise<Response>((resolve) => {
+          pending.push(() =>
+            resolve(
+              jsonResponse({
+                memberId: "member-ada",
+                blockType: m[1],
+                params: null,
+                updatedAt: 2,
+                ...body,
+              })
+            )
+          );
+        });
+      },
+    });
+    renderManagement();
+    fireEvent.click(await screen.findByTestId("daily-briefing-tab-blocks"));
+    fireEvent.click(await screen.findByTestId("daily-briefing-block-cell-weather-mon"));
+    fireEvent.click(screen.getByTestId("daily-briefing-block-cell-dadJoke-mon"));
+    await waitFor(() => expect(pending).toHaveLength(2));
+    expect(screen.getByTestId("daily-briefing-block-cell-weather-tue")).toBeDisabled();
+    expect(screen.getByTestId("daily-briefing-block-cell-dadJoke-tue")).toBeDisabled();
+    act(() => pending[1]?.());
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-block-cell-dadJoke-tue")).toBeEnabled()
+    );
+    expect(screen.getByTestId("daily-briefing-block-cell-weather-tue")).toBeDisabled();
+    act(() => pending[0]?.());
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-block-cell-weather-tue")).toBeEnabled()
+    );
+  });
+
+  it("shows the stored results of a date picked while Generate for all members runs", async () => {
+    let finish: ((response: Response) => void) | undefined;
+    let releaseRead: () => void = () => {};
+    const readGate = new Promise<void>((resolve) => {
+      releaseRead = resolve;
+    });
+    mockBackend({
+      optIns: ["member-ada"],
+      handle: (url) => {
+        if (url === "/api/daily-briefing/generate-all") {
+          return new Promise<Response>((resolve) => {
+            finish = resolve;
+          });
+        }
+        const read = /^\/api\/daily-briefing\/member-ada\/(\d{4}-\d{2}-\d{2})$/.exec(url);
+        if (!read) return undefined;
+        return read[1] === "2026-10-19"
+          ? readGate.then(() =>
+              jsonResponse({
+                generated: true,
+                briefing: { memberId: "member-ada", date: read[1], status: "ready" },
+                printedStatus: "none",
+              })
+            )
+          : jsonResponse({ generated: false });
+      },
+    });
+    renderManagement();
+    const dateInput = await screen.findByTestId("daily-briefing-generate-date");
+    fireEvent.change(dateInput, { target: { value: "2026-10-18" } });
+    const generateAll = screen.getByTestId("daily-briefing-generate-all");
+    await waitFor(() => expect(generateAll).toBeEnabled());
+    fireEvent.click(generateAll);
+    await waitFor(() => expect(finish).toBeDefined());
+    fireEvent.change(dateInput, { target: { value: "2026-10-19" } });
+    await waitFor(() =>
+      expect(callsTo("/api/daily-briefing/member-ada/2026-10-19")).toHaveLength(1)
+    );
+    finish?.(
+      jsonResponse({
+        status: "completed",
+        count: 1,
+        generated: [{ memberId: "member-ada", status: "partial" }],
+      })
+    );
+    await waitFor(() => expect(generateAll).toBeEnabled());
+    releaseRead();
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-member-status-member-ada")).toHaveTextContent(
+        "Ready"
+      )
+    );
+  });
+
+  it("does not guess Paused or Not generated while the briefing days are unknown", async () => {
+    mockBackend({
+      optIns: ["member-ada"],
+      settings: () => new Response("{}", { status: 500 }),
+    });
+    renderManagement();
+    fireEvent.change(await screen.findByTestId("daily-briefing-generate-date"), {
+      target: { value: "2026-10-18" },
+    });
+    await waitFor(() =>
+      expect(callsTo("/api/daily-briefing/member-ada/2026-10-18")).toHaveLength(1)
+    );
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.getByTestId("daily-briefing-member-status-member-ada")).toHaveTextContent("—");
+  });
+
+  it("opting the selected member out gates Blocks, and turning back on restores it without a refetch", async () => {
+    mockBackend({
+      optIns: ["member-ada"],
+      handle: (url, init) =>
+        url === "/api/daily-briefing/opt-in/member-ada" && init?.method === "PUT"
+          ? jsonResponse({
+              memberId: "member-ada",
+              enabled: (JSON.parse(String(init.body)) as { enabled: boolean }).enabled,
+            })
+          : undefined,
+    });
+    renderManagement();
+    fireEvent.click(await screen.findByTestId("daily-briefing-tab-blocks"));
+    expect(await screen.findByTestId("daily-briefing-block-matrix")).toBeVisible();
+    fireEvent.click(screen.getByTestId("daily-briefing-tab-schedule"));
+    fireEvent.click(screen.getByTestId("daily-briefing-opt-in-member-ada"));
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-opt-in-member-ada")).not.toBeChecked()
+    );
+    fireEvent.click(screen.getByTestId("daily-briefing-tab-blocks"));
+    expect(screen.getByTestId("daily-briefing-opted-out")).toBeVisible();
+    expect(screen.queryByTestId("daily-briefing-block-matrix")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("daily-briefing-turn-on"));
+    expect(await screen.findByTestId("daily-briefing-block-matrix")).toBeVisible();
+    expect(callsTo("/api/daily-briefing/settings")).toHaveLength(1);
   });
 
   it("titles the page with its sidebar label", async () => {

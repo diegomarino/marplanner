@@ -50,7 +50,8 @@ export interface BlockMatrixProps {
   resolve: (blockType: BlockRegistryType) => MemberBlockSettings;
   /** The member's briefing days (pause schedule); all seven when none is stored. */
   schedule: readonly WeekdayCode[];
-  savingType: BlockRegistryType | null;
+  /** Rows with a write in flight. */
+  savingTypes: ReadonlySet<BlockRegistryType>;
   scheduleSaving: boolean;
   orderSaving: boolean;
   /** Overrides the household week start (tests). */
@@ -162,7 +163,7 @@ export function BlockMatrix(props: BlockMatrixProps) {
                   days={days}
                   settings={props.resolve(type)}
                   schedule={props.schedule}
-                  saving={props.savingType === type}
+                  saving={props.savingTypes.has(type)}
                   orderSaving={props.orderSaving}
                   dayName={dayName}
                   onToggleCell={props.onToggleCell}

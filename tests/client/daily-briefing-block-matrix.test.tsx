@@ -23,7 +23,7 @@ function renderMatrix(overrides: Partial<BlockMatrixProps> = {}, rows: MemberBlo
     resolve: (type: BlockRegistryType) =>
       rows.find((r) => r.blockType === type) ?? defaultMemberBlockSettings("m1", type),
     schedule: ALL,
-    savingType: null,
+    savingTypes: new Set(),
     scheduleSaving: false,
     orderSaving: false,
     weekStartDay: 1,
@@ -94,7 +94,7 @@ describe("BlockMatrix", () => {
   });
 
   it("disables only the saving row, and the pause row while the schedule saves", () => {
-    renderMatrix({ savingType: "weather", scheduleSaving: true });
+    renderMatrix({ savingTypes: new Set(["weather"]), scheduleSaving: true });
     expect(screen.getByTestId("daily-briefing-block-cell-weather-mon")).toBeDisabled();
     expect(screen.getByTestId("daily-briefing-block-cell-dadJoke-mon")).toBeEnabled();
     expect(screen.getByTestId("daily-briefing-schedule-day-mon")).toBeDisabled();

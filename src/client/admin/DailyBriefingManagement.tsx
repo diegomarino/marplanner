@@ -86,7 +86,9 @@ export function DailyBriefingManagement() {
   const resultsVersion = useRef(0);
 
   const [blocksError, setBlocksError] = useState<string | null>(null);
-  const [savingType, setSavingType] = useState<BlockRegistryType | null>(null);
+  // Every row with a write in flight stays locked: a second click on it would build its body from
+  // the stored row before the first write lands, and undo that write.
+  const [savingTypes, setSavingTypes] = useState<ReadonlySet<BlockRegistryType>>(() => new Set());
   const [scheduleSaving, setScheduleSaving] = useState(false);
   const [orderSaving, setOrderSaving] = useState(false);
   const [settingsChanged, setSettingsChanged] = useState(false);
@@ -198,6 +200,8 @@ export function DailyBriefingManagement() {
   const optedIn = members.filter((member) => optIns[member.id]);
   const hasPendingOptIns = pendingOptIns.size > 0;
   const shownDate = date ?? today;
+  const shownDateRef = useRef(shownDate);
+  shownDateRef.current = shownDate;
   const optedInKey = optedIn.map((member) => member.id).join(",");
 
   // Schedule's Result column starts from what is stored for the shown date, so a briefing made
@@ -206,7 +210,8 @@ export function DailyBriefingManagement() {
   useEffect(() => {
     if (tab !== "schedule" || !shownDate || optedIn.length === 0) return;
     const version = ++resultsVersion.current;
-    const schedules = settings?.schedules ?? {};
+    // Without the briefing days (settings not loaded) "Paused" vs "Not generated" is unknown.
+    const schedules = settings?.schedules ?? null;
     const weekday = weekdayOfDate(shownDate);
     void Promise.all(
       optedIn.map(async (member): Promise<[string, MemberResult] | null> => {
@@ -217,6 +222,7 @@ export function DailyBriefingManagement() {
           if (!response.ok) return null;
           const read = (await response.json()) as BriefingReadResult;
           if (read.generated) return [member.id, read.briefing.status];
+          if (!schedules) return null;
           const days = schedules[member.id] ?? CANONICAL_WEEKDAY_ORDER;
           return [member.id, weekday && !days.includes(weekday) ? "paused" : "notGenerated"];
         } catch {
@@ -265,12 +271,15 @@ export function DailyBriefingManagement() {
       );
       const weekday = target ? weekdayOfDate(target) : null;
       for (const member of optedIn) {
-        if (statuses[member.id] !== undefined) continue;
-        const days = settings?.schedules[member.id] ?? CANONICAL_WEEKDAY_ORDER;
+        if (statuses[member.id] !== undefined || !settings) continue;
+        const days = settings.schedules[member.id] ?? CANONICAL_WEEKDAY_ORDER;
         statuses[member.id] = weekday && !days.includes(weekday) ? "paused" : "notGenerated";
       }
-      resultsVersion.current += 1;
-      setResults({ date: target, statuses });
+      // If the parent moved to another date meanwhile, that date's stored results stand.
+      if (target === shownDateRef.current) {
+        resultsVersion.current += 1;
+        setResults({ date: target, statuses });
+      }
       setRefreshKey((value) => value + 1);
     } catch (cause) {
       if (generationRequestId.current === requestId) {
@@ -305,7 +314,7 @@ export function DailyBriefingManagement() {
     input: { enabled?: boolean; weekdays?: WeekdayCode[] | null; params?: BlockParams }
   ) {
     if (!settings || !selected) return;
-    setSavingType(type);
+    setSavingTypes((previous) => new Set(previous).add(type));
     setBlocksError(null);
     const fallback = t("dailyBriefing.admin.blockSettingsSaveError");
     try {
@@ -330,7 +339,11 @@ export function DailyBriefingManagement() {
     } catch (cause) {
       blockWriteFailed(cause, fallback);
     } finally {
-      setSavingType((current) => (current === type ? null : current));
+      setSavingTypes((previous) => {
+        const next = new Set(previous);
+        next.delete(type);
+        return next;
+      });
     }
   }
 
@@ -557,7 +570,7 @@ export function DailyBriefingManagement() {
                     resolveMemberBlockSettings(settings.blockSettings, selected.id, type)
                   }
                   schedule={settings.schedules[selected.id] ?? CANONICAL_WEEKDAY_ORDER}
-                  savingType={savingType}
+                  savingTypes={savingTypes}
                   scheduleSaving={scheduleSaving}
                   orderSaving={orderSaving}
                   onToggleCell={(type, day) =>

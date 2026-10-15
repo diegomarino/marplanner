@@ -50,6 +50,8 @@ interface Backend {
   previewStatus?: Record<string, number>;
   generate?: (body: Record<string, unknown>) => Response;
   print?: () => Response;
+  /** The first N stored-briefing reads fail. */
+  readFails?: number;
   /** Ben has no stored briefings at all. */
   noHistory?: boolean;
   /** Dates with no stored briefing for Ben. */
@@ -61,6 +63,7 @@ interface Backend {
 function mockBackend(backend: Backend = {}) {
   const calls: Array<{ url: string; method: string; body?: unknown }> = [];
   let historyFailures = backend.historyFails ? 1 : 0;
+  let readFailures = backend.readFails ?? 0;
   const fetchMock = vi.fn(async (...args: FetchCall) => {
     const [input, init] = args;
     const url = String(input);
@@ -100,6 +103,10 @@ function mockBackend(backend: Backend = {}) {
     const read = url.match(/^\/api\/daily-briefing\/member-(ben|cleo)\/(\d{4}-\d{2}-\d{2})$/);
     if (read) {
       await backend.readGate?.[read[2]];
+      if (readFailures > 0) {
+        readFailures -= 1;
+        return json({ error: "internal_error", message: "x" }, 500);
+      }
       return read[1] === "ben" && !backend.notGenerated?.includes(read[2])
         ? json({
             generated: true,
@@ -405,6 +412,35 @@ describe("BriefingWorkspace", () => {
     );
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(screen.queryByTestId("daily-briefing-no-briefing")).not.toBeInTheDocument();
+  });
+
+  it("offers Retry when the stored briefing fails to load", async () => {
+    mockBackend({ readFails: 1 });
+    renderWorkspace();
+    fireEvent.click(await screen.findByTestId("daily-briefing-read-retry"));
+    expect(await screen.findByTestId("daily-briefing-generated-payload")).toHaveTextContent(
+      `"date": "${TODAY}"`
+    );
+  });
+
+  it("shows the server's message when Generate or Print fails", async () => {
+    mockBackend({
+      generate: () => json({ error: "validation_error", message: "Generation broke" }, 400),
+      print: () => json({ error: "internal_error", message: "x" }, 500),
+    });
+    const { onGenerated } = renderWorkspace();
+    await screen.findByTestId("daily-briefing-generated-payload");
+    fireEvent.click(screen.getByTestId("daily-briefing-generate"));
+    expect(await screen.findByTestId("daily-briefing-action-error")).toBeVisible();
+    expect(onGenerated).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(screen.getByTestId("daily-briefing-print")).toBeEnabled());
+    fireEvent.click(screen.getByTestId("daily-briefing-print"));
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-action-error")).toHaveTextContent(
+        "Failed to send the briefing to the printer."
+      )
+    );
   });
 
   it("fetches nothing while the tab is hidden", () => {
