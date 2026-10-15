@@ -494,6 +494,46 @@ describe("settings-write", () => {
     }
   });
 
+  it("PUT printerTransport accepts any well-formed 128-bit UUID, whatever its version nibble", async () => {
+    const { buildApp } = await import("../../src/server/app.ts");
+    const deviceKey = seedDeviceKey();
+    setPluginState("printing", "active");
+    const app = await buildApp();
+    try {
+      // Vendor GATT UUIDs such as the ISSC transparent-UART service carry a non-RFC version nibble.
+      const res = await putSettings(app, deviceKey, {
+        object: "printerTransport",
+        settings: {
+          deviceId: "dev-1",
+          name: "Thermal",
+          serviceUuid: "49535343-FE7D-4AE5-8FA9-9FAFD205E455",
+          characteristicUuid: "49535343-8841-f3f4-a8d4-ecbe34729bb3",
+        },
+      });
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).printerTransport).toEqual({
+        deviceId: "dev-1",
+        name: "Thermal",
+        serviceUuid: "49535343-fe7d-4ae5-8fa9-9fafd205e455",
+        characteristicUuid: "49535343-8841-f3f4-a8d4-ecbe34729bb3",
+      });
+
+      const malformed = await putSettings(app, deviceKey, {
+        object: "printerTransport",
+        settings: {
+          deviceId: "dev-1",
+          name: "Thermal",
+          serviceUuid: "49535343-fe7d-4ae5-8fa9",
+          characteristicUuid: "not-a-uuid",
+        },
+      });
+      expect(malformed.statusCode).toBe(400);
+      expect(JSON.parse(malformed.body)).toEqual({ error: "invalid_settings" });
+    } finally {
+      await app.close();
+    }
+  });
+
   it("PUT printerTransport nested type/config shape is rejected as invalid_settings (flat schema)", async () => {
     const { buildApp } = await import("../../src/server/app.ts");
     const deviceKey = seedDeviceKey();

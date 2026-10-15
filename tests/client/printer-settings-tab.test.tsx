@@ -7,7 +7,7 @@ import {
   isTransportValid,
   parsePaperWidth,
 } from "@/admin/printer/PrinterSettingsTab";
-import { PrinterSessionProvider } from "@/printing/PrinterSession";
+import { PrinterSessionProvider, usePrinterSession } from "@/printing/PrinterSession";
 import { createFakePrintTransport, FAKE_PRINTER_IDENTITY } from "@/printing/transport";
 import { json, stubFetchRoutes, type RouteHandler } from "./helpers/fetchRoutes";
 
@@ -94,10 +94,12 @@ describe("printer settings helpers", () => {
     expect(isTransportValid(EMPTY)).toBe(true);
     expect(isTransportValid(KITCHEN)).toBe(true);
     expect(isTransportValid({ ...EMPTY, name: "Kitchen" })).toBe(false);
-    // a UUID whose version nibble is not 1-5 is rejected, like the server does
+    // any well-formed 128-bit UUID is accepted, whatever its version nibble (vendor GATT ids)
     expect(
       isTransportValid({ ...KITCHEN, serviceUuid: "49535343-fe7d-fae5-8fa9-9fafd205e455" })
-    ).toBe(false);
+    ).toBe(true);
+    // a malformed UUID is rejected, like the server does
+    expect(isTransportValid({ ...KITCHEN, serviceUuid: "49535343-fe7d-4ae5-8fa9" })).toBe(false);
   });
 });
 
@@ -248,5 +250,40 @@ describe("PrinterSettingsTab", () => {
     });
     // a different device id: the device's own name replaces the stored one
     expect(screen.getByTestId("printer-name")).toHaveValue(FAKE_PRINTER_IDENTITY.name);
+  });
+
+  it("a pairing that completes while the settings are still loading is not overwritten", async () => {
+    let releaseSettings: (() => void) | undefined;
+    baseRoutes({
+      "GET /api/settings": () =>
+        new Promise<Response>((resolve) => {
+          releaseSettings = () => resolve(json(settings(KITCHEN)));
+        }),
+    });
+    function PairElsewhere() {
+      const session = usePrinterSession();
+      return (
+        <button type="button" data-testid="pair-elsewhere" onClick={() => session?.pair()}>
+          pair
+        </button>
+      );
+    }
+    render(
+      <LanguageProvider>
+        <PrinterSessionProvider transport={createFakePrintTransport()} pollIntervalMs={60_000}>
+          <PairElsewhere />
+          <PrinterSettingsTab />
+        </PrinterSessionProvider>
+      </LanguageProvider>
+    );
+    await flush();
+    fireEvent.click(screen.getByTestId("pair-elsewhere"));
+    await flush();
+    releaseSettings?.();
+    await flush();
+
+    expect(screen.getByTestId("printer-device-id")).toHaveValue(FAKE_PRINTER_IDENTITY.deviceId);
+    expect(screen.getByTestId("printer-paired-unsaved")).toBeInTheDocument();
+    expect(screen.getByTestId("printer-settings-save")).not.toBeDisabled();
   });
 });

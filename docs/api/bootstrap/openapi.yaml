@@ -135,7 +135,9 @@ components:
           type: object
           description: >
             Complete replacement object. The Settings domain rejects unknown or invalid fields and
-            writes a valid object atomically.
+            writes a valid object atomically. For `printerTransport`, either all four fields are
+            empty or `deviceId` and `name` are non-empty and `serviceUuid`/`characteristicUuid` are
+            well-formed 128-bit UUIDs (8-4-4-4-12 hex, any version nibble), stored lower-case.
     VerifyPinRequest:
       type: object
       required:

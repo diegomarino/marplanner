@@ -17,7 +17,7 @@ import { usePrinterSession } from "@/printing/PrinterSession";
 import { navigateHousehold } from "@/shell/routes";
 import type { EffectiveSettings, PrinterTransportSettings } from "../../../shared";
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EMPTY_TRANSPORT: PrinterTransportSettings = {
   deviceId: "",
   name: "",
@@ -27,7 +27,7 @@ const EMPTY_TRANSPORT: PrinterTransportSettings = {
 const DEFAULT_PAPER_WIDTH = 576;
 
 /** Mirrors the server's `printerTransport` rule (settings/index.ts): all four empty, or a named
- * device with two RFC-4122 (version 1-5) UUIDs. */
+ * device with two well-formed 128-bit UUIDs (any version nibble). */
 export function isTransportValid(transport: PrinterTransportSettings): boolean {
   const { deviceId, name, serviceUuid, characteristicUuid } = transport;
   if ([deviceId, name, serviceUuid, characteristicUuid].every((value) => value.length === 0)) {
@@ -180,11 +180,12 @@ export function PrinterSettingsTab(): React.JSX.Element {
   }, [reloadToken]);
 
   // A pairing that completes while this tab is open fills the printer fields (never on mount:
-  // a session paired earlier must not overwrite what is stored).
+  // a session paired earlier must not overwrite what is stored). It waits for the stored settings,
+  // so a pairing that lands mid-load is applied on top of them instead of being overwritten.
   const pairedDevice = session?.pairedDevice ?? null;
   const seenPairedDevice = useRef(pairedDevice);
   useEffect(() => {
-    if (!pairedDevice || pairedDevice === seenPairedDevice.current) return;
+    if (loadState !== "ready" || !pairedDevice || pairedDevice === seenPairedDevice.current) return;
     seenPairedDevice.current = pairedDevice;
     const fallbackName = t("admin.printer.defaultName");
     setTransport((current) => ({
@@ -198,7 +199,7 @@ export function PrinterSettingsTab(): React.JSX.Element {
     }));
     setPairedUnsaved(true);
     setSaved(false);
-  }, [pairedDevice, t]);
+  }, [loadState, pairedDevice, t]);
 
   const width = parsePaperWidth(paperWidth);
   const transportValid = isTransportValid(transport);
