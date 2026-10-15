@@ -4,14 +4,12 @@ import { authFetch } from "@/lib/credential";
 import { appUrl } from "@/lib/base-path";
 import { LocalizedApiError, responseMessage } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
-import { NATIVE_SELECT_CLASSES } from "@/lib/recipes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { usePrintingPluginActive } from "@/printing/pluginStatus";
 import { BriefingImage } from "./BriefingImage";
-import { BriefingMemberPills } from "./BriefingMemberPills";
 import type {
   Briefing,
   BriefingHistoryResponse,
@@ -31,33 +29,42 @@ const STATUS_BADGE_CLASS: Record<BriefingStatus, string> = {
 };
 
 export interface BriefingWorkspaceProps {
-  /** Pill members (children + opted-in adults), already filtered by the page. */
-  members: MemberDTO[];
-  optIns: Record<string, boolean>;
-  /** The Preview / Generate tab is visible — nothing is fetched while hidden (spec D16). */
+  /** The selected member; the page only mounts the workspace for an opted-in member (spec D9)
+   * and keys it by member id, so a member change starts from a clean state. */
+  member: MemberDTO;
+  /** The page date (spec D6); `null` means household today. */
+  date: string | null;
+  /** Household today from the shell timezone, when known; else `history.today` is used. */
+  today: string | null;
+  onDateChange: (date: string) => void;
+  /** The Briefings tab is visible — nothing is fetched while hidden. */
   active: boolean;
   /** Generate all is running or an opt-in write is pending. */
   blocked: boolean;
+  /** Bumped by the page after Generate briefings, to refetch history, payload and image. */
+  refreshKey: number;
   onGenerated: (briefing: Briefing) => void;
   onBusyChange: (busy: boolean) => void;
+  onOpenBlocks: () => void;
 }
 
 type Notice = { testId: string; text: string };
 
-/** Reference `BriefingHistory` port: member pills, history, regenerate/view/print, payload, image. */
+/** Reference `BriefingHistory` port: history, regenerate/view/print, payload, image. */
 export function BriefingWorkspace({
-  members,
-  optIns,
+  member,
+  date,
+  today,
+  onDateChange,
   active,
   blocked,
+  refreshKey,
   onGenerated,
   onBusyChange,
+  onOpenBlocks,
 }: BriefingWorkspaceProps) {
   const t = useT();
   const printingActive = usePrintingPluginActive();
-  const [memberId, setMemberId] = useState("");
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [dateInput, setDateInput] = useState("");
   const [history, setHistory] = useState<BriefingHistoryResponse | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [read, setRead] = useState<BriefingReadResult | null>(null);
@@ -67,39 +74,33 @@ export function BriefingWorkspace({
   const [printing, setPrinting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
-  const currentMember = useRef("");
-  currentMember.current = memberId;
   // Only the latest read may land: a slower response for an earlier date is dropped.
   const latestRead = useRef(0);
 
-  useEffect(() => {
-    if (members.some((member) => member.id === memberId)) return;
-    selectMember(members[0]?.id ?? "");
-  }, [members]);
+  const memberId = member.id;
+  const householdToday = history?.today ?? today;
+  const activeDate = date ?? householdToday;
+  // Spec D7: "today" (or unknown) lets the server resolve the household date.
+  const isToday = date === null || date === householdToday;
 
-  const activeDate = selectedDate ?? history?.today ?? null;
-
-  async function loadHistory(forMember: string) {
+  async function loadHistory() {
     setHistoryError(null);
     try {
-      const response = await authFetch(`/api/daily-briefing/history/${forMember}`, {
+      const response = await authFetch(`/api/daily-briefing/history/${memberId}`, {
         credentials: "include",
       });
       if (!response.ok) throw new Error("history");
-      const data = (await response.json()) as BriefingHistoryResponse;
-      if (currentMember.current === forMember) setHistory(data);
+      setHistory((await response.json()) as BriefingHistoryResponse);
     } catch {
-      if (currentMember.current === forMember) {
-        setHistoryError(t("dailyBriefing.admin.historyLoadError"));
-      }
+      setHistoryError(t("dailyBriefing.admin.historyLoadError"));
     }
   }
 
-  async function loadRead(forMember: string, date: string) {
+  async function loadRead(date: string) {
     const request = ++latestRead.current;
     setReadError(null);
     try {
-      const response = await authFetch(`/api/daily-briefing/${forMember}/${date}`, {
+      const response = await authFetch(`/api/daily-briefing/${memberId}/${date}`, {
         credentials: "include",
       });
       if (!response.ok) throw new Error("read");
@@ -111,60 +112,32 @@ export function BriefingWorkspace({
   }
 
   useEffect(() => {
-    if (active && memberId) void loadHistory(memberId);
-  }, [active, memberId]);
+    if (active) void loadHistory();
+  }, [active, refreshKey]);
+
+  // A new date drops the previous date's payload and notice before its own read lands.
+  const shownDate = useRef(activeDate);
+  useEffect(() => {
+    if (shownDate.current === activeDate) return;
+    shownDate.current = activeDate;
+    setRead(null);
+    setNotice(null);
+  }, [activeDate]);
 
   useEffect(() => {
-    if (active && memberId && activeDate) void loadRead(memberId, activeDate);
-  }, [active, memberId, activeDate, version]);
+    if (active && activeDate) void loadRead(activeDate);
+  }, [active, activeDate, version, refreshKey]);
 
-  function selectMember(id: string) {
-    // Re-selecting the current member keeps its state: the load effects key on `memberId` and
-    // would not refetch what this function clears.
-    if (id === currentMember.current) return;
-    latestRead.current += 1;
-    setMemberId(id);
-    setSelectedDate(null);
-    setDateInput("");
-    setHistory(null);
-    setRead(null);
-    setNotice(null);
-    setActionError(null);
-  }
-
-  function selectDate(date: string) {
-    // Re-selecting the shown date keeps its payload: the read effect keys on the date and would
-    // not refetch what this function clears.
-    if (date === activeDate) return;
-    setSelectedDate(date);
-    setDateInput(date);
-    setRead(null);
-    setNotice(null);
-  }
-
-  function showTypedDate() {
-    const date = dateInput || activeDate;
-    if (!date) return;
-    selectDate(date);
-    setVersion((value) => value + 1);
-  }
-
-  const optedIn = Boolean(memberId && optIns[memberId]);
   const generated = read?.generated === true ? read.briefing : null;
 
   async function generate() {
-    if (!optedIn || blocked || generating) return;
-    const forMember = memberId;
+    if (blocked || generating) return;
     setGenerating(true);
     onBusyChange(true);
     setActionError(null);
     setNotice(null);
     try {
-      // Spec D10: "today" lets the server resolve the household date.
-      const body =
-        selectedDate && selectedDate !== history?.today
-          ? { memberId: forMember, date: selectedDate }
-          : { memberId: forMember };
+      const body = isToday ? { memberId } : { memberId, date: activeDate };
       const response = await authFetch("/api/daily-briefing/generate", {
         method: "POST",
         credentials: "include",
@@ -177,21 +150,19 @@ export function BriefingWorkspace({
         );
       }
       const result = (await response.json()) as Briefing | GenerateSkippedResponse;
-      if (currentMember.current !== forMember) return;
       if ("skipped" in result) {
-        const name = members.find((m) => m.id === result.memberId)?.displayName ?? result.memberId;
         setNotice({
           testId: "daily-briefing-paused-notice",
           text: t("dailyBriefing.admin.pausedNotice")
-            .replace("{name}", name)
+            .replace("{name}", member.displayName)
             .replace("{date}", result.date)
-            .replace("{blocks}", t("dailyBriefing.admin.memberBlockSettingsTitle")),
+            .replace("{blocks}", t("dailyBriefing.admin.tabBlocks")),
         });
         return;
       }
-      if (result.date !== activeDate) selectDate(result.date);
+      if (result.date !== activeDate) onDateChange(result.date);
       setVersion((value) => value + 1);
-      void loadHistory(forMember);
+      void loadHistory();
       onGenerated(result);
     } catch (cause) {
       setActionError(
@@ -206,7 +177,7 @@ export function BriefingWorkspace({
   }
 
   async function print() {
-    if (!memberId || !activeDate || printing) return;
+    if (!activeDate || printing) return;
     setPrinting(true);
     setActionError(null);
     setNotice(null);
@@ -242,38 +213,9 @@ export function BriefingWorkspace({
     }
   }
 
-  if (members.length === 0) {
-    return (
-      <p className="text-muted-foreground text-control">{t("dailyBriefing.admin.noPillMembers")}</p>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-6 xl:flex-row" data-testid="daily-briefing-workspace">
       <div className="flex w-full flex-col gap-4 xl:w-64 xl:shrink-0">
-        <BriefingMemberPills
-          members={members}
-          selectedId={memberId}
-          onSelect={selectMember}
-          testIdPrefix="daily-briefing-preview-member"
-          label={t("dailyBriefing.management.selectMember")}
-        />
-        <label className="sr-only">
-          {t("dailyBriefing.management.selectMember")}
-          <select
-            value={memberId}
-            data-testid="daily-briefing-member-select"
-            onChange={(event) => selectMember(event.target.value)}
-            className={NATIVE_SELECT_CLASSES}
-          >
-            {members.map((member) => (
-              <option key={member.id} value={member.id}>
-                {member.displayName}
-              </option>
-            ))}
-          </select>
-        </label>
-
         <section className="flex flex-col gap-2">
           <h4 className="font-semibold">{t("dailyBriefing.admin.historyTitle")}</h4>
           {historyError ? (
@@ -284,7 +226,7 @@ export function BriefingWorkspace({
                 variant="outline"
                 size="sm"
                 data-testid="daily-briefing-history-retry"
-                onClick={() => void loadHistory(memberId)}
+                onClick={() => void loadHistory()}
               >
                 {t("dailyBriefing.admin.retry")}
               </Button>
@@ -302,7 +244,7 @@ export function BriefingWorkspace({
                     variant={entry.date === activeDate ? "secondary" : "ghost"}
                     aria-pressed={entry.date === activeDate}
                     data-testid={`daily-briefing-history-entry-${entry.date}`}
-                    onClick={() => selectDate(entry.date)}
+                    onClick={() => onDateChange(entry.date)}
                     className="w-full justify-between"
                   >
                     <span className="font-mono">{entry.date}</span>
@@ -320,36 +262,24 @@ export function BriefingWorkspace({
             </ul>
           )}
         </section>
+      </div>
 
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
         <div className="flex flex-wrap items-end gap-2">
           <Label className="flex flex-col items-start gap-1">
             {t("dailyBriefing.admin.previewDateLabel")}
             <Input
               type="date"
               data-testid="daily-briefing-admin-preview-date"
-              value={dateInput || activeDate || ""}
-              onChange={(event) => setDateInput(event.target.value)}
+              value={activeDate ?? ""}
+              onChange={(event) => event.target.value && onDateChange(event.target.value)}
               className="w-40"
             />
           </Label>
           <Button
             type="button"
-            variant="outline"
-            data-testid="daily-briefing-admin-preview-show"
-            disabled={!memberId || !(dateInput || activeDate)}
-            onClick={showTypedDate}
-          >
-            {t("dailyBriefing.admin.previewShowButton")}
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
             data-testid="daily-briefing-generate"
-            disabled={!optedIn || blocked || generating}
+            disabled={blocked || generating}
             onClick={() => void generate()}
           >
             {generating
@@ -384,11 +314,6 @@ export function BriefingWorkspace({
             {printing ? t("dailyBriefing.admin.printing") : t("dailyBriefing.admin.print")}
           </Button>
         </div>
-        {memberId && !optedIn && (
-          <p className="text-sm text-muted-foreground" data-testid="daily-briefing-needs-opt-in">
-            {t("dailyBriefing.admin.needsOptIn")}
-          </p>
-        )}
         {!printingActive && (
           <p
             className="text-sm text-muted-foreground"
@@ -398,9 +323,27 @@ export function BriefingWorkspace({
           </p>
         )}
         {notice && (
-          <p role="status" aria-live="polite" data-testid={notice.testId} className="text-control">
-            {notice.text}
-          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <p
+              role="status"
+              aria-live="polite"
+              data-testid={notice.testId}
+              className="text-control"
+            >
+              {notice.text}
+            </p>
+            {notice.testId === "daily-briefing-paused-notice" && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                data-testid="daily-briefing-paused-open-blocks"
+                onClick={onOpenBlocks}
+              >
+                {t("dailyBriefing.admin.openBlocks")}
+              </Button>
+            )}
+          </div>
         )}
         <ErrorNotice message={actionError} data-testid="daily-briefing-action-error" />
 
@@ -414,7 +357,7 @@ export function BriefingWorkspace({
                   variant="outline"
                   size="sm"
                   data-testid="daily-briefing-read-retry"
-                  onClick={() => activeDate && void loadRead(memberId, activeDate)}
+                  onClick={() => activeDate && void loadRead(activeDate)}
                 >
                   {t("dailyBriefing.admin.retry")}
                 </Button>
@@ -439,11 +382,11 @@ export function BriefingWorkspace({
               </p>
             ) : null}
           </div>
-          {active && memberId && activeDate && (
+          {active && activeDate && (
             <BriefingImage
               memberId={memberId}
               date={activeDate}
-              version={version}
+              version={version + refreshKey}
               status={generated?.status}
             />
           )}
