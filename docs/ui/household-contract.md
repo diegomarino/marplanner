@@ -79,7 +79,11 @@ The ordered capability table is:
 4. `/admin/reminders` — reminders
 5. `/admin/meals` — Meals: editable week menu (the family meal grid; a cell adds a one-off or, via "Every <weekday>", a recurring entry in an active plan; a meal opens for content edit or delete, and recurring changes apply every week), meal plans each listing their recurring entries by weekday with an in-card add form and activate/deactivate, then recipes
 6. `/admin/daily-messages` — daily messages
-7. `/admin/daily-briefing` — Briefing: Blocks tab (member pills, per-weekday pause switches over the block matrix, block order, generation time and auto-print binding, "settings changed" notice) and Preview / Generate tab (opt-in, Generate all, member pills, 30-day history, regenerate, view PNG, print to the queue, payload, image states); tabs are local state, no sub-paths
+7. `/admin/daily-briefing` — Briefing: three tabs (local state, no sub-paths).
+   - Schedule (default): automatic generation time and auto-print after morning chores (Save enabled when changed); Generate briefings for a chosen date (Generate for all members); a Members table with the per-member opt-in (its only home), the briefing days summary, the result for the chosen date and Blocks/Briefings shortcuts.
+   - Blocks and Briefings share one member pill bar (opted-out members marked "off", gated with a Turn on notice).
+   - Blocks: per-member blocks × weekdays matrix in household week-start order, with a "Briefing runs" pause row, inline block parameters and drag/keyboard reorder of the household block order; "settings changed" notice links to Briefings.
+   - Briefings: 30-day history, date, Generate/Regenerate, View PNG, Print to the queue, payload and image states; the paused notice links to Blocks.
 8. `/admin/telemetry` — client telemetry
 9. `/admin/backups` — backups: snapshot with success feedback, drag-and-drop .db upload, colour-coded types, relative dates, typed-filename restore, download with progress
 10. `/admin/time-announcements` — time announcements (card list; create/edit dialog; delete confirmation)

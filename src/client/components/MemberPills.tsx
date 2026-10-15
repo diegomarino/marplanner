@@ -14,7 +14,7 @@ import { PillControl } from "./PillControl";
  */
 
 /** Static class map so Tailwind sees every class (the `TodayAgenda.tsx` precedent). */
-const MEMBER_DOT_CLASS: Record<MemberColorKey, string> = {
+export const MEMBER_DOT_CLASS: Record<MemberColorKey, string> = {
   blue: "bg-member-blue-500",
   sky: "bg-member-sky-500",
   teal: "bg-member-teal-500",

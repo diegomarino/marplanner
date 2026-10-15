@@ -367,9 +367,14 @@ test("admin opt-in -> Generate -> complete ordered catalogue and raster preview 
   await expect(
     management.getByRole("heading", { name: m["admin.sidebar.briefing"], exact: true })
   ).toBeVisible();
-  await management.getByTestId("daily-briefing-tab-preview").click();
+  // Schedule is the default tab and the only home of the opt-in.
+  await expect(management.getByTestId("daily-briefing-tab-schedule")).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
 
   async function optIn(member: Member): Promise<void> {
+    await management.getByTestId("daily-briefing-tab-schedule").click();
     const optInResponse = page.waitForResponse(
       (response) =>
         response.url().includes(`/api/daily-briefing/opt-in/${member.id}`) &&
@@ -380,7 +385,8 @@ test("admin opt-in -> Generate -> complete ordered catalogue and raster preview 
   }
 
   async function generateFor(member: Member): Promise<GeneratedBriefing> {
-    await management.getByTestId(`daily-briefing-preview-member-${member.id}`).click();
+    await management.getByTestId("daily-briefing-tab-preview").click();
+    await management.getByTestId(`daily-briefing-member-pill-${member.id}`).click();
     const generateRequest = page.waitForRequest(
       (request) =>
         request.url().includes("/api/daily-briefing/generate") && request.method() === "POST"
@@ -513,12 +519,13 @@ test("admin opt-in -> Generate -> complete ordered catalogue and raster preview 
   ).toEqual([EXPECTED_PRESENT_BLOCK_TYPES[0], "message", ...EXPECTED_PRESENT_BLOCK_TYPES.slice(1)]);
 
   // Preview remains an administration capability after the family route is retired.
-  await management.getByTestId(`daily-briefing-preview-member-${secondMember.id}`).click();
-  await management.getByTestId("daily-briefing-admin-preview-date").fill(householdToday);
+  // Selecting a member loads the page date (today here); there is no Show button any more.
+  await management.getByTestId(`daily-briefing-member-pill-${firstMember.id}`).click();
   const previewResponse = page.waitForResponse((response) =>
     response.url().includes(`/api/daily-briefing/${secondMember.id}/${householdToday}/preview.png`)
   );
-  await management.getByTestId("daily-briefing-admin-preview-show").click();
+  await management.getByTestId(`daily-briefing-member-pill-${secondMember.id}`).click();
+  await management.getByTestId("daily-briefing-admin-preview-date").fill(householdToday);
   expect((await previewResponse).status()).toBe(200);
   const preview = management.getByTestId("daily-briefing-admin-preview-image");
   await expect(preview).toBeVisible();
@@ -537,7 +544,7 @@ test("admin opt-in -> Generate -> complete ordered catalogue and raster preview 
   const todayCode = weekdayCode(householdToday);
   async function toggleToday(): Promise<void> {
     await management.getByTestId("daily-briefing-tab-blocks").click();
-    await management.getByTestId(`daily-briefing-block-member-${secondMember.id}`).click();
+    await management.getByTestId(`daily-briefing-member-pill-${secondMember.id}`).click();
     const scheduleResponse = page.waitForResponse(
       (response) =>
         response.url().includes(`/api/daily-briefing/schedule/${secondMember.id}`) &&
@@ -547,18 +554,185 @@ test("admin opt-in -> Generate -> complete ordered catalogue and raster preview 
     expect((await scheduleResponse).status()).toBe(200);
   }
   await toggleToday();
-  await expect(management.getByTestId("daily-briefing-settings-changed")).toBeVisible();
+  // A pause changes no briefing already made, so it asks for no regenerate.
+  await expect(management.getByTestId("daily-briefing-settings-changed")).toHaveCount(0);
   await management.getByTestId("daily-briefing-tab-preview").click();
-  await management.getByTestId(`daily-briefing-preview-member-${secondMember.id}`).click();
-  const skippedResponse = page.waitForResponse(
-    (response) =>
-      response.url().includes("/api/daily-briefing/generate") &&
-      response.request().method() === "POST"
-  );
-  await management.getByTestId("daily-briefing-generate").click();
-  expect(await (await skippedResponse).json()).toMatchObject({ skipped: true, reason: "paused" });
+  await management.getByTestId(`daily-briefing-member-pill-${secondMember.id}`).click();
+  // Briefings explains the paused day up front and offers no Generate for it.
   await expect(management.getByTestId("daily-briefing-paused-notice")).toBeVisible();
+  await expect(management.getByTestId("daily-briefing-generate")).toBeDisabled();
+  // The server still refuses a paused day on its own (round-1 write-time recheck).
+  const skipped = await page.request.post("/api/daily-briefing/generate", {
+    data: { memberId: secondMember.id },
+  });
+  expect(skipped.status()).toBe(200);
+  expect(await skipped.json()).toMatchObject({ skipped: true, reason: "paused" });
+  await management.getByTestId("daily-briefing-paused-open-blocks").click();
+  await expect(management.getByTestId("daily-briefing-tab-blocks")).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
   await toggleToday(); // resume, so later specs sharing the data dir are unaffected
+});
+
+test("admin briefing tabs: opt-in gate, matrix cell, keyboard reorder and Generate briefings for a date", async ({
+  page,
+}) => {
+  const runId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  const childA = { id: "", name: `Briefing tabs A ${runId}` };
+  const childB = { id: "", name: `Briefing tabs B ${runId}` };
+
+  await page.goto("/");
+  await expect(page.getByTestId("access-gate-form")).toBeVisible();
+  await page.getByTestId("access-gate-form").locator('input[name="token"]').fill(ACCESS_TOKEN);
+  await page.getByRole("button", { name: "Enter" }).click();
+  await expect(page.getByRole("button", { name: "Provision Device" })).toBeVisible({
+    timeout: 15_000,
+  });
+  await page.getByLabel("Bootstrap key").fill(BOOTSTRAP_KEY);
+  await page.getByRole("button", { name: "Provision Device" }).click();
+  await expect(page.getByTestId("home-surface")).toBeVisible({ timeout: 15_000 });
+
+  const settingsResponse = await page.request.get("/api/settings");
+  expect(settingsResponse.status()).toBe(200);
+  const settings = (await settingsResponse.json()) as {
+    locale: { language?: string; timezone: string };
+  };
+  const m = messages[resolveLang(settings.locale.language)];
+  const pastDate = addDays(dateInTimezone(new Date(), settings.locale.timezone), -7);
+
+  // Two fresh children, neither opted in.
+  for (const member of [childA, childB]) {
+    const memberResponse = await page.request.post("/api/members", {
+      data: { displayName: member.name, role: "child" },
+    });
+    expect(memberResponse.status()).toBe(201);
+    member.id = ((await memberResponse.json()) as { id: string }).id;
+  }
+
+  await unlockAdmin(page, ADMIN_PIN);
+  await openAdminSection(page, "admin-nav-daily-briefing-management");
+  const management = page.getByTestId("daily-briefing-management");
+
+  try {
+    // 1) Schedule is the default tab; opted-out members show no days.
+    await expect(management.getByTestId("daily-briefing-tab-schedule")).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    for (const member of [childA, childB]) {
+      await expect(management.getByTestId(`daily-briefing-member-days-${member.id}`)).toHaveText(
+        "—"
+      );
+    }
+
+    // 2) Blocks: an opted-out member is gated until turned on.
+    await management.getByTestId("daily-briefing-tab-blocks").click();
+    await management.getByTestId(`daily-briefing-member-pill-${childA.id}`).click();
+    await expect(management.getByTestId("daily-briefing-opted-out")).toBeVisible();
+    await expect(management.getByTestId("daily-briefing-block-matrix")).toHaveCount(0);
+    const turnOnResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/api/daily-briefing/opt-in/${childA.id}`) &&
+        response.request().method() === "PUT"
+    );
+    await management.getByTestId("daily-briefing-turn-on").click();
+    expect((await turnOnResponse).status()).toBe(200);
+    await expect(management.getByTestId("daily-briefing-block-matrix")).toBeVisible();
+
+    // 3) One cell is the only on/off for a block on a day.
+    const dadJokeMonday = management.getByTestId("daily-briefing-block-cell-dadJoke-mon");
+    await expect(dadJokeMonday).toBeChecked();
+    const cellResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/api/daily-briefing/block-settings/${childA.id}/dadJoke`) &&
+        response.request().method() === "PUT"
+    );
+    await dadJokeMonday.click();
+    expect((await cellResponse).status()).toBe(200);
+    await expect(dadJokeMonday).not.toBeChecked();
+    await expect(management.getByTestId("daily-briefing-settings-changed")).toBeVisible();
+
+    // 4) Keyboard reorder of the household order. `weather` never prints in this fixture set (no
+    // location), so moving it leaves the order other tests in this file assert unchanged.
+    const rowIds = () =>
+      management
+        .getByTestId(/^daily-briefing-admin-block-settings-row-/)
+        .evaluateAll((rows) => rows.map((row) => row.getAttribute("data-testid") ?? ""));
+    const before = await rowIds();
+    const weatherIndex = before.indexOf("daily-briefing-admin-block-settings-row-weather");
+    expect(weatherIndex).toBeGreaterThan(0);
+    const predecessor = before[weatherIndex - 1];
+    // dnd-kit announces every step in its live region. Waiting on the announcement (rather than a
+    // sleep) also covers the case where the sensor first scrolls the page to reach the target row.
+    const liveRegion = page.locator('[id^="DndLiveRegion"]');
+    const movedTo = (position: number) =>
+      m["dailyBriefing.admin.dragOver"]
+        .replace("{block}", m["dailyBriefing.admin.blockType.weather"])
+        .replace("{position}", String(position));
+    async function moveWeather(
+      key: "ArrowUp" | "ArrowDown",
+      from: number,
+      to: number
+    ): Promise<void> {
+      const orderResponse = page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/daily-briefing/block-order") &&
+          response.request().method() === "PUT"
+      );
+      const handle = management.getByTestId("daily-briefing-admin-block-drag-weather");
+      await expect(handle).toBeEnabled();
+      await handle.focus();
+      await page.keyboard.press("Space");
+      await expect(liveRegion).toHaveText(movedTo(from));
+      await page.keyboard.press(key);
+      await expect(liveRegion).toHaveText(movedTo(to));
+      await page.keyboard.press("Space");
+      expect((await orderResponse).status()).toBe(200);
+    }
+    await moveWeather("ArrowUp", weatherIndex + 1, weatherIndex);
+    await expect
+      .poll(async () => (await rowIds()).slice(weatherIndex - 1, weatherIndex + 1))
+      .toEqual(["daily-briefing-admin-block-settings-row-weather", predecessor]);
+    await moveWeather("ArrowDown", weatherIndex, weatherIndex + 1); // restore the household order
+    await expect.poll(rowIds).toEqual(before);
+
+    // 5) Generate briefings for a past date from Schedule.
+    await management.getByTestId("daily-briefing-tab-schedule").click();
+    await management.getByTestId("daily-briefing-generate-date").fill(pastDate);
+    const generateAllRequest = page.waitForRequest(
+      (request) =>
+        request.url().includes("/api/daily-briefing/generate-all") && request.method() === "POST"
+    );
+    const generateAllResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/daily-briefing/generate-all") &&
+        response.request().method() === "POST"
+    );
+    await management.getByTestId("daily-briefing-generate-all").click();
+    expect((await generateAllRequest).postDataJSON()).toEqual({ date: pastDate });
+    expect((await generateAllResponse).status()).toBe(200);
+    await expect(management.getByTestId(`daily-briefing-member-status-${childA.id}`)).toHaveText(
+      new RegExp(`^(${m["dailyBriefing.status.ready"]}|${m["dailyBriefing.status.partial"]})$`)
+    );
+    await expect(management.getByTestId(`daily-briefing-member-status-${childB.id}`)).toHaveText(
+      "—"
+    );
+
+    // 6) The row shortcut opens that member's briefing for the same date.
+    await management.getByTestId(`daily-briefing-open-briefings-${childA.id}`).click();
+    await expect(management.getByTestId("daily-briefing-tab-preview")).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    await expect(management.getByTestId(`daily-briefing-history-entry-${pastDate}`)).toBeVisible();
+  } finally {
+    // 7) Leave the shared data dir as other specs expect it, even after a failed step.
+    const optOutResponse = await page.request.put(`/api/daily-briefing/opt-in/${childA.id}`, {
+      data: { enabled: false },
+    });
+    expect(optOutResponse.status()).toBe(200);
+  }
 });
 
 /** (docs/features/daily-briefing.md Phase 7, FR-017) — the trigger -> print e2e
@@ -844,18 +1018,21 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   // Idempotent: checks the binding regardless of whatever state a previously-interrupted run
   // left it in (this spec's own teardown restores it to unbound, but defends against a crash
   // that skipped teardown rather than assuming a clean precondition).
-  const settingsSaveResponse = page.waitForResponse(
-    (response) =>
-      response.url().includes("/api/daily-briefing/settings") &&
-      response.request().method() === "PUT"
-  );
-  await management.getByTestId("daily-briefing-admin-trigger-binding").check();
-  await management.getByTestId("daily-briefing-admin-settings-save").click();
-  expect((await settingsSaveResponse).status()).toBe(200);
-  await expect(management.getByTestId("daily-briefing-admin-trigger-binding")).toBeChecked();
+  // Save is enabled only when a value changed, so an already-bound trigger needs no write.
+  const triggerBinding = management.getByTestId("daily-briefing-admin-trigger-binding");
+  if (!(await triggerBinding.isChecked())) {
+    const settingsSaveResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/daily-briefing/settings") &&
+        response.request().method() === "PUT"
+    );
+    await triggerBinding.check();
+    await management.getByTestId("daily-briefing-admin-settings-save").click();
+    expect((await settingsSaveResponse).status()).toBe(200);
+  }
+  await expect(triggerBinding).toBeChecked();
 
-  await management.getByTestId("daily-briefing-tab-preview").click();
-
+  // Opt-in lives on the default Schedule tab.
   const optInResponse = page.waitForResponse(
     (response) =>
       response.url().includes(`/api/daily-briefing/opt-in/${boundMember.id}`) &&
@@ -881,7 +1058,8 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
 
   // 6b) Generate optOutMember's raster, then immediately opt them back OUT (the isolation —
   // see above).
-  await management.getByTestId(`daily-briefing-preview-member-${optOutMember.id}`).click();
+  await management.getByTestId("daily-briefing-tab-preview").click();
+  await management.getByTestId(`daily-briefing-member-pill-${optOutMember.id}`).click();
   const optOutGenerateResponse = page.waitForResponse(
     (response) =>
       response.url().includes("/api/daily-briefing/generate") &&
@@ -890,6 +1068,7 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   await management.getByTestId("daily-briefing-generate").click();
   expect((await optOutGenerateResponse).status()).toBe(200);
 
+  await management.getByTestId("daily-briefing-tab-schedule").click();
   const optOutOptOutResponse = page.waitForResponse(
     (response) =>
       response.url().includes(`/api/daily-briefing/opt-in/${optOutMember.id}`) &&
@@ -900,7 +1079,8 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
 
   // 6c) Generate boundMember's raster LAST — this is the freshest possible moment before step 7/8
   // fire the real trigger off boundMember's morning completion.
-  await management.getByTestId(`daily-briefing-preview-member-${boundMember.id}`).click();
+  await management.getByTestId("daily-briefing-tab-preview").click();
+  await management.getByTestId(`daily-briefing-member-pill-${boundMember.id}`).click();
   const generateResponse = page.waitForResponse(
     (response) =>
       response.url().includes("/api/daily-briefing/generate") &&
@@ -1018,7 +1198,7 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   await openAdminSection(page, "admin-nav-daily-briefing-management");
   const managementAgain = page.getByTestId("daily-briefing-management");
   await managementAgain.getByTestId("daily-briefing-tab-preview").click();
-  await managementAgain.getByTestId(`daily-briefing-preview-member-${boundMember.id}`).click();
+  await managementAgain.getByTestId(`daily-briefing-member-pill-${boundMember.id}`).click();
   const regenerateResponse = page.waitForResponse(
     (response) =>
       response.url().includes("/api/daily-briefing/generate") &&
