@@ -46,7 +46,7 @@ export function AssignmentDialog({
       }}
     >
       <DialogContent
-        className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-xl"
+        className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-2xl"
         closeLabel={t("routines.action.cancel")}
         data-testid="assignment-dialog"
       >
@@ -108,10 +108,20 @@ function AssignmentRow({
 
   return (
     <div
-      className="flex flex-col gap-3 rounded-2xl border p-3"
+      className="flex flex-col gap-3 rounded-2xl border p-4"
       data-testid={`routine-assignment-${child.id}`}
     >
-      <MemberChip member={child} className="self-start text-base" />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <MemberChip member={child} className="self-start text-base" />
+        {assignment !== undefined && !assignment.active && (
+          <span
+            className="text-muted-foreground text-sm"
+            data-testid={`routine-assignment-${child.id}-inactive`}
+          >
+            {t("routines.assignments.statusInactive")}
+          </span>
+        )}
+      </div>
       <WeekdayPicker
         mode="multi"
         value={weekdays}

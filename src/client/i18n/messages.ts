@@ -314,6 +314,7 @@ export const messages = {
     "routines.admin.detailError": "Failed to load this routine's chores and assignments.",
     "routines.admin.saveError": "The routine could not be saved.",
     "routines.admin.choreSaveError": "The chore could not be saved.",
+    "routines.assignments.statusInactive": "Deactivated",
     // admin-printer
     "admin.printer.description": "Printer preferences, connection and diagnostics.",
     "admin.printer.tabs": "Printer sections",
@@ -1790,6 +1791,7 @@ export const messages = {
     "routines.admin.detailError": "No se pudieron cargar las tareas y asignaciones de esta rutina.",
     "routines.admin.saveError": "No se pudo guardar la rutina.",
     "routines.admin.choreSaveError": "No se pudo guardar la tarea.",
+    "routines.assignments.statusInactive": "Desactivada",
     // admin-printer
     "admin.printer.description": "Preferencias, conexión y diagnóstico de la impresora.",
     "admin.printer.tabs": "Secciones de la impresora",
