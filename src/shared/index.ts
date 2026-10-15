@@ -654,6 +654,8 @@ export interface BuildInfo {
 export interface SystemStatus {
   status: "ok";
   checkedAt: string;
+  /** Whole seconds since the server process started. */
+  uptimeSeconds: number;
   build: BuildInfo;
 }
 
