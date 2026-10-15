@@ -66,7 +66,15 @@ import { getLabels } from "./render/labels";
 import type { PluginContentSourceId, PluginId } from "../../../shared/plugins";
 
 export { DailyBriefingValidationError } from "./errors";
-import { DailyBriefingValidationError } from "./errors";
+export {
+  DailyBriefingNotFoundError,
+  DailyBriefingPausedError,
+  DailyBriefingPrintUnavailableError,
+  DailyBriefingRasterMissingError,
+} from "./errors";
+export { listMemberSchedules, setMemberSchedule } from "./schedule";
+import { DailyBriefingPausedError, DailyBriefingValidationError } from "./errors";
+import { isBriefingScheduledOn } from "./schedule";
 
 const CONTENT_SOURCE_OWNERS = {
   weather: "weather",
@@ -935,6 +943,9 @@ export async function generateBriefing(
     if (!isOptedIn(memberId)) {
       throw new DailyBriefingValidationError(`Member "${memberId}" is not opted in`);
     }
+    if (!isBriefingScheduledOn(memberId, date)) {
+      throw new DailyBriefingPausedError(memberId, date);
+    }
 
     const language = readHouseholdLanguage();
     const txCtx: CalendarReadContext = new Map();
@@ -1227,6 +1238,8 @@ export async function generateAllBriefings(requestedDate?: string): Promise<Brie
     // An opt-in row remains after archive so that reactivation self-heals; it
     // is skipped while inactive rather than treated as an all-or-nothing error.
     if (!isActiveMember(memberId)) continue;
+    // A member paused on this weekday is skipped like an inactive one (spec D4).
+    if (!isBriefingScheduledOn(memberId, date)) continue;
     try {
       briefings.push(await generateBriefing(memberId, date, sharedCache));
     } catch (err) {

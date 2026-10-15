@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import {
+  DailyBriefingPausedError,
   DailyBriefingValidationError,
   generateBriefing,
   listOptIns,
@@ -17,7 +18,7 @@ import {
 } from "../modules/daily-briefing/settings";
 import { setMemberSchedule } from "../modules/daily-briefing/schedule";
 import { isStrictCalendarDate, runJobNow } from "../host-api";
-import type { Briefing, GenerateAllResponse } from "../../shared";
+import type { Briefing, GenerateAllResponse, GenerateSkippedResponse } from "../../shared";
 
 const ALLOWED_GENERATE_KEYS = new Set(["memberId", "date"]);
 const ALLOWED_GENERATE_ALL_KEYS = new Set(["date"]);
@@ -58,6 +59,14 @@ export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
     try {
       return reply.code(200).send(await generateBriefing(memberId, date ?? undefined));
     } catch (err) {
+      if (err instanceof DailyBriefingPausedError) {
+        return reply.code(200).send({
+          skipped: true,
+          reason: "paused",
+          memberId: err.memberId,
+          date: err.date,
+        } satisfies GenerateSkippedResponse);
+      }
       return handleDailyBriefingError(err, reply);
     }
   });

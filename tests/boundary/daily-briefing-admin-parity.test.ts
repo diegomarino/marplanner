@@ -9,7 +9,12 @@ import {
   setMemberSchedule,
 } from "../../src/server/modules/daily-briefing/schedule";
 import { useIsolatedDb } from "../helpers/db";
-import { seedMember } from "../helpers/daily-briefing-seed";
+import {
+  generateAllBriefings,
+  generateBriefing,
+} from "../../src/server/modules/daily-briefing/index";
+import { isMissed, regenerateFailedBriefings } from "../../src/server/modules/daily-briefing/job";
+import { findBriefingRow, seedBriefingRow, seedMember } from "../helpers/daily-briefing-seed";
 
 /** Admin parity (docs/superpowers/specs/2026-10-15-admin-briefing-design.md): weekday pause
  * schedule, skip semantics, history, manual print through the queue, 202 while rendering. */
@@ -44,7 +49,13 @@ describe("daily-briefing admin parity", () => {
     it("defaults to every day and stores a canonical, de-duplicated list", () => {
       seedMember("m-sched");
       expect(readMemberWeekdays("m-sched")).toEqual([
-        "mon", "tue", "wed", "thu", "fri", "sat", "sun",
+        "mon",
+        "tue",
+        "wed",
+        "thu",
+        "fri",
+        "sat",
+        "sun",
       ]);
       expect(setMemberSchedule("m-sched", ["sun", "mon", "mon"])).toEqual({
         memberId: "m-sched",
@@ -115,6 +126,69 @@ describe("daily-briefing admin parity", () => {
         expect(res.json()).toMatchObject({ error: "validation_error" });
       }
       expect(readMemberWeekdays("m-bad")).toHaveLength(7);
+    });
+  });
+
+  describe("paused weekdays are skipped", () => {
+    // 2026-09-07 is a Monday.
+    const MONDAY = "2026-09-07";
+
+    beforeEach(() => {
+      __setPrintingPluginActiveForTests(false); // no render needed for these assertions
+    });
+
+    it("generateBriefing writes nothing and the route answers skipped", async () => {
+      seedMember("m-paused");
+      setMemberSchedule("m-paused", ["tue"]);
+      await expect(generateBriefing("m-paused", MONDAY)).rejects.toMatchObject({
+        name: "DailyBriefingPausedError",
+        memberId: "m-paused",
+        date: MONDAY,
+      });
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/daily-briefing/generate",
+        cookies: auth(),
+        payload: { memberId: "m-paused", date: MONDAY },
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toEqual({
+        skipped: true,
+        reason: "paused",
+        memberId: "m-paused",
+        date: MONDAY,
+      });
+      expect(findBriefingRow("m-paused", MONDAY)).toBeUndefined();
+    });
+
+    it("Generate all skips a paused member but generates the others", async () => {
+      seedMember("m-a-paused");
+      seedMember("m-b-running");
+      setMemberSchedule("m-a-paused", ["tue"]);
+      const generated = await generateAllBriefings(MONDAY);
+      expect(generated.map((briefing) => briefing.memberId)).toEqual(["m-b-running"]);
+      expect(findBriefingRow("m-a-paused", MONDAY)).toBeUndefined();
+    });
+
+    it("the retry pass skips a member paused after their row was written", async () => {
+      seedMember("m-retry");
+      seedBriefingRow("m-retry", MONDAY);
+      getDb()
+        .prepare("UPDATE daily_briefing SET status = 'failed' WHERE member_id = ? AND date = ?")
+        .run("m-retry", MONDAY);
+      setMemberSchedule("m-retry", ["tue"]);
+      await expect(regenerateFailedBriefings(MONDAY)).resolves.toBeUndefined();
+      const row = getDb()
+        .prepare("SELECT status FROM daily_briefing WHERE member_id = ? AND date = ?")
+        .get("m-retry", MONDAY);
+      expect(row).toEqual({ status: "failed" });
+    });
+
+    it("catch-up does not count a paused member as missed", () => {
+      seedMember("m-catchup");
+      expect(isMissed(MONDAY)).toBe(true);
+      setMemberSchedule("m-catchup", ["tue"]);
+      expect(isMissed(MONDAY)).toBe(false);
     });
   });
 });
