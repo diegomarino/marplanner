@@ -2,9 +2,13 @@ import { render, screen, fireEvent, waitFor, cleanup, within } from "@testing-li
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MealsManagement } from "@/admin/MealsManagement";
+import { addCalendarDays, buildWeekDays } from "@/calendar/calendar-presentation";
 import { LanguageProvider } from "@/i18n";
+import { weekdayOf } from "../../src/shared/householdTime";
 
-/** Rework — view-staleness regression coverage.
+/** Rework — view-staleness regression coverage (updated for the editable admin week grid:
+ * every write — from the grid's entry dialog, a plan card's form, or a recipe delete — must
+ * show up in the grid AND in the plan cards without a reload).
  * added `refreshMenus` (day + week) but wired it only into the NEW plan/recurring
  * write paths; the PRE-EXISTING one-off entry create left the week grid stale (day-only
  * refresh), and deleting a recipe left BOTH the day and week grid stale (list-only
@@ -47,16 +51,12 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
     createdAt: number;
   }>;
   let nextEntryId: number;
+  let fetchMock: ReturnType<typeof vi.fn>;
 
-  function todayIsoDate(): string {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }
-
-  const today = todayIsoDate();
+  // The household timezone below is UTC, so "today" is the UTC date.
+  const today = new Date().toISOString().slice(0, 10);
+  const previousWeekAnchor = addCalendarDays(today, -7);
+  let delayedWeeks: Map<string, Promise<void>>;
 
   function toMenuItem(entry: (typeof entries)[number]) {
     const recipe = entry.recipeId ? recipes.find((r) => r.id === entry.recipeId) : undefined;
@@ -80,18 +80,27 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
     return grouped;
   }
 
+  /** The derived menu for one date: active-plan recurring entries for its weekday, then
+   * one-offs for the date (FR-003/FR-017). */
   function dayMenuFor(date: string) {
-    return entries.filter((e) => e.kind === "oneoff" && e.date === date).map(toMenuItem);
+    const weekday = weekdayOf(date, "UTC");
+    const activePlanIds = new Set(plans.filter((plan) => plan.active).map((plan) => plan.id));
+    const recurring = entries.filter(
+      (e) => e.kind === "recurring" && e.weekday === weekday && activePlanIds.has(e.mealPlanId!)
+    );
+    const oneoffs = entries.filter((e) => e.kind === "oneoff" && e.date === date);
+    return [...recurring, ...oneoffs].map(toMenuItem);
   }
 
   function weekMenuFor(anchorDate: string) {
-    // Simplified single-key "week" — the client does not assume a fixed key count,
-    // it just iterates whatever Object.keys(week) returns.
-    return { [anchorDate]: bySlot(dayMenuFor(anchorDate)) };
+    return Object.fromEntries(
+      buildWeekDays(anchorDate, 1).map((date) => [date, bySlot(dayMenuFor(date))])
+    );
   }
 
   beforeEach(() => {
     nextEntryId = 1;
+    delayedWeeks = new Map();
     recipes = [
       {
         id: "r1",
@@ -112,7 +121,9 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
 
       if (url.includes("/api/settings")) {
         return Promise.resolve(
-          new Response(JSON.stringify({ locale: { language: "en" } }), { status: 200 })
+          new Response(JSON.stringify({ locale: { timezone: "UTC", language: "en" } }), {
+            status: 200,
+          })
         );
       }
 
@@ -137,6 +148,15 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
 
       if (url.startsWith("/api/recipes")) {
         return Promise.resolve(new Response(JSON.stringify(recipes), { status: 200 }));
+      }
+
+      if (/\/api\/meal-entries\/[^/]+$/.test(url) && method === "PATCH") {
+        const id = url.match(/\/api\/meal-entries\/([^/]+)$/)?.[1];
+        const body = JSON.parse(init!.body as string) as { recipeId?: string; note?: string };
+        entries = entries.map((e) =>
+          e.id === id ? { ...e, recipeId: body.recipeId ?? null, note: body.note ?? null } : e
+        );
+        return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
       }
 
       if (/\/api\/meal-plans\/[^/]+\/entries$/.test(url)) {
@@ -168,19 +188,16 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
 
       if (url.startsWith("/api/menu/week")) {
         const date = new URL(url, "http://localhost").searchParams.get("date") ?? today;
-        return Promise.resolve(new Response(JSON.stringify(weekMenuFor(date)), { status: 200 }));
-      }
-
-      if (url.startsWith("/api/menu")) {
-        const date = new URL(url, "http://localhost").searchParams.get("date") ?? today;
-        return Promise.resolve(new Response(JSON.stringify(dayMenuFor(date)), { status: 200 }));
+        const respond = () => new Response(JSON.stringify(weekMenuFor(date)), { status: 200 });
+        const delay = delayedWeeks.get(date);
+        return delay ? delay.then(respond) : Promise.resolve(respond());
       }
 
       throw new Error(`unexpected fetch: ${url} (${method})`);
     });
 
     vi.stubGlobal("fetch", mockFetch);
-    vi.spyOn(window, "confirm").mockReturnValue(true);
+    fetchMock = mockFetch;
   });
 
   afterEach(() => {
@@ -189,33 +206,41 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
     cleanup();
   });
 
-  it("shows a newly-added one-off entry in the week grid without a manual reload", async () => {
-    plans = []; // keep the recurring-entry form's note input out of the DOM (placeholder collision)
-
+  function renderSurface() {
     render(
       <LanguageProvider>
         <MealsManagement />
       </LanguageProvider>
     );
+  }
 
-    const weekGrid = await screen.findByTestId("meals-week-grid");
+  /** The recipe card (Recipes renders after the week grid and the plan cards). */
+  function recipeCard(name: string): HTMLElement {
+    return screen.getByRole("heading", { name }).closest("div.border") as HTMLElement;
+  }
+
+  it("shows a newly-added one-off entry in the week grid without a manual reload", async () => {
+    renderSurface();
+
+    const weekGrid = await screen.findByTestId("meal-plan-grid");
     expect(within(weekGrid).queryByText("Weeknight note")).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByTestId("meals-entry-date-input"), { target: { value: today } });
-    fireEvent.change(screen.getByTestId("meals-entry-slot-select"), {
-      target: { value: "dinner" },
-    });
-    fireEvent.click(screen.getByRole("radio", { name: "Note" }));
-    fireEvent.change(screen.getByPlaceholderText("Entry note"), {
+    fireEvent.click(await screen.findByTestId(`meal-cell-${today}-dinner`));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("radio", { name: "Note" }));
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Note" }), {
       target: { value: "Weeknight note" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Add Entry" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add Entry" }));
 
     await waitFor(() => {
       expect(
-        within(screen.getByTestId("meals-week-grid")).getByText("Weeknight note")
+        within(screen.getByTestId("meal-plan-grid")).getByText("Weeknight note")
       ).toBeInTheDocument();
     });
+    expect(entries).toEqual([
+      expect.objectContaining({ kind: "oneoff", date: today, slot: "dinner" }),
+    ]);
   });
 
   it("removes a deleted recipe's entries from the week grid without a manual reload", async () => {
@@ -233,63 +258,50 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
       },
     ];
 
-    render(
-      <LanguageProvider>
-        <MealsManagement />
-      </LanguageProvider>
-    );
+    renderSurface();
 
-    const weekGrid = await screen.findByTestId("meals-week-grid");
-    await waitFor(() => {
-      expect(within(weekGrid).getByText("Old Recipe")).toBeInTheDocument();
-    });
+    const weekGrid = await screen.findByTestId("meal-plan-grid");
+    expect(await within(weekGrid).findByRole("button", { name: "Old Recipe" })).toBeInTheDocument();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
-    //: recipe delete now confirms through the shared ConfirmDialog
-    // (themed modal) instead of window.confirm — click its confirm button.
+    fireEvent.click(within(recipeCard("Old Recipe")).getByRole("button", { name: "Delete" }));
+    // Recipe delete confirms through the shared ConfirmDialog — click its confirm button.
     const deleteDialog = await screen.findByRole("dialog");
     fireEvent.click(within(deleteDialog).getByRole("button", { name: "Delete" }));
 
     await waitFor(() => {
       expect(
-        within(screen.getByTestId("meals-week-grid")).queryByText("Old Recipe")
+        within(screen.getByTestId("meal-plan-grid")).queryByRole("button", { name: "Old Recipe" })
       ).not.toBeInTheDocument();
     });
   });
 
-  it("shows a newly-added recurring entry in an already-expanded plan panel", async () => {
-    render(
-      <LanguageProvider>
-        <MealsManagement />
-      </LanguageProvider>
-    );
+  it("shows a newly-added recurring entry in its plan card", async () => {
+    renderSurface();
 
-    fireEvent.click(await screen.findByTestId("meals-plan-toggle-entries"));
-    await screen.findByText("No entries in this plan.");
+    const card = await screen.findByTestId("meals-plan-card");
+    await within(card).findByText("No entries in this plan.");
 
-    fireEvent.change(screen.getByTestId("meals-recurring-plan-select"), {
-      target: { value: "p1" },
-    });
-    fireEvent.change(screen.getByTestId("meals-recurring-weekday-select"), {
-      target: { value: "mon" },
-    });
-    fireEvent.change(screen.getByTestId("meals-recurring-slot-select"), {
+    fireEvent.click(within(card).getByTestId("meals-plan-add-recurring"));
+    fireEvent.click(within(card).getByTestId("meals-recurring-weekday-mon"));
+    fireEvent.change(within(card).getByTestId("meals-recurring-slot-select"), {
       target: { value: "breakfast" },
     });
-    // Two forms on the page share the "Note" radio label (one-off + recurring) —
-    // the recurring form's is the second one.
-    fireEvent.click(screen.getAllByRole("radio", { name: "Note" })[1]);
-    fireEvent.change(screen.getByTestId("meals-recurring-note-input"), {
+    fireEvent.click(within(card).getByRole("radio", { name: "Note" }));
+    fireEvent.change(within(card).getByTestId("meals-recurring-note-input"), {
       target: { value: "Oatmeal" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Add Recurring Entry" }));
+    fireEvent.click(within(card).getByRole("button", { name: "Add Recurring Entry" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Oatmeal")).toBeInTheDocument();
+      expect(
+        within(screen.getByTestId("meals-plan-entries-p1")).getByText("Oatmeal")
+      ).toBeVisible();
     });
+    // The form collapses after a successful add.
+    expect(screen.queryByTestId("meals-recurring-note-input")).not.toBeInTheDocument();
   });
 
-  it("removes a deleted recipe's cascaded recurring entry from an already-expanded plan panel", async () => {
+  it("removes a deleted recipe's cascaded recurring entry from its plan card", async () => {
     entries = [
       {
         id: "e0",
@@ -304,28 +316,17 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
       },
     ];
 
-    render(
-      <LanguageProvider>
-        <MealsManagement />
-      </LanguageProvider>
-    );
+    renderSurface();
 
-    fireEvent.click(await screen.findByTestId("meals-plan-toggle-entries"));
-
-    const planCard = screen.getByTestId("meals-plan-card");
+    const planCard = await screen.findByTestId("meals-plan-card");
     await waitFor(() => {
       expect(within(planCard).getAllByTestId("meals-plan-entry-row")).toHaveLength(1);
     });
 
-    // Two "Delete" buttons exist once the panel is expanded (the recipe card's
-    // and the phantom entry row's) — the recipe card's renders first in the DOM.
-    // (Asserting on the row itself, not a recipe-name label: once the recipe
-    // list refetches post-delete, the row's fallback label swaps to the raw
-    // recipeId — a phantom row can otherwise "look" different without
-    // disappearing, masking the real defect.)
-    fireEvent.click(screen.getAllByRole("button", { name: "Delete" })[0]);
-    //: recipe delete now confirms through the shared ConfirmDialog
-    // (themed modal) instead of window.confirm — click its confirm button.
+    // (Asserting on the row itself, not a recipe-name label: once the recipe list refetches
+    // post-delete, the row's fallback label swaps to the raw recipeId — a phantom row can
+    // otherwise "look" different without disappearing, masking the real defect.)
+    fireEvent.click(within(recipeCard("Old Recipe")).getByRole("button", { name: "Delete" }));
     const deleteDialog = await screen.findByRole("dialog");
     fireEvent.click(within(deleteDialog).getByRole("button", { name: "Delete" }));
 
@@ -334,5 +335,102 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
         within(screen.getByTestId("meals-plan-card")).queryAllByTestId("meals-plan-entry-row")
       ).toHaveLength(0);
     });
+  });
+
+  it("shows a recurring entry added from the week grid in its plan card", async () => {
+    const weekdayName = new Intl.DateTimeFormat("en", { weekday: "long", timeZone: "UTC" }).format(
+      new Date(`${today}T12:00:00Z`)
+    );
+    renderSurface();
+
+    await screen.findByTestId("meals-plan-entries-p1");
+    fireEvent.click(await screen.findByTestId(`meal-cell-${today}-lunch`));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("radio", { name: `Every ${weekdayName}` }));
+    // The single active plan is preselected.
+    expect(within(dialog).getByRole("combobox", { name: "Meal Plan" })).toHaveValue("p1");
+    fireEvent.click(within(dialog).getByRole("radio", { name: "Note" }));
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Note" }), {
+      target: { value: "Soup" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add Entry" }));
+
+    await waitFor(() => {
+      expect(within(screen.getByTestId("meal-plan-grid")).getByText("Soup")).toBeInTheDocument();
+      expect(within(screen.getByTestId("meals-plan-entries-p1")).getByText("Soup")).toBeVisible();
+    });
+    const post = (fetchMock.mock.calls as Parameters<typeof fetch>[]).find(
+      ([input, init]) => String(input) === "/api/meal-entries" && init?.method === "POST"
+    );
+    expect(JSON.parse(post![1]!.body as string)).toEqual({
+      kind: "recurring",
+      mealPlanId: "p1",
+      weekday: weekdayOf(today, "UTC"),
+      slot: "lunch",
+      note: "Soup",
+    });
+  });
+
+  it("updates the plan card when a recurring meal is edited from the week grid", async () => {
+    entries = [
+      {
+        id: "e0",
+        kind: "recurring",
+        date: null,
+        weekday: weekdayOf(today, "UTC"),
+        mealPlanId: "p1",
+        slot: "dinner",
+        recipeId: null,
+        note: "Stew",
+        createdAt: 0,
+      },
+    ];
+    renderSurface();
+
+    const grid = await screen.findByTestId("meal-plan-grid");
+    fireEvent.click(await within(grid).findByRole("button", { name: "Stew" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("note")).toHaveTextContent("This changes every matching week.");
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Note" }), {
+      target: { value: "Bean stew" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+
+    await waitFor(() => {
+      expect(
+        within(screen.getByTestId("meals-plan-entries-p1")).getByText("Bean stew")
+      ).toBeVisible();
+    });
+  });
+
+  it("keeps the newer week when an older week response arrives late", async () => {
+    let releasePreviousWeek!: () => void;
+    delayedWeeks.set(
+      previousWeekAnchor,
+      new Promise<void>((resolve) => {
+        releasePreviousWeek = resolve;
+      })
+    );
+    renderSurface();
+
+    await screen.findByTestId(`meal-day-heading-${today}`);
+    fireEvent.click(screen.getByRole("button", { name: "Previous week" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next week" }));
+    // Back on the current week; its (fast) response has landed.
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.filter(([input]) => String(input).includes("/api/menu/week"))
+      ).toHaveLength(3)
+    );
+    await screen.findByTestId(`meal-day-heading-${today}`);
+
+    releasePreviousWeek();
+    // Let the late response settle, then check it did not replace the current week.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await waitFor(() => expect(screen.queryByRole("status")).not.toBeInTheDocument());
+    expect(screen.getByTestId(`meal-day-heading-${today}`)).toBeInTheDocument();
+    expect(
+      screen.queryByTestId(`meal-day-heading-${addCalendarDays(today, -7)}`)
+    ).not.toBeInTheDocument();
   });
 });
