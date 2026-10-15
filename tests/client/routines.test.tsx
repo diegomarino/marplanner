@@ -1,18 +1,9 @@
-/** RoutinesManagement spec (FR-005/FR-009, — routines, chores and
- * per-child weekday assignments, the fourth of five call sites names for the
- * pre-migration `WEEKDAYS` literal).
- * This is the executable evidence for the verification policy (verification policy): it CALLS
- * the frozen density assertion over this surface's rendered control set with kiosk density
- * active (not merely imports it) — across the collapsed state, the expanded chores/assignments
- * state (which is where the shared `WeekdayPicker`, SC-009, actually renders), and an open
- * `ConfirmDialog` portalled outside this surface's own subtree (SC-003) — records a deliberate
- * negative proving the assertion can fail on THIS surface's own controls, asserts every one of
- * the three distinct error messages this surface can render is announced through the shared
- * `ErrorNotice` live region (SC-011), and proves the surface's own new behaviour: every
- * streak-affecting action now opens a themed `ConfirmDialog` instead of `window.confirm`
- * (FR-005, mirroring `MealsManagement.tsx`'s precedent).
+/** RoutinesManagement — master/detail admin page for routines, chores and weekday assignments.
+ * Pins: grouping/selection, Retry on load errors, routine and chore dialogs, the streak-warning
+ * confirmations (routine/chore delete, period move, existing assignment change, deactivate),
+ * keyboard drag reorder, Spanish labels and kiosk density.
  */
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { RoutinesManagement } from "@/admin/RoutinesManagement";
@@ -20,117 +11,158 @@ import { LanguageProvider } from "@/i18n";
 import { DensityViolationError, assertKioskDensityCompliant } from "./helpers/density";
 import { injectDensityStyles } from "./helpers/densityStyles";
 
-type FetchCall = Parameters<typeof globalThis.fetch>;
+// Radix Select scrolls the chosen option into view; jsdom has no scrollIntoView
+// (same file-local stub as members-admin.test.tsx).
+Element.prototype.scrollIntoView = Element.prototype.scrollIntoView ?? ((() => {}) as never);
 
-const DAY_PERIOD = { id: "morning", labelKey: "dayPeriod.morning", start: "06:00", sortOrder: 0 };
-const DAY_PERIOD_EVENING = {
-  id: "evening",
-  labelKey: "dayPeriod.evening",
-  start: "17:00",
-  sortOrder: 2,
+// Records every RoutineDetail render so a test can prove no frame ever paired one routine's
+// header with another routine's chores (the effect-driven reset would hide that from the DOM).
+const detailRenders = vi.hoisted(() => [] as Array<{ routine: string; chores: string[] }>);
+vi.mock("@/routines/admin/RoutineDetail", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/routines/admin/RoutineDetail")>();
+  const { createElement } = await import("react");
+  return {
+    ...mod,
+    RoutineDetail: (props: Parameters<typeof mod.RoutineDetail>[0]) => {
+      detailRenders.push({
+        routine: props.routine.id,
+        chores: props.chores.map((chore) => chore.routineId),
+      });
+      return createElement(mod.RoutineDetail, props);
+    },
+  };
+});
+
+type Json = Record<string, unknown>;
+interface Call {
+  url: string;
+  method: string;
+  body: unknown;
+}
+
+const MORNING = { id: "morning", labelKey: "dayPeriod.morning", start: "06:00", sortOrder: 0 };
+const AFTERNOON = {
+  id: "afternoon",
+  labelKey: "dayPeriod.afternoon",
+  start: "12:00",
+  sortOrder: 1,
 };
+const EVENING = { id: "evening", labelKey: "dayPeriod.evening", start: "17:00", sortOrder: 2 };
 const ROUTINE = { id: "r1", name: "Morning Routine", dayPeriodId: "morning", active: true };
-const ROUTINE_EVENING = {
-  id: "r2",
-  name: "Evening Routine",
-  dayPeriodId: "evening",
-  active: true,
-};
-const CHORE = {
-  id: "c1",
-  routineId: "r1",
-  name: "Brush teeth",
-  icon: "🪥",
+const ROUTINE_EVENING = { id: "r2", name: "Evening Routine", dayPeriodId: "evening", active: true };
+const CHORES = [
+  { id: "c1", routineId: "r1", name: "Brush teeth", icon: "🪥", sortOrder: 0, active: true },
+  { id: "c2", routineId: "r1", name: "Make bed", icon: null, sortOrder: 1, active: true },
+  { id: "c3", routineId: "r1", name: "Pack bag", icon: "🎒", sortOrder: 2, active: true },
+];
+const EVENING_CHORE = {
+  id: "c9",
+  routineId: "r2",
+  name: "Set table",
+  icon: null,
   sortOrder: 0,
   active: true,
 };
-const CHILD = {
-  id: "m1",
-  displayName: "Ari",
-  role: "child",
+const member = (id: string, displayName: string, role: string, colorKey: string) => ({
+  id,
+  displayName,
+  role,
+  colorKey,
   lifecycle: "active",
   createdAt: 0,
   updatedAt: 0,
-};
+});
+const CHILD = member("m1", "Ari", "child", "red");
+const CHILD_2 = member("m2", "Bo", "child", "teal");
+const PARENT = member("p1", "Pat", "parent", "blue");
+
+interface Backend {
+  routines?: Json[];
+  dayPeriods?: Json[];
+  chores?: Json[];
+  choresFor?: (routineId: string) => Promise<Json[]>;
+  assignments?: Json[];
+  members?: Json[];
+  language?: string;
+  /** Return true to answer that request with a 500. */
+  fail?: (url: string, method: string) => boolean;
+  /** Return a promise to hold that request until it settles. */
+  hold?: (url: string, method: string) => Promise<void> | undefined;
+}
 
 function json(body: unknown, status = 200): Response {
-  return new Response(body === null ? null : JSON.stringify(body), { status });
+  return new Response(JSON.stringify(body), { status });
 }
 
-/** A fully-loaded, happy-path mock backend: one day period, one routine, one chore, one active
- * child with no assignment yet. `overrides.assignments` seeds an existing assignment for the
- * reassign-confirmation test; `overrides.routines`/`overrides.language` redirect one endpoint or
- * the household locale without re-declaring the rest — mirrors `chores-board.test.tsx`'s own
- * `mockBackend` shape. */
-function mockBackend(
-  overrides: Partial<{
-    routines: () => Response;
-    dayPeriods: unknown[];
-    assignments: Array<{ id: string; memberId: string; weekdays: string[]; active: boolean }>;
-    language: string;
-  }> = {}
-) {
-  const mockFetch = vi.fn((input: string | URL, init?: Parameters<typeof fetch>[1]) => {
+function mockBackend(backend: Backend = {}): Call[] {
+  const calls: Call[] = [];
+  let routines: Json[] = [...(backend.routines ?? [ROUTINE, ROUTINE_EVENING])];
+  const mockFetch = vi.fn(async (input: string | URL, init?: RequestInit) => {
     const url = String(input);
     const method = init?.method ?? "GET";
-
+    const body: unknown = init?.body ? JSON.parse(String(init.body)) : undefined;
+    calls.push({ url, method, body });
+    await backend.hold?.(url, method);
+    if (backend.fail?.(url, method)) return json({ error: "internal_error", message: "x" }, 500);
     if (url.includes("/api/settings")) {
-      return Promise.resolve(
-        json({ locale: { timezone: "UTC", language: overrides.language ?? "en" } })
+      return json({ locale: { timezone: "UTC", language: backend.language ?? "en" } });
+    }
+    if (url === "/api/day-periods")
+      return json(backend.dayPeriods ?? [MORNING, AFTERNOON, EVENING]);
+    if (url === "/api/members") return json(backend.members ?? [CHILD, PARENT]);
+    if (url === "/api/routines" && method === "GET") return json(routines);
+    if (url === "/api/routines" && method === "POST") {
+      const created = { id: "r-new", active: true, ...(body as Json) };
+      routines = [...routines, created];
+      return json(created, 201);
+    }
+    const routineMatch = url.match(/^\/api\/routines\/([^/]+)$/);
+    if (routineMatch && method === "PATCH") {
+      routines = routines.map((r) => (r.id === routineMatch[1] ? { ...r, ...(body as Json) } : r));
+      return json(routines.find((r) => r.id === routineMatch[1]));
+    }
+    if (routineMatch && method === "DELETE") {
+      routines = routines.filter((r) => r.id !== routineMatch[1]);
+      return new Response(null, { status: 204 });
+    }
+    const choresMatch = url.match(/^\/api\/routines\/([^/]+)\/chores$/);
+    if (choresMatch && method === "GET") {
+      return json(
+        backend.choresFor ? await backend.choresFor(choresMatch[1]) : (backend.chores ?? CHORES)
       );
     }
-
-    if (url === "/api/day-periods") {
-      return Promise.resolve(json(overrides.dayPeriods ?? [DAY_PERIOD]));
+    if (choresMatch && method === "POST") {
+      return json(
+        { id: "c-new", routineId: choresMatch[1], sortOrder: 3, active: true, ...(body as Json) },
+        201
+      );
     }
-
-    if (overrides.routines && url === "/api/routines" && method === "GET") {
-      return Promise.resolve(overrides.routines());
+    if (/\/chores\/order$/.test(url) && method === "PUT") {
+      const ids = (body as { choreIds: string[] }).choreIds;
+      return json(ids.map((id, sortOrder) => ({ ...CHORES.find((c) => c.id === id), sortOrder })));
     }
-    if (url === "/api/routines" && method === "GET") {
-      return Promise.resolve(json([ROUTINE]));
+    if (/^\/api\/chores\/[^/]+$/.test(url) && method === "PATCH")
+      return json({ ...CHORES[0], ...(body as Json) });
+    if (/^\/api\/chores\/[^/]+$/.test(url) && method === "DELETE")
+      return new Response(null, { status: 204 });
+    if (/\/assignments$/.test(url) && method === "GET") return json(backend.assignments ?? []);
+    const assignmentMatch = url.match(/\/assignments\/([^/]+)$/);
+    if (assignmentMatch && method === "PUT") {
+      return json({ id: "a-new", memberId: assignmentMatch[1], ...(body as Json) });
     }
-    if (url === "/api/routines" && method === "POST") {
-      return Promise.resolve(json(null, 201));
+    if (assignmentMatch && method === "DELETE") {
+      return json({ id: "a1", memberId: assignmentMatch[1], weekdays: ["mon"], active: false });
     }
-
-    if (url === "/api/members") {
-      return Promise.resolve(json([CHILD]));
-    }
-
-    if (/\/api\/routines\/[^/]+\/chores$/.test(url) && method === "GET") {
-      return Promise.resolve(json([CHORE]));
-    }
-    if (/\/api\/routines\/[^/]+\/chores$/.test(url) && method === "POST") {
-      return Promise.resolve(json(null, 201));
-    }
-
-    if (/\/api\/routines\/[^/]+\/assignments$/.test(url) && method === "GET") {
-      return Promise.resolve(json(overrides.assignments ?? []));
-    }
-    if (
-      /\/api\/routines\/[^/]+\/assignments\/[^/]+$/.test(url) &&
-      (method === "PUT" || method === "DELETE")
-    ) {
-      return Promise.resolve(json(null, method === "PUT" ? 200 : 204));
-    }
-
-    if (/\/api\/routines\/[^/]+$/.test(url) && (method === "PATCH" || method === "DELETE")) {
-      return Promise.resolve(json(null, method === "DELETE" ? 204 : 200));
-    }
-
-    if (/\/api\/chores\/[^/]+$/.test(url) && (method === "PATCH" || method === "DELETE")) {
-      return Promise.resolve(json(null, method === "DELETE" ? 204 : 200));
-    }
-
-    throw new Error(`unexpected fetch: ${url} (${method})`);
+    throw new Error(`unexpected fetch: ${method} ${url}`);
   });
-
   vi.stubGlobal("fetch", mockFetch);
-  return mockFetch;
+  return calls;
 }
 
-function renderSurface() {
+const callsTo = (calls: Call[], method: string, url: string) =>
+  calls.filter((call) => call.method === method && call.url === url);
+
+function renderPage() {
   return render(
     <LanguageProvider>
       <RoutinesManagement />
@@ -138,562 +170,716 @@ function renderSurface() {
   );
 }
 
-/** Mirrors `density.ts`'s own selector/filter — see `chores-board.test.tsx`'s identical helper
- * for why this is duplicated rather than imported (the frozen file exposes no census API by
- * design). Lets THIS spec assert an exact control count per phase, not just "compliant or not" —
- * a phase that silently stopped rendering a control would otherwise still pass. */
-const CENSUS_CONTROL_SELECTOR = [
-  "button",
-  "input",
-  "select",
-  "textarea",
-  "a[href]",
-  '[role="button"]',
-  '[role="checkbox"]',
-  '[role="radio"]',
-  '[role="switch"]',
-  '[role="menuitem"]',
-  '[role="menuitemcheckbox"]',
-  '[role="option"]',
-  '[role="tab"]',
-  '[tabindex]:not([tabindex="-1"])',
-].join(", ");
+async function selectRoutine(id = "r1") {
+  fireEvent.click(await screen.findByTestId(`routine-list-item-${id}`));
+  return screen.findByTestId("routine-detail");
+}
 
-function countInteractiveControls(container: Document | Element): number {
-  return Array.from(container.querySelectorAll(CENSUS_CONTROL_SELECTOR)).filter((element) => {
-    if (element instanceof HTMLElement && element.hidden) return false;
-    return element.getAttribute("aria-hidden") !== "true";
-  }).length;
+async function chooseOption(comboboxName: string, optionText: string) {
+  fireEvent.click(screen.getByRole("combobox", { name: comboboxName }));
+  const options = await screen.findAllByRole("option");
+  fireEvent.click(options.find((option) => option.textContent === optionText)!);
+}
+
+function choreOrder(): string[] {
+  return screen.getAllByTestId(/^chore-c\d+$/).map((row) => row.dataset.testid ?? "");
+}
+
+async function keyboardDragFirstChoreDown() {
+  const handle = screen.getByRole("button", { name: "Reorder Brush teeth" });
+  screen.getAllByTestId(/^chore-c\d+$/).forEach((row, index) => {
+    vi.spyOn(row, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: index * 60,
+      top: index * 60,
+      left: 0,
+      bottom: index * 60 + 50,
+      right: 200,
+      width: 200,
+      height: 50,
+      toJSON: () => ({}),
+    });
+  });
+  handle.focus();
+  await act(async () => {
+    fireEvent.keyDown(handle, { key: "Space", code: "Space", keyCode: 32 });
+  });
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+  await act(async () => {
+    fireEvent.keyDown(handle, { key: "ArrowDown", code: "ArrowDown", keyCode: 40 });
+  });
+  await act(async () => {
+    fireEvent.keyDown(handle, { key: "Space", code: "Space", keyCode: 32 });
+  });
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
 }
 
 afterEach(() => {
+  detailRenders.length = 0;
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   cleanup();
   document.documentElement.removeAttribute("data-density");
 });
 
-describe("RoutinesManagement — chore icon editing", () => {
-  it("submits a selected icon on create and null when clearing an existing icon", async () => {
-    const mockFetch = mockBackend();
-    renderSurface();
-    const card = await screen.findByTestId("routine-r1");
-    fireEvent.click(within(card).getByRole("button", { name: "View Chores" }));
+describe("RoutinesManagement — list and selection", () => {
+  it("groups routines by day period in start order, names the page like the sidebar and asks for a selection", async () => {
+    mockBackend({ routines: [ROUTINE_EVENING, ROUTINE] });
+    renderPage();
 
-    fireEvent.click(within(card).getByRole("button", { name: "Select chore icon" }));
-    fireEvent.click(screen.getByRole("button", { name: "Select Backpack" }));
-    fireEvent.change(within(card).getByPlaceholderText("Chore name"), {
-      target: { value: "Pack backpack" },
+    await screen.findByTestId("routine-list-item-r1");
+    expect(screen.getAllByTestId(/^routine-list-item-/).map((item) => item.dataset.testid)).toEqual(
+      ["routine-list-item-r1", "routine-list-item-r2"]
+    );
+    expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent)).toEqual([
+      "Morning",
+      "Evening",
+    ]);
+    expect(screen.getByTestId("routines-select-prompt")).toHaveTextContent(
+      "Select a routine to manage its chores"
+    );
+    expect(screen.getByRole("region", { name: "Routines & Chores" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Routines & Chores" })
+    ).toBeInTheDocument();
+  });
+
+  it("shows the empty message without routines", async () => {
+    mockBackend({ routines: [] });
+    renderPage();
+    expect(await screen.findByTestId("routines-empty")).toHaveTextContent("No routines found.");
+  });
+
+  it("announces a load failure and Retry loads again", async () => {
+    let failOnce = true;
+    mockBackend({
+      fail: (url, method) => {
+        if (url === "/api/routines" && method === "GET" && failOnce) {
+          failOnce = false;
+          return true;
+        }
+        return false;
+      },
     });
-    fireEvent.click(within(card).getByRole("button", { name: "Add Chore" }));
-
-    await waitFor(() => {
-      const create = (mockFetch.mock.calls as FetchCall[]).find(
-        ([input, init]) => String(input) === "/api/routines/r1/chores" && init?.method === "POST"
-      );
-      expect(JSON.parse(String(create?.[1]?.body))).toEqual({ name: "Pack backpack", icon: "🎒" });
-    });
-
-    const row = await screen.findByTestId("chore-c1");
-    fireEvent.click(within(row).getByRole("button", { name: "Edit" }));
-    fireEvent.click(within(row).getByRole("button", { name: "Selected icon: 🪥. Change icon" }));
-    fireEvent.click(screen.getByRole("button", { name: "Clear icon" }));
-    fireEvent.click(within(row).getByRole("button", { name: "Save" }));
-
-    await waitFor(() => {
-      const edit = (mockFetch.mock.calls as FetchCall[]).find(
-        ([input, init]) => String(input) === "/api/chores/c1" && init?.method === "PATCH"
-      );
-      expect(JSON.parse(String(edit?.[1]?.body))).toEqual({ name: "Brush teeth", icon: null });
-    });
-  });
-
-  it("renders the chore's vendored Noto SVG instead of the literal emoji glyph", async () => {
-    mockBackend();
-    renderSurface();
-    const card = await screen.findByTestId("routine-r1");
-    fireEvent.click(within(card).getByRole("button", { name: "View Chores" }));
-
-    const row = await screen.findByTestId("chore-c1");
-    const icon = row.querySelector("img");
-    expect(icon).not.toBeNull();
-    expect(icon).toHaveAttribute("src", expect.stringContaining("emoji_u1faa5"));
-  });
-});
-
-describe("RoutinesManagement — kiosk density (SC-001, SC-002, SC-003, SC-009)", () => {
-  it("meets kiosk density collapsed, with chores expanded, with an ACTIVE assignment expanded, and with both inline-edit modes open", async () => {
-    // An ACTIVE assignment — not the default empty list — so the Deactivate button
-    // (RoutinesManagement.tsx, AssignmentRow's `isActive` branch) is actually in the measured
-    // control set. With zero assignments (the previous version of this test) that button is
-    // never rendered, so a `className="h-6 text-xs"` on it would pass this spec, eslint AND
-    // count-ui-debt (the raw-scale-class pattern is palette-only — sizing classes are outside
-    // its definition) without ever being measured against the kiosk minimum.
-    mockBackend({ assignments: [{ id: "a1", memberId: "m1", weekdays: ["mon"], active: true }] });
-    // The shared WeekdayPicker's multi-select mode is built on CheckboxField, which renders a
-    // `size-[var(--control-height)]` utility — outside the density helper's base candidate list
-    // (`densityStyles.ts` header), same as `meals-management.test.tsx`'s own extraCandidates.
-    const uninject = await injectDensityStyles({
-      extraCandidates: ["size-[var(--control-height)]"],
-    });
-    document.documentElement.setAttribute("data-density", "kiosk");
-
-    try {
-      renderSurface();
-      const card = await screen.findByTestId("routine-r1");
-
-      // Phase 1 — collapsed: the create-routine form + the routine card's own edit/delete/
-      // view toggles.
-      expect(countInteractiveControls(document.body)).toBe(7);
-      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
-
-      // Phase 2 — chores expanded: adds the create-chore input/button, the chore row's edit/
-      // delete buttons, and ChoreOrderControls' own reorder trigger (already token-migrated,
-      //).
-      fireEvent.click(within(card).getByRole("button", { name: "View Chores" }));
-      const choreRow = await screen.findByTestId("chore-c1");
-      expect(countInteractiveControls(document.body)).toBe(13);
-      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
-
-      // Phase 3 — assignments expanded, with the ACTIVE assignment seeded above: adds the
-      // shared WeekdayPicker's seven checkboxes (SC-009 — the reason this module exists), the
-      // Save Assignment button, AND (because the assignment is active) the Deactivate button.
-      fireEvent.click(within(card).getByRole("button", { name: "Members with assignments" }));
-      await screen.findByTestId("routine-assignment-m1");
-      expect(countInteractiveControls(document.body)).toBe(22);
-      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
-
-      // Phase 4 — both inline-edit modes open: the routine-name trio (Input/Save/Cancel,
-      // RoutinesManagement.tsx:444-473) and the chore-name trio (537-563) — neither is
-      // reachable from the collapsed/expanded-but-not-editing states above, so nothing before
-      // this phase ever measured them.
-      const heading = within(card).getByRole("heading", { name: /Morning Routine/ });
-      fireEvent.click(within(heading).getByRole("button", { name: "Edit" }));
-      fireEvent.click(within(choreRow).getByRole("button", { name: "Edit" }));
-
-      expect(countInteractiveControls(document.body)).toBe(26);
-      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
-    } finally {
-      uninject();
-    }
-  });
-
-  it("meets kiosk density with the chore emoji picker open", async () => {
-    mockBackend();
-    const uninject = await injectDensityStyles({
-      extraCandidates: ["size-[var(--control-height)]"],
-    });
-    document.documentElement.setAttribute("data-density", "kiosk");
-
-    try {
-      renderSurface();
-      const card = await screen.findByTestId("routine-r1");
-      fireEvent.click(within(card).getByRole("button", { name: "View Chores" }));
-      await screen.findByTestId("chore-c1");
-
-      fireEvent.click(within(card).getByRole("button", { name: "Select chore icon" }));
-      const picker = await screen.findByRole("dialog", { name: "Choose a chore icon" });
-      expect(within(picker).getAllByRole("button", { pressed: false }).length).toBeGreaterThan(0);
-      expect(() => assertKioskDensityCompliant(picker)).not.toThrow();
-    } finally {
-      uninject();
-    }
-  });
-
-  it("meets kiosk density with the delete ConfirmDialog open, portalled OUTSIDE this surface's own subtree (SC-003)", async () => {
-    mockBackend();
-    const uninject = await injectDensityStyles();
-    document.documentElement.setAttribute("data-density", "kiosk");
-
-    try {
-      renderSurface();
-      const card = await screen.findByTestId("routine-r1");
-
-      fireEvent.click(within(card).getByRole("button", { name: "Delete" }));
-      await screen.findByRole("dialog");
-
-      // Asserted over document.body — the one shape that reaches a control Radix mounted
-      // outside `card`'s own DOM subtree.
-      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
-    } finally {
-      uninject();
-    }
-  });
-
-  it("DELIBERATE NEGATIVE — forcing this surface's own Create Routine button below the kiosk minimum makes the assertion fail", async () => {
-    mockBackend();
-    const uninject = await injectDensityStyles();
-    document.documentElement.setAttribute("data-density", "kiosk");
-
-    try {
-      const { container } = renderSurface();
-      const createButton = await screen.findByRole("button", { name: "Create Routine" });
-
-      // A real control from this surface, not a synthetic fixture.
-      createButton.style.height = "10px";
-      createButton.style.fontSize = "8px";
-
-      let thrown: unknown;
-      try {
-        assertKioskDensityCompliant(container);
-      } catch (e) {
-        thrown = e;
-      }
-
-      expect(thrown).toBeInstanceOf(DensityViolationError);
-      const message = (thrown as DensityViolationError).message;
-      // Recorded verbatim in this module's report — proof the helper actually rejects a real
-      // undersized control on THIS surface, not merely on the helper's own synthetic fixtures.
-      expect(message).toMatch(/height 10px is below the kiosk minimum 48px/);
-      expect(message).toMatch(/font-size 8px is below the kiosk minimum 18px/);
-
-      // Revert — the control returns to token-driven sizing, proven compliant again.
-      createButton.style.height = "";
-      createButton.style.fontSize = "";
-      expect(() => assertKioskDensityCompliant(container)).not.toThrow();
-    } finally {
-      uninject();
-    }
-  });
-});
-
-describe("RoutinesManagement — error states are announced (SC-011)", () => {
-  it("announces a data-load failure through ErrorNotice's live region", async () => {
-    mockBackend({ routines: () => json(null, 500) });
-    renderSurface();
+    renderPage();
 
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("Failed to load data.");
     expect(alert).toHaveAttribute("aria-live", "assertive");
+    fireEvent.click(screen.getByTestId("routines-retry"));
+    expect(await screen.findByTestId("routine-list-item-r1")).toBeInTheDocument();
   });
 
-  it("announces a chore-creation failure through ErrorNotice's live region", async () => {
-    const mockFetch = mockBackend();
-    renderSurface();
+  it("shows the selected routine's header and chores in order, with the vendored Noto icon", async () => {
+    mockBackend();
+    renderPage();
+    const detail = await selectRoutine("r1");
 
-    const card = await screen.findByTestId("routine-r1");
-    fireEvent.click(within(card).getByRole("button", { name: "View Chores" }));
-    await screen.findByTestId("chore-c1");
+    expect(within(detail).getByRole("heading", { name: "Morning Routine" })).toBeInTheDocument();
+    expect(detail).toHaveTextContent("Morning");
+    await waitFor(() => expect(choreOrder()).toEqual(["chore-c1", "chore-c2", "chore-c3"]));
+    expect(screen.getByTestId("routine-list-item-r1")).toHaveAttribute("aria-current", "true");
+    expect(screen.getByTestId("routine-list-item-r2")).not.toHaveAttribute("aria-current");
+    expect(screen.getByTestId("chore-c1").querySelector("img")).toHaveAttribute(
+      "src",
+      expect.stringContaining("emoji_u1faa5")
+    );
+  });
 
-    // Redirect the chore-creation POST to a failure for this one interaction, after the
-    // initial load already succeeded.
-    mockFetch.mockImplementation((input: string | URL, init?: Parameters<typeof fetch>[1]) => {
-      const url = String(input);
-      if (/\/api\/routines\/[^/]+\/chores$/.test(url) && init?.method === "POST") {
-        return Promise.resolve(json(null, 500));
-      }
-      throw new Error(`unexpected fetch after override: ${url}`);
+  it("shows the empty chore message for a routine without chores", async () => {
+    mockBackend({ chores: [] });
+    renderPage();
+    const detail = await selectRoutine("r1");
+    expect(within(detail).getByTestId("routine-chores-empty")).toHaveTextContent(
+      "No chores yet. Add one above."
+    );
+  });
+
+  it("announces a detail load failure and Retry loads it again", async () => {
+    let failOnce = true;
+    mockBackend({
+      fail: (url) => {
+        if (url === "/api/routines/r1/chores" && failOnce) {
+          failOnce = false;
+          return true;
+        }
+        return false;
+      },
     });
+    renderPage();
+    fireEvent.click(await screen.findByTestId("routine-list-item-r1"));
 
-    fireEvent.change(within(card).getByPlaceholderText("Chore name"), {
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Failed to load this routine's chores and assignments."
+    );
+    fireEvent.click(screen.getByTestId("routine-detail-retry"));
+    expect(await screen.findByTestId("routine-detail")).toBeInTheDocument();
+  });
+
+  it("ignores a stale detail response after switching routines", async () => {
+    let releaseFirst!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
+    mockBackend({
+      choresFor: async (routineId) => {
+        if (routineId === "r1") {
+          await gate;
+          return CHORES;
+        }
+        return [EVENING_CHORE];
+      },
+    });
+    renderPage();
+    fireEvent.click(await screen.findByTestId("routine-list-item-r1"));
+    const detail = await selectRoutine("r2");
+    expect(await within(detail).findByText("Set table")).toBeInTheDocument();
+
+    await act(async () => {
+      releaseFirst();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(screen.getByTestId("routine-detail")).toHaveAttribute("data-routine-id", "r2");
+    expect(screen.queryByText("Brush teeth")).not.toBeInTheDocument();
+  });
+
+  it("week grid shows only active assignments, per weekday, and opens the assignment dialog", async () => {
+    mockBackend({
+      members: [CHILD, CHILD_2, PARENT],
+      assignments: [
+        { id: "a1", memberId: "m1", weekdays: ["mon", "wed"], active: true },
+        { id: "a2", memberId: "m2", weekdays: ["mon"], active: false },
+      ],
+    });
+    renderPage();
+    await selectRoutine("r1");
+
+    expect(screen.getByTestId("routine-week-day-mon")).toHaveTextContent("Ari");
+    expect(screen.getByTestId("routine-week-day-mon")).not.toHaveTextContent("Bo");
+    expect(screen.getByTestId("routine-week-day-tue")).not.toHaveTextContent("Ari");
+    expect(screen.getByTestId("routine-week-day-wed")).toHaveTextContent("Ari");
+
+    fireEvent.click(screen.getByRole("button", { name: "Manage assignments" }));
+    expect(await screen.findByTestId("assignment-dialog")).toBeInTheDocument();
+  });
+});
+
+describe("RoutinesManagement — routine dialog", () => {
+  it("never renders the previous routine's chores under a newly created routine", async () => {
+    let releaseNew!: () => void;
+    const newGate = new Promise<void>((resolve) => {
+      releaseNew = resolve;
+    });
+    mockBackend({
+      choresFor: async (routineId) => {
+        if (routineId === "r-new") {
+          await newGate;
+          return [];
+        }
+        return CHORES;
+      },
+    });
+    renderPage();
+    await selectRoutine("r1");
+    await screen.findByTestId("chore-c3");
+
+    fireEvent.click(screen.getByTestId("routines-new"));
+    const dialog = await screen.findByTestId("routine-form-dialog");
+    fireEvent.change(within(dialog).getByTestId("routine-form-name"), {
+      target: { value: "Fresh" },
+    });
+    fireEvent.click(within(dialog).getByTestId("routine-form-submit"));
+    await waitFor(() =>
+      expect(screen.queryByTestId("routine-form-dialog")).not.toBeInTheDocument()
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("routine-list-item-r-new")).toHaveAttribute("aria-current", "true")
+    );
+    expect(screen.queryByText("Brush teeth")).not.toBeInTheDocument();
+
+    await act(async () => {
+      releaseNew();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(await screen.findByTestId("routine-chores-empty")).toBeInTheDocument();
+    expect(detailRenders.filter((r) => r.chores.some((c) => c !== r.routine))).toEqual([]);
+  });
+
+  it("announces a list refresh that fails after a successful save", async () => {
+    let created = false;
+    const calls = mockBackend({
+      fail: (url, method) => {
+        if (url === "/api/routines" && method === "POST") created = true;
+        return created && url === "/api/routines" && method === "GET";
+      },
+    });
+    renderPage();
+    fireEvent.click(await screen.findByTestId("routines-new"));
+    const dialog = await screen.findByTestId("routine-form-dialog");
+    fireEvent.change(within(dialog).getByTestId("routine-form-name"), {
+      target: { value: "Fresh" },
+    });
+    fireEvent.click(within(dialog).getByTestId("routine-form-submit"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Failed to load data.");
+    expect(screen.queryByTestId("routine-form-dialog")).not.toBeInTheDocument();
+    expect(callsTo(calls, "POST", "/api/routines")).toHaveLength(1);
+  });
+
+  it("creates a routine: first period by default, submit disabled until named, new routine selected", async () => {
+    const calls = mockBackend();
+    renderPage();
+    fireEvent.click(await screen.findByTestId("routines-new"));
+    const dialog = await screen.findByTestId("routine-form-dialog");
+
+    expect(within(dialog).getByTestId("routine-form-submit")).toBeDisabled();
+    expect(within(dialog).getByRole("combobox", { name: "Day period" })).toHaveTextContent(
+      "Morning"
+    );
+    fireEvent.change(within(dialog).getByTestId("routine-form-name"), {
+      target: { value: "  Homework  " },
+    });
+    fireEvent.click(within(dialog).getByTestId("routine-form-submit"));
+
+    await waitFor(() =>
+      expect(callsTo(calls, "POST", "/api/routines")[0]?.body).toEqual({
+        name: "Homework",
+        dayPeriodId: "morning",
+      })
+    );
+    const detail = await screen.findByTestId("routine-detail");
+    expect(detail).toHaveAttribute("data-routine-id", "r-new");
+    expect(screen.queryByTestId("routine-form-dialog")).not.toBeInTheDocument();
+    expect(screen.getByTestId("routine-list-item-r-new")).toHaveAttribute("aria-current", "true");
+  });
+
+  it("renames a routine without a confirmation", async () => {
+    const calls = mockBackend();
+    renderPage();
+    await selectRoutine("r1");
+    fireEvent.click(screen.getByTestId("routine-edit"));
+    const dialog = await screen.findByTestId("routine-form-dialog");
+    fireEvent.change(within(dialog).getByTestId("routine-form-name"), {
+      target: { value: "Sunrise" },
+    });
+    fireEvent.click(within(dialog).getByTestId("routine-form-submit"));
+
+    await waitFor(() =>
+      expect(callsTo(calls, "PATCH", "/api/routines/r1")[0]?.body).toEqual({
+        name: "Sunrise",
+        dayPeriodId: "morning",
+      })
+    );
+    expect(screen.queryByTestId("routine-period-confirm")).not.toBeInTheDocument();
+    expect(await screen.findByTestId("routine-list-item-r1")).toHaveTextContent("Sunrise");
+  });
+
+  it("moving a routine to another period asks for the streak confirmation first", async () => {
+    const calls = mockBackend();
+    renderPage();
+    await selectRoutine("r1");
+    fireEvent.click(screen.getByTestId("routine-edit"));
+    await screen.findByTestId("routine-form-dialog");
+    await chooseOption("Day period", "Evening");
+
+    fireEvent.click(screen.getByTestId("routine-form-submit"));
+    expect(await screen.findByText("This will change the live streak.")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("routine-period-cancel"));
+    await waitFor(() =>
+      expect(screen.queryByTestId("routine-period-confirm")).not.toBeInTheDocument()
+    );
+    expect(callsTo(calls, "PATCH", "/api/routines/r1")).toHaveLength(0);
+
+    fireEvent.click(screen.getByTestId("routine-form-submit"));
+    fireEvent.click(await screen.findByTestId("routine-period-confirm"));
+    await waitFor(() =>
+      expect(callsTo(calls, "PATCH", "/api/routines/r1")[0]?.body).toEqual({
+        name: "Morning Routine",
+        dayPeriodId: "evening",
+      })
+    );
+    await waitFor(() => expect(screen.getByTestId("routine-detail")).toHaveTextContent("Evening"));
+  });
+
+  it("keeps the dialog open and announces a failed save", async () => {
+    mockBackend({ fail: (url, method) => url === "/api/routines" && method === "POST" });
+    renderPage();
+    fireEvent.click(await screen.findByTestId("routines-new"));
+    const dialog = await screen.findByTestId("routine-form-dialog");
+    fireEvent.change(within(dialog).getByTestId("routine-form-name"), {
+      target: { value: "Homework" },
+    });
+    fireEvent.click(within(dialog).getByTestId("routine-form-submit"));
+
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      "The routine could not be saved."
+    );
+    expect(screen.getByTestId("routine-form-dialog")).toBeInTheDocument();
+  });
+
+  it("deletes a routine only after confirmation and clears the selection", async () => {
+    const calls = mockBackend();
+    renderPage();
+    await selectRoutine("r1");
+
+    fireEvent.click(screen.getByTestId("routine-delete"));
+    expect(await screen.findByText(/This will change the live streak\./)).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("routine-delete-cancel-r1"));
+    await waitFor(() =>
+      expect(screen.queryByTestId("routine-delete-confirm-r1")).not.toBeInTheDocument()
+    );
+    expect(callsTo(calls, "DELETE", "/api/routines/r1")).toHaveLength(0);
+
+    fireEvent.click(screen.getByTestId("routine-delete"));
+    fireEvent.click(await screen.findByTestId("routine-delete-confirm-r1"));
+    await waitFor(() => expect(callsTo(calls, "DELETE", "/api/routines/r1")).toHaveLength(1));
+    expect(await screen.findByTestId("routines-select-prompt")).toBeInTheDocument();
+    expect(screen.queryByTestId("routine-list-item-r1")).not.toBeInTheDocument();
+  });
+});
+
+describe("RoutinesManagement — chores", () => {
+  it("adds a chore from the dialog: blank disables submit, Enter submits with the icon", async () => {
+    const calls = mockBackend();
+    renderPage();
+    await selectRoutine("r1");
+    fireEvent.click(screen.getByTestId("routine-add-chore"));
+    const dialog = await screen.findByTestId("chore-form-dialog");
+
+    expect(within(dialog).getByTestId("chore-form-submit")).toBeDisabled();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Select chore icon" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Select Backpack" }));
+    const input = within(dialog).getByTestId("chore-form-name");
+    fireEvent.change(input, { target: { value: "Pack lunch" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+
+    await waitFor(() =>
+      expect(callsTo(calls, "POST", "/api/routines/r1/chores")[0]?.body).toEqual({
+        name: "Pack lunch",
+        icon: "🎒",
+      })
+    );
+    await waitFor(() => expect(screen.queryByTestId("chore-form-dialog")).not.toBeInTheDocument());
+  });
+
+  it("Enter twice creates the chore once", async () => {
+    const calls = mockBackend();
+    renderPage();
+    await selectRoutine("r1");
+    fireEvent.click(screen.getByTestId("routine-add-chore"));
+    const input = within(await screen.findByTestId("chore-form-dialog")).getByTestId(
+      "chore-form-name"
+    );
+    fireEvent.change(input, { target: { value: "Pack lunch" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+
+    await waitFor(() => expect(screen.queryByTestId("chore-form-dialog")).not.toBeInTheDocument());
+    expect(callsTo(calls, "POST", "/api/routines/r1/chores")).toHaveLength(1);
+  });
+
+  it("edits a chore and clears its icon", async () => {
+    const calls = mockBackend();
+    renderPage();
+    await selectRoutine("r1");
+    fireEvent.click(await screen.findByRole("button", { name: "Edit Brush teeth" }));
+    const dialog = await screen.findByTestId("chore-form-dialog");
+
+    expect(within(dialog).getByTestId("chore-form-name")).toHaveValue("Brush teeth");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Selected icon: 🪥. Change icon" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Clear icon" }));
+    fireEvent.click(within(dialog).getByTestId("chore-form-submit"));
+
+    await waitFor(() =>
+      expect(callsTo(calls, "PATCH", "/api/chores/c1")[0]?.body).toEqual({
+        name: "Brush teeth",
+        icon: null,
+      })
+    );
+  });
+
+  it("announces a failed chore save inside the dialog", async () => {
+    mockBackend({ fail: (url, method) => url === "/api/routines/r1/chores" && method === "POST" });
+    renderPage();
+    await selectRoutine("r1");
+    fireEvent.click(screen.getByTestId("routine-add-chore"));
+    const dialog = await screen.findByTestId("chore-form-dialog");
+    fireEvent.change(within(dialog).getByTestId("chore-form-name"), {
       target: { value: "New chore" },
     });
-    fireEvent.click(within(card).getByRole("button", { name: "Add Chore" }));
+    fireEvent.click(within(dialog).getByTestId("chore-form-submit"));
 
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Failed to load chores.");
-    expect(alert).toHaveAttribute("aria-live", "assertive");
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      "The chore could not be saved."
+    );
   });
 
-  it("announces an assignment-save failure through ErrorNotice's live region", async () => {
-    const mockFetch = mockBackend();
-    renderSurface();
+  it("deletes a chore only after confirmation", async () => {
+    const calls = mockBackend();
+    renderPage();
+    await selectRoutine("r1");
 
-    const card = await screen.findByTestId("routine-r1");
-    fireEvent.click(within(card).getByRole("button", { name: "Members with assignments" }));
-    const row = await screen.findByTestId("routine-assignment-m1");
+    fireEvent.click(await screen.findByRole("button", { name: "Delete Brush teeth" }));
+    fireEvent.click(await screen.findByTestId("routine-r1-chore-delete-cancel"));
+    await waitFor(() =>
+      expect(screen.queryByTestId("routine-r1-chore-delete-confirm")).not.toBeInTheDocument()
+    );
+    expect(callsTo(calls, "DELETE", "/api/chores/c1")).toHaveLength(0);
 
-    fireEvent.click(within(row).getByRole("checkbox", { name: "Mon" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete Brush teeth" }));
+    fireEvent.click(await screen.findByTestId("routine-r1-chore-delete-confirm"));
+    await waitFor(() => expect(callsTo(calls, "DELETE", "/api/chores/c1")).toHaveLength(1));
+  });
 
-    // A brand-new assignment saves immediately (no ConfirmDialog) — redirect the PUT to a
-    // failure so the save itself is what fails.
-    mockFetch.mockImplementation((input: string | URL, init?: Parameters<typeof fetch>[1]) => {
-      const url = String(input);
-      if (/\/api\/routines\/[^/]+\/assignments\/[^/]+$/.test(url) && init?.method === "PUT") {
-        return Promise.resolve(json(null, 500));
-      }
-      throw new Error(`unexpected fetch after override: ${url}`);
+  it("keyboard drag persists the complete new order", async () => {
+    const calls = mockBackend();
+    renderPage();
+    await selectRoutine("r1");
+    await screen.findByTestId("chore-c3");
+
+    await keyboardDragFirstChoreDown();
+
+    await waitFor(() =>
+      expect(callsTo(calls, "PUT", "/api/routines/r1/chores/order")[0]?.body).toEqual({
+        choreIds: ["c2", "c1", "c3"],
+      })
+    );
+    await waitFor(() => expect(choreOrder()).toEqual(["chore-c2", "chore-c1", "chore-c3"]));
+  });
+
+  it("a failed reorder restores the order and announces it", async () => {
+    mockBackend({ fail: (url) => url === "/api/routines/r1/chores/order" });
+    renderPage();
+    await selectRoutine("r1");
+    await screen.findByTestId("chore-c3");
+
+    await keyboardDragFirstChoreDown();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Failed to save the new order. Please try again."
+    );
+    await waitFor(() => expect(choreOrder()).toEqual(["chore-c1", "chore-c2", "chore-c3"]));
+  });
+
+  it("a reorder that fails after switching routines leaves the new routine's chores alone", async () => {
+    let releaseOrder!: () => void;
+    const orderGate = new Promise<void>((resolve) => {
+      releaseOrder = resolve;
     });
+    mockBackend({
+      choresFor: async (routineId) => (routineId === "r1" ? CHORES : [EVENING_CHORE]),
+      hold: (url) => (url === "/api/routines/r1/chores/order" ? orderGate : undefined),
+      fail: (url) => url === "/api/routines/r1/chores/order",
+    });
+    renderPage();
+    await selectRoutine("r1");
+    await screen.findByTestId("chore-c3");
+    await keyboardDragFirstChoreDown();
 
-    fireEvent.click(within(row).getByRole("button", { name: "Save Assignment" }));
+    const detail = await selectRoutine("r2");
+    expect(await within(detail).findByText("Set table")).toBeInTheDocument();
 
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Failed to update assignment.");
-    expect(alert).toHaveAttribute("aria-live", "assertive");
+    await act(async () => {
+      releaseOrder();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Failed to save the new order. Please try again."
+    );
+    expect(screen.getByTestId("routine-detail")).toHaveAttribute("data-routine-id", "r2");
+    expect(choreOrder()).toEqual(["chore-c9"]);
+    expect(detailRenders.filter((r) => r.chores.some((c) => c !== r.routine))).toEqual([]);
   });
 });
 
-describe("RoutinesManagement — every streak-affecting action opens a themed ConfirmDialog instead of window.confirm (research D3/FR-005)", () => {
-  it("does not delete a routine until the ConfirmDialog is confirmed, and deletes on confirm", async () => {
-    const mockFetch = mockBackend();
-    renderSurface();
+describe("RoutinesManagement — assignments", () => {
+  async function openAssignments() {
+    await selectRoutine("r1");
+    fireEvent.click(screen.getByTestId("routine-assign"));
+    return screen.findByTestId("assignment-dialog");
+  }
 
-    const card = await screen.findByTestId("routine-r1");
-    fireEvent.click(within(card).getByRole("button", { name: "Delete" }));
-    const dialog = await screen.findByRole("dialog");
-    expect(dialog).toHaveTextContent("This will change the live streak.");
+  it("lists children only, and a brand-new assignment saves without confirmation", async () => {
+    const calls = mockBackend();
+    renderPage();
+    const dialog = await openAssignments();
 
-    // Cancel first — no DELETE must have fired.
-    fireEvent.click(screen.getByTestId("routine-delete-cancel-r1"));
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-    expect(
-      (mockFetch.mock.calls as FetchCall[]).filter(
-        ([reqInput, init]) => String(reqInput) === "/api/routines/r1" && init?.method === "DELETE"
-      )
-    ).toHaveLength(0);
-
-    // Now confirm.
-    fireEvent.click(within(card).getByRole("button", { name: "Delete" }));
-    await screen.findByRole("dialog");
-    fireEvent.click(screen.getByTestId("routine-delete-confirm-r1"));
-
-    await waitFor(() => {
-      expect(
-        (mockFetch.mock.calls as FetchCall[]).filter(
-          ([reqInput, init]) => String(reqInput) === "/api/routines/r1" && init?.method === "DELETE"
-        )
-      ).toHaveLength(1);
-    });
-  });
-
-  it("does not delete a chore until the ConfirmDialog is confirmed, and deletes on confirm", async () => {
-    const mockFetch = mockBackend();
-    renderSurface();
-
-    const card = await screen.findByTestId("routine-r1");
-    fireEvent.click(within(card).getByRole("button", { name: "View Chores" }));
-    const choreRow = await screen.findByTestId("chore-c1");
-
-    fireEvent.click(within(choreRow).getByRole("button", { name: "Delete" }));
-    const dialog = await screen.findByRole("dialog");
-    expect(dialog).toHaveTextContent("This will change the live streak.");
-
-    // No DELETE must have fired yet — the click above only opened the dialog.
-    expect(
-      (mockFetch.mock.calls as FetchCall[]).filter(
-        ([reqInput, init]) => String(reqInput) === "/api/chores/c1" && init?.method === "DELETE"
-      )
-    ).toHaveLength(0);
-
-    // Cancel first — still no DELETE.
-    fireEvent.click(screen.getByTestId("routine-r1-chore-delete-cancel"));
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-    expect(
-      (mockFetch.mock.calls as FetchCall[]).filter(
-        ([reqInput, init]) => String(reqInput) === "/api/chores/c1" && init?.method === "DELETE"
-      )
-    ).toHaveLength(0);
-
-    // Now confirm.
-    fireEvent.click(within(choreRow).getByRole("button", { name: "Delete" }));
-    await screen.findByRole("dialog");
-    fireEvent.click(screen.getByTestId("routine-r1-chore-delete-confirm"));
-
-    await waitFor(() => {
-      expect(
-        (mockFetch.mock.calls as FetchCall[]).filter(
-          ([reqInput, init]) => String(reqInput) === "/api/chores/c1" && init?.method === "DELETE"
-        )
-      ).toHaveLength(1);
-    });
-  });
-
-  it("a brand-new assignment saves immediately, with no confirmation", async () => {
-    const mockFetch = mockBackend();
-    renderSurface();
-
-    const card = await screen.findByTestId("routine-r1");
-    fireEvent.click(within(card).getByRole("button", { name: "Members with assignments" }));
-    const row = await screen.findByTestId("routine-assignment-m1");
-
+    expect(within(dialog).queryByText("Pat")).not.toBeInTheDocument();
+    const row = within(dialog).getByTestId("routine-assignment-m1");
     fireEvent.click(within(row).getByRole("checkbox", { name: "Mon" }));
     fireEvent.click(within(row).getByRole("button", { name: "Save Assignment" }));
 
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(
-        (mockFetch.mock.calls as FetchCall[]).filter(
-          ([reqInput, init]) =>
-            String(reqInput) === "/api/routines/r1/assignments/m1" && init?.method === "PUT"
-        )
-      ).toHaveLength(1);
-    });
+    await waitFor(() =>
+      expect(callsTo(calls, "PUT", "/api/routines/r1/assignments/m1")[0]?.body).toEqual({
+        weekdays: ["mon"],
+        active: true,
+      })
+    );
+    expect(screen.queryByTestId("routines-assignment-m1-save-confirm")).not.toBeInTheDocument();
   });
 
-  it("reassigning an already-active assignment requires confirmation before the PUT fires", async () => {
-    const mockFetch = mockBackend({
+  it("changing an existing assignment asks for the streak confirmation", async () => {
+    const calls = mockBackend({
       assignments: [{ id: "a1", memberId: "m1", weekdays: ["mon"], active: true }],
     });
-    renderSurface();
+    renderPage();
+    const row = within(await openAssignments()).getByTestId("routine-assignment-m1");
 
-    const card = await screen.findByTestId("routine-r1");
-    fireEvent.click(within(card).getByRole("button", { name: "Members with assignments" }));
-    const row = await screen.findByTestId("routine-assignment-m1");
-
+    expect(within(row).getByRole("button", { name: "Save Assignment" })).toBeDisabled();
     fireEvent.click(within(row).getByRole("checkbox", { name: "Tue" }));
     fireEvent.click(within(row).getByRole("button", { name: "Save Assignment" }));
+    fireEvent.click(await screen.findByTestId("routines-assignment-m1-save-cancel"));
+    expect(callsTo(calls, "PUT", "/api/routines/r1/assignments/m1")).toHaveLength(0);
 
-    await screen.findByRole("dialog");
-    expect(
-      (mockFetch.mock.calls as FetchCall[]).filter(
-        ([reqInput, init]) =>
-          String(reqInput) === "/api/routines/r1/assignments/m1" && init?.method === "PUT"
-      )
-    ).toHaveLength(0);
-
-    fireEvent.click(screen.getByTestId("routines-assignment-m1-save-confirm"));
-
-    await waitFor(() => {
-      expect(
-        (mockFetch.mock.calls as FetchCall[]).filter(
-          ([reqInput, init]) =>
-            String(reqInput) === "/api/routines/r1/assignments/m1" && init?.method === "PUT"
-        )
-      ).toHaveLength(1);
-    });
+    fireEvent.click(within(row).getByRole("button", { name: "Save Assignment" }));
+    fireEvent.click(await screen.findByTestId("routines-assignment-m1-save-confirm"));
+    await waitFor(() =>
+      expect(callsTo(calls, "PUT", "/api/routines/r1/assignments/m1")[0]?.body).toEqual({
+        weekdays: ["mon", "tue"],
+        active: true,
+      })
+    );
   });
 
-  it("does not deactivate an assignment until the ConfirmDialog is confirmed, and deactivates on confirm", async () => {
-    const mockFetch = mockBackend({
+  it("deactivates only after confirmation", async () => {
+    const calls = mockBackend({
       assignments: [{ id: "a1", memberId: "m1", weekdays: ["mon"], active: true }],
     });
-    renderSurface();
-
-    const card = await screen.findByTestId("routine-r1");
-    fireEvent.click(within(card).getByRole("button", { name: "Members with assignments" }));
-    const row = await screen.findByTestId("routine-assignment-m1");
+    renderPage();
+    const row = within(await openAssignments()).getByTestId("routine-assignment-m1");
 
     fireEvent.click(within(row).getByRole("button", { name: "Deactivate" }));
-    await screen.findByRole("dialog");
-    fireEvent.click(screen.getByTestId("routines-assignment-m1-deactivate-cancel"));
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-    expect(
-      (mockFetch.mock.calls as FetchCall[]).filter(
-        ([reqInput, init]) =>
-          String(reqInput) === "/api/routines/r1/assignments/m1" && init?.method === "DELETE"
-      )
-    ).toHaveLength(0);
+    fireEvent.click(await screen.findByTestId("routines-assignment-m1-deactivate-cancel"));
+    expect(callsTo(calls, "DELETE", "/api/routines/r1/assignments/m1")).toHaveLength(0);
 
     fireEvent.click(within(row).getByRole("button", { name: "Deactivate" }));
-    await screen.findByRole("dialog");
-    fireEvent.click(screen.getByTestId("routines-assignment-m1-deactivate-confirm"));
-
-    await waitFor(() => {
-      expect(
-        (mockFetch.mock.calls as FetchCall[]).filter(
-          ([reqInput, init]) =>
-            String(reqInput) === "/api/routines/r1/assignments/m1" && init?.method === "DELETE"
-        )
-      ).toHaveLength(1);
-    });
+    fireEvent.click(await screen.findByTestId("routines-assignment-m1-deactivate-confirm"));
+    await waitFor(() =>
+      expect(callsTo(calls, "DELETE", "/api/routines/r1/assignments/m1")).toHaveLength(1)
+    );
   });
-});
 
-// retrofit (verification policy — re-audited 2026-09-10 late): merged before
-// the panel-adoption clause existed and asserted NEITHER half for `RoutinesManagement.tsx`'s own
-// `AdminPanel` — a bare `<div><h2>` (title and description deleted) would have passed this
-// file's entire suite. `RoutinesManagement.tsx` DOES render through `AdminPanel` in both its
-// `loading` and loaded branches (same title in each), so this is a missing assertion, not a
-// missing adoption.
-describe("RoutinesManagement — adopts the AdminPanel L2 frame (c retrofit)", () => {
-  it("wraps the surface in a landmark region labelled by its own title, with a heading of the same name", async () => {
-    mockBackend();
-    renderSurface();
-
-    // Anchor on LOADED content FIRST — this surface's OWN `loading` branch also renders through
-    // `AdminPanel` with the identical title, so asserting region/heading from the very first
-    // render would not, by itself, prove the assertion runs against the real, loaded surface.
-    await screen.findByTestId("routine-r1");
-
-    expect(screen.getByRole("region", { name: "Routines Management" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Routines Management" })).toBeInTheDocument();
-  });
-});
-
-// Independent review lesson carried from /: assert EVERY key a typed-map replaces a
-// literal `as MessageKey` cast with, not just the one obviously exercised — rendered in Spanish,
-// not English, so an accidental English-literal fallback would not coincidentally still read
-// wrong.
-describe("RoutinesManagement — WEEKDAY_LABEL_KEYS maps each weekday to its OWN translation key, through the shared WeekdayPicker", () => {
-  it("labels the WeekdayPicker with the household's own Spanish weekday abbreviations, in canonical mon..sun order", async () => {
-    mockBackend({ language: "es" });
-    renderSurface();
-
-    const card = await screen.findByTestId("routine-r1");
-    fireEvent.click(within(card).getByRole("button", { name: "Miembros con asignaciones" }));
-    const row = await screen.findByTestId("routine-assignment-m1");
-
-    const dayLabels = within(row)
-      .getAllByRole("checkbox")
-      .map((checkbox) => checkbox.closest("label")?.textContent?.trim());
-    expect(dayLabels).toEqual(["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]);
-  });
-});
-
-//: the last two `as MessageKey` casts this file carried (`dayPeriodLabel`'s card render and
-// RoutineCreateForm's SelectItem) are replaced by indexing the shared `DAY_PERIOD_LABEL_KEYS` map
-// (`DailyBriefingView.tsx`) with the closed `PeriodId` union. A single-period fixture can't
-// distinguish "the correct key was picked" from "any key was picked" — two day periods, each
-// feeding a DIFFERENT routine card, rendered in Spanish so an accidental English literal
-// fallback would not coincidentally still read right.
-describe("RoutinesManagement — DAY_PERIOD_LABEL_KEYS indexes each routine's OWN day period, through the shared map (#814)", () => {
-  it("renders the morning routine's card with 'Mañana' and the evening routine's card with 'Tarde'", async () => {
+  it("a deactivated assignment starts empty and re-saving it asks for confirmation", async () => {
     mockBackend({
-      language: "es",
-      dayPeriods: [DAY_PERIOD, DAY_PERIOD_EVENING],
-      routines: () => json([ROUTINE, ROUTINE_EVENING]),
+      assignments: [{ id: "a1", memberId: "m1", weekdays: ["mon"], active: false }],
     });
-    renderSurface();
+    renderPage();
+    const row = within(await openAssignments()).getByTestId("routine-assignment-m1");
 
-    // Anchor on loaded content from BOTH routines first — under the applied es locale — before
-    // asserting the day-period text each card renders (the /api/settings locale fetch races the
-    // day-periods/routines fetches, so a synchronous getBy* here would be flaky).
-    const morningCard = await screen.findByTestId("routine-r1");
-    const eveningCard = await screen.findByTestId("routine-r2");
-
-    expect(await within(morningCard).findByText("Mañana")).toBeInTheDocument();
-    expect(await within(eveningCard).findByText("Tarde")).toBeInTheDocument();
+    expect(within(row).getByRole("checkbox", { name: "Mon" })).not.toBeChecked();
+    expect(within(row).queryByRole("button", { name: "Deactivate" })).not.toBeInTheDocument();
+    fireEvent.click(within(row).getByRole("checkbox", { name: "Wed" }));
+    fireEvent.click(within(row).getByRole("button", { name: "Save Assignment" }));
+    expect(await screen.findByTestId("routines-assignment-m1-save-confirm")).toBeInTheDocument();
   });
 
-  it("the create form's day-period Select lists each period under its OWN label (the second changed call site — a Radix popover no other test ever opens)", async () => {
-    // jsdom 30 ships no Element.prototype.scrollIntoView and Radix's open-popover focus effect
-    // calls it unconditionally — same shim-and-really-restore dance as
-    // select-item-density.test.tsx's beforeAll/afterAll (see its header), scoped to this one
-    // test because it is the only popover this file opens.
-    const originalScrollIntoView = Element.prototype.scrollIntoView as
-      typeof Element.prototype.scrollIntoView | undefined;
-    Element.prototype.scrollIntoView = vi.fn();
+  it("announces a failed assignment save inside the dialog", async () => {
+    mockBackend({ fail: (url, method) => /\/assignments\/m1$/.test(url) && method === "PUT" });
+    renderPage();
+    const dialog = await openAssignments();
+    const row = within(dialog).getByTestId("routine-assignment-m1");
+    fireEvent.click(within(row).getByRole("checkbox", { name: "Mon" }));
+    fireEvent.click(within(row).getByRole("button", { name: "Save Assignment" }));
+
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      "Failed to update assignment."
+    );
+  });
+
+  it("explains how to add a child when there is none", async () => {
+    mockBackend({ members: [PARENT] });
+    renderPage();
+    expect(await openAssignments()).toHaveTextContent(
+      "There are no children to assign yet. Add one in Members."
+    );
+  });
+});
+
+describe("RoutinesManagement — Spanish labels", () => {
+  it("renders period groups, the page name, weekday labels and period options in Spanish", async () => {
+    mockBackend({ language: "es", routines: [ROUTINE, ROUTINE_EVENING] });
+    renderPage();
+
+    expect(await screen.findByRole("heading", { level: 4, name: "Mañana" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 4, name: "Tarde" })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "Rutinas y tareas" })).toBeInTheDocument();
+
+    await selectRoutine("r1");
+    fireEvent.click(screen.getByTestId("routine-assign"));
+    const row = await screen.findByTestId("routine-assignment-m1");
+    expect(
+      within(row)
+        .getAllByRole("checkbox")
+        .map((checkbox) => checkbox.closest("label")?.textContent?.trim())
+    ).toEqual(["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]);
+  });
+
+  it("lists each period under its own Spanish label in the routine dialog", async () => {
+    mockBackend({ language: "es" });
+    renderPage();
+    await screen.findByRole("heading", { level: 4, name: "Mañana" });
+    fireEvent.click(screen.getByTestId("routines-new"));
+    await screen.findByTestId("routine-form-dialog");
+
+    fireEvent.click(screen.getByRole("combobox", { name: "Período del día" }));
+    const options = await screen.findAllByRole("option");
+    expect(options.map((option) => option.textContent)).toEqual(["Mañana", "Mediodía", "Tarde"]);
+  });
+});
+
+describe("RoutinesManagement — kiosk density (SC-001, SC-002, SC-003)", () => {
+  it("meets kiosk density with a routine selected and with the assignment dialog open", async () => {
+    mockBackend({
+      assignments: [{ id: "a1", memberId: "m1", weekdays: ["mon"], active: true }],
+    });
+    const uninject = await injectDensityStyles({
+      extraCandidates: ["size-[var(--control-height)]"],
+    });
+    document.documentElement.setAttribute("data-density", "kiosk");
     try {
-      // Independent review on the: a wrong-key mutation at the SelectItem call site
-      // survived the whole suite, because SelectContent renders nothing until the trigger is
-      // clicked. Open it (the members-admin.test.tsx combobox precedent) and assert both options
-      // carry DISTINCT per-period labels — the same falsifier the card test provides for the
-      // first call site.
-      mockBackend({
-        language: "es",
-        dayPeriods: [DAY_PERIOD, DAY_PERIOD_EVENING],
-        routines: () => json([ROUTINE, ROUTINE_EVENING]),
-      });
-      renderSurface();
-      await screen.findByTestId("routine-r1");
+      renderPage();
+      await selectRoutine("r1");
+      await screen.findByTestId("chore-c3");
+      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
-      const trigger = await screen.findByRole("combobox", { name: "Seleccionar período diario" });
-      fireEvent.click(trigger);
-
-      // findAllByRole + textContent array, not per-name queries: RTL's accessible-name matching
-      // does not resolve these portalled Radix options' names in jsdom (the elements exist with
-      // the right text — verified by direct DOM inspection — but role+name queries miss them; the
-      // members-admin precedent happens to work on its own portal, this one does not). Asserting
-      // the mapped textContent pins BOTH per-period content and order, which kills the same
-      // wrong-key mutation: the mutant renders ["Noche", "Noche"].
-      const options = await screen.findAllByRole("option");
-      expect(options.map((o) => o.textContent)).toEqual(["Mañana", "Tarde"]);
+      fireEvent.click(screen.getByTestId("routine-assign"));
+      await screen.findByTestId("routine-assignment-m1");
+      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
-      if (originalScrollIntoView) {
-        Element.prototype.scrollIntoView = originalScrollIntoView;
-      } else {
-        delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+      uninject();
+    }
+  });
+
+  it("DELIBERATE NEGATIVE — forcing the New routine button below the kiosk minimum fails", async () => {
+    mockBackend();
+    const uninject = await injectDensityStyles();
+    document.documentElement.setAttribute("data-density", "kiosk");
+    try {
+      const { container } = renderPage();
+      const button = await screen.findByTestId("routines-new");
+      button.style.height = "10px";
+      button.style.fontSize = "8px";
+
+      let thrown: unknown;
+      try {
+        assertKioskDensityCompliant(container);
+      } catch (error) {
+        thrown = error;
       }
+      expect(thrown).toBeInstanceOf(DensityViolationError);
+      expect((thrown as DensityViolationError).message).toMatch(
+        /height 10px is below the kiosk minimum 48px/
+      );
+
+      button.style.height = "";
+      button.style.fontSize = "";
+      expect(() => assertKioskDensityCompliant(container)).not.toThrow();
+    } finally {
+      uninject();
     }
   });
 });

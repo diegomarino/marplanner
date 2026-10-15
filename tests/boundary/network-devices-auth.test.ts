@@ -4,29 +4,21 @@ import type { preHandlerAsyncHookHandler } from "fastify";
 import { buildApp } from "../../src/server/app.ts";
 import { getDb } from "../../src/server/db/client.ts";
 import { hashKey } from "../../src/server/auth/credentials.ts";
-import { requireManagementKey, requireCapability } from "../../src/server/auth/capability.ts";
+import { requireCapability } from "../../src/server/auth/capability.ts";
 import { reconcileManagement } from "../../src/server/auth/reconcile.ts";
 import { DEVICE_COOKIE } from "../../src/server/auth/cookies.ts";
 import { useIsolatedDb } from "../helpers/db";
 import { AUTH_SCOPE_DENIED_CODE, AUTH_CREDENTIAL_INVALID_CODE } from "../../src/shared";
 
-/** docs/features/network-devices.md / — `requireManagementKey` (* NETWORK-DEVICES-INV-09/AC-06) + the env-seeded management-key reconcile (maintainer
- * decision 2026-09-04).
- * HIGHEST RISK per trap-sweep.md: the negative test MUST provision its key through the
- * REAL `provision.ts` path (`POST /api/auth/provision`) so it is genuinely `kind='device',
- * scope='*'` — the exact false green D1 documents (`requireCapability`'s `scope === '*'`
- * branch satisfies ANY capability string, so a capability check alone would still admit a
- * device key). A hand-inserted "device-kind" row would prove nothing about the real
- * provisioning flow's shape.
- * Per the maintainer's recorded decision (2026-09-04, review of 607005e): `kind='device'` is
- * the ONLY kind any browser can ever hold — `provisionDevice` hardcodes it, and nothing else
- * mints `kind='integration'`. A hand-inserted "management-kind" row therefore proved nothing
- * about production: no browser or operator flow could ever produce it. The POSITIVE
- * (management-key) tests below now go through `reconcileManagement` — the same
- * `MP_MANAGEMENT_KEY`-gated boot-time seam a real deployment uses (* `src/server/auth/reconcile.ts`) — exactly mirroring how the negative test already used the
- * real provisioning path instead of a hand-inserted device row.
+/** docs/features/network-devices.md FR-009/FR-016 — the network-devices guard is
+ * `requireCapability("network:admin")` ALONE (owner decision 2026-10-15, ADR-058 single
+ * household tier, superseding the ADR-053 device-key carve-out): a device `*` key minted through
+ * the REAL `provision.ts` path is accepted, exactly like every other household-tier admin
+ * endpoint; unauthenticated or unknown keys are still rejected. The env-seeded management key
+ * (`reconcileManagement`, maintainer decision 2026-09-04) remains a valid `kind='integration'`
+ * credential. The Admin PIN is a UI-only gate and is never evaluated server-side (FR-002).
  */
-describe("network-devices auth — requireManagementKey (RED-first)", () => {
+describe("network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06)", () => {
   useIsolatedDb();
 
   /** Bootstrap-row seeding precedent: tests/boundary/provision.test.ts `seedBootstrapKey`. */
@@ -109,28 +101,12 @@ describe("network-devices auth — requireManagementKey (RED-first)", () => {
     return app;
   }
 
-  it("NETWORK-DEVICES-AC-06: a device key minted through the REAL provision.ts path is rejected 403", async () => {
+  const guard = () => requireCapability("network:admin");
+
+  it("NETWORK-DEVICES-AC-06: a device key minted through the REAL provision.ts path is ACCEPTED", async () => {
     const deviceKeyId = await provisionRealDeviceKey();
 
-    const app = buildScratchApp(deviceKeyId, requireManagementKey());
-    try {
-      const res = await app.inject({ method: "GET", url: "/probe/management" });
-      expect(res.statusCode).toBe(403);
-      const body = JSON.parse(res.body);
-      expect(body).toHaveProperty("error", "forbidden");
-      //: pin the machine `code` on the wire — `authFetch`
-      // (src/client/lib/credential.ts) relies on exactly this value to recognize a
-      // scope-403 (live key, denied on scope grounds) and NOT de-provision the kiosk.
-      expect(body).toHaveProperty("code", AUTH_SCOPE_DENIED_CODE);
-    } finally {
-      await app.close();
-    }
-  });
-
-  it("a management key minted through the REAL reconcileManagement() path passes requireManagementKey", async () => {
-    const mgmtKeyId = provisionRealManagementKey();
-
-    const app = buildScratchApp(mgmtKeyId, requireManagementKey());
+    const app = buildScratchApp(deviceKeyId, guard());
     try {
       const res = await app.inject({ method: "GET", url: "/probe/management" });
       expect(res.statusCode).toBe(200);
@@ -139,18 +115,31 @@ describe("network-devices auth — requireManagementKey (RED-first)", () => {
     }
   });
 
-  it("no authenticated apiKeyId attached → 403 (fail-closed)", async () => {
-    const app = buildScratchApp(undefined, requireManagementKey());
+  it("a management key minted through the REAL reconcileManagement() path is accepted", async () => {
+    const mgmtKeyId = provisionRealManagementKey();
+
+    const app = buildScratchApp(mgmtKeyId, guard());
+    try {
+      const res = await app.inject({ method: "GET", url: "/probe/management" });
+      expect(res.statusCode).toBe(200);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("no authenticated apiKeyId attached → 403 credential_invalid (fail-closed)", async () => {
+    const app = buildScratchApp(undefined, guard());
     try {
       const res = await app.inject({ method: "GET", url: "/probe/management" });
       expect(res.statusCode).toBe(403);
+      expect(JSON.parse(res.body)).toHaveProperty("code", AUTH_CREDENTIAL_INVALID_CODE);
     } finally {
       await app.close();
     }
   });
 
   it("an unknown apiKeyId (no matching row) → 403", async () => {
-    const app = buildScratchApp("does-not-exist", requireManagementKey());
+    const app = buildScratchApp("does-not-exist", guard());
     try {
       const res = await app.inject({ method: "GET", url: "/probe/management" });
       expect(res.statusCode).toBe(403);
@@ -159,43 +148,22 @@ describe("network-devices auth — requireManagementKey (RED-first)", () => {
     }
   });
 
-  describe("composes with requireCapability (research D1's false-green matrix)", () => {
-    // NOTE: `reconcileManagement` always mints `scope='*'` (maintainer decision
-    // 2026-09-04) — a scoped-but-non-'*' management key is not a shape any production
-    // reconcile path can produce, so no test here hand-seeds one; generic
-    // requireCapability scope-rejection behavior is already covered by
-    // tests/boundary/telemetry-capability.test.ts.
-    it("a management key minted through the REAL reconcileManagement() path passes BOTH requireManagementKey and requireCapability", async () => {
-      const mgmtKeyId = provisionRealManagementKey();
+  it("a key scoped to OTHER capabilities is rejected 403 scope_denied (the capability check still runs)", async () => {
+    const now = Date.now();
+    getDb()
+      .prepare(
+        "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, 'telemetry:read', 'integration', ?)"
+      )
+      .run("scoped-other", hashKey(`mpk-scoped-${now}`), now);
 
-      const app = buildScratchApp(mgmtKeyId, [
-        requireManagementKey(),
-        requireCapability("network:admin"),
-      ]);
-      try {
-        const res = await app.inject({ method: "GET", url: "/probe/management" });
-        expect(res.statusCode).toBe(200);
-      } finally {
-        await app.close();
-      }
-    });
-
-    it("THE FALSE GREEN D1 KILLS: a REAL provisioned device key (scope='*') is rejected even composed with requireCapability, despite '*' satisfying ANY capability alone", async () => {
-      const deviceKeyId = await provisionRealDeviceKey();
-
-      const app = buildScratchApp(deviceKeyId, [
-        requireManagementKey(),
-        requireCapability("network:admin"),
-      ]);
-      try {
-        const res = await app.inject({ method: "GET", url: "/probe/management" });
-        // requireManagementKey MUST short-circuit before requireCapability ever gets to
-        // evaluate this key's scope='*' — a capability check ALONE would have returned 200.
-        expect(res.statusCode).toBe(403);
-      } finally {
-        await app.close();
-      }
-    });
+    const app = buildScratchApp("scoped-other", guard());
+    try {
+      const res = await app.inject({ method: "GET", url: "/probe/management" });
+      expect(res.statusCode).toBe(403);
+      expect(JSON.parse(res.body)).toHaveProperty("code", AUTH_SCOPE_DENIED_CODE);
+    } finally {
+      await app.close();
+    }
   });
 
   describe("reconcileManagement — (maintainer decision 2026-09-04)", () => {

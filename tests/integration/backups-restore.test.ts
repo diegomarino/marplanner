@@ -152,6 +152,18 @@ function seedBackupFixture(
   return filename;
 }
 
+// A case that times out never reaches its own `scheduler.stop()`, and the live
+// singleton then makes every later `initScheduler()` in this file throw.
+afterEach(async () => {
+  let scheduler: ReturnType<typeof getScheduler> | undefined;
+  try {
+    scheduler = getScheduler();
+  } catch {
+    return; // never initialized
+  }
+  if (!scheduler.isStopped()) await scheduler.stop();
+});
+
 describe("restore engine — confirmation + validation (BACKUPS-AC-01, no side effects)", () => {
   useIsolatedDb({ pluginState: "inactive" });
   afterEach(() => {
@@ -209,7 +221,7 @@ describe("restore engine — confirmation + validation (BACKUPS-AC-01, no side e
       }
     }
     await scheduler.stop();
-  }, 15_000); // Twelve restore cycles share this case; allow instrumented parallel-suite overhead.
+  }, 60_000); // Twelve restore cycles (~1.2 s each) share this case; allow for a loaded machine.
 
   it("invalid weekday data in the rollback snapshot keeps traffic and jobs quiesced", async () => {
     seedMember("original", "Original");

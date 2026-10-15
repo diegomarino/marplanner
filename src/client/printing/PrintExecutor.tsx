@@ -18,8 +18,19 @@ import {
   type ReactNode,
 } from "react";
 import { authFetch } from "@/lib/credential";
-import type { AckRequest, ClaimResponse, FailRequest, PrintFailureErrorCode } from "../../shared";
-import { createPrintTransport, PrintTransportError, type PrintTransport } from "./transport";
+import type {
+  AckRequest,
+  ClaimResponse,
+  FailRequest,
+  PrintFailureErrorCode,
+  PrinterTransportSettings,
+} from "../../shared";
+import {
+  createPrintTransport,
+  PrintTransportError,
+  type PrinterEndpointPreference,
+  type PrintTransport,
+} from "./transport";
 import { PRINT_INTENT_ENQUEUED_EVENT } from "./queueWakeup";
 import { usePrintingPluginActive } from "./pluginStatus";
 
@@ -67,7 +78,9 @@ export interface PrinterSession {
     | "printing.executor.state.disconnected"
     | "printing.executor.state.error";
   canPair: boolean;
-  pair: () => void;
+  /** The identity resolved by the last successful pairing; kept across disconnects. */
+  pairedDevice: PrinterTransportSettings | null;
+  pair: (preference?: PrinterEndpointPreference) => void;
 }
 
 const PrinterSessionContext = createContext<PrinterSession | null>(null);
@@ -160,6 +173,7 @@ export function PrintExecutor({
   const [connection, setConnection] = useState<Connection>("unpaired");
   const [activity, setActivity] = useState<Activity>("idle");
   const [lastError, setLastError] = useState<string | null>(null);
+  const [pairedDevice, setPairedDevice] = useState<PrinterTransportSettings | null>(null);
   const busyRef = useRef(false); // guards overlapping poll ticks
   const wakePendingRef = useRef(false);
   const pendingAckRef = useRef<PendingAck | null>(null); //
@@ -189,27 +203,36 @@ export function PrintExecutor({
     if (!res.ok) throw new Error(`capability registration failed: ${res.status}`);
   }, []);
 
-  const handlePair = useCallback(() => {
-    setConnection("pairing");
-    setLastError(null);
-    transport
-      .pair()
-      // FR-021/ADR-035: capability registration happens HERE, before this promise chain ever
-      // lets the poll effect see connection === "paired" (no first-claim race).
-      .then(() => registerCapability())
-      .then(() => setConnection("paired"))
-      .catch((err: unknown) => {
-        //: registerCapability can reject AFTER pair already
-        // succeeded (e.g. a network blip on the capability POST) — disconnect the
-        // now-orphaned GATT connection before falling back to "unpaired", or re-clicking
-        // the pair affordance opens a SECOND requestDevice chooser on top of a connection
-        // nothing will ever use again. Safe to call unconditionally: disconnect on a
-        // transport that never actually connected (pair itself failed) is a no-op.
-        transport.disconnect();
-        setConnection("unpaired");
-        setLastError(describeError(err));
-      });
-  }, [registerCapability, transport]);
+  const handlePair = useCallback(
+    (preference?: PrinterEndpointPreference) => {
+      setConnection("pairing");
+      setLastError(null);
+      transport
+        .pair(preference)
+        // FR-021/ADR-035: capability registration happens HERE, before this promise chain ever
+        // lets the poll effect see connection === "paired" (no first-claim race).
+        .then(async (identity) => {
+          await registerCapability();
+          return identity;
+        })
+        .then((identity) => {
+          setPairedDevice(identity);
+          setConnection("paired");
+        })
+        .catch((err: unknown) => {
+          //: registerCapability can reject AFTER pair already
+          // succeeded (e.g. a network blip on the capability POST) — disconnect the
+          // now-orphaned GATT connection before falling back to "unpaired", or re-clicking
+          // the pair affordance opens a SECOND requestDevice chooser on top of a connection
+          // nothing will ever use again. Safe to call unconditionally: disconnect on a
+          // transport that never actually connected (pair itself failed) is a no-op.
+          transport.disconnect();
+          setConnection("unpaired");
+          setLastError(describeError(err));
+        });
+    },
+    [registerCapability, transport]
+  );
 
   // an unexpected GATT drop (the transport's own `gattserverdisconnected` handling,
   // or the fake's scriptable `triggerDisconnect`) transitions straight to "disconnected" —
@@ -397,6 +420,7 @@ export function PrintExecutor({
           displayState,
           stateLabelKey,
           canPair: false,
+          pairedDevice,
           pair: handlePair,
         }}
       >
@@ -410,6 +434,7 @@ export function PrintExecutor({
     displayState,
     stateLabelKey,
     canPair: showPairAffordance,
+    pairedDevice,
     pair: handlePair,
   };
 

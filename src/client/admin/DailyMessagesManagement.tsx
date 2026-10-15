@@ -54,6 +54,8 @@ export function DailyMessagesManagement() {
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [savingDates, setSavingDates] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const [loadFailed, setLoadFailed] = useState<"members" | "messages" | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<DailyMessage | null>(null);
   const loadRequestIdRef = useRef(0);
   const selectedMemberIdRef = useRef(selectedMemberId);
@@ -72,6 +74,7 @@ export function DailyMessagesManagement() {
     let cancelled = false;
     setLoadingMembers(true);
     setError(null);
+    setLoadFailed(null);
 
     void (async () => {
       try {
@@ -87,7 +90,10 @@ export function DailyMessagesManagement() {
         setActiveMembers(active);
         setSelectedMemberId((current) => current || active[0]?.id || "");
       } catch {
-        if (!cancelled) setError(loadErrorMessage);
+        if (!cancelled) {
+          setError(loadErrorMessage);
+          setLoadFailed("members");
+        }
       } finally {
         if (!cancelled) setLoadingMembers(false);
       }
@@ -96,7 +102,7 @@ export function DailyMessagesManagement() {
     return () => {
       cancelled = true;
     };
-  }, [householdTimezone, loadErrorMessage]);
+  }, [householdTimezone, loadErrorMessage, reloadKey]);
 
   useEffect(() => {
     if (!selectedMemberId || !windowFrom) {
@@ -110,6 +116,7 @@ export function DailyMessagesManagement() {
     const dateWindow = buildDateWindow(windowFrom);
     setLoadingMessages(true);
     setError(null);
+    setLoadFailed(null);
     setMessagesList([]);
     setDrafts({});
 
@@ -135,12 +142,13 @@ export function DailyMessagesManagement() {
       } catch {
         if (requestId === loadRequestIdRef.current) {
           setError(loadErrorMessage);
+          setLoadFailed("messages");
         }
       } finally {
         if (requestId === loadRequestIdRef.current) setLoadingMessages(false);
       }
     })();
-  }, [loadErrorMessage, selectedMemberId, windowFrom]);
+  }, [loadErrorMessage, selectedMemberId, windowFrom, reloadKey]);
 
   async function saveMessage(date: string) {
     const memberId = selectedMemberId;
@@ -209,7 +217,7 @@ export function DailyMessagesManagement() {
       setDrafts((current) => ({ ...current, [message.date]: "" }));
     } catch {
       if (selectedMemberIdRef.current === message.memberId) {
-        setError(loadErrorMessage);
+        setError(t("dailyMessages.management.deleteError"));
       }
     }
   }
@@ -226,7 +234,20 @@ export function DailyMessagesManagement() {
 
       <ErrorNotice message={error} data-testid="daily-messages-error" />
 
+      {loadFailed && (
+        <Button
+          type="button"
+          variant="outline"
+          className="self-start"
+          data-testid="daily-messages-retry"
+          onClick={() => setReloadKey((key) => key + 1)}
+        >
+          {t("dailyMessages.management.retry")}
+        </Button>
+      )}
+
       {!loadingMembers &&
+        loadFailed !== "members" &&
         (activeMembers.length === 0 ? (
           <p className="text-muted-foreground" data-testid="daily-messages-no-members">
             {t("dailyMessages.management.noActiveMembers")}
@@ -286,7 +307,7 @@ export function DailyMessagesManagement() {
 
             {loadingMessages ? (
               <p className="text-muted-foreground">{t("dailyMessages.management.loading")}</p>
-            ) : (
+            ) : loadFailed === "messages" ? null : (
               <ul className="space-y-2">
                 {dates.map((date) => {
                   const existing = messagesByDate.get(date);

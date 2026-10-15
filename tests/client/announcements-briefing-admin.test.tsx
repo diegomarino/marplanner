@@ -10,15 +10,9 @@
  * surfaces' adoption of the shared `WeekdayPicker` (SC-009) — the group's accessible name AND
  * that toggling emits the CANONICAL `mon..sun` order at the request boundary, not click order —
  * and pins both surfaces' `WEEKDAY_LABEL_KEYS` maps by iteration (SC-007).
- * * `ConfirmDialog` is deliberately NOT adopted by either surface* (recorded here, mirroring
- * `backups-telemetry-admin.test.tsx`'s own documented deviation):
- * - `TimeAnnouncementsManagement`'s rule delete is pinned by the pre-existing
- * `tests/client/time-announcements-management.test.tsx` to go through `window.confirm`
- * (`vi.spyOn(window, "confirm")`) — a file this module's allowed-files list does not include,
- * so swapping the confirmation mechanism would break that pre-existing, out-of-scope
- * coverage. See `TimeAnnouncementsManagement.tsx`'s own file header for the same note.
- * - `DailyBriefingManagement` has no destructive action of any kind (opt-in, generate, and the
- * settings-layer writes are all non-destructive) — there is nothing to gate.
+ * * `ConfirmDialog`:* `TimeAnnouncementsManagement` uses it for rule delete (the old
+ * `window.confirm` is gone); `DailyBriefingManagement` has no destructive action of any kind
+ * (opt-in, generate, and the settings-layer writes are all non-destructive) — nothing to gate.
  * `StatusToggle`/`RadioField` do not apply to either surface — neither renders a pressed-state
  * toggle or a mutually-exclusive radio choice.
  * Functional CRUD/settings-layer coverage already exists (`tests/client/
@@ -162,14 +156,14 @@ describe("TimeAnnouncementsManagement — the panel is a real landmark (FR-009 L
     // AdminPanel with the SAME title while loading, so anchor on loaded fixture content first.
     await screen.findByTestId("time-announcements-rule-rule-morning");
 
-    const region = await screen.findByRole("region", { name: "Time Announcements" });
-    const heading = within(region).getByRole("heading", { name: "Time Announcements" });
+    const region = await screen.findByRole("region", { name: "Time announcements" });
+    const heading = within(region).getByRole("heading", { name: "Time announcements" });
     expect(heading).toBeInTheDocument();
   });
 });
 
 describe("TimeAnnouncementsManagement — kiosk density across reachable states (SC-001, SC-002, SC-003)", () => {
-  it("meets kiosk density collapsed with two rules, then with one rule's edit form open", async () => {
+  it("meets kiosk density collapsed with two rules, then with the create dialog open", async () => {
     mockTimeAnnouncementsBackend();
     const uninject = await injectDensityStyles({
       extraCandidates: ["size-[var(--control-height)]"],
@@ -181,24 +175,23 @@ describe("TimeAnnouncementsManagement — kiosk density across reachable states 
       await screen.findByTestId("time-announcements-rule-rule-morning");
       await screen.findByTestId("time-announcements-rule-rule-evening");
 
-      // Phase 1 — collapsed: the create-form (time input, the 7-day WeekdayPicker, the active
-      // checkbox, Create + Test-voice) + each rule's own collapsed action row (Edit/Toggle/Delete).
-      expect(countInteractiveControls(document.body)).toBe(17);
+      // Phase 1 — collapsed: the header "+ Create" button + each rule's own action row
+      // (Edit icon, Delete icon, Activate/Deactivate) = 1 + 3 * 2.
+      expect(countInteractiveControls(document.body)).toBe(7);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
-      // Phase 2 — rule-morning's inline edit open: swaps its collapsed 3-button row for the edit
-      // form (time input, its own 7-day WeekdayPicker, the active checkbox, Save + Cancel).
-      const row = screen.getByTestId("time-announcements-rule-rule-morning");
-      fireEvent.click(within(row).getByTestId("time-announcements-edit-rule-morning"));
-      expect(countInteractiveControls(document.body)).toBe(25);
+      // Phase 2 — the create dialog open: time input, Test voice, 7 weekday checkboxes, the
+      // Active checkbox, Cancel, Create and the dialog's close button = 13, on top of the
+      // 7 behind it (counted: the census reads 20, matching 7 + 13).
+      fireEvent.click(screen.getByTestId("time-announcements-create"));
+      expect(countInteractiveControls(document.body)).toBe(20);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
     }
   });
 
-  it("CENSUS FIRES ON REMOVAL — deleting a rule drops its collapsed row's 3 controls (17 -> 14), not a synthetic shrink", async () => {
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+  it("CENSUS FIRES ON REMOVAL — deleting a rule drops its collapsed row's 3 controls (7 -> 4), not a synthetic shrink", async () => {
     mockTimeAnnouncementsBackend();
     const uninject = await injectDensityStyles({
       extraCandidates: ["size-[var(--control-height)]"],
@@ -210,21 +203,25 @@ describe("TimeAnnouncementsManagement — kiosk density across reachable states 
       await screen.findByTestId("time-announcements-rule-rule-morning");
       await screen.findByTestId("time-announcements-rule-rule-evening");
 
-      expect(countInteractiveControls(document.body)).toBe(17);
+      expect(countInteractiveControls(document.body)).toBe(7);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
       fireEvent.click(screen.getByTestId("time-announcements-delete-rule-evening"));
+      fireEvent.click(await screen.findByTestId("time-announcements-delete-confirm"));
       await waitFor(() =>
         expect(screen.queryByTestId("time-announcements-rule-rule-evening")).not.toBeInTheDocument()
       );
+      // The confirm dialog must be gone too, or its buttons would inflate the census.
+      await waitFor(() =>
+        expect(screen.queryByTestId("time-announcements-delete-confirm")).not.toBeInTheDocument()
+      );
 
-      // rule-evening's own Edit/Toggle/Delete (3 controls) are gone — a census that failed to
-      // actually recompute (a stale/memoized count) would still read 17 here.
-      expect(countInteractiveControls(document.body)).toBe(14);
+      // rule-evening's own Edit/Delete/Toggle (3 controls) are gone — a census that failed to
+      // actually recompute (a stale/memoized count) would still read 7 here.
+      expect(countInteractiveControls(document.body)).toBe(4);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
-      confirmSpy.mockRestore();
     }
   });
 
@@ -272,6 +269,7 @@ describe("TimeAnnouncementsManagement — error states are announced (SC-011)", 
     expect(alert).toHaveAttribute("role", "alert");
     expect(alert).toHaveAttribute("aria-live", "assertive");
     expect(alert).toHaveTextContent("Failed to load time announcements.");
+    expect(screen.getByTestId("time-announcements-retry")).toBeInTheDocument();
   });
 
   it("announces a create-rule failure through ErrorNotice's live region", async () => {
@@ -290,13 +288,11 @@ describe("TimeAnnouncementsManagement — error states are announced (SC-011)", 
       throw new Error(`unexpected fetch after override: ${url}`);
     });
 
-    fireEvent.change(screen.getByTestId("time-announcements-time-input"), {
-      target: { value: "07:00" },
-    });
-    fireEvent.click(screen.getByTestId("time-announcements-weekday-mon"));
     fireEvent.click(screen.getByTestId("time-announcements-create"));
+    fireEvent.click(screen.getByTestId("time-announcements-weekday-mon"));
+    fireEvent.click(screen.getByTestId("time-announcements-submit"));
 
-    const alert = await screen.findByTestId("time-announcements-error");
+    const alert = await screen.findByTestId("time-announcements-form-error");
     expect(alert).toHaveAttribute("role", "alert");
     expect(alert).toHaveAttribute("aria-live", "assertive");
     expect(alert).toHaveTextContent(
@@ -310,6 +306,7 @@ describe("WeekdayPicker adoption (TimeAnnouncementsManagement) — group accessi
     mockTimeAnnouncementsBackend({ language: "es" });
     renderTimeAnnouncements();
     await screen.findByTestId("time-announcements-rule-rule-morning");
+    fireEvent.click(screen.getByTestId("time-announcements-create"));
 
     // findByRole, not getByRole: the testid anchor above proves the DATA loaded, but testids are
     // locale-independent — the surface can still be mid-flight on the async /api/settings locale
@@ -330,13 +327,12 @@ describe("WeekdayPicker adoption (TimeAnnouncementsManagement) — group accessi
     renderTimeAnnouncements();
     await screen.findByTestId("time-announcements-rule-rule-morning");
 
-    fireEvent.change(screen.getByTestId("time-announcements-time-input"), {
-      target: { value: "07:00" },
-    });
+    fireEvent.click(screen.getByTestId("time-announcements-create"));
+    // The time input already holds the 07:00 default.
     // Click order deliberately REVERSED from canonical order.
     fireEvent.click(screen.getByTestId("time-announcements-weekday-wed"));
     fireEvent.click(screen.getByTestId("time-announcements-weekday-mon"));
-    fireEvent.click(screen.getByTestId("time-announcements-create"));
+    fireEvent.click(screen.getByTestId("time-announcements-submit"));
 
     await waitFor(() => {
       const post = mockFetch.mock.calls.find(
@@ -373,7 +369,8 @@ describe("TimeAnnouncementsManagement — WEEKDAY_LABEL_KEYS maps each weekday t
 const ADA = {
   id: "member-ada",
   displayName: "Ada",
-  role: "parent",
+  colorKey: "blue",
+  role: "child",
   lifecycle: "active",
   createdAt: 1,
   updatedAt: 1,
@@ -397,6 +394,21 @@ function defaultDailyBriefingSettings(overrides: Partial<Record<string, unknown>
     memberBlockSettings: [],
     ...overrides,
   };
+}
+
+/** The Preview / Generate workspace's reads (history, stored briefing, image, Printing status). */
+function briefingWorkspaceResponse(url: string): Response | undefined {
+  if (url === "/api/printing/status") return json({ active: true });
+  if (url.startsWith("/api/daily-briefing/history/")) {
+    return json({ today: "2026-10-15", entries: [] });
+  }
+  if (/^\/api\/daily-briefing\/[^/]+\/[^/]+\/preview\.png/.test(url)) {
+    return new Response("{}", { status: 404 });
+  }
+  if (/^\/api\/daily-briefing\/[^/]+\/\d{4}-\d{2}-\d{2}$/.test(url)) {
+    return json({ generated: false });
+  }
+  return undefined;
 }
 
 function mockDailyBriefingBackend(
@@ -485,6 +497,9 @@ function mockDailyBriefingBackend(
       );
     }
 
+    const workspace = briefingWorkspaceResponse(url);
+    if (workspace) return Promise.resolve(workspace);
+
     throw new Error(`unexpected fetch: ${url} (${method})`);
   });
 
@@ -507,8 +522,8 @@ describe("DailyBriefingManagement — the panel is a real landmark (FR-009 L2-ad
 
     await screen.findByTestId("daily-briefing-opt-in-member-ada");
 
-    const region = await screen.findByRole("region", { name: "Daily Briefing" });
-    const heading = within(region).getByRole("heading", { name: "Daily Briefing" });
+    const region = await screen.findByRole("region", { name: "Briefing" });
+    const heading = within(region).getByRole("heading", { name: "Briefing" });
     expect(heading).toBeInTheDocument();
   });
 });
@@ -543,12 +558,14 @@ describe("DailyBriefingManagement — kiosk density across reachable states (SC-
 
       // Phase 1 — Blocks workspace: the first member is selected immediately, so the complete
       // 21-row matrix is visible with its drag handles, enabled controls, weekday cells, and
-      // applicable parameter selects, alongside the workspace/settings/order controls.
-      expect(countInteractiveControls(document.body)).toBe(212);
+      // applicable parameter selects, alongside the workspace/settings/order controls, plus the
+      // seven per-weekday pause checkboxes in the matrix header.
+      expect(countInteractiveControls(document.body)).toBe(219);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
-      // Phase 2 — Preview / Generate workspace: opt Ada in and expose the Generate panel's
-      // compatibility member-select, Generate, and Generate-all controls.
+      // Phase 2 — Preview / Generate workspace: opt Ada in and expose Generate all plus the
+      // briefing workspace (member pills, compatibility member-select, go-to-date, Generate,
+      // View PNG and Print), counted once its history and read have settled.
       fireEvent.click(screen.getByTestId("daily-briefing-tab-preview"));
       fireEvent.click(screen.getByTestId("daily-briefing-opt-in-member-ada"));
       await waitFor(() => {
@@ -560,7 +577,9 @@ describe("DailyBriefingManagement — kiosk density across reachable states (SC-
         ).toBe(true);
       });
       await screen.findByTestId("daily-briefing-member-select");
-      expect(countInteractiveControls(document.body)).toBe(12);
+      await screen.findByTestId("daily-briefing-history-empty");
+      await screen.findByTestId("daily-briefing-no-briefing");
+      expect(countInteractiveControls(document.body)).toBe(13);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
       // Phase 3 — add one block-order entry: the list appears with its 3 per-item action buttons
@@ -570,19 +589,19 @@ describe("DailyBriefingManagement — kiosk density across reachable states (SC-
       const addSelect = screen.getByTestId("daily-briefing-admin-block-order-add-select");
       fireEvent.change(addSelect, { target: { value: "dadJoke" } });
       fireEvent.click(screen.getByTestId("daily-briefing-admin-block-order-add-button"));
-      expect(countInteractiveControls(document.body)).toBe(215);
+      expect(countInteractiveControls(document.body)).toBe(222);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
       // Phase 4 — CENSUS FIRES ON REMOVAL: removing that same entry drops its 3 per-item action
-      // buttons back out (215 -> 212) — a census that failed to actually recompute (a stale/
-      // memoized count) would still read 215 here.
+      // buttons back out (222 -> 219) — a census that failed to actually recompute (a stale/
+      // memoized count) would still read 222 here.
       fireEvent.click(screen.getByTestId("daily-briefing-admin-block-order-remove-0"));
       await waitFor(() =>
         expect(
           screen.queryByTestId("daily-briefing-admin-block-order-item-0")
         ).not.toBeInTheDocument()
       );
-      expect(countInteractiveControls(document.body)).toBe(212);
+      expect(countInteractiveControls(document.body)).toBe(219);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();

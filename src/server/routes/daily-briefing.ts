@@ -1,9 +1,15 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import {
+  DailyBriefingNotFoundError,
+  DailyBriefingPausedError,
+  DailyBriefingPrintUnavailableError,
+  DailyBriefingRasterMissingError,
   DailyBriefingValidationError,
   generateBriefing,
+  listBriefingHistory,
   listOptIns,
   readBriefing,
+  printBriefing,
   readBriefingPng,
   setOptIn,
 } from "../modules/daily-briefing/index";
@@ -15,14 +21,21 @@ import {
   writeBlockOrder,
   writeMemberBlockSettings,
 } from "../modules/daily-briefing/settings";
+import { setMemberSchedule } from "../modules/daily-briefing/schedule";
 import { isStrictCalendarDate, runJobNow } from "../host-api";
-import type { Briefing, GenerateAllResponse } from "../../shared";
+import type {
+  Briefing,
+  BriefingPreviewRendering,
+  GenerateAllResponse,
+  GenerateSkippedResponse,
+} from "../../shared";
 
 const ALLOWED_GENERATE_KEYS = new Set(["memberId", "date"]);
 const ALLOWED_GENERATE_ALL_KEYS = new Set(["date"]);
 const ALLOWED_OPT_IN_KEYS = new Set(["enabled"]);
 const ALLOWED_SETTINGS_KEYS = new Set(["generationTime", "autoPrintTrigger"]);
 const ALLOWED_BLOCK_SETTINGS_KEYS = new Set(["enabled", "weekdays", "params"]);
+const ALLOWED_SCHEDULE_KEYS = new Set(["weekdays"]);
 
 /** Thin HTTP boundary for the assembly seam's generate and pure-read routes. */
 export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
@@ -56,6 +69,14 @@ export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
     try {
       return reply.code(200).send(await generateBriefing(memberId, date ?? undefined));
     } catch (err) {
+      if (err instanceof DailyBriefingPausedError) {
+        return reply.code(200).send({
+          skipped: true,
+          reason: "paused",
+          memberId: err.memberId,
+          date: err.date,
+        } satisfies GenerateSkippedResponse);
+      }
       return handleDailyBriefingError(err, reply);
     }
   });
@@ -145,6 +166,31 @@ export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
   });
 
   app.get(
+    "/api/daily-briefing/history/:memberId",
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const { memberId } = request.params as { memberId: string };
+      try {
+        return reply.code(200).send(listBriefingHistory(memberId));
+      } catch (err) {
+        return handleDailyBriefingError(err, reply);
+      }
+    }
+  );
+
+  // Manual print through the server print queue (spec D6). No request body.
+  app.post(
+    "/api/daily-briefing/:memberId/:date/print",
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const { memberId, date } = request.params as { memberId: string; date: string };
+      try {
+        return reply.code(200).send(printBriefing(memberId, date, Date.now()));
+      } catch (err) {
+        return handleDailyBriefingError(err, reply);
+      }
+    }
+  );
+
+  app.get(
     "/api/daily-briefing/:memberId/:date",
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { memberId, date } = request.params as { memberId: string; date: string };
@@ -163,18 +209,21 @@ export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
       const { memberId, date } = request.params as { memberId: string; date: string };
       try {
         const result = readBriefingPng(memberId, date);
+        if (result.png) {
+          return reply.code(200).header("content-type", "image/png").send(result.png);
+        }
+        if (result.generating) {
+          return reply.code(202).send({ status: "rendering" } satisfies BriefingPreviewRendering);
+        }
         if (!result.found) {
           return reply
             .code(404)
             .send({ error: "not_found", message: "No briefing for this member/date" });
         }
-        if (!result.png) {
-          return reply.code(409).send({
-            error: "printable_raster_missing",
-            message: "This briefing has no stored printable raster",
-          });
-        }
-        return reply.code(200).header("content-type", "image/png").send(result.png);
+        return reply.code(409).send({
+          error: "printable_raster_missing",
+          message: "This briefing has no stored printable raster",
+        });
       } catch (err) {
         return handleDailyBriefingError(err, reply);
       }
@@ -290,6 +339,32 @@ export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
       }
     }
   );
+
+  app.put(
+    "/api/daily-briefing/schedule/:memberId",
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = request.body;
+      if (!body || typeof body !== "object" || Array.isArray(body)) {
+        return reply
+          .code(400)
+          .send({ error: "validation_error", message: "Request body must be an object" });
+      }
+      const unknownKeys = Object.keys(body).filter((key) => !ALLOWED_SCHEDULE_KEYS.has(key));
+      if (unknownKeys.length > 0) {
+        return reply.code(400).send({
+          error: "validation_error",
+          message: `Unsupported field(s) in daily briefing schedule body: ${unknownKeys.join(", ")}`,
+        });
+      }
+      const { weekdays } = body as { weekdays?: unknown };
+      const { memberId } = request.params as { memberId: string };
+      try {
+        return reply.code(200).send(setMemberSchedule(memberId, weekdays));
+      } catch (err) {
+        return handleDailyBriefingError(err, reply);
+      }
+    }
+  );
 }
 
 function handleDailyBriefingError(err: unknown, reply: FastifyReply): FastifyReply {
@@ -298,6 +373,15 @@ function handleDailyBriefingError(err: unknown, reply: FastifyReply): FastifyRep
   // "400 corpus_language_unavailable" error code).
   if (err instanceof CorpusLanguageUnavailableError) {
     return reply.code(400).send({ error: "corpus_language_unavailable", message: err.message });
+  }
+  if (err instanceof DailyBriefingNotFoundError) {
+    return reply.code(404).send({ error: "not_found", message: err.message });
+  }
+  if (err instanceof DailyBriefingPrintUnavailableError) {
+    return reply.code(409).send({ error: "plugin_inactive", message: err.message });
+  }
+  if (err instanceof DailyBriefingRasterMissingError) {
+    return reply.code(409).send({ error: "printable_raster_missing", message: err.message });
   }
   if (err instanceof DailyBriefingValidationError) {
     return reply.code(400).send({ error: "validation_error", message: err.message });

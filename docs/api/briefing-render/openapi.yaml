@@ -298,6 +298,12 @@ paths:
               schema:
                 type: string
                 contentEncoding: base64
+        "202":
+          description: a generation for this member/date is in flight and no PNG is stored yet (FR-028).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BriefingPreviewRendering"
         "400":
           description: an invalid date.
           content:
@@ -330,6 +336,122 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PrintableRasterMissingErrorResponse"
+        "500":
+          description: unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalErrorResponse"
+  /api/daily-briefing/schedule/{memberId}:
+    put:
+      summary: Set a member's weekday pause schedule (admin, FR-023/FR-025).
+      description: Never regenerates or invalidates briefings. An empty list pauses every day.
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BriefingScheduleInput"
+      responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
+        "200":
+          description: the stored schedule, canonical order.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BriefingSchedule"
+        "400":
+          description: bad weekday, missing weekdays, unknown field, or inactive member.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ValidationErrorResponse"
+                  - $ref: "#/components/schemas/FastifyParseErrorResponse"
+        "401":
+          description: missing or invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedErrorResponse"
+        "403":
+          description: revoked or expired device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenErrorResponse"
+        "500":
+          description: unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalErrorResponse"
+  /api/daily-briefing/{memberId}/{date}/print:
+    post:
+      summary: Send a stored briefing to the printer queue (admin, FR-027).
+      description: >-
+        Enqueues through Printing's producer seam under the record key
+        `daily-briefing:<memberId>:manual:<date>`, targeting the household today. A job still
+        waiting is reused; an already printed record is superseded and enqueued again.
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
+        "200":
+          description: queued (or the waiting job reused).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BriefingPrintResponse"
+        "400":
+          description: invalid date or inactive member.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+        "404":
+          description: no briefing for this member/date.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFoundErrorResponse"
+        "409":
+          description: Printing plugin inactive, or the briefing has no printable raster.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/PrintingPluginInactiveErrorResponse"
+                  - $ref: "#/components/schemas/PrintableRasterMissingErrorResponse"
+        "401":
+          description: missing or invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedErrorResponse"
+        "403":
+          description: revoked or expired device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenErrorResponse"
         "500":
           description: unexpected server error.
           content:
@@ -736,6 +858,7 @@ components:
         - autoPrintTrigger
         - blockOrder
         - memberBlockSettings
+        - memberSchedules
       properties:
         generationTime:
           type: string
@@ -749,6 +872,62 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MemberBlockSettings"
+        memberSchedules:
+          type: array
+          description: stored weekday pause schedules; members without one run every day (FR-023).
+          items:
+            $ref: "#/components/schemas/BriefingSchedule"
+    Weekday:
+      type: string
+      enum: [mon, tue, wed, thu, fri, sat, sun]
+    BriefingSchedule:
+      type: object
+      additionalProperties: false
+      required: [memberId, weekdays]
+      properties:
+        memberId:
+          type: string
+        weekdays:
+          type: array
+          items:
+            $ref: "#/components/schemas/Weekday"
+    BriefingScheduleInput:
+      type: object
+      additionalProperties: false
+      required: [weekdays]
+      properties:
+        weekdays:
+          type: array
+          items:
+            $ref: "#/components/schemas/Weekday"
+    BriefingPreviewRendering:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [rendering]
+    BriefingPrintResponse:
+      type: object
+      additionalProperties: false
+      required: [jobId, enqueued]
+      properties:
+        jobId:
+          type: string
+        enqueued:
+          type: boolean
+          description: false when a job for this briefing was already waiting and was reused.
+    PrintingPluginInactiveErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          enum: [plugin_inactive]
+        message:
+          type: string
     ValidationErrorResponse:
       type: object
       additionalProperties: false

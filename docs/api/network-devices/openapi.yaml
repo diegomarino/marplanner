@@ -223,7 +223,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NetworkDevicesListResponse"
         "403":
-          description: device-kind key rejected (AC-06)
+          description: unauthenticated, unknown or out-of-scope key rejected (AC-06)
     post:
       summary: Register a device from the fresh picker cache
       requestBody:

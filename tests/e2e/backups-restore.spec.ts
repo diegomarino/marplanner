@@ -2,7 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import Database from "better-sqlite3";
 import { spawn, type ChildProcess } from "node:child_process";
 import { createServer } from "node:net";
-import { mkdtempSync, existsSync } from "node:fs";
+import { mkdtempSync, existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { unlockAdmin } from "./admin-unlock";
@@ -363,8 +363,12 @@ test("backups admin visibly restores data and deletes only the confirmed snapsho
       downloadedDatabase.close();
     }
 
-    await page.getByTestId("backups-upload-input").setInputFiles(downloadedPath);
-    await page.getByTestId("backups-upload-submit").click();
+    // Playwright stores downloads under an extension-less temp name; the client only accepts `.db`.
+    await page.getByTestId("backups-upload-input").setInputFiles({
+      name: firstSnapshot,
+      mimeType: "application/x-sqlite3",
+      buffer: readFileSync(downloadedPath),
+    });
     const uploadRow = page.locator('[data-testid^="backups-row-upload-"]').first();
     await expect(uploadRow).toBeVisible();
     const uploadRowId = await uploadRow.getAttribute("data-testid");

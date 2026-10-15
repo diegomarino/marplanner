@@ -42,8 +42,8 @@ blocked device succeeds locally and the admin accepts that the block lingers ups
   explicit unavailable/unconfigured state, never an invented fresh-online.
 - A local mirror write that fails after a successful controller block leaves a stale
   "belief vs controller" state that self-heals on the next poll.
-- A device-scoped `*` kiosk key calling the network endpoints is rejected at the
-  capability layer, not merely by route placement.
+- A provisioned device `*` kiosk key calling the network endpoints is accepted like on every
+  other household-tier admin endpoint (ADR-058); unauthenticated or out-of-scope keys are rejected.
 - An assignment to an inactive member is rejected, while a pre-existing inactive link
   is tolerated and rendered as "inactive member".
 
@@ -67,7 +67,7 @@ blocked device succeeds locally and the admin accepts that the block lingers ups
 
 - **FR-008**: Given UniFi credentials, when the plugin needs them, then they MUST NOT live in `network_devices`, `app_settings`, `GET /settings`, backups, or telemetry, and they MUST be read only as operator env config via the host operator-config interface. Contract: NETWORK-DEVICES-INV-08.
 
-- **FR-009**: Given a network reads/writes or block/unblock request, when it is authorized, then it MUST require management/admin scope (ADR-030/031), and a device `*` kiosk key MUST be rejected at the API capability layer, not only by route placement. Contract: NETWORK-DEVICES-INV-09.
+- **FR-009**: Given a network reads/writes or block/unblock request, when it is authorized, then it MUST require the `network:admin` capability, which a provisioned device `*` key satisfies (ADR-058 single household tier; the earlier ADR-053 device-key exclusion was removed by owner decision 2026-10-15). The Admin PIN MUST remain a UI-only gate (FR-002). Contract: NETWORK-DEVICES-INV-09.
 
 - **FR-010**: Given the `lastSeenAt` field, when it is stamped, then it MUST be stamped only from a real observation (guaranteed by picker-only registration) and MUST never be a creation-time default. Contract: NETWORK-DEVICES-INV-10.
 
@@ -81,11 +81,27 @@ blocked device succeeds locally and the admin accepts that the block lingers ups
 
 - **FR-015**: Given the system, when devices are stored or returned and telemetry is emitted, then an IP MUST NOT be stored or returned, a MAC MUST never appear un-redacted in telemetry, and the UI MUST show the alias. Contract: NETWORK-DEVICES-AC-05.
 
-- **FR-016**: Given a network endpoint call, when it presents a device `*` kiosk key, then it MUST be rejected, and management/admin scope MUST be required for reads and writes. Contract: NETWORK-DEVICES-AC-06.
+- **FR-016**: Given a network endpoint call, when it presents a provisioned device `*` kiosk key, then it MUST be accepted for reads and writes, and an unauthenticated, unknown or out-of-scope key MUST be rejected. Contract: NETWORK-DEVICES-AC-06.
 
 - **FR-017**: Given a member assignment, when the target is an inactive member, then the assignment MUST be rejected, while an existing inactive link MUST render as "inactive member" and the device MUST stay editable. Contract: NETWORK-DEVICES-AC-07.
 
 - **FR-018**: Given a plugin needing UniFi credentials, when it reads them, then it MUST read them only via the host operator-config interface, and the secret MUST never appear in `GET /settings`, a backup, or telemetry. Contract: NETWORK-DEVICES-AC-08.
+
+### Admin console
+
+- **FR-019**: Given the admin Network devices page, when it renders, then it MUST offer two tabs, "Registered devices" and "Add device", and the page heading MUST equal the sidebar label. The active tab is local page state, not a URL sub-route.
+
+- **FR-020**: Given a registered device, when its row renders, then it MUST show a status dot (success colour for online, destructive colour for online and blocked, muted for unknown, a warning glyph for not detected) and status chips, and the text label MUST remain the accessible carrier (colour is never the sole signal). Last-seen MUST never be shown next to "online".
+
+- **FR-021**: Given the registered list is open and the browser tab is visible, when 30 seconds pass, then the list MUST refresh silently (no loading state), MUST NOT refresh while the tab is hidden, and a refresh that was in flight while the user blocked, unblocked, edited, deleted or registered a device MUST NOT overwrite that newer local result.
+
+- **FR-022**: Given a device, when it is edited or registered, then the form MUST open in a dialog that never shows a raw MAC; the registration dialog MUST prefill the alias from the client's name (empty when unnamed, at most 80 characters).
+
+- **FR-023**: Given a delete action, when it is requested, then a confirmation dialog MUST be shown, using the stranded-upstream-block wording whenever the device is blocked or its belief diverged, and nothing is deleted until it is confirmed.
+
+- **FR-024**: Given the Add tab, when it lists live clients, then it MUST be sortable by name and by MAC address, MUST dim already-registered MACs (compared case-insensitively) with an "Already added" badge instead of an Add button, and MUST return to the registered list after a successful registration. The discovery table is the one place a MAC is shown.
+
+- **FR-025**: Given a failed read of the registry or the live client list (including a 403), when the page renders, then it MUST show its generic load error and MUST offer Retry.
 
 ### Key Entities
 
@@ -110,8 +126,9 @@ blocked device succeeds locally and the admin accepts that the block lingers ups
   telemetry record, or human-facing diagnostic artifact across all operations.
 - **SC-003**: 100% of registrations whose submitted MAC is absent from the current fresh
   cache are rejected with a reselect error; 0 manual-MAC registrations succeed.
-- **SC-004**: 100% of network endpoint calls bearing a device `*` kiosk key are rejected
-  at the capability layer; only management/admin scope is admitted.
+- **SC-004**: 100% of network endpoint calls without a valid key, or with a key outside the
+  `network:admin` capability, are rejected at the capability layer; a provisioned device `*`
+  key is admitted.
 
 ## Assumptions
 
@@ -126,3 +143,14 @@ blocked device succeeds locally and the admin accepts that the block lingers ups
   (ADR-039), never imported into any table.
 - The concrete block mechanism (`block-sta` vs `acl_rule_id`) is deferred to
   implementation, constrained only to keep blocked-state poll-readable.
+
+## Exercising the page without a controller
+
+- Component tests (`tests/client/network-devices-management.test.tsx`) cover every live-cache state with a fetch fake.
+- The e2e spec (`tests/e2e/network-devices.spec.ts`) starts a local self-signed HTTPS controller (`tests/e2e/unifi-fixture-server.ts`) and its own server with the scheduler enabled.
+- For manual use, `npm run dev:unifi-fixture` starts the same fixture with six demo clients (one unnamed). Order matters:
+  1. Run `npm run dev:unifi-fixture -- --api http://127.0.0.1:3100` first; it prints the environment (`UNIFI_API_KEY`, `UNIFI_SITE_ID`, `UNIFI_HOST`, `NODE_EXTRA_CA_CERTS`).
+  2. Start the dev server with that environment (and the seeded `DATA_DIR`). The tool provisions a normal device key with `MP_BOOTSTRAP_KEY`, waits for a fresh live cache, registers the first four demo clients through the real API and blocks one.
+  3. Open the SPA with `npm run dev:session`, unlock admin with the PIN and open Network devices: the normal provisioned device cookie is enough.
+- Limitation: a "not detected" device cannot be produced this way (registration needs the device in the live cache); the component tests cover that state.
+- `UNIFI_TLS_INSECURE` is not used (Node 24 undici mismatch, see the fixture server's docblock); the certificate is trusted through `NODE_EXTRA_CA_CERTS` and is regenerated on every run, so restart the dev server after restarting the tool.

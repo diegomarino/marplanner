@@ -1,8 +1,10 @@
 import { LocalizedApiError, responseMessage as readResponseMessage } from "@/lib/api-error";
-import { appUrl } from "@/lib/base-path";
+import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/credential";
 import { useHouseholdSettings } from "@/lib/householdSettings";
+import { STATUS_BANNER_CLASSES, TYPE_PILL_CLASSES } from "@/lib/recipes";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n";
 import type { MessageKey } from "@/i18n/messages";
 import { AdminPanel } from "@/components/AdminPanel";
@@ -71,6 +73,25 @@ export const TYPE_KEYS: Record<BackupType, MessageKey> = {
   upload: "backups.management.type.upload",
 };
 
+/** Relative label for ages up to 30 days; `null` means "show the absolute date instead". */
+export function formatRelativeAge(createdAt: number, now: number, language: string): string | null {
+  const seconds = Math.max(0, Math.trunc((now - createdAt) / 1000));
+  const rtf = new Intl.RelativeTimeFormat(language === "es" ? "es-ES" : "en-GB", {
+    numeric: "auto",
+  });
+  if (seconds < 60) return rtf.format(0, "second");
+  const minutes = Math.trunc(seconds / 60);
+  if (minutes < 60) return rtf.format(-minutes, "minute");
+  const hours = Math.trunc(minutes / 60);
+  if (hours < 24) return rtf.format(-hours, "hour");
+  const days = Math.trunc(hours / 24);
+  return days <= 30 ? rtf.format(-days, "day") : null;
+}
+
+export function isDbFile(name: string): boolean {
+  return name.toLowerCase().endsWith(".db");
+}
+
 export const BACKUP_ERROR_KEYS: Record<BackupErrorCode, MessageKey> = {
   validation_error: "backups.error.validation_error",
   confirmation_mismatch: "backups.error.confirmation_mismatch",
@@ -130,9 +151,15 @@ export function BackupsManagement() {
   // on the standalone ErrorNotice below — they are not a property of the input.
   const [restoreMismatch, setRestoreMismatch] = useState<string | null>(null);
 
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadingName, setUploadingName] = useState("");
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [snapshotSuccess, setSnapshotSuccess] = useState<string | null>(null);
+  // Key is `${filename}|db` or `${filename}|sql`.
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -160,7 +187,13 @@ export function BackupsManagement() {
     }
   }
 
+  function clearBanners() {
+    setSnapshotSuccess(null);
+    setUploadSuccess(null);
+  }
+
   async function snapshotNow() {
+    clearBanners();
     setSnapshotting(true);
     setSnapshotInfo(null);
     setSnapshotError(null);
@@ -178,6 +211,9 @@ export function BackupsManagement() {
       if (result.status === "already_running") {
         setSnapshotInfo(t("backups.management.snapshotAlreadyRunning"));
       } else {
+        setSnapshotSuccess(
+          t("backups.management.snapshotCreated").replace("{filename}", result.filename)
+        );
         await loadBackups();
       }
     } catch (cause) {
@@ -190,6 +226,7 @@ export function BackupsManagement() {
   }
 
   async function deleteBackup(filename: string) {
+    clearBanners();
     setDeletingFilenames((previous) => new Set(previous).add(filename));
     setDeleteError(null);
     try {
@@ -217,6 +254,7 @@ export function BackupsManagement() {
   }
 
   function selectForRestore(filename: string) {
+    clearBanners();
     setRestoreTarget(filename);
     setRestoreConfirmInput("");
     setRestoreError(null);
@@ -275,37 +313,78 @@ export function BackupsManagement() {
     }
   }
 
-  function onFileSelected(event: React.ChangeEvent<HTMLInputElement>) {
-    setUploadFile(event.target.files?.[0] ?? null);
+  async function uploadBackupFile(file: File | undefined) {
+    if (!file || uploading) return;
+    clearBanners();
     setUploadError(null);
-  }
-
-  async function submitUpload() {
-    if (!uploadFile || uploading) return;
+    const resetInput = () => {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+    // Client pre-flight only: the server stays the authority (SQLite header check, FR-006).
+    if (!isDbFile(file.name)) {
+      setUploadError(t("backups.management.uploadUnsupported"));
+      resetInput();
+      return;
+    }
     setUploading(true);
-    setUploadError(null);
+    setUploadingName(file.name);
     try {
       const response = await authFetch("/api/backups/upload", {
         method: "POST",
         credentials: "include",
         headers: { "content-type": "application/octet-stream" },
-        body: uploadFile,
+        body: file,
       });
       if (!response.ok) {
         throw new LocalizedApiError(
           await responseMessage(response, t("backups.management.uploadError"))
         );
       }
-      (await response.json()) as UploadResult;
-      setUploadFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      const result = (await response.json()) as UploadResult;
+      setUploadSuccess(
+        t("backups.management.uploadSuccess").replace("{filename}", result.filename)
+      );
       await loadBackups();
     } catch (cause) {
       setUploadError(
         cause instanceof LocalizedApiError ? cause.message : t("backups.management.uploadError")
       );
     } finally {
+      resetInput();
       setUploading(false);
+    }
+  }
+
+  async function downloadBackup(filename: string, format: "db" | "sql") {
+    const key = `${filename}|${format}`;
+    if (downloading === key) return;
+    clearBanners();
+    setDownloadError(null);
+    setDownloading(key);
+    try {
+      const path = `/api/backups/${encodeURIComponent(filename)}/${
+        format === "db" ? "download" : "download-sql"
+      }`;
+      const response = await authFetch(path, { credentials: "include" });
+      if (!response.ok) {
+        throw new LocalizedApiError(
+          await responseMessage(response, t("backups.management.downloadError"))
+        );
+      }
+      const url = URL.createObjectURL(await response.blob());
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = format === "db" ? filename : `${filename}.sql`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (cause) {
+      setDownloadError(
+        cause instanceof LocalizedApiError ? cause.message : t("backups.management.downloadError")
+      );
+    } finally {
+      setDownloading(null);
     }
   }
 
@@ -331,7 +410,19 @@ export function BackupsManagement() {
       description={t("backups.management.description")}
       data-testid="backups-management"
     >
-      <ErrorNotice message={loadError} />
+      {loadError && (
+        <div className="flex flex-wrap items-center gap-3">
+          <ErrorNotice message={loadError} />
+          <Button
+            type="button"
+            variant="secondary"
+            data-testid="backups-retry"
+            onClick={() => void loadBackups()}
+          >
+            {t("backups.management.retry")}
+          </Button>
+        </div>
+      )}
       {lastBackupError && (
         <ErrorNotice
           message={`${t("backups.management.lastBackupErrorLabel")}: ${lastBackupError}`}
@@ -369,6 +460,16 @@ export function BackupsManagement() {
             {snapshotInfo}
           </p>
         )}
+        {snapshotSuccess && (
+          <p
+            className={cn("mt-2", STATUS_BANNER_CLASSES)}
+            role="status"
+            aria-live="polite"
+            data-testid="backups-snapshot-success"
+          >
+            {snapshotSuccess}
+          </p>
+        )}
         <ErrorNotice
           message={snapshotError}
           className="mt-2"
@@ -377,11 +478,14 @@ export function BackupsManagement() {
       </div>
 
       <ErrorNotice message={deleteError} data-testid="backups-delete-error" />
+      <ErrorNotice message={downloadError} data-testid="backups-download-error" />
 
       {backups.length === 0 ? (
-        <p className="text-muted-foreground" data-testid="backups-empty">
-          {t("backups.management.empty")}
-        </p>
+        loadError ? null : (
+          <p className="text-muted-foreground" data-testid="backups-empty">
+            {t("backups.management.empty")}
+          </p>
+        )
       ) : (
         <div className="bg-card overflow-x-auto rounded-lg shadow">
           <table className="w-full text-control" data-testid="backups-table">
@@ -402,33 +506,53 @@ export function BackupsManagement() {
                   data-testid={`backups-row-${backup.filename}`}
                 >
                   <td className="p-2 align-top">{backup.filename}</td>
-                  <td className="p-2 align-top">{t(TYPE_KEYS[backup.type])}</td>
-                  <td className="p-2 align-top">{formatCreatedAt(backup.createdAt)}</td>
+                  <td className="p-2 align-top">
+                    <span
+                      data-testid={`backups-type-${backup.filename}`}
+                      className={cn(
+                        "inline-block rounded-full px-2.5 py-0.5 text-xs font-medium",
+                        TYPE_PILL_CLASSES[backup.type]
+                      )}
+                    >
+                      {t(TYPE_KEYS[backup.type])}
+                    </span>
+                  </td>
+                  <td className="p-2 align-top">
+                    <time
+                      dateTime={new Date(backup.createdAt).toISOString()}
+                      title={formatCreatedAt(backup.createdAt)}
+                    >
+                      {formatRelativeAge(backup.createdAt, Date.now(), language) ??
+                        formatCreatedAt(backup.createdAt)}
+                    </time>
+                  </td>
                   <td className="p-2 align-top">{formatBytes(backup.sizeBytes)}</td>
                   <td className="p-2 align-top">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Button asChild variant="link" size="sm">
-                        <a
-                          href={appUrl(
-                            `/api/backups/${encodeURIComponent(backup.filename)}/download`
-                          )}
-                          download={backup.filename}
-                          data-testid={`backups-download-${backup.filename}`}
-                        >
-                          {t("backups.management.download")}
-                        </a>
-                      </Button>
-                      <Button asChild variant="link" size="sm">
-                        <a
-                          href={appUrl(
-                            `/api/backups/${encodeURIComponent(backup.filename)}/download-sql`
-                          )}
-                          download={`${backup.filename}.sql`}
-                          data-testid={`backups-download-sql-${backup.filename}`}
-                        >
-                          {t("backups.management.downloadSql")}
-                        </a>
-                      </Button>
+                      {(["db", "sql"] as const).map((format) => {
+                        const busy = downloading === `${backup.filename}|${format}`;
+                        return (
+                          <Button
+                            key={format}
+                            type="button"
+                            variant="link"
+                            size="sm"
+                            data-testid={
+                              format === "db"
+                                ? `backups-download-${backup.filename}`
+                                : `backups-download-sql-${backup.filename}`
+                            }
+                            disabled={busy}
+                            aria-busy={busy}
+                            onClick={() => void downloadBackup(backup.filename, format)}
+                          >
+                            {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+                            {format === "db"
+                              ? t("backups.management.download")
+                              : t("backups.management.downloadSql")}
+                          </Button>
+                        );
+                      })}
                       <Button
                         type="button"
                         variant="link"
@@ -524,27 +648,61 @@ export function BackupsManagement() {
         }}
       />
 
-      <div className="bg-card rounded-lg p-4 shadow">
-        <h3 className="mb-2 text-lg font-semibold">{t("backups.management.uploadTitle")}</h3>
-        <div className="flex flex-wrap items-end gap-3">
-          <Field label={t("backups.management.uploadFileLabel")}>
-            <Input
-              ref={fileInputRef}
-              type="file"
-              data-testid="backups-upload-input"
-              onChange={onFileSelected}
-            />
-          </Field>
-          <Button
-            type="button"
-            data-testid="backups-upload-submit"
-            disabled={!uploadFile || uploading}
-            onClick={() => void submitUpload()}
-          >
-            {uploading ? t("backups.management.uploading") : t("backups.management.uploadSubmit")}
-          </Button>
-        </div>
+      <div
+        data-testid="backups-upload-dropzone"
+        data-drag-active={dragActive ? "true" : "false"}
+        className={cn(
+          "bg-card rounded-lg border-2 border-dashed p-4 shadow",
+          dragActive ? "border-primary bg-primary/5" : "border-border"
+        )}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setDragActive(true);
+        }}
+        onDragEnter={(event) => {
+          event.preventDefault();
+          setDragActive(true);
+        }}
+        onDragLeave={(event) => {
+          event.preventDefault();
+          setDragActive(false);
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          setDragActive(false);
+          void uploadBackupFile(event.dataTransfer.files[0]);
+        }}
+      >
+        <h3 className="mb-1 text-lg font-semibold">{t("backups.management.uploadTitle")}</h3>
+        <p className="text-muted-foreground mb-2 text-control">
+          {t("backups.management.uploadDropHint")}
+        </p>
+        <Field label={t("backups.management.uploadFileLabel")}>
+          <Input
+            ref={fileInputRef}
+            type="file"
+            accept=".db"
+            disabled={uploading}
+            data-testid="backups-upload-input"
+            onChange={(event) => void uploadBackupFile(event.target.files?.[0])}
+          />
+        </Field>
+        {uploading && (
+          <p className="text-muted-foreground mt-2 text-control" role="status" aria-live="polite">
+            {t("backups.management.uploadingFile").replace("{filename}", uploadingName)}
+          </p>
+        )}
         <ErrorNotice message={uploadError} className="mt-2" data-testid="backups-upload-error" />
+        {uploadSuccess && (
+          <p
+            className={cn("mt-2", STATUS_BANNER_CLASSES)}
+            role="status"
+            aria-live="polite"
+            data-testid="backups-upload-success"
+          >
+            {uploadSuccess}
+          </p>
+        )}
       </div>
     </AdminPanel>
   );

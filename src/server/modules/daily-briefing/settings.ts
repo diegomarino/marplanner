@@ -12,7 +12,7 @@ import {
  * briefings implicitly") — every function below writes only its own settings table.
  */
 import { assertActiveMember, getDb } from "../../host-api";
-import type { Weekday } from "../../../shared";
+import type { BriefingSchedule, Weekday } from "../../../shared";
 import {
   DEFAULT_DISABLED_BLOCK_TYPES,
   isCorpusLanguageAvailable,
@@ -20,6 +20,7 @@ import {
 } from "./corpora/index";
 import { DailyBriefingValidationError } from "./errors";
 import { getBriefingTime, rearmDailyBriefingSchedule } from "./job";
+import { listMemberSchedules } from "./schedule";
 
 /** Thrown for the one write-boundary rejection the contract names a specific error code for
  * (contracts/openapi.planned.yaml — "400 corpus_language_unavailable"). A subclass of
@@ -409,6 +410,7 @@ export interface DailyBriefingSettingsView {
   autoPrintTrigger: "morning_complete" | null;
   blockOrder: BlockOrderInstance[];
   memberBlockSettings: MemberBlockSettings[];
+  memberSchedules: BriefingSchedule[];
 }
 
 export function readAllSettings(): DailyBriefingSettingsView {
@@ -418,5 +420,6 @@ export function readAllSettings(): DailyBriefingSettingsView {
     autoPrintTrigger: settings.autoPrintTrigger,
     blockOrder: readBlockOrder(),
     memberBlockSettings: listMemberBlockSettings(),
+    memberSchedules: listMemberSchedules(),
   };
 }

@@ -22,6 +22,7 @@ import {
 import { readBriefing } from "../../src/server/modules/daily-briefing/index";
 import { useIsolatedDb } from "../helpers/db";
 import { seedMember } from "../helpers/daily-briefing-seed";
+import { setMemberSchedule } from "../../src/server/modules/daily-briefing/schedule";
 import { FakeClock, noopLog } from "../helpers/fake-clock";
 
 /** docs/features/daily-briefing.md (US1, FR-017/FR-018) — the auto-print
@@ -147,6 +148,23 @@ describe("daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018)", 
     expect(countJobsForOutputRef(outputRefFor(memberId))).toBe(0);
 
     completeChoreDirect(chore2, memberId, DATE);
+    evaluateAutoPrintTrigger(NOW);
+    expect(countJobsForOutputRef(outputRefFor(memberId))).toBe(1);
+  });
+
+  it("a member paused on today's weekday is not enqueued, and is again once resumed", () => {
+    const memberId = "member-paused-today";
+    seedMember(memberId);
+    enableAutoPrint();
+    seedBriefingRowWithRaster(memberId, DATE);
+    const [chore] = seedMorningRoutine(memberId, 1, WEEKDAY);
+    completeChoreDirect(chore, memberId, DATE);
+
+    setMemberSchedule(memberId, ["mon", "tue", "wed", "fri", "sat", "sun"]); // Thursday off
+    evaluateAutoPrintTrigger(NOW);
+    expect(countJobsForOutputRef(outputRefFor(memberId))).toBe(0);
+
+    setMemberSchedule(memberId, ["thu"]);
     evaluateAutoPrintTrigger(NOW);
     expect(countJobsForOutputRef(outputRefFor(memberId))).toBe(1);
   });

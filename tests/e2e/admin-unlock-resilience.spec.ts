@@ -97,13 +97,11 @@ const adminDestinations: ReadonlyArray<{
   },
   {
     path: "/admin/routines",
-    primary: (page, m) =>
-      page.getByRole("button", { name: m["routines.action.create"], exact: true }),
+    primary: (page) => page.getByTestId("routines-new"),
   },
   {
     path: "/admin/reminders",
-    primary: (page, m) =>
-      page.getByRole("button", { name: m["reminders.action.create"], exact: true }),
+    primary: (page) => page.getByTestId("reminders-add-rule"),
   },
   {
     path: "/admin/meals",
@@ -139,7 +137,7 @@ const adminDestinations: ReadonlyArray<{
   },
   {
     path: "/admin/printing",
-    primary: (page: Page) => page.getByTestId("printing-trigger-test-print"),
+    primary: (page: Page) => page.getByTestId("printing-tab-diagnostics"),
   },
   {
     path: "/admin/settings",

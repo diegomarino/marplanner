@@ -46,6 +46,12 @@ describe("routines and reminders demo seed integration", () => {
           active: true,
         },
         {
+          id: "demo:routine:after-school",
+          name: "After school",
+          dayPeriodId: "afternoon",
+          active: true,
+        },
+        {
           id: "demo:routine:evening-reset",
           name: "Evening reset",
           dayPeriodId: "evening",

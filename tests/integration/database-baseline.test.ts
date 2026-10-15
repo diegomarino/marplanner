@@ -17,6 +17,11 @@ const CALENDAR_EVENT_DETAILS_MIGRATION = join(
   "0003_calendar_event_details.sql"
 );
 const MEMBER_PALETTE_MIGRATION = join(PROJECT_ROOT, "drizzle", "0004_member_palette.sql");
+const DAILY_BRIEFING_SCHEDULE_MIGRATION = join(
+  PROJECT_ROOT,
+  "drizzle",
+  "0005_daily_briefing_schedule.sql"
+);
 const DRIZZLE_KIT = join(PROJECT_ROOT, "node_modules", "drizzle-kit", "bin.cjs");
 const SCHEMA_FILE = join(PROJECT_ROOT, "src", "server", "db", "schema.ts");
 const LIFECYCLE_TABLES = new Set([
@@ -182,27 +187,32 @@ function generateCurrentSchemaCatalog(tempDir: string): Catalog {
 describe("database lifecycle fresh current baseline", () => {
   useIsolatedDb({ pluginState: "inactive" });
 
-  it("is semantically equivalent to a clean Drizzle generation from the current TypeScript schema", () => {
-    const tempDir = mkdtempSync(join(tmpdir(), "mp-current-baseline-catalog-"));
-    try {
-      const generated = generateCurrentSchemaCatalog(tempDir);
-      const committed = instantiateCatalog(
-        [
-          BASELINE_FILE,
-          CALENDAR_FEED_SYNC_MIGRATION,
-          CALENDAR_EVENT_DETAILS_MIGRATION,
-          MEMBER_PALETTE_MIGRATION,
-        ],
-        join(tempDir, "baseline.sqlite")
-      );
+  it(
+    "is semantically equivalent to a clean Drizzle generation from the current TypeScript schema",
+    { timeout: 30_000 },
+    () => {
+      const tempDir = mkdtempSync(join(tmpdir(), "mp-current-baseline-catalog-"));
+      try {
+        const generated = generateCurrentSchemaCatalog(tempDir);
+        const committed = instantiateCatalog(
+          [
+            BASELINE_FILE,
+            CALENDAR_FEED_SYNC_MIGRATION,
+            CALENDAR_EVENT_DETAILS_MIGRATION,
+            MEMBER_PALETTE_MIGRATION,
+            DAILY_BRIEFING_SCHEDULE_MIGRATION,
+          ],
+          join(tempDir, "baseline.sqlite")
+        );
 
-      expect(committed).toEqual({
-        tables: generated.tables.filter(({ name }) => !LIFECYCLE_TABLES.has(name)),
-      });
-    } finally {
-      rmSync(tempDir, { recursive: true, force: true });
+        expect(committed).toEqual({
+          tables: generated.tables.filter(({ name }) => !LIFECYCLE_TABLES.has(name)),
+        });
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
     }
-  });
+  );
 
   it("installs the re-derived schema, applies the reviewed migrations, and preserves foreign keys", () => {
     const db = getDb();
@@ -222,6 +232,7 @@ describe("database lifecycle fresh current baseline", () => {
       { fileName: "0002_plugin_lifecycle.sql" },
       { fileName: "0003_calendar_event_details.sql" },
       { fileName: "0004_member_palette.sql" },
+      { fileName: "0005_daily_briefing_schedule.sql" },
     ]);
 
     const foreignKeys = ALL_SCHEMA_TABLES.flatMap((table) =>

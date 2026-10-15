@@ -289,12 +289,13 @@ export interface RoutineInput {
   dayPeriodId: string;
 }
 
-/** RoutineEditInput — edit payload (name and/or active only).
- * (no `required` list — both fields optional).
+/** RoutineEditInput — edit payload: name, active flag and/or day period (FR-015).
+ * (no `required` list — all fields optional).
  */
 export interface RoutineEditInput {
   name?: string;
   active?: boolean;
+  dayPeriodId?: string;
 }
 
 /** Chore — a named, ordered task within one routine.
@@ -434,8 +435,10 @@ export interface ReminderInput {
 
 /** ReminderEditInput — edit payload. Scheduled fields (text/active/weekdays) coexist
  * with calendar_gated query/queryFields edits; omitting queryFields on PATCH preserves the
- * stored value; it is not reset to the create-time default.
- * The calendar-gated variant extends the scheduled edit shape.
+ * stored value. `targetingMode` may switch apply_to_all <-> specific: switching to specific
+ * requires `assignments`, switching a scheduled rule to apply_to_all requires `weekdays`.
+ * `assignments` (full-set replace) is accepted only when the resulting mode is specific.
+ * `kind` is immutable and is not part of this payload.
  */
 export interface ReminderEditInput {
   text?: string;
@@ -443,6 +446,8 @@ export interface ReminderEditInput {
   query?: string;
   queryFields?: ReminderQueryField[];
   active?: boolean;
+  targetingMode?: TargetingMode;
+  assignments?: ReminderAssignmentInput[];
 }
 
 /** ReminderAssignment — links a reminder to one member on a weekday set.
@@ -654,6 +659,8 @@ export interface BuildInfo {
 export interface SystemStatus {
   status: "ok";
   checkedAt: string;
+  /** Whole seconds since the server process started. */
+  uptimeSeconds: number;
   build: BuildInfo;
 }
 
@@ -971,6 +978,16 @@ export interface PrintingStatusResponse {
   active: boolean;
 }
 
+/** ResetTodayPrintsResponse — `POST /api/printing/reset-today`'s envelope: how many of the
+ * household's today print records were made printable again and how many queued jobs were
+ * cancelled. Declared HERE for shapes-gate coverage (see `ErrorResponse` above).
+ */
+export interface ResetTodayPrintsResponse {
+  targetDate: string;
+  resetRecords: number;
+  cancelledJobs: number;
+}
+
 // ─── Auth-layer error codes ──────────────────────────────────────────────
 
 /** Machine-readable `code` values on the cross-cutting auth-layer `Error` response
@@ -983,10 +1000,9 @@ export interface PrintingStatusResponse {
  * unrecognized, revoked, or expired): `authFetch` (src/client/lib/credential.ts)
  * clears the stale `mp_provisioned` marker and falls back to the provisioning gate.
  * `AUTH_SCOPE_DENIED_CODE` — the key IS live but this specific request is denied on
- * scope grounds (`requireCapability`'s "not granted" branch, or
- * `requireManagementKey` rejecting a `kind='device'` key). The credential is still
+ * scope grounds (`requireCapability`'s "not granted" branch). The credential is still
  * good; `authFetch` passes the response through unchanged so the caller's own UI
- * handles it (e.g. NetworkDevicesManagement rendering its own error state instead
+ * handles it (e.g. an admin panel rendering its own error state instead
  * of the whole kiosk session dying).
  */
 export const AUTH_CREDENTIAL_INVALID_CODE = "credential_invalid";

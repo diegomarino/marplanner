@@ -36,7 +36,11 @@ export function PrinterAttention(): React.JSX.Element | null {
         </p>
         <DialogFooter>
           {session.canPair && (
-            <Button type="button" data-testid="printer-attention-pair" onClick={session.pair}>
+            <Button
+              type="button"
+              data-testid="printer-attention-pair"
+              onClick={() => session.pair()}
+            >
               {t(
                 session.displayState === "disconnected"
                   ? "printing.executor.repairButton"

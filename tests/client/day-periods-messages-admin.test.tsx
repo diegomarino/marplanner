@@ -245,10 +245,8 @@ describe("DayPeriodsManagement / DailyMessagesManagement — the shared AdminPan
     mockDailyMessagesBackend();
     renderDailyMessages();
 
-    expect(
-      await screen.findByRole("region", { name: "Daily Messages Management" })
-    ).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Daily Messages Management" })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "Messages" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Messages" })).toBeInTheDocument();
   });
 });
 
@@ -688,7 +686,7 @@ describe("DailyMessagesManagement — every error state is announced through Err
     fireEvent.click(screen.getByTestId("daily-messages-delete-confirm"));
 
     const alert = await screen.findByTestId("daily-messages-error");
-    expect(alert).toHaveTextContent("Failed to load daily messages.");
+    expect(alert).toHaveTextContent("Failed to delete the message.");
     expectErrorNoticeIdentity(alert, "assertive");
   });
 });

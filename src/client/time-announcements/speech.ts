@@ -55,6 +55,15 @@ function pickVoice(synth: SpeechSynthesis, lang: string): SpeechSynthesisVoice |
   }
 }
 
+/** Name of the voice `speak`/`testVoice` would use for `lang`, or `null` when none matches (the
+ * default voice is used then) or the API is unavailable. Read-only and never throws: the admin
+ * panel shows it next to Test voice. Chromium loads voices lazily, so callers re-read it. */
+export function voiceNameFor(lang: Language): string | null {
+  const synth = getSynth();
+  if (!synth) return null;
+  return pickVoice(synth, UTTERANCE_LANG[lang])?.name ?? null;
+}
+
 /** Start the browser's voice load. Chrome fills `getVoices()` lazily: the first call on a
  * page returns `[]` and only kicks off the load, so a lookup made cold would report a
  * spurious `"voice-miss"` on a device that does have the voice. Best-effort, never throws.

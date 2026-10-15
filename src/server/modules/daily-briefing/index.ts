@@ -2,6 +2,7 @@ import {
   assertActiveMember,
   DailyMessageNotFoundError,
   emit,
+  enqueuePrintJob,
   getDb,
   getMessage,
   getPrintRecordStatus,
@@ -16,7 +17,9 @@ import {
   registerPrintableProvider,
   resolveMemberLabel,
   subscribe,
+  supersedePrintRecord,
   supersedePrintRecordTxn,
+  todayInHouseholdTz,
   weekdayOf,
 } from "../../host-api";
 import type { CalendarReadContext, PrintableRaster } from "../../host-api";
@@ -25,7 +28,9 @@ import type { RenderBlockInput, RenderEnvelope } from "./render/index";
 import type {
   BlockInstance,
   Briefing,
+  BriefingHistoryResponse,
   BriefingPayload,
+  BriefingPrintResponse,
   BriefingReadResult,
   BriefingStatus,
   OptInState,
@@ -66,7 +71,21 @@ import { getLabels } from "./render/labels";
 import type { PluginContentSourceId, PluginId } from "../../../shared/plugins";
 
 export { DailyBriefingValidationError } from "./errors";
-import { DailyBriefingValidationError } from "./errors";
+export {
+  DailyBriefingNotFoundError,
+  DailyBriefingPausedError,
+  DailyBriefingPrintUnavailableError,
+  DailyBriefingRasterMissingError,
+} from "./errors";
+export { listMemberSchedules, setMemberSchedule } from "./schedule";
+import {
+  DailyBriefingNotFoundError,
+  DailyBriefingPausedError,
+  DailyBriefingPrintUnavailableError,
+  DailyBriefingRasterMissingError,
+  DailyBriefingValidationError,
+} from "./errors";
+import { isBriefingScheduledOn } from "./schedule";
 
 const CONTENT_SOURCE_OWNERS = {
   weather: "weather",
@@ -893,6 +912,22 @@ async function finishBlocks(
  * start" vs "a concurrent change raced a healthy request") never get confused in a stack trace.
  */
 class LateEligibilityAbortError extends Error {}
+class LatePauseAbortError extends Error {}
+
+// ── In-flight registry (spec D7) ───────────────────────────────────────────
+// `pending` never escapes the write transaction, so the admin preview cannot tell "still
+// rendering" from the row. This per-process counter marks (member, date) from the end of the
+// read transaction until generateBriefing settles. One process, one scheduler (Constitution III).
+const generationsInFlight = new Map<string, number>();
+
+function flightKey(memberId: string, date: string): string {
+  return `${memberId}:${date}`;
+}
+
+/** True while at least one generation for this member/date is running. */
+export function isBriefingGenerating(memberId: string, date: string): boolean {
+  return generationsInFlight.has(flightKey(memberId, date));
+}
 
 /** Constitution XIV probe hook (fold) — test-only. Forces an abort
  * IMMEDIATELY AFTER `supersedePrintRecordTxn` returns inside the write transaction below, so a
@@ -935,6 +970,9 @@ export async function generateBriefing(
     if (!isOptedIn(memberId)) {
       throw new DailyBriefingValidationError(`Member "${memberId}" is not opted in`);
     }
+    if (!isBriefingScheduledOn(memberId, date)) {
+      throw new DailyBriefingPausedError(memberId, date);
+    }
 
     const language = readHouseholdLanguage();
     const txCtx: CalendarReadContext = new Map();
@@ -947,164 +985,189 @@ export async function generateBriefing(
     };
   })();
   const { member, date, language } = inputs;
-  const cache = sharedCache ?? createDailyBlockCache(date);
-  const blocks = await finishBlocks(
-    inputs.blocks,
-    memberId,
-    cache,
-    date,
-    generationClock,
-    inputs.weather
-  );
-
-  // TOCTOU re-validation ( generalized to the now-multi-call gather
-  // phase): re-run the SAME two eligibility checks immediately before the transaction opens, so a
-  // member who went ineligible DURING the gather can never get a stale-eligible write past this
-  // strict-on-write boundary.
+  const flight = flightKey(memberId, date);
+  generationsInFlight.set(flight, (generationsInFlight.get(flight) ?? 0) + 1);
   try {
-    assertActiveMember(memberId);
-  } catch (err) {
-    throw new DailyBriefingValidationError(
-      err instanceof Error ? err.message : `Member "${memberId}" is not active`
+    const cache = sharedCache ?? createDailyBlockCache(date);
+    const blocks = await finishBlocks(
+      inputs.blocks,
+      memberId,
+      cache,
+      date,
+      generationClock,
+      inputs.weather
     );
-  }
-  if (!isOptedIn(memberId)) {
-    throw new DailyBriefingValidationError(`Member "${memberId}" is not opted in`);
-  }
 
-  // exit condition: render whenever Printing is active (full 21-type registry;
-  // see the "Render + store" section doc comment above `selectRenderableBlocks`).
-  const shouldRender = isPrintingPluginActive();
-  const renderResult: RenderStoreResult = shouldRender
-    ? await renderAndPackBriefing(memberId, member.displayName, date, blocks, language)
-    : NO_RENDER_RESULT;
-
-  const now = Date.now();
-  let briefing: Briefing;
-  try {
-    briefing = db.transaction((): Briefing => {
-      // Printing-active render can await up to 30s — a member
-      // archived or opted-out during THAT window would otherwise slip past the pre-render TOCTOU
-      // check above and still get a row written. Re-check ONE MORE TIME, as the very FIRST
-      // statement of the write transaction (before the reservation upsert even runs): throwing
-      // here rolls back the WHOLE transaction via better-sqlite3's automatic rollback-on-throw —
-      // nothing commits, not even the reservation. This is deliberately chosen over letting the
-      // reservation persist as a dangling 'pending' row: a full-transaction abort sidesteps the
-      // delete-vs-leave-for-next-pass dilemma entirely (there is nothing to clean up either way)
-      // — a PRE-EXISTING row (if any) stays completely untouched, and a first-ever attempt
-      // leaves no row at all (FR-010 purity). The sentinel is caught immediately below; it never
-      // escapes this function as-is.
-      if (!isActiveMember(memberId) || !isOptedIn(memberId)) {
-        throw new LateEligibilityAbortError(memberId);
-      }
-      // The unique (member_id, date) index is the reservation: an existing row
-      // keeps its stable id while its synchronous regeneration is pending. The
-      // pending state never escapes this transaction; only the settled update is
-      // returned to the HTTP boundary.
-      const reservation = db
-        .prepare(
-          `INSERT INTO daily_briefing (id, member_id, date, status, payload, created_at, updated_at)
-           VALUES (?, ?, ?, 'pending', '{}', ?, ?)
-           ON CONFLICT(member_id, date) DO UPDATE SET
-             status = 'pending',
-             updated_at = MAX(daily_briefing.updated_at + 1, excluded.updated_at)
-           RETURNING id, created_at, updated_at`
-        )
-        .get(globalThis.crypto.randomUUID(), memberId, date, now, now) as DailyBriefingReservation;
-      const payload: BriefingPayload = {
-        schemaVersion: 2,
-        member: { id: member.id, displayName: member.displayName },
-        date,
-        blocks,
-      };
-      const settled: Briefing = {
-        id: reservation.id,
-        memberId,
-        date,
-        status: deriveOverallStatus(deriveStatus(payload.blocks), renderResult, shouldRender),
-        payload,
-        createdAt: reservation.created_at,
-        updatedAt: reservation.updated_at,
-      };
-      // (extended); drizzle/0018: raster/png/failed_render_blocks/
-      // unrendered_blocks are written atomically alongside status/payload in this SAME statement —
-      // a crash can never leave a committed payload update without its paired render outcome.
-      // (FR-002): the local printed-status cache is ALSO cleared here, in the SAME statement —
-      // a stale `last_print_*` cache must never survive a regeneration (a NULL is always correct:
-      // either this is a first-ever generation, where the columns are already NULL, or it is a
-      // regeneration, whose whole point is invalidating whatever the prior generation's cache said).
-      db.prepare(
-        `UPDATE daily_briefing
-         SET status = ?, payload = ?, failed_render_blocks = ?, unrendered_blocks = ?,
-             raster_bits = ?, raster_height = ?, png = ?,
-             last_print_state = NULL, last_print_at = NULL, last_print_generation = NULL,
-             updated_at = ?
-         WHERE id = ?`
-      ).run(
-        settled.status,
-        JSON.stringify(settled.payload),
-        JSON.stringify(renderResult.failedRenderBlocks),
-        JSON.stringify(renderResult.unrenderedBlocks),
-        renderResult.rasterBits ? Buffer.from(renderResult.rasterBits) : null,
-        renderResult.rasterHeight,
-        renderResult.png ? Buffer.from(renderResult.png) : null,
-        settled.updatedAt,
-        settled.id
+    // TOCTOU re-validation ( generalized to the now-multi-call gather
+    // phase): re-run the SAME two eligibility checks immediately before the transaction opens, so a
+    // member who went ineligible DURING the gather can never get a stale-eligible write past this
+    // strict-on-write boundary.
+    try {
+      assertActiveMember(memberId);
+    } catch (err) {
+      throw new DailyBriefingValidationError(
+        err instanceof Error ? err.message : `Member "${memberId}" is not active`
       );
-
-      // (FR-002/FR-003/FR-004, fold): supersede this member/date's
-      // daily-briefing print record IN THIS SAME TRANSACTION, via the transaction-composable
-      // variant (see `printing/index.ts#supersedePrintRecordTxn`'s own doc comment for the
-      // empirically-probed savepoint-nesting mechanism that makes this correct). A crash can
-      // therefore never leave a committed new snapshot alongside an un-superseded print record or
-      // a surviving stale pending/claimed job. Unconditional — never gated on "is this actually a
-      // regeneration" — because the call is a documented no-op when no print_records row exists
-      // yet (a first-ever generation), so the ONE code path is exercised by every call. No print
-      // job is ever enqueued here (FR-002 forbids it) — the next trigger sweep or admin action
-      // re-enqueues against the now-superseded (higher-generation) record.
-      supersedePrintRecordTxn(`${PRINTABLE_RECORD_KEY_PREFIX}:${memberId}`, date, now);
-
-      if (forcePostSupersedeAbortForTests) {
-        // Constitution XIV probe (see `__setForcePostSupersedeAbortForTests`'s own doc comment) —
-        // never true in production; this branch exists solely for the atomicity test. POSITION IS
-        // LOAD-BEARING for what that test actually proves: this throw must fire AFTER
-        // `supersedePrintRecordTxn` above has already returned (i.e. its own nested transaction has
-        // RELEASEd its savepoint — "committed" from its own point of view), not before it. Moving
-        // this check earlier would only prove the trivial case (an abort before ANY write) and say
-        // nothing about savepoint-nesting rollback; firing it here is what proves the outer
-        // ROLLBACK discards an already-released nested savepoint too, not just the outer's own
-        // statements.
-        throw new ForcedPostSupersedeAbortError("savepoint probe: forced abort after supersede");
-      }
-
-      return settled;
-    })();
-  } catch (err) {
-    if (!(err instanceof LateEligibilityAbortError)) throw err;
-    // English, machine-actionable log (repo convention) — quiet abort, never a crash: the
-    // render's own work is discarded, no content or raster was ever committed.
-    console.warn("daily-briefing.generate.late-eligibility-abort", { memberId, date });
-    const existing = readBriefing(memberId, date);
-    if (existing.generated) {
-      // A prior frozen snapshot stands, completely untouched by this aborted attempt — return
-      // it as-is. No `daily_briefing.generated` emit: nothing actually changed, so emitting
-      // would falsely signal a fresh generation to any subscriber.
-      return existing.briefing;
     }
-    // First-ever generation attempt for this member/date, now abandoned — there is nothing
-    // honest to return. Same observable failure as the pre-render TOCTOU checks above (a
-    // concurrent archive/opt-out): a 400 to a manual caller, a quiet skip in
-    // `generateAllBriefings`'s per-candidate catch.
-    throw new DailyBriefingValidationError(`Member "${memberId}" is not active or opted in`);
+    if (!isOptedIn(memberId)) {
+      throw new DailyBriefingValidationError(`Member "${memberId}" is not opted in`);
+    }
+    if (!isBriefingScheduledOn(memberId, date)) {
+      throw new DailyBriefingPausedError(memberId, date);
+    }
+
+    // exit condition: render whenever Printing is active (full 21-type registry;
+    // see the "Render + store" section doc comment above `selectRenderableBlocks`).
+    const shouldRender = isPrintingPluginActive();
+    const renderResult: RenderStoreResult = shouldRender
+      ? await renderAndPackBriefing(memberId, member.displayName, date, blocks, language)
+      : NO_RENDER_RESULT;
+
+    const now = Date.now();
+    let briefing: Briefing;
+    try {
+      briefing = db.transaction((): Briefing => {
+        // Printing-active render can await up to 30s — a member
+        // archived or opted-out during THAT window would otherwise slip past the pre-render TOCTOU
+        // check above and still get a row written. Re-check ONE MORE TIME, as the very FIRST
+        // statement of the write transaction (before the reservation upsert even runs): throwing
+        // here rolls back the WHOLE transaction via better-sqlite3's automatic rollback-on-throw —
+        // nothing commits, not even the reservation. This is deliberately chosen over letting the
+        // reservation persist as a dangling 'pending' row: a full-transaction abort sidesteps the
+        // delete-vs-leave-for-next-pass dilemma entirely (there is nothing to clean up either way)
+        // — a PRE-EXISTING row (if any) stays completely untouched, and a first-ever attempt
+        // leaves no row at all (FR-010 purity). The sentinel is caught immediately below; it never
+        // escapes this function as-is.
+        if (!isActiveMember(memberId) || !isOptedIn(memberId)) {
+          throw new LateEligibilityAbortError(memberId);
+        }
+        // A weekday paused during the render aborts the same way, before anything is written.
+        if (!isBriefingScheduledOn(memberId, date)) {
+          throw new LatePauseAbortError(memberId);
+        }
+        // The unique (member_id, date) index is the reservation: an existing row
+        // keeps its stable id while its synchronous regeneration is pending. The
+        // pending state never escapes this transaction; only the settled update is
+        // returned to the HTTP boundary.
+        const reservation = db
+          .prepare(
+            `INSERT INTO daily_briefing (id, member_id, date, status, payload, created_at, updated_at)
+             VALUES (?, ?, ?, 'pending', '{}', ?, ?)
+             ON CONFLICT(member_id, date) DO UPDATE SET
+               status = 'pending',
+               updated_at = MAX(daily_briefing.updated_at + 1, excluded.updated_at)
+             RETURNING id, created_at, updated_at`
+          )
+          .get(
+            globalThis.crypto.randomUUID(),
+            memberId,
+            date,
+            now,
+            now
+          ) as DailyBriefingReservation;
+        const payload: BriefingPayload = {
+          schemaVersion: 2,
+          member: { id: member.id, displayName: member.displayName },
+          date,
+          blocks,
+        };
+        const settled: Briefing = {
+          id: reservation.id,
+          memberId,
+          date,
+          status: deriveOverallStatus(deriveStatus(payload.blocks), renderResult, shouldRender),
+          payload,
+          createdAt: reservation.created_at,
+          updatedAt: reservation.updated_at,
+        };
+        // (extended); drizzle/0018: raster/png/failed_render_blocks/
+        // unrendered_blocks are written atomically alongside status/payload in this SAME statement —
+        // a crash can never leave a committed payload update without its paired render outcome.
+        // (FR-002): the local printed-status cache is ALSO cleared here, in the SAME statement —
+        // a stale `last_print_*` cache must never survive a regeneration (a NULL is always correct:
+        // either this is a first-ever generation, where the columns are already NULL, or it is a
+        // regeneration, whose whole point is invalidating whatever the prior generation's cache said).
+        db.prepare(
+          `UPDATE daily_briefing
+           SET status = ?, payload = ?, failed_render_blocks = ?, unrendered_blocks = ?,
+               raster_bits = ?, raster_height = ?, png = ?,
+               last_print_state = NULL, last_print_at = NULL, last_print_generation = NULL,
+               updated_at = ?
+           WHERE id = ?`
+        ).run(
+          settled.status,
+          JSON.stringify(settled.payload),
+          JSON.stringify(renderResult.failedRenderBlocks),
+          JSON.stringify(renderResult.unrenderedBlocks),
+          renderResult.rasterBits ? Buffer.from(renderResult.rasterBits) : null,
+          renderResult.rasterHeight,
+          renderResult.png ? Buffer.from(renderResult.png) : null,
+          settled.updatedAt,
+          settled.id
+        );
+
+        // (FR-002/FR-003/FR-004, fold): supersede this member/date's
+        // daily-briefing print record IN THIS SAME TRANSACTION, via the transaction-composable
+        // variant (see `printing/index.ts#supersedePrintRecordTxn`'s own doc comment for the
+        // empirically-probed savepoint-nesting mechanism that makes this correct). A crash can
+        // therefore never leave a committed new snapshot alongside an un-superseded print record or
+        // a surviving stale pending/claimed job. Unconditional — never gated on "is this actually a
+        // regeneration" — because the call is a documented no-op when no print_records row exists
+        // yet (a first-ever generation), so the ONE code path is exercised by every call. No print
+        // job is ever enqueued here (FR-002 forbids it) — the next trigger sweep or admin action
+        // re-enqueues against the now-superseded (higher-generation) record.
+        supersedePrintRecordTxn(`${PRINTABLE_RECORD_KEY_PREFIX}:${memberId}`, date, now);
+
+        if (forcePostSupersedeAbortForTests) {
+          // Constitution XIV probe (see `__setForcePostSupersedeAbortForTests`'s own doc comment) —
+          // never true in production; this branch exists solely for the atomicity test. POSITION IS
+          // LOAD-BEARING for what that test actually proves: this throw must fire AFTER
+          // `supersedePrintRecordTxn` above has already returned (i.e. its own nested transaction has
+          // RELEASEd its savepoint — "committed" from its own point of view), not before it. Moving
+          // this check earlier would only prove the trivial case (an abort before ANY write) and say
+          // nothing about savepoint-nesting rollback; firing it here is what proves the outer
+          // ROLLBACK discards an already-released nested savepoint too, not just the outer's own
+          // statements.
+          throw new ForcedPostSupersedeAbortError("savepoint probe: forced abort after supersede");
+        }
+
+        return settled;
+      })();
+    } catch (err) {
+      if (err instanceof LatePauseAbortError) {
+        console.warn("daily-briefing.generate.late-pause-abort", { memberId, date });
+        throw new DailyBriefingPausedError(memberId, date);
+      }
+      if (!(err instanceof LateEligibilityAbortError)) throw err;
+      // English, machine-actionable log (repo convention) — quiet abort, never a crash: the
+      // render's own work is discarded, no content or raster was ever committed.
+      console.warn("daily-briefing.generate.late-eligibility-abort", { memberId, date });
+      const existing = readBriefing(memberId, date);
+      if (existing.generated) {
+        // A prior frozen snapshot stands, completely untouched by this aborted attempt — return
+        // it as-is. No `daily_briefing.generated` emit: nothing actually changed, so emitting
+        // would falsely signal a fresh generation to any subscriber.
+        return existing.briefing;
+      }
+      // First-ever generation attempt for this member/date, now abandoned — there is nothing
+      // honest to return. Same observable failure as the pre-render TOCTOU checks above (a
+      // concurrent archive/opt-out): a 400 to a manual caller, a quiet skip in
+      // `generateAllBriefings`'s per-candidate catch.
+      throw new DailyBriefingValidationError(`Member "${memberId}" is not active or opted in`);
+    }
+
+    emit("daily_briefing.generated", {
+      memberId: briefing.memberId,
+      date: briefing.date,
+      status: briefing.status,
+    });
+
+    return briefing;
+  } finally {
+    const remaining = (generationsInFlight.get(flight) ?? 1) - 1;
+    if (remaining > 0) generationsInFlight.set(flight, remaining);
+    else generationsInFlight.delete(flight);
   }
-
-  emit("daily_briefing.generated", {
-    memberId: briefing.memberId,
-    date: briefing.date,
-    status: briefing.status,
-  });
-
-  return briefing;
 }
 
 /** Read-only snapshot lookup. A missing row is not generated on demand. `printedStatus` is derived at read time — see `derivePrintedStatus`'s own doc comment; deriving it
@@ -1140,6 +1203,8 @@ export function readBriefing(memberId: string, date: string): BriefingReadResult
 export interface BriefingPngResult {
   found: boolean;
   png: Buffer | null;
+  /** A generation for this member/date is in flight. */
+  generating: boolean;
 }
 
 /** Serves the SAME `png` column pressedslip wrote at generation time (schema.ts: "admin/preview
@@ -1155,8 +1220,74 @@ export function readBriefingPng(memberId: string, date: string): BriefingPngResu
     .prepare("SELECT png FROM daily_briefing WHERE member_id = ? AND date = ?")
     .get(memberId, date) as { png: Buffer | null } | undefined;
 
-  if (!row) return { found: false, png: null };
-  return { found: true, png: row.png };
+  const generating = isBriefingGenerating(memberId, date);
+  if (!row) return { found: false, png: null, generating };
+  return { found: true, png: row.png, generating };
+}
+
+/** How many history rows the admin list shows (reference parity). */
+export const BRIEFING_HISTORY_LIMIT = 30;
+
+/** Admin history: the member's latest briefings, newest date first, plus the household business
+ * date the client uses as its default selection. A pure read (FR-010). */
+export function listBriefingHistory(memberId: string): BriefingHistoryResponse {
+  const rows = getDb()
+    .prepare(
+      `SELECT id, date, status, updated_at FROM daily_briefing
+       WHERE member_id = ? ORDER BY date DESC LIMIT ?`
+    )
+    .all(memberId, BRIEFING_HISTORY_LIMIT) as Array<{
+    id: string;
+    date: string;
+    status: BriefingStatus;
+    updated_at: number;
+  }>;
+  return {
+    today: resolveBusinessDate(undefined),
+    entries: rows.map((row) => ({
+      id: row.id,
+      date: row.date,
+      status: row.status,
+      updatedAt: row.updated_at,
+    })),
+  };
+}
+
+/** Manual print (spec D6) through Printing's producer seam — never Printing internals. The job
+ * targets the household TODAY (claims are day-scoped) under a per-briefing manual record key, so
+ * it never touches the automatic print's dedup or this briefing's derived printed-status. A job
+ * still waiting is reused; a printed record is superseded so the click prints again. */
+export function printBriefing(memberId: string, date: string, now: number): BriefingPrintResponse {
+  assertStrictCalendarDate(date);
+  if (!isPrintingPluginActive()) throw new DailyBriefingPrintUnavailableError();
+  const row = getDb()
+    .prepare("SELECT raster_bits FROM daily_briefing WHERE member_id = ? AND date = ?")
+    .get(memberId, date) as { raster_bits: Buffer | null } | undefined;
+  if (!row) {
+    throw new DailyBriefingNotFoundError(`No briefing for member "${memberId}" on ${date}`);
+  }
+  if (row.raster_bits === null) {
+    throw new DailyBriefingRasterMissingError(
+      `The briefing for member "${memberId}" on ${date} has no printable raster`
+    );
+  }
+  try {
+    assertActiveMember(memberId);
+  } catch {
+    throw new DailyBriefingValidationError(`Member "${memberId}" is not active`);
+  }
+  const params = {
+    recordKey: `${PRINTABLE_RECORD_KEY_PREFIX}:${memberId}:manual:${date}`,
+    targetDate: todayInHouseholdTz(now),
+    outputRef: `${PRINTABLE_RECORD_KEY_PREFIX}:${memberId}:${date}`,
+    memberId,
+  };
+  let result = enqueuePrintJob(params, now);
+  if (result.alreadyPrinted) {
+    supersedePrintRecord(params.recordKey, params.targetDate, now);
+    result = enqueuePrintJob(params, now);
+  }
+  return { jobId: result.jobId, enqueued: result.enqueued };
 }
 
 /** Set Daily Briefing's own per-member opt-in state after strict active-member validation. */
@@ -1227,6 +1358,8 @@ export async function generateAllBriefings(requestedDate?: string): Promise<Brie
     // An opt-in row remains after archive so that reactivation self-heals; it
     // is skipped while inactive rather than treated as an all-or-nothing error.
     if (!isActiveMember(memberId)) continue;
+    // A member paused on this weekday is skipped like an inactive one (spec D4).
+    if (!isBriefingScheduledOn(memberId, date)) continue;
     try {
       briefings.push(await generateBriefing(memberId, date, sharedCache));
     } catch (err) {

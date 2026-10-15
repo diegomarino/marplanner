@@ -62,11 +62,10 @@ export function reconcileBootstrap(): void {
 }
 
 /** Idempotent management-key reconciliation (env-configured)
- * 2026-09-04) — seeds the `api_keys` row `requireManagementKey` (
- * `src/server/auth/capability.ts`) is designed to admit. Today `kind='device'` is the ONLY
- * kind any browser can ever hold — `provisionDevice` (`provision.ts`) hardcodes it, and
- * nothing else ever mints `kind='integration'` — so without this reconcile, every browser
- * would be locked out of the network-devices admin surface by its own gate. Mirrors
+ * 2026-09-04) — seeds the operator's `kind='integration'` `api_keys` row (the Bearer
+ * credential `requireFullAccess` admits on `/api/plugins*`). Nothing else ever mints
+ * `kind='integration'`. Network-devices no longer depends on it: a provisioned device `*` cookie
+ * is accepted there too (ADR-058, owner decision 2026-10-15). Mirrors
  * `reconcileBootstrap` above for the shared plumbing: same env-var-gated idempotent seed,
  * same `mpk-` format enforcement (ADR-037), same "unset → no-op, deployment/feature stays
  * locked" fail-closed default (no key is ever silently minted). Deliberately does NOT

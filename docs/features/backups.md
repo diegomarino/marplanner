@@ -34,7 +34,9 @@ regular backups — never below the count floor, never to zero, and never touchi
 An admin uploads a `.db` file (validated extension, path-safe filename, atomic
 write, suffixed on collision) or downloads a `.db` / on-demand read-only SQL export;
 `.sql` execute-into-DB import is refused, and every path is resolved inside the
-backups root.
+backups root. The admin panel accepts the `.db` file by selection or drag-and-drop,
+uploads it immediately, rejects any non-`.db` file before a request is sent, and
+reports the stored filename on success; downloads show per-row progress.
 
 ### Edge Cases
 

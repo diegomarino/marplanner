@@ -13,8 +13,8 @@ import { unlockAdmin } from "./admin-unlock";
  * calendar event assigned to that member, titled to match a query → admin
  * unlock → Reminders tab → author a `calendar_gated` `specific` reminder
  * (query + membership assignment, no weekdays,
- * calendar-gated reminders US2/REMINDERS-AC-05) via the create form
- * → open the dry-run/explain panel on that rule's card and run it for the
+ * calendar-gated reminders US2/REMINDERS-AC-05) via the add-rule dialog
+ * → open the dry-run/explain panel on that rule's row and run it for the
  * seeded member/date → assert the verdict (`wouldEmit`,
  * calendar-gated reminders US3/REMINDERS-AC-10) → assert the rule
  * actually emits via `GET /api/reminders/emissions` (REMINDERS-AC-02).
@@ -27,7 +27,7 @@ import { unlockAdmin } from "./admin-unlock";
  * in that timezone, so anchoring the seeded event and the
  * dry-run date on the SAME household "today" keeps them aligned regardless of
  * the host machine's own timezone.
- * The create form uses its stable test ID; accessible labels identify its controls.
+ * The add-rule dialog and the rule row use their stable test IDs; accessible labels identify the dialog controls.
  */
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
@@ -212,14 +212,9 @@ test("calendar_gated admin author → dry-run → emit: query + membership assig
     timeout: 10_000,
   });
 
-  // --- 7) Author a calendar_gated `specific` reminder: query + membership
-  // assignment, no weekdays (calendar-gated reminders US2,
-  // REMINDERS-AC-05/REMINDERS-INV-01/REMINDERS-INV-09) — scoped to the
-  // create form's testid so it never collides with any existing reminder
-  // card (persisted DATA_DIR across runs). Was a styling-class locator
-  // (.bg-white...), which broke the moment the token migration recoloured
-  // the surface — never couple an e2e locator to presentation classes. ---
-  const createForm = page.getByTestId("reminder-create-form");
+  // --- 7) Author a calendar_gated `specific` reminder in the add dialog ---
+  await page.getByTestId("reminders-add-rule").click();
+  const createForm = page.getByTestId("reminder-form-dialog");
   await expect(createForm).toBeVisible();
 
   const reminderText = `Prepara al perro ${rid}`;
@@ -234,17 +229,18 @@ test("calendar_gated admin author → dry-run → emit: query + membership assig
     page.waitForResponse(
       (r) => r.url().endsWith("/api/reminders") && r.request().method() === "POST"
     ),
-    createForm.getByRole("button", { name: m["reminders.action.create"] }).click(),
+    createForm.getByTestId("reminder-save").click(),
   ]);
   expect(createResp.status()).toBe(201);
   const reminder = (await createResp.json()) as Reminder;
   expect(reminder.kind).toBe("calendar_gated");
   expect(reminder.targetingMode).toBe("specific");
   expect(reminder.weekdays).toBeNull();
+  await expect(createForm).toBeHidden();
   await expect(page.getByText(reminderText)).toBeVisible({ timeout: 10_000 });
 
-  // --- 8) Run the dry-run/explain view on this rule's card for (member, today) ---
-  const card = page.locator(".border.rounded-lg.p-4.mb-4").filter({ hasText: reminderText });
+  // --- 8) Run the dry-run/explain view on this rule's row for (member, today) ---
+  const card = page.getByTestId(`reminder-${reminder.id}`);
   await expect(card).toBeVisible();
   await card.getByRole("button", { name: m["reminders.dryRun.toggleShow"] }).click();
   await expect(card.getByText(m["reminders.dryRun.title"])).toBeVisible({ timeout: 10_000 });
