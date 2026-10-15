@@ -306,7 +306,11 @@ describe("routines-crud boundary tests (red-by-design)", () => {
       expect(res.statusCode).toBe(200);
       expect(res.json()).toEqual({ ...created, dayPeriodId: "night" });
 
-      const reread = await app.inject({ method: "GET", url: `/api/routines/${created.id}`, cookies });
+      const reread = await app.inject({
+        method: "GET",
+        url: `/api/routines/${created.id}`,
+        cookies,
+      });
       expect(reread.json().dayPeriodId).toBe("night");
     } finally {
       await app.close();
@@ -337,10 +341,17 @@ describe("routines-crud boundary tests (red-by-design)", () => {
           payload: { name: "Renamed", dayPeriodId },
         });
         expect(res.statusCode, String(dayPeriodId)).toBe(400);
-        expect(res.json()).toMatchObject({ error: "validation_error", message: expect.any(String) });
+        expect(res.json()).toMatchObject({
+          error: "validation_error",
+          message: expect.any(String),
+        });
       }
 
-      const reread = await app.inject({ method: "GET", url: `/api/routines/${created.id}`, cookies });
+      const reread = await app.inject({
+        method: "GET",
+        url: `/api/routines/${created.id}`,
+        cookies,
+      });
       expect(reread.json()).toEqual(created);
     } finally {
       await app.close();

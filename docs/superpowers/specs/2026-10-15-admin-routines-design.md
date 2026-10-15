@@ -86,17 +86,17 @@ Out (explicit):
 
 Client, new directory `src/client/routines/admin/` (mirrors `src/client/calendar/admin/`):
 
-| File | Responsibility |
-| --- | --- |
-| `routineOrder.ts` | Pure helpers: `groupRoutinesByPeriod(routines, dayPeriods)`, `moveChore(chores, activeId, overId)` |
-| `MemberChip.tsx` | Coloured name chip from a member's `colorKey` (token forwarding like `MembersManagement.tsx`) |
-| `RoutineList.tsx` | Grouped master list, New button, selection |
-| `RoutineWeekGrid.tsx` | 7-column grid of active assignments; whole grid opens the assignment dialog |
-| `SortableChoreRow.tsx` | One sortable chore row (handle, icon, name, edit/delete) |
-| `RoutineDetail.tsx` | Header actions, week grid, chore list with DnD context, chore-delete confirm |
-| `RoutineFormDialog.tsx` | Create/edit routine; period-move confirm |
-| `ChoreFormDialog.tsx` | Create/edit chore |
-| `AssignmentDialog.tsx` | Per-child weekday rows with save/deactivate confirms |
+| File                    | Responsibility                                                                                     |
+| ----------------------- | -------------------------------------------------------------------------------------------------- |
+| `routineOrder.ts`       | Pure helpers: `groupRoutinesByPeriod(routines, dayPeriods)`, `moveChore(chores, activeId, overId)` |
+| `MemberChip.tsx`        | Coloured name chip from a member's `colorKey` (token forwarding like `MembersManagement.tsx`)      |
+| `RoutineList.tsx`       | Grouped master list, New button, selection                                                         |
+| `RoutineWeekGrid.tsx`   | 7-column grid of active assignments; whole grid opens the assignment dialog                        |
+| `SortableChoreRow.tsx`  | One sortable chore row (handle, icon, name, edit/delete)                                           |
+| `RoutineDetail.tsx`     | Header actions, week grid, chore list with DnD context, chore-delete confirm                       |
+| `RoutineFormDialog.tsx` | Create/edit routine; period-move confirm                                                           |
+| `ChoreFormDialog.tsx`   | Create/edit chore                                                                                  |
+| `AssignmentDialog.tsx`  | Per-child weekday rows with save/deactivate confirms                                               |
 
 `src/client/admin/RoutinesManagement.tsx` becomes the orchestrator: loads day periods, routines and
 members; owns selection; loads chores + assignments for the selected routine; performs every
