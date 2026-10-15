@@ -942,6 +942,7 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   await openAdminSection(page, "admin-nav-members-management");
   await openAdminSection(page, "admin-nav-printing");
   await expect(page.getByTestId("printing-management")).toBeVisible();
+  await page.getByTestId("printing-tab-diagnostics").click();
   await expect(page.getByTestId(`printing-job-state-${firstJobId}`)).toHaveText(
     m["printing.management.state.printed"]
   );
@@ -1030,6 +1031,7 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   await openAdminSection(page, "admin-nav-members-management");
   await openAdminSection(page, "admin-nav-printing");
   await expect(page.getByTestId("printing-management")).toBeVisible();
+  await page.getByTestId("printing-tab-diagnostics").click();
   await expect(page.getByTestId(`printing-job-state-${secondJobId}`)).toHaveText(
     m["printing.management.state.printed"]
   );

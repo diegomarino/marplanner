@@ -14,7 +14,8 @@
  * explicit user gesture. D6's one deliberate simplification vs v1: no persisted
  * `deviceId`/`getDevices` silent-reconnect path — "device re-acquired per session
  * (browser amnesia accepted)" means every session re-runs the same explicit-gesture
- * `pair` ritual instead of v1's `connect({requireUserGesture})` two-path split.
+ * `pair` ritual instead of v1's `connect({requireUserGesture})` two-path split; the stored
+ * `printerTransport` UUIDs are only a try-first preference — pairing still needs the gesture.
  * Seam (D6): `__setPrintTransportForTests` overrides `createPrintTransport`'s return
  * value unconditionally (client unit/component tests call this directly — no env flag
  * needed). Absent an override, a DEV or `VITE_E2E_HOOKS=true` build (mirrors
@@ -23,6 +24,13 @@
  * `page.evaluate` — a production build with neither set gets the real Bluetooth
  * transport.
  */
+
+import type { PrinterTransportSettings } from "../../shared";
+
+/** A stored service/characteristic the pairing ritual tries first (never required). */
+export type PrinterEndpointPreference = Partial<
+  Pick<PrinterTransportSettings, "serviceUuid" | "characteristicUuid">
+>;
 
 /* ------------------------------------------------------------------ */
 /* Pure, testable helpers — chunk math, delay, retry (no real I/O) */
@@ -140,8 +148,9 @@ export class PrintTransportError extends Error {
 
 export interface PrintTransport {
   /** Explicit-user-gesture pairing ritual. Resolves once a writable device is connected and
-   * ready; rejects with a `PrintTransportError` otherwise (never leaves a half-paired state). */
-  pair(): Promise<void>;
+   * ready; rejects with a `PrintTransportError` otherwise (never leaves a half-paired state).
+   * Resolves the paired device's identity; a preference is tried first, never required. */
+  pair(preference?: PrinterEndpointPreference): Promise<PrinterTransportSettings>;
   /** Whether a connected, writable device is currently available. */
   isReady(): boolean;
   /** Transmit printer-ready bytes in chunked form. Rejects with a `PrintTransportError` on any
@@ -183,6 +192,15 @@ export interface FakePrintTransport extends PrintTransport {
 
 const DEFAULT_PAIR_FAILURE = (): PrintTransportError =>
   new PrintTransportError("pairing_required", "scripted pairing failure");
+
+/** The fake's paired identity; both UUIDs pass the server's `printerTransport` validator. */
+export const FAKE_PRINTER_IDENTITY: PrinterTransportSettings = {
+  deviceId: "fake-printer",
+  name: "Fake printer",
+  serviceUuid: "e7810a71-73ae-499d-8c15-faa9aef0c3f2",
+  characteristicUuid: "bef8d6c9-9c21-4c9e-b632-bd58c1009f9f",
+};
+
 const DEFAULT_PRINT_FAILURE = (): PrintTransportError =>
   new PrintTransportError("write_failed", "scripted write failure");
 
@@ -198,13 +216,19 @@ export function createFakePrintTransport(): FakePrintTransport {
   const disconnectListeners = new Set<() => void>();
 
   return {
-    async pair() {
+    async pair(preference) {
       if (pairFailure) {
         const err = pairFailure;
         pairFailure = null;
         throw err;
       }
       ready = true;
+      return {
+        ...FAKE_PRINTER_IDENTITY,
+        serviceUuid: preference?.serviceUuid || FAKE_PRINTER_IDENTITY.serviceUuid,
+        characteristicUuid:
+          preference?.characteristicUuid || FAKE_PRINTER_IDENTITY.characteristicUuid,
+      };
     },
     isReady() {
       return ready;
@@ -279,6 +303,18 @@ export const BLUETOOTH_PRINTER_CANDIDATE_SERVICES: (number | string)[] = [
 export const BLUETOOTH_PRINTER_FILTER_SERVICE: number | string =
   BLUETOOTH_PRINTER_CANDIDATE_SERVICES[0];
 
+/** The candidate services in try order: a stored preference (lower-cased) first, then the v1
+ * candidates without it. With no preference this is the candidate list itself, so the
+ * `requestDevice` call stays exactly v1's shape. */
+export function orderCandidateServices(preferred?: string): (number | string)[] {
+  if (!preferred) return BLUETOOTH_PRINTER_CANDIDATE_SERVICES;
+  const normalized = preferred.toLowerCase();
+  return [
+    normalized,
+    ...BLUETOOTH_PRINTER_CANDIDATE_SERVICES.filter((service) => service !== normalized),
+  ];
+}
+
 function ensureBluetoothAvailable(): void {
   if (globalThis.isSecureContext === false) {
     throw new PrintTransportError(
@@ -322,16 +358,19 @@ export function createBluetoothPrintTransport(): PrintTransport {
   }
 
   return {
-    async pair() {
+    async pair(preference) {
       ensureBluetoothAvailable();
-      device = await navigator.bluetooth.requestDevice({
+      const services = orderCandidateServices(preference?.serviceUuid);
+      const preferredCharacteristic = preference?.characteristicUuid?.toLowerCase();
+      const paired = await navigator.bluetooth.requestDevice({
         filters: [{ services: [BLUETOOTH_PRINTER_FILTER_SERVICE] }],
-        optionalServices: BLUETOOTH_PRINTER_CANDIDATE_SERVICES,
+        optionalServices: services,
       });
-      device.addEventListener("gattserverdisconnected", notifyUnexpectedDisconnect);
+      device = paired;
+      paired.addEventListener("gattserverdisconnected", notifyUnexpectedDisconnect);
       const server = await connectGattWithRetry();
 
-      for (const serviceId of BLUETOOTH_PRINTER_CANDIDATE_SERVICES) {
+      for (const serviceId of services) {
         let service: BluetoothRemoteGATTService;
         try {
           service = await server.getPrimaryService(serviceId);
@@ -344,12 +383,20 @@ export function createBluetoothPrintTransport(): PrintTransport {
         } catch {
           continue;
         }
-        const writable = characteristics.find(
+        const writableCharacteristics = characteristics.filter(
           (c) => c.properties.write || c.properties.writeWithoutResponse
         );
+        const writable =
+          writableCharacteristics.find((c) => c.uuid === preferredCharacteristic) ??
+          writableCharacteristics[0];
         if (writable) {
           characteristic = writable;
-          return;
+          return {
+            deviceId: paired.id,
+            name: paired.name ?? "",
+            serviceUuid: service.uuid,
+            characteristicUuid: writable.uuid,
+          };
         }
       }
 

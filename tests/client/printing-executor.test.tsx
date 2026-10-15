@@ -67,7 +67,11 @@ function ExecutorSessionProbe() {
         {t(session.stateLabelKey)}
       </output>
       {session.canPair && (
-        <button type="button" data-testid="print-executor-pair-button" onClick={session.pair}>
+        <button
+          type="button"
+          data-testid="print-executor-pair-button"
+          onClick={() => session.pair()}
+        >
           {t(
             session.displayState === "disconnected"
               ? "printing.executor.repairButton"
@@ -75,6 +79,9 @@ function ExecutorSessionProbe() {
           )}
         </button>
       )}
+      <output data-testid="print-executor-paired-device">
+        {session.pairedDevice?.deviceId ?? ""}
+      </output>
       {session.displayState === "error" && (
         <output data-testid="print-executor-last-error" role="alert" aria-live="polite">
           Last error:
@@ -147,6 +154,51 @@ describe("PrintExecutor", () => {
     cleanup();
     vi.useRealTimers();
     vi.unstubAllGlobals();
+  });
+
+  it("exposes the paired device identity after a successful pair", async () => {
+    const transport = createFakePrintTransport();
+    mockFetch.mockResolvedValueOnce(jsonResponse({ registered: true })); // capability
+    mockFetch.mockResolvedValue(new Response(null, { status: 204 })); // claims: nothing to do
+
+    renderExecutor({ transport, pollIntervalMs: 60_000 });
+    expect(screen.getByTestId("print-executor-paired-device")).toHaveTextContent("");
+    fireEvent.click(screen.getByTestId("print-executor-pair-button"));
+    await flushMicrotasks();
+
+    expect(screen.getByTestId("print-executor-state")).toHaveTextContent("Ready");
+    expect(screen.getByTestId("print-executor-paired-device")).toHaveTextContent("fake-printer");
+  });
+
+  it("passes a pairing preference through to the transport", async () => {
+    const transport = createFakePrintTransport();
+    const pairSpy = vi.spyOn(transport, "pair");
+    mockFetch.mockResolvedValueOnce(jsonResponse({ registered: true }));
+    mockFetch.mockResolvedValue(new Response(null, { status: 204 }));
+
+    function PreferenceProbe() {
+      const session = usePrinterSession();
+      return (
+        <button
+          type="button"
+          data-testid="pair-with-preference"
+          onClick={() => session?.pair({ serviceUuid: "000018f0-0000-1000-8000-00805f9b34fb" })}
+        >
+          pair
+        </button>
+      );
+    }
+    render(
+      <LanguageProvider>
+        <PrintExecutor transport={transport} pollIntervalMs={60_000}>
+          <PreferenceProbe />
+        </PrintExecutor>
+      </LanguageProvider>
+    );
+    fireEvent.click(screen.getByTestId("pair-with-preference"));
+    await flushMicrotasks();
+
+    expect(pairSpy).toHaveBeenCalledWith({ serviceUuid: "000018f0-0000-1000-8000-00805f9b34fb" });
   });
 
   it("is intrinsically headless when mounted directly", () => {

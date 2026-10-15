@@ -137,7 +137,7 @@ const adminDestinations: ReadonlyArray<{
   },
   {
     path: "/admin/printing",
-    primary: (page: Page) => page.getByTestId("printing-trigger-test-print"),
+    primary: (page: Page) => page.getByTestId("printing-tab-diagnostics"),
   },
   {
     path: "/admin/settings",

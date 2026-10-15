@@ -90,6 +90,7 @@ describe("printing routes", () => {
     payload?: Record<string, unknown>;
   }> = [
     { method: "POST", url: "/api/printing/test-print" },
+    { method: "POST", url: "/api/printing/reset-today" },
     { method: "GET", url: "/api/printing/jobs" },
     { method: "GET", url: "/api/printing/status" },
     { method: "POST", url: "/api/printing/capability" },
@@ -645,6 +646,69 @@ describe("printing routes", () => {
         cookies: { mp_device_key: deviceKey },
       });
       expect(claimRes.statusCode).toBe(409);
+    } finally {
+      await app.close();
+    }
+  });
+
+  // ── POST /reset-today — admin "reset today's print" (FR-016) ──────────
+
+  it("POST /reset-today — 200 makes today's test print printable again", async () => {
+    const deviceKey = await provisionRealDeviceKey();
+    const app = await buildApp();
+    try {
+      const today = todayInHouseholdTz(Date.now());
+      enqueuePrintJob(
+        { recordKey: "test-print", targetDate: today, outputRef: `test-print:${today}` },
+        Date.now()
+      );
+
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/printing/reset-today",
+        cookies: { mp_device_key: deviceKey },
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body)).toEqual({
+        targetDate: today,
+        resetRecords: 1,
+        cancelledJobs: 1,
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("POST /reset-today — 400 when the body carries any field", async () => {
+    const deviceKey = await provisionRealDeviceKey();
+    const app = await buildApp();
+    try {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/printing/reset-today",
+        cookies: { mp_device_key: deviceKey },
+        payload: { targetDate: "2026-06-15" },
+      });
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toBe("validation_error");
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("POST /reset-today — 409 plugin_inactive while the printing plugin is inactive", async () => {
+    const deviceKey = await provisionRealDeviceKey();
+    const app = await buildApp();
+    try {
+      __setPrintingPluginActiveForTests(false);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/printing/reset-today",
+        cookies: { mp_device_key: deviceKey },
+      });
+      expect(res.statusCode).toBe(409);
+      expect(JSON.parse(res.body).error).toBe("plugin_inactive");
     } finally {
       await app.close();
     }

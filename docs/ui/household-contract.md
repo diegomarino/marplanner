@@ -79,7 +79,9 @@ The ordered capability table is:
 9. `/admin/backups` — backups: snapshot with success feedback, drag-and-drop .db upload, colour-coded types, relative dates, typed-filename restore, download with progress
 10. `/admin/time-announcements` — time announcements (card list; create/edit dialog; delete confirmation)
 11. `/admin/network-devices` — network devices (Registered devices and Add device tabs)
-12. `/admin/printing` — pair/re-pair, test print, print history
+12. `/admin/printing` — Printer: Settings tab (plugin and auto-print state, paper width, Bluetooth
+    printer with pair/re-pair, name, device id and UUIDs, saved to `printer`/`printerTransport`) and
+    Diagnostics tab (test print, reset today's print, recent prints)
 13. `/admin/settings` — language, week start and time zone, plus the day periods and, while the
     weather plugin is active, the weather location, with one Save for language, week start, time
     zone and weather (the day periods keep their own save)
