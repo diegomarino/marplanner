@@ -549,30 +549,36 @@ export function getReminder(id: string): Reminder {
   return rowToReminder(row, listActiveAssignments(id));
 }
 
-const EDITABLE_REMINDER_KEYS = new Set(["text", "weekdays", "active", "query", "queryFields"]);
+const EDITABLE_REMINDER_KEYS = new Set([
+  "text",
+  "weekdays",
+  "active",
+  "query",
+  "queryFields",
+  "targetingMode",
+  "assignments",
+]);
 
-/** Edit a reminder's text / active / (apply_to_all) weekdays / (calendar_gated) query+queryFields.
- * `kind` and `targetingMode` are immutable after creation (FR-013, Clarifications) —
- * their presence in the patch body, even unchanged, is rejected 400. Mirrors
- * `ReminderEditInput`'s `additionalProperties: false`: any other unrecognized
- * key, an empty object (nothing to edit), or a non-object/array body is
- * likewise rejected 400 — never silently accepted as a no-op 200.
- * `weekdays` and `query`/`queryFields` are kind-aware (009, finding + the carry-in):
- * `weekdays` is rejected 400 on a `calendar_gated` row (was a 500 CHECK-constraint violation
- * before this fix — the discriminant must reject at the boundary, never let a bad UPDATE reach
- * the DB); `query`/`queryFields` are rejected 400 on a `scheduled` row. Omitting `queryFields`
- * while editing `query` PRESERVES the stored value — a partial edit MUST NOT reset it to the
- * create-time default (finding ′).
+/** Edit a reminder's text / active / weekdays / query+queryFields / targetingMode / assignments.
+ * `kind` is immutable after creation (FR-013) — its presence in the patch, even unchanged, is
+ * rejected 400. `targetingMode` may switch `apply_to_all` <-> `specific` (FR-019): switching to
+ * `specific` requires `assignments`; switching a `scheduled` rule to `apply_to_all` requires
+ * `weekdays`; a `calendar_gated` rule switching to `apply_to_all` needs nothing extra. Switching
+ * to `apply_to_all` deactivates (never deletes) the rule's active assignments. `assignments` is
+ * a full-set replace and is accepted only when the RESULTING mode is `specific`; `weekdays` only
+ * when the resulting mode is `apply_to_all` on a `scheduled` rule. Everything is validated before
+ * any write, and the rule row plus the assignment writes commit in ONE transaction (FR-008,
+ * FR-015). Mirrors `ReminderEditInput`'s `additionalProperties: false`: any other key, an empty
+ * object, or a non-object/array body is 400. `query`/`queryFields` are rejected 400 on a
+ * `scheduled` row; omitting `queryFields` while editing `query` PRESERVES the stored value.
  */
 export function editReminder(id: string, patch: unknown): Reminder {
   if (!patch || typeof patch !== "object" || Array.isArray(patch)) {
     throw new ReminderValidationError("Patch body must be a JSON object");
   }
 
-  if ("kind" in patch || "targetingMode" in patch) {
-    throw new ReminderValidationError(
-      "kind and targetingMode are immutable after creation (FR-013)"
-    );
+  if ("kind" in patch) {
+    throw new ReminderValidationError("kind is immutable after creation (FR-013)");
   }
 
   const patchKeys = Object.keys(patch);
@@ -584,7 +590,7 @@ export function editReminder(id: string, patch: unknown): Reminder {
   }
   if (patchKeys.length === 0) {
     throw new ReminderValidationError(
-      "Patch body must include at least one of: text, weekdays, active"
+      "Patch body must include at least one of: text, weekdays, active, query, queryFields, targetingMode, assignments"
     );
   }
 
@@ -599,13 +605,25 @@ export function editReminder(id: string, patch: unknown): Reminder {
     throw new ReminderNotFoundError(id);
   }
 
-  const { text, weekdays, active, query, queryFields } = patch as {
+  const { text, weekdays, active, query, queryFields, targetingMode, assignments } = patch as {
     text?: unknown;
     weekdays?: unknown;
     active?: unknown;
     query?: unknown;
     queryFields?: unknown;
+    targetingMode?: unknown;
+    assignments?: unknown;
   };
+
+  if (
+    targetingMode !== undefined &&
+    targetingMode !== "apply_to_all" &&
+    targetingMode !== "specific"
+  ) {
+    throw new ReminderValidationError('targetingMode must be "apply_to_all" or "specific"');
+  }
+  const nextMode = (targetingMode ?? row.targeting_mode) as "apply_to_all" | "specific";
+  const switching = nextMode !== row.targeting_mode;
 
   if (weekdays !== undefined && row.kind === "calendar_gated") {
     throw new ReminderValidationError(
@@ -613,9 +631,32 @@ export function editReminder(id: string, patch: unknown): Reminder {
     );
   }
 
-  if (weekdays !== undefined && row.targeting_mode !== "apply_to_all") {
+  if (weekdays !== undefined && nextMode !== "apply_to_all") {
     throw new ReminderValidationError(
-      "weekdays can only be edited on an apply_to_all rule (per-member weekdays live on assignments for specific)"
+      "weekdays can only be set on an apply_to_all rule (per-member weekdays live on assignments for specific)"
+    );
+  }
+
+  if (assignments !== undefined && nextMode !== "specific") {
+    throw new ReminderValidationError(
+      "assignments is only accepted when the rule's targetingMode is specific (INV-09)"
+    );
+  }
+
+  if (
+    switching &&
+    nextMode === "apply_to_all" &&
+    row.kind === "scheduled" &&
+    weekdays === undefined
+  ) {
+    throw new ReminderValidationError(
+      "weekdays is required when switching a scheduled rule to apply_to_all"
+    );
+  }
+
+  if (switching && nextMode === "specific" && assignments === undefined) {
+    throw new ReminderValidationError(
+      "assignments is required when switching a rule to targetingMode: specific"
     );
   }
 
@@ -664,15 +705,36 @@ export function editReminder(id: string, patch: unknown): Reminder {
     params.push(active ? 1 : 0);
   }
 
-  if (updates.length === 0) {
+  if (switching) {
+    updates.push("targeting_mode = ?");
+    params.push(nextMode);
+    if (nextMode === "specific" && row.kind === "scheduled") {
+      // The discriminant CHECK requires NULL rule-level weekdays on a scheduled specific rule.
+      updates.push("weekdays = NULL");
+    }
+  }
+
+  const plan = assignments !== undefined ? planAssignmentSet(id, row.kind, assignments) : null;
+
+  if (updates.length === 0 && plan === null) {
     return rowToReminder(row, listActiveAssignments(id));
   }
 
-  updates.push("updated_at = ?");
-  params.push(Date.now());
-  params.push(id);
+  const now = Date.now();
+  db.transaction(() => {
+    updates.push("updated_at = ?");
+    params.push(now);
+    params.push(id);
+    db.prepare(`UPDATE reminder SET ${updates.join(", ")} WHERE id = ?`).run(...params);
 
-  db.prepare(`UPDATE reminder SET ${updates.join(", ")} WHERE id = ?`).run(...params);
+    if (plan) {
+      plan.write(now);
+    } else if (switching && nextMode === "apply_to_all") {
+      db.prepare(
+        "UPDATE reminder_assignment SET active = 0, updated_at = ? WHERE reminder_id = ? AND active = 1"
+      ).run(now, id);
+    }
+  })();
 
   return getReminder(id);
 }
@@ -688,6 +750,64 @@ export function deleteReminder(id: string): void {
 }
 
 // ── Assignment set-replace ────────────────────────────────────────────
+
+/** Validate a desired full assignment set for a rule and return the writer that applies it.
+ * Validation (and every read it needs) happens here and throws `ReminderValidationError`; the
+ * returned `write(now)` only performs the upserts/deactivations and MUST be called inside a
+ * `db.transaction` so the caller can combine it with other writes atomically. Kind-aware:
+ * calendar_gated validates the membership-only shape, scheduled the weekday-bearing one.
+ * Active-member status is required only for members not already holding an ACTIVE row here.
+ */
+function planAssignmentSet(
+  reminderId: string,
+  kind: string,
+  assignments: unknown
+): { write: (now: number) => void } {
+  const db = getDb();
+  const existingRows = db
+    .prepare("SELECT id, member_id, active FROM reminder_assignment WHERE reminder_id = ?")
+    .all(reminderId) as Array<{ id: string; member_id: string; active: number }>;
+  const existingActiveMemberIds = new Set(
+    existingRows.filter((row) => row.active === 1).map((row) => row.member_id)
+  );
+
+  const parsedAssignments: { memberId: string; weekdays: Weekday[] }[] =
+    kind === "calendar_gated"
+      ? validateCalendarGatedAssignmentSetForReplace(assignments, existingActiveMemberIds).map(
+          ({ memberId }) => ({ memberId, weekdays: [] as Weekday[] })
+        )
+      : validateAssignmentSetForReplace(assignments, existingActiveMemberIds);
+
+  const desiredMemberIds = new Set(parsedAssignments.map((a) => a.memberId));
+
+  return {
+    write(now: number) {
+      const existingByMember = new Map(existingRows.map((row) => [row.member_id, row]));
+
+      for (const { memberId, weekdays } of parsedAssignments) {
+        const existing = existingByMember.get(memberId);
+        if (existing) {
+          db.prepare(
+            "UPDATE reminder_assignment SET weekdays = ?, active = 1, updated_at = ? WHERE id = ?"
+          ).run(JSON.stringify(weekdays), now, existing.id);
+        } else {
+          db.prepare(
+            "INSERT INTO reminder_assignment (id, reminder_id, member_id, weekdays, active, created_at, updated_at) VALUES (?, ?, ?, ?, 1, ?, ?)"
+          ).run(randomUUID(), reminderId, memberId, JSON.stringify(weekdays), now, now);
+        }
+      }
+
+      for (const row of existingRows) {
+        if (row.active === 1 && !desiredMemberIds.has(row.member_id)) {
+          db.prepare("UPDATE reminder_assignment SET active = 0, updated_at = ? WHERE id = ?").run(
+            now,
+            row.id
+          );
+        }
+      }
+    },
+  };
+}
 
 /** Atomic full-set replace of a `specific` rule's active assignments — the
  * ONLY assignment-write operation: the caller sends the
@@ -741,48 +861,8 @@ export function replaceAssignments(reminderId: string, input: unknown): Reminder
 
   const { assignments } = input as { assignments?: unknown };
 
-  const existingRows = db
-    .prepare("SELECT id, member_id, active FROM reminder_assignment WHERE reminder_id = ?")
-    .all(reminderId) as Array<{ id: string; member_id: string; active: number }>;
-  const existingActiveMemberIds = new Set(
-    existingRows.filter((row) => row.active === 1).map((row) => row.member_id)
-  );
-
-  const parsedAssignments: { memberId: string; weekdays: Weekday[] }[] =
-    reminderRow.kind === "calendar_gated"
-      ? validateCalendarGatedAssignmentSetForReplace(assignments, existingActiveMemberIds).map(
-          ({ memberId }) => ({ memberId, weekdays: [] as Weekday[] })
-        )
-      : validateAssignmentSetForReplace(assignments, existingActiveMemberIds);
-
-  const now = Date.now();
-  const desiredMemberIds = new Set(parsedAssignments.map((a) => a.memberId));
-
-  db.transaction(() => {
-    const existingByMember = new Map(existingRows.map((row) => [row.member_id, row]));
-
-    for (const { memberId, weekdays } of parsedAssignments) {
-      const existing = existingByMember.get(memberId);
-      if (existing) {
-        db.prepare(
-          "UPDATE reminder_assignment SET weekdays = ?, active = 1, updated_at = ? WHERE id = ?"
-        ).run(JSON.stringify(weekdays), now, existing.id);
-      } else {
-        db.prepare(
-          "INSERT INTO reminder_assignment (id, reminder_id, member_id, weekdays, active, created_at, updated_at) VALUES (?, ?, ?, ?, 1, ?, ?)"
-        ).run(randomUUID(), reminderId, memberId, JSON.stringify(weekdays), now, now);
-      }
-    }
-
-    for (const row of existingRows) {
-      if (row.active === 1 && !desiredMemberIds.has(row.member_id)) {
-        db.prepare("UPDATE reminder_assignment SET active = 0, updated_at = ? WHERE id = ?").run(
-          now,
-          row.id
-        );
-      }
-    }
-  })();
+  const plan = planAssignmentSet(reminderId, reminderRow.kind, assignments);
+  db.transaction(() => plan.write(Date.now()))();
 
   return listActiveAssignments(reminderId);
 }

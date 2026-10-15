@@ -150,7 +150,7 @@ components:
           enum:
             - apply_to_all
             - specific
-          description: immutable after creation (FR-013).
+          description: editable through PATCH (FR-019); kind is immutable.
         text:
           type: string
           minLength: 1
@@ -371,9 +371,14 @@ components:
       type: object
       additionalProperties: false
       description: >-
-        Partial edit; kind and targetingMode are immutable. Weekdays are valid only on stored scheduled
-        apply_to_all rules; query fields only on stored calendar_gated rules. These state-dependent
-        constraints are enforced by the service.
+        Partial edit; kind is immutable. targetingMode may switch between apply_to_all and specific.
+        Switching to specific requires assignments; switching a scheduled rule to apply_to_all requires
+        weekdays; a calendar_gated rule switching to apply_to_all needs nothing extra. Weekdays are
+        valid only when the resulting mode is apply_to_all on a scheduled rule; assignments only when
+        the resulting mode is specific (full-set replace). Query fields only on stored calendar_gated
+        rules. These state-dependent constraints are enforced by the service; a rejected edit
+        persists nothing. Switching to apply_to_all deactivates (never deletes) the rule's active
+        assignments.
       properties:
         text:
           type: string
@@ -386,6 +391,19 @@ components:
           minItems: 1
         active:
           type: boolean
+        targetingMode:
+          type: string
+          enum:
+            - apply_to_all
+            - specific
+        assignments:
+          type: array
+          minItems: 1
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/ReminderAssignmentInput"
+              - $ref: "#/components/schemas/CalendarGatedAssignmentInput"
+          description: full desired set; accepted only when the resulting targetingMode is specific.
         query:
           type: string
           minLength: 1
@@ -503,7 +521,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
     patch:
-      summary: Edit text/active/(apply_to_all weekdays). kind & targetingMode immutable (FR-013).
+      summary: Edit text/active/weekdays/query and switch targetingMode (assignments for specific). kind immutable (FR-013).
       security:
         - deviceKeyCookie: []
       parameters:
@@ -528,7 +546,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Reminder"
         "400":
-          description: attempted kind/targetingMode change or invalid field
+          description: kind in body, invalid targetingMode, missing weekdays/assignments for the switch, or invalid field
           content:
             application/json:
               schema:

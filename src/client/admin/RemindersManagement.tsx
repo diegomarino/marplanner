@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { authFetch } from "@/lib/credential";
 import { useHouseholdSettings } from "@/lib/householdSettings";
 import { todayInHouseholdTimezone } from "@/lib/household-date";
@@ -6,9 +7,7 @@ import {
   Reminder,
   ReminderInput,
   ReminderEditInput,
-  ReminderAssignment,
   ReminderAssignmentInput,
-  ReminderAssignmentSetInput,
   ReminderKind,
   ReminderQueryField,
   DryRunResult,
@@ -30,28 +29,23 @@ import {
 import { CheckboxField } from "@/components/CheckboxField";
 import { RadioField } from "@/components/RadioField";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { NATIVE_SELECT_CLASSES, BARE_CHECKBOX_INPUT_CLASSES } from "@/lib/recipes";
 
-/* ------------------------------------------------------------------ */
-/* RemindersManagement — CRUD UI for reminders: scheduled (006, */
-/* apply_to_all rule-level weekdays or specific per-member assignment */
-/* matrix) and calendar_gated (009, query/queryFields-driven, */
-/* membership-only targeting, no weekdays) + a dry-run/explain view. */
-/* */
-/* (token dialect, FR-005/FR-009): migrated to the */
-/* shared L2 components. SC-009: the local `WEEKDAYS` constant */
-/* this file used to declare is replaced by `WeekdayPicker`'s */
-/* canonical order in every render site EXCEPT `AssignmentMatrixGrid` */
-/* — that one is `WeekdayPicker`'s own documented deliberate */
-/* exception (a member × weekday table with label-less cells and a */
-/* `memberId` dimension the component's signature has no room for), */
-/* so it imports `CANONICAL_WEEKDAY_ORDER` directly instead. Deleting */
-/* a reminder now opens a themed `ConfirmDialog` instead of */
-/* `window.confirm`, mirroring `RoutinesManagement.tsx`'s */
-/* precedent (FR-005) — `deleteReminder` performs the */
-/* DELETE unconditionally once the caller has already confirmed. */
-/* ------------------------------------------------------------------ */
+/* RemindersManagement — the reminders admin page: a list of rules, one add/edit Dialog
+ * (scheduled all/specific with the member x weekday matrix, calendar_gated with query and
+ * members), a per-row dry-run panel for calendar_gated rules, and a themed delete ConfirmDialog.
+ * Only the first load and an explicit Retry show the loading state; later refreshes are silent so
+ * open dialogs and panels survive. `AssignmentMatrixGrid` is `WeekdayPicker`'s documented
+ * deliberate exception (a member x weekday table), so it imports `CANONICAL_WEEKDAY_ORDER`. */
 
 export const WEEKDAY_LABEL_KEYS: Record<Weekday, MessageKey> = {
   mon: "reminders.weekday.mon",
@@ -104,21 +98,28 @@ function membershipToAssignments(memberIds: string[]): ReminderAssignmentInput[]
   return memberIds.map((memberId) => ({ memberId, weekdays: [] as Weekday[] }));
 }
 
+type FormState = { kind: "create" } | { kind: "edit"; reminder: Reminder } | null;
+
+type Translate = (key: MessageKey) => string;
+
 export function RemindersManagement() {
   const { t } = useTranslation();
-  // US0 hoist: household timezone from the shared `useHouseholdSettings` context
-  // (one `/api/settings` fetch per boot) instead of an ad-hoc GET here. `loadData` (the
-  // reminders/members fetch, independent endpoints) stays gated behind the timezone
-  // resolving, mirroring the original settings-then-data ordering exactly — the dry-run
-  // date default below depends on `householdToday` already being set BEFORE any
-  // `ReminderCard` mounts and captures it as its initial state.
+  // The household timezone comes from the shared `useHouseholdSettings` context. The first load
+  // stays gated behind it so the dry-run date default (`householdToday`) is set before any row
+  // mounts and captures it.
   const { timezone: householdTimezone } = useHouseholdSettings();
 
   const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [activeMembers, setActiveMembers] = useState<Member[]>([]);
+  const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [householdToday, setHouseholdToday] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState<FormState>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Reminder | null>(null);
+
+  const activeMembers = allMembers.filter((m) => m.lifecycle === "active");
+  const memberNames = new Map(allMembers.map((m) => [m.id, m.displayName]));
 
   useEffect(() => {
     if (householdTimezone === null) return;
@@ -126,103 +127,87 @@ export function RemindersManagement() {
     void loadData();
   }, [householdTimezone]);
 
+  async function fetchAll(): Promise<void> {
+    const [remindersRes, membersRes] = await Promise.all([
+      authFetch("/api/reminders", { credentials: "include" }),
+      authFetch("/api/members", { credentials: "include" }),
+    ]);
+    if (!remindersRes.ok) throw new Error("Failed to load reminders");
+    if (!membersRes.ok) throw new Error("Failed to load members");
+    const [remindersData, membersData] = (await Promise.all([
+      remindersRes.json(),
+      membersRes.json(),
+    ])) as [Reminder[], Member[]];
+    setReminders(remindersData);
+    setAllMembers(membersData);
+  }
+
+  /** First load and Retry: shows the loading state. */
   async function loadData() {
     setLoading(true);
+    setLoadFailed(false);
     setError(null);
     try {
-      const [remindersRes, membersRes] = await Promise.all([
-        authFetch("/api/reminders", { credentials: "include" }),
-        authFetch("/api/members", { credentials: "include" }),
-      ]);
-      if (!remindersRes.ok) throw new Error("Failed to load reminders");
-      if (!membersRes.ok) throw new Error("Failed to load members");
-
-      const [remindersData, membersData] = (await Promise.all([
-        remindersRes.json(),
-        membersRes.json(),
-      ])) as [Reminder[], Member[]];
-
-      setReminders(remindersData);
-      setActiveMembers(membersData.filter((m) => m.lifecycle === "active"));
+      await fetchAll();
     } catch {
+      setLoadFailed(true);
       setError(t("reminders.management.error"));
     } finally {
       setLoading(false);
     }
   }
 
-  async function createReminder(input: ReminderInput): Promise<boolean> {
+  /** After a mutation: no loading state, so an open dialog or dry-run panel is never unmounted. */
+  async function refresh() {
     try {
-      const res = await authFetch("/api/reminders", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-      });
-      if (!res.ok) throw new Error("Failed to create reminder");
-      await loadData();
-      return true;
+      await fetchAll();
     } catch {
+      setLoadFailed(true);
       setError(t("reminders.management.error"));
-      return false;
     }
   }
 
-  async function saveAssignments(
-    reminderId: string,
-    assignments: ReminderAssignmentInput[]
+  async function send(
+    url: string,
+    method: "POST" | "PATCH" | "DELETE",
+    body?: unknown
   ): Promise<boolean> {
     try {
-      const input: ReminderAssignmentSetInput = { assignments };
-      const res = await authFetch(`/api/reminders/${reminderId}/assignments`, {
-        method: "PUT",
+      const res = await authFetch(url, {
+        method,
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
+        ...(body !== undefined
+          ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+          : {}),
       });
-      if (!res.ok) throw new Error("Failed to save assignments");
-      await loadData();
-      return true;
+      if (!res.ok) return false;
     } catch {
-      setError(t("reminders.matrix.error"));
       return false;
     }
+    await refresh();
+    return true;
   }
 
-  async function editReminder(id: string, updates: ReminderEditInput): Promise<boolean> {
-    try {
-      const res = await authFetch(`/api/reminders/${id}`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-      });
-      if (!res.ok) throw new Error("Failed to update reminder");
-      await loadData();
-      return true;
-    } catch {
-      setError(t("reminders.management.error"));
-      return false;
-    }
+  async function saveReminder(
+    target: Reminder | null,
+    body: ReminderInput | ReminderEditInput
+  ): Promise<boolean> {
+    return target
+      ? send(`/api/reminders/${target.id}`, "PATCH", body)
+      : send("/api/reminders", "POST", body);
   }
 
   async function toggleActive(reminder: Reminder) {
-    await editReminder(reminder.id, { active: !reminder.active });
+    setError(null);
+    const ok = await send(`/api/reminders/${reminder.id}`, "PATCH", { active: !reminder.active });
+    if (!ok) setError(t("reminders.management.actionError"));
   }
 
-  /** Confirmation now lives at the UI layer (`ReminderCard`'s `ConfirmDialog`) — this performs the
-   * delete unconditionally once the caller has already confirmed (FR-005). */
-  async function deleteReminder(id: string) {
-    try {
-      const res = await authFetch(`/api/reminders/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to delete reminder");
-      await loadData();
-    } catch {
-      setError(t("reminders.management.error"));
-    }
+  /** Confirmation lives in the ConfirmDialog below; this deletes unconditionally (FR-005). */
+  async function deleteReminder(reminder: Reminder) {
+    setError(null);
+    const ok = await send(`/api/reminders/${reminder.id}`, "DELETE");
+    if (!ok) setError(t("reminders.management.actionError"));
   }
 
   async function dryRunReminder(
@@ -249,41 +234,91 @@ export function RemindersManagement() {
   }
 
   return (
-    <AdminPanel
-      title={t("reminders.management.title")}
-      description={t("reminders.management.description")}
-    >
-      <ErrorNotice message={error} />
+    <>
+      <AdminPanel
+        title={t("reminders.management.title")}
+        description={t("reminders.management.description")}
+        actions={
+          loadFailed ? undefined : (
+            <Button
+              type="button"
+              data-testid="reminders-add-rule"
+              onClick={() => setForm({ kind: "create" })}
+            >
+              <Plus aria-hidden="true" />
+              {t("reminders.action.addRule")}
+            </Button>
+          )
+        }
+      >
+        <ErrorNotice message={error} />
 
-      <ReminderCreateForm
-        t={t}
-        activeMembers={activeMembers}
-        onCreate={(input) => createReminder(input)}
-      />
+        {loadFailed && (
+          <Button
+            type="button"
+            variant="outline"
+            className="self-start"
+            data-testid="reminders-retry"
+            onClick={() => void loadData()}
+          >
+            {t("reminders.management.retry")}
+          </Button>
+        )}
 
-      <div>
-        <h3 className="text-lg font-semibold mb-2">{t("reminders.management.list")}</h3>
-        {reminders.length === 0 && (
+        {!loadFailed && reminders.length === 0 && (
           <p className="text-muted-foreground">{t("reminders.management.noReminders")}</p>
         )}
-        <div className="space-y-4">
-          {reminders.map((reminder) => (
-            <ReminderCard
-              key={reminder.id}
-              reminder={reminder}
-              t={t}
-              activeMembers={activeMembers}
-              onSave={(updates) => editReminder(reminder.id, updates)}
-              onToggleActive={() => void toggleActive(reminder)}
-              onDelete={() => void deleteReminder(reminder.id)}
-              onSaveAssignments={(assignments) => saveAssignments(reminder.id, assignments)}
-              onDryRun={(memberId, date) => dryRunReminder(reminder.id, memberId, date)}
-              householdToday={householdToday}
-            />
-          ))}
-        </div>
-      </div>
-    </AdminPanel>
+
+        {reminders.length > 0 && (
+          <ul
+            aria-label={t("reminders.management.list")}
+            className="m-0 flex list-none flex-col divide-y rounded-lg border p-0"
+          >
+            {reminders.map((reminder) => (
+              <ReminderRow
+                key={reminder.id}
+                reminder={reminder}
+                t={t}
+                memberNames={memberNames}
+                activeMembers={activeMembers}
+                householdToday={householdToday}
+                onEdit={() => setForm({ kind: "edit", reminder })}
+                onDelete={() => setDeleteTarget(reminder)}
+                onToggleActive={() => void toggleActive(reminder)}
+                onDryRun={(memberId, date) => dryRunReminder(reminder.id, memberId, date)}
+              />
+            ))}
+          </ul>
+        )}
+      </AdminPanel>
+
+      {form && (
+        <ReminderFormDialog
+          key={form.kind === "edit" ? form.reminder.id : "create"}
+          t={t}
+          reminder={form.kind === "edit" ? form.reminder : null}
+          activeMembers={activeMembers}
+          onSubmit={(body) => saveReminder(form.kind === "edit" ? form.reminder : null, body)}
+          onClose={() => setForm(null)}
+        />
+      )}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        title={t("reminders.action.delete")}
+        description={t("reminders.action.deleteConfirm")}
+        confirmLabel={t("reminders.action.delete")}
+        cancelLabel={t("reminders.action.cancel")}
+        onConfirm={() => {
+          if (deleteTarget) void deleteReminder(deleteTarget);
+        }}
+        confirmTestId={deleteTarget ? `reminder-delete-confirm-${deleteTarget.id}` : undefined}
+        cancelTestId={deleteTarget ? `reminder-delete-cancel-${deleteTarget.id}` : undefined}
+      />
+    </>
   );
 }
 
@@ -291,21 +326,269 @@ export function RemindersManagement() {
 /* Sub-components */
 /* ------------------------------------------------------------------ */
 
-interface ReminderCreateFormProps {
-  t: (key: MessageKey) => string;
-  activeMembers: Member[];
-  onCreate: (input: ReminderInput) => Promise<boolean>;
+function weekdayList(t: Translate, days: Weekday[]): string {
+  return days.map((day) => t(WEEKDAY_LABEL_KEYS[day])).join(", ");
 }
 
-function ReminderCreateForm({ t, activeMembers, onCreate }: ReminderCreateFormProps) {
-  const [kind, setKind] = useState<ReminderKind>("scheduled");
-  const [text, setText] = useState("");
-  const [targetingMode, setTargetingMode] = useState<TargetingMode>("apply_to_all");
-  const [weekdays, setWeekdays] = useState<Weekday[]>([]);
-  const [assignmentDraft, setAssignmentDraft] = useState<Record<string, Weekday[]>>({});
-  const [query, setQuery] = useState("");
-  const [queryFields, setQueryFields] = useState<ReminderQueryField[]>(DEFAULT_QUERY_FIELDS);
-  const [cgMemberIds, setCgMemberIds] = useState<string[]>([]);
+/** The muted "who and when" line of a row. */
+function summarize(reminder: Reminder, t: Translate, memberNames: Map<string, string>): string {
+  const everyone = t("reminders.management.targetingApplyToAll");
+  const names = reminder.assignments.flatMap((a) => {
+    const name = memberNames.get(a.memberId);
+    return name ? [name] : [];
+  });
+  if (reminder.kind === "calendar_gated") {
+    const who = reminder.targetingMode === "apply_to_all" ? everyone : names.join(", ");
+    return `${t("reminders.calendarGated.queryLabel")}: ${reminder.query ?? ""} · ${who}`;
+  }
+  if (reminder.targetingMode === "apply_to_all") {
+    return `${everyone} · ${weekdayList(t, reminder.weekdays ?? [])}`;
+  }
+  return reminder.assignments
+    .flatMap((a) => {
+      const name = memberNames.get(a.memberId);
+      return name ? [`${name}: ${weekdayList(t, a.weekdays)}`] : [];
+    })
+    .join(" · ");
+}
+
+interface ReminderRowProps {
+  reminder: Reminder;
+  t: Translate;
+  memberNames: Map<string, string>;
+  activeMembers: Member[];
+  householdToday: string;
+  onEdit: () => void;
+  onDelete: () => void;
+  onToggleActive: () => void;
+  onDryRun: (memberId: string, date: string) => Promise<DryRunResult>;
+}
+
+function ReminderRow({
+  reminder,
+  t,
+  memberNames,
+  activeMembers,
+  householdToday,
+  onEdit,
+  onDelete,
+  onToggleActive,
+  onDryRun,
+}: ReminderRowProps) {
+  const isCalendarGated = reminder.kind === "calendar_gated";
+  const [showDryRun, setShowDryRun] = useState(false);
+
+  return (
+    <li data-testid={`reminder-${reminder.id}`} className="flex flex-col gap-3 px-4 py-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="flex flex-wrap items-center gap-2 font-medium">
+            <span className="truncate">{reminder.text}</span>
+            <span className="bg-muted rounded-full px-2.5 py-0.5 text-sm font-medium">
+              {isCalendarGated ? t("reminders.kind.calendarGated") : t("reminders.kind.scheduled")}
+            </span>
+          </p>
+          <p className="text-muted-foreground text-control">
+            {summarize(reminder, t, memberNames)}
+          </p>
+        </div>
+        <span
+          className={cn(
+            "rounded-full px-2.5 py-0.5 text-sm font-medium",
+            reminder.active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+          )}
+        >
+          {reminder.active ? t("reminders.status.active") : t("reminders.status.off")}
+        </span>
+        {isCalendarGated && (
+          <Button type="button" variant="link" onClick={() => setShowDryRun((prev) => !prev)}>
+            {showDryRun ? t("reminders.dryRun.close") : t("reminders.dryRun.toggleShow")}
+          </Button>
+        )}
+        <Button
+          type="button"
+          variant="secondary"
+          data-testid={`reminder-toggle-${reminder.id}`}
+          onClick={onToggleActive}
+        >
+          {reminder.active ? t("reminders.action.deactivate") : t("reminders.action.activate")}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          data-testid={`reminder-edit-${reminder.id}`}
+          aria-label={`${t("reminders.action.edit")}: ${reminder.text}`}
+          onClick={onEdit}
+        >
+          <Pencil className="size-4" aria-hidden="true" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="text-muted-foreground hover:text-destructive"
+          data-testid={`reminder-delete-${reminder.id}`}
+          aria-label={`${t("reminders.action.delete")}: ${reminder.text}`}
+          onClick={onDelete}
+        >
+          <Trash2 className="size-4" aria-hidden="true" />
+        </Button>
+      </div>
+
+      {isCalendarGated && showDryRun && (
+        <DryRunPanel
+          t={t}
+          activeMembers={activeMembers}
+          householdToday={householdToday}
+          onDryRun={onDryRun}
+        />
+      )}
+    </li>
+  );
+}
+
+interface DryRunPanelProps {
+  t: Translate;
+  activeMembers: Member[];
+  householdToday: string;
+  onDryRun: (memberId: string, date: string) => Promise<DryRunResult>;
+}
+
+/** The dry-run / explain panel of a calendar_gated row (behaviour unchanged). */
+function DryRunPanel({ t, activeMembers, householdToday, onDryRun }: DryRunPanelProps) {
+  const [dryRunMemberId, setDryRunMemberId] = useState("");
+  const [dryRunDate, setDryRunDate] = useState(householdToday);
+  const [dryRunResult, setDryRunResult] = useState<DryRunResult | null>(null);
+  const [dryRunLoading, setDryRunLoading] = useState(false);
+  const [dryRunError, setDryRunError] = useState<string | null>(null);
+  const dryRunRequestIdRef = useRef(0);
+
+  // The verdict (or error) describes the PREVIOUS member/date once either changes — clear it and
+  // invalidate any in-flight request so a slow response for stale inputs can't publish over it.
+  useEffect(() => {
+    dryRunRequestIdRef.current++;
+    setDryRunResult(null);
+    setDryRunError(null);
+  }, [dryRunMemberId, dryRunDate]);
+
+  const runDryRun = () => {
+    if (!dryRunMemberId) return;
+    const requestId = ++dryRunRequestIdRef.current;
+    setDryRunLoading(true);
+    setDryRunError(null);
+    void (async () => {
+      try {
+        const result = await onDryRun(dryRunMemberId, dryRunDate);
+        if (requestId !== dryRunRequestIdRef.current) return;
+        setDryRunResult(result);
+      } catch {
+        if (requestId !== dryRunRequestIdRef.current) return;
+        setDryRunResult(null);
+        setDryRunError(t("reminders.dryRun.error"));
+      } finally {
+        if (requestId === dryRunRequestIdRef.current) {
+          setDryRunLoading(false);
+        }
+      }
+    })();
+  };
+
+  return (
+    <div className="border-t pt-3">
+      <h5 className="text-sm font-semibold mb-2">{t("reminders.dryRun.title")}</h5>
+      <div className="flex gap-2 items-center flex-wrap">
+        <label className="flex items-center gap-1 text-sm">
+          {t("reminders.dryRun.memberLabel")}
+          <select
+            value={dryRunMemberId}
+            onChange={(e) => setDryRunMemberId(e.target.value)}
+            className={NATIVE_SELECT_CLASSES}
+          >
+            <option value="">{t("reminders.dryRun.selectMember")}</option>
+            {activeMembers.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.displayName}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex items-center gap-1 text-sm">
+          {t("reminders.dryRun.dateLabel")}
+          <Input
+            type="date"
+            value={dryRunDate}
+            onChange={(e) => setDryRunDate(e.target.value)}
+            className="w-auto"
+          />
+        </label>
+        <Button type="button" onClick={runDryRun} disabled={!dryRunMemberId || dryRunLoading}>
+          {dryRunLoading ? t("reminders.dryRun.running") : t("reminders.dryRun.run")}
+        </Button>
+      </div>
+      <ErrorNotice message={dryRunError} className="mt-2" />
+      {dryRunResult && (
+        <p className="text-sm mt-2">
+          <span className="font-semibold">
+            {dryRunResult.wouldEmit
+              ? t("reminders.dryRun.wouldEmit")
+              : t("reminders.dryRun.wouldNotEmit")}
+          </span>
+          {!dryRunResult.wouldEmit && dryRunResult.reason && (
+            <span className="text-muted-foreground">
+              {" — "}
+              {t(DRY_RUN_REASON_LABEL_KEYS[dryRunResult.reason])}
+            </span>
+          )}
+        </p>
+      )}
+    </div>
+  );
+}
+
+interface ReminderFormDialogProps {
+  t: Translate;
+  /** `null` = create. */
+  reminder: Reminder | null;
+  activeMembers: Member[];
+  /** Resolves `true` when the request succeeded (the page has already refreshed). */
+  onSubmit: (body: ReminderInput | ReminderEditInput) => Promise<boolean>;
+  onClose: () => void;
+}
+
+/** One dialog for create and edit. Mounted only while open (keyed by reminder id), so its drafts
+ * start fresh from the rule every time. The weekday, matrix and members drafts are separate state
+ * so switching All/Specific back and forth keeps what was entered. */
+function ReminderFormDialog({
+  t,
+  reminder,
+  activeMembers,
+  onSubmit,
+  onClose,
+}: ReminderFormDialogProps) {
+  const editing = reminder !== null;
+  const [kind, setKind] = useState<ReminderKind>(reminder?.kind ?? "scheduled");
+  const [text, setText] = useState(reminder?.text ?? "");
+  const [targetingMode, setTargetingMode] = useState<TargetingMode>(
+    reminder?.targetingMode ?? "apply_to_all"
+  );
+  const [weekdays, setWeekdays] = useState<Weekday[]>(reminder?.weekdays ?? []);
+  const [assignmentDraft, setAssignmentDraft] = useState<Record<string, Weekday[]>>(() =>
+    reminder && reminder.kind === "scheduled" && reminder.targetingMode === "specific"
+      ? Object.fromEntries(reminder.assignments.map((a) => [a.memberId, a.weekdays]))
+      : {}
+  );
+  const [query, setQuery] = useState(reminder?.query ?? "");
+  const [queryFields, setQueryFields] = useState<ReminderQueryField[]>(
+    reminder?.queryFields ?? DEFAULT_QUERY_FIELDS
+  );
+  const [cgMemberIds, setCgMemberIds] = useState<string[]>(() =>
+    reminder && reminder.kind === "calendar_gated"
+      ? reminder.assignments.map((a) => a.memberId)
+      : []
+  );
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const toggleAssignmentDay = (memberId: string, day: Weekday) => {
     setAssignmentDraft((prev) => {
@@ -338,30 +621,43 @@ function ReminderCreateForm({ t, activeMembers, onCreate }: ReminderCreateFormPr
         queryFields.length > 0 &&
         (targetingMode === "apply_to_all" || cgMemberIds.length > 0));
 
-  const reset = () => {
-    setText("");
-    setWeekdays([]);
-    setAssignmentDraft({});
-    setQuery("");
-    setQueryFields(DEFAULT_QUERY_FIELDS);
-    setCgMemberIds([]);
-  };
-
-  const buildInput = (): ReminderInput => {
+  const buildBody = (): ReminderInput | ReminderEditInput => {
     const trimmedText = text.trim();
     if (kind === "scheduled") {
-      return targetingMode === "apply_to_all"
-        ? { kind: "scheduled", targetingMode: "apply_to_all", text: trimmedText, weekdays }
+      if (targetingMode === "apply_to_all") {
+        return editing
+          ? { text: trimmedText, targetingMode: "apply_to_all", weekdays }
+          : { kind: "scheduled", targetingMode: "apply_to_all", text: trimmedText, weekdays };
+      }
+      return editing
+        ? { text: trimmedText, targetingMode: "specific", assignments }
         : { kind: "scheduled", targetingMode: "specific", text: trimmedText, assignments };
     }
     const trimmedQuery = query.trim();
-    return targetingMode === "apply_to_all"
+    if (targetingMode === "apply_to_all") {
+      return editing
+        ? {
+            text: trimmedText,
+            targetingMode: "apply_to_all",
+            query: trimmedQuery,
+            queryFields,
+          }
+        : {
+            kind: "calendar_gated",
+            targetingMode: "apply_to_all",
+            text: trimmedText,
+            query: trimmedQuery,
+            queryFields,
+          };
+    }
+    const memberAssignments = membershipToAssignments(cgMemberIds);
+    return editing
       ? {
-          kind: "calendar_gated",
-          targetingMode: "apply_to_all",
           text: trimmedText,
+          targetingMode: "specific",
           query: trimmedQuery,
           queryFields,
+          assignments: memberAssignments,
         }
       : {
           kind: "calendar_gated",
@@ -369,302 +665,140 @@ function ReminderCreateForm({ t, activeMembers, onCreate }: ReminderCreateFormPr
           text: trimmedText,
           query: trimmedQuery,
           queryFields,
-          assignments: membershipToAssignments(cgMemberIds),
+          assignments: memberAssignments,
         };
   };
 
-  return (
-    <div className="bg-card p-4 rounded-lg shadow mb-6" data-testid="reminder-create-form">
-      <h3 className="text-md font-semibold mb-2">{t("reminders.management.createTitle")}</h3>
-      <div className="flex flex-col gap-2">
-        <div className="flex gap-2 items-center flex-wrap">
-          <span className="text-muted-foreground text-control">
-            {t("reminders.management.kindLabel")}
-          </span>
-          <RadioField
-            name="reminder-kind"
-            value="scheduled"
-            checked={kind === "scheduled"}
-            onChange={() => setKind("scheduled")}
-            label={t("reminders.kind.scheduled")}
-          />
-          <RadioField
-            name="reminder-kind"
-            value="calendar_gated"
-            checked={kind === "calendar_gated"}
-            onChange={() => setKind("calendar_gated")}
-            label={t("reminders.kind.calendarGated")}
-          />
-        </div>
+  const submit = () => {
+    if (!canSubmit || saving) return;
+    setSaving(true);
+    setFormError(null);
+    void (async () => {
+      const ok = await onSubmit(buildBody());
+      if (ok) {
+        onClose();
+      } else {
+        setFormError(t("reminders.management.saveError"));
+        setSaving(false);
+      }
+    })();
+  };
 
-        <div className="flex gap-2 items-center flex-wrap">
+  return (
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open && !saving) onClose();
+      }}
+    >
+      <DialogContent
+        className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-xl"
+        closeLabel={t("reminders.action.cancel")}
+        data-testid="reminder-form-dialog"
+      >
+        <DialogHeader>
+          <DialogTitle>
+            {editing ? t("reminders.management.editTitle") : t("reminders.management.createTitle")}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            {t("reminders.management.description")}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            submit();
+          }}
+        >
+          <div className="flex gap-2 items-center flex-wrap">
+            <span className="text-muted-foreground text-control">
+              {t("reminders.management.kindLabel")}
+            </span>
+            {editing ? (
+              <span className="text-control font-medium">
+                {kind === "calendar_gated"
+                  ? t("reminders.kind.calendarGated")
+                  : t("reminders.kind.scheduled")}
+              </span>
+            ) : (
+              <>
+                <RadioField
+                  name="reminder-kind"
+                  value="scheduled"
+                  checked={kind === "scheduled"}
+                  onChange={() => setKind("scheduled")}
+                  label={t("reminders.kind.scheduled")}
+                />
+                <RadioField
+                  name="reminder-kind"
+                  value="calendar_gated"
+                  checked={kind === "calendar_gated"}
+                  onChange={() => setKind("calendar_gated")}
+                  label={t("reminders.kind.calendarGated")}
+                />
+              </>
+            )}
+          </div>
+
           <Input
             type="text"
             placeholder={t("reminders.management.textPlaceholder")}
             value={text}
             onChange={(e) => setText(e.target.value)}
             aria-label={t("reminders.management.textPlaceholder")}
-            className="w-auto"
           />
-          <RadioField
-            name="reminder-targeting-mode"
-            value="apply_to_all"
-            checked={targetingMode === "apply_to_all"}
-            onChange={() => setTargetingMode("apply_to_all")}
-            label={t("reminders.management.targetingApplyToAll")}
-          />
-          <RadioField
-            name="reminder-targeting-mode"
-            value="specific"
-            checked={targetingMode === "specific"}
-            onChange={() => setTargetingMode("specific")}
-            label={t("reminders.management.targetingSpecific")}
-          />
-        </div>
 
-        {kind === "scheduled" ? (
-          targetingMode === "apply_to_all" ? (
-            <WeekdayPicker
-              mode="multi"
-              value={weekdays}
-              onChange={(next) => setWeekdays([...next])}
-              labels={weekdayLabels(t)}
-              groupLabel={t("reminders.management.weekdaysLabel")}
-              testIdPrefix="reminders-weekday-create"
+          <div className="flex gap-2 items-center flex-wrap">
+            <span className="text-muted-foreground text-control">
+              {t("reminders.management.targetingLabel")}
+            </span>
+            <RadioField
+              name="reminder-targeting-mode"
+              value="apply_to_all"
+              checked={targetingMode === "apply_to_all"}
+              onChange={() => setTargetingMode("apply_to_all")}
+              label={t("reminders.management.targetingApplyToAll")}
             />
-          ) : (
-            <AssignmentMatrixGrid
-              t={t}
-              members={activeMembers}
-              weekdaysByMember={assignmentDraft}
-              onToggle={toggleAssignmentDay}
+            <RadioField
+              name="reminder-targeting-mode"
+              value="specific"
+              checked={targetingMode === "specific"}
+              onChange={() => setTargetingMode("specific")}
+              label={t("reminders.management.targetingSpecific")}
             />
-          )
-        ) : (
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-1 text-sm">
-              {t("reminders.calendarGated.queryLabel")}
-              <Input
-                type="text"
-                placeholder={t("reminders.calendarGated.queryPlaceholder")}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-auto"
+          </div>
+
+          {kind === "scheduled" ? (
+            targetingMode === "apply_to_all" ? (
+              <WeekdayPicker
+                mode="multi"
+                value={weekdays}
+                onChange={(next) => setWeekdays([...next])}
+                labels={weekdayLabels(t)}
+                groupLabel={t("reminders.management.weekdaysLabel")}
+                testIdPrefix="reminders-weekday-form"
               />
-            </label>
-            <div className="flex gap-2 items-center flex-wrap">
-              <span className="text-muted-foreground text-control">
-                {t("reminders.calendarGated.queryFieldsLabel")}
-              </span>
-              <QueryFieldsPicker t={t} selected={queryFields} onToggle={toggleQueryField} />
-            </div>
-            {targetingMode === "specific" && (
-              <div>
-                <span className="text-muted-foreground text-control">
-                  {t("reminders.calendarGated.membershipTitle")}
-                </span>
-                <MembershipChecklist
+            ) : (
+              <div className="overflow-x-auto">
+                <AssignmentMatrixGrid
+                  t={t}
                   members={activeMembers}
-                  emptyMessage={t("reminders.calendarGated.noActiveMembers")}
-                  selectedMemberIds={cgMemberIds}
-                  onToggle={toggleCgMember}
+                  weekdaysByMember={assignmentDraft}
+                  onToggle={toggleAssignmentDay}
                 />
               </div>
-            )}
-          </div>
-        )}
-
-        <Button
-          type="button"
-          onClick={() => {
-            if (!canSubmit) return;
-            void (async () => {
-              const succeeded = await onCreate(buildInput());
-              if (succeeded) reset();
-            })();
-          }}
-          disabled={!canSubmit}
-          className="self-start"
-        >
-          {t("reminders.action.create")}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-interface ReminderCardProps {
-  reminder: Reminder;
-  t: (key: MessageKey) => string;
-  activeMembers: Member[];
-  onSave: (updates: ReminderEditInput) => Promise<boolean>;
-  onToggleActive: () => void;
-  onDelete: () => void;
-  onSaveAssignments: (assignments: ReminderAssignmentInput[]) => Promise<boolean>;
-  onDryRun: (memberId: string, date: string) => Promise<DryRunResult>;
-  householdToday: string;
-}
-
-function ReminderCard({
-  reminder,
-  t,
-  activeMembers,
-  onSave,
-  onToggleActive,
-  onDelete,
-  onSaveAssignments,
-  onDryRun,
-  householdToday,
-}: ReminderCardProps) {
-  const isSpecific = reminder.targetingMode === "specific";
-  const isCalendarGated = reminder.kind === "calendar_gated";
-
-  const [editing, setEditing] = useState(false);
-  const [textDraft, setTextDraft] = useState(reminder.text);
-  const [weekdaysDraft, setWeekdaysDraft] = useState<Weekday[]>(reminder.weekdays ?? []);
-  const [queryDraft, setQueryDraft] = useState(reminder.query ?? "");
-  const [queryFieldsDraft, setQueryFieldsDraft] = useState<ReminderQueryField[]>(
-    reminder.queryFields ?? DEFAULT_QUERY_FIELDS
-  );
-
-  const [showMatrix, setShowMatrix] = useState(false);
-  // specific: one weekday set per member. apply_to_all: a single shared set, mirrored across
-  // every active member's row (the rule is rule-level, not per-member — REMINDERS spec).
-  const [matrixDraft, setMatrixDraft] = useState<Record<string, Weekday[]>>({});
-  const [sharedWeekdaysDraft, setSharedWeekdaysDraft] = useState<Weekday[]>([]);
-  const [cgMemberIdsDraft, setCgMemberIdsDraft] = useState<string[]>([]);
-  const [matrixError, setMatrixError] = useState<string | null>(null);
-
-  const [showDryRun, setShowDryRun] = useState(false);
-  const [dryRunMemberId, setDryRunMemberId] = useState("");
-  const [dryRunDate, setDryRunDate] = useState(householdToday);
-  const [dryRunResult, setDryRunResult] = useState<DryRunResult | null>(null);
-  const [dryRunLoading, setDryRunLoading] = useState(false);
-  const [dryRunError, setDryRunError] = useState<string | null>(null);
-  const dryRunRequestIdRef = useRef(0);
-
-  // FR-014-style guard (mirrors RoutinesManagement.tsx/ChoresBoard.tsx): deleting a reminder
-  // now goes through a themed `ConfirmDialog` instead of `window.confirm` (FR-005).
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  // The verdict (or error) describes the PREVIOUS member/date once either changes — clear it and
-  // invalidate any in-flight request so a slow response for stale inputs can't publish over it.
-  useEffect(() => {
-    dryRunRequestIdRef.current++;
-    setDryRunResult(null);
-    setDryRunError(null);
-  }, [dryRunMemberId, dryRunDate]);
-
-  const toggleQueryField = (field: ReminderQueryField) => {
-    setQueryFieldsDraft((prev) =>
-      prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
-    );
-  };
-
-  const startEdit = () => {
-    setTextDraft(reminder.text);
-    setWeekdaysDraft(reminder.weekdays ?? []);
-    setQueryDraft(reminder.query ?? "");
-    setQueryFieldsDraft(reminder.queryFields ?? DEFAULT_QUERY_FIELDS);
-    setEditing(true);
-  };
-
-  const draftFromAssignments = (assignments: ReminderAssignment[]): Record<string, Weekday[]> =>
-    Object.fromEntries(assignments.map((a) => [a.memberId, a.weekdays]));
-
-  const openMatrix = () => {
-    if (isCalendarGated) {
-      setCgMemberIdsDraft(reminder.assignments.map((a) => a.memberId));
-    } else if (isSpecific) {
-      setMatrixDraft(draftFromAssignments(reminder.assignments));
-    } else {
-      setSharedWeekdaysDraft(reminder.weekdays ?? []);
-    }
-    setMatrixError(null);
-    setShowMatrix(true);
-  };
-
-  // apply_to_all shares ONE weekday set across every member row — toggling any row's cell for a
-  // day toggles that day for the whole rule (there is no independent per-member edit).
-  const toggleMatrixDay = (memberId: string, day: Weekday) => {
-    if (!isSpecific) {
-      setSharedWeekdaysDraft((prev) =>
-        prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
-      );
-      return;
-    }
-    setMatrixDraft((prev) => {
-      const current = prev[memberId] ?? [];
-      const next = current.includes(day) ? current.filter((d) => d !== day) : [...current, day];
-      return { ...prev, [memberId]: next };
-    });
-  };
-
-  const toggleCgMemberDraft = (memberId: string) => {
-    setCgMemberIdsDraft((prev) =>
-      prev.includes(memberId) ? prev.filter((id) => id !== memberId) : [...prev, memberId]
-    );
-  };
-
-  const matrixWeekdaysByMember = isSpecific
-    ? matrixDraft
-    : Object.fromEntries(activeMembers.map((m) => [m.id, sharedWeekdaysDraft]));
-
-  const runDryRun = () => {
-    if (!dryRunMemberId) return;
-    const requestId = ++dryRunRequestIdRef.current;
-    setDryRunLoading(true);
-    setDryRunError(null);
-    void (async () => {
-      try {
-        const result = await onDryRun(dryRunMemberId, dryRunDate);
-        if (requestId !== dryRunRequestIdRef.current) return;
-        setDryRunResult(result);
-      } catch {
-        if (requestId !== dryRunRequestIdRef.current) return;
-        setDryRunResult(null);
-        setDryRunError(t("reminders.dryRun.error"));
-      } finally {
-        if (requestId === dryRunRequestIdRef.current) {
-          setDryRunLoading(false);
-        }
-      }
-    })();
-  };
-
-  const editSaveDisabled = isCalendarGated
-    ? !textDraft.trim() || !queryDraft.trim() || queryFieldsDraft.length === 0
-    : !textDraft.trim() || (!isSpecific && weekdaysDraft.length === 0);
-
-  return (
-    <div className="border rounded-lg p-4 mb-4" data-testid={`reminder-${reminder.id}`}>
-      {editing ? (
-        <div className="flex flex-col gap-2">
-          <Input
-            type="text"
-            value={textDraft}
-            onChange={(e) => setTextDraft(e.target.value)}
-            aria-label={t("reminders.management.textPlaceholder")}
-            className="w-auto"
-          />
-          {!isCalendarGated && !isSpecific && (
-            <WeekdayPicker
-              mode="multi"
-              value={weekdaysDraft}
-              onChange={(next) => setWeekdaysDraft([...next])}
-              labels={weekdayLabels(t)}
-              groupLabel={t("reminders.management.weekdaysLabel")}
-              testIdPrefix={`reminders-weekday-edit-${reminder.id}`}
-            />
-          )}
-          {isCalendarGated && (
+            )
+          ) : (
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-1 text-sm">
                 {t("reminders.calendarGated.queryLabel")}
                 <Input
                   type="text"
-                  value={queryDraft}
-                  onChange={(e) => setQueryDraft(e.target.value)}
+                  placeholder={t("reminders.calendarGated.queryPlaceholder")}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
                   className="w-auto"
                 />
               </label>
@@ -672,240 +806,37 @@ function ReminderCard({
                 <span className="text-muted-foreground text-control">
                   {t("reminders.calendarGated.queryFieldsLabel")}
                 </span>
-                <QueryFieldsPicker t={t} selected={queryFieldsDraft} onToggle={toggleQueryField} />
+                <QueryFieldsPicker t={t} selected={queryFields} onToggle={toggleQueryField} />
               </div>
+              {targetingMode === "specific" && (
+                <div>
+                  <span className="text-muted-foreground text-control">
+                    {t("reminders.calendarGated.membershipTitle")}
+                  </span>
+                  <MembershipChecklist
+                    members={activeMembers}
+                    emptyMessage={t("reminders.calendarGated.noActiveMembers")}
+                    selectedMemberIds={cgMemberIds}
+                    onToggle={toggleCgMember}
+                  />
+                </div>
+              )}
             </div>
           )}
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="link"
-              onClick={() => {
-                if (editSaveDisabled) return;
-                void (async () => {
-                  const updates: ReminderEditInput = isCalendarGated
-                    ? {
-                        text: textDraft.trim(),
-                        query: queryDraft.trim(),
-                        queryFields: queryFieldsDraft,
-                      }
-                    : isSpecific
-                      ? { text: textDraft.trim() }
-                      : { text: textDraft.trim(), weekdays: weekdaysDraft };
-                  const succeeded = await onSave(updates);
-                  if (succeeded) {
-                    setEditing(false);
-                  }
-                })();
-              }}
-              disabled={editSaveDisabled}
-            >
-              {t("reminders.action.save")}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground"
-              onClick={() => setEditing(false)}
-            >
+
+          <ErrorNotice message={formError} />
+
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
               {t("reminders.action.cancel")}
             </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex justify-between items-start">
-          <div>
-            <h4 className="text-md font-semibold">{reminder.text}</h4>
-            <p className="text-muted-foreground text-control">
-              {isCalendarGated ? t("reminders.kind.calendarGated") : t("reminders.kind.scheduled")}
-            </p>
-            <p className="text-muted-foreground text-control">
-              {isCalendarGated
-                ? reminder.query
-                : isSpecific
-                  ? t("reminders.management.targetingSpecific")
-                  : (reminder.weekdays ?? []).map((day) => t(WEEKDAY_LABEL_KEYS[day])).join(", ")}
-            </p>
-            <p className="text-muted-foreground text-control">
-              {reminder.active ? t("reminders.status.active") : t("reminders.status.inactive")}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button type="button" variant="link" onClick={startEdit}>
-              {t("reminders.action.edit")}
-            </Button>
-            {(!isCalendarGated || isSpecific) && (
-              <Button
-                type="button"
-                variant="link"
-                onClick={() => (showMatrix ? setShowMatrix(false) : openMatrix())}
-              >
-                {showMatrix ? t("reminders.matrix.close") : t("reminders.matrix.toggleShow")}
-              </Button>
-            )}
-            {isCalendarGated && (
-              <Button type="button" variant="link" onClick={() => setShowDryRun((prev) => !prev)}>
-                {showDryRun ? t("reminders.dryRun.close") : t("reminders.dryRun.toggleShow")}
-              </Button>
-            )}
-            <Button type="button" variant="secondary" onClick={onToggleActive}>
-              {reminder.active ? t("reminders.action.deactivate") : t("reminders.action.activate")}
-            </Button>
-            <Button
-              type="button"
-              variant="link"
-              className="text-destructive hover:text-destructive/80"
-              onClick={() => setShowDeleteConfirm(true)}
-            >
-              {t("reminders.action.delete")}
+            <Button type="submit" data-testid="reminder-save" disabled={!canSubmit || saving}>
+              {editing ? t("reminders.action.save") : t("reminders.action.create")}
             </Button>
           </div>
-        </div>
-      )}
-
-      {showMatrix &&
-        (isCalendarGated ? (
-          <div className="mt-4 border-t pt-4">
-            <h5 className="text-sm font-semibold mb-2">
-              {t("reminders.calendarGated.membershipTitle")}
-            </h5>
-            <MembershipChecklist
-              members={activeMembers}
-              emptyMessage={t("reminders.calendarGated.noActiveMembers")}
-              selectedMemberIds={cgMemberIdsDraft}
-              onToggle={toggleCgMemberDraft}
-            />
-            <ErrorNotice message={matrixError} className="mt-2" />
-            <Button
-              type="button"
-              size="sm"
-              className="mt-2"
-              onClick={() => {
-                if (cgMemberIdsDraft.length === 0) {
-                  setMatrixError(t("reminders.calendarGated.membersRequiredError"));
-                  return;
-                }
-                setMatrixError(null);
-                void (async () => {
-                  const succeeded = await onSaveAssignments(
-                    membershipToAssignments(cgMemberIdsDraft)
-                  );
-                  if (succeeded) setShowMatrix(false);
-                })();
-              }}
-            >
-              {t("reminders.matrix.save")}
-            </Button>
-          </div>
-        ) : (
-          <div className="mt-4 border-t pt-4">
-            <h5 className="text-sm font-semibold mb-2">{t("reminders.matrix.title")}</h5>
-            <AssignmentMatrixGrid
-              t={t}
-              members={activeMembers}
-              weekdaysByMember={matrixWeekdaysByMember}
-              onToggle={toggleMatrixDay}
-            />
-            <ErrorNotice message={matrixError} className="mt-2" />
-            <Button
-              type="button"
-              size="sm"
-              className="mt-2"
-              onClick={() => {
-                if (isSpecific) {
-                  const assignments = draftToAssignments(matrixDraft);
-                  if (assignments.length === 0) {
-                    setMatrixError(t("reminders.matrix.emptySetError"));
-                    return;
-                  }
-                  setMatrixError(null);
-                  void (async () => {
-                    const succeeded = await onSaveAssignments(assignments);
-                    if (succeeded) setShowMatrix(false);
-                  })();
-                  return;
-                }
-                if (sharedWeekdaysDraft.length === 0) {
-                  setMatrixError(t("reminders.matrix.weekdaysRequiredError"));
-                  return;
-                }
-                setMatrixError(null);
-                void (async () => {
-                  const succeeded = await onSave({ weekdays: sharedWeekdaysDraft });
-                  if (succeeded) setShowMatrix(false);
-                })();
-              }}
-            >
-              {t("reminders.matrix.save")}
-            </Button>
-          </div>
-        ))}
-
-      {isCalendarGated && showDryRun && (
-        <div className="mt-4 border-t pt-4">
-          <h5 className="text-sm font-semibold mb-2">{t("reminders.dryRun.title")}</h5>
-          <div className="flex gap-2 items-center flex-wrap">
-            <label className="flex items-center gap-1 text-sm">
-              {t("reminders.dryRun.memberLabel")}
-              <select
-                value={dryRunMemberId}
-                onChange={(e) => setDryRunMemberId(e.target.value)}
-                className={NATIVE_SELECT_CLASSES}
-              >
-                <option value="">{t("reminders.dryRun.selectMember")}</option>
-                {activeMembers.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.displayName}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex items-center gap-1 text-sm">
-              {t("reminders.dryRun.dateLabel")}
-              <Input
-                type="date"
-                value={dryRunDate}
-                onChange={(e) => setDryRunDate(e.target.value)}
-                className="w-auto"
-              />
-            </label>
-            <Button type="button" onClick={runDryRun} disabled={!dryRunMemberId || dryRunLoading}>
-              {dryRunLoading ? t("reminders.dryRun.running") : t("reminders.dryRun.run")}
-            </Button>
-          </div>
-          <ErrorNotice message={dryRunError} className="mt-2" />
-          {dryRunResult && (
-            <p className="text-sm mt-2">
-              <span className="font-semibold">
-                {dryRunResult.wouldEmit
-                  ? t("reminders.dryRun.wouldEmit")
-                  : t("reminders.dryRun.wouldNotEmit")}
-              </span>
-              {!dryRunResult.wouldEmit && dryRunResult.reason && (
-                <span className="text-muted-foreground">
-                  {" — "}
-                  {t(DRY_RUN_REASON_LABEL_KEYS[dryRunResult.reason])}
-                </span>
-              )}
-            </p>
-          )}
-        </div>
-      )}
-
-      <ConfirmDialog
-        open={showDeleteConfirm}
-        onOpenChange={(open) => {
-          if (!open) setShowDeleteConfirm(false);
-        }}
-        title={t("reminders.action.delete")}
-        description={t("reminders.action.deleteConfirm")}
-        confirmLabel={t("reminders.action.delete")}
-        cancelLabel={t("reminders.action.cancel")}
-        onConfirm={onDelete}
-        confirmTestId={`reminder-delete-confirm-${reminder.id}`}
-        cancelTestId={`reminder-delete-cancel-${reminder.id}`}
-      />
-    </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
