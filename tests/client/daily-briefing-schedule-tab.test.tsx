@@ -75,7 +75,7 @@ describe("BriefingScheduleTab", () => {
     expect(screen.getByTestId("daily-briefing-member-days-m-bart")).toHaveTextContent("—");
     fireEvent.click(screen.getByTestId("daily-briefing-opt-in-m-bart"));
     expect(props.onOptInChange).toHaveBeenCalledWith("m-bart", true);
-    fireEvent.click(screen.getByRole("button", { name: "Open blocks for Bart" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open Blocks for Bart" }));
     expect(props.onOpen).toHaveBeenCalledWith("m-bart", "blocks");
     fireEvent.click(screen.getByTestId("daily-briefing-open-briefings-m-lisa"));
     expect(props.onOpen).toHaveBeenCalledWith("m-lisa", "preview");
@@ -91,6 +91,22 @@ describe("BriefingScheduleTab", () => {
       "data-label",
       "Result for 2026-10-15"
     );
+  });
+
+  it("names a date that is not today on Generate and offers a way back to today", () => {
+    const props = renderTab();
+    expect(screen.queryByTestId("daily-briefing-generate-today")).not.toBeInTheDocument();
+    expect(screen.getByTestId("daily-briefing-generate-all")).toHaveTextContent(
+      /^Generate for all members$/
+    );
+    cleanup();
+    const past = renderTab({ date: "2026-10-11" });
+    expect(screen.getByTestId("daily-briefing-generate-all")).toHaveTextContent(
+      "Generate for all members on 2026-10-11"
+    );
+    fireEvent.click(screen.getByTestId("daily-briefing-generate-today"));
+    expect(past.onDateChange).toHaveBeenCalledWith("2026-10-15");
+    expect(props.onDateChange).not.toHaveBeenCalled();
   });
 
   it("shows the household today in the date input and reports a new date", () => {

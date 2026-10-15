@@ -9,7 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { usePrintingPluginActive } from "@/printing/pluginStatus";
+import type { WeekdayCode } from "@/components/WeekdayPicker";
 import { BriefingImage } from "./BriefingImage";
+import { weekdayOfDate } from "./briefingBlocks";
 import type {
   Briefing,
   BriefingHistoryResponse,
@@ -46,6 +48,8 @@ export interface BriefingWorkspaceProps {
   onGenerated: (briefing: Briefing) => void;
   onBusyChange: (busy: boolean) => void;
   onOpenBlocks: () => void;
+  /** The member's briefing days (pause schedule); omitted = every day. */
+  briefingDays?: readonly WeekdayCode[];
 }
 
 type Notice = { testId: string; text: string };
@@ -62,6 +66,7 @@ export function BriefingWorkspace({
   onGenerated,
   onBusyChange,
   onOpenBlocks,
+  briefingDays,
 }: BriefingWorkspaceProps) {
   const t = useT();
   const printingActive = usePrintingPluginActive();
@@ -83,6 +88,11 @@ export function BriefingWorkspace({
   const activeDate = date ?? householdToday;
   // Spec D7: "today" (or unknown) lets the server resolve the household date.
   const isToday = date === null || date === householdToday;
+  // A paused day is explained before any Generate: the server would only skip it.
+  const activeWeekday = activeDate ? weekdayOfDate(activeDate) : null;
+  const pausedDate = Boolean(
+    briefingDays && activeWeekday && !briefingDays.includes(activeWeekday)
+  );
 
   async function loadHistory() {
     setHistoryError(null);
@@ -183,6 +193,18 @@ export function BriefingWorkspace({
     }
   }
 
+  const shownNotice: Notice | null =
+    notice ??
+    (pausedDate && activeDate
+      ? {
+          testId: "daily-briefing-paused-notice",
+          text: t("dailyBriefing.admin.pausedNotice")
+            .replace("{name}", member.displayName)
+            .replace("{date}", activeDate)
+            .replace("{blocks}", t("dailyBriefing.admin.tabBlocks")),
+        }
+      : null);
+
   async function print() {
     if (!activeDate || printing) return;
     setPrinting(true);
@@ -222,7 +244,8 @@ export function BriefingWorkspace({
 
   return (
     <div className="flex flex-col gap-6 xl:flex-row" data-testid="daily-briefing-workspace">
-      <div className="flex w-full flex-col gap-4 xl:w-64 xl:shrink-0">
+      {/* Below xl the actions and the briefing come first; a long history follows them. */}
+      <div className="flex w-full flex-col gap-4 max-xl:order-2 xl:w-64 xl:shrink-0">
         <section className="flex flex-col gap-2">
           <h4 className="font-semibold">{t("dailyBriefing.admin.historyTitle")}</h4>
           {historyError ? (
@@ -283,10 +306,20 @@ export function BriefingWorkspace({
               className="w-40"
             />
           </Label>
+          {householdToday && activeDate !== householdToday && (
+            <Button
+              type="button"
+              variant="outline"
+              data-testid="daily-briefing-preview-today"
+              onClick={() => onDateChange(householdToday)}
+            >
+              {t("dailyBriefing.admin.today")}
+            </Button>
+          )}
           <Button
             type="button"
             data-testid="daily-briefing-generate"
-            disabled={blocked || generating}
+            disabled={blocked || generating || pausedDate}
             onClick={() => void generate()}
           >
             {generating
@@ -329,17 +362,17 @@ export function BriefingWorkspace({
             {t("dailyBriefing.admin.printUnavailable")}
           </p>
         )}
-        {notice && (
+        {shownNotice && (
           <div className="flex flex-wrap items-center gap-3">
             <p
               role="status"
               aria-live="polite"
-              data-testid={notice.testId}
+              data-testid={shownNotice.testId}
               className="text-control"
             >
-              {notice.text}
+              {shownNotice.text}
             </p>
-            {notice.testId === "daily-briefing-paused-notice" && (
+            {shownNotice.testId === "daily-briefing-paused-notice" && (
               <Button
                 type="button"
                 variant="outline"

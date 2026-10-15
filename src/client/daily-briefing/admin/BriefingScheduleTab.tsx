@@ -76,6 +76,9 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
   const shownDate = props.date ?? props.today;
   const results = props.results && props.results.date === shownDate ? props.results.statuses : null;
   const anyOn = props.members.some((member) => props.optIns[member.id]);
+  // The date is shared with Briefings, so browsing an old briefing moves it too: say so on the
+  // button and offer the way back.
+  const notToday = Boolean(props.today && shownDate && shownDate !== props.today);
   const columnBriefing = t("dailyBriefing.admin.columnBriefing");
   const columnDays = t("dailyBriefing.admin.columnDays");
   const columnResult = shownDate
@@ -104,6 +107,16 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
                   className="w-44"
                 />
               </Label>
+              {notToday && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  data-testid="daily-briefing-generate-today"
+                  onClick={() => props.today && props.onDateChange(props.today)}
+                >
+                  {t("dailyBriefing.admin.today")}
+                </Button>
+              )}
               <Button
                 type="button"
                 data-testid="daily-briefing-generate-all"
@@ -112,7 +125,9 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
               >
                 {props.generatingAll
                   ? t("dailyBriefing.management.generating")
-                  : t("dailyBriefing.admin.generateAllButton")}
+                  : notToday && shownDate
+                    ? t("dailyBriefing.admin.generateAllOnDate").replace("{date}", shownDate)
+                    : t("dailyBriefing.admin.generateAllButton")}
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
