@@ -15,8 +15,6 @@ function cacheStateMessageKey(state: LiveCacheState): MessageKey {
   return "networkDevices.cacheState.fresh";
 }
 
-const CHIP_CLASSES = "rounded-full border px-2 py-0.5 text-xs";
-
 /** liveStatus (online/notDetected/unknown) + belief-divergence affordance, never inventing a
  * status. The dot is decorative (`aria-hidden`): the text label stays the accessible carrier, so
  * colour is never the sole signal. Last-seen is shown for unknown/not-detected rows only, never
@@ -81,8 +79,8 @@ export function DeviceStatus({
           />
         )}
       </span>
-      <span className={CHIP_CLASSES}>{t(liveStatusKey)}</span>
-      {blockBadge && <span className={CHIP_CLASSES}>{blockBadge}</span>}
+      <span className="rounded-full border px-2 py-0.5 text-xs">{t(liveStatusKey)}</span>
+      {blockBadge && <span className="rounded-full border px-2 py-0.5 text-xs">{blockBadge}</span>}
       {/* lastSeenAt: deliberately NEVER shown next to "online" — only for notDetected/unknown,
           where the observation stamp is the useful signal. */}
       {device.liveStatus !== "online" &&
