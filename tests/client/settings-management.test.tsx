@@ -119,9 +119,9 @@ describe("SettingsManagement", () => {
     renderSettings();
 
     await screen.findByTestId("settings-save");
-    expect(screen.getByRole("radio", { name: "English" })).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByRole("radio", { name: "Español" })).toHaveAttribute("aria-checked", "false");
-    expect(screen.getByRole("radio", { name: "Monday" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: "English" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Español" })).not.toBeChecked();
+    expect(screen.getByRole("radio", { name: "Monday" })).toBeChecked();
     expect(screen.getByLabelText("Time zone")).toHaveValue("Europe/Madrid");
     expect(screen.getByTestId("settings-save")).toBeDisabled();
     for (const key of [
@@ -215,7 +215,7 @@ describe("SettingsManagement", () => {
     );
     expect(screen.getByTestId("settings-save")).toBeEnabled();
     expect(screen.getByTestId("weather-lat-input")).toHaveValue("41");
-    expect(screen.getByTestId("settings-week-start-0")).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByTestId("settings-week-start-0")).toBeChecked();
     expect(retry).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId("settings-saved")).not.toBeInTheDocument();
   });
@@ -231,7 +231,7 @@ describe("SettingsManagement", () => {
     expect(await screen.findByTestId("settings-error")).toHaveTextContent(
       messages.en["admin.settings.saveError"]
     );
-    expect(screen.getByTestId("settings-week-start-0")).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByTestId("settings-week-start-0")).toBeChecked();
     expect(screen.getByTestId("settings-save")).toBeEnabled();
     expect(retry).not.toHaveBeenCalled();
   });
