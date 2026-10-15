@@ -180,6 +180,7 @@ components:
       required:
         - status
         - checkedAt
+        - uptimeSeconds
         - build
       properties:
         status:
@@ -189,6 +190,10 @@ components:
         checkedAt:
           type: string
           format: date-time
+        uptimeSeconds:
+          type: integer
+          minimum: 0
+          description: Whole seconds since the server process started.
         build:
           $ref: "#/components/schemas/BuildInfo"
     ValidationError:
