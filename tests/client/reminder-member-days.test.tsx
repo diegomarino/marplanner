@@ -6,7 +6,13 @@ import type { WeekdayLabels } from "@/components/WeekdayPicker";
 import type { Member, Weekday } from "../../src/shared";
 
 const LABELS: WeekdayLabels = {
-  mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun",
+  mon: "Mon",
+  tue: "Tue",
+  wed: "Wed",
+  thu: "Thu",
+  fri: "Fri",
+  sat: "Sat",
+  sun: "Sun",
 };
 const ARI = { id: "m1", displayName: "Ari", colorKey: "blue" } as Member;
 const BEA = { id: "m2", displayName: "Bea", colorKey: "teal" } as Member;
