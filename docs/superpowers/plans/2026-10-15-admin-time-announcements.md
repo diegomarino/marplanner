@@ -23,7 +23,7 @@ The spec and this plan are UNTRACKED files in the main checkout
 (`<maintainer-workspace>`). They are not in your worktree.
 
 - [ ] Work in your own worktree/branch (e.g. `feat/admin-time-announcements`) of
-  `<maintainer-workspace>`. Copy both documents into it:
+      `<maintainer-workspace>`. Copy both documents into it:
 
 ```bash
 MAIN=<maintainer-workspace>
@@ -34,25 +34,25 @@ cp "$MAIN/docs/superpowers/plans/2026-10-15-admin-time-announcements.md" docs/su
 
 - [ ] Install dependencies in the worktree (`node_modules` is not shared): `npm ci`.
 - [ ] If git commands are refused in your environment (isolated agents sometimes cannot run git),
-  do not stall: finish the work, skip commits, and report the changed files so the parent can
-  collect a patch. Otherwise commit as described in the last task.
+      do not stall: finish the work, skip commits, and report the changed files so the parent can
+      collect a patch. Otherwise commit as described in the last task.
 - [ ] Baseline: `npx vitest run tests/client/time-announcements-management.test.tsx tests/client/announcements-briefing-admin.test.tsx tests/client/time-announcements-speech.test.ts tests/client/time-announcements-i18n-parity.test.ts`
-  Expect all PASS before you change anything.
+      Expect all PASS before you change anything.
 
 ## File map
 
-| File | Action |
-| --- | --- |
-| `src/client/time-announcements/speech.ts` | add exported `voiceNameFor(lang)` |
-| `tests/client/time-announcements-speech.test.ts` | add tests for `voiceNameFor` |
-| `src/client/i18n/messages.ts` | edit 2 title values; add `// admin-time-announcements` block at the end of `en` and of `es` |
-| `src/client/admin/TimeAnnouncementsManagement.tsx` | rewrite (dialog, cards, ConfirmDialog, retry, spinner) |
-| `tests/client/time-announcements-management.test.tsx` | update + add tests |
-| `tests/client/announcements-briefing-admin.test.tsx` | update title, density census, dialog-first flows, header comment |
-| `tests/e2e/time-announcements-admin.spec.ts` | new: admin-UI CRUD e2e (runs by default) |
-| `tests/fixtures/assembly-cohort.json` | resync case names + coverage floors |
-| `docs/features/time-announcements.md` | add FR-020 and a user-story line |
-| `docs/ui/household-contract.md` | one-line description for `/admin/time-announcements` |
+| File                                                  | Action                                                                                      |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `src/client/time-announcements/speech.ts`             | add exported `voiceNameFor(lang)`                                                           |
+| `tests/client/time-announcements-speech.test.ts`      | add tests for `voiceNameFor`                                                                |
+| `src/client/i18n/messages.ts`                         | edit 2 title values; add `// admin-time-announcements` block at the end of `en` and of `es` |
+| `src/client/admin/TimeAnnouncementsManagement.tsx`    | rewrite (dialog, cards, ConfirmDialog, retry, spinner)                                      |
+| `tests/client/time-announcements-management.test.tsx` | update + add tests                                                                          |
+| `tests/client/announcements-briefing-admin.test.tsx`  | update title, density census, dialog-first flows, header comment                            |
+| `tests/e2e/time-announcements-admin.spec.ts`          | new: admin-UI CRUD e2e (runs by default)                                                    |
+| `tests/fixtures/assembly-cohort.json`                 | resync case names + coverage floors                                                         |
+| `docs/features/time-announcements.md`                 | add FR-020 and a user-story line                                                            |
+| `docs/ui/household-contract.md`                       | one-line description for `/admin/time-announcements`                                        |
 
 `tests/e2e/admin-unlock-resilience.spec.ts` needs NO change: it keys on
 `time-announcements-create`, which stays on the header "+ Create" button.
@@ -68,42 +68,42 @@ The speech tests re-import the module per case via `freshSpeech()` and install a
 just `{ lang }`; extend with `name` in the new tests.
 
 - [ ] **Step 1: failing tests.** Append inside the existing top-level `describe` of
-  `tests/client/time-announcements-speech.test.ts`:
+      `tests/client/time-announcements-speech.test.ts`:
 
 ```ts
-  it("voiceNameFor returns the name of the voice speak() would pick for the language", async () => {
-    installFakeSynth({
-      voices: [
-        { lang: "de-DE", name: "Anna" },
-        { lang: "es-ES", name: "Monica" },
-      ] as Array<{ lang: string }>,
-    });
-    const { voiceNameFor } = await freshSpeech();
-    expect(voiceNameFor("es")).toBe("Monica");
+it("voiceNameFor returns the name of the voice speak() would pick for the language", async () => {
+  installFakeSynth({
+    voices: [
+      { lang: "de-DE", name: "Anna" },
+      { lang: "es-ES", name: "Monica" },
+    ] as Array<{ lang: string }>,
   });
+  const { voiceNameFor } = await freshSpeech();
+  expect(voiceNameFor("es")).toBe("Monica");
+});
 
-  it("voiceNameFor is null when no voice matches, the API is absent, or getVoices throws", async () => {
-    installFakeSynth({ voices: [{ lang: "de-DE" }] });
-    let speech = await freshSpeech();
-    expect(speech.voiceNameFor("en")).toBeNull();
+it("voiceNameFor is null when no voice matches, the API is absent, or getVoices throws", async () => {
+  installFakeSynth({ voices: [{ lang: "de-DE" }] });
+  let speech = await freshSpeech();
+  expect(speech.voiceNameFor("en")).toBeNull();
 
-    installFakeSynth({ throwOnGetVoices: true });
-    speech = await freshSpeech();
-    expect(speech.voiceNameFor("en")).toBeNull();
+  installFakeSynth({ throwOnGetVoices: true });
+  speech = await freshSpeech();
+  expect(speech.voiceNameFor("en")).toBeNull();
 
-    vi.unstubAllGlobals();
-    speech = await freshSpeech();
-    expect(speech.voiceNameFor("en")).toBeNull();
-  });
+  vi.unstubAllGlobals();
+  speech = await freshSpeech();
+  expect(speech.voiceNameFor("en")).toBeNull();
+});
 ```
 
-  If the file's `afterEach` already unstubs globals, keep the manual `vi.unstubAllGlobals()` anyway
-  (it is what makes the "API absent" case real). Run
-  `npx vitest run tests/client/time-announcements-speech.test.ts` and confirm the new tests FAIL
-  (`voiceNameFor is not a function`).
+If the file's `afterEach` already unstubs globals, keep the manual `vi.unstubAllGlobals()` anyway
+(it is what makes the "API absent" case real). Run
+`npx vitest run tests/client/time-announcements-speech.test.ts` and confirm the new tests FAIL
+(`voiceNameFor is not a function`).
 
 - [ ] **Step 2: implement.** In `src/client/time-announcements/speech.ts`, directly after
-  `pickVoice`, add:
+      `pickVoice`, add:
 
 ```ts
 /** Name of the voice `speak`/`testVoice` would use for `lang`, or `null` when none matches (the
@@ -116,17 +116,17 @@ export function voiceNameFor(lang: Language): string | null {
 }
 ```
 
-  `pickVoice` already try/catches `getVoices()`. Run the speech test file: PASS.
+`pickVoice` already try/catches `getVoices()`. Run the speech test file: PASS.
 
 ## Task 2: i18n keys
 
 **File:** `src/client/i18n/messages.ts` (shared with parallel workers: keep edits minimal).
 
 - [ ] **Step 1: title parity with the sidebar label** (brief rule 2). Edit in place:
-  `"timeAnnouncements.management.title"` en `"Time Announcements"` -> `"Time announcements"`;
-  es `"Anuncios Horarios"` -> `"Anuncios horarios"`. (Do NOT touch `admin.nav.timeAnnouncements`.)
+      `"timeAnnouncements.management.title"` en `"Time Announcements"` -> `"Time announcements"`;
+      es `"Anuncios Horarios"` -> `"Anuncios horarios"`. (Do NOT touch `admin.nav.timeAnnouncements`.)
 - [ ] **Step 2: new keys.** At the END of the `en` object (just before its closing `},` that precedes
-  `es: {`; at the time of writing it ends after `"shell.density.disable"`), append:
+      `es: {`; at the time of writing it ends after `"shell.density.disable"`), append:
 
 ```ts
     // admin-time-announcements
@@ -147,7 +147,7 @@ export function voiceNameFor(lang: Language): string | null {
     "timeAnnouncements.weekdayInitial.sun": "S",
 ```
 
-  and at the END of the `es` object (just before the closing `},` preceding `} as const;`):
+and at the END of the `es` object (just before the closing `},` preceding `} as const;`):
 
 ```ts
     // admin-time-announcements
@@ -168,13 +168,14 @@ export function voiceNameFor(lang: Language): string | null {
     "timeAnnouncements.weekdayInitial.sun": "D",
 ```
 
-  Reused existing keys (do not duplicate): `.title`, `.description`, `.loading`, `.loadError`,
-  `.noRules`, `.createTitle` (dialog title when creating), `.timeLabel`, `.weekdaysLabel`,
-  `.activeLabel`, `.create`, `.creating`, `.createError`, `.testVoice`, `.edit`, `.save`, `.cancel`,
-  `.editError`, `.activate`, `.deactivate`, `.delete`, `.deleteConfirm`, `.deleteError`,
-  `.statusInactive`, `timeAnnouncements.weekday.*`. Leave the now-unused `.list`/`.statusActive`.
+Reused existing keys (do not duplicate): `.title`, `.description`, `.loading`, `.loadError`,
+`.noRules`, `.createTitle` (dialog title when creating), `.timeLabel`, `.weekdaysLabel`,
+`.activeLabel`, `.create`, `.creating`, `.createError`, `.testVoice`, `.edit`, `.save`, `.cancel`,
+`.editError`, `.activate`, `.deactivate`, `.delete`, `.deleteConfirm`, `.deleteError`,
+`.statusInactive`, `timeAnnouncements.weekday.*`. Leave the now-unused `.list`/`.statusActive`.
+
 - [ ] **Step 3:** `npx vitest run tests/client/time-announcements-i18n-parity.test.ts` PASS (en/es
-  parity). Do not run typecheck yet (the component does not use the keys until Task 3).
+      parity). Do not run typecheck yet (the component does not use the keys until Task 3).
 
 ## Task 3: Tests first for the component (red)
 
@@ -189,6 +190,7 @@ vi.mock("@/time-announcements/speech", () => ({
   voiceNameFor: vi.fn(() => null),
 }));
 ```
+
 and `import { testVoice, voiceNameFor } from "@/time-announcements/speech";`. Add
 `vi.mocked(voiceNameFor).mockReset().mockReturnValue(null)` in `beforeEach`.
 
@@ -202,6 +204,7 @@ function openCreateDialog() {
 ```
 
 Per existing test:
+
 1. "lists ALL rules..." keep as is (row text "07:00", "Inactive", server order). Also assert the
    evening row is dimmed-tag only: `expect(morningRow).not.toHaveTextContent("Inactive")`.
 2. "renders the empty state" keep.
@@ -245,6 +248,7 @@ Per existing test:
     `time-announcements-form-error` and that it does not contain "private diagnostics".
 
 New tests (add to the main `describe`):
+
 - "shows a spinner while loading": mock fetch with a never-resolving GET for
   `/api/time-announcements`; render; expect `screen.getByRole("status")` to have text
   "Loading time announcements…".
@@ -663,7 +667,9 @@ export function TimeAnnouncementsManagement() {
                 ? t("timeAnnouncements.management.dialogEditTitle")
                 : t("timeAnnouncements.management.createTitle")}
             </DialogTitle>
-            <DialogDescription>{t("timeAnnouncements.management.dialogDescription")}</DialogDescription>
+            <DialogDescription>
+              {t("timeAnnouncements.management.dialogDescription")}
+            </DialogDescription>
           </DialogHeader>
           <form
             className="flex flex-col gap-4"
@@ -696,10 +702,7 @@ export function TimeAnnouncementsManagement() {
                   {t("timeAnnouncements.management.testVoice")}
                 </Button>
               </div>
-              <p
-                className="text-muted-foreground text-xs"
-                data-testid="time-announcements-voice"
-              >
+              <p className="text-muted-foreground text-xs" data-testid="time-announcements-voice">
                 {voiceName
                   ? `${t("timeAnnouncements.management.voiceLabel")}: ${voiceName}`
                   : t("timeAnnouncements.management.noVoice")}
@@ -771,6 +774,7 @@ export function TimeAnnouncementsManagement() {
 ```
 
 Notes for the executor while implementing:
+
 - Adjust formatting with `npx prettier --write` on touched files (the repo has `format:check`).
 - `DialogFooter` is exported from `@/components/ui/dialog` (verified). `Button size="icon"` and
   `variant="ghost"|"secondary"` exist in `ui/button.tsx` (verified).
@@ -784,7 +788,7 @@ Notes for the executor while implementing:
   existing catalog, they ARE (messages.ts lines 25-27); do not re-add them.
 
 - [ ] Run `npx vitest run tests/client/time-announcements-management.test.tsx` until GREEN. Fix the
-  component, not the assertions, unless an assertion contradicts the spec.
+      component, not the assertions, unless an assertion contradicts the spec.
 - [ ] Run `npm run typecheck` and `npm run lint` (fix `MessageKey` or unused-import findings).
 
 ## Task 5: Update the density / landmark / error / weekday tests
@@ -793,40 +797,40 @@ Notes for the executor while implementing:
 TimeAnnouncements half changes; the Daily Briefing half must not be touched: other workers edit it).
 
 - [ ] Header comment (lines 1-30): delete the two bullets claiming `ConfirmDialog` is deliberately
-  not adopted by TimeAnnouncementsManagement; state that it now uses `ConfirmDialog` for delete
-  (`DailyBriefingManagement` still has nothing destructive).
+      not adopted by TimeAnnouncementsManagement; state that it now uses `ConfirmDialog` for delete
+      (`DailyBriefingManagement` still has nothing destructive).
 - [ ] Landmark test: region/heading name becomes `"Time announcements"` (matches the sidebar).
-  The comment about a second loading AdminPanel still holds (loading panel has the same title).
+      The comment about a second loading AdminPanel still holds (loading panel has the same title).
 - [ ] Density test "meets kiosk density collapsed with two rules, then with one rule's edit form
-  open": rewrite phases. Phase 1 (collapsed): header "+ Create" (1) + each rule's Edit, Delete,
-  Toggle (3 x 2) = **7** controls. Phase 2: click `time-announcements-create` (dialog open): the
-  dialog adds time input, Test voice, 7 weekday checkboxes, Active checkbox, Cancel, Submit and the
-  Radix close button = 13, so the expected total is **20**. Because Radix portals/aria-hides, do
-  NOT trust this arithmetic: print `countInteractiveControls(document.body)` once, confirm it equals
-  the sum of the controls you can name in the DOM, then hard-code that number with a comment listing
-  the controls. Test names change accordingly (e.g. "...collapsed with two rules, then with the
-  create dialog open").
+      open": rewrite phases. Phase 1 (collapsed): header "+ Create" (1) + each rule's Edit, Delete,
+      Toggle (3 x 2) = **7** controls. Phase 2: click `time-announcements-create` (dialog open): the
+      dialog adds time input, Test voice, 7 weekday checkboxes, Active checkbox, Cancel, Submit and the
+      Radix close button = 13, so the expected total is **20**. Because Radix portals/aria-hides, do
+      NOT trust this arithmetic: print `countInteractiveControls(document.body)` once, confirm it equals
+      the sum of the controls you can name in the DOM, then hard-code that number with a comment listing
+      the controls. Test names change accordingly (e.g. "...collapsed with two rules, then with the
+      create dialog open").
 - [ ] Census test "CENSUS FIRES ON REMOVAL": drop the `window.confirm` spy. Flow: click
-  `time-announcements-delete-rule-evening`, click `time-announcements-delete-confirm`, wait for the
-  row to disappear. Collapsed count 7 -> after removal **4**. Rename the test to
-  "...drops its collapsed row's 3 controls (7 -> 4)". Make sure the confirm dialog has closed before
-  counting (`waitFor` on the dialog being gone), otherwise its buttons inflate the census.
+      `time-announcements-delete-rule-evening`, click `time-announcements-delete-confirm`, wait for the
+      row to disappear. Collapsed count 7 -> after removal **4**. Rename the test to
+      "...drops its collapsed row's 3 controls (7 -> 4)". Make sure the confirm dialog has closed before
+      counting (`waitFor` on the dialog being gone), otherwise its buttons inflate the census.
 - [ ] Negative test: still finds `time-announcements-create` (now the header button): keep, but the
-  assertions on message text stay valid. Update its title only if it says "Create button" and is
-  still correct (it is).
+      assertions on message text stay valid. Update its title only if it says "Create button" and is
+      still correct (it is).
 - [ ] Error tests: load failure still asserts `time-announcements-error`, role alert, text
-  "Failed to load time announcements."; ALSO assert `time-announcements-retry` is present. Create
-  failure test: click `time-announcements-create` first, then fill/submit with
-  `time-announcements-submit`, and assert the alert is `time-announcements-form-error` with the
-  overlap text.
+      "Failed to load time announcements."; ALSO assert `time-announcements-retry` is present. Create
+      failure test: click `time-announcements-create` first, then fill/submit with
+      `time-announcements-submit`, and assert the alert is `time-announcements-form-error` with the
+      overlap text.
 - [ ] WeekdayPicker tests: both must open the dialog first (`fireEvent.click(screen.getByTestId("time-announcements-create"))`).
-  Group-name test: still `findByRole("group", { name: "Días de la semana" })` in `es`. NOTE the
-  Radix dialog marks the page behind it `aria-hidden`, which is fine because the picker is inside
-  the dialog. POST-order test: time input already `07:00` (keep the explicit `fireEvent.change`
-  or drop it), click wed then mon, click `time-announcements-submit`, expect `["mon","wed"]`.
+      Group-name test: still `findByRole("group", { name: "Días de la semana" })` in `es`. NOTE the
+      Radix dialog marks the page behind it `aria-hidden`, which is fine because the picker is inside
+      the dialog. POST-order test: time input already `07:00` (keep the explicit `fireEvent.change`
+      or drop it), click wed then mon, click `time-announcements-submit`, expect `["mon","wed"]`.
 - [ ] `WEEKDAY_LABEL_KEYS` iteration test unchanged.
 - [ ] Run `npx vitest run tests/client/announcements-briefing-admin.test.tsx` GREEN (the whole file,
-  including the Daily Briefing half).
+      including the Daily Briefing half).
 
 ## Task 6: E2E, admin UI CRUD (new spec file)
 
@@ -837,9 +841,9 @@ not run in acceptance. Put the admin-UI test in a NEW default-run spec instead.
 **File (new):** `tests/e2e/time-announcements-admin.spec.ts`
 
 - [ ] Write it, copying `provision` verbatim from `tests/e2e/time-announcements.spec.ts` (lines
-  ~55-66: access gate, bootstrap key, "Provision Device") together with the three constants
-  (`ACCESS_TOKEN`, `BOOTSTRAP_KEY`, `ADMIN_PIN`) and importing `unlockAdmin` from `./admin-unlock`
-  (no `timezoneId` override needed):
+      ~55-66: access gate, bootstrap key, "Provision Device") together with the three constants
+      (`ACCESS_TOKEN`, `BOOTSTRAP_KEY`, `ADMIN_PIN`) and importing `unlockAdmin` from `./admin-unlock`
+      (no `timezoneId` override needed):
 
 ```ts
 import { expect, test, type Page } from "@playwright/test";
@@ -892,13 +896,14 @@ test("admin page: create in the dialog, edit, deactivate, delete through Confirm
 });
 ```
 
-  `page.request` shares the provisioned device cookie, as in the sibling spec's `afterEach`.
+`page.request` shares the provisioned device cookie, as in the sibling spec's `afterEach`.
+
 - [ ] Run (unique port, spec runs by default; no `MP_E2E_TIME_ANNOUNCEMENTS` needed):
-  `PORT=43206 npx playwright test tests/e2e/time-announcements-admin.spec.ts --workers=1`
-  (first run builds and starts the server: allow ~3 minutes). Expect PASS. If something differs
-  (testid on a checkbox, dialog timing), fix the test or the component, not the intent.
+      `PORT=43206 npx playwright test tests/e2e/time-announcements-admin.spec.ts --workers=1`
+      (first run builds and starts the server: allow ~3 minutes). Expect PASS. If something differs
+      (testid on a checkbox, dialog timing), fix the test or the component, not the intent.
 - [ ] The Playwright cohort in `assembly-cohort.json` lists e2e case names per file; the new file
-  must be added there (Task 8).
+      must be added there (Task 8).
 
 ## Task 7: Docs
 
@@ -911,11 +916,13 @@ test("admin page: create in the dialog, edit, deactivate, delete through Confirm
   on a rejected write, and MUST close and refresh the list on success; deleting a rule MUST require
   confirmation in an in-app dialog; a failed list load MUST offer Retry. No API contract changes.
 ```
-  (match the file's existing bold-FR formatting and blank-line style) and add one sentence to
-  User Story 2: the admin page presents rules as cards with an in-dialog editor.
+
+(match the file's existing bold-FR formatting and blank-line style) and add one sentence to
+User Story 2: the admin page presents rules as cards with an in-dialog editor.
+
 - [ ] `docs/ui/household-contract.md` line 67: extend to
-  `` `/admin/time-announcements` — time announcements (card list; create/edit dialog; delete confirmation) ``
-  keeping the file's list style.
+      `` `/admin/time-announcements` — time announcements (card list; create/edit dialog; delete confirmation) ``
+      keeping the file's list style.
 - [ ] OpenAPI: no change (state this in the commit message). `npm run check:openapi` runs in the gate.
 
 ## Task 8: Cohort fixture resync
@@ -926,57 +933,57 @@ exact list of case names, and (b) `coveragePolicy.files[<src file>]` with `minim
 requires.
 
 - [ ] Produce the observed list: `npm run test:cohorts:stamp` (writes `.quality/candidate.json`,
-  prints the candidate id; export `MP_CANDIDATE_ID` to it for the following commands), then
-  `npm run test:cohorts:vitest:list` and `npm run test:cohorts:vitest`.
+      prints the candidate id; export `MP_CANDIDATE_ID` to it for the following commands), then
+      `npm run test:cohorts:vitest:list` and `npm run test:cohorts:vitest`.
 - [ ] Update the case-name arrays for the three test files you changed
-  (`tests/client/time-announcements-management.test.tsx`,
-  `tests/client/announcements-briefing-admin.test.tsx` (Time announcements cases only),
-  `tests/client/time-announcements-speech.test.ts`) from `.quality/vitest-list.json`, keeping the
-  file's existing ordering convention. Run `node tools/verify-test-cohorts.mjs --expected tests/fixtures/assembly-cohort.json --raw-dir .quality --candidate "$MP_CANDIDATE_ID" --runners node,vitest`
-  (or `npm run check:test-cohorts:standard`) and fix every reported difference.
+      (`tests/client/time-announcements-management.test.tsx`,
+      `tests/client/announcements-briefing-admin.test.tsx` (Time announcements cases only),
+      `tests/client/time-announcements-speech.test.ts`) from `.quality/vitest-list.json`, keeping the
+      file's existing ordering convention. Run `node tools/verify-test-cohorts.mjs --expected tests/fixtures/assembly-cohort.json --raw-dir .quality --candidate "$MP_CANDIDATE_ID" --runners node,vitest`
+      (or `npm run check:test-cohorts:standard`) and fix every reported difference.
 - [ ] Coverage floors: `npm run check:coverage` reports per-file failures. The two files that can
-  move are `src/client/admin/TimeAnnouncementsManagement.tsx` and
-  `src/client/time-announcements/speech.ts` (new `voiceNameFor`). Totals floors are counts of
-  lines/statements/functions/branches; set them to the new observed totals (they are minimums, a
-  rewrite changes the totals) and keep rates >= the previous rates where the real run meets them.
-  If a rate falls, add the missing test rather than lowering the floor.
+      move are `src/client/admin/TimeAnnouncementsManagement.tsx` and
+      `src/client/time-announcements/speech.ts` (new `voiceNameFor`). Totals floors are counts of
+      lines/statements/functions/branches; set them to the new observed totals (they are minimums, a
+      rewrite changes the totals) and keep rates >= the previous rates where the real run meets them.
+      If a rate falls, add the missing test rather than lowering the floor.
 - [ ] Playwright cohort: add `tests/e2e/time-announcements-admin.spec.ts` with its one case name
-  under `testCohorts.runners.playwright.files` (look at how neighbouring e2e entries are named, and
-  generate the observed list with `npm run test:cohorts:e2e:list`). Without it
-  `check:test-cohorts` rejects the new file.
+      under `testCohorts.runners.playwright.files` (look at how neighbouring e2e entries are named, and
+      generate the observed list with `npm run test:cohorts:e2e:list`). Without it
+      `check:test-cohorts` rejects the new file.
 - [ ] Only the files above are touched in this fixture (other workers edit the same JSON; keep the
-  diff localized).
+      diff localized).
 
 ## Task 9: Verification gate
 
 - [ ] From a clean, committed tree (commit first per Task 10 step 1, amend later if needed):
-  `npm run check:standard`. Must pass completely. Common failures and fixes:
-  `format:check` (run `npx prettier --write` on touched files), `check:accessible-names` (icon-only
-  buttons need `aria-label`, already set), `check:ui-debt`/`check:ui-catalog` (no new shared
-  component was added, so none should move; if `check:ui-debt` complains about `window.confirm` or
-  similar counts going DOWN, update the baseline it names), cohort/coverage (Task 8).
+      `npm run check:standard`. Must pass completely. Common failures and fixes:
+      `format:check` (run `npx prettier --write` on touched files), `check:accessible-names` (icon-only
+      buttons need `aria-label`, already set), `check:ui-debt`/`check:ui-catalog` (no new shared
+      component was added, so none should move; if `check:ui-debt` complains about `window.confirm` or
+      similar counts going DOWN, update the baseline it names), cohort/coverage (Task 8).
 - [ ] Affected e2e, unique port (`playwright.config.ts` takes `PORT`, default `BASE_URL` follows it):
-  `PORT=43206 npx playwright test tests/e2e/time-announcements-admin.spec.ts tests/e2e/admin-unlock-resilience.spec.ts --workers=3`
-  `admin-unlock-resilience.spec.ts` covers the `/admin/time-announcements` primary action
-  (`time-announcements-create`).
+      `PORT=43206 npx playwright test tests/e2e/time-announcements-admin.spec.ts tests/e2e/admin-unlock-resilience.spec.ts --workers=3`
+      `admin-unlock-resilience.spec.ts` covers the `/admin/time-announcements` primary action
+      (`time-announcements-create`).
 - [ ] Also run the real-clock spec once, since the panel still dispatches `RULES_CHANGED_EVENT` and
-  the page is the entry point of that flow: `PORT=43206 npm run test:e2e:time-announcements`
-  (`package.json` sets `MP_E2E_TIME_ANNOUNCEMENTS=1`; it waits real minutes for the announcements to
-  fire, ~5-8 minutes total, expected). It does not touch the admin UI, so a failure there would be
-  unrelated to this work; report it rather than chasing it.
+      the page is the entry point of that flow: `PORT=43206 npm run test:e2e:time-announcements`
+      (`package.json` sets `MP_E2E_TIME_ANNOUNCEMENTS=1`; it waits real minutes for the announcements to
+      fire, ~5-8 minutes total, expected). It does not touch the admin UI, so a failure there would be
+      unrelated to this work; report it rather than chasing it.
 - [ ] Also run `tests/e2e/accessible-names-audit.spec.ts` the same way if the audit lists admin
-  routes (grep it for `time-announcements`; if it does not mention the route skip it).
+      routes (grep it for `time-announcements`; if it does not mention the route skip it).
 - [ ] Optional visual check: seed and run the app per the project memory notes on dev servers, open
-  `/admin/time-announcements`, compare to `ref-admin-*time*` screenshots if present; never use the
-  reference's real DB, and use your own browser tab.
+      `/admin/time-announcements`, compare to `ref-admin-*time*` screenshots if present; never use the
+      reference's real DB, and use your own browser tab.
 
 ## Task 10: Commit and report
 
 - [ ] Commit on the worktree branch (the spec and plan copies included), message e.g.
-  `feat(admin): rework Time announcements with a create/edit dialog and cards` with a body listing:
-  dialog create/edit, ConfirmDialog delete (window.confirm removed), Retry, spinner, voice line,
-  panel title aligned with the sidebar label, no API change. End the message with the attribution
-  lines from your environment's system reminder, when present.
+      `feat(admin): rework Time announcements with a create/edit dialog and cards` with a body listing:
+      dialog create/edit, ConfirmDialog delete (window.confirm removed), Retry, spinner, voice line,
+      panel title aligned with the sidebar label, no API change. End the message with the attribution
+      lines from your environment's system reminder, when present.
 - [ ] Report back: branch name, commit hash, results of `check:standard` and the e2e command (pass
-  counts), any floors you changed in `assembly-cohort.json` and why, and any deviation from this
-  plan. Do not merge; the parent integrates.
+      counts), any floors you changed in `assembly-cohort.json` and why, and any deviation from this
+      plan. Do not merge; the parent integrates.

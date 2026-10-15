@@ -48,6 +48,7 @@ loading message); load error = `ErrorNotice` + "Retry" button; empty = existing 
 
 Cards (a `<ul>` of `<li data-testid="time-announcements-rule-<id>">`), ordered as the server
 returns them (no client re-sort, FR-006):
+
 - Big time (`text-3xl tabular-nums`), 7 round weekday circles in canonical Mon-Sun order (on =
   primary fill, off = muted), localized single-letter initials, circles are `aria-hidden` and a
   `sr-only` sentence lists the selected full weekday names.
@@ -60,6 +61,7 @@ returns them (no client re-sort, FR-006):
 
 Dialog (shared `Dialog` primitive, not a Sheet): one dialog for create and edit,
 testid `time-announcements-form-dialog`.
+
 - Title: "New rule" (create) / "Edit announcement" (edit); description line.
 - Time input (`type="time"`, default `07:00` on create, testid `time-announcements-time-input`) with
   a "Test voice" button beside it (`time-announcements-test-voice`, speaks the unsaved time, never
