@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { BriefingWorkspace } from "@/daily-briefing/admin/BriefingWorkspace";
@@ -18,7 +19,6 @@ const ben: MemberDTO = {
   updatedAt: 1,
   birthDate: null,
 };
-const cleo: MemberDTO = { ...ben, id: "member-cleo", displayName: "Cleo", colorKey: "pink" };
 
 const TODAY = "2026-10-15";
 const PAST = "2026-10-14";
@@ -110,22 +110,40 @@ function mockBackend(backend: Backend = {}) {
   return calls;
 }
 
-function renderWorkspace(props: Partial<Parameters<typeof BriefingWorkspace>[0]> = {}) {
+type WorkspaceProps = Parameters<typeof BriefingWorkspace>[0];
+
+function renderWorkspace(props: Partial<WorkspaceProps> = {}) {
   const onGenerated = vi.fn();
-  render(
-    <LanguageProvider>
+  const onOpenBlocks = vi.fn();
+  const onDateChange = vi.fn();
+  // The page owns the date: a small stateful harness lets date changes flow back.
+  function Harness() {
+    const [date, setDate] = useState<string | null>(null);
+    return (
       <BriefingWorkspace
-        members={[ben, cleo]}
-        optIns={{ "member-ben": true }}
+        member={ben}
+        date={date}
+        today={null}
+        onDateChange={(next) => {
+          onDateChange(next);
+          setDate(next);
+        }}
         active
         blocked={false}
+        refreshKey={0}
         onGenerated={onGenerated}
         onBusyChange={() => {}}
+        onOpenBlocks={onOpenBlocks}
         {...props}
       />
+    );
+  }
+  render(
+    <LanguageProvider>
+      <Harness />
     </LanguageProvider>
   );
-  return { onGenerated };
+  return { onGenerated, onOpenBlocks, onDateChange };
 }
 
 describe("BriefingWorkspace", () => {
@@ -246,23 +264,32 @@ describe("BriefingWorkspace", () => {
     expect(await screen.findByTestId(`daily-briefing-history-entry-${TODAY}`)).toBeVisible();
   });
 
-  it("disables Generate for a member without the briefing turned on", async () => {
-    mockBackend();
-    renderWorkspace();
-    fireEvent.click(await screen.findByTestId("daily-briefing-preview-member-member-cleo"));
-    expect(await screen.findByTestId("daily-briefing-needs-opt-in")).toBeVisible();
-    expect(screen.getByTestId("daily-briefing-generate")).toBeDisabled();
-    expect(await screen.findByTestId("daily-briefing-history-empty")).toBeVisible();
+  it("offers Open Blocks from the paused notice", async () => {
+    mockBackend({
+      generate: () =>
+        json({ skipped: true, reason: "paused", memberId: "member-ben", date: TODAY }),
+    });
+    const { onOpenBlocks } = renderWorkspace();
+    await screen.findByTestId(`daily-briefing-history-entry-${TODAY}`);
+    fireEvent.click(screen.getByTestId("daily-briefing-generate"));
+    expect(await screen.findByTestId("daily-briefing-paused-notice")).toHaveTextContent(
+      /in Blocks to generate/
+    );
+    fireEvent.click(screen.getByTestId("daily-briefing-paused-open-blocks"));
+    expect(onOpenBlocks).toHaveBeenCalledTimes(1);
   });
 
-  it("Show loads any typed date and refetches the image", async () => {
-    mockBackend();
+  it("changing the date loads that date and refetches the image", async () => {
+    const calls = mockBackend();
     renderWorkspace();
     await screen.findByTestId(`daily-briefing-history-entry-${TODAY}`);
     fireEvent.change(screen.getByTestId("daily-briefing-admin-preview-date"), {
       target: { value: "2026-09-07" },
     });
-    fireEvent.click(screen.getByTestId("daily-briefing-admin-preview-show"));
+    expect(screen.queryByTestId("daily-briefing-admin-preview-show")).toBeNull();
+    await waitFor(() =>
+      expect(calls.some((c) => c.url === "/api/daily-briefing/member-ben/2026-09-07")).toBe(true)
+    );
     await waitFor(() =>
       expect(
         vi
@@ -278,17 +305,6 @@ describe("BriefingWorkspace", () => {
     const calls = mockBackend();
     renderWorkspace({ active: false });
     expect(calls.filter((c) => c.url.startsWith("/api/daily-briefing"))).toEqual([]);
-  });
-
-  it("keeps the history when the current member is selected again", async () => {
-    mockBackend();
-    renderWorkspace();
-    await screen.findByTestId(`daily-briefing-history-entry-${TODAY}`);
-    fireEvent.click(screen.getByTestId("daily-briefing-preview-member-member-ben"));
-    fireEvent.change(screen.getByTestId("daily-briefing-member-select"), {
-      target: { value: "member-ben" },
-    });
-    expect(screen.getByTestId(`daily-briefing-history-entry-${TODAY}`)).toBeVisible();
   });
 
   it("keeps the payload when the already-selected history entry is clicked again", async () => {
