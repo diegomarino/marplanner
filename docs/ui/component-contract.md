@@ -46,15 +46,17 @@ and it is what SC-013 demonstrates.
 Each component's promise to its call sites — this is what "carries load" means concretely, and it is
 what a call site is allowed to stop implementing:
 
-| Component              | What the call site may stop doing                                    |
-| ---------------------- | -------------------------------------------------------------------- |
-| Admin panel frame      | laying out a panel's header/body/actions consistently                |
-| Field                  | associating label, hint and error with the input                     |
-| Error notice           | announcing errors to assistive technology                            |
-| Confirmation dialog    | focus trapping, portalling, and the escape/confirm keyboard contract |
-| Weekday picker         | five separate implementations of the same selection                  |
-| Checkbox / radio field | label association and grouping semantics                             |
-| Status toggle          | the pressed-state contract                                           |
+| Component              | What the call site may stop doing                                                       |
+| ---------------------- | --------------------------------------------------------------------------------------- |
+| Admin panel frame      | laying out a panel's header/body/actions consistently                                   |
+| Field                  | associating label, hint and error with the input                                        |
+| Error notice           | announcing errors to assistive technology                                               |
+| Confirmation dialog    | focus trapping, portalling, and the escape/confirm keyboard contract                    |
+| Weekday picker         | five separate implementations of the same selection, and the household week-start order |
+| Choice pills           | the radiogroup, shared native name and pill look of a one-of-few choice                 |
+| Member pills           | member colours, the inactive marker and single/multi member selection                   |
+| Checkbox / radio field | label association and grouping semantics                                                |
+| Status toggle          | the pressed-state contract                                                              |
 
 **The confirmation dialog carries a scope rule, not just an interface**: it guards the destructive
 direction of a chore toggle only. Completing is one tap; undoing asks. A call site that wraps the
