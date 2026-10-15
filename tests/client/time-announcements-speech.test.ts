@@ -17,7 +17,7 @@ interface FakeUtterance {
 }
 
 function installFakeSynth(opts: {
-  voices?: Array<{ lang: string }>;
+  voices?: Array<{ lang: string; name?: string }>;
   throwOnSpeak?: boolean;
   throwOnCancel?: boolean;
   throwOnGetVoices?: boolean;
@@ -86,7 +86,7 @@ describe("time-announcements speech", () => {
       voices: [
         { lang: "de-DE", name: "Anna" },
         { lang: "es-ES", name: "Monica" },
-      ] as Array<{ lang: string }>,
+      ],
     });
     const { voiceNameFor } = await freshSpeech();
     expect(voiceNameFor("es")).toBe("Monica");
