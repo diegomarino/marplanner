@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { authFetch } from "@/lib/credential";
 import { useTranslation } from "@/i18n";
-import type { MessageKey } from "@/i18n/messages";
 import type {
   LiveCacheState,
   LiveClient,
@@ -20,12 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { NATIVE_SELECT_CLASSES } from "@/lib/recipes";
-import {
-  LoadFailure,
-  loadFailureMessageKey,
-  parseErrorCode,
-  type NetworkDevicesData,
-} from "./data";
+import { parseErrorCode, type NetworkDevicesData } from "./data";
 
 type SortKey = "name" | "mac";
 type SortDir = "asc" | "desc";
@@ -57,7 +51,7 @@ export function initialAlias(client: LiveClient): string {
 
 type LoadState =
   | { phase: "loading" }
-  | { phase: "loadError"; key: MessageKey }
+  | { phase: "loadError" }
   | { phase: "ready"; state: LiveCacheState; clients: LiveClient[] };
 
 /** Discovery table + registration Dialog. Fetches the LIVE cache and renders each of the 5 closed
@@ -91,17 +85,11 @@ export function DiscoverDevices({
       const response = await authFetch("/api/network-devices/live-clients", {
         credentials: "include",
       });
-      if (!response.ok) throw new LoadFailure(response.status, await parseErrorCode(response));
+      if (!response.ok) throw new Error(`live-clients: ${response.status}`);
       const body = (await response.json()) as LiveClientsResponse;
       setLoad({ phase: "ready", state: body.state, clients: body.clients });
-    } catch (err) {
-      setLoad({
-        phase: "loadError",
-        key:
-          err instanceof LoadFailure
-            ? loadFailureMessageKey(err.status, err.code, "networkDevices.error.pickerLoadError")
-            : "networkDevices.error.pickerLoadError",
-      });
+    } catch {
+      setLoad({ phase: "loadError" });
     }
   }, []);
 
@@ -218,7 +206,10 @@ export function DiscoverDevices({
       )}
       {load.phase === "loadError" && (
         <div className="flex flex-col items-start gap-2">
-          <ErrorNotice message={t(load.key)} data-testid="network-devices-picker-state" />
+          <ErrorNotice
+            message={t("networkDevices.error.pickerLoadError")}
+            data-testid="network-devices-picker-state"
+          />
           <Button
             type="button"
             variant="secondary"

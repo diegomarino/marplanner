@@ -281,6 +281,9 @@ unchanged. Docs: `docs/features/network-devices.md` (new "Admin console" require
 section), `docs/ui/household-contract.md` (line 11 entry mentions the two tabs). No OpenAPI change, so
 `check:openapi*` stays green.
 
+> **Resolved 2026-10-15 (owner, option B):** the ADR-053 device-key carve-out was removed; the page
+> works with the normal device cookie and sections 2 and 6 above describe the superseded behaviour.
+
 ## 9. Open questions for the owner
 
 1. (Complex, non-blocking) The page is only reachable with the management key as the browser cookie,

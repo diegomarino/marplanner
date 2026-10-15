@@ -1426,8 +1426,6 @@ export const messages = {
     "networkDevices.action.retry": "Retry",
     "networkDevices.action.refresh": "Refresh",
     "networkDevices.management.emptyAdd": "Add a device",
-    "networkDevices.error.managementRequired":
-      "This browser's credential can't manage network devices. Network access rules need the household management key; see the operations guide.",
     "networkDevices.edit.title": "Edit device",
     "networkDevices.edit.description": "Change the device's name or the member it belongs to.",
     "networkDevices.delete.title": "Delete this device?",
@@ -2893,8 +2891,6 @@ export const messages = {
     "networkDevices.action.retry": "Reintentar",
     "networkDevices.action.refresh": "Actualizar",
     "networkDevices.management.emptyAdd": "Añadir un dispositivo",
-    "networkDevices.error.managementRequired":
-      "La credencial de este navegador no puede gestionar dispositivos de red. Las reglas de acceso a la red requieren la clave de gestión del hogar; consulta la guía de operaciones.",
     "networkDevices.edit.title": "Editar dispositivo",
     "networkDevices.edit.description":
       "Cambia el nombre del dispositivo o el miembro al que pertenece.",

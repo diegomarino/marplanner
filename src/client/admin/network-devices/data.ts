@@ -1,26 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/credential";
 import type { MessageKey } from "@/i18n/messages";
-import {
-  AUTH_SCOPE_DENIED_CODE,
-  type LiveCacheState,
-  type Member,
-  type NetworkDevicesListResponse,
-  type RegisteredDevice,
+import type {
+  LiveCacheState,
+  Member,
+  NetworkDevicesListResponse,
+  RegisteredDevice,
 } from "../../../shared";
 
 /** Background refresh cadence. The server poller runs every 60 s and the cache is fresh for 5 min. */
 export const REFRESH_MS = 30_000;
-
-export class LoadFailure extends Error {
-  constructor(
-    readonly status: number,
-    readonly code: string | undefined
-  ) {
-    super(`load failed: ${status}`);
-    this.name = "LoadFailure";
-  }
-}
 
 export async function parseErrorCode(response: Response): Promise<string | undefined> {
   const data = (await response.json().catch(() => null)) as { code?: unknown } | null;
@@ -43,17 +32,6 @@ export function controllerErrorMessageKey(code: string | undefined): MessageKey 
   if (code === "controller_rejected") return "networkDevices.error.controllerRejected";
   if (code === "controller_unreachable") return "networkDevices.error.controllerUnreachable";
   return "networkDevices.error.controllerGeneric";
-}
-
-/** A live key denied on SCOPE (a device kiosk key, FR-009/FR-016) is not a load failure: say what is needed. */
-export function loadFailureMessageKey(
-  status: number,
-  code: string | undefined,
-  generic: MessageKey
-): MessageKey {
-  return status === 403 && code === AUTH_SCOPE_DENIED_CODE
-    ? "networkDevices.error.managementRequired"
-    : generic;
 }
 
 /** Registry + members reads with a silent 30 s refresh.
@@ -87,19 +65,15 @@ export function useNetworkDevicesData() {
     }
     try {
       const response = await authFetch("/api/network-devices", { credentials: "include" });
-      if (!response.ok) throw new LoadFailure(response.status, await parseErrorCode(response));
+      if (!response.ok) throw new Error(`list devices: ${response.status}`);
       const data = (await response.json()) as NetworkDevicesListResponse;
       if (silent && mutations.current !== startedAt) return;
       setDevices(data.devices);
       setCacheState(data.cacheState);
       setListErrorKey(null);
-    } catch (err) {
+    } catch {
       if (silent) return; // keep the last data; the next tick retries
-      setListErrorKey(
-        err instanceof LoadFailure
-          ? loadFailureMessageKey(err.status, err.code, "networkDevices.management.loadError")
-          : "networkDevices.management.loadError"
-      );
+      setListErrorKey("networkDevices.management.loadError");
     } finally {
       if (!silent) setLoading(false);
     }

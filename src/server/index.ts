@@ -134,9 +134,9 @@ export async function main(): Promise<void> {
     const { reconcileBootstrap, reconcileManagement } = await import("./auth/reconcile");
     reconcileBootstrap();
     // (maintainer decision 2026-09-04): seed the env-configured management
-    // key the same way — kind='integration', the only kind requireManagementKey admits
-    // that any deployment can actually configure today (nothing mints 'integration' via any
-    // HTTP path yet). No-op when MP_MANAGEMENT_KEY is unset (fail-closed default).
+    // key the same way — kind='integration', the only kind any deployment can configure today
+    // (nothing mints 'integration' via any HTTP path yet). No-op when MP_MANAGEMENT_KEY is
+    // unset (fail-closed default).
     reconcileManagement();
 
     // : remove any `.tmp-*` snapshot temp file

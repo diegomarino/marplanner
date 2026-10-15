@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   REFRESH_MS,
   controllerErrorMessageKey,
-  loadFailureMessageKey,
   useNetworkDevicesData,
 } from "@/admin/network-devices/data";
 import { AUTH_SCOPE_DENIED_CODE } from "../../src/shared";
@@ -41,15 +40,6 @@ describe("network-devices data helpers", () => {
     );
     expect(controllerErrorMessageKey(undefined)).toBe("networkDevices.error.controllerGeneric");
     expect(controllerErrorMessageKey("whatever")).toBe("networkDevices.error.controllerGeneric");
-  });
-
-  it("only a scope-denied 403 maps to the management-required message", () => {
-    const generic = "networkDevices.management.loadError" as const;
-    expect(loadFailureMessageKey(403, AUTH_SCOPE_DENIED_CODE, generic)).toBe(
-      "networkDevices.error.managementRequired"
-    );
-    expect(loadFailureMessageKey(403, undefined, generic)).toBe(generic);
-    expect(loadFailureMessageKey(500, AUTH_SCOPE_DENIED_CODE, generic)).toBe(generic);
   });
 });
 
@@ -92,14 +82,14 @@ describe("useNetworkDevicesData", () => {
     expect(result.current.members.map((m) => m.id)).toEqual(["m1"]);
   });
 
-  it("a scope-denied 403 on the list sets the management-required key; a members failure stays independent", async () => {
+  it("a 403 on the list sets the generic load-error key; a members failure stays independent", async () => {
     route({
       devices: () => json({ error: "forbidden", code: AUTH_SCOPE_DENIED_CODE }, 403),
       members: () => json(null, 500),
     });
     const { result } = renderHook(() => useNetworkDevicesData());
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.listErrorKey).toBe("networkDevices.error.managementRequired");
+    expect(result.current.listErrorKey).toBe("networkDevices.management.loadError");
     expect(result.current.membersErrorKey).toBe("networkDevices.error.membersLoadError");
   });
 

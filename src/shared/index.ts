@@ -1000,10 +1000,9 @@ export interface ResetTodayPrintsResponse {
  * unrecognized, revoked, or expired): `authFetch` (src/client/lib/credential.ts)
  * clears the stale `mp_provisioned` marker and falls back to the provisioning gate.
  * `AUTH_SCOPE_DENIED_CODE` — the key IS live but this specific request is denied on
- * scope grounds (`requireCapability`'s "not granted" branch, or
- * `requireManagementKey` rejecting a `kind='device'` key). The credential is still
+ * scope grounds (`requireCapability`'s "not granted" branch). The credential is still
  * good; `authFetch` passes the response through unchanged so the caller's own UI
- * handles it (e.g. NetworkDevicesManagement rendering its own error state instead
+ * handles it (e.g. an admin panel rendering its own error state instead
  * of the whole kiosk session dying).
  */
 export const AUTH_CREDENTIAL_INVALID_CODE = "credential_invalid";
