@@ -35,6 +35,8 @@ import { join } from "node:path";
 export interface UnifiFixtureClient {
   macAddress: string;
   name: string;
+  /** Initial blocked state (default false), so a spec or the dev fixture can start with a block. */
+  isBlocked?: boolean;
 }
 
 export interface UnifiFixtureServer {
@@ -50,7 +52,8 @@ export interface UnifiFixtureServer {
 }
 
 export async function startUnifiFixtureServer(
-  clients: UnifiFixtureClient[]
+  clients: UnifiFixtureClient[],
+  options: { port?: number } = {}
 ): Promise<UnifiFixtureServer> {
   const certDir = mkdtempSync(join(tmpdir(), "mp-e2e-unifi-cert-"));
   const keyPath = join(certDir, "key.pem");
@@ -93,7 +96,9 @@ export async function startUnifiFixtureServer(
   const cert = readFileSync(certPath);
 
   /** mac (lowercase) -> isBlocked. */
-  const blocked = new Map<string, boolean>();
+  const blocked = new Map<string, boolean>(
+    clients.map((c) => [c.macAddress.toLowerCase(), c.isBlocked ?? false])
+  );
 
   const server: Server = https.createServer({ key, cert }, (req, res) => {
     const url = new URL(req.url ?? "/", "https://127.0.0.1");
@@ -147,7 +152,7 @@ export async function startUnifiFixtureServer(
 
   await new Promise<void>((resolve, reject) => {
     server.once("error", reject);
-    server.listen(0, "127.0.0.1", () => resolve());
+    server.listen(options.port ?? 0, "127.0.0.1", () => resolve());
   });
 
   const address = server.address();
