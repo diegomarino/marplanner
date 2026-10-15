@@ -33,10 +33,12 @@
 ### Task 1: `weekBands` helper
 
 **Files:**
+
 - Create: `src/client/admin/daily-messages-weeks.ts`
 - Test: `tests/client/daily-messages-weeks.test.ts`
 
 **Interfaces:**
+
 - Produces: `export type WeekBand = "plain" | "shaded"; export function weekBands(dates: readonly string[], weekStartDay: number | null | undefined): WeekBand[]` (same length and order as `dates`).
 
 - [ ] **Step 1: Write the failing test** `tests/client/daily-messages-weeks.test.ts`
@@ -145,16 +147,19 @@ export function weekBands(
 ### Task 2: Member pills and zebra in the page
 
 **Files:**
+
 - Modify: `src/client/admin/DailyMessagesManagement.tsx`
 - Modify: `tests/client/daily-messages-management.test.tsx`
 - Modify: `tests/client/day-periods-messages-admin.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `weekBands` (Task 1); `MemberPills` single mode (`@/ui`): props `mode="single"`, `members`, `value: string | null`, `onChange(id: string)`, `groupLabel`, `testIdPrefix`. `Member` structurally satisfies `MemberPillsMember`.
 
 - [ ] **Step 1: Update tests first.**
 
 In `tests/client/daily-messages-management.test.tsx`:
+
 1. Make the fetch mock accept a members list and a per-member message map. Change `renderManagement(messages = [])` to `renderManagement(messages: DailyMessage[] = [], options: { members?: Member[]; weekStartDay?: 0 | 1; byMember?: Record<string, DailyMessage[]> } = {})`: `/api/settings` returns `{ locale: { timezone: "UTC", language: "en", ...(options.weekStartDay === undefined ? {} : { weekStartDay: options.weekStartDay }) } }`; `/api/members` returns `options.members ?? [member()]`; the messages GET returns `options.byMember?.[new URL(url, "http://x").searchParams.get("memberId") ?? ""] ?? messages`. Make `member(overrides: Partial<Member> = {})` spread overrides.
 2. Replace the test "keeps the loaded editor visible when the active member is selected again" with:
 
@@ -189,8 +194,8 @@ it("selects members with pills, defaults to the first and loads the picked membe
   expect(screen.getByRole("radio", { name: /Bo/ })).toBeChecked();
 });
 ```
-(Adjust `colorKey: "green"` to any valid `MemberColorKey` in `src/shared` if "green" is not one. If the radio's accessible name includes extra text, loosen the regex.)
-3. Add zebra tests (TODAY is Thursday 2026-01-15):
+
+(Adjust `colorKey: "green"` to any valid `MemberColorKey` in `src/shared` if "green" is not one. If the radio's accessible name includes extra text, loosen the regex.) 3. Add zebra tests (TODAY is Thursday 2026-01-15):
 
 ```tsx
 const bandOf = (date: string) =>
@@ -217,6 +222,7 @@ it("bands from a Sunday week start", async () => {
   expect(bandOf("2026-01-25")).toBe("plain");
 });
 ```
+
 Also in the existing "moves through 14-day windows" test, after clicking next (window starts Thu 2026-01-29), nothing else needed.
 
 In `tests/client/day-periods-messages-admin.test.tsx`, in the test at ~line 440 ("active member and an empty 14-day editor"), update the title text to "(2 navigation buttons + 1 member pill + 14 textareas)" and add `expect(document.body.querySelector("select")).toBeNull();`. Census counts 17/19/18 stay as is (one radio replaces one select).
@@ -248,8 +254,9 @@ In `tests/client/day-periods-messages-admin.test.tsx`, in the test at ~line 440 
   />
 </div>
 ```
-  5. In `dates.map((date) => ...)` change to `dates.map((date, index) => ...)`, then `const band = bands[index] ?? "plain";`, add `data-week-band={band}` to the `<li>` and append `band === "shaded" && "bg-muted/50"` to its class via `cn` from `@/lib/utils` (use whatever class-merge helper the file's neighbours import; `grep -n "import { cn }" src/client/admin/*.tsx`) .
-  6. The `<ul className="space-y-2">` stays (rows keep their gap; the band is the row background).
+
+5. In `dates.map((date) => ...)` change to `dates.map((date, index) => ...)`, then `const band = bands[index] ?? "plain";`, add `data-week-band={band}` to the `<li>` and append `band === "shaded" && "bg-muted/50"` to its class via `cn` from `@/lib/utils` (use whatever class-merge helper the file's neighbours import; `grep -n "import { cn }" src/client/admin/*.tsx`) .
+6. The `<ul className="space-y-2">` stays (rows keep their gap; the band is the row background).
 
 - [ ] **Step 4: Run, expect PASS** (both test files), then `npx tsc --noEmit -p .` style typecheck via `npm run typecheck`.
 - [ ] **Step 5: Commit**: `git commit -am "feat(admin): pick the Messages member with pills and band the days by week"`
@@ -257,6 +264,7 @@ In `tests/client/day-periods-messages-admin.test.tsx`, in the test at ~line 440 
 ### Task 3: e2e and docs
 
 **Files:**
+
 - Modify: `tests/e2e/daily-messages.spec.ts` (lines ~92-96)
 - Modify: `tests/e2e/member-lifecycle.spec.ts` (lines ~176-177)
 - Modify: `docs/ui/household-contract.md` (the Messages sentence near line 61)
@@ -266,6 +274,7 @@ In `tests/client/day-periods-messages-admin.test.tsx`, in the test at ~line 440 
 ```ts
 await page.getByRole("radio", { name: new RegExp(memberName) }).check();
 ```
+
 and fix the comment above it ("the pill may default to a pre-existing active member"). After the loading wait, add a banding sanity check that does not depend on the weekday:
 
 ```ts
@@ -276,6 +285,7 @@ expect(bands).toHaveLength(14);
 expect(bands[0]).toBe("plain");
 expect(bands).toContain("shaded");
 ```
+
 (Wait for the 14 rows first: `await expect(page.locator('[data-testid^="daily-messages-day-"]')).toHaveCount(14);`. Note `daily-messages-day-` prefix also matches nothing else; `daily-messages-delete-` and `-text-` differ.) Do not rename the test title.
 
 - [ ] **Step 2: Update `member-lifecycle.spec.ts`.** Replace the `option[value=...]` assertion with `await expect(page.getByTestId(\`daily-messages-member-${memberId}\`)).toBeVisible(); await expect(page.getByRole("radio", { name: editedName })).toBeVisible();` (name match may be a regexp if the pill name carries extra text).
