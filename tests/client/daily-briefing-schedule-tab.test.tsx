@@ -62,8 +62,13 @@ describe("scheduleSummary", () => {
 describe("BriefingScheduleTab", () => {
   it("lists every member with the opt-in, days and open buttons", () => {
     const props = renderTab();
-    expect(screen.getByRole("checkbox", { name: "Lisa: On" })).toBeChecked();
-    expect(screen.getByRole("checkbox", { name: "Bart: On" })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Lisa: Daily briefing" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Bart: Daily briefing" })).not.toBeChecked();
+    // The label names what the box controls and is hidden: the column header shows it, and an
+    // unticked box never sits next to a word that reads as its state.
+    expect(
+      screen.getByTestId("daily-briefing-opt-in-m-bart").closest("label")?.querySelector(".sr-only")
+    ).not.toBeNull();
     expect(screen.getByTestId("daily-briefing-member-days-m-lisa")).toHaveTextContent(
       "Mon, Tue, Wed, Thu, Fri"
     );
@@ -80,7 +85,7 @@ describe("BriefingScheduleTab", () => {
     renderTab();
     expect(screen.getByTestId("daily-briefing-member-days-m-lisa")).toHaveAttribute(
       "data-label",
-      "Days"
+      "Briefing days"
     );
     expect(screen.getByTestId("daily-briefing-member-status-m-lisa")).toHaveAttribute(
       "data-label",
@@ -117,7 +122,9 @@ describe("BriefingScheduleTab", () => {
   it("disables Generate for all members when it cannot run, with the hint", () => {
     renderTab({ canGenerateAll: false, optIns: {} });
     expect(screen.getByTestId("daily-briefing-generate-all")).toBeDisabled();
-    expect(screen.getByText("Turn on the daily briefing for a member below to generate.")).toBeVisible();
+    expect(
+      screen.getByText("Turn on the daily briefing for a member below to generate.")
+    ).toBeVisible();
   });
 
   it("does not render the automation card until settings load", () => {

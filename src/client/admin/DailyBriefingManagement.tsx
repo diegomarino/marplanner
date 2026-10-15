@@ -502,7 +502,9 @@ export function DailyBriefingManagement() {
             optIns={optIns}
             selectedId={selectedId}
             onSelect={selectMember}
-            turnOnPending={selected ? pendingOptIns.has(selected.id) : false}
+            turnOnPending={
+              generatingAll || workspaceBusy || (selected ? pendingOptIns.has(selected.id) : false)
+            }
             onTurnOn={(id) => void setOptIn(id, true)}
           />
         )}

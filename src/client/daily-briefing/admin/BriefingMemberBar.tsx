@@ -16,6 +16,7 @@ export function BriefingMemberBar({
   optIns: Record<string, boolean>;
   selectedId: string;
   onSelect: (memberId: string) => void;
+  /** That member's opt-in write is pending, or opt-ins are locked (a generate is running). */
   turnOnPending: boolean;
   onTurnOn: (memberId: string) => void;
 }) {
