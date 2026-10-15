@@ -52,28 +52,28 @@ pause row + notice + Retry, and delegates the Preview tab to three new component
 
 ## File map
 
-| File | Change |
-|------|--------|
-| `drizzle/0005_daily_briefing_schedule.sql` | create — `ALTER TABLE daily_briefing_optin ADD weekdays text` |
-| `src/server/db/schema.ts` | `dailyBriefingOptins` + `weekdays` column (last) |
-| `src/server/db/weekday-integrity.ts` | check the new column |
-| `src/shared/dailyBriefing.ts` | new DTO types |
-| `src/server/modules/daily-briefing/errors.ts` | 4 new error classes |
-| `src/server/modules/daily-briefing/schedule.ts` | create — schedule read/write/predicate |
-| `src/server/modules/daily-briefing/index.ts` | pause check, Generate-all skip, in-flight registry, `readBriefingPng.generating`, `listBriefingHistory`, `printBriefing`, re-exports |
-| `src/server/modules/daily-briefing/job.ts` | `isMissed` + retry pass skip paused; export `regenerateFailedBriefings` |
-| `src/server/modules/daily-briefing/trigger.ts` | skip paused members |
-| `src/server/modules/daily-briefing/settings.ts` | `memberSchedules` in the aggregate view |
-| `src/server/routes/daily-briefing.ts` | 3 new routes, generate skipped, preview 202, error mapping |
-| `docs/features/daily-briefing.md`, `docs/api/daily-briefing/openapi.yaml`, `docs/api/briefing-render/openapi.yaml`, `docs/ui/household-contract.md` | docs |
-| `src/client/components/WeekdayPicker.tsx` | `disabledDays` prop |
-| `src/client/daily-briefing/admin/BriefingMemberPills.tsx` | create |
-| `src/client/daily-briefing/admin/BriefingImage.tsx` | create |
-| `src/client/daily-briefing/admin/BriefingWorkspace.tsx` | create |
-| `src/client/admin/DailyBriefingManagement.tsx` | rework (see Task 8) |
-| `src/client/i18n/messages.ts` | `// admin-briefing` blocks |
-| Tests | new: `tests/boundary/daily-briefing-admin-parity.test.ts`, `tests/client/daily-briefing-workspace.test.tsx`; updated: see tasks |
-| `tests/fixtures/assembly-cohort.json` | routes, test cases, coverage floors |
+| File                                                                                                                                                | Change                                                                                                                               |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `drizzle/0005_daily_briefing_schedule.sql`                                                                                                          | create — `ALTER TABLE daily_briefing_optin ADD weekdays text`                                                                        |
+| `src/server/db/schema.ts`                                                                                                                           | `dailyBriefingOptins` + `weekdays` column (last)                                                                                     |
+| `src/server/db/weekday-integrity.ts`                                                                                                                | check the new column                                                                                                                 |
+| `src/shared/dailyBriefing.ts`                                                                                                                       | new DTO types                                                                                                                        |
+| `src/server/modules/daily-briefing/errors.ts`                                                                                                       | 4 new error classes                                                                                                                  |
+| `src/server/modules/daily-briefing/schedule.ts`                                                                                                     | create — schedule read/write/predicate                                                                                               |
+| `src/server/modules/daily-briefing/index.ts`                                                                                                        | pause check, Generate-all skip, in-flight registry, `readBriefingPng.generating`, `listBriefingHistory`, `printBriefing`, re-exports |
+| `src/server/modules/daily-briefing/job.ts`                                                                                                          | `isMissed` + retry pass skip paused; export `regenerateFailedBriefings`                                                              |
+| `src/server/modules/daily-briefing/trigger.ts`                                                                                                      | skip paused members                                                                                                                  |
+| `src/server/modules/daily-briefing/settings.ts`                                                                                                     | `memberSchedules` in the aggregate view                                                                                              |
+| `src/server/routes/daily-briefing.ts`                                                                                                               | 3 new routes, generate skipped, preview 202, error mapping                                                                           |
+| `docs/features/daily-briefing.md`, `docs/api/daily-briefing/openapi.yaml`, `docs/api/briefing-render/openapi.yaml`, `docs/ui/household-contract.md` | docs                                                                                                                                 |
+| `src/client/components/WeekdayPicker.tsx`                                                                                                           | `disabledDays` prop                                                                                                                  |
+| `src/client/daily-briefing/admin/BriefingMemberPills.tsx`                                                                                           | create                                                                                                                               |
+| `src/client/daily-briefing/admin/BriefingImage.tsx`                                                                                                 | create                                                                                                                               |
+| `src/client/daily-briefing/admin/BriefingWorkspace.tsx`                                                                                             | create                                                                                                                               |
+| `src/client/admin/DailyBriefingManagement.tsx`                                                                                                      | rework (see Task 8)                                                                                                                  |
+| `src/client/i18n/messages.ts`                                                                                                                       | `// admin-briefing` blocks                                                                                                           |
+| Tests                                                                                                                                               | new: `tests/boundary/daily-briefing-admin-parity.test.ts`, `tests/client/daily-briefing-workspace.test.tsx`; updated: see tasks      |
+| `tests/fixtures/assembly-cohort.json`                                                                                                               | routes, test cases, coverage floors                                                                                                  |
 
 ---
 
@@ -104,6 +104,7 @@ Expected: both files PASS before you change anything.
 ## Task 1: Schedule storage (migration, schema, integrity, shared types)
 
 **Files:**
+
 - Create: `drizzle/0005_daily_briefing_schedule.sql`
 - Modify: `src/server/db/schema.ts` (`dailyBriefingOptins`, ≈ line 688)
 - Modify: `src/server/db/weekday-integrity.ts`
@@ -111,6 +112,7 @@ Expected: both files PASS before you change anything.
 - Test: `tests/boundary/database-baseline.test.ts`, `tests/integration/database-baseline.test.ts`, `tests/integration/plugin-compatibility.test.ts`, `tests/boundary/weekday-integrity.test.ts`
 
 **Interfaces:**
+
 - Produces: column `daily_briefing_optin.weekdays TEXT NULL` (JSON array of weekday codes, canonical order; NULL = every day); shared types below.
 
 - [ ] **Step 1: Update the migration-list tests first (they fail until the file exists)**
@@ -118,6 +120,7 @@ Expected: both files PASS before you change anything.
 `tests/boundary/database-baseline.test.ts`: add `const DAILY_BRIEFING_SCHEDULE_MIGRATION = "0005_daily_briefing_schedule.sql";` after `MEMBER_PALETTE_MIGRATION`, and append `DAILY_BRIEFING_SCHEDULE_MIGRATION,` after `MEMBER_PALETTE_MIGRATION,` in the `expect(migrationFiles).toEqual([...])` list.
 
 `tests/integration/database-baseline.test.ts`: add
+
 ```ts
 const DAILY_BRIEFING_SCHEDULE_MIGRATION = join(
   PROJECT_ROOT,
@@ -125,12 +128,14 @@ const DAILY_BRIEFING_SCHEDULE_MIGRATION = join(
   "0005_daily_briefing_schedule.sql"
 );
 ```
+
 after `MEMBER_PALETTE_MIGRATION`; append it to the `instantiateCatalog([...])` file list (after `MEMBER_PALETTE_MIGRATION`), and append `{ fileName: "0005_daily_briefing_schedule.sql" },` after the `0004_member_palette.sql` entry of the applied-migrations list (≈ line 224).
 
 `tests/integration/plugin-compatibility.test.ts`: add `const DAILY_BRIEFING_SCHEDULE_FILE = "0005_daily_briefing_schedule.sql";` after `MEMBER_PALETTE_FILE`, and after `recordMigration(db, MEMBER_PALETTE_FILE);` add:
+
 ```ts
-      applyRealMigration(db, DAILY_BRIEFING_SCHEDULE_FILE);
-      recordMigration(db, DAILY_BRIEFING_SCHEDULE_FILE);
+applyRealMigration(db, DAILY_BRIEFING_SCHEDULE_FILE);
+recordMigration(db, DAILY_BRIEFING_SCHEDULE_FILE);
 ```
 
 `tests/boundary/weekday-integrity.test.ts`: in the test "identifies corrupt persisted weekday rows in every domain without rewriting data", add `["daily_briefing_optin", "weekdays"],` to the `for (const [table, column] of [...])` list, right after the `daily_briefing_member_block_settings` entry. (The public seed opts members in, so a row exists; if `row` is undefined there, insert one opt-in row for an existing member before the loop instead of skipping.)
@@ -143,6 +148,7 @@ Expected: FAIL (missing migration file / missing column).
 - [ ] **Step 3: Create the migration**
 
 `drizzle/0005_daily_briefing_schedule.sql`:
+
 ```sql
 -- Per-member weekday pause for the daily briefing. NULL means every day; otherwise a JSON array
 -- of canonical weekday codes (mon..sun) on which the member's briefing is generated and printed.
@@ -150,24 +156,28 @@ ALTER TABLE `daily_briefing_optin` ADD `weekdays` text;
 ```
 
 - [ ] **Step 4: Schema** — in `src/server/db/schema.ts`, `dailyBriefingOptins`, add the column LAST (after `updatedAt`) so Drizzle's generated column order matches the ALTER:
+
 ```ts
     updatedAt: integer("updated_at").notNull(),
     /** Weekday pause schedule (JSON weekday codes, canonical order); NULL = every day. */
     weekdays: text("weekdays"),
 ```
+
 Also extend the doc comment above the table with one sentence: "`weekdays` is the per-member pause schedule (drizzle/0005)."
 
 - [ ] **Step 5: Integrity** — `src/server/db/weekday-integrity.ts`: add `["daily_briefing_optin", "weekdays", true],` after the block-settings entry, and change the id expression to:
+
 ```ts
-    const id =
-      table === "daily_briefing_member_block_settings"
-        ? "member_id || ':' || block_type"
-        : table === "daily_briefing_optin"
-          ? "member_id"
-          : "id";
+const id =
+  table === "daily_briefing_member_block_settings"
+    ? "member_id || ':' || block_type"
+    : table === "daily_briefing_optin"
+      ? "member_id"
+      : "id";
 ```
 
 - [ ] **Step 6: Shared types** — append to `src/shared/dailyBriefing.ts` (add `import type { WeekdayCode } from "./weekdays.js";` at the top of the file):
+
 ```ts
 /** BriefingSchedule — a member's weekday pause schedule: the weekdays (canonical mon..sun order)
  * on which their briefing is generated and auto-printed. An empty array pauses every day. */
@@ -217,6 +227,7 @@ Run: `npx vitest run tests/boundary/database-baseline.test.ts tests/integration/
 Expected: PASS. If the catalog comparison in `tests/integration/database-baseline.test.ts` reports a definition mismatch for `daily_briefing_optin`, compare the two normalized SQL strings it prints: the column must be the last column, before the CHECK constraint, in both.
 
 - [ ] **Step 8: Commit**
+
 ```bash
 git add drizzle/0005_daily_briefing_schedule.sql src/server/db/schema.ts src/server/db/weekday-integrity.ts src/shared/dailyBriefing.ts tests/boundary/database-baseline.test.ts tests/integration/database-baseline.test.ts tests/integration/plugin-compatibility.test.ts tests/boundary/weekday-integrity.test.ts
 git commit -m "feat(daily-briefing): store a per-member weekday pause schedule"
@@ -227,6 +238,7 @@ git commit -m "feat(daily-briefing): store a per-member weekday pause schedule"
 ## Task 2: Schedule module, errors, settings view, schedule route
 
 **Files:**
+
 - Modify: `src/server/modules/daily-briefing/errors.ts`
 - Create: `src/server/modules/daily-briefing/schedule.ts`
 - Modify: `src/server/modules/daily-briefing/settings.ts` (`DailyBriefingSettingsView`, `readAllSettings`, bottom of file)
@@ -235,6 +247,7 @@ git commit -m "feat(daily-briefing): store a per-member weekday pause schedule"
 - Modify test: `tests/boundary/daily-briefing-settings.test.ts` (≈ line 55 `toEqual`)
 
 **Interfaces:**
+
 - Consumes: Task 1 column + `BriefingSchedule`.
 - Produces (exact):
   - `errors.ts`: `class DailyBriefingPausedError extends Error { readonly memberId: string; readonly date: string }`, `class DailyBriefingNotFoundError extends Error`, `class DailyBriefingPrintUnavailableError extends Error`, `class DailyBriefingRasterMissingError extends Error`.
@@ -291,7 +304,13 @@ describe("daily-briefing admin parity", () => {
     it("defaults to every day and stores a canonical, de-duplicated list", () => {
       seedMember("m-sched");
       expect(readMemberWeekdays("m-sched")).toEqual([
-        "mon", "tue", "wed", "thu", "fri", "sat", "sun",
+        "mon",
+        "tue",
+        "wed",
+        "thu",
+        "fri",
+        "sat",
+        "sun",
       ]);
       expect(setMemberSchedule("m-sched", ["sun", "mon", "mon"])).toEqual({
         memberId: "m-sched",
@@ -375,6 +394,7 @@ Run: `npx vitest run tests/boundary/daily-briefing-admin-parity.test.ts tests/bo
 Expected: FAIL — `schedule.ts` does not exist.
 
 - [ ] **Step 3: Errors** — append to `src/server/modules/daily-briefing/errors.ts`:
+
 ```ts
 /** The member's briefing is paused on this weekday (spec D4). Deliberately NOT a validation
  * error: the generate route answers 200 `{skipped: true}`, and batch callers skip it. */
@@ -414,6 +434,7 @@ export class DailyBriefingRasterMissingError extends Error {
 ```
 
 - [ ] **Step 4: Schedule module** — create `src/server/modules/daily-briefing/schedule.ts`:
+
 ```ts
 /** Per-member weekday pause schedule (admin parity, spec D1–D4). Stored as the nullable
  * `daily_briefing_optin.weekdays` JSON column (drizzle/0005): NULL means every day. Imports only
@@ -479,6 +500,7 @@ export function isBriefingScheduledOn(memberId: string, date: string): boolean {
   return readMemberWeekdays(memberId).includes(weekdayOf(date, readHouseholdTimezone()));
 }
 ```
+
 Note: `row?.weekdays ? ... : ...` treats `""` like NULL; the column is only written by `setMemberSchedule`, which always writes a JSON array.
 
 - [ ] **Step 5: Settings view** — in `src/server/modules/daily-briefing/settings.ts`:
@@ -490,32 +512,33 @@ Note: `row?.weekdays ? ... : ...` treats `""` like NULL; the column is only writ
   - import `{ setMemberSchedule } from "../modules/daily-briefing/schedule";`
   - add `const ALLOWED_SCHEDULE_KEYS = new Set(["weekdays"]);` next to the other key sets,
   - register after the block-settings route:
+
 ```ts
-  app.put(
-    "/api/daily-briefing/schedule/:memberId",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const body = request.body;
-      if (!body || typeof body !== "object" || Array.isArray(body)) {
-        return reply
-          .code(400)
-          .send({ error: "validation_error", message: "Request body must be an object" });
-      }
-      const unknownKeys = Object.keys(body).filter((key) => !ALLOWED_SCHEDULE_KEYS.has(key));
-      if (unknownKeys.length > 0) {
-        return reply.code(400).send({
-          error: "validation_error",
-          message: `Unsupported field(s) in daily briefing schedule body: ${unknownKeys.join(", ")}`,
-        });
-      }
-      const { weekdays } = body as { weekdays?: unknown };
-      const { memberId } = request.params as { memberId: string };
-      try {
-        return reply.code(200).send(setMemberSchedule(memberId, weekdays));
-      } catch (err) {
-        return handleDailyBriefingError(err, reply);
-      }
+app.put(
+  "/api/daily-briefing/schedule/:memberId",
+  async (request: FastifyRequest, reply: FastifyReply) => {
+    const body = request.body;
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return reply
+        .code(400)
+        .send({ error: "validation_error", message: "Request body must be an object" });
     }
-  );
+    const unknownKeys = Object.keys(body).filter((key) => !ALLOWED_SCHEDULE_KEYS.has(key));
+    if (unknownKeys.length > 0) {
+      return reply.code(400).send({
+        error: "validation_error",
+        message: `Unsupported field(s) in daily briefing schedule body: ${unknownKeys.join(", ")}`,
+      });
+    }
+    const { weekdays } = body as { weekdays?: unknown };
+    const { memberId } = request.params as { memberId: string };
+    try {
+      return reply.code(200).send(setMemberSchedule(memberId, weekdays));
+    } catch (err) {
+      return handleDailyBriefingError(err, reply);
+    }
+  }
+);
 ```
 
 - [ ] **Step 7: Run the tests**
@@ -524,6 +547,7 @@ Run: `npx vitest run tests/boundary/daily-briefing-admin-parity.test.ts tests/bo
 Expected: PASS.
 
 - [ ] **Step 8: Commit**
+
 ```bash
 git add src/server/modules/daily-briefing/errors.ts src/server/modules/daily-briefing/schedule.ts src/server/modules/daily-briefing/settings.ts src/server/routes/daily-briefing.ts tests/boundary/daily-briefing-admin-parity.test.ts tests/boundary/daily-briefing-settings.test.ts
 git commit -m "feat(daily-briefing): add the weekday pause schedule endpoint"
@@ -534,6 +558,7 @@ git commit -m "feat(daily-briefing): add the weekday pause schedule endpoint"
 ## Task 3: Pause semantics (generate, Generate all, retry pass, catch-up, auto-print)
 
 **Files:**
+
 - Modify: `src/server/modules/daily-briefing/index.ts` (`generateBriefing` read transaction ≈ lines 922–948; `generateAllBriefings` ≈ line 1226; re-exports near line 68)
 - Modify: `src/server/modules/daily-briefing/job.ts` (`isMissed`, `regenerateFailedBriefings`)
 - Modify: `src/server/modules/daily-briefing/trigger.ts` (`evaluateAutoPrintTrigger`)
@@ -541,92 +566,96 @@ git commit -m "feat(daily-briefing): add the weekday pause schedule endpoint"
 - Test: `tests/boundary/daily-briefing-admin-parity.test.ts`, `tests/integration/daily-briefing-trigger.test.ts`
 
 **Interfaces:**
+
 - Consumes: `isBriefingScheduledOn` (Task 2), `DailyBriefingPausedError` (Task 2).
 - Produces: `generateBriefing` throws `DailyBriefingPausedError` for a paused weekday (no write); `generateAllBriefings` skips paused members; `regenerateFailedBriefings(requestedDate?: string): Promise<void>` is now EXPORTED from `job.ts`; `POST /generate` answers `200 GenerateSkippedResponse`.
 
 - [ ] **Step 1: Failing tests** — add to `tests/boundary/daily-briefing-admin-parity.test.ts` (new imports at the top: `generateAllBriefings`, `generateBriefing` from `../../src/server/modules/daily-briefing/index`; `isMissed`, `regenerateFailedBriefings` from `../../src/server/modules/daily-briefing/job`; `seedBriefingRow`, `findBriefingRow` from `../helpers/daily-briefing-seed`):
+
 ```ts
-  describe("paused weekdays are skipped", () => {
-    // 2026-09-07 is a Monday.
-    const MONDAY = "2026-09-07";
+describe("paused weekdays are skipped", () => {
+  // 2026-09-07 is a Monday.
+  const MONDAY = "2026-09-07";
 
-    beforeEach(() => {
-      __setPrintingPluginActiveForTests(false); // no render needed for these assertions
-    });
-
-    it("generateBriefing writes nothing and the route answers skipped", async () => {
-      seedMember("m-paused");
-      setMemberSchedule("m-paused", ["tue"]);
-      await expect(generateBriefing("m-paused", MONDAY)).rejects.toMatchObject({
-        name: "DailyBriefingPausedError",
-        memberId: "m-paused",
-        date: MONDAY,
-      });
-      const res = await app.inject({
-        method: "POST",
-        url: "/api/daily-briefing/generate",
-        cookies: auth(),
-        payload: { memberId: "m-paused", date: MONDAY },
-      });
-      expect(res.statusCode).toBe(200);
-      expect(res.json()).toEqual({
-        skipped: true,
-        reason: "paused",
-        memberId: "m-paused",
-        date: MONDAY,
-      });
-      expect(findBriefingRow("m-paused", MONDAY)).toBeUndefined();
-    });
-
-    it("Generate all skips a paused member but generates the others", async () => {
-      seedMember("m-a-paused");
-      seedMember("m-b-running");
-      setMemberSchedule("m-a-paused", ["tue"]);
-      const generated = await generateAllBriefings(MONDAY);
-      expect(generated.map((briefing) => briefing.memberId)).toEqual(["m-b-running"]);
-      expect(findBriefingRow("m-a-paused", MONDAY)).toBeUndefined();
-    });
-
-    it("the retry pass skips a member paused after their row was written", async () => {
-      seedMember("m-retry");
-      seedBriefingRow("m-retry", MONDAY);
-      getDb()
-        .prepare("UPDATE daily_briefing SET status = 'failed' WHERE member_id = ? AND date = ?")
-        .run("m-retry", MONDAY);
-      setMemberSchedule("m-retry", ["tue"]);
-      await expect(regenerateFailedBriefings(MONDAY)).resolves.toBeUndefined();
-      const row = getDb()
-        .prepare("SELECT status FROM daily_briefing WHERE member_id = ? AND date = ?")
-        .get("m-retry", MONDAY);
-      expect(row).toEqual({ status: "failed" });
-    });
-
-    it("catch-up does not count a paused member as missed", () => {
-      seedMember("m-catchup");
-      expect(isMissed(MONDAY)).toBe(true);
-      setMemberSchedule("m-catchup", ["tue"]);
-      expect(isMissed(MONDAY)).toBe(false);
-    });
+  beforeEach(() => {
+    __setPrintingPluginActiveForTests(false); // no render needed for these assertions
   });
+
+  it("generateBriefing writes nothing and the route answers skipped", async () => {
+    seedMember("m-paused");
+    setMemberSchedule("m-paused", ["tue"]);
+    await expect(generateBriefing("m-paused", MONDAY)).rejects.toMatchObject({
+      name: "DailyBriefingPausedError",
+      memberId: "m-paused",
+      date: MONDAY,
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/daily-briefing/generate",
+      cookies: auth(),
+      payload: { memberId: "m-paused", date: MONDAY },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      skipped: true,
+      reason: "paused",
+      memberId: "m-paused",
+      date: MONDAY,
+    });
+    expect(findBriefingRow("m-paused", MONDAY)).toBeUndefined();
+  });
+
+  it("Generate all skips a paused member but generates the others", async () => {
+    seedMember("m-a-paused");
+    seedMember("m-b-running");
+    setMemberSchedule("m-a-paused", ["tue"]);
+    const generated = await generateAllBriefings(MONDAY);
+    expect(generated.map((briefing) => briefing.memberId)).toEqual(["m-b-running"]);
+    expect(findBriefingRow("m-a-paused", MONDAY)).toBeUndefined();
+  });
+
+  it("the retry pass skips a member paused after their row was written", async () => {
+    seedMember("m-retry");
+    seedBriefingRow("m-retry", MONDAY);
+    getDb()
+      .prepare("UPDATE daily_briefing SET status = 'failed' WHERE member_id = ? AND date = ?")
+      .run("m-retry", MONDAY);
+    setMemberSchedule("m-retry", ["tue"]);
+    await expect(regenerateFailedBriefings(MONDAY)).resolves.toBeUndefined();
+    const row = getDb()
+      .prepare("SELECT status FROM daily_briefing WHERE member_id = ? AND date = ?")
+      .get("m-retry", MONDAY);
+    expect(row).toEqual({ status: "failed" });
+  });
+
+  it("catch-up does not count a paused member as missed", () => {
+    seedMember("m-catchup");
+    expect(isMissed(MONDAY)).toBe(true);
+    setMemberSchedule("m-catchup", ["tue"]);
+    expect(isMissed(MONDAY)).toBe(false);
+  });
+});
 ```
+
 Add to `tests/integration/daily-briefing-trigger.test.ts`, inside the main `describe`, after the "AC-1" test (add `import { setMemberSchedule } from "../../src/server/modules/daily-briefing/schedule";` at the top):
+
 ```ts
-  it("a member paused on today's weekday is not enqueued, and is again once resumed", () => {
-    const memberId = "member-paused-today";
-    seedMember(memberId);
-    enableAutoPrint();
-    seedBriefingRowWithRaster(memberId, DATE);
-    const [chore] = seedMorningRoutine(memberId, 1, WEEKDAY);
-    completeChoreDirect(chore, memberId, DATE);
+it("a member paused on today's weekday is not enqueued, and is again once resumed", () => {
+  const memberId = "member-paused-today";
+  seedMember(memberId);
+  enableAutoPrint();
+  seedBriefingRowWithRaster(memberId, DATE);
+  const [chore] = seedMorningRoutine(memberId, 1, WEEKDAY);
+  completeChoreDirect(chore, memberId, DATE);
 
-    setMemberSchedule(memberId, ["mon", "tue", "wed", "fri", "sat", "sun"]); // Thursday off
-    evaluateAutoPrintTrigger(NOW);
-    expect(countJobsForOutputRef(outputRefFor(memberId))).toBe(0);
+  setMemberSchedule(memberId, ["mon", "tue", "wed", "fri", "sat", "sun"]); // Thursday off
+  evaluateAutoPrintTrigger(NOW);
+  expect(countJobsForOutputRef(outputRefFor(memberId))).toBe(0);
 
-    setMemberSchedule(memberId, ["thu"]);
-    evaluateAutoPrintTrigger(NOW);
-    expect(countJobsForOutputRef(outputRefFor(memberId))).toBe(1);
-  });
+  setMemberSchedule(memberId, ["thu"]);
+  evaluateAutoPrintTrigger(NOW);
+  expect(countJobsForOutputRef(outputRefFor(memberId))).toBe(1);
+});
 ```
 
 - [ ] **Step 2: Run to see them fail**
@@ -636,6 +665,7 @@ Expected: FAIL (no pause checks yet; `regenerateFailedBriefings` not exported).
 
 - [ ] **Step 3: index.ts**
   - Imports: `import { isBriefingScheduledOn } from "./schedule";` and add `DailyBriefingPausedError` to the `./errors` import (there is `import { DailyBriefingValidationError } from "./errors";` at ≈ line 69 — extend it). Also add, next to the existing `export { DailyBriefingValidationError } from "./errors";`:
+
 ```ts
 export {
   DailyBriefingNotFoundError,
@@ -645,18 +675,23 @@ export {
 } from "./errors";
 export { listMemberSchedules, setMemberSchedule } from "./schedule";
 ```
-  - In `generateBriefing`, inside the first `db.transaction(() => { ... })`, right after the `if (!isOptedIn(memberId)) { throw ... }` block, add:
+
+- In `generateBriefing`, inside the first `db.transaction(() => { ... })`, right after the `if (!isOptedIn(memberId)) { throw ... }` block, add:
+
 ```ts
-    if (!isBriefingScheduledOn(memberId, date)) {
-      throw new DailyBriefingPausedError(memberId, date);
-    }
+if (!isBriefingScheduledOn(memberId, date)) {
+  throw new DailyBriefingPausedError(memberId, date);
+}
 ```
-  - In `generateAllBriefings`, right after `if (!isActiveMember(memberId)) continue;` add:
+
+- In `generateAllBriefings`, right after `if (!isActiveMember(memberId)) continue;` add:
+
 ```ts
-    // A member paused on this weekday is skipped like an inactive one (spec D4).
-    if (!isBriefingScheduledOn(memberId, date)) continue;
+// A member paused on this weekday is skipped like an inactive one (spec D4).
+if (!isBriefingScheduledOn(memberId, date)) continue;
 ```
-  Leave the existing `catch` untouched: the pre-check runs synchronously right before the call, so a pause cannot land in between.
+
+Leave the existing `catch` untouched: the pre-check runs synchronously right before the call, so a pause cannot land in between.
 
 - [ ] **Step 4: job.ts**
   - `import { isBriefingScheduledOn } from "./schedule";`
@@ -664,12 +699,14 @@ export { listMemberSchedules, setMemberSchedule } from "./schedule";
   - Change `async function regenerateFailedBriefings(` to `export async function regenerateFailedBriefings(` and, in its loop, after `if (!isActiveMember(memberId)) continue;` add `if (!isBriefingScheduledOn(memberId, date)) continue;`
 
 - [ ] **Step 5: trigger.ts** — `import { isBriefingScheduledOn } from "./schedule";` and in `evaluateAutoPrintTrigger` add one filter after the `isActiveMember` filter:
+
 ```ts
     // A member paused on today's weekday has no briefing to print (spec D4).
     .filter((optIn) => isBriefingScheduledOn(optIn.memberId, date))
 ```
 
 - [ ] **Step 6: Route** — in `POST /api/daily-briefing/generate`, replace the `catch (err) { return handleDailyBriefingError(err, reply); }` with:
+
 ```ts
     } catch (err) {
       if (err instanceof DailyBriefingPausedError) {
@@ -683,6 +720,7 @@ export { listMemberSchedules, setMemberSchedule } from "./schedule";
       return handleDailyBriefingError(err, reply);
     }
 ```
+
 and import `DailyBriefingPausedError` from `../modules/daily-briefing/index` and `GenerateSkippedResponse` from `../../shared`.
 
 - [ ] **Step 7: Run the tests (plus the existing briefing suites that touch these paths)**
@@ -691,6 +729,7 @@ Run: `npx vitest run tests/boundary/daily-briefing-admin-parity.test.ts tests/in
 Expected: PASS.
 
 - [ ] **Step 8: Commit**
+
 ```bash
 git add src/server/modules/daily-briefing/index.ts src/server/modules/daily-briefing/job.ts src/server/modules/daily-briefing/trigger.ts src/server/routes/daily-briefing.ts tests/boundary/daily-briefing-admin-parity.test.ts tests/integration/daily-briefing-trigger.test.ts
 git commit -m "feat(daily-briefing): skip paused weekdays in generation, retries, catch-up and auto-print"
@@ -701,11 +740,13 @@ git commit -m "feat(daily-briefing): skip paused weekdays in generation, retries
 ## Task 4: History read and manual print through the queue
 
 **Files:**
+
 - Modify: `src/server/modules/daily-briefing/index.ts`
 - Modify: `src/server/routes/daily-briefing.ts`
 - Test: `tests/boundary/daily-briefing-admin-parity.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `export const BRIEFING_HISTORY_LIMIT = 30;`
   - `export function listBriefingHistory(memberId: string): BriefingHistoryResponse`
@@ -714,153 +755,159 @@ git commit -m "feat(daily-briefing): skip paused weekdays in generation, retries
   - `POST /api/daily-briefing/:memberId/:date/print` → 200 `BriefingPrintResponse`; 400 `validation_error`; 404 `not_found`; 409 `plugin_inactive` | `printable_raster_missing`.
 
 - [ ] **Step 1: Failing tests** — add to the parity test file (imports: `todayInHouseholdTz` from `../../src/server/host-api`):
+
 ```ts
-  function insertRow(memberId: string, date: string, opts: { raster?: boolean; status?: string } = {}) {
-    const now = Date.now();
-    getDb()
-      .prepare(
-        `INSERT INTO daily_briefing
+function insertRow(
+  memberId: string,
+  date: string,
+  opts: { raster?: boolean; status?: string } = {}
+) {
+  const now = Date.now();
+  getDb()
+    .prepare(
+      `INSERT INTO daily_briefing
            (id, member_id, date, status, payload, failed_render_blocks, raster_bits, raster_height,
             png, created_at, updated_at)
          VALUES (?, ?, ?, ?, '{}', '[]', ?, ?, ?, ?, ?)`
-      )
-      .run(
-        `row-${memberId}-${date}`,
-        memberId,
-        date,
-        opts.status ?? "ready",
-        opts.raster ? Buffer.from([0]) : null,
-        opts.raster ? 1 : null,
-        opts.raster ? Buffer.from([0]) : null,
-        now,
-        now
-      );
-  }
+    )
+    .run(
+      `row-${memberId}-${date}`,
+      memberId,
+      date,
+      opts.status ?? "ready",
+      opts.raster ? Buffer.from([0]) : null,
+      opts.raster ? 1 : null,
+      opts.raster ? Buffer.from([0]) : null,
+      now,
+      now
+    );
+}
 
-  describe("history", () => {
-    it("returns the household today and the latest 30 rows newest first", async () => {
-      seedMember("m-hist");
-      for (let day = 1; day <= 31; day += 1) {
-        insertRow("m-hist", `2026-08-${String(day).padStart(2, "0")}`, {
-          status: day === 31 ? "partial" : "ready",
-        });
-      }
-      const res = await app.inject({
-        method: "GET",
-        url: "/api/daily-briefing/history/m-hist",
-        cookies: auth(),
+describe("history", () => {
+  it("returns the household today and the latest 30 rows newest first", async () => {
+    seedMember("m-hist");
+    for (let day = 1; day <= 31; day += 1) {
+      insertRow("m-hist", `2026-08-${String(day).padStart(2, "0")}`, {
+        status: day === 31 ? "partial" : "ready",
       });
-      expect(res.statusCode).toBe(200);
-      const body = res.json();
-      expect(body.today).toBe(todayInHouseholdTz(Date.now()));
-      expect(body.entries).toHaveLength(30);
-      expect(body.entries[0]).toMatchObject({ date: "2026-08-31", status: "partial" });
-      expect(body.entries[29]).toMatchObject({ date: "2026-08-02" });
-      expect(typeof body.entries[0].updatedAt).toBe("number");
+    }
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/daily-briefing/history/m-hist",
+      cookies: auth(),
     });
-
-    it("is an empty, write-free read for an unknown member", async () => {
-      const res = await app.inject({
-        method: "GET",
-        url: "/api/daily-briefing/history/nobody",
-        cookies: auth(),
-      });
-      expect(res.statusCode).toBe(200);
-      expect(res.json().entries).toEqual([]);
-    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.today).toBe(todayInHouseholdTz(Date.now()));
+    expect(body.entries).toHaveLength(30);
+    expect(body.entries[0]).toMatchObject({ date: "2026-08-31", status: "partial" });
+    expect(body.entries[29]).toMatchObject({ date: "2026-08-02" });
+    expect(typeof body.entries[0].updatedAt).toBe("number");
   });
 
-  describe("manual print", () => {
-    function jobsFor(memberId: string) {
-      return getDb()
-        .prepare(
-          `SELECT j.state, j.target_date, j.output_ref, r.record_key
+  it("is an empty, write-free read for an unknown member", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/daily-briefing/history/nobody",
+      cookies: auth(),
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().entries).toEqual([]);
+  });
+});
+
+describe("manual print", () => {
+  function jobsFor(memberId: string) {
+    return getDb()
+      .prepare(
+        `SELECT j.state, j.target_date, j.output_ref, r.record_key
            FROM print_jobs j JOIN print_records r ON r.id = j.record_id
            WHERE j.member_id = ? ORDER BY j.created_at ASC`
-        )
-        .all(memberId) as Array<{
-        state: string;
-        target_date: string;
-        output_ref: string;
-        record_key: string;
-      }>;
-    }
+      )
+      .all(memberId) as Array<{
+      state: string;
+      target_date: string;
+      output_ref: string;
+      record_key: string;
+    }>;
+  }
 
-    async function print(memberId: string, date: string) {
-      return app.inject({
-        method: "POST",
-        url: `/api/daily-briefing/${memberId}/${date}/print`,
-        cookies: auth(),
-      });
-    }
-
-    it("queues a past briefing for TODAY under the manual record key", async () => {
-      seedMember("m-print");
-      insertRow("m-print", "2026-08-01", { raster: true });
-      const res = await print("m-print", "2026-08-01");
-      expect(res.statusCode).toBe(200);
-      expect(res.json()).toMatchObject({ enqueued: true, jobId: expect.any(String) });
-      expect(jobsFor("m-print")).toEqual([
-        {
-          state: "pending",
-          target_date: todayInHouseholdTz(Date.now()),
-          output_ref: "daily-briefing:m-print:2026-08-01",
-          record_key: "daily-briefing:m-print:manual:2026-08-01",
-        },
-      ]);
+  async function print(memberId: string, date: string) {
+    return app.inject({
+      method: "POST",
+      url: `/api/daily-briefing/${memberId}/${date}/print`,
+      cookies: auth(),
     });
+  }
 
-    it("reuses a job still waiting in the queue", async () => {
-      seedMember("m-twice");
-      insertRow("m-twice", "2026-08-01", { raster: true });
-      const first = (await print("m-twice", "2026-08-01")).json();
-      const second = (await print("m-twice", "2026-08-01")).json();
-      expect(second).toEqual({ jobId: first.jobId, enqueued: false });
-      expect(jobsFor("m-twice")).toHaveLength(1);
-    });
-
-    it("re-arms and queues again after a completed print", async () => {
-      seedMember("m-reprint");
-      insertRow("m-reprint", "2026-08-01", { raster: true });
-      const first = (await print("m-reprint", "2026-08-01")).json();
-      // Simulate the printer finishing the job.
-      const db = getDb();
-      db.prepare("UPDATE print_jobs SET state = 'printed', printed_at = ? WHERE id = ?").run(
-        Date.now(),
-        first.jobId
-      );
-      db.prepare(
-        "UPDATE print_records SET printed_job_id = ? WHERE id = (SELECT record_id FROM print_jobs WHERE id = ?)"
-      ).run(first.jobId, first.jobId);
-
-      const second = await print("m-reprint", "2026-08-01");
-      expect(second.statusCode).toBe(200);
-      expect(second.json()).toMatchObject({ enqueued: true });
-      expect(second.json().jobId).not.toBe(first.jobId);
-    });
-
-    it("maps every refusal to its error code", async () => {
-      seedMember("m-errors");
-      insertRow("m-errors", "2026-08-02"); // no raster
-      expect((await print("m-errors", "2026-08-03")).statusCode).toBe(404);
-      const noRaster = await print("m-errors", "2026-08-02");
-      expect(noRaster.statusCode).toBe(409);
-      expect(noRaster.json()).toMatchObject({ error: "printable_raster_missing" });
-      expect((await print("m-errors", "not-a-date")).json()).toMatchObject({
-        error: "validation_error",
-      });
-
-      seedMember("m-gone", { active: false });
-      insertRow("m-gone", "2026-08-02", { raster: true });
-      expect((await print("m-gone", "2026-08-02")).statusCode).toBe(400);
-
-      __setPrintingPluginActiveForTests(false);
-      const inactive = await print("m-errors", "2026-08-02");
-      expect(inactive.statusCode).toBe(409);
-      expect(inactive.json()).toMatchObject({ error: "plugin_inactive" });
-    });
+  it("queues a past briefing for TODAY under the manual record key", async () => {
+    seedMember("m-print");
+    insertRow("m-print", "2026-08-01", { raster: true });
+    const res = await print("m-print", "2026-08-01");
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ enqueued: true, jobId: expect.any(String) });
+    expect(jobsFor("m-print")).toEqual([
+      {
+        state: "pending",
+        target_date: todayInHouseholdTz(Date.now()),
+        output_ref: "daily-briefing:m-print:2026-08-01",
+        record_key: "daily-briefing:m-print:manual:2026-08-01",
+      },
+    ]);
   });
+
+  it("reuses a job still waiting in the queue", async () => {
+    seedMember("m-twice");
+    insertRow("m-twice", "2026-08-01", { raster: true });
+    const first = (await print("m-twice", "2026-08-01")).json();
+    const second = (await print("m-twice", "2026-08-01")).json();
+    expect(second).toEqual({ jobId: first.jobId, enqueued: false });
+    expect(jobsFor("m-twice")).toHaveLength(1);
+  });
+
+  it("re-arms and queues again after a completed print", async () => {
+    seedMember("m-reprint");
+    insertRow("m-reprint", "2026-08-01", { raster: true });
+    const first = (await print("m-reprint", "2026-08-01")).json();
+    // Simulate the printer finishing the job.
+    const db = getDb();
+    db.prepare("UPDATE print_jobs SET state = 'printed', printed_at = ? WHERE id = ?").run(
+      Date.now(),
+      first.jobId
+    );
+    db.prepare(
+      "UPDATE print_records SET printed_job_id = ? WHERE id = (SELECT record_id FROM print_jobs WHERE id = ?)"
+    ).run(first.jobId, first.jobId);
+
+    const second = await print("m-reprint", "2026-08-01");
+    expect(second.statusCode).toBe(200);
+    expect(second.json()).toMatchObject({ enqueued: true });
+    expect(second.json().jobId).not.toBe(first.jobId);
+  });
+
+  it("maps every refusal to its error code", async () => {
+    seedMember("m-errors");
+    insertRow("m-errors", "2026-08-02"); // no raster
+    expect((await print("m-errors", "2026-08-03")).statusCode).toBe(404);
+    const noRaster = await print("m-errors", "2026-08-02");
+    expect(noRaster.statusCode).toBe(409);
+    expect(noRaster.json()).toMatchObject({ error: "printable_raster_missing" });
+    expect((await print("m-errors", "not-a-date")).json()).toMatchObject({
+      error: "validation_error",
+    });
+
+    seedMember("m-gone", { active: false });
+    insertRow("m-gone", "2026-08-02", { raster: true });
+    expect((await print("m-gone", "2026-08-02")).statusCode).toBe(400);
+
+    __setPrintingPluginActiveForTests(false);
+    const inactive = await print("m-errors", "2026-08-02");
+    expect(inactive.statusCode).toBe(409);
+    expect(inactive.json()).toMatchObject({ error: "plugin_inactive" });
+  });
+});
 ```
+
 (`'printed'` is a valid `print_jobs.state` per the baseline CHECK constraint.) The reprint branch only depends on `print_records.printed_job_id` being set and `superseded_at` being NULL.
 
 - [ ] **Step 2: Run to see them fail**
@@ -869,6 +916,7 @@ Run: `npx vitest run tests/boundary/daily-briefing-admin-parity.test.ts -t "hist
 Expected: FAIL (404 route not found).
 
 - [ ] **Step 3: index.ts** — add `enqueuePrintJob`, `supersedePrintRecord`, `todayInHouseholdTz` to the `../../host-api` import; add `BriefingHistoryResponse`, `BriefingPrintResponse` to the `../../../shared` type import; add the error classes to the `./errors` import. Then add after `readBriefingPng`:
+
 ```ts
 /** How many history rows the admin list shows (reference parity). */
 export const BRIEFING_HISTORY_LIMIT = 30;
@@ -935,49 +983,54 @@ export function printBriefing(memberId: string, date: string, now: number): Brie
   return { jobId: result.jobId, enqueued: result.enqueued };
 }
 ```
+
 (The record key `daily-briefing:<m>:manual:<d>` resolves to this plugin's provider because Printing matches providers by the `daily-briefing:` prefix; the provider parses the dated `outputRef`.)
 
 - [ ] **Step 4: Routes** — import `listBriefingHistory`, `printBriefing`, `DailyBriefingNotFoundError`, `DailyBriefingPrintUnavailableError`, `DailyBriefingRasterMissingError` from `../modules/daily-briefing/index`. Register BEFORE the `GET /api/daily-briefing/:memberId/:date` route (static segments win anyway, this just reads well):
-```ts
-  app.get(
-    "/api/daily-briefing/history/:memberId",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { memberId } = request.params as { memberId: string };
-      try {
-        return reply.code(200).send(listBriefingHistory(memberId));
-      } catch (err) {
-        return handleDailyBriefingError(err, reply);
-      }
-    }
-  );
 
-  // Manual print through the server print queue (spec D6). No request body.
-  app.post(
-    "/api/daily-briefing/:memberId/:date/print",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const { memberId, date } = request.params as { memberId: string; date: string };
-      try {
-        return reply.code(200).send(printBriefing(memberId, date, Date.now()));
-      } catch (err) {
-        return handleDailyBriefingError(err, reply);
-      }
-    }
-  );
-```
-In `handleDailyBriefingError`, before the `DailyBriefingValidationError` branch, add:
 ```ts
-  if (err instanceof DailyBriefingNotFoundError) {
-    return reply.code(404).send({ error: "not_found", message: err.message });
+app.get(
+  "/api/daily-briefing/history/:memberId",
+  async (request: FastifyRequest, reply: FastifyReply) => {
+    const { memberId } = request.params as { memberId: string };
+    try {
+      return reply.code(200).send(listBriefingHistory(memberId));
+    } catch (err) {
+      return handleDailyBriefingError(err, reply);
+    }
   }
-  if (err instanceof DailyBriefingPrintUnavailableError) {
-    return reply.code(409).send({ error: "plugin_inactive", message: err.message });
+);
+
+// Manual print through the server print queue (spec D6). No request body.
+app.post(
+  "/api/daily-briefing/:memberId/:date/print",
+  async (request: FastifyRequest, reply: FastifyReply) => {
+    const { memberId, date } = request.params as { memberId: string; date: string };
+    try {
+      return reply.code(200).send(printBriefing(memberId, date, Date.now()));
+    } catch (err) {
+      return handleDailyBriefingError(err, reply);
+    }
   }
-  if (err instanceof DailyBriefingRasterMissingError) {
-    return reply.code(409).send({ error: "printable_raster_missing", message: err.message });
-  }
+);
+```
+
+In `handleDailyBriefingError`, before the `DailyBriefingValidationError` branch, add:
+
+```ts
+if (err instanceof DailyBriefingNotFoundError) {
+  return reply.code(404).send({ error: "not_found", message: err.message });
+}
+if (err instanceof DailyBriefingPrintUnavailableError) {
+  return reply.code(409).send({ error: "plugin_inactive", message: err.message });
+}
+if (err instanceof DailyBriefingRasterMissingError) {
+  return reply.code(409).send({ error: "printable_raster_missing", message: err.message });
+}
 ```
 
 - [ ] **Step 5: Auth matrix** — in `tests/boundary/plugin-routes.test.ts` `AUTH_ROUTE_MATRIX`, after `["PUT", "/api/daily-briefing/opt-in/:memberId"],` add:
+
 ```ts
   ["PUT", "/api/daily-briefing/schedule/:memberId"],
   ["GET", "/api/daily-briefing/history/:memberId"],
@@ -990,6 +1043,7 @@ Run: `npx vitest run tests/boundary/daily-briefing-admin-parity.test.ts tests/bo
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
+
 ```bash
 git add src/server/modules/daily-briefing/index.ts src/server/routes/daily-briefing.ts tests/boundary/daily-briefing-admin-parity.test.ts tests/boundary/plugin-routes.test.ts
 git commit -m "feat(daily-briefing): add briefing history and manual print through the queue"
@@ -1000,89 +1054,93 @@ git commit -m "feat(daily-briefing): add briefing history and manual print throu
 ## Task 5: 202 while a briefing is still rendering
 
 **Files:**
+
 - Modify: `src/server/modules/daily-briefing/index.ts` (`generateBriefing`, `BriefingPngResult`, `readBriefingPng`)
 - Modify: `src/server/routes/daily-briefing.ts` (preview route)
 - Test: `tests/boundary/daily-briefing-admin-parity.test.ts`, `tests/boundary/daily-briefing-preview.test.ts` (unchanged expectations must still pass)
 
 **Interfaces:**
+
 - Produces: `export function isBriefingGenerating(memberId: string, date: string): boolean`; `BriefingPngResult` gains `generating: boolean`; preview route 202 `{status: "rendering"}`.
 
 - [ ] **Step 1: Failing tests** — add to the parity file (imports: `__setQuoteSourceForTests`, `isBriefingGenerating` from the module index):
+
 ```ts
-  describe("still rendering", () => {
-    const DATE = "2026-09-07";
-    let release: () => void = () => {};
+describe("still rendering", () => {
+  const DATE = "2026-09-07";
+  let release: () => void = () => {};
 
-    beforeEach(() => {
-      __setPrintingPluginActiveForTests(false);
-      const gate = new Promise<null>((resolve) => {
-        release = () => resolve(null);
-      });
-      // quoteOfDay is an external block: generation awaits this port before it can finish.
-      __setQuoteSourceForTests(() => gate);
+  beforeEach(() => {
+    __setPrintingPluginActiveForTests(false);
+    const gate = new Promise<null>((resolve) => {
+      release = () => resolve(null);
     });
-
-    afterEach(() => {
-      release();
-      __setQuoteSourceForTests(undefined);
-    });
-
-    async function preview(memberId: string) {
-      return app.inject({
-        method: "GET",
-        url: `/api/daily-briefing/${memberId}/${DATE}/preview.png`,
-        cookies: auth(),
-      });
-    }
-
-    it("answers 202 while a first generation is in flight, then the final state", async () => {
-      seedMember("m-render");
-      const pending = generateBriefing("m-render", DATE);
-      expect(isBriefingGenerating("m-render", DATE)).toBe(true);
-      const during = await preview("m-render");
-      expect(during.statusCode).toBe(202);
-      expect(during.json()).toEqual({ status: "rendering" });
-
-      release();
-      await pending;
-      expect(isBriefingGenerating("m-render", DATE)).toBe(false);
-      expect((await preview("m-render")).statusCode).toBe(409); // Printing off: no raster
-    });
-
-    it("stays generating until the last overlapping generation finishes", async () => {
-      seedMember("m-overlap");
-      const first = generateBriefing("m-overlap", DATE);
-      const second = generateBriefing("m-overlap", DATE);
-      expect(isBriefingGenerating("m-overlap", DATE)).toBe(true);
-      release();
-      await Promise.all([first, second]);
-      expect(isBriefingGenerating("m-overlap", DATE)).toBe(false);
-    });
-
-    it("clears the in-flight mark when generation throws", async () => {
-      seedMember("m-throws");
-      setMemberSchedule("m-throws", ["tue"]); // Monday paused: throws inside the read transaction
-      await expect(generateBriefing("m-throws", DATE)).rejects.toThrow();
-      expect(isBriefingGenerating("m-throws", DATE)).toBe(false);
-    });
-
-    it("keeps serving a stored PNG while a regeneration is in flight", async () => {
-      seedMember("m-stored");
-      const { PNG } = await import("pngjs");
-      const png = PNG.sync.write(new PNG({ width: 2, height: 2 }));
-      getDb()
-        .prepare(
-          `INSERT INTO daily_briefing (id, member_id, date, status, payload, png, created_at, updated_at)
-           VALUES ('stored', 'm-stored', ?, 'ready', '{}', ?, 1, 1)`
-        )
-        .run(DATE, Buffer.from(png));
-      const pending = generateBriefing("m-stored", DATE);
-      expect((await preview("m-stored")).statusCode).toBe(200);
-      release();
-      await pending;
-    });
+    // quoteOfDay is an external block: generation awaits this port before it can finish.
+    __setQuoteSourceForTests(() => gate);
   });
+
+  afterEach(() => {
+    release();
+    __setQuoteSourceForTests(undefined);
+  });
+
+  async function preview(memberId: string) {
+    return app.inject({
+      method: "GET",
+      url: `/api/daily-briefing/${memberId}/${DATE}/preview.png`,
+      cookies: auth(),
+    });
+  }
+
+  it("answers 202 while a first generation is in flight, then the final state", async () => {
+    seedMember("m-render");
+    const pending = generateBriefing("m-render", DATE);
+    expect(isBriefingGenerating("m-render", DATE)).toBe(true);
+    const during = await preview("m-render");
+    expect(during.statusCode).toBe(202);
+    expect(during.json()).toEqual({ status: "rendering" });
+
+    release();
+    await pending;
+    expect(isBriefingGenerating("m-render", DATE)).toBe(false);
+    expect((await preview("m-render")).statusCode).toBe(409); // Printing off: no raster
+  });
+
+  it("stays generating until the last overlapping generation finishes", async () => {
+    seedMember("m-overlap");
+    const first = generateBriefing("m-overlap", DATE);
+    const second = generateBriefing("m-overlap", DATE);
+    expect(isBriefingGenerating("m-overlap", DATE)).toBe(true);
+    release();
+    await Promise.all([first, second]);
+    expect(isBriefingGenerating("m-overlap", DATE)).toBe(false);
+  });
+
+  it("clears the in-flight mark when generation throws", async () => {
+    seedMember("m-throws");
+    setMemberSchedule("m-throws", ["tue"]); // Monday paused: throws inside the read transaction
+    await expect(generateBriefing("m-throws", DATE)).rejects.toThrow();
+    expect(isBriefingGenerating("m-throws", DATE)).toBe(false);
+  });
+
+  it("keeps serving a stored PNG while a regeneration is in flight", async () => {
+    seedMember("m-stored");
+    const { PNG } = await import("pngjs");
+    const png = PNG.sync.write(new PNG({ width: 2, height: 2 }));
+    getDb()
+      .prepare(
+        `INSERT INTO daily_briefing (id, member_id, date, status, payload, png, created_at, updated_at)
+           VALUES ('stored', 'm-stored', ?, 'ready', '{}', ?, 1, 1)`
+      )
+      .run(DATE, Buffer.from(png));
+    const pending = generateBriefing("m-stored", DATE);
+    expect((await preview("m-stored")).statusCode).toBe(200);
+    release();
+    await pending;
+  });
+});
 ```
+
 Note on the last case: once the regeneration completes with Printing off, the stored PNG is replaced by NULL — that is existing behaviour (FR-012) and not asserted here.
 
 - [ ] **Step 2: Run to see them fail**
@@ -1091,6 +1149,7 @@ Run: `npx vitest run tests/boundary/daily-briefing-admin-parity.test.ts -t "stil
 Expected: FAIL (`isBriefingGenerating` is not a function).
 
 - [ ] **Step 3: Implement the registry** in `index.ts`, above `generateBriefing`:
+
 ```ts
 // ── In-flight registry (spec D7) ───────────────────────────────────────────
 // `pending` never escapes the write transaction, so the admin preview cannot tell "still
@@ -1107,13 +1166,17 @@ export function isBriefingGenerating(memberId: string, date: string): boolean {
   return generationsInFlight.has(flightKey(memberId, date));
 }
 ```
+
 In `generateBriefing`, right after `const { member, date, language } = inputs;` insert:
+
 ```ts
   const flight = flightKey(memberId, date);
   generationsInFlight.set(flight, (generationsInFlight.get(flight) ?? 0) + 1);
   try {
 ```
+
 and close it right after the final `return briefing;` of the function:
+
 ```ts
   } finally {
     const remaining = (generationsInFlight.get(flight) ?? 1) - 1;
@@ -1121,27 +1184,28 @@ and close it right after the final `return briefing;` of the function:
     else generationsInFlight.delete(flight);
   }
 ```
+
 (Everything between — cache, finishBlocks, TOCTOU checks, render, write transaction, catch of `LateEligibilityAbortError`, emit, return — moves inside the `try`; re-indent with the formatter.) A throw from the first read transaction (e.g. paused) happens before the counter is set, so nothing is left marked.
 
 - [ ] **Step 4: readBriefingPng + route** — add `generating: boolean;` to `BriefingPngResult` (doc: "a generation for this member/date is in flight"), and return `generating: isBriefingGenerating(memberId, date)` in both returns of `readBriefingPng`. Replace the body of the preview route's `try` with:
+
 ```ts
-        const result = readBriefingPng(memberId, date);
-        if (result.png) {
-          return reply.code(200).header("content-type", "image/png").send(result.png);
-        }
-        if (result.generating) {
-          return reply.code(202).send({ status: "rendering" } satisfies BriefingPreviewRendering);
-        }
-        if (!result.found) {
-          return reply
-            .code(404)
-            .send({ error: "not_found", message: "No briefing for this member/date" });
-        }
-        return reply.code(409).send({
-          error: "printable_raster_missing",
-          message: "This briefing has no stored printable raster",
-        });
+const result = readBriefingPng(memberId, date);
+if (result.png) {
+  return reply.code(200).header("content-type", "image/png").send(result.png);
+}
+if (result.generating) {
+  return reply.code(202).send({ status: "rendering" } satisfies BriefingPreviewRendering);
+}
+if (!result.found) {
+  return reply.code(404).send({ error: "not_found", message: "No briefing for this member/date" });
+}
+return reply.code(409).send({
+  error: "printable_raster_missing",
+  message: "This briefing has no stored printable raster",
+});
 ```
+
 (import type `BriefingPreviewRendering` from `../../shared`).
 
 - [ ] **Step 5: Run**
@@ -1150,6 +1214,7 @@ Run: `npx vitest run tests/boundary/daily-briefing-admin-parity.test.ts tests/bo
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
+
 ```bash
 git add src/server/modules/daily-briefing/index.ts src/server/routes/daily-briefing.ts tests/boundary/daily-briefing-admin-parity.test.ts
 git commit -m "feat(daily-briefing): report a briefing that is still rendering with 202"
@@ -1160,12 +1225,14 @@ git commit -m "feat(daily-briefing): report a briefing that is still rendering w
 ## Task 6: Server docs (feature spec + OpenAPI)
 
 **Files:**
+
 - Modify: `docs/features/daily-briefing.md`
 - Modify: `docs/api/daily-briefing/openapi.yaml`
 - Modify: `docs/api/briefing-render/openapi.yaml`
 
 - [ ] **Step 1: Feature spec** — in `docs/features/daily-briefing.md`:
   - After "User Story 3", add:
+
 ```markdown
 ### User Story 4 — Admin page: pause, history, regenerate, view and print
 
@@ -1174,7 +1241,9 @@ regenerates any date, opens its image, and sends it to the printer queue on dema
 weekday produces no briefing and no automatic print; a manual regenerate on that day reports that
 the member is paused instead of generating.
 ```
-  - Append to "Functional Requirements" (after FR-022):
+
+- Append to "Functional Requirements" (after FR-022):
+
 ```markdown
 - **FR-023**: Given a member's weekday schedule, when one of their weekdays is switched off, then scheduled, catch-up, retry and Generate-all generation MUST skip that member on that weekday and the auto-print trigger MUST NOT evaluate them; a member with no stored schedule runs every day. Contract: none (admin parity, 2026-10-15).
 - **FR-024**: Given a manual generate for a member paused on that date's weekday, then no row MUST be written and the API MUST answer `200 {skipped: true, reason: "paused", memberId, date}`. Contract: none (admin parity).
@@ -1183,241 +1252,258 @@ the member is paused instead of generating.
 - **FR-027**: Given a manual print of a stored briefing, then Daily Briefing MUST enqueue it through Printing's producer seam under the record key `daily-briefing:<memberId>:manual:<date>` with the household today as target date and the dated output reference, MUST reuse a job still waiting, MUST supersede and re-enqueue a record already printed, MUST NOT change the automatic print's dedup or the briefing's derived printed-status, and MUST refuse with 404 (no briefing), 409 `plugin_inactive`, 409 `printable_raster_missing` or 400 (inactive member, bad date). Contract: none (admin parity).
 - **FR-028**: Given a preview read while a generation for that member/date is in flight and no PNG is stored, then it MUST answer `202 {status: "rendering"}`; a stored PNG is served even during a regeneration. Contract: none (admin parity).
 ```
-  - In "Key Entities", add: `- **Member schedule**: the weekdays on which a member's briefing runs, stored with the opt-in (NULL = every day); pausing a weekday never deletes existing briefings.`
+
+- In "Key Entities", add: `- **Member schedule**: the weekdays on which a member's briefing runs, stored with the opt-in (NULL = every day); pausing a weekday never deletes existing briefings.`
 
 - [ ] **Step 2: `docs/api/daily-briefing/openapi.yaml`**
   - Under `components.schemas` add:
+
 ```yaml
-    GenerateSkippedResponse:
-      type: object
-      additionalProperties: false
-      required: [skipped, reason, memberId, date]
-      properties:
-        skipped:
-          type: boolean
-          const: true
-        reason:
-          type: string
-          enum: [paused]
-        memberId:
-          type: string
-        date:
-          type: string
-    BriefingHistoryEntry:
-      type: object
-      additionalProperties: false
-      required: [id, date, status, updatedAt]
-      properties:
-        id:
-          type: string
-        date:
-          type: string
-        status:
-          $ref: "#/components/schemas/BriefingStatus"
-        updatedAt:
-          type: integer
-    BriefingHistoryResponse:
-      type: object
-      additionalProperties: false
-      required: [today, entries]
-      properties:
-        today:
-          type: string
-          description: household-timezone business date (YYYY-MM-DD).
-        entries:
-          type: array
-          maxItems: 30
-          items:
-            $ref: "#/components/schemas/BriefingHistoryEntry"
+GenerateSkippedResponse:
+  type: object
+  additionalProperties: false
+  required: [skipped, reason, memberId, date]
+  properties:
+    skipped:
+      type: boolean
+      const: true
+    reason:
+      type: string
+      enum: [paused]
+    memberId:
+      type: string
+    date:
+      type: string
+BriefingHistoryEntry:
+  type: object
+  additionalProperties: false
+  required: [id, date, status, updatedAt]
+  properties:
+    id:
+      type: string
+    date:
+      type: string
+    status:
+      $ref: "#/components/schemas/BriefingStatus"
+    updatedAt:
+      type: integer
+BriefingHistoryResponse:
+  type: object
+  additionalProperties: false
+  required: [today, entries]
+  properties:
+    today:
+      type: string
+      description: household-timezone business date (YYYY-MM-DD).
+    entries:
+      type: array
+      maxItems: 30
+      items:
+        $ref: "#/components/schemas/BriefingHistoryEntry"
 ```
-  - In `POST /api/daily-briefing/generate` → `"200"`, replace the schema with:
+
+- In `POST /api/daily-briefing/generate` → `"200"`, replace the schema with:
+
 ```yaml
-              schema:
-                oneOf:
-                  - $ref: "#/components/schemas/Briefing"
-                  - $ref: "#/components/schemas/GenerateSkippedResponse"
+schema:
+  oneOf:
+    - $ref: "#/components/schemas/Briefing"
+    - $ref: "#/components/schemas/GenerateSkippedResponse"
 ```
+
     and change its description to `generated briefing, or skipped because the member is paused on that weekday (FR-024).`
-  - Add the path (copy the 401/403/429/500 response blocks verbatim from `/api/daily-briefing/opt-in`):
+
+- Add the path (copy the 401/403/429/500 response blocks verbatim from `/api/daily-briefing/opt-in`):
+
 ```yaml
-  /api/daily-briefing/history/{memberId}:
-    get:
-      summary: List a member's latest briefings, newest first (admin, FR-026).
-      parameters:
-        - name: memberId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "429":
-          $ref: "#/components/responses/AuthenticationBackoff"
-        "200":
-          description: household today plus at most 30 history entries; a pure read.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BriefingHistoryResponse"
-        "401": ... (copy)
-        "403": ... (copy)
-        "500": ... (copy)
+/api/daily-briefing/history/{memberId}:
+  get:
+    summary: List a member's latest briefings, newest first (admin, FR-026).
+    parameters:
+      - name: memberId
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      "429":
+        $ref: "#/components/responses/AuthenticationBackoff"
+      "200":
+        description: household today plus at most 30 history entries; a pure read.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BriefingHistoryResponse"
+      "401": ... (copy)
+      "403": ... (copy)
+      "500": ... (copy)
 ```
 
 - [ ] **Step 3: `docs/api/briefing-render/openapi.yaml`**
   - `DailyBriefingSettingsView`: add `- memberSchedules` to `required` and the property:
+
 ```yaml
-        memberSchedules:
-          type: array
-          description: stored weekday pause schedules; members without one run every day (FR-023).
-          items:
-            $ref: "#/components/schemas/BriefingSchedule"
+memberSchedules:
+  type: array
+  description: stored weekday pause schedules; members without one run every day (FR-023).
+  items:
+    $ref: "#/components/schemas/BriefingSchedule"
 ```
-  - New schemas:
+
+- New schemas:
+
 ```yaml
-    Weekday:
+Weekday:
+  type: string
+  enum: [mon, tue, wed, thu, fri, sat, sun]
+BriefingSchedule:
+  type: object
+  additionalProperties: false
+  required: [memberId, weekdays]
+  properties:
+    memberId:
       type: string
-      enum: [mon, tue, wed, thu, fri, sat, sun]
-    BriefingSchedule:
-      type: object
-      additionalProperties: false
-      required: [memberId, weekdays]
-      properties:
-        memberId:
-          type: string
-        weekdays:
-          type: array
-          items:
-            $ref: "#/components/schemas/Weekday"
-    BriefingScheduleInput:
-      type: object
-      additionalProperties: false
-      required: [weekdays]
-      properties:
-        weekdays:
-          type: array
-          items:
-            $ref: "#/components/schemas/Weekday"
-    BriefingPreviewRendering:
-      type: object
-      additionalProperties: false
-      required: [status]
-      properties:
-        status:
-          type: string
-          enum: [rendering]
-    BriefingPrintResponse:
-      type: object
-      additionalProperties: false
-      required: [jobId, enqueued]
-      properties:
-        jobId:
-          type: string
-        enqueued:
-          type: boolean
-          description: false when a job for this briefing was already waiting and was reused.
-    PrintingPluginInactiveErrorResponse:
-      type: object
-      additionalProperties: false
-      required: [error, message]
-      properties:
-        error:
-          type: string
-          enum: [plugin_inactive]
-        message:
-          type: string
+    weekdays:
+      type: array
+      items:
+        $ref: "#/components/schemas/Weekday"
+BriefingScheduleInput:
+  type: object
+  additionalProperties: false
+  required: [weekdays]
+  properties:
+    weekdays:
+      type: array
+      items:
+        $ref: "#/components/schemas/Weekday"
+BriefingPreviewRendering:
+  type: object
+  additionalProperties: false
+  required: [status]
+  properties:
+    status:
+      type: string
+      enum: [rendering]
+BriefingPrintResponse:
+  type: object
+  additionalProperties: false
+  required: [jobId, enqueued]
+  properties:
+    jobId:
+      type: string
+    enqueued:
+      type: boolean
+      description: false when a job for this briefing was already waiting and was reused.
+PrintingPluginInactiveErrorResponse:
+  type: object
+  additionalProperties: false
+  required: [error, message]
+  properties:
+    error:
+      type: string
+      enum: [plugin_inactive]
+    message:
+      type: string
 ```
+
     (If a `Weekday` schema already exists in this file, reuse it instead of adding a second.)
-  - Preview path: add a `"202"` response:
+
+- Preview path: add a `"202"` response:
+
 ```yaml
-        "202":
-          description: a generation for this member/date is in flight and no PNG is stored yet (FR-028).
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BriefingPreviewRendering"
+"202":
+  description: a generation for this member/date is in flight and no PNG is stored yet (FR-028).
+  content:
+    application/json:
+      schema:
+        $ref: "#/components/schemas/BriefingPreviewRendering"
 ```
-  - New paths (copy 401/403/429/500 blocks from the block-settings path):
+
+- New paths (copy 401/403/429/500 blocks from the block-settings path):
+
 ```yaml
-  /api/daily-briefing/schedule/{memberId}:
-    put:
-      summary: Set a member's weekday pause schedule (admin, FR-023/FR-025).
-      description: Never regenerates or invalidates briefings. An empty list pauses every day.
-      parameters:
-        - name: memberId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
+/api/daily-briefing/schedule/{memberId}:
+  put:
+    summary: Set a member's weekday pause schedule (admin, FR-023/FR-025).
+    description: Never regenerates or invalidates briefings. An empty list pauses every day.
+    parameters:
+      - name: memberId
+        in: path
         required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BriefingScheduleInput"
+    responses:
+      "200":
+        description: the stored schedule, canonical order.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BriefingScheduleInput"
-      responses:
-        "200":
-          description: the stored schedule, canonical order.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BriefingSchedule"
-        "400":
-          description: bad weekday, missing weekdays, unknown field, or inactive member.
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: "#/components/schemas/ValidationErrorResponse"
-                  - $ref: "#/components/schemas/FastifyParseErrorResponse"
-        # plus 401/403/429/500 copied
-  /api/daily-briefing/{memberId}/{date}/print:
-    post:
-      summary: Send a stored briefing to the printer queue (admin, FR-027).
-      parameters:
-        - name: memberId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: date
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: queued (or the waiting job reused).
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BriefingPrintResponse"
-        "400":
-          description: invalid date or inactive member.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ValidationErrorResponse"
-        "404":
-          description: no briefing for this member/date.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotFoundErrorResponse"
-        "409":
-          description: Printing plugin inactive, or the briefing has no printable raster.
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: "#/components/schemas/PrintingPluginInactiveErrorResponse"
-                  - $ref: "#/components/schemas/PrintableRasterMissingErrorResponse"
-        # plus 401/403/429/500 copied
+              $ref: "#/components/schemas/BriefingSchedule"
+      "400":
+        description: bad weekday, missing weekdays, unknown field, or inactive member.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/ValidationErrorResponse"
+                - $ref: "#/components/schemas/FastifyParseErrorResponse"
+      # plus 401/403/429/500 copied
+/api/daily-briefing/{memberId}/{date}/print:
+  post:
+    summary: Send a stored briefing to the printer queue (admin, FR-027).
+    parameters:
+      - name: memberId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: date
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      "200":
+        description: queued (or the waiting job reused).
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BriefingPrintResponse"
+      "400":
+        description: invalid date or inactive member.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidationErrorResponse"
+      "404":
+        description: no briefing for this member/date.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotFoundErrorResponse"
+      "409":
+        description: Printing plugin inactive, or the briefing has no printable raster.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/PrintingPluginInactiveErrorResponse"
+                - $ref: "#/components/schemas/PrintableRasterMissingErrorResponse"
+      # plus 401/403/429/500 copied
 ```
-  If `FastifyParseErrorResponse` is not defined in this file, copy its schema from `docs/api/daily-briefing/openapi.yaml`.
+
+If `FastifyParseErrorResponse` is not defined in this file, copy its schema from `docs/api/daily-briefing/openapi.yaml`.
 
 - [ ] **Step 4: Verify** — `npm run check:openapi && npm run check:openapi-shapes`. Expected: PASS once the cohort fixture lists the three new routes (Task 11); if `check:openapi` complains ONLY about the cohort `pluginRoutes`, do Task 11 Step 1 now and re-run.
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add docs/features/daily-briefing.md docs/api/daily-briefing/openapi.yaml docs/api/briefing-render/openapi.yaml
 git commit -m "docs(daily-briefing): document pause schedule, history, manual print and 202"
@@ -1428,6 +1514,7 @@ git commit -m "docs(daily-briefing): document pause schedule, history, manual pr
 ## Task 7: Client building blocks (WeekdayPicker prop, pills, image, workspace, i18n)
 
 **Files:**
+
 - Modify: `src/client/components/WeekdayPicker.tsx`
 - Create: `src/client/daily-briefing/admin/BriefingMemberPills.tsx`
 - Create: `src/client/daily-briefing/admin/BriefingImage.tsx`
@@ -1436,6 +1523,7 @@ git commit -m "docs(daily-briefing): document pause schedule, history, manual pr
 - Test: `tests/client/weekday-picker.test.tsx`, create `tests/client/daily-briefing-workspace.test.tsx`
 
 **Interfaces:**
+
 - Consumes: server API from Tasks 2–5; shared types from Task 1.
 - Produces:
   - `WeekdayPicker` multi mode prop `disabledDays?: readonly WeekdayCode[]`.
@@ -1444,6 +1532,7 @@ git commit -m "docs(daily-briefing): document pause schedule, history, manual pr
   - `BriefingWorkspace({members, optIns, active, blocked, onGenerated, onBusyChange})`.
 
 - [ ] **Step 1: i18n block** — in `src/client/i18n/messages.ts`, after `"admin.notFound.description": ...,` in `en` insert:
+
 ```ts
     // admin-briefing
     "dailyBriefing.admin.retry": "Retry",
@@ -1478,7 +1567,9 @@ git commit -m "docs(daily-briefing): document pause schedule, history, manual pr
       "No printable image — Printing was off when this briefing was generated.",
     "dailyBriefing.admin.imageError": "Could not load the image.",
 ```
+
 and after `"admin.notFound.description": ...,` in `es`:
+
 ```ts
     // admin-briefing
     "dailyBriefing.admin.retry": "Reintentar",
@@ -1517,35 +1608,48 @@ and after `"admin.notFound.description": ...,` in `es`:
 ```
 
 - [ ] **Step 2: WeekdayPicker failing test** — add to `tests/client/weekday-picker.test.tsx` (follow the file's existing render/import style):
+
 ```tsx
-  it("disables only the listed days in multi mode", () => {
-    render(
-      <WeekdayPicker
-        value={["mon", "tue"]}
-        onChange={() => {}}
-        labels={{ mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" }}
-        groupLabel="Days"
-        disabledDays={["tue", "sun"]}
-        testIdPrefix="picker"
-      />
-    );
-    expect(screen.getByTestId("picker-tue")).toBeDisabled();
-    expect(screen.getByTestId("picker-sun")).toBeDisabled();
-    expect(screen.getByTestId("picker-mon")).toBeEnabled();
-    expect(screen.getByTestId("picker-tue")).toBeChecked();
-  });
+it("disables only the listed days in multi mode", () => {
+  render(
+    <WeekdayPicker
+      value={["mon", "tue"]}
+      onChange={() => {}}
+      labels={{
+        mon: "Mon",
+        tue: "Tue",
+        wed: "Wed",
+        thu: "Thu",
+        fri: "Fri",
+        sat: "Sat",
+        sun: "Sun",
+      }}
+      groupLabel="Days"
+      disabledDays={["tue", "sun"]}
+      testIdPrefix="picker"
+    />
+  );
+  expect(screen.getByTestId("picker-tue")).toBeDisabled();
+  expect(screen.getByTestId("picker-sun")).toBeDisabled();
+  expect(screen.getByTestId("picker-mon")).toBeEnabled();
+  expect(screen.getByTestId("picker-tue")).toBeChecked();
+});
 ```
+
 Run: `npx vitest run tests/client/weekday-picker.test.tsx` — Expected: FAIL (TS/prop ignored → `picker-tue` enabled).
 
 - [ ] **Step 3: WeekdayPicker** — in `WeekdayPickerMultiProps` add:
+
 ```ts
   /** Days rendered disabled (still showing their value) — e.g. weekdays a parent setting has
    * switched off. Multi mode only. */
   disabledDays?: readonly WeekdayCode[];
 ```
+
 In the multi branch: `const { value, onChange, disabledDays } = props;` and on each `CheckboxField` use `disabled={disabled || disabledDays?.includes(day)}`. Re-run the test: PASS. Run `npm run check:ui-catalog` (should still pass; the catalog lists exports, not props).
 
 - [ ] **Step 4: Pills** — create `src/client/daily-briefing/admin/BriefingMemberPills.tsx`:
+
 ```tsx
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -1620,6 +1724,7 @@ export function BriefingMemberPills({
 ```
 
 - [ ] **Step 5: Workspace failing tests** — create `tests/client/daily-briefing-workspace.test.tsx`:
+
 ```tsx
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -1651,7 +1756,12 @@ function briefing(date: string, status: Briefing["status"] = "ready"): Briefing 
     memberId: "member-ben",
     date,
     status,
-    payload: { schemaVersion: 2, member: { id: "member-ben", displayName: "Ben" }, date, blocks: [] },
+    payload: {
+      schemaVersion: 2,
+      member: { id: "member-ben", displayName: "Ben" },
+      date,
+      blocks: [],
+    },
     createdAt: 1,
     updatedAt: 2,
   };
@@ -1705,7 +1815,8 @@ function mockBackend(backend: Backend = {}) {
       return backend.generate?.(JSON.parse(String(init?.body))) ?? json(briefing(TODAY));
     }
     const print = url.match(/^\/api\/daily-briefing\/[^/]+\/[^/]+\/print$/);
-    if (print && method === "POST") return backend.print?.() ?? json({ jobId: "j1", enqueued: true });
+    if (print && method === "POST")
+      return backend.print?.() ?? json({ jobId: "j1", enqueued: true });
     const read = url.match(/^\/api\/daily-briefing\/member-(ben|cleo)\/(\d{4}-\d{2}-\d{2})$/);
     if (read) {
       return read[1] === "ben"
@@ -1793,15 +1904,15 @@ describe("BriefingWorkspace", () => {
     fireEvent.click(screen.getByTestId(`daily-briefing-history-entry-${PAST}`));
     fireEvent.click(screen.getByTestId("daily-briefing-generate"));
     await waitFor(() => expect(onGenerated).toHaveBeenCalledTimes(2));
-    expect(calls.filter((call) => call.url === "/api/daily-briefing/generate").map((c) => c.body)).toEqual([
-      { memberId: "member-ben" },
-      { memberId: "member-ben", date: PAST },
-    ]);
+    expect(
+      calls.filter((call) => call.url === "/api/daily-briefing/generate").map((c) => c.body)
+    ).toEqual([{ memberId: "member-ben" }, { memberId: "member-ben", date: PAST }]);
   });
 
   it("reports a paused day instead of generating", async () => {
     mockBackend({
-      generate: () => json({ skipped: true, reason: "paused", memberId: "member-ben", date: TODAY }),
+      generate: () =>
+        json({ skipped: true, reason: "paused", memberId: "member-ben", date: TODAY }),
     });
     const { onGenerated } = renderWorkspace();
     await screen.findByTestId(`daily-briefing-history-entry-${TODAY}`);
@@ -1889,9 +2000,11 @@ describe("BriefingWorkspace", () => {
   });
 });
 ```
+
 Run: `npx vitest run tests/client/daily-briefing-workspace.test.tsx` — Expected: FAIL (module not found).
 
 - [ ] **Step 6: BriefingImage** — create `src/client/daily-briefing/admin/BriefingImage.tsx`:
+
 ```tsx
 import { useEffect, useState } from "react";
 import { useT } from "@/i18n";
@@ -2009,6 +2122,7 @@ export function BriefingImage({ memberId, date, version, status }: BriefingImage
 ```
 
 - [ ] **Step 7: BriefingWorkspace** — create `src/client/daily-briefing/admin/BriefingWorkspace.tsx`:
+
 ```tsx
 import { useEffect, useRef, useState } from "react";
 import { useT } from "@/i18n";
@@ -2116,7 +2230,8 @@ export function BriefingWorkspace({
       const data = (await response.json()) as BriefingReadResult;
       if (currentMember.current === forMember) setRead(data);
     } catch {
-      if (currentMember.current === forMember) setReadError(t("dailyBriefing.admin.briefingLoadError"));
+      if (currentMember.current === forMember)
+        setReadError(t("dailyBriefing.admin.briefingLoadError"));
     }
   }
 
@@ -2200,7 +2315,9 @@ export function BriefingWorkspace({
       onGenerated(result);
     } catch (cause) {
       setActionError(
-        cause instanceof LocalizedApiError ? cause.message : t("dailyBriefing.management.generateError")
+        cause instanceof LocalizedApiError
+          ? cause.message
+          : t("dailyBriefing.management.generateError")
       );
     } finally {
       setGenerating(false);
@@ -2231,7 +2348,9 @@ export function BriefingWorkspace({
       setNotice({
         testId: "daily-briefing-print-notice",
         text: t(
-          result.enqueued ? "dailyBriefing.admin.printQueued" : "dailyBriefing.admin.printAlreadyQueued"
+          result.enqueued
+            ? "dailyBriefing.admin.printQueued"
+            : "dailyBriefing.admin.printAlreadyQueued"
         ),
       });
     } catch (cause) {
@@ -2308,7 +2427,10 @@ export function BriefingWorkspace({
                   >
                     <span className="font-mono">{entry.date}</span>
                     <span
-                      className={cn("rounded-full px-2 py-0.5 text-xs", STATUS_BADGE_CLASS[entry.status])}
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-xs",
+                        STATUS_BADGE_CLASS[entry.status]
+                      )}
                     >
                       {t(`dailyBriefing.status.${entry.status}`)}
                     </span>
@@ -2388,7 +2510,10 @@ export function BriefingWorkspace({
           </p>
         )}
         {!printingActive && (
-          <p className="text-sm text-muted-foreground" data-testid="daily-briefing-print-unavailable">
+          <p
+            className="text-sm text-muted-foreground"
+            data-testid="daily-briefing-print-unavailable"
+          >
             {t("dailyBriefing.admin.printUnavailable")}
           </p>
         )}
@@ -2417,7 +2542,8 @@ export function BriefingWorkspace({
             ) : generated ? (
               <div className="flex flex-col gap-2">
                 <p className="text-sm" data-testid="daily-briefing-status" aria-live="polite">
-                  {t("dailyBriefing.management.status")}: {t(`dailyBriefing.status.${generated.status}`)}
+                  {t("dailyBriefing.management.status")}:{" "}
+                  {t(`dailyBriefing.status.${generated.status}`)}
                 </p>
                 <h4 className="font-semibold">{t("dailyBriefing.admin.payloadTitle")}</h4>
                 <pre
@@ -2447,7 +2573,9 @@ export function BriefingWorkspace({
   );
 }
 ```
+
 Notes for the implementer:
+
 - If ESLint reports the `react-hooks/exhaustive-deps` disable comments as unknown rules (the repo may not load that plugin), delete those comment lines; `quality/justified-disable` may also require a justification format — follow what lint says.
 - The `selectMember` call inside the first effect runs before `selectMember` is declared in source order; that is fine at runtime (function declarations are hoisted) but if lint flags `no-use-before-define`, move the effect below `selectMember`.
 - If `bg-success/15` / `text-success` do not render (check `--color-success` in `src/client/styles/globals.css`), use `bg-accent text-accent-foreground` for `ready`.
@@ -2459,6 +2587,7 @@ Run: `npx vitest run tests/client/daily-briefing-workspace.test.tsx tests/client
 Expected: PASS. Then `npx tsc -p tsconfig.client.json --noEmit` (or `npm run typecheck`) and `npx eslint src/client/daily-briefing/admin src/client/components/WeekdayPicker.tsx`.
 
 - [ ] **Step 9: Commit**
+
 ```bash
 git add src/client/components/WeekdayPicker.tsx src/client/daily-briefing/admin src/client/i18n/messages.ts tests/client/weekday-picker.test.tsx tests/client/daily-briefing-workspace.test.tsx
 git commit -m "feat(admin): add the briefing workspace, image states and member pills"
@@ -2469,99 +2598,116 @@ git commit -m "feat(admin): add the briefing workspace, image states and member 
 ## Task 8: Rework `DailyBriefingManagement.tsx`
 
 **Files:**
+
 - Modify: `src/client/admin/DailyBriefingManagement.tsx`
 - Test: `tests/client/daily-briefing-management.test.tsx`, `tests/client/daily-briefing-admin.test.tsx`, `tests/client/announcements-briefing-admin.test.tsx` (Daily Briefing cases only), plus any other client test the run turns red (`tests/client/admin-gate-panel-reset.test.tsx`, `tests/client/admin-routes.test.tsx`, `tests/client/daily-briefing-admin-mirror-fence.test.tsx`).
 
 **Interfaces:**
+
 - Consumes: `BriefingWorkspace`, `BriefingMemberPills`, `pillMembers` (Task 7), `PUT /api/daily-briefing/schedule/:memberId` and `memberSchedules` (Task 2).
 
 - [ ] **Step 1: Write the new failing tests** — add to `tests/client/daily-briefing-management.test.tsx` (reuse its `activeMembers`, `jsonResponse`, `renderManagement`; give both fixture members a `colorKey`, e.g. `"blue"` and `"teal"`):
+
 ```tsx
-  it("pauses a weekday for the selected member, disables that column and shows the notice", async () => {
-    let scheduleBody: unknown;
-    vi.mocked(globalThis.fetch).mockImplementation(async (...args: FetchCall) => {
-      const [input, init] = args;
-      const url = String(input);
-      if (url === "/api/settings") return jsonResponse({ locale: { timezone: "UTC", language: "en" } });
-      if (url === "/api/members") return jsonResponse(activeMembers);
-      if (url === "/api/daily-briefing/opt-in") {
-        return jsonResponse([{ memberId: "member-ada", enabled: true }]);
-      }
-      if (url === "/api/daily-briefing/settings") {
-        return jsonResponse({
-          generationTime: "06:00",
-          autoPrintTrigger: null,
-          blockOrder: [],
-          memberBlockSettings: [],
-          memberSchedules: [{ memberId: "member-ada", weekdays: ["mon", "tue", "wed", "thu", "fri"] }],
-        });
-      }
-      if (url === "/api/daily-briefing/schedule/member-ada" && init?.method === "PUT") {
-        scheduleBody = JSON.parse(String(init.body));
-        return jsonResponse({ memberId: "member-ada", ...(scheduleBody as object) });
-      }
-      throw new Error(`unexpected fetch: ${url}`);
-    });
-
-    renderManagement();
-
-    const sunday = await screen.findByTestId("daily-briefing-schedule-day-sun");
-    expect(sunday).not.toBeChecked();
-    expect(screen.getByTestId("daily-briefing-admin-block-weekday-weather-sun")).toBeDisabled();
-    expect(screen.getByTestId("daily-briefing-admin-block-weekday-weather-mon")).toBeEnabled();
-
-    fireEvent.click(screen.getByTestId("daily-briefing-schedule-day-mon"));
-    await waitFor(() =>
-      expect(scheduleBody).toEqual({ weekdays: ["tue", "wed", "thu", "fri"] })
-    );
-    expect(await screen.findByTestId("daily-briefing-settings-changed")).toBeVisible();
-    expect(screen.getByTestId("daily-briefing-admin-block-weekday-weather-mon")).toBeDisabled();
+it("pauses a weekday for the selected member, disables that column and shows the notice", async () => {
+  let scheduleBody: unknown;
+  vi.mocked(globalThis.fetch).mockImplementation(async (...args: FetchCall) => {
+    const [input, init] = args;
+    const url = String(input);
+    if (url === "/api/settings")
+      return jsonResponse({ locale: { timezone: "UTC", language: "en" } });
+    if (url === "/api/members") return jsonResponse(activeMembers);
+    if (url === "/api/daily-briefing/opt-in") {
+      return jsonResponse([{ memberId: "member-ada", enabled: true }]);
+    }
+    if (url === "/api/daily-briefing/settings") {
+      return jsonResponse({
+        generationTime: "06:00",
+        autoPrintTrigger: null,
+        blockOrder: [],
+        memberBlockSettings: [],
+        memberSchedules: [
+          { memberId: "member-ada", weekdays: ["mon", "tue", "wed", "thu", "fri"] },
+        ],
+      });
+    }
+    if (url === "/api/daily-briefing/schedule/member-ada" && init?.method === "PUT") {
+      scheduleBody = JSON.parse(String(init.body));
+      return jsonResponse({ memberId: "member-ada", ...(scheduleBody as object) });
+    }
+    throw new Error(`unexpected fetch: ${url}`);
   });
 
-  it("offers Retry when members fail to load, and when settings fail to load", async () => {
-    let membersFail = true;
-    let settingsFail = true;
-    vi.mocked(globalThis.fetch).mockImplementation(async (...args: FetchCall) => {
-      const url = String(args[0]);
-      if (url === "/api/settings") return jsonResponse({ locale: { timezone: "UTC", language: "en" } });
-      if (url === "/api/members") {
-        if (membersFail) return new Response("{}", { status: 500 });
-        return jsonResponse(activeMembers);
-      }
-      if (url === "/api/daily-briefing/opt-in") return jsonResponse([]);
-      if (url === "/api/daily-briefing/settings") {
-        if (settingsFail) return new Response("{}", { status: 500 });
-        return jsonResponse({ generationTime: "06:00", autoPrintTrigger: null, blockOrder: [], memberBlockSettings: [] });
-      }
-      throw new Error(`unexpected fetch: ${url}`);
-    });
+  renderManagement();
 
-    renderManagement();
+  const sunday = await screen.findByTestId("daily-briefing-schedule-day-sun");
+  expect(sunday).not.toBeChecked();
+  expect(screen.getByTestId("daily-briefing-admin-block-weekday-weather-sun")).toBeDisabled();
+  expect(screen.getByTestId("daily-briefing-admin-block-weekday-weather-mon")).toBeEnabled();
 
-    membersFail = false;
-    fireEvent.click(await screen.findByTestId("daily-briefing-retry"));
-    expect(await screen.findByTestId("daily-briefing-block-member-member-ben")).toBeVisible();
+  fireEvent.click(screen.getByTestId("daily-briefing-schedule-day-mon"));
+  await waitFor(() => expect(scheduleBody).toEqual({ weekdays: ["tue", "wed", "thu", "fri"] }));
+  expect(await screen.findByTestId("daily-briefing-settings-changed")).toBeVisible();
+  expect(screen.getByTestId("daily-briefing-admin-block-weekday-weather-mon")).toBeDisabled();
+});
 
-    settingsFail = false;
-    fireEvent.click(screen.getByTestId("daily-briefing-settings-retry"));
-    expect(await screen.findByTestId("daily-briefing-block-matrix")).toBeVisible();
+it("offers Retry when members fail to load, and when settings fail to load", async () => {
+  let membersFail = true;
+  let settingsFail = true;
+  vi.mocked(globalThis.fetch).mockImplementation(async (...args: FetchCall) => {
+    const url = String(args[0]);
+    if (url === "/api/settings")
+      return jsonResponse({ locale: { timezone: "UTC", language: "en" } });
+    if (url === "/api/members") {
+      if (membersFail) return new Response("{}", { status: 500 });
+      return jsonResponse(activeMembers);
+    }
+    if (url === "/api/daily-briefing/opt-in") return jsonResponse([]);
+    if (url === "/api/daily-briefing/settings") {
+      if (settingsFail) return new Response("{}", { status: 500 });
+      return jsonResponse({
+        generationTime: "06:00",
+        autoPrintTrigger: null,
+        blockOrder: [],
+        memberBlockSettings: [],
+      });
+    }
+    throw new Error(`unexpected fetch: ${url}`);
   });
 
-  it("titles the page with its sidebar label", async () => {
-    vi.mocked(globalThis.fetch).mockImplementation(async (...args: FetchCall) => {
-      const url = String(args[0]);
-      if (url === "/api/settings") return jsonResponse({ locale: { timezone: "UTC", language: "en" } });
-      if (url === "/api/members") return jsonResponse(activeMembers);
-      if (url === "/api/daily-briefing/opt-in") return jsonResponse([]);
-      if (url === "/api/daily-briefing/settings") {
-        return jsonResponse({ generationTime: "06:00", autoPrintTrigger: null, blockOrder: [], memberBlockSettings: [] });
-      }
-      throw new Error(`unexpected fetch: ${url}`);
-    });
-    renderManagement();
-    expect(await screen.findByRole("heading", { name: "Briefing", exact: true })).toBeVisible();
+  renderManagement();
+
+  membersFail = false;
+  fireEvent.click(await screen.findByTestId("daily-briefing-retry"));
+  expect(await screen.findByTestId("daily-briefing-block-member-member-ben")).toBeVisible();
+
+  settingsFail = false;
+  fireEvent.click(screen.getByTestId("daily-briefing-settings-retry"));
+  expect(await screen.findByTestId("daily-briefing-block-matrix")).toBeVisible();
+});
+
+it("titles the page with its sidebar label", async () => {
+  vi.mocked(globalThis.fetch).mockImplementation(async (...args: FetchCall) => {
+    const url = String(args[0]);
+    if (url === "/api/settings")
+      return jsonResponse({ locale: { timezone: "UTC", language: "en" } });
+    if (url === "/api/members") return jsonResponse(activeMembers);
+    if (url === "/api/daily-briefing/opt-in") return jsonResponse([]);
+    if (url === "/api/daily-briefing/settings") {
+      return jsonResponse({
+        generationTime: "06:00",
+        autoPrintTrigger: null,
+        blockOrder: [],
+        memberBlockSettings: [],
+      });
+    }
+    throw new Error(`unexpected fetch: ${url}`);
   });
+  renderManagement();
+  expect(await screen.findByRole("heading", { name: "Briefing", exact: true })).toBeVisible();
+});
 ```
+
 (The weather row's weekday test ids come from `testIdPrefix={\`daily-briefing-admin-block-weekday-${blockType}\`}`; `weather` is always in the effective matrix.)
 
 Run: `npx vitest run tests/client/daily-briefing-management.test.tsx` — Expected: the three new cases FAIL.
@@ -2572,142 +2718,178 @@ Run: `npx vitest run tests/client/daily-briefing-management.test.tsx` — Expect
   3. **Title (spec D9):** in both `AdminPanel` usages and the tablist `aria-label`, use `t("admin.sidebar.briefing")` instead of `t("dailyBriefing.management.title")`.
   4. **State removed:** `selectedMemberId`, `generatedBriefing`, `generating`, `previewMemberId`, `previewDate`, `previewRequest`, `previewError`, the `todayIsoDate` and `PreviewRequest` helpers, `showPreview`, `generate`, `selectMember`. In `setOptIn`, delete the lines that touched those (`generationRequestId.current += 1` stays only if `generateAll` still uses it — it does; keep `setOptIns`, `setMemberStatuses` cleanup).
   5. **State added:**
-```ts
-  const [membersLoadFailed, setMembersLoadFailed] = useState(false);
-  const [workspaceBusy, setWorkspaceBusy] = useState(false);
-  const [settingsChanged, setSettingsChanged] = useState(false);
-  const [memberSchedules, setMemberSchedules] = useState<Record<string, WeekdayCode[]>>({});
-  const [scheduleSaving, setScheduleSaving] = useState(false);
-  const [scheduleError, setScheduleError] = useState<string | null>(null);
-```
-  6. **loadMembers:** set `setMembersLoadFailed(false)` at start and `true` in the catch; replace the default selection lines with
-```ts
-      const firstPillMemberId = pillMembers(nextActiveMembers, nextOptIns)[0]?.id ?? "";
-      setBlockSettingsMemberId((current) => current || firstPillMemberId);
-```
-  7. **loadAdminSettings:** after setting `memberBlockSettings`, add
-```ts
-      setMemberSchedules(
-        Object.fromEntries(
-          (Array.isArray(data.memberSchedules) ? data.memberSchedules : []).map(
-            (schedule: BriefingSchedule) => [schedule.memberId, schedule.weekdays]
-          )
-        )
-      );
-```
-     and add `memberSchedules?: BriefingSchedule[]` to the local `DailyBriefingSettingsView` interface (optional: the client tolerates older/mocked payloads).
-  8. **Settings-changed notice:** call `setSettingsChanged(true)` after the successful `setBlockOrder(data.blockOrder)` in `saveBlockOrder`, after the successful list update in `saveMemberBlockSettings`, and in `toggleScheduleDay` below. Add `setSettingsChanged(false)` wherever the Blocks member changes (pill `onSelect` and the sr-only select `onChange`).
-  9. **Schedule toggle:**
-```ts
-  const blockMemberSchedule: readonly Weekday[] =
-    memberSchedules[blockSettingsMemberId] ?? CANONICAL_WEEKDAY_ORDER;
 
-  async function toggleScheduleDay(day: Weekday) {
-    const memberId = blockSettingsMemberId;
-    if (!memberId) return;
-    const current = new Set(memberSchedules[memberId] ?? CANONICAL_WEEKDAY_ORDER);
-    if (current.has(day)) current.delete(day);
-    else current.add(day);
-    const weekdays = CANONICAL_WEEKDAY_ORDER.filter((d) => current.has(d));
-    setScheduleSaving(true);
-    setScheduleError(null);
-    try {
-      const response = await authFetch(`/api/daily-briefing/schedule/${memberId}`, {
-        method: "PUT",
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ weekdays }),
-      });
-      if (!response.ok) {
-        throw new LocalizedApiError(
-          await responseMessage(response, t("dailyBriefing.admin.scheduleSaveError"))
-        );
-      }
-      const saved = (await response.json()) as BriefingSchedule;
-      setMemberSchedules((previous) => ({ ...previous, [saved.memberId]: saved.weekdays }));
-      setSettingsChanged(true);
-    } catch (cause) {
-      setScheduleError(
-        cause instanceof LocalizedApiError ? cause.message : t("dailyBriefing.admin.scheduleSaveError")
+```ts
+const [membersLoadFailed, setMembersLoadFailed] = useState(false);
+const [workspaceBusy, setWorkspaceBusy] = useState(false);
+const [settingsChanged, setSettingsChanged] = useState(false);
+const [memberSchedules, setMemberSchedules] = useState<Record<string, WeekdayCode[]>>({});
+const [scheduleSaving, setScheduleSaving] = useState(false);
+const [scheduleError, setScheduleError] = useState<string | null>(null);
+```
+
+6. **loadMembers:** set `setMembersLoadFailed(false)` at start and `true` in the catch; replace the default selection lines with
+
+```ts
+const firstPillMemberId = pillMembers(nextActiveMembers, nextOptIns)[0]?.id ?? "";
+setBlockSettingsMemberId((current) => current || firstPillMemberId);
+```
+
+7. **loadAdminSettings:** after setting `memberBlockSettings`, add
+
+```ts
+setMemberSchedules(
+  Object.fromEntries(
+    (Array.isArray(data.memberSchedules) ? data.memberSchedules : []).map(
+      (schedule: BriefingSchedule) => [schedule.memberId, schedule.weekdays]
+    )
+  )
+);
+```
+
+     and add `memberSchedules?: BriefingSchedule[]` to the local `DailyBriefingSettingsView` interface (optional: the client tolerates older/mocked payloads).
+
+8. **Settings-changed notice:** call `setSettingsChanged(true)` after the successful `setBlockOrder(data.blockOrder)` in `saveBlockOrder`, after the successful list update in `saveMemberBlockSettings`, and in `toggleScheduleDay` below. Add `setSettingsChanged(false)` wherever the Blocks member changes (pill `onSelect` and the sr-only select `onChange`). 9. **Schedule toggle:**
+
+```ts
+const blockMemberSchedule: readonly Weekday[] =
+  memberSchedules[blockSettingsMemberId] ?? CANONICAL_WEEKDAY_ORDER;
+
+async function toggleScheduleDay(day: Weekday) {
+  const memberId = blockSettingsMemberId;
+  if (!memberId) return;
+  const current = new Set(memberSchedules[memberId] ?? CANONICAL_WEEKDAY_ORDER);
+  if (current.has(day)) current.delete(day);
+  else current.add(day);
+  const weekdays = CANONICAL_WEEKDAY_ORDER.filter((d) => current.has(d));
+  setScheduleSaving(true);
+  setScheduleError(null);
+  try {
+    const response = await authFetch(`/api/daily-briefing/schedule/${memberId}`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ weekdays }),
+    });
+    if (!response.ok) {
+      throw new LocalizedApiError(
+        await responseMessage(response, t("dailyBriefing.admin.scheduleSaveError"))
       );
-    } finally {
-      setScheduleSaving(false);
     }
+    const saved = (await response.json()) as BriefingSchedule;
+    setMemberSchedules((previous) => ({ ...previous, [saved.memberId]: saved.weekdays }));
+    setSettingsChanged(true);
+  } catch (cause) {
+    setScheduleError(
+      cause instanceof LocalizedApiError
+        ? cause.message
+        : t("dailyBriefing.admin.scheduleSaveError")
+    );
+  } finally {
+    setScheduleSaving(false);
   }
+}
 ```
-  10. **Derived lists:** `const briefingMembers = pillMembers(activeMembers, optIns);` and keep `blockSettingsMemberId` valid with an effect: if it is not in `briefingMembers`, set it to `briefingMembers[0]?.id ?? ""`.
-  11. **Members load error + Retry:** below `<ErrorNotice message={error} />` render
+
+10. **Derived lists:** `const briefingMembers = pillMembers(activeMembers, optIns);` and keep `blockSettingsMemberId` valid with an effect: if it is not in `briefingMembers`, set it to `briefingMembers[0]?.id ?? ""`.
+11. **Members load error + Retry:** below `<ErrorNotice message={error} />` render
+
 ```tsx
-      {membersLoadFailed && (
-        <Button type="button" variant="outline" data-testid="daily-briefing-retry" onClick={() => void loadMembers()}>
-          {t("dailyBriefing.admin.retry")}
-        </Button>
-      )}
+{
+  membersLoadFailed && (
+    <Button
+      type="button"
+      variant="outline"
+      data-testid="daily-briefing-retry"
+      onClick={() => void loadMembers()}
+    >
+      {t("dailyBriefing.admin.retry")}
+    </Button>
+  );
+}
 ```
-  12. **Settings load error + Retry:** in the "settings" card, after its `ErrorNotice`, render when `!settingsLoading && !settingsLoaded`:
+
+12. **Settings load error + Retry:** in the "settings" card, after its `ErrorNotice`, render when `!settingsLoading && !settingsLoaded`:
+
 ```tsx
-              <Button type="button" variant="outline" data-testid="daily-briefing-settings-retry" onClick={() => void loadAdminSettings()}>
-                {t("dailyBriefing.admin.retry")}
-              </Button>
+<Button
+  type="button"
+  variant="outline"
+  data-testid="daily-briefing-settings-retry"
+  onClick={() => void loadAdminSettings()}
+>
+  {t("dailyBriefing.admin.retry")}
+</Button>
 ```
-  13. **Blocks workspace:**
-     - Replace the `activeMembers.map(... daily-briefing-block-member-...)` button row with
+
+13. **Blocks workspace:** - Replace the `activeMembers.map(... daily-briefing-block-member-...)` button row with
+
 ```tsx
-        <BriefingMemberPills
-          members={briefingMembers}
-          selectedId={blockSettingsMemberId}
-          onSelect={(id) => {
-            setBlockSettingsMemberId(id);
-            setSettingsChanged(false);
-          }}
-          testIdPrefix="daily-briefing-block-member"
-          label={t("dailyBriefing.admin.memberBlockSelectMember")}
-        />
+<BriefingMemberPills
+  members={briefingMembers}
+  selectedId={blockSettingsMemberId}
+  onSelect={(id) => {
+    setBlockSettingsMemberId(id);
+    setSettingsChanged(false);
+  }}
+  testIdPrefix="daily-briefing-block-member"
+  label={t("dailyBriefing.admin.memberBlockSelectMember")}
+/>
 ```
+
        and make the sr-only `daily-briefing-admin-block-settings-member-select` list `briefingMembers` (its `onChange` also clears `settingsChanged`).
      - Right under the pills:
+
 ```tsx
-        {settingsChanged && (
-          <p
-            role="status"
-            aria-live="polite"
-            data-testid="daily-briefing-settings-changed"
-            className="rounded-lg border bg-accent px-4 py-3 text-control text-accent-foreground"
-          >
-            {t("dailyBriefing.admin.settingsChanged")}
-          </p>
-        )}
+{
+  settingsChanged && (
+    <p
+      role="status"
+      aria-live="polite"
+      data-testid="daily-briefing-settings-changed"
+      className="rounded-lg border bg-accent px-4 py-3 text-control text-accent-foreground"
+    >
+      {t("dailyBriefing.admin.settingsChanged")}
+    </p>
+  );
+}
 ```
+
      - In the block-settings card, above the table: `<p className="text-sm text-muted-foreground">{t("dailyBriefing.admin.scheduleCaption")}</p>` and `<ErrorNotice message={scheduleError} data-testid="daily-briefing-schedule-error" />`.
      - In each weekday `<th>` (keep the existing `data-testid` and label), add under the label:
+
 ```tsx
-                          <CheckboxField
-                            data-testid={`daily-briefing-schedule-day-${day}`}
-                            checked={blockMemberSchedule.includes(day)}
-                            disabled={scheduleSaving || !settingsLoaded}
-                            onChange={() => void toggleScheduleDay(day)}
-                            label={t("dailyBriefing.admin.scheduleDayLabel")}
-                            aria-label={`${weekdayLabels(t)[day]}: ${t("dailyBriefing.admin.scheduleDayLabel")}`}
-                            className="justify-center"
-                          />
+<CheckboxField
+  data-testid={`daily-briefing-schedule-day-${day}`}
+  checked={blockMemberSchedule.includes(day)}
+  disabled={scheduleSaving || !settingsLoaded}
+  onChange={() => void toggleScheduleDay(day)}
+  label={t("dailyBriefing.admin.scheduleDayLabel")}
+  aria-label={`${weekdayLabels(t)[day]}: ${t("dailyBriefing.admin.scheduleDayLabel")}`}
+  className="justify-center"
+/>
 ```
+
        and wrap label + checkbox in `<div className="flex flex-col items-center gap-1">`.
      - On each row's `WeekdayPicker` add `disabledDays={CANONICAL_WEEKDAY_ORDER.filter((d) => !blockMemberSchedule.includes(d))}`.
-  14. **Preview workspace:** keep the opt-in card but remove the per-member pill `Button` from each opt-in row (leave the member name as plain text: `<span className="font-medium">{member.displayName}</span>` before the `CheckboxField`). Replace the whole "generate" card's single-member part (hidden select, Generate button, `generatedBriefing` block) with only the Generate-all button, info line and statuses (keep their test ids; Generate all's `disabled` gains `|| workspaceBusy`). Replace the old `<Card ... data-testid="daily-briefing-admin-preview">` with, inside the preview workspace div after the generate card:
+
+14. **Preview workspace:** keep the opt-in card but remove the per-member pill `Button` from each opt-in row (leave the member name as plain text: `<span className="font-medium">{member.displayName}</span>` before the `CheckboxField`). Replace the whole "generate" card's single-member part (hidden select, Generate button, `generatedBriefing` block) with only the Generate-all button, info line and statuses (keep their test ids; Generate all's `disabled` gains `|| workspaceBusy`). Replace the old `<Card ... data-testid="daily-briefing-admin-preview">` with, inside the preview workspace div after the generate card:
+
 ```tsx
-            <BriefingWorkspace
-              members={briefingMembers}
-              optIns={optIns}
-              active={workspace === "preview"}
-              blocked={generatingAll || hasPendingOptInUpdates}
-              onBusyChange={setWorkspaceBusy}
-              onGenerated={(briefing) => {
-                setMemberStatuses((previous) => ({ ...previous, [briefing.memberId]: briefing.status }));
-                setSettingsChanged(false);
-                setGenerateAllInfo(null);
-              }}
-            />
+<BriefingWorkspace
+  members={briefingMembers}
+  optIns={optIns}
+  active={workspace === "preview"}
+  blocked={generatingAll || hasPendingOptInUpdates}
+  onBusyChange={setWorkspaceBusy}
+  onGenerated={(briefing) => {
+    setMemberStatuses((previous) => ({ ...previous, [briefing.memberId]: briefing.status }));
+    setSettingsChanged(false);
+    setGenerateAllInfo(null);
+  }}
+/>
 ```
+
        The "no opted-in members" message under the generate card stays only around the Generate-all button.
 
 - [ ] **Step 3: Update existing client tests** (run them, fix what the rework legitimately changed — never weaken an assertion about server writes):
@@ -2725,6 +2907,7 @@ Expected: PASS. Then `npm run typecheck && npm run lint`.
 - [ ] **Step 5: Unused keys** — if lint or a test flags now-unused message keys (`dailyBriefing.admin.previewSelectMember`, `dailyBriefing.admin.previewSelectMemberPlaceholder`, `dailyBriefing.admin.previewError`, `dailyBriefing.admin.previewTitle`, `dailyBriefing.management.generateTitle`, `dailyBriefing.management.selectMemberPlaceholder`), delete them from BOTH locales; otherwise leave them (smaller diff in a shared file).
 
 - [ ] **Step 6: Commit**
+
 ```bash
 git add src/client/admin/DailyBriefingManagement.tsx tests/client
 git commit -m "feat(admin): daily briefing page parity (pause days, workspace, notice, retry)"
@@ -2737,9 +2920,11 @@ git commit -m "feat(admin): daily briefing page parity (pause days, workspace, n
 **Files:** Modify `docs/ui/household-contract.md` (line 64).
 
 - [ ] **Step 1:** Replace line 64 `7. \`/admin/daily-briefing\` — briefing configuration/generation/preview` with:
+
 ```markdown
 7. `/admin/daily-briefing` — Briefing: Blocks tab (member pills, per-weekday pause switches over the block matrix, block order, generation time and auto-print binding, "settings changed" notice) and Preview / Generate tab (opt-in, Generate all, member pills, 30-day history, regenerate, view PNG, print to the queue, payload, image states); tabs are local state, no sub-paths
 ```
+
 - [ ] **Step 2: Commit** — `git add docs/ui/household-contract.md && git commit -m "docs(ui): describe the daily briefing admin page"`
 
 ---
@@ -2751,39 +2936,41 @@ git commit -m "feat(admin): daily briefing page parity (pause days, workspace, n
 - [ ] **Step 1: Heading** — lines ≈ 368 and ≈ 810: replace `m["dailyBriefing.management.title"]` with `m["admin.sidebar.briefing"]`.
 
 - [ ] **Step 2: History + pause round trip** — in the first admin test ("admin opt-in -> Generate -> complete ordered catalogue and raster preview"), after the final `expect.poll(...naturalWidth...)` block, append:
-```ts
-  // History lists the briefing just generated for the selected member.
-  await expect(
-    management.getByTestId(`daily-briefing-history-entry-${householdToday}`)
-  ).toBeVisible();
 
-  // Pause today's weekday for secondMember: a regenerate is skipped, then resume.
-  const todayCode = weekdayCode(householdToday);
-  async function toggleToday(): Promise<void> {
-    await management.getByTestId("daily-briefing-tab-blocks").click();
-    await management.getByTestId(`daily-briefing-block-member-${secondMember.id}`).click();
-    const scheduleResponse = page.waitForResponse(
-      (response) =>
-        response.url().includes(`/api/daily-briefing/schedule/${secondMember.id}`) &&
-        response.request().method() === "PUT"
-    );
-    await management.getByTestId(`daily-briefing-schedule-day-${todayCode}`).click();
-    expect((await scheduleResponse).status()).toBe(200);
-  }
-  await toggleToday();
-  await expect(management.getByTestId("daily-briefing-settings-changed")).toBeVisible();
-  await management.getByTestId("daily-briefing-tab-preview").click();
-  await management.getByTestId(`daily-briefing-preview-member-${secondMember.id}`).click();
-  const skippedResponse = page.waitForResponse(
+```ts
+// History lists the briefing just generated for the selected member.
+await expect(
+  management.getByTestId(`daily-briefing-history-entry-${householdToday}`)
+).toBeVisible();
+
+// Pause today's weekday for secondMember: a regenerate is skipped, then resume.
+const todayCode = weekdayCode(householdToday);
+async function toggleToday(): Promise<void> {
+  await management.getByTestId("daily-briefing-tab-blocks").click();
+  await management.getByTestId(`daily-briefing-block-member-${secondMember.id}`).click();
+  const scheduleResponse = page.waitForResponse(
     (response) =>
-      response.url().includes("/api/daily-briefing/generate") &&
-      response.request().method() === "POST"
+      response.url().includes(`/api/daily-briefing/schedule/${secondMember.id}`) &&
+      response.request().method() === "PUT"
   );
-  await management.getByTestId("daily-briefing-generate").click();
-  expect(await (await skippedResponse).json()).toMatchObject({ skipped: true, reason: "paused" });
-  await expect(management.getByTestId("daily-briefing-paused-notice")).toBeVisible();
-  await toggleToday(); // resume, so later specs sharing the data dir are unaffected
+  await management.getByTestId(`daily-briefing-schedule-day-${todayCode}`).click();
+  expect((await scheduleResponse).status()).toBe(200);
+}
+await toggleToday();
+await expect(management.getByTestId("daily-briefing-settings-changed")).toBeVisible();
+await management.getByTestId("daily-briefing-tab-preview").click();
+await management.getByTestId(`daily-briefing-preview-member-${secondMember.id}`).click();
+const skippedResponse = page.waitForResponse(
+  (response) =>
+    response.url().includes("/api/daily-briefing/generate") &&
+    response.request().method() === "POST"
+);
+await management.getByTestId("daily-briefing-generate").click();
+expect(await (await skippedResponse).json()).toMatchObject({ skipped: true, reason: "paused" });
+await expect(management.getByTestId("daily-briefing-paused-notice")).toBeVisible();
+await toggleToday(); // resume, so later specs sharing the data dir are unaffected
 ```
+
 (`weekdayCode` is defined near the top of the spec; `householdToday`, `secondMember`, `management`, `page`, `m` are already in scope.)
 
 - [ ] **Step 3:** Do not run e2e yet; Task 11 runs it after the build.
@@ -2797,37 +2984,45 @@ git commit -m "feat(admin): daily briefing page parity (pause days, workspace, n
 **Files:** `tests/fixtures/assembly-cohort.json` (and any baseline the gate names).
 
 - [ ] **Step 1: Routes** — in `pluginRoutes` (sorted by method, then path, like its neighbours) add:
+
 ```json
     { "method": "GET", "path": "/api/daily-briefing/history/{memberId}" },
     { "method": "POST", "path": "/api/daily-briefing/{memberId}/{date}/print" },
     { "method": "PUT", "path": "/api/daily-briefing/schedule/{memberId}" }
 ```
+
 (use the file's existing multi-line formatting; GET entries sit after `/api/daily-briefing/settings` GET, the POST after `/api/daily-briefing/generate-all`, the PUT after `/api/daily-briefing/opt-in/{memberId}` PUT — keep the order the tool expects; `npm run check:openapi` tells you if it is wrong).
 
 - [ ] **Step 2: Test cases** — produce the observed lists:
+
 ```bash
 npm run test:cohorts:stamp            # prints the candidate id; export MP_CANDIDATE_ID=<that id>
 npm run test:cohorts:vitest:list
 npm run test:cohorts:vitest
 ```
+
 Update `testCohorts.runners.vitest.files` from `.quality/vitest-list.json` for exactly the test files you created or changed: `tests/boundary/daily-briefing-admin-parity.test.ts` (new), `tests/client/daily-briefing-workspace.test.tsx` (new), `tests/integration/daily-briefing-trigger.test.ts`, `tests/client/weekday-picker.test.tsx`, `tests/client/daily-briefing-management.test.tsx`, `tests/client/daily-briefing-admin.test.tsx`, `tests/client/announcements-briefing-admin.test.tsx` (only if a case name changed). Then run
 `node tools/verify-test-cohorts.mjs --expected tests/fixtures/assembly-cohort.json --raw-dir .quality --candidate "$MP_CANDIDATE_ID" --runners node,vitest` and fix every reported difference. Playwright case names did not change (the e2e additions live inside an existing test).
 
 - [ ] **Step 3: Coverage floors** — `npm run check:coverage` reports per-file failures. Add entries under `coveragePolicy.files` for the new sources (`src/server/modules/daily-briefing/schedule.ts` layer `server`; `src/client/daily-briefing/admin/BriefingImage.tsx`, `BriefingMemberPills.tsx`, `BriefingWorkspace.tsx` layer `client`) with `minimumTotals` = observed totals and `minimumRates` = observed rates. For changed files (`index.ts`, `job.ts`, `trigger.ts` — trigger requires 100%, `settings.ts`, `routes/daily-briefing.ts`, `errors.ts`, `DailyBriefingManagement.tsx`, `WeekdayPicker.tsx`), set totals to the observed counts; keep rates ≥ the previous rates — if a rate falls, add the missing test rather than lowering the floor. Touch only these entries.
 
 - [ ] **Step 4: Commit everything, then run the standard gate from the clean tree**
+
 ```bash
 git add tests/fixtures/assembly-cohort.json
 git commit -m "chore: resync assembly cohort for the daily briefing admin parity"
 git status --short   # must be empty
 npm run check:standard
 ```
+
 Expected: PASS. Common fixes: `npx prettier --write <touched files>` for `format:check`; `check:accessible-names` (every icon-less button already has text; the pause checkboxes carry `aria-label`); `check:ui-debt` must not rise (no inline styles, no raw palette classes — fix the code, never edit the baselines); `check:openapi` (route ↔ contract ↔ cohort). Amend or add commits for fixes and re-run until green from a clean tree.
 
 - [ ] **Step 5: Affected e2e on the assigned port** (the build from `check:standard` is fresh):
+
 ```bash
 PORT=43202 npx playwright test tests/e2e/daily-briefing.spec.ts tests/e2e/admin-unlock-resilience.spec.ts tests/e2e/accessible-names-audit.spec.ts tests/e2e/plugin-lifecycle-visual.spec.ts tests/e2e/printing.spec.ts --workers=3
 ```
+
 Expected: all PASS. If `plugin-lifecycle-visual.spec.ts` compares screenshots of this page, update its baseline only if the change is the intended new layout, and say so in the report.
 
 ---
