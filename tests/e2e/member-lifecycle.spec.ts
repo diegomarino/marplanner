@@ -173,8 +173,8 @@ test("member lifecycle preserves active choices, historical reads, and colour id
   expect(routineAssignmentResponse.status()).toBe(200);
 
   await openAdminSection(page, "admin-nav-daily-messages-management");
-  const messagePicker = page.getByTestId("daily-messages-select-member");
-  await expect(messagePicker.locator(`option[value="${memberId}"]`)).toHaveText(editedName);
+  await expect(page.getByTestId(`daily-messages-member-${memberId}`)).toBeVisible();
+  await expect(page.getByRole("radio", { name: new RegExp(editedName) })).toBeVisible();
 
   await page.goto("/calendar");
   await expect(page.getByText(/cargando calendario|loading calendar/i)).toHaveCount(0, {
@@ -227,7 +227,7 @@ test("member lifecycle preserves active choices, historical reads, and colour id
   );
 
   await openAdminSection(page, "admin-nav-daily-messages-management");
-  await expect(messagePicker.locator(`option[value="${memberId}"]`)).toHaveCount(0);
+  await expect(page.getByTestId(`daily-messages-member-${memberId}`)).toHaveCount(0);
   const historicalMessageResponse = await page.request.get(
     `/api/daily-messages/current?memberId=${memberId}&date=${today}`
   );
@@ -281,7 +281,7 @@ test("member lifecycle preserves active choices, historical reads, and colour id
   expect(restoredColour).toBeTruthy();
 
   await openAdminSection(page, "admin-nav-daily-messages-management");
-  await expect(messagePicker.locator(`option[value="${memberId}"]`)).toHaveText(editedName);
+  await expect(page.getByRole("radio", { name: new RegExp(editedName) })).toBeVisible();
 
   const restoredScopedResponse = await page.request.get(
     `/api/calendar/events?source=all&from=${today}&to=${addDays(today, 2)}&assignedTo=${memberId}`

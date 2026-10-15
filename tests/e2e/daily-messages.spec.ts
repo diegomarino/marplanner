@@ -89,14 +89,19 @@ test("daily-messages admin author→read: PUT then GET window + current (#462)",
     timeout: 10_000,
   });
 
-  // --- 6) Select the seeded member — the dropdown may default to a pre-existing
-  // active member from earlier runs, so pick ours explicitly by label. ---
-  await page
-    .getByLabel(m["dailyMessages.management.selectMember"])
-    .selectOption({ label: memberName });
+  // --- 6) Select the seeded member — the pill may default to a pre-existing
+  // active member from earlier runs, so pick ours explicitly by name. ---
+  await page.getByRole("radio", { name: new RegExp(memberName) }).check();
   await expect(page.getByText(m["dailyMessages.management.loading"])).toHaveCount(0, {
     timeout: 10_000,
   });
+  await expect(page.locator('[data-testid^="daily-messages-day-"]')).toHaveCount(14);
+  const bands = await page
+    .locator('[data-testid^="daily-messages-day-"]')
+    .evaluateAll((rows) => rows.map((row) => row.getAttribute("data-week-band")));
+  expect(bands).toHaveLength(14);
+  expect(bands[0]).toBe("plain");
+  expect(bands).toContain("shaded");
 
   // --- 7) Author today's message via the 14-day editor (FR-015) ---
   const todayTextarea = page.getByTestId(`daily-messages-text-${today}`);
