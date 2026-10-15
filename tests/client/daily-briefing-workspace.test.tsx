@@ -50,6 +50,8 @@ interface Backend {
   previewStatus?: Record<string, number>;
   generate?: (body: Record<string, unknown>) => Response;
   print?: () => Response;
+  /** Holds the read of a date until the promise resolves. */
+  readGate?: Record<string, Promise<void>>;
 }
 
 function mockBackend(backend: Backend = {}) {
@@ -92,6 +94,7 @@ function mockBackend(backend: Backend = {}) {
       return backend.print?.() ?? json({ jobId: "j1", enqueued: true });
     const read = url.match(/^\/api\/daily-briefing\/member-(ben|cleo)\/(\d{4}-\d{2}-\d{2})$/);
     if (read) {
+      await backend.readGate?.[read[2]];
       return read[1] === "ben"
         ? json({
             generated: true,
@@ -286,5 +289,39 @@ describe("BriefingWorkspace", () => {
       target: { value: "member-ben" },
     });
     expect(screen.getByTestId(`daily-briefing-history-entry-${TODAY}`)).toBeVisible();
+  });
+
+  it("keeps the payload when the already-selected history entry is clicked again", async () => {
+    mockBackend();
+    renderWorkspace();
+    const payload = await screen.findByTestId("daily-briefing-generated-payload");
+    expect(payload).toHaveTextContent(`"date": "${TODAY}"`);
+    fireEvent.click(screen.getByTestId(`daily-briefing-history-entry-${TODAY}`));
+    expect(screen.getByTestId("daily-briefing-generated-payload")).toHaveTextContent(
+      `"date": "${TODAY}"`
+    );
+  });
+
+  it("ignores a slower read for a date that is no longer selected", async () => {
+    let releasePast: () => void = () => {};
+    const pastGate = new Promise<void>((resolve) => {
+      releasePast = resolve;
+    });
+    mockBackend({ readGate: { [PAST]: pastGate } });
+    renderWorkspace();
+    await screen.findByTestId("daily-briefing-generated-payload");
+    fireEvent.click(screen.getByTestId(`daily-briefing-history-entry-${PAST}`));
+    fireEvent.click(screen.getByTestId(`daily-briefing-history-entry-${TODAY}`));
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-generated-payload")).toHaveTextContent(
+        `"date": "${TODAY}"`
+      )
+    );
+    releasePast();
+    await pastGate;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.getByTestId("daily-briefing-generated-payload")).toHaveTextContent(
+      `"date": "${TODAY}"`
+    );
   });
 });

@@ -69,6 +69,8 @@ export function BriefingWorkspace({
   const [notice, setNotice] = useState<Notice | null>(null);
   const currentMember = useRef("");
   currentMember.current = memberId;
+  // Only the latest read may land: a slower response for an earlier date is dropped.
+  const latestRead = useRef(0);
 
   useEffect(() => {
     if (members.some((member) => member.id === memberId)) return;
@@ -94,6 +96,7 @@ export function BriefingWorkspace({
   }
 
   async function loadRead(forMember: string, date: string) {
+    const request = ++latestRead.current;
     setReadError(null);
     try {
       const response = await authFetch(`/api/daily-briefing/${forMember}/${date}`, {
@@ -101,10 +104,9 @@ export function BriefingWorkspace({
       });
       if (!response.ok) throw new Error("read");
       const data = (await response.json()) as BriefingReadResult;
-      if (currentMember.current === forMember) setRead(data);
+      if (latestRead.current === request) setRead(data);
     } catch {
-      if (currentMember.current === forMember)
-        setReadError(t("dailyBriefing.admin.briefingLoadError"));
+      if (latestRead.current === request) setReadError(t("dailyBriefing.admin.briefingLoadError"));
     }
   }
 
@@ -120,6 +122,7 @@ export function BriefingWorkspace({
     // Re-selecting the current member keeps its state: the load effects key on `memberId` and
     // would not refetch what this function clears.
     if (id === currentMember.current) return;
+    latestRead.current += 1;
     setMemberId(id);
     setSelectedDate(null);
     setDateInput("");
@@ -130,6 +133,9 @@ export function BriefingWorkspace({
   }
 
   function selectDate(date: string) {
+    // Re-selecting the shown date keeps its payload: the read effect keys on the date and would
+    // not refetch what this function clears.
+    if (date === activeDate) return;
     setSelectedDate(date);
     setDateInput(date);
     setRead(null);
