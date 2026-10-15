@@ -37,7 +37,7 @@ unchanged (only additions), and the existing printing guarantees (server is the 
   `printing`); sidebar label key `admin.sidebar.printer` = "Printer" / "Impresora".
 - Server settings (`src/server/modules/settings/index.ts:42-136`): `printer` `{ paperWidthDots }`
   (default 576, integer > 0) and `printerTransport` `{ deviceId, name, serviceUuid,
-  characteristicUuid }` (all empty, or deviceId+name non-empty and both UUIDs valid RFC-4122
+characteristicUuid }` (all empty, or deviceId+name non-empty and both UUIDs valid RFC-4122
   versions 1-5). Both owned by the `printing` plugin, read through `GET /api/settings`, written
   through `PUT /api/settings` `{ object, settings }`. Nothing in the client reads or writes them
   today. The render pipeline is fixed at 576 dots (`src/server/modules/printing/escpos.ts:28`
@@ -47,7 +47,7 @@ unchanged (only additions), and the existing printing guarantees (server is the 
   characteristic, discarding device id/name/UUIDs; the fake (`createFakePrintTransport`) is
   exposed at `window.__mpPrintTransport` in DEV/e2e builds.
 - Session (`src/client/printing/PrintExecutor.tsx`): `PrinterSession { active, displayState,
-  stateLabelKey, canPair, pair: () => void }`; pairing registers the printer capability and starts
+stateLabelKey, canPair, pair: () => void }`; pairing registers the printer capability and starts
   polling. `canPair` is true only while unpaired or disconnected.
 - Printing server module (`src/server/modules/printing/index.ts`): `listJobs(now)` returns every job
   newest first with `memberId`, `attempts`, `failureReason`, `derivedState`;
@@ -146,7 +146,7 @@ button (`printer-settings-retry`), no form.
   (`listJobs` already orders by `created_at DESC`); a caption-like note "Showing the latest 50." only
   when more exist. Row `printing-job-<id>`. Columns:
   - When: `createdAt` formatted with `Intl.DateTimeFormat(language === "es" ? "es-ES" : "en-GB",
-    { dateStyle: "short", timeStyle: "short", timeZone: household timezone })`.
+{ dateStyle: "short", timeStyle: "short", timeZone: household timezone })`.
   - For: `targetDate` (YYYY-MM-DD as stored).
   - Member: display name from the members map, else "—".
   - Source: `recordKey === "test-print"` -> "Test print"; `recordKey` starting `daily-briefing:` ->
@@ -165,7 +165,7 @@ button (`printer-settings-retry`), no form.
   the jobs that will be cancelled (`pending`, or `claimed` with `payload_served_at IS NULL`), and
   calls the existing `supersedePrintRecordTxn` for each record. After commit it calls
   `notifyPrintingClaimSettled()` when anything changed. Returns `{ targetDate, resetRecords,
-  cancelledJobs }`. Jobs already fetched in flight continue (same H2 rule as supersede); printed job
+cancelledJobs }`. Jobs already fetched in flight continue (same H2 rule as supersede); printed job
   rows keep their history.
 - Effect: the record is re-printable; the test print can be enqueued again; Daily Briefing's
   auto-print trigger sees an unprinted record with a new generation and no dead-letter in that
@@ -175,7 +175,7 @@ button (`printer-settings-retry`), no form.
   body object with unknown keys -> 400 `validation_error`, same pattern as test-print); 200 with the
   DTO; errors through `handlePrintingError` (409 `plugin_inactive`).
 - Shared DTO `ResetTodayPrintsResponse { targetDate: string; resetRecords: number; cancelledJobs:
-  number; }` in `src/shared/index.ts` next to `PrintingStatusResponse`; same-named schema in
+number; }` in `src/shared/index.ts` next to `PrintingStatusResponse`; same-named schema in
   `docs/api/printing/openapi.yaml` with the new path (200, 400, 401, 409, 429, 503 like the
   neighbours). `tests/fixtures/assembly-cohort.json` `pluginRoutes` gains
   `{ "method": "POST", "path": "/api/printing/reset-today" }`.
@@ -186,15 +186,15 @@ button (`printer-settings-retry`), no form.
 
 - `transport.ts`: `pair(preference?: PrinterEndpointPreference): Promise<PrinterTransportSettings>`
   where `PrinterEndpointPreference = Partial<Pick<PrinterTransportSettings, "serviceUuid" |
-  "characteristicUuid">>` and `PrinterTransportSettings` is the existing shared settings type.
+"characteristicUuid">>` and `PrinterTransportSettings` is the existing shared settings type.
   - Bluetooth: with no preference, `requestDevice` arguments are byte-identical to today. With a
     preferred service UUID it is tried first and added to `optionalServices` (deduplicated, first).
     Within a service, a writable characteristic whose `uuid` equals the preferred characteristic
     UUID wins, else the first writable one. Resolves `{ deviceId: device.id, name: device.name ??
-    "", serviceUuid: service.uuid, characteristicUuid: characteristic.uuid }`.
+"", serviceUuid: service.uuid, characteristicUuid: characteristic.uuid }`.
   - Fake: resolves `{ deviceId: "fake-printer", name: "Fake printer", serviceUuid:
-    preference?.serviceUuid ?? "e7810a71-73ae-499d-8c15-faa9aef0c3f2", characteristicUuid:
-    preference?.characteristicUuid ?? "bef8d6c9-9c21-4c9e-b632-bd58c1009f9f" }` (both valid for the
+preference?.serviceUuid ?? "e7810a71-73ae-499d-8c15-faa9aef0c3f2", characteristicUuid:
+preference?.characteristicUuid ?? "bef8d6c9-9c21-4c9e-b632-bd58c1009f9f" }` (both valid for the
     server validator).
 - `PrintExecutor.tsx`: `PrinterSession` gains `pairedDevice: PrinterTransportSettings | null` and
   `pair: (preference?: PrinterEndpointPreference) => void`. A successful pair stores the resolved
