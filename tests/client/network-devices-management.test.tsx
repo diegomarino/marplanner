@@ -5,6 +5,7 @@ import { LanguageProvider } from "@/i18n";
 import { messages } from "@/i18n/messages";
 import { NetworkDevicesManagement } from "@/admin/NetworkDevicesManagement";
 import { initialAlias, sortClients } from "@/admin/network-devices/DiscoverDevices";
+import { AUTH_SCOPE_DENIED_CODE } from "../../src/shared";
 import type {
   LiveCacheState,
   LiveClient,
@@ -199,12 +200,13 @@ describe("NetworkDevicesManagement", () => {
     );
 
     renderManagement();
-    const list = await screen.findByTestId("network-devices-list");
+    await screen.findByTestId("network-devices-list");
     fireEvent.click(screen.getByTestId("network-devices-edit-dev-edit-scan"));
 
-    // Re-scan the SAME list container now that it renders the edit form (alias input,
-    // member select) instead of the read-only row — the edit draft never seeds a MAC.
-    expect(list.textContent).not.toMatch(MAC_SHAPED);
+    // The edit form now lives in a Dialog portal, outside the list: scan the whole body (list +
+    // dialog) — the edit draft never seeds a MAC.
+    await screen.findByTestId("network-devices-edit-dialog");
+    expect(document.body.textContent).not.toMatch(MAC_SHAPED);
   });
 
   it("the MAC-shape scan ALSO holds while a row error is displayed (PR-E review P2-4)", async () => {
@@ -467,12 +469,12 @@ describe("NetworkDevicesManagement", () => {
 
       fireEvent.click(screen.getByTestId(`network-devices-picker-select-${MAC}`));
 
-      const picker = await screen.findByTestId("network-devices-picker");
-      // Selecting a client unmounts the client-list `<ul>` (the picker's ONE documented
-      // MAC-rendering surface) in favor of the alias/member form — pin that the whole
-      // picker, post-selection, is MAC-free.
-      expect(screen.queryByTestId("network-devices-picker-clients")).not.toBeInTheDocument();
-      expect(picker.textContent).not.toMatch(MAC_SHAPED);
+      // The registration form opens in a Dialog (a portal): the discovery table stays mounted
+      // behind it as the ONE documented MAC-rendering surface, so pin that the DIALOG itself is
+      // MAC-free (its alias input is prefilled from the client name, never the MAC).
+      const dialog = await screen.findByTestId("network-devices-register-dialog");
+      expect(dialog.textContent).not.toMatch(MAC_SHAPED);
+      expect(screen.getByTestId("network-devices-picker-alias-input")).toHaveValue("Marta's iPad");
     });
   });
 
@@ -678,7 +680,6 @@ describe("NetworkDevicesManagement", () => {
   // stranded-upstream-block warning must fire whenever `isBlocked || beliefDiverged`, not just
   // when the (possibly stale) mirror says blocked.
   it("delete: a device with isBlocked=false + beliefDiverged=true ALSO shows the stranded-upstream-block warning", async () => {
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     const mockFetch = vi.mocked(globalThis.fetch);
     mockFetch.mockImplementation(
       mockRouter({
@@ -692,11 +693,9 @@ describe("NetworkDevicesManagement", () => {
     await screen.findByTestId("network-devices-list");
     fireEvent.click(screen.getByTestId("network-devices-delete-dev-del-diverged"));
 
-    expect(confirmSpy).toHaveBeenCalledWith(
-      messages.en["networkDevices.action.deleteConfirmBlocked"]
-    );
-
-    confirmSpy.mockRestore();
+    expect(
+      await screen.findByText(messages.en["networkDevices.action.deleteConfirmBlocked"])
+    ).toBeInTheDocument();
   });
 
   // a failed/degraded members read must not silently drop the device's CURRENT
@@ -859,6 +858,7 @@ describe("NetworkDevicesManagement", () => {
     const listErr = await screen.findByTestId("network-devices-error");
     expect(listErr).toHaveTextContent(messages.en["networkDevices.management.loadError"]);
     expect(screen.queryByTestId("network-devices-empty")).not.toBeInTheDocument();
+    expect(screen.getByTestId("network-devices-retry")).toBeInTheDocument();
   });
 
   it("PR-E review P2-3: a pre-response transport failure loading the list renders the localized fallback, never the raw exception", async () => {
@@ -933,7 +933,6 @@ describe("NetworkDevicesManagement", () => {
   });
 
   it("delete: the confirmation for a BLOCKED device names the stranded upstream block", async () => {
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     const mockFetch = vi.mocked(globalThis.fetch);
     mockFetch.mockImplementation(
       mockRouter({
@@ -947,22 +946,20 @@ describe("NetworkDevicesManagement", () => {
     await screen.findByTestId("network-devices-list");
     fireEvent.click(screen.getByTestId("network-devices-delete-dev-del-blocked"));
 
-    expect(confirmSpy).toHaveBeenCalledWith(
-      messages.en["networkDevices.action.deleteConfirmBlocked"]
-    );
+    expect(
+      await screen.findByText(messages.en["networkDevices.action.deleteConfirmBlocked"])
+    ).toBeInTheDocument();
     expect(messages.en["networkDevices.action.deleteConfirmBlocked"].toLowerCase()).toContain(
       "block"
     );
+    fireEvent.click(screen.getByTestId("network-devices-delete-confirm"));
 
     await waitFor(() => {
       expect(screen.queryByTestId("network-devices-row-dev-del-blocked")).not.toBeInTheDocument();
     });
-
-    confirmSpy.mockRestore();
   });
 
   it("delete: cancelling the confirmation performs NO request and keeps the row", async () => {
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
     const mockFetch = vi.mocked(globalThis.fetch);
     mockFetch.mockImplementation(
       mockRouter({
@@ -977,9 +974,246 @@ describe("NetworkDevicesManagement", () => {
     renderManagement();
     await screen.findByTestId("network-devices-list");
     fireEvent.click(screen.getByTestId("network-devices-delete-dev-keep"));
+    fireEvent.click(
+      await screen.findByRole("button", { name: messages.en["networkDevices.action.cancel"] })
+    );
 
+    await waitFor(() => {
+      expect(screen.queryByTestId("network-devices-delete-confirm")).not.toBeInTheDocument();
+    });
     expect(screen.getByTestId("network-devices-row-dev-keep")).toBeInTheDocument();
-    confirmSpy.mockRestore();
+  });
+});
+
+describe("NetworkDevicesManagement — reworked page", () => {
+  beforeEach(() => {
+    currentSettings.language = "en";
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    cleanup();
+  });
+
+  const OTHER_MAC = "11:22:33:44:55:66";
+  const rowOrder = () =>
+    screen
+      .getAllByTestId(/^network-devices-picker-client-/)
+      .map((el) => el.getAttribute("data-testid")?.replace("network-devices-picker-client-", ""));
+
+  it("a scope-denied 403 on the list shows the management-required message, Retry, and keeps the add button", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(
+      mockRouter({
+        onDevicesList: () =>
+          jsonResponse({ error: "forbidden", code: AUTH_SCOPE_DENIED_CODE }, 403),
+      })
+    );
+    renderManagement();
+    expect(await screen.findByTestId("network-devices-error")).toHaveTextContent(
+      messages.en["networkDevices.error.managementRequired"]
+    );
+    expect(screen.getByTestId("network-devices-retry")).toBeInTheDocument();
+    expect(screen.getByTestId("network-devices-open-picker")).toBeInTheDocument();
+    expect(screen.queryByTestId("network-devices-empty")).not.toBeInTheDocument();
+  });
+
+  it("Retry reloads the list after a failure", async () => {
+    let fail = true;
+    vi.mocked(globalThis.fetch).mockImplementation(
+      mockRouter({
+        devices: [device()],
+        onDevicesList: () =>
+          fail
+            ? jsonResponse({ error: "boom" }, 500)
+            : jsonResponse({ devices: [device()], cacheState: "fresh" }),
+      })
+    );
+    renderManagement();
+    const retry = await screen.findByTestId("network-devices-retry");
+    fail = false;
+    fireEvent.click(retry);
+    await screen.findByTestId("network-devices-list");
+    expect(screen.queryByTestId("network-devices-error")).not.toBeInTheDocument();
+  });
+
+  it("the page heading equals the sidebar label", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(mockRouter({ devices: [] }));
+    renderManagement();
+    await screen.findByTestId("network-devices-empty");
+    expect(
+      screen.getByRole("heading", { name: messages.en["admin.sidebar.networkDevices"] })
+    ).toBeInTheDocument();
+    expect(messages.es["networkDevices.management.title"]).toBe(
+      messages.es["admin.sidebar.networkDevices"]
+    );
+  });
+
+  it("the empty state links to the Add tab", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(
+      mockRouter({ devices: [], liveClients: { state: "fresh", clients: [] } })
+    );
+    renderManagement();
+    fireEvent.click(await screen.findByTestId("network-devices-empty-add"));
+    expect(screen.getByTestId("network-devices-tab-add")).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("shows a green/red/muted dot or a warning glyph per state, with the text label still present", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(
+      mockRouter({
+        devices: [
+          device({ id: "d-on", liveStatus: "online" }),
+          device({ id: "d-blocked", liveStatus: "online", isBlocked: true }),
+          device({ id: "d-unknown", liveStatus: "unknown" }),
+          device({ id: "d-missing", liveStatus: "notDetected" }),
+        ],
+        members: [],
+      })
+    );
+    renderManagement();
+    await screen.findByTestId("network-devices-list");
+    const dotClass = (id: string) =>
+      screen.getByTestId(`network-devices-dot-${id}`).firstElementChild?.className ?? "";
+    expect(dotClass("d-on")).toContain("bg-success");
+    expect(dotClass("d-blocked")).toContain("bg-destructive");
+    expect(dotClass("d-unknown")).toContain("bg-muted-foreground");
+    expect(screen.getByTestId("network-devices-dot-d-missing")).toHaveTextContent("⚠");
+    // Colour is never the sole carrier: the text label is present for each state.
+    expect(screen.getByTestId("network-devices-status-d-on")).toHaveTextContent(
+      messages.en["networkDevices.liveStatus.online"]
+    );
+    expect(screen.getByTestId("network-devices-status-d-unknown")).toHaveTextContent(
+      messages.en["networkDevices.liveStatus.unknown"]
+    );
+    expect(screen.getByTestId("network-devices-status-d-missing")).toHaveTextContent(
+      messages.en["networkDevices.liveStatus.notDetected"]
+    );
+    expect(screen.getByTestId("network-devices-status-d-blocked")).toHaveTextContent(
+      messages.en["networkDevices.badge.blocked"]
+    );
+  });
+
+  it("Add tab: already-registered MACs (compared case-insensitively) are dimmed with an Already added badge and no Add button", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(
+      mockRouter({
+        devices: [device({ mac: MAC.toUpperCase() })],
+        liveClients: {
+          state: "fresh",
+          clients: [
+            { mac: MAC, displayName: "Taken", isBlocked: false },
+            { mac: OTHER_MAC, displayName: "Free", isBlocked: false },
+          ],
+        },
+      })
+    );
+    renderManagement();
+    fireEvent.click(await screen.findByTestId("network-devices-open-picker"));
+    expect(await screen.findByTestId(`network-devices-picker-added-${MAC}`)).toBeInTheDocument();
+    expect(screen.queryByTestId(`network-devices-picker-select-${MAC}`)).not.toBeInTheDocument();
+    expect(screen.getByTestId(`network-devices-picker-select-${OTHER_MAC}`)).toBeInTheDocument();
+  });
+
+  it("Add tab: sorting by name then MAC reorders the rows and toggles aria-sort", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(
+      mockRouter({
+        devices: [],
+        liveClients: {
+          state: "fresh",
+          clients: [
+            { mac: "ff:00:00:00:00:01", displayName: "Amy", isBlocked: false },
+            { mac: "aa:00:00:00:00:02", displayName: "Zed", isBlocked: false },
+          ],
+        },
+      })
+    );
+    renderManagement();
+    fireEvent.click(await screen.findByTestId("network-devices-open-picker"));
+    await screen.findByTestId("network-devices-picker-clients");
+    const nameHeader = screen.getByTestId("network-devices-sort-name").closest("th");
+    const macHeader = screen.getByTestId("network-devices-sort-mac").closest("th");
+    expect(rowOrder()).toEqual(["ff:00:00:00:00:01", "aa:00:00:00:00:02"]);
+    expect(nameHeader).toHaveAttribute("aria-sort", "ascending");
+
+    fireEvent.click(screen.getByTestId("network-devices-sort-mac"));
+    expect(rowOrder()).toEqual(["aa:00:00:00:00:02", "ff:00:00:00:00:01"]);
+    expect(macHeader).toHaveAttribute("aria-sort", "ascending");
+    expect(nameHeader).toHaveAttribute("aria-sort", "none");
+
+    fireEvent.click(screen.getByTestId("network-devices-sort-mac"));
+    expect(rowOrder()).toEqual(["ff:00:00:00:00:01", "aa:00:00:00:00:02"]);
+    expect(macHeader).toHaveAttribute("aria-sort", "descending");
+  });
+
+  it("register dialog prefills the alias from the client name, never shows the MAC, and returns to the list after success", async () => {
+    let posted: unknown;
+    vi.mocked(globalThis.fetch).mockImplementation(
+      mockRouter({
+        devices: [],
+        members: [],
+        liveClients: {
+          state: "fresh",
+          clients: [{ mac: MAC, displayName: "Marta's iPad", isBlocked: false }],
+        },
+        onRegister: (body) => {
+          posted = body;
+          return jsonResponse(device({ id: "dev-new", alias: "Kitchen iPad" }), 201);
+        },
+      })
+    );
+    renderManagement();
+    fireEvent.click(await screen.findByTestId("network-devices-open-picker"));
+    fireEvent.click(await screen.findByTestId(`network-devices-picker-select-${MAC}`));
+    const dialog = await screen.findByTestId("network-devices-register-dialog");
+    const alias = screen.getByTestId("network-devices-picker-alias-input");
+    expect(alias).toHaveValue("Marta's iPad");
+    expect(dialog.textContent).not.toMatch(MAC_SHAPED);
+
+    fireEvent.change(alias, { target: { value: "Kitchen iPad" } });
+    fireEvent.click(screen.getByTestId("network-devices-picker-submit"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("network-devices-tab-registered")).toHaveAttribute(
+        "aria-selected",
+        "true"
+      );
+    });
+    expect(posted).toMatchObject({ mac: MAC, alias: "Kitchen iPad", memberId: null });
+    expect(screen.queryByTestId("network-devices-register-dialog")).not.toBeInTheDocument();
+    expect(screen.getByTestId("network-devices-alias-dev-new")).toHaveTextContent("Kitchen iPad");
+  });
+
+  it("a 403 on live-clients shows the management-required message with Retry", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(async (...args: FetchCall) => {
+      if (String(args[0]) === "/api/network-devices/live-clients") {
+        return jsonResponse({ error: "forbidden", code: AUTH_SCOPE_DENIED_CODE }, 403);
+      }
+      return mockRouter({ devices: [device()], members: [] })(...args);
+    });
+    renderManagement();
+    fireEvent.click(await screen.findByTestId("network-devices-open-picker"));
+    await waitFor(() => {
+      expect(screen.getByTestId("network-devices-picker-state")).toHaveTextContent(
+        messages.en["networkDevices.error.managementRequired"]
+      );
+    });
+    expect(screen.getByTestId("network-devices-picker-retry")).toBeInTheDocument();
+  });
+
+  it("an unnamed client opens the dialog with an empty alias", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(
+      mockRouter({
+        devices: [],
+        members: [],
+        liveClients: {
+          state: "fresh",
+          clients: [{ mac: MAC, displayName: null, isBlocked: false }],
+        },
+      })
+    );
+    renderManagement();
+    fireEvent.click(await screen.findByTestId("network-devices-open-picker"));
+    fireEvent.click(await screen.findByTestId(`network-devices-picker-select-${MAC}`));
+    expect(await screen.findByTestId("network-devices-picker-alias-input")).toHaveValue("");
   });
 });
 
