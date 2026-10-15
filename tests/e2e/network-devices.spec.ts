@@ -14,7 +14,10 @@ import { prepareActivePlugins } from "./plugin-fixture-db";
 /** docs/features/network-devices.md — lifecycle e2e (FR-001, FR-009, FR-010; quickstart.md
  * scenario 10 + "Admin access posture"). Fake-client-backed instance: seed a live client via a
  * local self-signed HTTPS fixture standing in for the real UniFi controller, register it from the
- * picker, block it, then delete it (confirming the warning) — asserting UI state after each step.
+ * Add tab's dialog, edit it, block it, then delete it through the confirmation dialog (blocked
+ * wording) — asserting UI state after each step. Before the management cookie is swapped in, the
+ * page must show the specific "management key required" message (a device key is denied on scope)
+ * and Retry must recover once the cookie is swapped.
  * OWN spawned server (backups-restore.spec.ts's pattern), NOT the shared Playwright `webServer`:
  * the shared server runs with `SCHEDULER_DISABLED=1` (playwright.config.ts), which never
  * registers the network-devices poller job at all (`src/server/index.ts`'s `startScheduler`) — the
@@ -188,7 +191,7 @@ async function stopServer(child: ChildProcess): Promise<void> {
   }
 }
 
-test.setTimeout(60_000);
+test.setTimeout(90_000);
 
 test("network devices lifecycle: seed live client -> register from picker -> block -> delete (FR-001, FR-009, FR-010)", async ({
   page,
@@ -242,7 +245,28 @@ test("network devices lifecycle: seed live client -> register from picker -> blo
     );
     await page.goto(`${base}/`);
     await catalogResponsePromise;
+    // Resolve the household's current locale so we can assert against LOCALIZED literals
+    // (member-lifecycle.spec.ts's precedent) rather than hardcoding English/Spanish strings.
+    const settingsRes = await page.request.get(`${base}/api/settings`);
+    expect(settingsRes.ok()).toBe(true);
+    const settings = (await settingsRes.json()) as { locale?: { language?: string } };
+    const lang = resolveLang(settings.locale?.language);
+    const m = messages[lang];
+
+    // --- Admin unlock (long-press affordance + PIN, AdminGate.tsx) ---
+    await unlockAdmin(page, ADMIN_PIN);
+
+    await openAdminSection(page, "admin-nav-network-devices");
+
+    // --- The device key is denied on scope: the specific message, not the generic failure ---
+    await expect(page.getByTestId("network-devices-error")).toHaveText(
+      m["networkDevices.error.managementRequired"]
+    );
+    // Swap to the management cookie now that the plugin catalog has loaded, then Retry.
     await context.addCookies([{ name: "mp_device_key", value: MP_MANAGEMENT_KEY, url: base }]);
+    await page.getByTestId("network-devices-retry").click();
+    await expect(page.getByTestId("network-devices-empty")).toBeVisible();
+    await expect(page.getByTestId("network-devices-management")).toBeVisible();
 
     // Wait for the REAL poller (registered because this server's own scheduler is enabled) to
     // observe the fixture at least once — the picker only shows clients from a `fresh` cache.
@@ -258,56 +282,62 @@ test("network devices lifecycle: seed live client -> register from picker -> blo
       )
       .toBe("fresh");
 
-    // Resolve the household's current locale so we can assert against LOCALIZED literals
-    // (member-lifecycle.spec.ts's precedent) rather than hardcoding English/Spanish strings.
-    const settingsRes = await page.request.get(`${base}/api/settings`);
-    expect(settingsRes.ok()).toBe(true);
-    const settings = (await settingsRes.json()) as { locale?: { language?: string } };
-    const lang = resolveLang(settings.locale?.language);
-    const m = messages[lang];
-
-    // --- Admin unlock (long-press affordance + PIN, AdminGate.tsx) ---
-    await unlockAdmin(page, ADMIN_PIN);
-
-    await openAdminSection(page, "admin-nav-network-devices");
-    await expect(page.getByTestId("network-devices-management")).toBeVisible();
-
-    // --- Register from the seeded picker (US1) ---
-    await page.getByTestId("network-devices-open-picker").click();
+    // --- Add tab: discovery table, sort, register in a dialog ---
+    await page.getByTestId("network-devices-empty-add").click();
     await expect(page.getByTestId("network-devices-picker")).toBeVisible();
 
     const macLower = mac.toLowerCase();
     await expect(page.getByTestId(`network-devices-picker-client-${macLower}`)).toBeVisible({
       timeout: 10_000,
     });
+    await page.getByTestId("network-devices-sort-mac").click();
     await page.getByTestId(`network-devices-picker-select-${macLower}`).click();
-    await page.getByTestId("network-devices-picker-alias-input").fill(alias);
-    await page.getByTestId("network-devices-picker-submit").click();
+    const dialog = page.getByTestId("network-devices-register-dialog");
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByTestId("network-devices-picker-alias-input")).toHaveValue(
+      `Fixture ${suffix}`
+    );
+    await expect(dialog).not.toContainText(macLower);
+    await dialog.getByTestId("network-devices-picker-alias-input").fill(alias);
+    await dialog.getByTestId("network-devices-picker-submit").click();
 
-    // Picker closes on success; the new row appears in the registry list.
-    await expect(page.getByTestId("network-devices-picker")).toHaveCount(0);
-    await expect(page.getByText(alias)).toBeVisible();
-
+    // Returned to the list, not the Add tab.
+    await expect(page.getByTestId("network-devices-tab-registered")).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
     const row = page.locator("li").filter({ hasText: alias });
     await expect(row).toHaveCount(1);
 
-    // --- Block (US2) ---
-    await row.getByRole("button", { name: m["networkDevices.action.block"] }).click();
-    await expect(row.getByText(m["networkDevices.badge.blocked"])).toBeVisible({
+    // --- Already added is dimmed on the Add tab ---
+    await page.getByTestId("network-devices-tab-add").click();
+    await expect(page.getByTestId(`network-devices-picker-added-${macLower}`)).toBeVisible();
+    await expect(page.getByTestId(`network-devices-picker-select-${macLower}`)).toHaveCount(0);
+    await page.getByTestId("network-devices-tab-registered").click();
+
+    // --- Edit in a dialog ---
+    await row.getByRole("button", { name: m["networkDevices.action.edit"] }).click();
+    const edit = page.getByTestId("network-devices-edit-dialog");
+    const renamed = `${alias} renamed`;
+    await edit.locator("input").fill(renamed);
+    await edit.getByRole("button", { name: m["networkDevices.action.save"] }).click();
+    await expect(edit).toBeHidden();
+    await expect(page.getByText(renamed)).toBeVisible();
+
+    // --- Block (US2), then delete through the ConfirmDialog with the blocked wording (US3) ---
+    const renamedRow = page.locator("li").filter({ hasText: renamed });
+    await renamedRow.getByRole("button", { name: m["networkDevices.action.block"] }).click();
+    await expect(renamedRow.getByText(m["networkDevices.badge.blocked"])).toBeVisible({
       timeout: 10_000,
     });
     await expect(
-      row.getByRole("button", { name: m["networkDevices.action.unblock"] })
+      renamedRow.getByRole("button", { name: m["networkDevices.action.unblock"] })
     ).toBeVisible();
+    await renamedRow.getByRole("button", { name: m["networkDevices.action.delete"] }).click();
+    await expect(page.getByText(m["networkDevices.action.deleteConfirmBlocked"])).toBeVisible();
+    await page.getByTestId("network-devices-delete-confirm").click();
 
-    // --- Delete, confirming the warning (US3) ---
-    page.once("dialog", (dialog) => {
-      expect(dialog.message()).toBe(m["networkDevices.action.deleteConfirmBlocked"]);
-      void dialog.accept();
-    });
-    await row.getByRole("button", { name: m["networkDevices.action.delete"] }).click();
-
-    await expect(page.getByText(alias)).toHaveCount(0);
+    await expect(page.getByText(renamed)).toHaveCount(0);
     await expect(page.getByTestId("network-devices-empty")).toBeVisible();
   } finally {
     if (server) await stopServer(server);
