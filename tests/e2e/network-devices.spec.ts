@@ -15,21 +15,17 @@ import { prepareActivePlugins } from "./plugin-fixture-db";
  * scenario 10 + "Admin access posture"). Fake-client-backed instance: seed a live client via a
  * local self-signed HTTPS fixture standing in for the real UniFi controller, register it from the
  * Add tab's dialog, edit it, block it, then delete it through the confirmation dialog (blocked
- * wording) — asserting UI state after each step. Before the management cookie is swapped in, the
- * page must show the specific "management key required" message (a device key is denied on scope)
- * and Retry must recover once the cookie is swapped.
+ * wording) — asserting UI state after each step, all with the NORMAL provisioned device cookie
+ * (ADR-058 single household tier; the ADR-053 device-key carve-out was removed 2026-10-15).
  * OWN spawned server (backups-restore.spec.ts's pattern), NOT the shared Playwright `webServer`:
  * the shared server runs with `SCHEDULER_DISABLED=1` (playwright.config.ts), which never
  * registers the network-devices poller job at all (`src/server/index.ts`'s `startScheduler`) — the
  * live cache would stay `cold` forever and the picker could never show a fresh client. This spec's
  * own server runs with the scheduler ENABLED so `registerNetworkDevicesPollerJob`'s * run-on-startup poll actually populates the cache against the fixture below.
- * Auth posture (quickstart.md "Admin access posture", review 2026-09-04): a management cookie set
- * directly via `context.addCookies` — `mp_device_key` = the raw `MP_MANAGEMENT_KEY` value (the
- * `kind='integration'` row `reconcileManagement` seeds at boot) plus the non-HttpOnly
- * `mp_provisioned` marker `Shell.tsx` gates on (FR-031/ADR-059) — never the browser-driven
- * provisioning flow, which only ever mints a `kind='device'` key `requireManagementKey` rejects
- * (AC-06). The access-gate cookie (`mp_gate`, auth/gate.ts) is set the same way so the SPA loads
- * directly, without driving the HTML gate form.
+ * Auth posture: the browser keeps the `kind='device'` cookie minted by the REAL provisioning
+ * endpoint, plus the non-HttpOnly `mp_provisioned` marker `Shell.tsx` gates on (FR-031/ADR-059).
+ * The access-gate cookie (`mp_gate`, auth/gate.ts) is set via `context.addCookies` so the SPA
+ * loads directly, without driving the HTML gate form. No management key is configured at all.
  * FINDING (reported, not fixed here): `client.ts`'s `unifi.tlsInsecure` toggle is broken on this
  * repo's Node 24 — see `unifi-fixture-server.ts`'s docblock for the root cause (an `undici`
  * npm-package `Agent` passed as Node's built-in `fetch`'s `dispatcher`, a cross-major-version ABI
@@ -41,16 +37,13 @@ import { prepareActivePlugins } from "./plugin-fixture-db";
  * trusts it, keeping `client.ts` on its plain (dispatcher-free) `fetch` path.
  * Admin PIN seeding: `admin_config.pin_hash` (the row `AdminGate`'s PIN unlock compares against)
  * is seeded ONLY inside `POST /api/auth/provision`'s handler (`auth/provision.ts`) — there is no
- * standalone reconcile seam for it the way `reconcileManagement` covers the management key
- *. So this spec calls the REAL provision endpoint once, with the REAL bootstrap key, purely
- * as a seeding side effect (it also mints a throwaway `kind='device'` cookie pair, which the
- * subsequent `context.addCookies` call below immediately overwrites with the real management
- * key) — never driving the browser-side `ProvisioningScreen` UI itself.
+ * standalone reconcile seam. So this spec calls the REAL provision endpoint once, with the REAL
+ * bootstrap key (it also mints the `kind='device'` cookie pair the whole spec then uses) —
+ * never driving the browser-side `ProvisioningScreen` UI itself.
  */
 
 const MP_ACCESS_TOKEN = "mpg-e2e-network-devices-access-token";
 const MP_BOOTSTRAP_KEY = `mpk-e2e-network-devices-bootstrap-${Date.now()}`;
-const MP_MANAGEMENT_KEY = `mpk-e2e-network-devices-${Date.now()}`;
 const ADMIN_PIN = "1234";
 
 const SERVER_ENTRY = resolve(process.cwd(), "dist", "server", "index.js");
@@ -112,7 +105,6 @@ async function startServer(
       DATABASE_PATH: "marplanner.db",
       MP_ACCESS_TOKEN,
       MP_BOOTSTRAP_KEY,
-      MP_MANAGEMENT_KEY,
       ADMIN_PIN,
       // Scheduler ENABLED (no SCHEDULER_DISABLED) — see module docblock: the poller must
       // actually run for the picker to ever show a fresh client.
@@ -225,16 +217,14 @@ test("network devices lifecycle: seed live client -> register from picker -> blo
     server = await startServer(port, dataDir, fixture.origin, fixture.certPath);
 
     // Seed admin_config.pin_hash via the REAL provisioning endpoint (see module docblock's "Admin
-    // PIN seeding" note) — a throwaway call purely for that side effect; its own device-key cookie
-    // is overwritten by the addCookies call immediately below.
+    // PIN seeding" note); its device-key cookie is the credential the whole spec runs on.
     const provisionRes = await page.request.post(`${base}/api/auth/provision`, {
       headers: { Authorization: `Bearer ${MP_BOOTSTRAP_KEY}` },
     });
     expect(provisionRes.ok()).toBe(true);
 
     // Load the SPA with the provisioned device cookie so the plugin catalog's full-access browser
-    // transport resolves normally. The management cookie replaces it only after that one-time
-    // catalog read, before any network-device administration request is made.
+    // transport resolves normally.
     await context.addCookies([
       { name: "mp_gate", value: gateCookieValue(MP_ACCESS_TOKEN), url: base },
       { name: "mp_provisioned", value: "1", url: base },
@@ -258,15 +248,9 @@ test("network devices lifecycle: seed live client -> register from picker -> blo
 
     await openAdminSection(page, "admin-nav-network-devices");
 
-    // --- The device key is denied on scope: the specific message, not the generic failure ---
-    await expect(page.getByTestId("network-devices-error")).toHaveText(
-      m["networkDevices.error.managementRequired"]
-    );
-    // Swap to the management cookie now that the plugin catalog has loaded, then Retry.
-    await context.addCookies([{ name: "mp_device_key", value: MP_MANAGEMENT_KEY, url: base }]);
-    await page.getByTestId("network-devices-retry").click();
+    // --- The normal device key loads the list: no error, the empty state ---
     await expect(page.getByTestId("network-devices-empty")).toBeVisible();
-    await expect(page.getByTestId("network-devices-management")).toBeVisible();
+    await expect(page.getByTestId("network-devices-error")).toHaveCount(0);
 
     // Wait for the REAL poller (registered because this server's own scheduler is enabled) to
     // observe the fixture at least once — the picker only shows clients from a `fresh` cache.

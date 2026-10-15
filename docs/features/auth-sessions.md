@@ -25,7 +25,7 @@ with no expiry, binds it to an httpOnly cookie, and never returns the raw key. T
 
 ### Integration credentials
 
-Startup reconciles `MP_MANAGEMENT_KEY` into an integration credential. Bearer transport for that class is limited to `/api/plugins*`; other management carve-outs use the cookie authentication path. There is no API to issue, list or revoke keys. See [operations](../operations.md).
+Startup reconciles `MP_MANAGEMENT_KEY` into an integration credential. Bearer transport for that class is limited to `/api/plugins*`; other routes use the cookie authentication path. There is no API to issue, list or revoke keys. See [operations](../operations.md).
 
 ### User Story 3 — Unlock admin with the client-side PIN
 
@@ -62,7 +62,7 @@ session row is created, and backend authorization never consults PIN state.
 
 - **FR-007 (deferred, not this release)**: Given a future revoke/expire mutation removing the last operator-usable raw `*` credential, when it is attempted, then the system MUST refuse it even if device keys remain; bootstrap retirement MUST also preserve an operator-held credential admitted for future provisioning (anti-lockout, `ADR-030`/`ADR-032`). _(Realizes: AUTH-SESSIONS-INV-07)_
 
-- **FR-008**: Given the trust model, when an operation is authorized, then there MUST be no second server-side privilege tier — a provisioned device's `*` cookie confers full household trust — and key-management MUST be the sole server-side operator boundary (with the `ADR-053` device-block as the lone pre-existing carve-out); every other operation — backups, plugins, telemetry-read, settings — MUST be household-tier (device-`*` cookie + client-side PIN), and any future operation that appears to need an ad-hoc per-endpoint "admin scope" carve-out MUST instead be treated as a signal to re-examine the threat model rather than add a tier. _(Realizes: AUTH-SESSIONS-INV-08)_
+- **FR-008**: Given the trust model, when an operation is authorized, then there MUST be no second server-side privilege tier — a provisioned device's `*` cookie confers full household trust — and key-management MUST be the sole server-side operator boundary (the former `ADR-053` device-block carve-out was removed 2026-10-15); every other operation — backups, plugins, telemetry-read, settings — MUST be household-tier (device-`*` cookie + client-side PIN), and any future operation that appears to need an ad-hoc per-endpoint "admin scope" carve-out MUST instead be treated as a signal to re-examine the threat model rather than add a tier. _(Realizes: AUTH-SESSIONS-INV-08)_
 
 - **FR-009**: Given any authenticated request, when it is validated, then it MUST validate both the credential and that the referenced key record is active (not revoked, not expired), and revocation or expiry MUST take effect on the next request. _(Realizes: AUTH-SESSIONS-INV-09)_
 

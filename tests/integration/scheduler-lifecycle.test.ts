@@ -316,16 +316,9 @@ describe("reads stay pure across every GET surface (US3 — BACKGROUND-JOBS-SCHE
 
     // A valid key so every route reaches its REAL handler/read path (not just
     // a 401/403 short-circuit at the auth boundary) — the purity guarantee is
-    // about what the handler DOES, so the handler must run. `kind='integration'`
-    // (NOT 'device'): the network-devices routes compose
-    // `requireManagementKey` on top of `requireCapability`, which rejects
-    // `kind='device'` outright (403) regardless of scope — a device-kind key
-    // here would short-circuit those two routes before their handlers ever
-    // ran, making this sweep vacuous for them (reviewer M6: an INSERT planted
-    // inside the list handler survived undetected). `scope='*'` still
-    // satisfies every OTHER route's plain `requireCapability` check
-    // (`scope === '*'` branch), so this key keeps exercising the full
-    // existing surface too.
+    // about what the handler DOES, so the handler must run. `scope='*'`
+    // satisfies every route's `requireCapability` check (`scope === '*'`
+    // branch), so this key exercises the full surface.
     const sweepKey = `mpk-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const sweepKeyHash = hashKey(sweepKey);
     const now = Date.now();

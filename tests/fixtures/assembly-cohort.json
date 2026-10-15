@@ -1578,7 +1578,6 @@
             "foundation runtime persistence seeds a configured management key once and leaves revoked keys revoked",
             "foundation runtime persistence reads only persisted settings and rejects corrupt or incomplete weather locations",
             "foundation runtime persistence drains selected jobs by deadline and applies the lifecycle gate to manual runs",
-            "foundation runtime persistence keeps management routes inaccessible to a provisioned device key",
             "foundation runtime persistence boots the foundation listener and drains its scheduler on shutdown"
           ],
           "tests/boundary/foundation-telemetry-outage.test.ts": [
@@ -1946,16 +1945,15 @@
             "pre-migration recovery points retains distinct recovery points when later SQL fails"
           ],
           "tests/boundary/network-devices-auth.test.ts": [
-            "network-devices auth — requireManagementKey (RED-first) NETWORK-DEVICES-AC-06: a device key minted through the REAL provision.ts path is rejected 403",
-            "network-devices auth — requireManagementKey (RED-first) no authenticated apiKeyId attached → 403 (fail-closed)",
-            "network-devices auth — requireManagementKey (RED-first) an unknown apiKeyId (no matching row) → 403",
-            "network-devices auth — requireManagementKey (RED-first) composes with requireCapability (research D1's false-green matrix) THE FALSE GREEN D1 KILLS: a REAL provisioned device key (scope='*') is rejected even composed with requireCapability, despite '*' satisfying ANY capability alone",
-            "network-devices auth — requireManagementKey (RED-first) reconcileManagement — (maintainer decision 2026-09-04) MP_MANAGEMENT_KEY unset → creates no row (fail-closed default, mirrors reconcileBootstrap)",
-            "network-devices auth — requireManagementKey (RED-first) reconcileManagement — (maintainer decision 2026-09-04) is idempotent — running twice with the same MP_MANAGEMENT_KEY mints exactly one row",
-            "network-devices auth — requireManagementKey (RED-first) reconcileManagement — (maintainer decision 2026-09-04) Codex P1-b: a REVOKED management row is NOT resurrected by a later reconcile — stays revoked, guard still rejects it",
-            "network-devices auth — requireManagementKey (RED-first) authBoundary — unknown/missing key (#682 review fold, P1) an UNRECOGNIZED key presented as the device cookie → 401 'Invalid API key', code credential_invalid",
-            "network-devices auth — requireManagementKey (RED-first) a management key minted through the REAL reconcileManagement() path passes requireManagementKey",
-            "network-devices auth — requireManagementKey (RED-first) composes with requireCapability (research D1's false-green matrix) a management key minted through the REAL reconcileManagement() path passes BOTH requireManagementKey and requireCapability"
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) NETWORK-DEVICES-AC-06: a device key minted through the REAL provision.ts path is ACCEPTED",
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) a management key minted through the REAL reconcileManagement() path is accepted",
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) no authenticated apiKeyId attached → 403 credential_invalid (fail-closed)",
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) an unknown apiKeyId (no matching row) → 403",
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) a key scoped to OTHER capabilities is rejected 403 scope_denied (the capability check still runs)",
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) reconcileManagement — (maintainer decision 2026-09-04) MP_MANAGEMENT_KEY unset → creates no row (fail-closed default, mirrors reconcileBootstrap)",
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) reconcileManagement — (maintainer decision 2026-09-04) is idempotent — running twice with the same MP_MANAGEMENT_KEY mints exactly one row",
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) reconcileManagement — (maintainer decision 2026-09-04) Codex P1-b: a REVOKED management row is NOT resurrected by a later reconcile — stays revoked, guard still rejects it",
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) authBoundary — unknown/missing key (#682 review fold, P1) an UNRECOGNIZED key presented as the device cookie → 401 'Invalid API key', code credential_invalid"
           ],
           "tests/boundary/network-devices-cache.test.ts": [
             "network-devices cache starts cold before any fetch (never fetched, no error)",
@@ -2081,7 +2079,6 @@
             "network-devices registry liveStatus derivation matrix notDetected: never seen (lastSeenAt NULL) — the column is nullable in the schema even though register() never inserts NULL (INV-10)"
           ],
           "tests/boundary/network-devices-routes.test.ts": [
-            "network-devices routes NETWORK-DEVICES-AC-06: a REAL device key (kind='device', scope='*') is rejected 403 on EVERY endpoint x method",
             "network-devices routes a REAL management key (kind='integration', via reconcileManagement) passes the auth gate on EVERY endpoint x method (never 403)",
             "network-devices routes GET /api/network-devices/live-clients — cache state 'unconfigured' surfaces verbatim",
             "network-devices routes GET /api/network-devices/live-clients — cache state 'cold' surfaces verbatim",
@@ -2106,7 +2103,9 @@
             "network-devices routes POST /api/network-devices/:id/block and unblock — 502 on controller unconfigured (null), NOTHING mirrored (row unchanged)",
             "network-devices routes POST /api/network-devices/:id/block and unblock — 502 on controller rejected (401/403), NOTHING mirrored (row unchanged)",
             "network-devices routes POST /api/network-devices/:id/block and unblock — 502 on controller unreachable (timeout/network), NOTHING mirrored (row unchanged)",
-            "network-devices routes NetworkDeviceControllerUnavailableError carries no MAC in its message (sanity on the 502 body itself)"
+            "network-devices routes NetworkDeviceControllerUnavailableError carries no MAC in its message (sanity on the 502 body itself)",
+            "network-devices routes NETWORK-DEVICES-AC-06: a REAL device key (kind='device', scope='*') passes the auth gate on EVERY endpoint x method (never 403)",
+            "network-devices routes an unauthenticated request is rejected on EVERY endpoint x method"
           ],
           "tests/boundary/network-devices-rule-b.test.ts": [
             "network-devices-rule-b — config-drift tripwire import-x/no-restricted-paths (the network-devices zone) rejects a core-internal import from src/server/modules/network-devices (e.g. ../../db/client)",
@@ -3284,7 +3283,6 @@
             "authFetch / reportCredentialLoss (FR-013) does NOT clear the marker or dispatch on a successful (2xx) response",
             "authFetch / reportCredentialLoss (FR-013) preserves provisioning and passes through 429 without retrying or reporting credential loss",
             "authFetch / reportCredentialLoss (FR-013) reportCredentialLoss clears the marker and dispatches the event directly",
-            "authFetch — scope-403 vs credential-invalid (#682) does NOT clear the marker on a scope-403 (requireManagementKey rejecting a device key, real body shape)",
             "authFetch — scope-403 vs credential-invalid (#682) does NOT clear the marker on a scope-403 (requireCapability's 'not granted' branch, real body shape)",
             "authFetch — scope-403 vs credential-invalid (#682) STILL clears the marker on a credential-invalid 403 (revoked key, real authBoundary body shape)",
             "authFetch — scope-403 vs credential-invalid (#682) STILL clears the marker on a credential-invalid 401 (invalid key, real authBoundary body shape)",
@@ -3648,13 +3646,12 @@
           ],
           "tests/client/network-devices-data.test.ts": [
             "network-devices data helpers maps the three controller codes and falls back to the neutral generic key",
-            "network-devices data helpers only a scope-denied 403 maps to the management-required message",
             "useNetworkDevicesData loads devices, cache state and only ACTIVE members",
-            "useNetworkDevicesData a scope-denied 403 on the list sets the management-required key; a members failure stays independent",
             "useNetworkDevicesData refreshes silently every REFRESH_MS, without flipping loading",
             "useNetworkDevicesData skips the refresh while the tab is hidden",
             "useNetworkDevicesData discards a refresh that was in flight while a mutation happened",
-            "useNetworkDevicesData stops refreshing after unmount"
+            "useNetworkDevicesData stops refreshing after unmount",
+            "useNetworkDevicesData a 403 on the list sets the generic load-error key; a members failure stays independent"
           ],
           "tests/client/network-devices-i18n-parity.test.ts": [
             "network-devices-i18n-parity en and es catalogs have identical keys (both directions)",
@@ -3705,7 +3702,6 @@
             "NetworkDevicesManagement PR-E review P2-3: a pre-response transport failure blocking a device renders the localized fallback, never the raw exception",
             "NetworkDevicesManagement delete: the confirmation for a BLOCKED device names the stranded upstream block",
             "NetworkDevicesManagement delete: cancelling the confirmation performs NO request and keeps the row",
-            "NetworkDevicesManagement — reworked page a scope-denied 403 on the list shows the management-required message, Retry, and keeps the add button",
             "NetworkDevicesManagement — reworked page Retry reloads the list after a failure",
             "NetworkDevicesManagement — reworked page the page heading equals the sidebar label",
             "NetworkDevicesManagement — reworked page the empty state links to the Add tab",
@@ -3713,11 +3709,12 @@
             "NetworkDevicesManagement — reworked page Add tab: already-registered MACs (compared case-insensitively) are dimmed with an Already added badge and no Add button",
             "NetworkDevicesManagement — reworked page Add tab: sorting by name then MAC reorders the rows and toggles aria-sort",
             "NetworkDevicesManagement — reworked page register dialog prefills the alias from the client name, never shows the MAC, and returns to the list after success",
-            "NetworkDevicesManagement — reworked page a 403 on live-clients shows the management-required message with Retry",
             "NetworkDevicesManagement — reworked page an unnamed client opens the dialog with an empty alias",
             "discovery helpers sorts by name ascending with unnamed clients last, in either direction",
             "discovery helpers sorts by MAC and does not mutate its input",
-            "discovery helpers prefills the alias from the client name, empty for unnamed, cut to 80 chars"
+            "discovery helpers prefills the alias from the client name, empty for unnamed, cut to 80 chars",
+            "NetworkDevicesManagement — reworked page a 403 on the list shows the generic load error, Retry, and keeps the add button",
+            "NetworkDevicesManagement — reworked page a 403 on live-clients shows the generic picker load error with Retry"
           ],
           "tests/client/network-weather-admin.test.tsx": [
             "NetworkDevicesManagement — kiosk density (SC-001, SC-002) meets kiosk density across the collapsed list, an open edit row, and the registration picker (both before and after selecting a client)",
@@ -5574,7 +5571,7 @@
           "lines": 78,
           "statements": 90,
           "functions": 23,
-          "branches": 91
+          "branches": 89
         },
         "minimumRates": {
           "lines": 94.87,
@@ -5601,16 +5598,16 @@
       "src/client/admin/network-devices/data.ts": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 62,
-          "statements": 80,
-          "functions": 25,
-          "branches": 32
+          "lines": 57,
+          "statements": 75,
+          "functions": 23,
+          "branches": 26
         },
         "minimumRates": {
           "lines": 100.0,
-          "statements": 98.75,
-          "functions": 100.0,
-          "branches": 93.75
+          "statements": 97.33,
+          "functions": 95.65,
+          "branches": 92.3
         }
       },
       "src/client/admin/printer/PrinterDiagnosticsTab.tsx": {
@@ -7221,10 +7218,10 @@
       "src/server/auth/capability.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 43,
-          "statements": 43,
-          "functions": 7,
-          "branches": 28
+          "lines": 31,
+          "statements": 31,
+          "functions": 5,
+          "branches": 22
         },
         "minimumRates": {
           "lines": 93.02,

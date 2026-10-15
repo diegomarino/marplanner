@@ -35,9 +35,10 @@ endpoint require admin scope?" (it surfaced ad-hoc in ADR-053 and ADR-057).
    (read-only diagnostic, ADR-057), settings, and all household content. Reversible/recoverable
    operations do not warrant forcing the operator to hold the bootstrap key.
 
-5. **ADR-053 device-block** is the one pre-existing extra carve-out (it rejects device-`*` kiosk
-   keys at the API capability layer). **Kept as already decided**; flagged here as the lone
-   exception, not a precedent to generalize.
+5. **ADR-053 device-block** was the one pre-existing extra carve-out (it rejected device-`*`
+   kiosk keys at the API capability layer). **Removed 2026-10-15 by owner decision**: network
+   devices are household-tier like everything else here, reachable by a device `*` cookie +
+   client-side PIN.
 
 **Anti-pattern named:** do **not** add ad-hoc per-endpoint "requires admin/operator scope"
 carve-outs. If a future operation _feels_ like it needs one, that is a signal to re-examine the
@@ -67,8 +68,7 @@ This is the same "accept + document" posture chosen for telemetry (ADR-057), app
 
 ## Acceptance Criteria
 
-- No endpoint other than key-management requires a non-cookie credential, except ADR-053
-  device-block (the documented lone exception).
+- No endpoint other than key-management requires a non-cookie credential.
 - The PIN is never used as a server-side authorization check.
 - A future grill proposing a per-endpoint "admin scope" requirement is evaluated against this
   calibration first (re-examine threat model) rather than adding a carve-out.
