@@ -409,11 +409,11 @@ export const messages = {
     "dailyBriefing.admin.memberLabel": "Member",
     "dailyBriefing.admin.offMarker": "off",
     "dailyBriefing.admin.optedOutNotice":
-      "The daily briefing is off for {name}. Turn it on to choose blocks and generate briefings.",
+      "The daily briefing is off for {name}. Turn it on to choose blocks, generate briefings or see past ones.",
     "dailyBriefing.admin.turnOn": "Turn on daily briefing",
-    "dailyBriefing.admin.automationTitle": "Automatic generation",
+    "dailyBriefing.admin.automationTitle": "Automatic generation and printing",
     "dailyBriefing.admin.automationHint":
-      "Every day at this time a briefing is generated for each member who has it on.",
+      "Every day at this time a briefing is generated for each member who has it on, except on their paused days.",
     "dailyBriefing.admin.autoPrintLabel": "Auto-print after morning chores",
     "dailyBriefing.admin.generateTitle": "Generate briefings",
     "dailyBriefing.admin.generateAllButton": "Generate for all members",
@@ -429,8 +429,8 @@ export const messages = {
     "dailyBriefing.admin.daysNone": "Paused every day",
     "dailyBriefing.admin.resultPaused": "Paused",
     "dailyBriefing.admin.resultNotGenerated": "Not generated",
-    "dailyBriefing.admin.openBlocksAria": "Open blocks for {name}",
-    "dailyBriefing.admin.openBriefingsAria": "Open briefings for {name}",
+    "dailyBriefing.admin.openBlocksAria": "Open Blocks for {name}",
+    "dailyBriefing.admin.openBriefingsAria": "Open Briefings for {name}",
     "dailyBriefing.admin.openBlocks": "Open Blocks",
     "dailyBriefing.admin.openBriefings": "Open Briefings",
     "dailyBriefing.admin.blocksCaption":
@@ -447,6 +447,9 @@ export const messages = {
     "dailyBriefing.admin.dragEnded": "{block} dropped.",
     "dailyBriefing.admin.dragCancelled": "Reorder cancelled.",
     "dailyBriefing.admin.paramDefault": "Default",
+    "dailyBriefing.admin.today": "Today",
+    "dailyBriefing.admin.generateAllOnDate": "Generate for all members on {date}",
+    "dailyBriefing.admin.settingsLoading": "Loading settings…",
     "dailyBriefing.admin.autoPrintHint":
       "When a member finishes their morning chores, their briefing prints. Needs the Printing plugin on.",
     "plugins.title": "Plugin Management",
@@ -1905,11 +1908,11 @@ export const messages = {
     "dailyBriefing.admin.memberLabel": "Miembro",
     "dailyBriefing.admin.offMarker": "desactivado",
     "dailyBriefing.admin.optedOutNotice":
-      "El resumen diario está desactivado para {name}. Actívalo para elegir bloques y generar resúmenes.",
+      "El resumen diario está desactivado para {name}. Actívalo para elegir bloques, generar resúmenes o ver los anteriores.",
     "dailyBriefing.admin.turnOn": "Activar el resumen diario",
-    "dailyBriefing.admin.automationTitle": "Generación automática",
+    "dailyBriefing.admin.automationTitle": "Generación e impresión automáticas",
     "dailyBriefing.admin.automationHint":
-      "Cada día a esta hora se genera el resumen de cada miembro que lo tiene activado.",
+      "Cada día a esta hora se genera el resumen de cada miembro que lo tiene activado, salvo en sus días en pausa.",
     "dailyBriefing.admin.autoPrintLabel": "Imprimir al terminar las tareas de la mañana",
     "dailyBriefing.admin.generateTitle": "Generar resúmenes",
     "dailyBriefing.admin.generateAllButton": "Generar para todos los miembros",
@@ -1925,8 +1928,8 @@ export const messages = {
     "dailyBriefing.admin.daysNone": "En pausa todos los días",
     "dailyBriefing.admin.resultPaused": "En pausa",
     "dailyBriefing.admin.resultNotGenerated": "No generado",
-    "dailyBriefing.admin.openBlocksAria": "Abrir los bloques de {name}",
-    "dailyBriefing.admin.openBriefingsAria": "Abrir los resúmenes de {name}",
+    "dailyBriefing.admin.openBlocksAria": "Abrir Bloques de {name}",
+    "dailyBriefing.admin.openBriefingsAria": "Abrir Resúmenes de {name}",
     "dailyBriefing.admin.openBlocks": "Abrir Bloques",
     "dailyBriefing.admin.openBriefings": "Abrir Resúmenes",
     "dailyBriefing.admin.blocksCaption":
@@ -1943,6 +1946,9 @@ export const messages = {
     "dailyBriefing.admin.dragEnded": "{block} soltado.",
     "dailyBriefing.admin.dragCancelled": "Reordenación cancelada.",
     "dailyBriefing.admin.paramDefault": "Predeterminado",
+    "dailyBriefing.admin.today": "Hoy",
+    "dailyBriefing.admin.generateAllOnDate": "Generar para todos los miembros el {date}",
+    "dailyBriefing.admin.settingsLoading": "Cargando ajustes…",
     "dailyBriefing.admin.autoPrintHint":
       "Cuando un miembro termina las tareas de la mañana, se imprime su resumen. Requiere el complemento de impresión activado.",
     "plugins.title": "Gestión de Complementos",

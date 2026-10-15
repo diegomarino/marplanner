@@ -536,6 +536,11 @@ export function DailyBriefingManagement() {
                 </div>
               )}
               <ErrorNotice message={blocksError} data-testid="daily-briefing-blocks-error" />
+              {!settings && settingsLoading && (
+                <p className="text-control text-muted-foreground">
+                  {t("dailyBriefing.admin.settingsLoading")}
+                </p>
+              )}
               {settings && (
                 <BlockMatrix
                   memberName={selected.displayName}
@@ -573,6 +578,7 @@ export function DailyBriefingManagement() {
               <BriefingWorkspace
                 key={selected.id}
                 member={selected}
+                briefingDays={settings?.schedules[selected.id]}
                 date={date}
                 today={today}
                 onDateChange={setDate}

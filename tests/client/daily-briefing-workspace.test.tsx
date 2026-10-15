@@ -364,6 +364,31 @@ describe("BriefingWorkspace", () => {
     expect(calls.some((c) => c.url.includes(`/${PAST}/preview.png`))).toBe(false);
   });
 
+  it("offers a way back to today after browsing another date", async () => {
+    mockBackend();
+    const { onDateChange } = renderWorkspace();
+    await screen.findByTestId(`daily-briefing-history-entry-${TODAY}`);
+    expect(screen.queryByTestId("daily-briefing-preview-today")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId(`daily-briefing-history-entry-${PAST}`));
+    fireEvent.click(await screen.findByTestId("daily-briefing-preview-today"));
+    expect(onDateChange).toHaveBeenLastCalledWith(TODAY);
+    await waitFor(() =>
+      expect(screen.queryByTestId("daily-briefing-preview-today")).not.toBeInTheDocument()
+    );
+  });
+
+  it("explains a paused day up front, links to Blocks and does not offer Generate", async () => {
+    mockBackend({ notGenerated: [TODAY] });
+    const { onOpenBlocks } = renderWorkspace({ briefingDays: ["mon", "tue", "wed", "fri"] });
+    // TODAY (2026-10-15) is a Thursday.
+    expect(await screen.findByTestId("daily-briefing-paused-notice")).toHaveTextContent(
+      `Ben is paused on ${TODAY}`
+    );
+    expect(screen.getByTestId("daily-briefing-generate")).toBeDisabled();
+    fireEvent.click(screen.getByTestId("daily-briefing-paused-open-blocks"));
+    expect(onOpenBlocks).toHaveBeenCalledTimes(1);
+  });
+
   it("fetches nothing while the tab is hidden", () => {
     const calls = mockBackend();
     renderWorkspace({ active: false });
