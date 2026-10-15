@@ -129,6 +129,9 @@ export function MealsManagement() {
   const [weekError, setWeekError] = useState<string | null>(null);
   // Only the newest week request may write the grid: a slow earlier week must not overwrite it.
   const weekGeneration = useRef(0);
+  // The week on screen, for refreshes started by a write that finishes after the user has
+  // navigated: they must re-read the current week, not the one their render closed over.
+  const weekAnchorRef = useRef("");
   const [entryTarget, setEntryTarget] = useState<MealEntryTarget | null>(null);
 
   useEffect(() => {
@@ -144,6 +147,7 @@ export function MealsManagement() {
   }, []);
 
   useEffect(() => {
+    weekAnchorRef.current = weekAnchorDate;
     void loadWeekMenu();
   }, [weekAnchorDate]);
 
@@ -180,7 +184,7 @@ export function MealsManagement() {
     }
   }
 
-  async function loadWeekMenu(anchor = weekAnchorDate) {
+  async function loadWeekMenu(anchor = weekAnchorRef.current) {
     if (!anchor) return;
     const generation = ++weekGeneration.current;
     setWeekLoading(true);
@@ -384,7 +388,7 @@ export function MealsManagement() {
       setPlanEntriesRefreshToken((n) => n + 1);
       return true;
     } catch {
-      setError(t("meals.entries.error"));
+      // The in-card form shows the failure next to itself.
       return false;
     }
   }
@@ -1072,6 +1076,9 @@ function PlanEntriesPanel({ t, planId, recipes, onChanged, refreshToken }: PlanE
   const { weekStartDay } = useHouseholdSettings();
   const [entries, setEntries] = useState<MealEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  // After the first successful load, refetches keep the rows mounted so an open row edit (in
+  // this card, while another card or the week grid writes) keeps its draft.
+  const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [writeError, setWriteError] = useState<string | null>(null);
 
@@ -1088,6 +1095,7 @@ function PlanEntriesPanel({ t, planId, recipes, onChanged, refreshToken }: PlanE
       });
       if (!res.ok) throw new Error("Failed to load plan entries");
       setEntries((await res.json()) as MealEntry[]);
+      setLoaded(true);
     } catch {
       setLoadError(t("meals.plan.entriesError"));
     } finally {
@@ -1129,7 +1137,7 @@ function PlanEntriesPanel({ t, planId, recipes, onChanged, refreshToken }: PlanE
     }
   }
 
-  if (loading) return <p>{t("meals.plan.loading")}</p>;
+  if (loading && !loaded) return <p>{t("meals.plan.loading")}</p>;
 
   if (loadError) {
     return (
@@ -1359,6 +1367,7 @@ function RecurringEntryAuthoringForm({
   const [contentMode, setContentMode] = useState<"recipe" | "note">("recipe");
   const [recipeId, setRecipeId] = useState("");
   const [note, setNote] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const availableRecipes = recipes.filter((recipe) => isRecipeAvailableForSlot(recipe, slot));
   const canSubmit = contentMode === "recipe" ? !!recipeId : !!note.trim();
@@ -1448,6 +1457,7 @@ function RecurringEntryAuthoringForm({
           />
         )}
 
+        <ErrorNotice message={error} />
         <Button
           onClick={() => {
             if (!canSubmit) return;
@@ -1456,8 +1466,10 @@ function RecurringEntryAuthoringForm({
                 contentMode === "recipe"
                   ? { kind: "recurring", mealPlanId, weekday, slot, recipeId }
                   : { kind: "recurring", mealPlanId, weekday, slot, note: note.trim() };
+              setError(null);
               const succeeded = await onCreate(input);
               if (succeeded) onDone();
+              else setError(t("meals.entries.error"));
             })();
           }}
           disabled={!canSubmit}
