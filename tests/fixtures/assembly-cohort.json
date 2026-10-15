@@ -3070,13 +3070,13 @@
             "TimeAnnouncementsManagement — WEEKDAY_LABEL_KEYS maps each weekday to its OWN translation key (SC-007's cast removal, pinned) every weekday maps to its own key, by ITERATING the map",
             "DailyBriefingManagement — the panel is a real landmark (FR-009 L2-adoption clause) exposes an AdminPanel region AND heading, both named for the panel title",
             "DailyBriefingManagement — every opt-in checkbox carries a DISTINCT accessible name (Codex review on #812) names each member's checkbox with the member's own name, so two rows never announce identically",
-            "DailyBriefingManagement — kiosk density across reachable states (SC-001, SC-002) meets kiosk density collapsed, opted-in, block-order added, then removed (CENSUS FIRES ON REMOVAL)",
+            "DailyBriefingManagement — kiosk density across reachable states (SC-001, SC-002) meets kiosk density on Schedule, Blocks and Briefings (CENSUS PER TAB)",
             "DailyBriefingManagement — kiosk density across reachable states (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own settings Save button below the kiosk minimum makes the assertion fail",
             "DailyBriefingManagement — error states are announced (SC-011) announces a members/opt-in load failure through ErrorNotice's live region",
             "DailyBriefingManagement — error states are announced (SC-011) announces a settings-save validation failure through the settings card's own ErrorNotice",
-            "DailyBriefingManagement — error states are announced (SC-011) announces the settings-load failure through the block-order AND block-settings cards' own ErrorNotice (routed off the shared component now, closing #758's per-site debt)",
-            "WeekdayPicker adoption (DailyBriefingManagement) — group accessible name AND canonical emission order (SC-009) labels a per-block WeekdayPicker group with the localized active-weekdays caption",
-            "WeekdayPicker adoption (DailyBriefingManagement) — group accessible name AND canonical emission order (SC-009) unchecking fri then mon on wordOfDay emits the canonical mon..sun-minus-those-two order at the PUT boundary, regardless of click order",
+            "DailyBriefingManagement — error states are announced (SC-011) announces the settings-load failure once, above the tabs, with Retry",
+            "Matrix cells (DailyBriefingManagement) names every cell by block and localized day",
+            "Matrix cells (DailyBriefingManagement) unchecking fri then mon on wordOfDay emits the canonical order",
             "DailyBriefingManagement — WEEKDAY_LABEL_KEYS maps each weekday to its OWN translation key (SC-007's cast removal, pinned) every weekday maps to its own key, by ITERATING the map"
           ],
           "tests/client/backups-i18n-parity.test.ts": [
@@ -3244,7 +3244,8 @@
             "CheckboxField calls onChange with the new checked value on click",
             "CheckboxField deliberate negative — reports the ACTUAL next state (false when currently checked), not a hardcoded value",
             "CheckboxField renders the disabled attribute when disabled is set",
-            "CheckboxField meets kiosk density"
+            "CheckboxField meets kiosk density",
+            "CheckboxField keeps a hidden label as the accessible name when labelHidden is set"
           ],
           "tests/client/choice-pills.test.tsx": [
             "ChoicePills is a radiogroup named by groupLabel, options in order, only the value checked",
@@ -3300,22 +3301,45 @@
             "runtime subpath credential transport prefixes canonical API strings and clears the marker at its mounted cookie path"
           ],
           "tests/client/daily-briefing-admin-mirror-fence.test.tsx": [
-            "daily-briefing admin panel — server-constant mirror fence offers exactly the server's ALL_BLOCK_TYPES, in registry order",
+            "daily-briefing admin panel — server-constant mirror fence lists exactly the server's ALL_BLOCK_TYPES as matrix rows, in registry order",
             "daily-briefing admin panel — server-constant mirror fence offers exactly the server's CORPUS_LANGUAGE_AVAILABILITY per block type",
             "daily-briefing admin panel — server-constant mirror fence renders a settings row for every server block type"
           ],
           "tests/client/daily-briefing-admin.test.tsx": [
             "DailyBriefingManagement — admin settings-layer extensions loads settings and saves generation time + trigger binding as morning_complete/null",
             "DailyBriefingManagement — admin settings-layer extensions surfaces a validation error from the settings save",
-            "DailyBriefingManagement — admin settings-layer extensions block order editor sends the ordered array including a repeated type",
             "DailyBriefingManagement — admin settings-layer extensions language select is absent on a non-corpus type and offers only the available languages",
             "DailyBriefingManagement — admin settings-layer extensions weekday toggles always send the canonical mon..sun order regardless of click order",
             "DailyBriefingManagement — admin settings-layer extensions surfaces onThisDay's default-disabled reality on its row",
             "DailyBriefingManagement — admin settings-layer extensions preview fetches the stored image for the selected member/date, honouring the base path",
-            "DailyBriefingManagement — admin settings-layer extensions block order Save is disabled while the settings GET is pending, then enabled once it resolves",
-            "DailyBriefingManagement — admin settings-layer extensions block order Save stays disabled after the settings GET fails",
+            "DailyBriefingManagement — admin settings-layer extensions automation and matrix stay absent while the settings GET is pending, then appear",
+            "DailyBriefingManagement — admin settings-layer extensions after the settings GET fails nothing can be written and Retry recovers",
             "translates block and parameter labels without changing persisted identifiers (en)",
             "translates block and parameter labels without changing persisted identifiers (es)"
+          ],
+          "tests/client/daily-briefing-block-matrix.test.tsx": [
+            "BlockMatrix puts the weekday columns in household week-start order, headers and cells aligned",
+            "BlockMatrix names each cell by block and day and reports toggles",
+            "BlockMatrix shows a disabled block as all off, with onThisDay's default-off note",
+            "BlockMatrix drops onThisDay's default-off note once the member has configured the block",
+            "BlockMatrix disables a paused column's cells but keeps their value, and toggles the pause",
+            "BlockMatrix disables only the saving row, and the pause row while the schedule saves",
+            "BlockMatrix offers params inline and reports changes",
+            "BlockMatrix names the drag handles and disables them while the order saves",
+            "BlockMatrix contains the hidden cell labels inside its own scroll box (no page-wide sideways scroll)",
+            "BlockMatrix meets kiosk density"
+          ],
+          "tests/client/daily-briefing-blocks.test.ts": [
+            "briefingBlocks — effective days and cell writes treats enabled + null weekdays as every day and disabled as no day",
+            "briefingBlocks — effective days and cell writes switching one cell on in a legacy disabled row writes only that day",
+            "briefingBlocks — effective days and cell writes switching the last cell off disables the block with an empty list",
+            "briefingBlocks — effective days and cell writes completing all seven days writes null (every day) in canonical order otherwise",
+            "briefingBlocks — effective days and cell writes resolves a missing row to the FR-013 default (onThisDay off)",
+            "briefingBlocks — order lists configured types first, then the rest of the registry once",
+            "briefingBlocks — order moves a type and keeps repeated instances with their params",
+            "briefingBlocks — order returns the same array when nothing moves",
+            "briefingBlocks — dates and labels reads a calendar date's weekday without a timezone",
+            "briefingBlocks — dates and labels maps every weekday to its own key"
           ],
           "tests/client/daily-briefing-i18n-parity.test.ts": [
             "daily-briefing-i18n-parity every daily briefing key in en exists in es",
@@ -3323,14 +3347,37 @@
             "daily-briefing-i18n-parity daily briefing keys resolve to non-empty strings in both languages"
           ],
           "tests/client/daily-briefing-management.test.tsx": [
-            "DailyBriefingManagement — Generate-all opt-in interlock (#555) restores the v1-like Blocks and Preview / Generate workspaces",
-            "DailyBriefingManagement — Generate-all opt-in interlock (#555) reorders block rows by drag and persists the complete effective order",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) opens on Schedule and offers Blocks and Briefings tabs for the selected member",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) keyboard reorder persists the complete effective order and reverts on failure",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) posts the empty Generate-all body and renders every returned member status",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) Generate for all members on another date sends that date and marks paused members",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) renders an already_running Generate-all response as a non-error informational message",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) keeps Generate-all disabled while an earlier opt-in PUT is still pending",
-            "DailyBriefingManagement — Generate-all opt-in interlock (#555) pauses a weekday for the selected member, disables that column and shows the notice",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) pauses a weekday for the selected member and disables that column without a regenerate notice",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) an opted-out member is gated on Blocks and Briefings until turned on",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) locks Turn on daily briefing while Generate for all members runs, like the table opt-in",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) toggling a cell writes the effective day set for that block",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) offers Retry when members fail to load, and when settings fail to load",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) fills the Result column from the briefings already stored for the shown date",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) lets the tab bar wrap so long tab names never widen the page",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) marks a paused member once settings arrive after the stored results",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) keeps a row locked until its own save returns, even while another row saves",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) shows the stored results of a date picked while Generate for all members runs",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) does not guess Paused or Not generated while the briefing days are unknown",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) opting the selected member out gates Blocks, and turning back on restores it without a refetch",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) titles the page with its sidebar label"
+          ],
+          "tests/client/daily-briefing-schedule-tab.test.tsx": [
+            "scheduleSummary says every day, paused every day, or the days in display order",
+            "BriefingScheduleTab lists every member with the opt-in, days and open buttons",
+            "BriefingScheduleTab labels each cell for the stacked phone layout with its column name",
+            "BriefingScheduleTab names a date that is not today on Generate and offers a way back to today",
+            "BriefingScheduleTab shows the household today in the date input and reports a new date",
+            "BriefingScheduleTab titles the result column with the date and shows each member's result",
+            "BriefingScheduleTab hides results that belong to another date",
+            "BriefingScheduleTab disables Generate for all members when it cannot run, with the hint",
+            "BriefingScheduleTab does not render the automation card until settings load",
+            "BriefingAutomationCard enables Save only while a value differs from the stored one, then saves"
           ],
           "tests/client/daily-briefing-view.test.tsx": [
             "DailyBriefingView — full block registry keeps existing scalar meal snapshots visible",
@@ -3365,10 +3412,17 @@
             "BriefingWorkspace prints through the queue and says so; Print is disabled when Printing is off",
             "BriefingWorkspace shows still-rendering with a Retry that refetches",
             "BriefingWorkspace offers Retry when the history fails to load",
-            "BriefingWorkspace disables Generate for a member without the briefing turned on",
-            "BriefingWorkspace Show loads any typed date and refetches the image",
+            "BriefingWorkspace offers Open Blocks from the paused notice",
+            "BriefingWorkspace changing the date loads that date and refetches the image",
+            "BriefingWorkspace clears the paused notice once the tab is hidden",
+            "BriefingWorkspace shows the image first and keeps the raw payload in collapsed technical details",
+            "BriefingWorkspace shows no image frame for a date without a briefing",
+            "BriefingWorkspace offers a way back to today after browsing another date",
+            "BriefingWorkspace explains a paused day up front, links to Blocks and does not offer Generate",
+            "BriefingWorkspace says only once that there is nothing yet for a member with no briefings",
+            "BriefingWorkspace offers Retry when the stored briefing fails to load",
+            "BriefingWorkspace shows the server's message when Generate or Print fails",
             "BriefingWorkspace fetches nothing while the tab is hidden",
-            "BriefingWorkspace keeps the history when the current member is selected again",
             "BriefingWorkspace keeps the payload when the already-selected history entry is clicked again",
             "BriefingWorkspace ignores a slower read for a date that is no longer selected"
           ],
@@ -5260,6 +5314,7 @@
           "tests/e2e/daily-briefing.spec.ts": [
             "86839c4e71e65f7dc2a3-aa86899c234dd598acdd",
             "86839c4e71e65f7dc2a3-e4393fb7a8648d313a5e",
+            "86839c4e71e65f7dc2a3-8e09be68fe08301dc3e5",
             "86839c4e71e65f7dc2a3-da5cab8905813c4e7781"
           ],
           "tests/e2e/daily-messages.spec.ts": ["84aeea7f0cfc163093f1-f7a8bf8818add9ed3690"],
@@ -5394,10 +5449,10 @@
       "src/client/admin/DailyBriefingManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 295,
-          "statements": 325,
-          "functions": 95,
-          "branches": 218
+          "lines": 216,
+          "statements": 251,
+          "functions": 62,
+          "branches": 185
         },
         "minimumRates": {
           "lines": 83.38,
@@ -6216,6 +6271,36 @@
           "branches": 82.55
         }
       },
+      "src/client/daily-briefing/admin/BlockMatrix.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 37,
+          "statements": 39,
+          "functions": 24,
+          "branches": 46
+        },
+        "minimumRates": {
+          "lines": 78.37,
+          "statements": 76.92,
+          "functions": 70.83,
+          "branches": 69.56
+        }
+      },
+      "src/client/daily-briefing/admin/BriefingAutomationCard.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 25,
+          "statements": 25,
+          "functions": 6,
+          "branches": 16
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 93.75
+        }
+      },
       "src/client/daily-briefing/admin/BriefingImage.tsx": {
         "layer": "client",
         "minimumTotals": {
@@ -6231,13 +6316,28 @@
           "branches": 80
         }
       },
-      "src/client/daily-briefing/admin/BriefingMemberPills.tsx": {
+      "src/client/daily-briefing/admin/BriefingMemberBar.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 2,
-          "statements": 3,
-          "functions": 3,
-          "branches": 2
+          "lines": 6,
+          "statements": 7,
+          "functions": 4,
+          "branches": 7
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 85.71
+        }
+      },
+      "src/client/daily-briefing/admin/BriefingScheduleTab.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 28,
+          "statements": 31,
+          "functions": 11,
+          "branches": 57
         },
         "minimumRates": {
           "lines": 100,
@@ -6249,16 +6349,31 @@
       "src/client/daily-briefing/admin/BriefingWorkspace.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 110,
-          "statements": 129,
-          "functions": 24,
-          "branches": 126
+          "lines": 89,
+          "statements": 101,
+          "functions": 18,
+          "branches": 119
         },
         "minimumRates": {
           "lines": 93.63,
           "statements": 89.92,
           "functions": 95.83,
           "branches": 81.74
+        }
+      },
+      "src/client/daily-briefing/admin/briefingBlocks.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 47,
+          "statements": 56,
+          "functions": 17,
+          "branches": 27
+        },
+        "minimumRates": {
+          "lines": 97.87,
+          "statements": 98.21,
+          "functions": 94.11,
+          "branches": 88.88
         }
       },
       "src/client/daily-briefing/blockRenderers.tsx": {
