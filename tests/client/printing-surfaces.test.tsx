@@ -27,6 +27,7 @@ import { createFakePrintTransport } from "@/printing/transport";
 import type { JobsListResponse, PrintJob } from "../../src/shared";
 import { DensityViolationError, assertKioskDensityCompliant } from "./helpers/density";
 import { injectDensityStyles } from "./helpers/densityStyles";
+import { stubFetchRoutes, type RouteHandler } from "./helpers/fetchRoutes";
 
 vi.mock("@/lib/householdSettings", () => ({
   useHouseholdSettingsContext: () => ({
@@ -116,6 +117,32 @@ function renderManagement() {
   );
 }
 
+function printerRoutes(jobs: PrintJob[], extra: Record<string, RouteHandler> = {}) {
+  return stubFetchRoutes({
+    "GET /api/settings": () =>
+      new Response(
+        JSON.stringify({
+          locale: { timezone: "Europe/Madrid", language: "en", weekStartDay: 1 },
+          printer: { paperWidthDots: 576 },
+          printerTransport: { deviceId: "", name: "", serviceUuid: "", characteristicUuid: "" },
+        }),
+        { status: 200 }
+      ),
+    "GET /api/daily-briefing/settings": () =>
+      new Response(JSON.stringify({ autoPrintTrigger: null }), { status: 200 }),
+    "GET /api/printing/jobs": () => jobsResponse(jobs),
+    "GET /api/members?lifecycle=all": () => new Response("[]", { status: 200 }),
+    "POST /api/printing/capability": () => jsonResponse({ registered: true }),
+    "POST /api/printing/claim": () => new Response(null, { status: 204 }),
+    ...extra,
+  });
+}
+
+async function openDiagnostics(): Promise<void> {
+  fireEvent.click(await screen.findByTestId("printing-tab-diagnostics"));
+  await flushMicrotasks();
+}
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -133,31 +160,25 @@ describe("PrintingManagement — the shared L2 panel was actually ADOPTED (FR-00
     // (meals-management.test.tsx:493 and calendar-view.test.tsx:345 on main; members-admin in the unmerged; and here), because
     // the verification policy mandates the density assertion and the announcement assertion but never
     // this one. The DoD clause is being added separately; this is the local fix.
-    const mockFetch = vi.fn();
-    vi.stubGlobal("fetch", mockFetch);
-    mockFetch.mockResolvedValueOnce(jobsResponse([makeJob({ id: "job-1" })]));
+    printerRoutes([makeJob({ id: "job-1" })]);
 
     renderManagement();
-    await screen.findByTestId("printing-jobs-list");
-    expect(screen.getByRole("region", { name: "Printing" })).toBeInTheDocument();
+    await screen.findByTestId("printer-settings");
+    // The heading equals the sidebar label ("Printer").
+    expect(screen.getByRole("region", { name: "Printer" })).toBeInTheDocument();
     // Region ALONE is not enough, and the re-review proved it: `AdminPanel` names its region via
-    // `aria-labelledby` pointing at its own heading, so a hand-rolled `<section aria-label="Printing">`
+    // `aria-labelledby` pointing at its own heading, so a hand-rolled `<section aria-label="Printer">`
     // with NO heading and NO description reproduces the landmark and its name and passes a
     // region-only assertion 13/13. The heading is the part a substitute would have to reproduce the
     // component to satisfy.
-    expect(screen.getByRole("heading", { name: "Printing" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Printer" })).toBeInTheDocument();
   });
 });
 
 describe("PrintingManagement — shared printer session", () => {
   it("uses the globally owned session for its pair action", async () => {
     const transport = createFakePrintTransport();
-    const mockFetch = vi.fn();
-    vi.stubGlobal("fetch", mockFetch);
-    mockFetch
-      .mockResolvedValueOnce(jobsResponse([]))
-      .mockResolvedValueOnce(jsonResponse({ registered: true }))
-      .mockResolvedValue(new Response(null, { status: 204 }));
+    const mockFetch = printerRoutes([]);
 
     render(
       <LanguageProvider>
@@ -178,49 +199,63 @@ describe("PrintingManagement — shared printer session", () => {
 });
 
 describe("PrintingManagement — kiosk density across every reachable state (SC-001, SC-002)", () => {
-  it("meets kiosk density across the jobs list (mixed healthy/unhealthy states), an in-flight trigger, and an unhealthy trigger result — three phases, one control throughout", async () => {
-    const mockFetch = vi.fn();
-    vi.stubGlobal("fetch", mockFetch);
+  it("meets kiosk density on the Settings tab", async () => {
+    printerRoutes([]);
     const uninject = await injectDensityStyles();
     document.documentElement.setAttribute("data-density", "kiosk");
 
     try {
-      // initial load: one healthy (pending) job, one unhealthy (dead-letter) job.
-      mockFetch.mockResolvedValueOnce(
-        jobsResponse([
-          makeJob({ id: "job-pending", derivedState: "pending" }),
-          makeJob({ id: "job-dead", derivedState: "dead-letter" }),
-        ])
-      );
-
       renderManagement();
-      await screen.findByTestId("printing-jobs-list");
+      await screen.findByTestId("printer-paper-width");
+      await flushMicrotasks();
 
-      // Phase 1 — the default list: the test-print trigger button is this surface's ONLY
-      // control (the jobs list renders text only, never a button/input) — one control whether
-      // the list holds zero, one, or many jobs.
-      expect(countInteractiveControls(document.body)).toBe(1);
+      // 2 tabs, plugin link, auto-print link, paper width, name, device id, service UUID,
+      // characteristic UUID, Save (no session provider, so no Pair button).
+      expect(countInteractiveControls(document.body)).toBe(10);
+      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
+    } finally {
+      uninject();
+    }
+  });
+
+  it("meets kiosk density across the jobs table (mixed healthy/unhealthy states), an in-flight trigger, and an unhealthy trigger result — three phases, five controls throughout", async () => {
+    let resolveTrigger: (() => void) | undefined;
+    printerRoutes(
+      [
+        makeJob({ id: "job-pending", derivedState: "pending" }),
+        makeJob({ id: "job-dead", derivedState: "dead-letter" }),
+      ],
+      {
+        "POST /api/printing/test-print": () =>
+          new Promise<Response>((resolve) => {
+            resolveTrigger = () => resolve(jsonResponse({ error: "plugin_inactive" }, 409));
+          }),
+      }
+    );
+    const uninject = await injectDensityStyles();
+    document.documentElement.setAttribute("data-density", "kiosk");
+
+    try {
+      renderManagement();
+      await openDiagnostics();
+      await screen.findByTestId("printing-jobs-table");
+
+      // Phase 1 — the table renders text only: 2 tabs + test print + reset + refresh.
+      expect(countInteractiveControls(document.body)).toBe(5);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
       // Phase 2 — the trigger fires, deliberately left UNRESOLVED so the surface renders its
-      // in-flight (disabled) state: the button stays mounted (still one control) but disabled.
-      let resolveTrigger: (() => void) | undefined;
-      mockFetch.mockImplementationOnce(
-        () =>
-          new Promise<Response>((resolve) => {
-            resolveTrigger = () => resolve(jsonResponse({ error: "plugin_inactive" }, 409));
-          })
-      );
+      // in-flight (disabled) state: both actions stay mounted but disabled.
       fireEvent.click(screen.getByTestId("printing-trigger-test-print"));
       await flushMicrotasks();
 
       expect(screen.getByTestId("printing-trigger-test-print")).toBeDisabled();
-      expect(countInteractiveControls(document.body)).toBe(1);
+      expect(screen.getByTestId("printing-reset-today")).toBeDisabled();
+      expect(countInteractiveControls(document.body)).toBe(5);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
       // Phase 3 — the trigger resolves to an UNHEALTHY (plugin-inactive) result: the control
-      // count stays one (the button never disappears), and the result is now announced through
-      // ErrorNotice (SC-011, asserted in its own describe block below).
+      // count stays five, and the result is announced through ErrorNotice (SC-011, below).
       resolveTrigger?.();
       await flushMicrotasks();
 
@@ -228,25 +263,25 @@ describe("PrintingManagement — kiosk density across every reachable state (SC-
       expect(screen.getByTestId("printing-trigger-result")).toHaveTextContent(
         "The Printing plugin is inactive."
       );
-      expect(countInteractiveControls(document.body)).toBe(1);
+      expect(countInteractiveControls(document.body)).toBe(5);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
     }
   });
 
-  it("meets kiosk density when the jobs list itself fails to load — the trigger button is still the surface's only control", async () => {
-    const mockFetch = vi.fn();
-    vi.stubGlobal("fetch", mockFetch);
-    mockFetch.mockResolvedValueOnce(new Response(null, { status: 500 }));
+  it("meets kiosk density when the jobs list itself fails to load — Retry is the one added control", async () => {
+    printerRoutes([], { "GET /api/printing/jobs": () => new Response(null, { status: 500 }) });
     const uninject = await injectDensityStyles();
     document.documentElement.setAttribute("data-density", "kiosk");
 
     try {
       renderManagement();
+      await openDiagnostics();
       await screen.findByTestId("printing-list-error");
 
-      expect(countInteractiveControls(document.body)).toBe(1);
+      // 2 tabs + test print + reset + refresh + retry.
+      expect(countInteractiveControls(document.body)).toBe(6);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
@@ -254,14 +289,13 @@ describe("PrintingManagement — kiosk density across every reachable state (SC-
   });
 
   it("DELIBERATE NEGATIVE — forcing this surface's own trigger button below the kiosk minimum makes the assertion fail, and reverting restores compliance", async () => {
-    const mockFetch = vi.fn();
-    vi.stubGlobal("fetch", mockFetch);
-    mockFetch.mockResolvedValueOnce(jobsResponse([]));
+    printerRoutes([]);
     const uninject = await injectDensityStyles();
     document.documentElement.setAttribute("data-density", "kiosk");
 
     try {
       const { container } = renderManagement();
+      await openDiagnostics();
       const button = await screen.findByTestId("printing-trigger-test-print");
 
       // A real control from this surface, not a synthetic fixture.
@@ -292,11 +326,10 @@ describe("PrintingManagement — kiosk density across every reachable state (SC-
 
 describe("PrintingManagement — error states are announced through ErrorNotice's live region (SC-011)", () => {
   it("announces a jobs-list load failure", async () => {
-    const mockFetch = vi.fn();
-    vi.stubGlobal("fetch", mockFetch);
-    mockFetch.mockResolvedValueOnce(new Response(null, { status: 500 }));
+    printerRoutes([], { "GET /api/printing/jobs": () => new Response(null, { status: 500 }) });
 
     renderManagement();
+    await openDiagnostics();
 
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("Failed to load print jobs.");
@@ -304,17 +337,14 @@ describe("PrintingManagement — error states are announced through ErrorNotice'
   });
 
   it("announces a dead-lettered job's state distinctly from a healthy job's — only the unhealthy one is an alert", async () => {
-    const mockFetch = vi.fn();
-    vi.stubGlobal("fetch", mockFetch);
-    mockFetch.mockResolvedValueOnce(
-      jobsResponse([
-        makeJob({ id: "job-pending", derivedState: "pending" }),
-        makeJob({ id: "job-dead", derivedState: "dead-letter" }),
-      ])
-    );
+    printerRoutes([
+      makeJob({ id: "job-pending", derivedState: "pending" }),
+      makeJob({ id: "job-dead", derivedState: "dead-letter" }),
+    ]);
 
     renderManagement();
-    await screen.findByTestId("printing-jobs-list");
+    await openDiagnostics();
+    await screen.findByTestId("printing-jobs-table");
 
     const alert = screen.getByRole("alert");
     expect(alert).toHaveTextContent("Dead-lettered");
@@ -328,12 +358,12 @@ describe("PrintingManagement — error states are announced through ErrorNotice'
   });
 
   it("announces a plugin-inactive test-print trigger result", async () => {
-    const mockFetch = vi.fn();
-    vi.stubGlobal("fetch", mockFetch);
-    mockFetch.mockResolvedValueOnce(jobsResponse([]));
-    mockFetch.mockResolvedValueOnce(jsonResponse({ error: "plugin_inactive" }, 409));
+    printerRoutes([], {
+      "POST /api/printing/test-print": () => jsonResponse({ error: "plugin_inactive" }, 409),
+    });
 
     renderManagement();
+    await openDiagnostics();
     await screen.findByTestId("printing-jobs-empty");
     fireEvent.click(screen.getByTestId("printing-trigger-test-print"));
 
@@ -343,13 +373,12 @@ describe("PrintingManagement — error states are announced through ErrorNotice'
   });
 
   it("does NOT render a healthy (enqueued) trigger result as an alert", async () => {
-    const mockFetch = vi.fn();
-    vi.stubGlobal("fetch", mockFetch);
-    mockFetch.mockResolvedValueOnce(jobsResponse([]));
-    mockFetch.mockResolvedValueOnce(jsonResponse({ enqueued: true, jobId: "job-9" }));
-    mockFetch.mockResolvedValueOnce(jobsResponse([makeJob({ id: "job-9" })]));
+    printerRoutes([], {
+      "POST /api/printing/test-print": () => jsonResponse({ enqueued: true, jobId: "job-9" }),
+    });
 
     renderManagement();
+    await openDiagnostics();
     await screen.findByTestId("printing-jobs-empty");
     fireEvent.click(screen.getByTestId("printing-trigger-test-print"));
 
