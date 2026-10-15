@@ -166,3 +166,64 @@ describe("DailyMessagesManagement 14-day editor", () => {
     expect(previousButton).toBeDisabled();
   });
 });
+
+describe("DailyMessagesManagement load failures can be retried", () => {
+  function stubFetch(handlers: { members: () => Response; messages: () => Response }) {
+    const mockFetch = vi.fn((input: string | URL, init?: Parameters<typeof fetch>[1]) => {
+      const url = String(input);
+      const method = init?.method ?? "GET";
+      if (url === "/api/settings") {
+        return Promise.resolve(jsonResponse({ locale: { timezone: "UTC", language: "en" } }));
+      }
+      if (url === "/api/members" && method === "GET") return Promise.resolve(handlers.members());
+      if (url.startsWith("/api/daily-messages?") && method === "GET") {
+        return Promise.resolve(handlers.messages());
+      }
+      throw new Error(`unexpected fetch: ${url} (${method})`);
+    });
+    vi.stubGlobal("fetch", mockFetch);
+    render(
+      <HouseholdSettingsProvider>
+        <LanguageProvider>
+          <DailyMessagesManagement />
+        </LanguageProvider>
+      </HouseholdSettingsProvider>
+    );
+    return mockFetch;
+  }
+
+  it("offers Retry when the members request fails and recovers on click", async () => {
+    let membersFail = true;
+    stubFetch({
+      members: () => (membersFail ? jsonResponse(null, 500) : jsonResponse([member()])),
+      messages: () => jsonResponse([]),
+    });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Failed to load daily messages.");
+    expect(screen.queryByTestId("daily-messages-no-members")).not.toBeInTheDocument();
+
+    membersFail = false;
+    fireEvent.click(screen.getByTestId("daily-messages-retry"));
+
+    expect(await screen.findAllByTestId(/^daily-messages-day-/)).toHaveLength(14);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("daily-messages-retry")).not.toBeInTheDocument();
+  });
+
+  it("hides the day editor and offers Retry when the messages request fails", async () => {
+    let messagesFail = true;
+    stubFetch({
+      members: () => jsonResponse([member()]),
+      messages: () => (messagesFail ? jsonResponse(null, 500) : jsonResponse([message()])),
+    });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Failed to load daily messages.");
+    expect(screen.queryAllByTestId(/^daily-messages-day-/)).toHaveLength(0);
+
+    messagesFail = false;
+    fireEvent.click(screen.getByTestId("daily-messages-retry"));
+
+    expect(await screen.findAllByTestId(/^daily-messages-day-/)).toHaveLength(14);
+    expect(screen.getByTestId("daily-messages-text-2026-01-15")).toHaveValue("Have a great day!");
+  });
+});

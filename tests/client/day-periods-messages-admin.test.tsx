@@ -688,7 +688,7 @@ describe("DailyMessagesManagement — every error state is announced through Err
     fireEvent.click(screen.getByTestId("daily-messages-delete-confirm"));
 
     const alert = await screen.findByTestId("daily-messages-error");
-    expect(alert).toHaveTextContent("Failed to load daily messages.");
+    expect(alert).toHaveTextContent("Failed to delete the message.");
     expectErrorNoticeIdentity(alert, "assertive");
   });
 });
