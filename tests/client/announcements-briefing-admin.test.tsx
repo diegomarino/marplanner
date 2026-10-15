@@ -536,11 +536,11 @@ describe("DailyBriefingManagement — every opt-in checkbox carries a DISTINCT a
     const ada = await screen.findByTestId("daily-briefing-opt-in-member-ada");
     const ben = await screen.findByTestId("daily-briefing-opt-in-member-ben");
 
-    // Pre-fix, both computed to the bare visible label ("On") — indistinguishable to
+    // Pre-fix, both computed to the bare label ("Daily briefing") — indistinguishable to
     // assistive technology with more than one member listed. The name must compose the two
     // VISIBLE texts (member name + state word), mirroring what sighted users see.
-    expect(ada).toHaveAccessibleName("Ada: On");
-    expect(ben).toHaveAccessibleName("Ben: On");
+    expect(ada).toHaveAccessibleName("Ada: Daily briefing");
+    expect(ben).toHaveAccessibleName("Ben: Daily briefing");
   });
 });
 
@@ -582,7 +582,7 @@ describe("DailyBriefingManagement — kiosk density across reachable states (SC-
         );
         fireEvent.click(screen.getByTestId("daily-briefing-tab-blocks"));
         await screen.findByTestId("daily-briefing-block-matrix");
-        // The Schedule tab is hidden now. 3 tabs + 2 member pills + the matrix: 7 "Briefing runs"
+        // The Schedule tab is hidden now. 3 tabs + 2 member pills + the matrix: 7 "Briefing days"
         // pause checkboxes, 21 drag handles, 21 x 7 = 147 cells and 12 param selects (level on
         // wordOfDay, difficulty on trivia/wordSearch, language on the 9 corpus-backed types)
         // = 3 + 2 + 7 + 21 + 147 + 12.
@@ -593,7 +593,7 @@ describe("DailyBriefingManagement — kiosk density across reachable states (SC-
         fireEvent.click(screen.getByTestId("daily-briefing-tab-preview"));
         await screen.findByTestId("daily-briefing-history-empty");
         await screen.findByTestId("daily-briefing-no-briefing");
-        // 3 tabs + 2 member pills + the workspace's date, Generate, View PNG and Print.
+        // 3 tabs + 2 member pills + the workspace's date, Generate, Open image and Print.
         expect(countInteractiveControls(document.body)).toBe(9);
         expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
       } finally {

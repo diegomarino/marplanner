@@ -244,7 +244,7 @@ function BlockRow({
             <GripVertical aria-hidden="true" className="size-4" />
           </Button>
           <span className="font-medium">{label}</span>
-          {DEFAULT_DISABLED_BLOCK_TYPES.has(type) && (
+          {DEFAULT_DISABLED_BLOCK_TYPES.has(type) && settings.updatedAt === null && (
             <span
               className="text-xs text-muted-foreground"
               data-testid={`daily-briefing-admin-block-default-disabled-${type}`}

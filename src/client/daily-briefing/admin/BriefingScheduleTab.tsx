@@ -204,6 +204,7 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
                             data-testid={`daily-briefing-opt-in-${member.id}`}
                             onChange={(checked) => props.onOptInChange(member.id, checked)}
                             label={enabledText}
+                            labelHidden
                             aria-label={`${member.displayName}: ${enabledText}`}
                           />
                         </td>

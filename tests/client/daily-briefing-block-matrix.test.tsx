@@ -69,6 +69,20 @@ describe("BlockMatrix", () => {
     ).toBeVisible();
   });
 
+  it("drops onThisDay's default-off note once the member has configured the block", () => {
+    renderMatrix({}, [
+      {
+        ...defaultMemberBlockSettings("m1", "onThisDay"),
+        enabled: true,
+        weekdays: ["mon"],
+        updatedAt: 5,
+      },
+    ]);
+    expect(
+      screen.queryByTestId("daily-briefing-admin-block-default-disabled-onThisDay")
+    ).not.toBeInTheDocument();
+  });
+
   it("disables a paused column's cells but keeps their value, and toggles the pause", () => {
     const props = renderMatrix({ schedule: ["mon", "tue", "wed", "thu", "fri"] });
     expect(screen.getByTestId("daily-briefing-schedule-day-sun")).not.toBeChecked();

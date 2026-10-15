@@ -292,7 +292,7 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
 
     const info = await screen.findByTestId("daily-briefing-generate-all-info");
     expect(info).toHaveTextContent(
-      "A Daily Briefing generation is already running — try again shortly."
+      "A daily briefing generation is already running — try again shortly."
     );
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.getByTestId("daily-briefing-member-status-member-ada")).toHaveTextContent("—");
@@ -438,6 +438,33 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     fireEvent.click(screen.getByTestId("daily-briefing-tab-blocks"));
     expect(await screen.findByTestId("daily-briefing-opted-out")).toBeVisible();
     expect(screen.queryByTestId("daily-briefing-block-matrix")).not.toBeInTheDocument();
+  });
+
+  it("locks Turn on daily briefing while Generate for all members runs, like the table opt-in", async () => {
+    let finish: ((response: Response) => void) | undefined;
+    mockBackend({
+      optIns: ["member-ada"],
+      handle: (url) =>
+        url === "/api/daily-briefing/generate-all"
+          ? new Promise<Response>((resolve) => {
+              finish = resolve;
+            })
+          : undefined,
+    });
+    renderManagement();
+    const generateAll = await screen.findByTestId("daily-briefing-generate-all");
+    await waitFor(() => expect(generateAll).toBeEnabled());
+    fireEvent.click(generateAll);
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-opt-in-member-ben")).toBeDisabled()
+    );
+
+    fireEvent.click(screen.getByTestId("daily-briefing-tab-blocks"));
+    fireEvent.click(screen.getByTestId("daily-briefing-member-pill-member-ben"));
+    expect(screen.getByTestId("daily-briefing-turn-on")).toBeDisabled();
+
+    finish?.(jsonResponse({ status: "completed", count: 0, generated: [] }));
+    await waitFor(() => expect(screen.getByTestId("daily-briefing-turn-on")).toBeEnabled());
   });
 
   it("toggling a cell writes the effective day set for that block", async () => {
