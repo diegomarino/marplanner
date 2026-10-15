@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { AdminPanel } from "@/components/AdminPanel";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useT } from "@/i18n";
-import { LABEL_INLINE_CLASSES } from "@/lib/recipes";
 import type { WeatherSettingsObject } from "../../shared";
 
 /**
@@ -81,6 +81,7 @@ export interface WeatherManagementProps {
 
 export function WeatherManagement({ value, onChange, disabled = false }: WeatherManagementProps) {
   const t = useT();
+  const uid = useId();
   const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -114,43 +115,45 @@ export function WeatherManagement({ value, onChange, disabled = false }: Weather
     >
       <ErrorNotice message={error} data-testid="weather-error" />
 
-      <div className="bg-card flex flex-col gap-2 rounded-lg p-4 shadow">
-        <label className={LABEL_INLINE_CLASSES}>
-          {t("weather.management.latLabel")}
+      <div className="bg-card flex flex-col gap-4 rounded-lg p-4 shadow">
+        <div
+          data-testid="weather-fields"
+          className="grid grid-cols-1 items-center gap-x-3 gap-y-3 @sm:grid-cols-[max-content_1fr]"
+        >
+          <Label htmlFor={`${uid}-lat`}>{t("weather.management.latLabel")}</Label>
           <Input
+            id={`${uid}-lat`}
             type="text"
             inputMode="decimal"
             data-testid="weather-lat-input"
             value={value.lat}
             disabled={disabled}
             onChange={(e) => onChange({ lat: e.target.value })}
-            className="w-auto"
+            className="w-full min-w-0"
           />
-        </label>
-        <label className={LABEL_INLINE_CLASSES}>
-          {t("weather.management.lonLabel")}
+          <Label htmlFor={`${uid}-lon`}>{t("weather.management.lonLabel")}</Label>
           <Input
+            id={`${uid}-lon`}
             type="text"
             inputMode="decimal"
             data-testid="weather-lon-input"
             value={value.lon}
             disabled={disabled}
             onChange={(e) => onChange({ lon: e.target.value })}
-            className="w-auto"
+            className="w-full min-w-0"
           />
-        </label>
-        <label className={LABEL_INLINE_CLASSES}>
-          {t("weather.management.labelLabel")}
+          <Label htmlFor={`${uid}-label`}>{t("weather.management.labelLabel")}</Label>
           <Input
+            id={`${uid}-label`}
             type="text"
             data-testid="weather-label-input"
             value={value.label}
             disabled={disabled}
             onChange={(e) => onChange({ label: e.target.value })}
             placeholder={t("weather.management.labelPlaceholder")}
-            className="w-auto"
+            className="w-full min-w-0"
           />
-        </label>
+        </div>
 
         {problem !== null && (
           <p data-testid="weather-hint" className="text-muted-foreground text-control">
@@ -160,7 +163,7 @@ export function WeatherManagement({ value, onChange, disabled = false }: Weather
           </p>
         )}
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             type="button"
             variant="outline"
