@@ -46,11 +46,13 @@ import {
 import {
   __setOnThisDaySourceForTests,
   __setQuoteSourceForTests,
+  DailyBriefingPausedError,
   DailyBriefingValidationError,
   deriveStatus,
   generateAllBriefings,
   generateBriefing,
   readBriefing,
+  setMemberSchedule,
 } from "../../src/server/modules/daily-briefing/index";
 import {
   writeBlockOrder,
@@ -726,6 +728,45 @@ describe("daily-briefing full generation", () => {
   });
 
   describe("late-eligibility abort (FOLD-2, Codex #707 review)", () => {
+    it("a weekday paused while the render is in-flight aborts that write: paused rejection, no row committed (PR #38 review)", async () => {
+      seedMember("m1", { optedIn: true });
+
+      let renderStarted = false;
+      let releaseRender: (() => void) | undefined;
+      const gate = new Promise<void>((resolve) => {
+        releaseRender = resolve;
+      });
+      bridgeOverride.current = async () => {
+        renderStarted = true;
+        await gate;
+        return {
+          bitmapPng: buildValidPng(),
+          bitmapHeight: 1,
+          failedRenderBlocks: [],
+          unrenderedBlocks: [],
+        };
+      };
+      try {
+        const generatePromise = generateBriefing("m1", DATE_FRI);
+        await vi.waitFor(() => {
+          expect(renderStarted).toBe(true);
+        });
+
+        // Pause Friday WHILE the render is in flight.
+        setMemberSchedule("m1", ["mon", "tue", "wed", "thu", "sat", "sun"]);
+        releaseRender?.();
+
+        await expect(generatePromise).rejects.toThrow(DailyBriefingPausedError);
+        expect(
+          getDb()
+            .prepare("SELECT COUNT(*) AS count FROM daily_briefing WHERE member_id = ?")
+            .get("m1")
+        ).toEqual({ count: 0 });
+      } finally {
+        bridgeOverride.current = null;
+      }
+    });
+
     it("a member archived while the render is in-flight aborts that write quietly: no crash, no payload/raster committed, other members unaffected", async () => {
       seedMember("m1", { optedIn: true });
       seedMember("m2", { optedIn: true });

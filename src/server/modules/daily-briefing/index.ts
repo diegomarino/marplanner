@@ -912,6 +912,7 @@ async function finishBlocks(
  * start" vs "a concurrent change raced a healthy request") never get confused in a stack trace.
  */
 class LateEligibilityAbortError extends Error {}
+class LatePauseAbortError extends Error {}
 
 // ── In-flight registry (spec D7) ───────────────────────────────────────────
 // `pending` never escapes the write transaction, so the admin preview cannot tell "still
@@ -1011,6 +1012,9 @@ export async function generateBriefing(
     if (!isOptedIn(memberId)) {
       throw new DailyBriefingValidationError(`Member "${memberId}" is not opted in`);
     }
+    if (!isBriefingScheduledOn(memberId, date)) {
+      throw new DailyBriefingPausedError(memberId, date);
+    }
 
     // exit condition: render whenever Printing is active (full 21-type registry;
     // see the "Render + store" section doc comment above `selectRenderableBlocks`).
@@ -1036,6 +1040,10 @@ export async function generateBriefing(
         // escapes this function as-is.
         if (!isActiveMember(memberId) || !isOptedIn(memberId)) {
           throw new LateEligibilityAbortError(memberId);
+        }
+        // A weekday paused during the render aborts the same way, before anything is written.
+        if (!isBriefingScheduledOn(memberId, date)) {
+          throw new LatePauseAbortError(memberId);
         }
         // The unique (member_id, date) index is the reservation: an existing row
         // keeps its stable id while its synchronous regeneration is pending. The
@@ -1126,6 +1134,10 @@ export async function generateBriefing(
         return settled;
       })();
     } catch (err) {
+      if (err instanceof LatePauseAbortError) {
+        console.warn("daily-briefing.generate.late-pause-abort", { memberId, date });
+        throw new DailyBriefingPausedError(memberId, date);
+      }
       if (!(err instanceof LateEligibilityAbortError)) throw err;
       // English, machine-actionable log (repo convention) — quiet abort, never a crash: the
       // render's own work is discarded, no content or raster was ever committed.

@@ -4450,7 +4450,8 @@
             "WeatherManagement announces a refused geolocation without changing the fields",
             "WeatherManagement Clear empties all three fields locally and is disabled once blank",
             "WeatherManagement explains a half-filled pair",
-            "WeatherManagement reads typed text as it is, so a non-numeric value is flagged and never becomes a clear"
+            "WeatherManagement reads typed text as it is, so a non-numeric value is flagged and never becomes a clear",
+            "weather form helpers accepts only plain decimal coordinates"
           ],
           "tests/client/weather-pill.test.tsx": [
             "WeatherPill renders nothing when no location is configured (silent absence, FR-022)",
@@ -4827,7 +4828,8 @@
             "daily-briefing full generation corpus defaults follow the en household with English-only fallback",
             "daily-briefing full generation explicit corpus overrides win while household changes leave stored snapshots intact",
             "daily-briefing full generation contains malformed persisted external cache entries as block failures",
-            "daily-briefing full generation generates an enabled onThisDay block and contains its external failure"
+            "daily-briefing full generation generates an enabled onThisDay block and contains its external failure",
+            "daily-briefing full generation late-eligibility abort (FOLD-2, Codex #707 review) a weekday paused while the render is in-flight aborts that write: paused rejection, no row committed (PR #38 review)"
           ],
           "tests/integration/daily-briefing-job.test.ts": [
             "daily-briefing job registration (research D8/D9) isMissed predicate truth table (Codex review F1: per-member, never COUNT(*)==0) DAILY-BRIEFING-AC-10: no daily_briefing row for an opted-in active member — missed",
