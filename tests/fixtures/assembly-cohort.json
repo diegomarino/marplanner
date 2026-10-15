@@ -5205,6 +5205,7 @@
             "d2c923e8dbd7b5ee6d04-0031c1d54f8f4e93fae5"
           ],
           "tests/e2e/admin-routines.spec.ts": ["9039bdc4f4b37608b18c-2d67652f4c452d3453f0"],
+          "tests/e2e/admin-settings.spec.ts": ["f375f71858043ffaa49e-780f363c12847aa39921"],
           "tests/e2e/admin-unlock-resilience.spec.ts": [
             "224608ef7363313c2282-9f89fbd41fbab627eca2",
             "224608ef7363313c2282-8d68d3e6e84b83b77ca0"
