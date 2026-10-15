@@ -8,6 +8,7 @@ import {
   readMemberWeekdays,
   setMemberSchedule,
 } from "../../src/server/modules/daily-briefing/schedule";
+import { todayInHouseholdTz } from "../../src/server/host-api";
 import { useIsolatedDb } from "../helpers/db";
 import {
   generateAllBriefings,
@@ -189,6 +190,156 @@ describe("daily-briefing admin parity", () => {
       expect(isMissed(MONDAY)).toBe(true);
       setMemberSchedule("m-catchup", ["tue"]);
       expect(isMissed(MONDAY)).toBe(false);
+    });
+  });
+
+  function insertRow(
+    memberId: string,
+    date: string,
+    opts: { raster?: boolean; status?: string } = {}
+  ) {
+    const now = Date.now();
+    getDb()
+      .prepare(
+        `INSERT INTO daily_briefing
+           (id, member_id, date, status, payload, failed_render_blocks, raster_bits, raster_height,
+            png, created_at, updated_at)
+         VALUES (?, ?, ?, ?, '{}', '[]', ?, ?, ?, ?, ?)`
+      )
+      .run(
+        `row-${memberId}-${date}`,
+        memberId,
+        date,
+        opts.status ?? "ready",
+        opts.raster ? Buffer.from([0]) : null,
+        opts.raster ? 1 : null,
+        opts.raster ? Buffer.from([0]) : null,
+        now,
+        now
+      );
+  }
+
+  describe("history", () => {
+    it("returns the household today and the latest 30 rows newest first", async () => {
+      seedMember("m-hist");
+      for (let day = 1; day <= 31; day += 1) {
+        insertRow("m-hist", `2026-08-${String(day).padStart(2, "0")}`, {
+          status: day === 31 ? "partial" : "ready",
+        });
+      }
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/daily-briefing/history/m-hist",
+        cookies: auth(),
+      });
+      expect(res.statusCode).toBe(200);
+      const body = res.json();
+      expect(body.today).toBe(todayInHouseholdTz(Date.now()));
+      expect(body.entries).toHaveLength(30);
+      expect(body.entries[0]).toMatchObject({ date: "2026-08-31", status: "partial" });
+      expect(body.entries[29]).toMatchObject({ date: "2026-08-02" });
+      expect(typeof body.entries[0].updatedAt).toBe("number");
+    });
+
+    it("is an empty, write-free read for an unknown member", async () => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/daily-briefing/history/nobody",
+        cookies: auth(),
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().entries).toEqual([]);
+    });
+  });
+
+  describe("manual print", () => {
+    function jobsFor(memberId: string) {
+      return getDb()
+        .prepare(
+          `SELECT j.state, j.target_date, j.output_ref, r.record_key
+           FROM print_jobs j JOIN print_records r ON r.id = j.record_id
+           WHERE j.member_id = ? ORDER BY j.created_at ASC`
+        )
+        .all(memberId) as Array<{
+        state: string;
+        target_date: string;
+        output_ref: string;
+        record_key: string;
+      }>;
+    }
+
+    async function print(memberId: string, date: string) {
+      return app.inject({
+        method: "POST",
+        url: `/api/daily-briefing/${memberId}/${date}/print`,
+        cookies: auth(),
+      });
+    }
+
+    it("queues a past briefing for TODAY under the manual record key", async () => {
+      seedMember("m-print");
+      insertRow("m-print", "2026-08-01", { raster: true });
+      const res = await print("m-print", "2026-08-01");
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toMatchObject({ enqueued: true, jobId: expect.any(String) });
+      expect(jobsFor("m-print")).toEqual([
+        {
+          state: "pending",
+          target_date: todayInHouseholdTz(Date.now()),
+          output_ref: "daily-briefing:m-print:2026-08-01",
+          record_key: "daily-briefing:m-print:manual:2026-08-01",
+        },
+      ]);
+    });
+
+    it("reuses a job still waiting in the queue", async () => {
+      seedMember("m-twice");
+      insertRow("m-twice", "2026-08-01", { raster: true });
+      const first = (await print("m-twice", "2026-08-01")).json();
+      const second = (await print("m-twice", "2026-08-01")).json();
+      expect(second).toEqual({ jobId: first.jobId, enqueued: false });
+      expect(jobsFor("m-twice")).toHaveLength(1);
+    });
+
+    it("re-arms and queues again after a completed print", async () => {
+      seedMember("m-reprint");
+      insertRow("m-reprint", "2026-08-01", { raster: true });
+      const first = (await print("m-reprint", "2026-08-01")).json();
+      // Simulate the printer finishing the job.
+      const db = getDb();
+      db.prepare("UPDATE print_jobs SET state = 'printed', printed_at = ? WHERE id = ?").run(
+        Date.now(),
+        first.jobId
+      );
+      db.prepare(
+        "UPDATE print_records SET printed_job_id = ? WHERE id = (SELECT record_id FROM print_jobs WHERE id = ?)"
+      ).run(first.jobId, first.jobId);
+
+      const second = await print("m-reprint", "2026-08-01");
+      expect(second.statusCode).toBe(200);
+      expect(second.json()).toMatchObject({ enqueued: true });
+      expect(second.json().jobId).not.toBe(first.jobId);
+    });
+
+    it("maps every refusal to its error code", async () => {
+      seedMember("m-errors");
+      insertRow("m-errors", "2026-08-02"); // no raster
+      expect((await print("m-errors", "2026-08-03")).statusCode).toBe(404);
+      const noRaster = await print("m-errors", "2026-08-02");
+      expect(noRaster.statusCode).toBe(409);
+      expect(noRaster.json()).toMatchObject({ error: "printable_raster_missing" });
+      expect((await print("m-errors", "not-a-date")).json()).toMatchObject({
+        error: "validation_error",
+      });
+
+      seedMember("m-gone", { active: false });
+      insertRow("m-gone", "2026-08-02", { raster: true });
+      expect((await print("m-gone", "2026-08-02")).statusCode).toBe(400);
+
+      __setPrintingPluginActiveForTests(false);
+      const inactive = await print("m-errors", "2026-08-02");
+      expect(inactive.statusCode).toBe(409);
+      expect(inactive.json()).toMatchObject({ error: "plugin_inactive" });
     });
   });
 });

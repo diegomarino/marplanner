@@ -1,10 +1,15 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import {
+  DailyBriefingNotFoundError,
   DailyBriefingPausedError,
+  DailyBriefingPrintUnavailableError,
+  DailyBriefingRasterMissingError,
   DailyBriefingValidationError,
   generateBriefing,
+  listBriefingHistory,
   listOptIns,
   readBriefing,
+  printBriefing,
   readBriefingPng,
   setOptIn,
 } from "../modules/daily-briefing/index";
@@ -154,6 +159,31 @@ export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
       return handleDailyBriefingError(err, reply);
     }
   });
+
+  app.get(
+    "/api/daily-briefing/history/:memberId",
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const { memberId } = request.params as { memberId: string };
+      try {
+        return reply.code(200).send(listBriefingHistory(memberId));
+      } catch (err) {
+        return handleDailyBriefingError(err, reply);
+      }
+    }
+  );
+
+  // Manual print through the server print queue (spec D6). No request body.
+  app.post(
+    "/api/daily-briefing/:memberId/:date/print",
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const { memberId, date } = request.params as { memberId: string; date: string };
+      try {
+        return reply.code(200).send(printBriefing(memberId, date, Date.now()));
+      } catch (err) {
+        return handleDailyBriefingError(err, reply);
+      }
+    }
+  );
 
   app.get(
     "/api/daily-briefing/:memberId/:date",
@@ -335,6 +365,15 @@ function handleDailyBriefingError(err: unknown, reply: FastifyReply): FastifyRep
   // "400 corpus_language_unavailable" error code).
   if (err instanceof CorpusLanguageUnavailableError) {
     return reply.code(400).send({ error: "corpus_language_unavailable", message: err.message });
+  }
+  if (err instanceof DailyBriefingNotFoundError) {
+    return reply.code(404).send({ error: "not_found", message: err.message });
+  }
+  if (err instanceof DailyBriefingPrintUnavailableError) {
+    return reply.code(409).send({ error: "plugin_inactive", message: err.message });
+  }
+  if (err instanceof DailyBriefingRasterMissingError) {
+    return reply.code(409).send({ error: "printable_raster_missing", message: err.message });
   }
   if (err instanceof DailyBriefingValidationError) {
     return reply.code(400).send({ error: "validation_error", message: err.message });
