@@ -70,7 +70,7 @@ const PANELS: PanelSpec[] = [
   {
     nav: "admin-nav-routines-management",
     path: "/admin/routines",
-    text: "Configure routines, chores, and weekday assignments.",
+    testId: "routines-management",
   },
   {
     nav: "admin-nav-reminders-management",
