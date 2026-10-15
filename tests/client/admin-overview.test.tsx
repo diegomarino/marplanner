@@ -208,7 +208,8 @@ describe("AdminOverview uptime", () => {
     expect(await screen.findByTestId("admin-overview-uptime")).toHaveTextContent(/2\s?d\s?3\s?h/);
     unmount();
     cleanup();
-    const { uptimeSeconds: _omit, ...legacy } = STATUS;
+    const legacy: Partial<SystemStatus> = { ...STATUS };
+    delete legacy.uptimeSeconds;
     mockBackend({ status: legacy });
     render(<AdminOverview onOpenTelemetry={vi.fn()} />);
     expect(await screen.findByTestId("admin-overview-uptime")).toHaveTextContent("—");

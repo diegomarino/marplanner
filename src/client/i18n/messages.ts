@@ -1101,8 +1101,6 @@ export const messages = {
     "weather.management.title": "Weather",
     "weather.management.description":
       "Set the household location the kiosk and Daily Briefing use for weather. Leave blank to disable weather.",
-    "weather.management.loading": "Loading weather settings…",
-    "weather.management.loadError": "Failed to load weather settings.",
     "weather.management.latLabel": "Latitude",
     "weather.management.lonLabel": "Longitude",
     "weather.management.labelLabel": "Place label (optional)",
@@ -1110,11 +1108,7 @@ export const messages = {
     "weather.management.locate": "Use current location",
     "weather.management.locating": "Locating…",
     "weather.management.geolocationError": "Could not get the current location.",
-    "weather.management.save": "Save",
-    "weather.management.saving": "Saving…",
-    "weather.management.saveError": "Failed to save the weather location.",
     "weather.management.clear": "Clear location",
-    "weather.management.clearError": "Failed to clear the weather location.",
 
     // WeatherConditionKey closed union (src/shared/weather.ts) — rendered by BOTH the
     // kiosk pill and the Daily Briefing block; this panel doesn't
@@ -2411,8 +2405,6 @@ export const messages = {
     "weather.management.title": "Meteorología",
     "weather.management.description":
       "Define la ubicación del hogar que usan el kiosco y el Resumen Diario para el tiempo. Déjalo en blanco para desactivar el tiempo.",
-    "weather.management.loading": "Cargando ajustes de meteorología…",
-    "weather.management.loadError": "Error al cargar los ajustes de meteorología.",
     "weather.management.latLabel": "Latitud",
     "weather.management.lonLabel": "Longitud",
     "weather.management.labelLabel": "Nombre del lugar (opcional)",
@@ -2420,11 +2412,7 @@ export const messages = {
     "weather.management.locate": "Usar ubicación actual",
     "weather.management.locating": "Localizando…",
     "weather.management.geolocationError": "No se pudo obtener la ubicación actual.",
-    "weather.management.save": "Guardar",
-    "weather.management.saving": "Guardando…",
-    "weather.management.saveError": "Error al guardar la ubicación meteorológica.",
     "weather.management.clear": "Borrar ubicación",
-    "weather.management.clearError": "Error al borrar la ubicación meteorológica.",
 
     "weather.condition.clear": "Despejado",
     "weather.condition.mostlyClear": "Mayormente despejado",
