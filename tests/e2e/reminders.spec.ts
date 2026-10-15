@@ -8,7 +8,7 @@ import { unlockAdmin } from "./admin-unlock";
  * Flow: access gate → provision → API-seed 2 active members → admin unlock →
  * Reminders tab → create an `apply_to_all` scheduled reminder (US1/AC-03) AND
  * a `specific` reminder with per-member weekday assignments via the create
- * dialog's assignment matrix (US2/INV-09/AC-03) → assert live emissions via
+ * dialog's member pills with weekday rows (US2/INV-09/AC-03) → assert live emissions via
  * `GET /api/reminders/emissions` for the right member/date (quickstart
  * Scenarios B and C).
  * Anti-flakiness (memory e2e-flakiness — burned on /): unique
@@ -18,8 +18,8 @@ import { unlockAdmin } from "./admin-unlock";
  * on 4 distinct weekdays), so assertions never depend on the run date's
  * actual weekday.
  * The create/edit form is a Dialog (`reminder-form-dialog`) opened by "Add rule"; rows and
- * actions carry data-testids, and the assignment matrix's per-member checkboxes are scoped to
- * that member's `<tr>` inside the dialog by weekday column index (mon..sun). The last step edits
+ * actions carry data-testids; each member is a pill (`reminders-member-<id>`) whose weekday
+ * pills (`reminders-weekday-<id>-<day>`) appear once selected. The last step edits
  * the apply_to_all rule into a specific one (PATCH carrying targetingMode + assignments).
  */
 
@@ -28,6 +28,7 @@ const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
 const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
 
 type WeekdayCode = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
+const WEEKDAY_ORDER: readonly WeekdayCode[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 
 function ymd(d: Date): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(
@@ -144,21 +145,26 @@ test("reminders admin author→read: apply_to_all + specific-with-matrix (US1/US
   await expect(dialog).toBeHidden();
   await expect(page.getByText(applyToAllText)).toBeVisible({ timeout: 10_000 });
 
-  // --- 8) Create a specific reminder with per-member assignments via the matrix (US2/INV-09/AC-03) ---
+  // --- 8) Create a specific reminder with per-member assignments via the member pills (US2/INV-09/AC-03) ---
   const specificText = `Coges el bus ${rid}`;
   await addRule.click();
   await dialog.getByPlaceholder(m["reminders.management.textPlaceholder"]).fill(specificText);
   await dialog.getByLabel(m["reminders.management.targetingSpecific"]).check();
 
-  // Cells are picked by accessible name, not column position: the matrix follows the household
-  // week start, which a parallel spec (admin-settings) may switch to Sunday-first.
-  const dayCell = (memberName: string, day: WeekdayCode) =>
-    dialog.getByRole("checkbox", {
-      name: `${memberName} — ${m[`reminders.weekday.${day}` as MessageKey]}`,
-      exact: true,
-    });
-  await dayCell(memberAName, weekdayA).check();
-  await dayCell(memberBName, weekdayB).check();
+  // Pills are picked by testid: a member's day row only exists while that member is selected.
+  await dialog.getByTestId(`reminders-member-${memberAId}`).check();
+  await dialog.getByTestId(`reminders-weekday-${memberAId}-${weekdayA}`).check();
+  await dialog.getByTestId(`reminders-member-${memberBId}`).check();
+  await dialog.getByTestId(`reminders-weekday-${memberBId}-${weekdayB}`).check();
+
+  // The seven weekday pills of one member share one line.
+  const ys = await Promise.all(
+    WEEKDAY_ORDER.map(async (day) => {
+      const box = await dialog.getByTestId(`reminders-weekday-${memberAId}-${day}`).boundingBox();
+      return box!.y;
+    })
+  );
+  expect(new Set(ys).size).toBe(1);
 
   const [specificCreateResp] = await Promise.all([
     page.waitForResponse(
@@ -198,7 +204,8 @@ test("reminders admin author→read: apply_to_all + specific-with-matrix (US1/US
   // --- 10) Edit the apply_to_all rule into a specific one for member A only (targetingMode edit) ---
   await page.getByTestId(`reminder-edit-${applyToAllReminder.id}`).click();
   await dialog.getByLabel(m["reminders.management.targetingSpecific"]).check();
-  await dayCell(memberAName, weekdayAll).check();
+  await dialog.getByTestId(`reminders-member-${memberAId}`).check();
+  await dialog.getByTestId(`reminders-weekday-${memberAId}-${weekdayAll}`).check();
   const [editResp] = await Promise.all([
     page.waitForResponse(
       (r) =>
