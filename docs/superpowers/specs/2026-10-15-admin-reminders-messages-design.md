@@ -134,13 +134,13 @@ function moves into the dialog.
 `PATCH /api/reminders/:id` accepts two more keys, `targetingMode` and `assignments`. `kind` stays
 immutable (400). Let `next = body.targetingMode ?? stored targeting_mode`.
 
-| Stored kind | Switch | Required in body | Effect |
-| ----------- | ------ | ---------------- | ------ |
-| scheduled | apply_to_all to specific | `assignments` (member + non-empty weekdays) | `weekdays` set NULL, assignments written, rule row updated, one transaction |
-| scheduled | specific to apply_to_all | `weekdays` | `weekdays` stored, every active assignment set `active=0`, one transaction |
-| calendar_gated | apply_to_all to specific | `assignments` (membership only, `weekdays` absent or `[]`) | assignments written |
-| calendar_gated | specific to apply_to_all | nothing | every active assignment set `active=0` |
-| any | same mode | `assignments` optional when `next` is specific (full-set replace, same rules as `PUT .../assignments`) | as today |
+| Stored kind    | Switch                   | Required in body                                                                                       | Effect                                                                      |
+| -------------- | ------------------------ | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| scheduled      | apply_to_all to specific | `assignments` (member + non-empty weekdays)                                                            | `weekdays` set NULL, assignments written, rule row updated, one transaction |
+| scheduled      | specific to apply_to_all | `weekdays`                                                                                             | `weekdays` stored, every active assignment set `active=0`, one transaction  |
+| calendar_gated | apply_to_all to specific | `assignments` (membership only, `weekdays` absent or `[]`)                                             | assignments written                                                         |
+| calendar_gated | specific to apply_to_all | nothing                                                                                                | every active assignment set `active=0`                                      |
+| any            | same mode                | `assignments` optional when `next` is specific (full-set replace, same rules as `PUT .../assignments`) | as today                                                                    |
 
 Validation (all before any write, so a rejected patch persists nothing):
 `targetingMode` must be `apply_to_all` or `specific`; `assignments` is rejected when `next` is
@@ -206,17 +206,17 @@ unchanged.
 
 ## New i18n keys (en / es), block `// admin-reminders-messages`
 
-| Key | en | es |
-| --- | -- | -- |
-| `reminders.action.addRule` | Add rule | Añadir regla |
-| `reminders.management.editTitle` | Edit reminder | Editar recordatorio |
-| `reminders.management.saveError` | Failed to save the reminder. | Error al guardar el recordatorio. |
-| `reminders.management.actionError` | Failed to update the reminder. | Error al actualizar el recordatorio. |
-| `reminders.management.retry` | Retry | Reintentar |
-| `reminders.management.targetingLabel` | Applies to | Se aplica a |
-| `reminders.status.off` | Off | Apagado |
-| `dailyMessages.management.retry` | Retry | Reintentar |
-| `dailyMessages.management.deleteError` | Failed to delete the message. | Error al eliminar el mensaje. |
+| Key                                    | en                             | es                                   |
+| -------------------------------------- | ------------------------------ | ------------------------------------ |
+| `reminders.action.addRule`             | Add rule                       | Añadir regla                         |
+| `reminders.management.editTitle`       | Edit reminder                  | Editar recordatorio                  |
+| `reminders.management.saveError`       | Failed to save the reminder.   | Error al guardar el recordatorio.    |
+| `reminders.management.actionError`     | Failed to update the reminder. | Error al actualizar el recordatorio. |
+| `reminders.management.retry`           | Retry                          | Reintentar                           |
+| `reminders.management.targetingLabel`  | Applies to                     | Se aplica a                          |
+| `reminders.status.off`                 | Off                            | Apagado                              |
+| `dailyMessages.management.retry`       | Retry                          | Reintentar                           |
+| `dailyMessages.management.deleteError` | Failed to delete the message.  | Error al eliminar el mensaje.        |
 
 Changed in place: `reminders.management.title` to "Reminders" / "Recordatorios";
 `dailyMessages.management.title` to "Messages" / "Mensajes".

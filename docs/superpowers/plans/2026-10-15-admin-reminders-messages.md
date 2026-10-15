@@ -72,107 +72,103 @@ cp /Users/diego/Dev/marplanner-project/docs/superpowers/plans/2026-10-15-admin-r
 - [ ] **Step 1: Add imports/helpers.** The file already imports `getDb`. After the existing `createApplyToAllReminder` helper (line ~55) add:
 
 ```ts
-  async function withApp(
-    run: (app: import("fastify").FastifyInstance, deviceKey: string) => Promise<void>
-  ) {
-    const { deviceKey } = seedKeys();
-    const { buildApp } = await import("../../src/server/app.ts");
-    const app = await buildApp();
-    try {
-      await run(app, deviceKey);
-    } finally {
-      await app.close();
-    }
+async function withApp(
+  run: (app: import("fastify").FastifyInstance, deviceKey: string) => Promise<void>
+) {
+  const { deviceKey } = seedKeys();
+  const { buildApp } = await import("../../src/server/app.ts");
+  const app = await buildApp();
+  try {
+    await run(app, deviceKey);
+  } finally {
+    await app.close();
   }
+}
 
-  async function patchReminder(
-    app: import("fastify").FastifyInstance,
-    deviceKey: string,
-    id: string,
-    payload: unknown
-  ) {
-    return app.inject({
-      method: "PATCH",
-      url: `/api/reminders/${id}`,
-      cookies: { mp_device_key: deviceKey },
-      payload: payload as Record<string, unknown>,
-    });
-  }
+async function patchReminder(
+  app: import("fastify").FastifyInstance,
+  deviceKey: string,
+  id: string,
+  payload: unknown
+) {
+  return app.inject({
+    method: "PATCH",
+    url: `/api/reminders/${id}`,
+    cookies: { mp_device_key: deviceKey },
+    payload: payload as Record<string, unknown>,
+  });
+}
 
-  async function readReminder(
-    app: import("fastify").FastifyInstance,
-    deviceKey: string,
-    id: string
-  ) {
-    const res = await app.inject({
-      method: "GET",
-      url: `/api/reminders/${id}`,
-      cookies: { mp_device_key: deviceKey },
-    });
-    return JSON.parse(res.body);
-  }
+async function readReminder(app: import("fastify").FastifyInstance, deviceKey: string, id: string) {
+  const res = await app.inject({
+    method: "GET",
+    url: `/api/reminders/${id}`,
+    cookies: { mp_device_key: deviceKey },
+  });
+  return JSON.parse(res.body);
+}
 
-  async function createSpecificReminder(
-    app: import("fastify").FastifyInstance,
-    deviceKey: string,
-    memberId: string
-  ) {
-    const res = await app.inject({
-      method: "POST",
-      url: "/api/reminders",
-      cookies: { mp_device_key: deviceKey },
-      payload: {
-        kind: "scheduled",
-        targetingMode: "specific",
-        text: "coges el bus",
-        assignments: [{ memberId, weekdays: ["mon"] }],
-      },
-    });
-    expect(res.statusCode).toBe(201);
-    return JSON.parse(res.body);
-  }
+async function createSpecificReminder(
+  app: import("fastify").FastifyInstance,
+  deviceKey: string,
+  memberId: string
+) {
+  const res = await app.inject({
+    method: "POST",
+    url: "/api/reminders",
+    cookies: { mp_device_key: deviceKey },
+    payload: {
+      kind: "scheduled",
+      targetingMode: "specific",
+      text: "coges el bus",
+      assignments: [{ memberId, weekdays: ["mon"] }],
+    },
+  });
+  expect(res.statusCode).toBe(201);
+  return JSON.parse(res.body);
+}
 
-  async function createCalendarGated(
-    app: import("fastify").FastifyInstance,
-    deviceKey: string,
-    overrides: Record<string, unknown> = {}
-  ) {
-    const res = await app.inject({
-      method: "POST",
-      url: "/api/reminders",
-      cookies: { mp_device_key: deviceKey },
-      payload: {
-        kind: "calendar_gated",
-        targetingMode: "apply_to_all",
-        text: "trae las espinilleras",
-        query: "futbol",
-        ...overrides,
-      },
-    });
-    expect(res.statusCode).toBe(201);
-    return JSON.parse(res.body);
-  }
+async function createCalendarGated(
+  app: import("fastify").FastifyInstance,
+  deviceKey: string,
+  overrides: Record<string, unknown> = {}
+) {
+  const res = await app.inject({
+    method: "POST",
+    url: "/api/reminders",
+    cookies: { mp_device_key: deviceKey },
+    payload: {
+      kind: "calendar_gated",
+      targetingMode: "apply_to_all",
+      text: "trae las espinilleras",
+      query: "futbol",
+      ...overrides,
+    },
+  });
+  expect(res.statusCode).toBe(201);
+  return JSON.parse(res.body);
+}
 
-  function assignmentRows(reminderId: string) {
-    return getDb()
-      .prepare(
-        "SELECT member_id AS memberId, active FROM reminder_assignment WHERE reminder_id = ? ORDER BY member_id"
-      )
-      .all(reminderId) as Array<{ memberId: string; active: number }>;
-  }
+function assignmentRows(reminderId: string) {
+  return getDb()
+    .prepare(
+      "SELECT member_id AS memberId, active FROM reminder_assignment WHERE reminder_id = ? ORDER BY member_id"
+    )
+    .all(reminderId) as Array<{ memberId: string; active: number }>;
+}
 ```
 
 - [ ] **Step 2: Replace the immutable-targetingMode test.** Delete the test at line 219 (`PATCH ... with targetingMode in body → 400 (immutable, FR-013)`) and, in its place, add:
 
 ```ts
-  it("PATCH /api/reminders/:id with an invalid targetingMode value → 400, nothing persisted", async () => {
-    await withApp(async (app, deviceKey) => {
-      const created = JSON.parse((await createApplyToAllReminder(app, deviceKey)).body);
-      const res = await patchReminder(app, deviceKey, created.id, { targetingMode: "by_role" });
-      expect(res.statusCode).toBe(400);
-      expect(await readReminder(app, deviceKey, created.id)).toEqual(created);
-    });
+it("PATCH /api/reminders/:id with an invalid targetingMode value → 400, nothing persisted", async () => {
+  await withApp(async (app, deviceKey) => {
+    const created = JSON.parse((await createApplyToAllReminder(app, deviceKey)).body);
+    const res = await patchReminder(app, deviceKey, created.id, { targetingMode: "by_role" });
+    expect(res.statusCode).toBe(400);
+    expect(await readReminder(app, deviceKey, created.id)).toEqual(created);
   });
+});
 ```
 
 Rename the test at line 275 to `PATCH /api/reminders/:id with assignments on an apply_to_all rule that stays apply_to_all → 400, nothing persisted` (body unchanged).
@@ -180,222 +176,222 @@ Rename the test at line 275 to `PATCH /api/reminders/:id with assignments on an 
 - [ ] **Step 3: Add the switching tests** inside the same `describe`, before its closing `});`:
 
 ```ts
-  // ── PATCH targetingMode switching (spec: Admin Reminders and Messages) ──────
+// ── PATCH targetingMode switching (spec: Admin Reminders and Messages) ──────
 
-  it("PATCH apply_to_all → specific with assignments → 200, weekdays cleared, emits only for the assigned member", async () => {
-    await withApp(async (app, deviceKey) => {
-      const memberA = seedMember();
-      const memberB = seedMember();
-      const created = JSON.parse((await createApplyToAllReminder(app, deviceKey)).body);
+it("PATCH apply_to_all → specific with assignments → 200, weekdays cleared, emits only for the assigned member", async () => {
+  await withApp(async (app, deviceKey) => {
+    const memberA = seedMember();
+    const memberB = seedMember();
+    const created = JSON.parse((await createApplyToAllReminder(app, deviceKey)).body);
 
-      const res = await patchReminder(app, deviceKey, created.id, {
-        text: "coges el bus",
-        targetingMode: "specific",
-        assignments: [{ memberId: memberA, weekdays: ["mon"] }],
+    const res = await patchReminder(app, deviceKey, created.id, {
+      text: "coges el bus",
+      targetingMode: "specific",
+      assignments: [{ memberId: memberA, weekdays: ["mon"] }],
+    });
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.targetingMode).toBe("specific");
+    expect(body.weekdays).toBeNull();
+    expect(body.text).toBe("coges el bus");
+    expect(body.assignments).toHaveLength(1);
+    expect(body.assignments[0]).toMatchObject({ memberId: memberA, weekdays: ["mon"] });
+
+    // 2026-01-05 is a Monday.
+    const emits = async (memberId: string) => {
+      const e = await app.inject({
+        method: "GET",
+        url: `/api/reminders/emissions?memberId=${memberId}&date=2026-01-05`,
+        cookies: { mp_device_key: deviceKey },
       });
-      expect(res.statusCode).toBe(200);
-      const body = JSON.parse(res.body);
-      expect(body.targetingMode).toBe("specific");
-      expect(body.weekdays).toBeNull();
-      expect(body.text).toBe("coges el bus");
-      expect(body.assignments).toHaveLength(1);
-      expect(body.assignments[0]).toMatchObject({ memberId: memberA, weekdays: ["mon"] });
+      return (JSON.parse(e.body) as Array<{ id: string }>).map((x) => x.id);
+    };
+    expect(await emits(memberA)).toContain(created.id);
+    expect(await emits(memberB)).not.toContain(created.id);
+  });
+});
 
-      // 2026-01-05 is a Monday.
-      const emits = async (memberId: string) => {
-        const e = await app.inject({
-          method: "GET",
-          url: `/api/reminders/emissions?memberId=${memberId}&date=2026-01-05`,
-          cookies: { mp_device_key: deviceKey },
-        });
-        return (JSON.parse(e.body) as Array<{ id: string }>).map((x) => x.id);
-      };
-      expect(await emits(memberA)).toContain(created.id);
-      expect(await emits(memberB)).not.toContain(created.id);
+it("PATCH apply_to_all → specific without assignments → 400, nothing persisted", async () => {
+  await withApp(async (app, deviceKey) => {
+    const created = JSON.parse((await createApplyToAllReminder(app, deviceKey)).body);
+    const res = await patchReminder(app, deviceKey, created.id, { targetingMode: "specific" });
+    expect(res.statusCode).toBe(400);
+    expect(await readReminder(app, deviceKey, created.id)).toEqual(created);
+  });
+});
+
+it("PATCH apply_to_all → specific that also sends rule-level weekdays → 400, nothing persisted", async () => {
+  await withApp(async (app, deviceKey) => {
+    const memberA = seedMember();
+    const created = JSON.parse((await createApplyToAllReminder(app, deviceKey)).body);
+    const res = await patchReminder(app, deviceKey, created.id, {
+      targetingMode: "specific",
+      weekdays: ["mon"],
+      assignments: [{ memberId: memberA, weekdays: ["mon"] }],
+    });
+    expect(res.statusCode).toBe(400);
+    expect(await readReminder(app, deviceKey, created.id)).toEqual(created);
+  });
+});
+
+it("PATCH apply_to_all → specific with an unknown member → 400 and the rule is left apply_to_all (atomic)", async () => {
+  await withApp(async (app, deviceKey) => {
+    const created = JSON.parse((await createApplyToAllReminder(app, deviceKey)).body);
+    const res = await patchReminder(app, deviceKey, created.id, {
+      text: "changed text",
+      targetingMode: "specific",
+      assignments: [{ memberId: "no-such-member", weekdays: ["mon"] }],
+    });
+    expect(res.statusCode).toBe(400);
+    expect(await readReminder(app, deviceKey, created.id)).toEqual(created);
+    expect(assignmentRows(created.id)).toEqual([]);
+  });
+});
+
+it("PATCH specific → apply_to_all with weekdays → 200, assignments deactivated not deleted", async () => {
+  await withApp(async (app, deviceKey) => {
+    const memberA = seedMember();
+    const created = await createSpecificReminder(app, deviceKey, memberA);
+    const res = await patchReminder(app, deviceKey, created.id, {
+      targetingMode: "apply_to_all",
+      weekdays: ["tue", "thu"],
+    });
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.targetingMode).toBe("apply_to_all");
+    expect(body.weekdays).toEqual(["tue", "thu"]);
+    expect(body.assignments).toEqual([]);
+    expect(assignmentRows(created.id)).toEqual([{ memberId: memberA, active: 0 }]);
+  });
+});
+
+it("PATCH specific → apply_to_all without weekdays → 400, nothing persisted", async () => {
+  await withApp(async (app, deviceKey) => {
+    const memberA = seedMember();
+    const created = await createSpecificReminder(app, deviceKey, memberA);
+    const res = await patchReminder(app, deviceKey, created.id, {
+      targetingMode: "apply_to_all",
+    });
+    expect(res.statusCode).toBe(400);
+    expect(await readReminder(app, deviceKey, created.id)).toEqual(created);
+  });
+});
+
+it("switching specific → apply_to_all → specific reuses and reactivates the member's row", async () => {
+  await withApp(async (app, deviceKey) => {
+    const memberA = seedMember();
+    const created = await createSpecificReminder(app, deviceKey, memberA);
+    expect(
+      (
+        await patchReminder(app, deviceKey, created.id, {
+          targetingMode: "apply_to_all",
+          weekdays: ["mon"],
+        })
+      ).statusCode
+    ).toBe(200);
+    const back = await patchReminder(app, deviceKey, created.id, {
+      targetingMode: "specific",
+      assignments: [{ memberId: memberA, weekdays: ["fri"] }],
+    });
+    expect(back.statusCode).toBe(200);
+    const body = JSON.parse(back.body);
+    expect(body.weekdays).toBeNull();
+    expect(body.assignments).toHaveLength(1);
+    expect(body.assignments[0]).toMatchObject({ memberId: memberA, weekdays: ["fri"] });
+    expect(assignmentRows(created.id)).toEqual([{ memberId: memberA, active: 1 }]);
+  });
+});
+
+it("PATCH on a specific rule with assignments replaces the set and edits text in one request", async () => {
+  await withApp(async (app, deviceKey) => {
+    const memberA = seedMember();
+    const memberB = seedMember();
+    const created = await createSpecificReminder(app, deviceKey, memberA);
+    const res = await patchReminder(app, deviceKey, created.id, {
+      text: "nuevo texto",
+      targetingMode: "specific",
+      assignments: [{ memberId: memberB, weekdays: ["wed"] }],
+    });
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.text).toBe("nuevo texto");
+    expect(body.assignments).toHaveLength(1);
+    expect(body.assignments[0]).toMatchObject({ memberId: memberB, weekdays: ["wed"] });
+    expect(assignmentRows(created.id)).toEqual(
+      [
+        { memberId: memberA, active: 0 },
+        { memberId: memberB, active: 1 },
+      ].sort((a, b) => a.memberId.localeCompare(b.memberId))
+    );
+  });
+});
+
+it("PATCH re-saving a specific rule keeps an assigned member who has since been archived", async () => {
+  await withApp(async (app, deviceKey) => {
+    const memberA = seedMember();
+    const created = await createSpecificReminder(app, deviceKey, memberA);
+    getDb().prepare("UPDATE members SET lifecycle = 'archived' WHERE id = ?").run(memberA);
+    const res = await patchReminder(app, deviceKey, created.id, {
+      text: "sigue igual",
+      targetingMode: "specific",
+      assignments: [{ memberId: memberA, weekdays: ["mon", "tue"] }],
+    });
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(res.body).assignments[0]).toMatchObject({
+      memberId: memberA,
+      weekdays: ["mon", "tue"],
     });
   });
+});
 
-  it("PATCH apply_to_all → specific without assignments → 400, nothing persisted", async () => {
-    await withApp(async (app, deviceKey) => {
-      const created = JSON.parse((await createApplyToAllReminder(app, deviceKey)).body);
-      const res = await patchReminder(app, deviceKey, created.id, { targetingMode: "specific" });
-      expect(res.statusCode).toBe(400);
-      expect(await readReminder(app, deviceKey, created.id)).toEqual(created);
+it("PATCH calendar_gated apply_to_all → specific with membership assignments → 200", async () => {
+  await withApp(async (app, deviceKey) => {
+    const memberA = seedMember();
+    const created = await createCalendarGated(app, deviceKey);
+    const res = await patchReminder(app, deviceKey, created.id, {
+      targetingMode: "specific",
+      assignments: [{ memberId: memberA, weekdays: [] }],
     });
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.targetingMode).toBe("specific");
+    expect(body.weekdays).toBeNull();
+    expect(body.query).toBe("futbol");
+    expect(body.assignments).toHaveLength(1);
+    expect(body.assignments[0].memberId).toBe(memberA);
   });
+});
 
-  it("PATCH apply_to_all → specific that also sends rule-level weekdays → 400, nothing persisted", async () => {
-    await withApp(async (app, deviceKey) => {
-      const memberA = seedMember();
-      const created = JSON.parse((await createApplyToAllReminder(app, deviceKey)).body);
-      const res = await patchReminder(app, deviceKey, created.id, {
-        targetingMode: "specific",
-        weekdays: ["mon"],
-        assignments: [{ memberId: memberA, weekdays: ["mon"] }],
-      });
-      expect(res.statusCode).toBe(400);
-      expect(await readReminder(app, deviceKey, created.id)).toEqual(created);
+it("PATCH calendar_gated → specific with per-assignment weekdays → 400, nothing persisted", async () => {
+  await withApp(async (app, deviceKey) => {
+    const memberA = seedMember();
+    const created = await createCalendarGated(app, deviceKey);
+    const res = await patchReminder(app, deviceKey, created.id, {
+      targetingMode: "specific",
+      assignments: [{ memberId: memberA, weekdays: ["mon"] }],
     });
+    expect(res.statusCode).toBe(400);
+    expect(await readReminder(app, deviceKey, created.id)).toEqual(created);
   });
+});
 
-  it("PATCH apply_to_all → specific with an unknown member → 400 and the rule is left apply_to_all (atomic)", async () => {
-    await withApp(async (app, deviceKey) => {
-      const created = JSON.parse((await createApplyToAllReminder(app, deviceKey)).body);
-      const res = await patchReminder(app, deviceKey, created.id, {
-        text: "changed text",
-        targetingMode: "specific",
-        assignments: [{ memberId: "no-such-member", weekdays: ["mon"] }],
-      });
-      expect(res.statusCode).toBe(400);
-      expect(await readReminder(app, deviceKey, created.id)).toEqual(created);
-      expect(assignmentRows(created.id)).toEqual([]);
+it("PATCH calendar_gated specific → apply_to_all needs no extra fields and deactivates the memberships", async () => {
+  await withApp(async (app, deviceKey) => {
+    const memberA = seedMember();
+    const created = await createCalendarGated(app, deviceKey, {
+      targetingMode: "specific",
+      assignments: [{ memberId: memberA }],
     });
-  });
-
-  it("PATCH specific → apply_to_all with weekdays → 200, assignments deactivated not deleted", async () => {
-    await withApp(async (app, deviceKey) => {
-      const memberA = seedMember();
-      const created = await createSpecificReminder(app, deviceKey, memberA);
-      const res = await patchReminder(app, deviceKey, created.id, {
-        targetingMode: "apply_to_all",
-        weekdays: ["tue", "thu"],
-      });
-      expect(res.statusCode).toBe(200);
-      const body = JSON.parse(res.body);
-      expect(body.targetingMode).toBe("apply_to_all");
-      expect(body.weekdays).toEqual(["tue", "thu"]);
-      expect(body.assignments).toEqual([]);
-      expect(assignmentRows(created.id)).toEqual([{ memberId: memberA, active: 0 }]);
+    const res = await patchReminder(app, deviceKey, created.id, {
+      targetingMode: "apply_to_all",
     });
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.targetingMode).toBe("apply_to_all");
+    expect(body.assignments).toEqual([]);
+    expect(assignmentRows(created.id)).toEqual([{ memberId: memberA, active: 0 }]);
   });
-
-  it("PATCH specific → apply_to_all without weekdays → 400, nothing persisted", async () => {
-    await withApp(async (app, deviceKey) => {
-      const memberA = seedMember();
-      const created = await createSpecificReminder(app, deviceKey, memberA);
-      const res = await patchReminder(app, deviceKey, created.id, {
-        targetingMode: "apply_to_all",
-      });
-      expect(res.statusCode).toBe(400);
-      expect(await readReminder(app, deviceKey, created.id)).toEqual(created);
-    });
-  });
-
-  it("switching specific → apply_to_all → specific reuses and reactivates the member's row", async () => {
-    await withApp(async (app, deviceKey) => {
-      const memberA = seedMember();
-      const created = await createSpecificReminder(app, deviceKey, memberA);
-      expect(
-        (
-          await patchReminder(app, deviceKey, created.id, {
-            targetingMode: "apply_to_all",
-            weekdays: ["mon"],
-          })
-        ).statusCode
-      ).toBe(200);
-      const back = await patchReminder(app, deviceKey, created.id, {
-        targetingMode: "specific",
-        assignments: [{ memberId: memberA, weekdays: ["fri"] }],
-      });
-      expect(back.statusCode).toBe(200);
-      const body = JSON.parse(back.body);
-      expect(body.weekdays).toBeNull();
-      expect(body.assignments).toHaveLength(1);
-      expect(body.assignments[0]).toMatchObject({ memberId: memberA, weekdays: ["fri"] });
-      expect(assignmentRows(created.id)).toEqual([{ memberId: memberA, active: 1 }]);
-    });
-  });
-
-  it("PATCH on a specific rule with assignments replaces the set and edits text in one request", async () => {
-    await withApp(async (app, deviceKey) => {
-      const memberA = seedMember();
-      const memberB = seedMember();
-      const created = await createSpecificReminder(app, deviceKey, memberA);
-      const res = await patchReminder(app, deviceKey, created.id, {
-        text: "nuevo texto",
-        targetingMode: "specific",
-        assignments: [{ memberId: memberB, weekdays: ["wed"] }],
-      });
-      expect(res.statusCode).toBe(200);
-      const body = JSON.parse(res.body);
-      expect(body.text).toBe("nuevo texto");
-      expect(body.assignments).toHaveLength(1);
-      expect(body.assignments[0]).toMatchObject({ memberId: memberB, weekdays: ["wed"] });
-      expect(assignmentRows(created.id)).toEqual(
-        [
-          { memberId: memberA, active: 0 },
-          { memberId: memberB, active: 1 },
-        ].sort((a, b) => a.memberId.localeCompare(b.memberId))
-      );
-    });
-  });
-
-  it("PATCH re-saving a specific rule keeps an assigned member who has since been archived", async () => {
-    await withApp(async (app, deviceKey) => {
-      const memberA = seedMember();
-      const created = await createSpecificReminder(app, deviceKey, memberA);
-      getDb().prepare("UPDATE members SET lifecycle = 'archived' WHERE id = ?").run(memberA);
-      const res = await patchReminder(app, deviceKey, created.id, {
-        text: "sigue igual",
-        targetingMode: "specific",
-        assignments: [{ memberId: memberA, weekdays: ["mon", "tue"] }],
-      });
-      expect(res.statusCode).toBe(200);
-      expect(JSON.parse(res.body).assignments[0]).toMatchObject({
-        memberId: memberA,
-        weekdays: ["mon", "tue"],
-      });
-    });
-  });
-
-  it("PATCH calendar_gated apply_to_all → specific with membership assignments → 200", async () => {
-    await withApp(async (app, deviceKey) => {
-      const memberA = seedMember();
-      const created = await createCalendarGated(app, deviceKey);
-      const res = await patchReminder(app, deviceKey, created.id, {
-        targetingMode: "specific",
-        assignments: [{ memberId: memberA, weekdays: [] }],
-      });
-      expect(res.statusCode).toBe(200);
-      const body = JSON.parse(res.body);
-      expect(body.targetingMode).toBe("specific");
-      expect(body.weekdays).toBeNull();
-      expect(body.query).toBe("futbol");
-      expect(body.assignments).toHaveLength(1);
-      expect(body.assignments[0].memberId).toBe(memberA);
-    });
-  });
-
-  it("PATCH calendar_gated → specific with per-assignment weekdays → 400, nothing persisted", async () => {
-    await withApp(async (app, deviceKey) => {
-      const memberA = seedMember();
-      const created = await createCalendarGated(app, deviceKey);
-      const res = await patchReminder(app, deviceKey, created.id, {
-        targetingMode: "specific",
-        assignments: [{ memberId: memberA, weekdays: ["mon"] }],
-      });
-      expect(res.statusCode).toBe(400);
-      expect(await readReminder(app, deviceKey, created.id)).toEqual(created);
-    });
-  });
-
-  it("PATCH calendar_gated specific → apply_to_all needs no extra fields and deactivates the memberships", async () => {
-    await withApp(async (app, deviceKey) => {
-      const memberA = seedMember();
-      const created = await createCalendarGated(app, deviceKey, {
-        targetingMode: "specific",
-        assignments: [{ memberId: memberA }],
-      });
-      const res = await patchReminder(app, deviceKey, created.id, {
-        targetingMode: "apply_to_all",
-      });
-      expect(res.statusCode).toBe(200);
-      const body = JSON.parse(res.body);
-      expect(body.targetingMode).toBe("apply_to_all");
-      expect(body.assignments).toEqual([]);
-      expect(assignmentRows(created.id)).toEqual([{ memberId: memberA, active: 0 }]);
-    });
-  });
+});
 ```
 
 - [ ] **Step 4: Run RED.** `npx vitest run tests/boundary/reminders-crud.test.ts`. Expected: the new switching tests and the invalid-targetingMode test FAIL (today any `targetingMode` key is a 400 or assignments are unsupported); previously-passing tests still PASS. If any new test passes already, stop and read why before continuing.
@@ -408,6 +404,7 @@ Rename the test at line 275 to `PATCH /api/reminders/:id with assignments on an 
 **Files:** Modify `src/server/modules/reminders/index.ts`, `src/shared/index.ts`.
 
 **Interfaces:**
+
 - Produces `planAssignmentSet(reminderId: string, kind: string, assignments: unknown): { write: (now: number) => void }` (module-internal; throws `ReminderValidationError`, writes nothing until `write` is called inside a transaction).
 - `editReminder(id: string, patch: unknown): Reminder` signature unchanged. `replaceAssignments(reminderId: string, input: unknown): ReminderAssignment[]` signature and behaviour unchanged.
 - `ReminderEditInput` (shared) gains `targetingMode?: TargetingMode; assignments?: ReminderAssignmentInput[];`.
@@ -498,12 +495,12 @@ function planAssignmentSet(
 - [ ] **Step 3: Shrink `replaceAssignments`.** Keep its doc comment, the reminder lookup, the `targeting_mode !== "specific"` check, the body-object check and the unknown-key check. Replace everything from `const { assignments } = input as ...` to the end of the function with:
 
 ```ts
-  const { assignments } = input as { assignments?: unknown };
+const { assignments } = input as { assignments?: unknown };
 
-  const plan = planAssignmentSet(reminderId, reminderRow.kind, assignments);
-  db.transaction(() => plan.write(Date.now()))();
+const plan = planAssignmentSet(reminderId, reminderRow.kind, assignments);
+db.transaction(() => plan.write(Date.now()))();
 
-  return listActiveAssignments(reminderId);
+return listActiveAssignments(reminderId);
 ```
 
 - [ ] **Step 4: Rewrite `editReminder`.** Replace `EDITABLE_REMINDER_KEYS`, the doc comment and the function (lines 552-678) with:
@@ -674,8 +671,7 @@ export function editReminder(id: string, patch: unknown): Reminder {
     }
   }
 
-  const plan =
-    assignments !== undefined ? planAssignmentSet(id, row.kind, assignments) : null;
+  const plan = assignments !== undefined ? planAssignmentSet(id, row.kind, assignments) : null;
 
   if (updates.length === 0 && plan === null) {
     return rowToReminder(row, listActiveAssignments(id));
@@ -716,59 +712,59 @@ Note: `UPDATE reminder SET weekdays = ?, ..., weekdays = NULL` cannot happen tog
 - [ ] **Step 1: `docs/api/reminders/openapi.yaml`.** Replace the `ReminderEditInput` schema (line ~370) with:
 
 ```yaml
-    ReminderEditInput:
-      type: object
-      additionalProperties: false
-      description: >-
-        Partial edit; kind is immutable. targetingMode may switch between apply_to_all and specific.
-        Switching to specific requires assignments; switching a scheduled rule to apply_to_all requires
-        weekdays; a calendar_gated rule switching to apply_to_all needs nothing extra. Weekdays are
-        valid only when the resulting mode is apply_to_all on a scheduled rule; assignments only when
-        the resulting mode is specific (full-set replace). Query fields only on stored calendar_gated
-        rules. These state-dependent constraints are enforced by the service; a rejected edit
-        persists nothing. Switching to apply_to_all deactivates (never deletes) the rule's active
-        assignments.
-      properties:
-        text:
-          type: string
-          minLength: 1
-          pattern: \S
-        weekdays:
-          type: array
-          items:
-            $ref: "#/components/schemas/Weekday"
-          minItems: 1
-        active:
-          type: boolean
-        targetingMode:
-          type: string
-          enum:
-            - apply_to_all
-            - specific
-        assignments:
-          type: array
-          minItems: 1
-          items:
-            oneOf:
-              - $ref: "#/components/schemas/ReminderAssignmentInput"
-              - $ref: "#/components/schemas/CalendarGatedAssignmentInput"
-          description: full desired set; accepted only when the resulting targetingMode is specific.
-        query:
-          type: string
-          minLength: 1
-          pattern: \S
-        queryFields:
-          $ref: "#/components/schemas/QueryFields"
-      minProperties: 1
-      not:
-        allOf:
+ReminderEditInput:
+  type: object
+  additionalProperties: false
+  description: >-
+    Partial edit; kind is immutable. targetingMode may switch between apply_to_all and specific.
+    Switching to specific requires assignments; switching a scheduled rule to apply_to_all requires
+    weekdays; a calendar_gated rule switching to apply_to_all needs nothing extra. Weekdays are
+    valid only when the resulting mode is apply_to_all on a scheduled rule; assignments only when
+    the resulting mode is specific (full-set replace). Query fields only on stored calendar_gated
+    rules. These state-dependent constraints are enforced by the service; a rejected edit
+    persists nothing. Switching to apply_to_all deactivates (never deletes) the rule's active
+    assignments.
+  properties:
+    text:
+      type: string
+      minLength: 1
+      pattern: \S
+    weekdays:
+      type: array
+      items:
+        $ref: "#/components/schemas/Weekday"
+      minItems: 1
+    active:
+      type: boolean
+    targetingMode:
+      type: string
+      enum:
+        - apply_to_all
+        - specific
+    assignments:
+      type: array
+      minItems: 1
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/ReminderAssignmentInput"
+          - $ref: "#/components/schemas/CalendarGatedAssignmentInput"
+      description: full desired set; accepted only when the resulting targetingMode is specific.
+    query:
+      type: string
+      minLength: 1
+      pattern: \S
+    queryFields:
+      $ref: "#/components/schemas/QueryFields"
+  minProperties: 1
+  not:
+    allOf:
+      - required:
+          - weekdays
+      - anyOf:
           - required:
-              - weekdays
-          - anyOf:
-              - required:
-                  - query
-              - required:
-                  - queryFields
+              - query
+          - required:
+              - queryFields
 ```
 
 In the same file: in the `Reminder` schema change the `targetingMode` property description from `immutable after creation (FR-013).` to `editable through PATCH (FR-019); kind is immutable.`; change the PATCH `summary` (line ~506) to `Edit text/active/weekdays/query and switch targetingMode (assignments for specific). kind immutable (FR-013).`; change the PATCH 400 description to `kind in body, invalid targetingMode, missing weekdays/assignments for the switch, or invalid field`.
@@ -776,18 +772,18 @@ In the same file: in the `Reminder` schema change the `targetingMode` property d
 - [ ] **Step 2: `docs/api/calendar-reminders/openapi.yaml`.** In the `ReminderEditInput` description (line ~193) replace `kind and targetingMode remain immutable (FR-013).` with `kind remains immutable (FR-013); targetingMode and assignments are editable (FR-019), see docs/api/reminders/openapi.yaml.` Add the same two properties to its `properties:` block:
 
 ```yaml
-        targetingMode:
-          type: string
-          enum:
-            - apply_to_all
-            - specific
-          description: switching to specific requires assignments (membership only for calendar_gated).
-        assignments:
-          type: array
-          minItems: 1
-          items:
-            $ref: "#/components/schemas/CalendarGatedAssignmentInput"
-          description: calendar_gated membership set; accepted only when the resulting targetingMode is specific.
+targetingMode:
+  type: string
+  enum:
+    - apply_to_all
+    - specific
+  description: switching to specific requires assignments (membership only for calendar_gated).
+assignments:
+  type: array
+  minItems: 1
+  items:
+    $ref: "#/components/schemas/CalendarGatedAssignmentInput"
+  description: calendar_gated membership set; accepted only when the resulting targetingMode is specific.
 ```
 
 In its PATCH summary (line ~299) replace `kind and targetingMode remain immutable (FR-013).` with `kind remains immutable (FR-013); targetingMode is editable (FR-019).` (If `CalendarGatedAssignmentInput` is not defined in this file, reference it by copying the object schema from `docs/api/reminders/openapi.yaml` lines 59-71.)
@@ -813,16 +809,16 @@ and add to Edge Cases: `- Switching a rule between all members and specific memb
   - `tests/client/reminders-i18n-parity.test.ts`: line 66 expect `"Reminders"` (was `"Reminders Management"`); line 110 expect `"Recordatorios"`. Do NOT touch the `admin.nav.remindersManagement` expectations (lines 65 and 109). Add inside that same `it`:
 
 ```ts
-    expect(messages.en["reminders.action.addRule"]).toBe("Add rule");
-    expect(messages.en["reminders.management.retry"]).toBe("Retry");
-    expect(messages.en["reminders.status.off"]).toBe("Off");
-    expect(messages.es["reminders.action.addRule"]).toBe("Añadir regla");
-    expect(messages.es["reminders.management.retry"]).toBe("Reintentar");
-    expect(messages.es["reminders.status.off"]).toBe("Apagado");
+expect(messages.en["reminders.action.addRule"]).toBe("Add rule");
+expect(messages.en["reminders.management.retry"]).toBe("Retry");
+expect(messages.en["reminders.status.off"]).toBe("Off");
+expect(messages.es["reminders.action.addRule"]).toBe("Añadir regla");
+expect(messages.es["reminders.management.retry"]).toBe("Reintentar");
+expect(messages.es["reminders.status.off"]).toBe("Apagado");
 ```
 
-  - `tests/client/daily-messages-i18n-parity.test.ts`: line 67 expect `"Messages"`; line 96 expect `"Mensajes"`; add `expect(messages.en["dailyMessages.management.retry"]).toBe("Retry");` and `expect(messages.es["dailyMessages.management.retry"]).toBe("Reintentar");` next to them.
-  - `tests/client/day-periods-messages-admin.test.tsx` lines 249-251: change all three occurrences of `"Daily Messages Management"` to `"Messages"`.
+- `tests/client/daily-messages-i18n-parity.test.ts`: line 67 expect `"Messages"`; line 96 expect `"Mensajes"`; add `expect(messages.en["dailyMessages.management.retry"]).toBe("Retry");` and `expect(messages.es["dailyMessages.management.retry"]).toBe("Reintentar");` next to them.
+- `tests/client/day-periods-messages-admin.test.tsx` lines 249-251: change all three occurrences of `"Daily Messages Management"` to `"Messages"`.
 - [ ] **Step 2: Run RED.** `npx vitest run tests/client/reminders-i18n-parity.test.ts tests/client/daily-messages-i18n-parity.test.ts tests/client/day-periods-messages-admin.test.tsx`. Expected: FAIL on the new expectations.
 - [ ] **Step 3: Edit `messages.ts`.**
   - `"reminders.management.title"`: en `"Reminders"` (line ~617), es `"Recordatorios"` (line ~1911).
@@ -842,7 +838,7 @@ and add to Edge Cases: `- Switching a rule between all members and specific memb
     "dailyMessages.management.deleteError": "Failed to delete the message.",
 ```
 
-  - Append at the end of the `es` object (before `},` at line ~2553):
+- Append at the end of the `es` object (before `},` at line ~2553):
 
 ```ts
     // admin-reminders-messages
@@ -857,7 +853,8 @@ and add to Edge Cases: `- Switching a rule between all members and specific memb
     "dailyMessages.management.deleteError": "Error al eliminar el mensaje.",
 ```
 
-  Before appending, re-read the tail of each locale: other workers' blocks may already sit there; put yours after them, keep the file's en/es key sets identical (the parity test enforces it).
+Before appending, re-read the tail of each locale: other workers' blocks may already sit there; put yours after them, keep the file's en/es key sets identical (the parity test enforces it).
+
 - [ ] **Step 4: Run GREEN.** Same vitest command. Expected: PASS except any test still asserting the old titles (fix per grep: `grep -rn "Daily Messages Management\|Reminders Management\|Gestión de Mensajes\|Gestión de Recordatorios" tests src` and update only title expectations, not `admin.nav.*`; `tests/client/reminders.test.tsx` is rewritten in Task 5).
 - [ ] **Step 5: Commit** `git add -A && git commit -m "feat(i18n): retitle the reminders and messages pages and add their dialog keys"`.
 
@@ -915,64 +912,67 @@ describe("RemindersManagement — the panel is a real landmark (FR-009 L2-adopti
 4. Replace the first density test with (numbers are the EXPECTED values from the control inventory below; run it, and if a number differs find the control that explains the difference before changing the expectation, then record the inventory in the comment):
 
 ```tsx
-  it("meets kiosk density with the list, the dry-run panel, the add dialog and the edit dialog open", async () => {
-    mockBackend();
-    const uninject = await injectDensityStyles({
-      extraCandidates: ["size-[var(--control-height)]"],
-    });
-    document.documentElement.setAttribute("data-density", "kiosk");
-
-    try {
-      renderSurface();
-      await screen.findByText("Take out the trash");
-      await screen.findByText("Vet appointment prep");
-
-      // Phase 1 — list only. Page: Add rule (1). Row r1: Deactivate, Edit, Delete (3).
-      // Row r2 (calendar_gated): Deactivate, Dry-run, Edit, Delete (4). Total 8.
-      expect(countInteractiveControls(document.body)).toBe(8);
-      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
-
-      // Phase 2 — r2's dry-run panel open: member select, date input, Run (+3) = 11.
-      const cgRow = await screen.findByTestId("reminder-r2");
-      fireEvent.click(within(cgRow).getByRole("button", { name: "Dry-run" }));
-      await screen.findByText("Dry-run / explain");
-      expect(countInteractiveControls(document.body)).toBe(11);
-      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
-
-      // Phase 3 — add dialog (scheduled, all members): close X (1), kind radios (2), text (1),
-      // targeting radios (2), seven weekday checkboxes (7), Cancel (1), Create (1) = +15 = 26.
-      fireEvent.click(screen.getByTestId("reminders-add-rule"));
-      await screen.findByTestId("reminder-form-dialog");
-      expect(countInteractiveControls(document.body)).toBe(26);
-      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
-    } finally {
-      uninject();
-    }
+it("meets kiosk density with the list, the dry-run panel, the add dialog and the edit dialog open", async () => {
+  mockBackend();
+  const uninject = await injectDensityStyles({
+    extraCandidates: ["size-[var(--control-height)]"],
   });
+  document.documentElement.setAttribute("data-density", "kiosk");
 
-  it("meets kiosk density with the edit dialog open on a specific rule (member matrix)", async () => {
-    mockBackend({ reminders: () => json([REMINDER_SPECIFIC]), members: () => json([MEMBER, MEMBER_B]) });
-    const uninject = await injectDensityStyles({
-      extraCandidates: ["size-[var(--control-height)]"],
-    });
-    document.documentElement.setAttribute("data-density", "kiosk");
+  try {
+    renderSurface();
+    await screen.findByText("Take out the trash");
+    await screen.findByText("Vet appointment prep");
 
-    try {
-      renderSurface();
-      await screen.findByText("Pack the gym bag");
-      fireEvent.click(screen.getByTestId("reminder-edit-r3"));
-      await screen.findByTestId("reminder-form-dialog");
-      // Dialog: close X (1), text (1), targeting radios (2), matrix 2 members x 7 days (14),
-      // Cancel (1), Save (1) = 20; page behind it: Add rule, Deactivate, Edit, Delete = 4. Total 24.
-      expect(countInteractiveControls(document.body)).toBe(24);
-      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
-    } finally {
-      uninject();
-    }
+    // Phase 1 — list only. Page: Add rule (1). Row r1: Deactivate, Edit, Delete (3).
+    // Row r2 (calendar_gated): Deactivate, Dry-run, Edit, Delete (4). Total 8.
+    expect(countInteractiveControls(document.body)).toBe(8);
+    expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
+
+    // Phase 2 — r2's dry-run panel open: member select, date input, Run (+3) = 11.
+    const cgRow = await screen.findByTestId("reminder-r2");
+    fireEvent.click(within(cgRow).getByRole("button", { name: "Dry-run" }));
+    await screen.findByText("Dry-run / explain");
+    expect(countInteractiveControls(document.body)).toBe(11);
+    expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
+
+    // Phase 3 — add dialog (scheduled, all members): close X (1), kind radios (2), text (1),
+    // targeting radios (2), seven weekday checkboxes (7), Cancel (1), Create (1) = +15 = 26.
+    fireEvent.click(screen.getByTestId("reminders-add-rule"));
+    await screen.findByTestId("reminder-form-dialog");
+    expect(countInteractiveControls(document.body)).toBe(26);
+    expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
+  } finally {
+    uninject();
+  }
+});
+
+it("meets kiosk density with the edit dialog open on a specific rule (member matrix)", async () => {
+  mockBackend({
+    reminders: () => json([REMINDER_SPECIFIC]),
+    members: () => json([MEMBER, MEMBER_B]),
   });
+  const uninject = await injectDensityStyles({
+    extraCandidates: ["size-[var(--control-height)]"],
+  });
+  document.documentElement.setAttribute("data-density", "kiosk");
+
+  try {
+    renderSurface();
+    await screen.findByText("Pack the gym bag");
+    fireEvent.click(screen.getByTestId("reminder-edit-r3"));
+    await screen.findByTestId("reminder-form-dialog");
+    // Dialog: close X (1), text (1), targeting radios (2), matrix 2 members x 7 days (14),
+    // Cancel (1), Save (1) = 20; page behind it: Add rule, Deactivate, Edit, Delete = 4. Total 24.
+    expect(countInteractiveControls(document.body)).toBe(24);
+    expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
+  } finally {
+    uninject();
+  }
+});
 ```
 
-   Keep the delete-ConfirmDialog density test but change `within(card).getByRole("button", { name: "Delete" })` to `within(card).getByRole("button", { name: /^Delete/ })`. Keep the DELIBERATE NEGATIVE test but find the button with `await screen.findByTestId("reminders-add-rule")` (set `style.height="10px"`, `fontSize="8px"` on it; the assertions stay).
+Keep the delete-ConfirmDialog density test but change `within(card).getByRole("button", { name: "Delete" })` to `within(card).getByRole("button", { name: /^Delete/ })`. Keep the DELIBERATE NEGATIVE test but find the button with `await screen.findByTestId("reminders-add-rule")` (set `style.height="10px"`, `fontSize="8px"` on it; the assertions stay).
 
 5. Replace the `error states` describe with:
 
@@ -1010,7 +1010,8 @@ describe("RemindersManagement — error states are announced (SC-011) and recove
     const dialog = await screen.findByTestId("reminder-form-dialog");
     mockFetch.mockImplementation((input: string | URL, init?: Parameters<typeof fetch>[1]) => {
       const url = String(input);
-      if (url === "/api/reminders" && init?.method === "POST") return Promise.resolve(json(null, 500));
+      if (url === "/api/reminders" && init?.method === "POST")
+        return Promise.resolve(json(null, 500));
       throw new Error(`unexpected fetch after override: ${url}`);
     });
 
@@ -1080,11 +1081,15 @@ describe("RemindersManagement — rows name their members and days", () => {
     renderSurface();
     await screen.findByText("Pack the gym bag");
 
-    expect(within(screen.getByTestId("reminder-r1")).getByText("All members · Mon")).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("reminder-r1")).getByText("All members · Mon")
+    ).toBeInTheDocument();
     expect(
       within(screen.getByTestId("reminder-r3")).getByText("Ari: Mon, Wed · Bea: Fri")
     ).toBeInTheDocument();
-    expect(within(screen.getByTestId("reminder-r2")).getByText("Match text: vet · Ari")).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("reminder-r2")).getByText("Match text: vet · Ari")
+    ).toBeInTheDocument();
     expect(within(screen.getByTestId("reminder-r1")).getByText("Active")).toBeInTheDocument();
   });
 
@@ -1123,7 +1128,9 @@ describe("RemindersManagement — the add/edit dialog", () => {
         assignments: [{ memberId: "m1", weekdays: ["mon"] }],
       });
     });
-    await waitFor(() => expect(screen.queryByTestId("reminder-form-dialog")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByTestId("reminder-form-dialog")).not.toBeInTheDocument()
+    );
   });
 
   it("Enter in the text field submits a valid form", async () => {
@@ -2102,20 +2109,23 @@ Run `npx vitest run tests/client/daily-messages-management.test.tsx`. Expected: 
   - Render: right after `<ErrorNotice .../>` add
 
 ```tsx
-      {loadFailed && (
-        <Button
-          type="button"
-          variant="outline"
-          className="self-start"
-          data-testid="daily-messages-retry"
-          onClick={() => setReloadKey((key) => key + 1)}
-        >
-          {t("dailyMessages.management.retry")}
-        </Button>
-      )}
+{
+  loadFailed && (
+    <Button
+      type="button"
+      variant="outline"
+      className="self-start"
+      data-testid="daily-messages-retry"
+      onClick={() => setReloadKey((key) => key + 1)}
+    >
+      {t("dailyMessages.management.retry")}
+    </Button>
+  );
+}
 ```
 
-  Change the body guard `{!loadingMembers && (activeMembers.length === 0 ? ...` to `{!loadingMembers && loadFailed !== "members" && (...)`; and change `{loadingMessages ? (...loading...) : (<ul>...)}` to `{loadingMessages ? (...) : loadFailed === "messages" ? null : (<ul>...)}`.
+Change the body guard `{!loadingMembers && (activeMembers.length === 0 ? ...` to `{!loadingMembers && loadFailed !== "members" && (...)`; and change `{loadingMessages ? (...loading...) : (<ul>...)}` to `{loadingMessages ? (...) : loadFailed === "messages" ? null : (<ul>...)}`.
+
 - [ ] **Step 3: Run GREEN.** `npx vitest run tests/client/daily-messages-management.test.tsx tests/client/admin-household-timezone-defaults.test.tsx tests/client/day-periods-messages-admin.test.tsx`. Expected: PASS.
 - [ ] **Step 4: Commit** `git add -A && git commit -m "feat(admin): retry failed loads on the messages page"`.
 
@@ -2130,113 +2140,121 @@ Run `npx vitest run tests/client/daily-messages-management.test.tsx`. Expected: 
 - [ ] **Step 3: `reminders.spec.ts`.** Update the top comment (the form is now a dialog). After the loading wait (step 6), replace steps 7 and 8 and add a step 8b:
 
 ```ts
-  const dialog = page.getByTestId("reminder-form-dialog");
-  const addRule = page.getByTestId("reminders-add-rule");
+const dialog = page.getByTestId("reminder-form-dialog");
+const addRule = page.getByTestId("reminders-add-rule");
 
-  // --- 7) Create an apply_to_all scheduled reminder (US1/AC-03) ---
-  const applyToAllText = `Sacar la basura ${rid}`;
-  await addRule.click();
-  await dialog.getByPlaceholder(m["reminders.management.textPlaceholder"]).fill(applyToAllText);
-  // targetingMode defaults to apply_to_all — only the weekday checkbox row needs a toggle.
-  await dialog.getByLabel(m[`reminders.weekday.${weekdayAll}` as MessageKey]).check();
+// --- 7) Create an apply_to_all scheduled reminder (US1/AC-03) ---
+const applyToAllText = `Sacar la basura ${rid}`;
+await addRule.click();
+await dialog.getByPlaceholder(m["reminders.management.textPlaceholder"]).fill(applyToAllText);
+// targetingMode defaults to apply_to_all — only the weekday checkbox row needs a toggle.
+await dialog.getByLabel(m[`reminders.weekday.${weekdayAll}` as MessageKey]).check();
 
-  const [applyToAllCreateResp] = await Promise.all([
-    page.waitForResponse(
-      (r) => r.url().endsWith("/api/reminders") && r.request().method() === "POST"
-    ),
-    dialog.getByTestId("reminder-save").click(),
-  ]);
-  expect(applyToAllCreateResp.status()).toBe(201);
-  const applyToAllReminder = (await applyToAllCreateResp.json()) as Reminder;
-  expect(applyToAllReminder.targetingMode).toBe("apply_to_all");
-  await expect(dialog).toBeHidden();
-  await expect(page.getByText(applyToAllText)).toBeVisible({ timeout: 10_000 });
+const [applyToAllCreateResp] = await Promise.all([
+  page.waitForResponse(
+    (r) => r.url().endsWith("/api/reminders") && r.request().method() === "POST"
+  ),
+  dialog.getByTestId("reminder-save").click(),
+]);
+expect(applyToAllCreateResp.status()).toBe(201);
+const applyToAllReminder = (await applyToAllCreateResp.json()) as Reminder;
+expect(applyToAllReminder.targetingMode).toBe("apply_to_all");
+await expect(dialog).toBeHidden();
+await expect(page.getByText(applyToAllText)).toBeVisible({ timeout: 10_000 });
 
-  // --- 8) Create a specific reminder with per-member assignments via the matrix (US2/INV-09/AC-03) ---
-  const specificText = `Coges el bus ${rid}`;
-  await addRule.click();
-  await dialog.getByPlaceholder(m["reminders.management.textPlaceholder"]).fill(specificText);
-  await dialog.getByLabel(m["reminders.management.targetingSpecific"]).check();
+// --- 8) Create a specific reminder with per-member assignments via the matrix (US2/INV-09/AC-03) ---
+const specificText = `Coges el bus ${rid}`;
+await addRule.click();
+await dialog.getByPlaceholder(m["reminders.management.textPlaceholder"]).fill(specificText);
+await dialog.getByLabel(m["reminders.management.targetingSpecific"]).check();
 
-  const rowOf = (memberName: string) => dialog.locator("tr").filter({ hasText: memberName });
-  await rowOf(memberAName).locator('input[type="checkbox"]').nth(WEEKDAY_ORDER.indexOf(weekdayA)).check();
-  await rowOf(memberBName).locator('input[type="checkbox"]').nth(WEEKDAY_ORDER.indexOf(weekdayB)).check();
+const rowOf = (memberName: string) => dialog.locator("tr").filter({ hasText: memberName });
+await rowOf(memberAName)
+  .locator('input[type="checkbox"]')
+  .nth(WEEKDAY_ORDER.indexOf(weekdayA))
+  .check();
+await rowOf(memberBName)
+  .locator('input[type="checkbox"]')
+  .nth(WEEKDAY_ORDER.indexOf(weekdayB))
+  .check();
 
-  const [specificCreateResp] = await Promise.all([
-    page.waitForResponse(
-      (r) => r.url().endsWith("/api/reminders") && r.request().method() === "POST"
-    ),
-    dialog.getByTestId("reminder-save").click(),
-  ]);
-  expect(specificCreateResp.status()).toBe(201);
-  const specificReminder = (await specificCreateResp.json()) as Reminder;
-  expect(specificReminder.targetingMode).toBe("specific");
-  await expect(dialog).toBeHidden();
-  await expect(page.getByText(specificText)).toBeVisible({ timeout: 10_000 });
+const [specificCreateResp] = await Promise.all([
+  page.waitForResponse(
+    (r) => r.url().endsWith("/api/reminders") && r.request().method() === "POST"
+  ),
+  dialog.getByTestId("reminder-save").click(),
+]);
+expect(specificCreateResp.status()).toBe(201);
+const specificReminder = (await specificCreateResp.json()) as Reminder;
+expect(specificReminder.targetingMode).toBe("specific");
+await expect(dialog).toBeHidden();
+await expect(page.getByText(specificText)).toBeVisible({ timeout: 10_000 });
 ```
 
-  Then after the existing step-9 assertions append:
+Then after the existing step-9 assertions append:
 
 ```ts
-  // --- 10) Edit the apply_to_all rule into a specific one for member A only (targetingMode edit) ---
-  await page.getByTestId(`reminder-edit-${applyToAllReminder.id}`).click();
-  await dialog.getByLabel(m["reminders.management.targetingSpecific"]).check();
-  await rowOf(memberAName)
-    .locator('input[type="checkbox"]')
-    .nth(WEEKDAY_ORDER.indexOf(weekdayAll))
-    .check();
-  const [editResp] = await Promise.all([
-    page.waitForResponse(
-      (r) =>
-        r.url().endsWith(`/api/reminders/${applyToAllReminder.id}`) &&
-        r.request().method() === "PATCH"
-    ),
-    dialog.getByTestId("reminder-save").click(),
-  ]);
-  expect(editResp.status()).toBe(200);
-  expect(((await editResp.json()) as Reminder).targetingMode).toBe("specific");
-  await expect(dialog).toBeHidden();
-  expect(await emissionIds(memberAId, dateAllYes)).toContain(applyToAllReminder.id);
-  expect(await emissionIds(memberBId, dateAllYes)).not.toContain(applyToAllReminder.id);
+// --- 10) Edit the apply_to_all rule into a specific one for member A only (targetingMode edit) ---
+await page.getByTestId(`reminder-edit-${applyToAllReminder.id}`).click();
+await dialog.getByLabel(m["reminders.management.targetingSpecific"]).check();
+await rowOf(memberAName)
+  .locator('input[type="checkbox"]')
+  .nth(WEEKDAY_ORDER.indexOf(weekdayAll))
+  .check();
+const [editResp] = await Promise.all([
+  page.waitForResponse(
+    (r) =>
+      r.url().endsWith(`/api/reminders/${applyToAllReminder.id}`) &&
+      r.request().method() === "PATCH"
+  ),
+  dialog.getByTestId("reminder-save").click(),
+]);
+expect(editResp.status()).toBe(200);
+expect(((await editResp.json()) as Reminder).targetingMode).toBe("specific");
+await expect(dialog).toBeHidden();
+expect(await emissionIds(memberAId, dateAllYes)).toContain(applyToAllReminder.id);
+expect(await emissionIds(memberBId, dateAllYes)).not.toContain(applyToAllReminder.id);
 ```
 
-  Keep `emissionIds` defined before this block (it is a function declaration inside the test body; move it above step 10 if needed).
+Keep `emissionIds` defined before this block (it is a function declaration inside the test body; move it above step 10 if needed).
+
 - [ ] **Step 4: `reminders-calendar-gated.spec.ts`.** Replace step 7 through the card lookup in step 8:
 
 ```ts
-  // --- 7) Author a calendar_gated `specific` reminder in the add dialog ---
-  await page.getByTestId("reminders-add-rule").click();
-  const createForm = page.getByTestId("reminder-form-dialog");
-  await expect(createForm).toBeVisible();
+// --- 7) Author a calendar_gated `specific` reminder in the add dialog ---
+await page.getByTestId("reminders-add-rule").click();
+const createForm = page.getByTestId("reminder-form-dialog");
+await expect(createForm).toBeVisible();
 
-  const reminderText = `Prepara al perro ${rid}`;
-  await createForm.getByLabel(m["reminders.kind.calendarGated"]).check();
-  await createForm.getByPlaceholder(m["reminders.management.textPlaceholder"]).fill(reminderText);
-  await createForm.getByLabel(m["reminders.management.targetingSpecific"]).check();
-  await createForm.getByPlaceholder(m["reminders.calendarGated.queryPlaceholder"]).fill(queryText);
-  // queryFields defaults to [title, description] — the event title match is sufficient, no toggle needed.
-  await createForm.getByLabel(memberName).check();
+const reminderText = `Prepara al perro ${rid}`;
+await createForm.getByLabel(m["reminders.kind.calendarGated"]).check();
+await createForm.getByPlaceholder(m["reminders.management.textPlaceholder"]).fill(reminderText);
+await createForm.getByLabel(m["reminders.management.targetingSpecific"]).check();
+await createForm.getByPlaceholder(m["reminders.calendarGated.queryPlaceholder"]).fill(queryText);
+// queryFields defaults to [title, description] — the event title match is sufficient, no toggle needed.
+await createForm.getByLabel(memberName).check();
 
-  const [createResp] = await Promise.all([
-    page.waitForResponse(
-      (r) => r.url().endsWith("/api/reminders") && r.request().method() === "POST"
-    ),
-    createForm.getByTestId("reminder-save").click(),
-  ]);
-  expect(createResp.status()).toBe(201);
-  const reminder = (await createResp.json()) as Reminder;
-  expect(reminder.kind).toBe("calendar_gated");
-  expect(reminder.targetingMode).toBe("specific");
-  expect(reminder.weekdays).toBeNull();
-  await expect(createForm).toBeHidden();
-  await expect(page.getByText(reminderText)).toBeVisible({ timeout: 10_000 });
+const [createResp] = await Promise.all([
+  page.waitForResponse(
+    (r) => r.url().endsWith("/api/reminders") && r.request().method() === "POST"
+  ),
+  createForm.getByTestId("reminder-save").click(),
+]);
+expect(createResp.status()).toBe(201);
+const reminder = (await createResp.json()) as Reminder;
+expect(reminder.kind).toBe("calendar_gated");
+expect(reminder.targetingMode).toBe("specific");
+expect(reminder.weekdays).toBeNull();
+await expect(createForm).toBeHidden();
+await expect(page.getByText(reminderText)).toBeVisible({ timeout: 10_000 });
 
-  // --- 8) Run the dry-run/explain view on this rule's row for (member, today) ---
-  const card = page.getByTestId(`reminder-${reminder.id}`);
-  await expect(card).toBeVisible();
+// --- 8) Run the dry-run/explain view on this rule's row for (member, today) ---
+const card = page.getByTestId(`reminder-${reminder.id}`);
+await expect(card).toBeVisible();
 ```
 
-  The rest of step 8 (toggle dry-run, select, date, Run, assertions) is unchanged. Update the file header comment's last line (no more create-form testid).
+The rest of step 8 (toggle dry-run, select, date, Run, assertions) is unchanged. Update the file header comment's last line (no more create-form testid).
+
 - [ ] **Step 5: Household contract.** In `docs/ui/household-contract.md`, after the Members paragraph in "Administration" add:
 
 ```markdown
@@ -2267,7 +2285,8 @@ keeps its 14-day editor and offers Retry when a load fails.
 PORT=43204 npx playwright test tests/e2e/reminders.spec.ts tests/e2e/reminders-calendar-gated.spec.ts tests/e2e/daily-messages.spec.ts tests/e2e/admin-household-timezone-defaults.spec.ts tests/e2e/admin-unlock-resilience.spec.ts tests/e2e/accessible-names-audit.spec.ts --workers=3
 ```
 
-  Expected: all PASS. (Do not use any other port; other workers use theirs.) If the dialog's Enter/keyboard focus or a locator flakes, fix the locator (prefer test ids) rather than adding sleeps.
+Expected: all PASS. (Do not use any other port; other workers use theirs.) If the dialog's Enter/keyboard focus or a locator flakes, fix the locator (prefer test ids) rather than adding sleeps.
+
 - [ ] **Step 2: Manual smoke (optional but recommended).** Seed and run per the project's dev instructions, open `/admin/reminders`: Add rule, edit a rule All to Specific and back, dry-run a calendar-gated rule, delete one; open `/admin/daily-messages` and check Retry by stopping the API momentarily.
 
 ### Task 10: Commit on the worktree branch and report

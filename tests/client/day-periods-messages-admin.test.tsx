@@ -245,9 +245,7 @@ describe("DayPeriodsManagement / DailyMessagesManagement — the shared AdminPan
     mockDailyMessagesBackend();
     renderDailyMessages();
 
-    expect(
-      await screen.findByRole("region", { name: "Messages" })
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "Messages" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Messages" })).toBeInTheDocument();
   });
 });
