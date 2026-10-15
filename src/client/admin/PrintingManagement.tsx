@@ -122,7 +122,7 @@ export function PrintingManagement(): React.JSX.Element {
             type="button"
             variant="outline"
             data-testid="printing-management-pair"
-            onClick={printerSession.pair}
+            onClick={() => printerSession.pair()}
           >
             {t(
               printerSession.displayState === "disconnected"
