@@ -57,7 +57,9 @@ Reminders are listed at `/admin/reminders`, one row per rule naming who it appli
 days with an Active/Off badge. "Add rule" and the row's edit icon open one dialog; editing can switch
 a rule between all members and specific members. Deleting asks for confirmation. A failed load can
 be retried; a calendar-gated rule's row opens its dry-run panel. Messages (`/admin/daily-messages`)
-keeps its 14-day editor and offers Retry when a load fails.
+chooses the member with member pills, keeps its 14-day editor, alternates the rows' background per
+week from the household week start (the first chunk is plain, then shaded, then plain) and offers
+Retry when a load fails.
 
 Routines and chores are managed from `/admin/routines`: a list of routines grouped by day period,
 in start-time order, beside the selected routine's detail — a weekday grid of the children it is
