@@ -15,7 +15,8 @@ const activeMembers = [
   {
     id: "member-ada",
     displayName: "Ada",
-    role: "parent",
+    colorKey: "blue",
+    role: "child",
     lifecycle: "active",
     createdAt: 1,
     updatedAt: 1,
@@ -325,35 +326,46 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
 
   // ── FOLD-A — admin PNG preview ──────────────────────────────────────────────
 
-  it("preview shows an <img> whose src targets the endpoint for the selected member/date", async () => {
+  it("preview fetches the stored image for the selected member/date, honouring the base path", async () => {
+    URL.createObjectURL = vi.fn(() => "blob:briefing");
+    URL.revokeObjectURL = vi.fn();
     const mockFetch = vi.fn(async (...args: FetchCall) => {
       const [input] = args;
-      const url = String(input);
+      const url = String(input).replace(/^\/family\/planner/, "");
       if (url === "/api/settings") {
         return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
       }
       if (url === "/api/members") return jsonResponse(activeMembers);
       if (url === "/api/daily-briefing/opt-in") return jsonResponse([]);
       if (url === "/api/daily-briefing/settings") return jsonResponse(defaultSettings());
+      if (url === "/api/printing/status") return jsonResponse({ active: true });
+      if (url.startsWith("/api/daily-briefing/history/")) {
+        return jsonResponse({ today: "2026-10-15", entries: [] });
+      }
+      if (/^\/api\/daily-briefing\/[^/]+\/[^/]+\/preview\.png/.test(url)) {
+        return new Response("{}", { status: 404 });
+      }
+      if (/^\/api\/daily-briefing\/[^/]+\/\d{4}-\d{2}-\d{2}$/.test(url)) {
+        return jsonResponse({ generated: false });
+      }
       throw new Error(`unexpected fetch: ${url}`);
     });
     vi.stubGlobal("fetch", mockFetch);
 
     renderManagement();
 
-    fireEvent.change(await screen.findByTestId("daily-briefing-admin-preview-member-select"), {
-      target: { value: "member-ada" },
-    });
-    fireEvent.change(screen.getByTestId("daily-briefing-admin-preview-date"), {
+    fireEvent.click(await screen.findByTestId("daily-briefing-tab-preview"));
+    fireEvent.change(await screen.findByTestId("daily-briefing-admin-preview-date"), {
       target: { value: "2026-09-07" },
     });
     fireEvent.click(screen.getByTestId("daily-briefing-admin-preview-show"));
 
-    const image = (await screen.findByTestId(
-      "daily-briefing-admin-preview-image"
-    )) as HTMLImageElement;
-    expect(image.getAttribute("src")).toMatch(
-      /^\/api\/daily-briefing\/member-ada\/2026-09-07\/preview\.png\?v=\d+$/
+    const previewCalls = (pattern: RegExp) =>
+      (mockFetch.mock.calls as FetchCall[]).filter(([input]) => pattern.test(String(input)));
+    await waitFor(() =>
+      expect(
+        previewCalls(/^\/api\/daily-briefing\/member-ada\/2026-09-07\/preview\.png\?v=/)
+      ).not.toHaveLength(0)
     );
 
     const mount = document.createElement("meta");
@@ -362,8 +374,12 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
     document.head.append(mount);
     try {
       fireEvent.click(screen.getByTestId("daily-briefing-admin-preview-show"));
-      expect(image.getAttribute("src")).toMatch(
-        /^\/family\/planner\/api\/daily-briefing\/member-ada\/2026-09-07\/preview\.png\?v=\d+$/
+      await waitFor(() =>
+        expect(
+          previewCalls(
+            /^\/family\/planner\/api\/daily-briefing\/member-ada\/2026-09-07\/preview\.png\?v=/
+          )
+        ).not.toHaveLength(0)
       );
     } finally {
       mount.remove();

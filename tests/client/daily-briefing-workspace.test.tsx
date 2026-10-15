@@ -276,4 +276,15 @@ describe("BriefingWorkspace", () => {
     renderWorkspace({ active: false });
     expect(calls.filter((c) => c.url.startsWith("/api/daily-briefing"))).toEqual([]);
   });
+
+  it("keeps the history when the current member is selected again", async () => {
+    mockBackend();
+    renderWorkspace();
+    await screen.findByTestId(`daily-briefing-history-entry-${TODAY}`);
+    fireEvent.click(screen.getByTestId("daily-briefing-preview-member-member-ben"));
+    fireEvent.change(screen.getByTestId("daily-briefing-member-select"), {
+      target: { value: "member-ben" },
+    });
+    expect(screen.getByTestId(`daily-briefing-history-entry-${TODAY}`)).toBeVisible();
+  });
 });

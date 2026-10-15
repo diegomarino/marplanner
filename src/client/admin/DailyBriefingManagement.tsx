@@ -1,7 +1,6 @@
 import { LocalizedApiError, responseMessage } from "@/lib/api-error";
 import { useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/credential";
-import { appUrl } from "@/lib/base-path";
 import { useT } from "@/i18n";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ErrorNotice } from "@/components/ErrorNotice";
@@ -17,8 +16,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NATIVE_SELECT_CLASSES } from "@/lib/recipes";
+import { BriefingWorkspace } from "@/daily-briefing/admin/BriefingWorkspace";
+import { BriefingMemberPills, pillMembers } from "@/daily-briefing/admin/BriefingMemberPills";
 import type {
-  Briefing,
+  BriefingSchedule,
   BriefingStatus,
   GenerateAllResponse,
   MemberDTO,
@@ -51,6 +52,9 @@ import type { MessageKey } from "@/i18n/messages";
 /* is GONE — the file imports the shared `CANONICAL_WEEKDAY_ORDER` */
 /* and renders through the shared `WeekdayPicker` for the per-member, */
 /* per-block weekday overrides — the ONE weekday-rendering site here. */
+/* */
+/* The Preview / Generate tab delegates to */
+/* `daily-briefing/admin/BriefingWorkspace` (admin parity 2026-10-15). */
 /* */
 /* No destructive confirmation exists anywhere in this surface (no */
 /* delete action) — `ConfirmDialog` does not apply. `StatusToggle` */
@@ -120,6 +124,7 @@ interface DailyBriefingSettingsView {
   autoPrintTrigger: AutoPrintTrigger;
   blockOrder: BlockOrderInstance[];
   memberBlockSettings: MemberBlockSettings[];
+  memberSchedules?: BriefingSchedule[];
 }
 
 interface DailyBriefingSettingsSnapshot {
@@ -250,24 +255,6 @@ const CORPUS_LANGUAGE_AVAILABILITY: Partial<Record<BlockRegistryType, readonly s
   drawingPrompt: ["en", "es"],
 };
 
-/** Browser-local YYYY-MM-DD — an admin-facing default only (the preview date field is editable;
- * this never drives generation, which is always household-timezone server-side, FR-012). */
-function todayIsoDate(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-/** A confirmed (member, date) preview request — `cacheBust` forces the browser to refetch the
- * `<img>` after a regenerate, since the URL would otherwise be byte-identical to a cached one. */
-interface PreviewRequest {
-  memberId: string;
-  date: string;
-  cacheBust: number;
-}
-
 function defaultMemberBlockSettings(
   memberId: string,
   blockType: BlockRegistryType
@@ -287,16 +274,19 @@ export function DailyBriefingManagement() {
   const [workspace, setWorkspace] = useState<"blocks" | "preview">("blocks");
   const [activeMembers, setActiveMembers] = useState<MemberDTO[]>([]);
   const [optIns, setOptIns] = useState<Record<string, boolean>>({});
-  const [selectedMemberId, setSelectedMemberId] = useState("");
-  const [generatedBriefing, setGeneratedBriefing] = useState<Briefing | null>(null);
   const [memberStatuses, setMemberStatuses] = useState<Record<string, BriefingStatus>>({});
   const [loading, setLoading] = useState(true);
   const [pendingOptInMemberIds, setPendingOptInMemberIds] = useState<Set<string>>(() => new Set());
-  const [generating, setGenerating] = useState(false);
   const [generatingAll, setGeneratingAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generateAllInfo, setGenerateAllInfo] = useState<string | null>(null);
   const generationRequestId = useRef(0);
+  const [membersLoadFailed, setMembersLoadFailed] = useState(false);
+  const [workspaceBusy, setWorkspaceBusy] = useState(false);
+  const [settingsChanged, setSettingsChanged] = useState(false);
+  const [memberSchedules, setMemberSchedules] = useState<Record<string, WeekdayCode[]>>({});
+  const [scheduleSaving, setScheduleSaving] = useState(false);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
 
   // ── settings-layer state (FR-022) ────────────────────────────────────────────
   const [settingsLoading, setSettingsLoading] = useState(true);
@@ -322,11 +312,6 @@ export function DailyBriefingManagement() {
   const [blockSettingsMemberId, setBlockSettingsMemberId] = useState("");
   const [blockSettingsSavingKey, setBlockSettingsSavingKey] = useState<string | null>(null);
   const [blockSettingsError, setBlockSettingsError] = useState<string | null>(null);
-
-  const [previewMemberId, setPreviewMemberId] = useState("");
-  const [previewDate, setPreviewDate] = useState(() => todayIsoDate());
-  const [previewRequest, setPreviewRequest] = useState<PreviewRequest | null>(null);
-  const [previewError, setPreviewError] = useState<string | null>(null);
 
   useEffect(() => {
     void loadMembers();
@@ -358,6 +343,13 @@ export function DailyBriefingManagement() {
       setBlockOrder(Array.isArray(data.blockOrder) ? data.blockOrder : []);
       setMemberBlockSettingsList(
         Array.isArray(data.memberBlockSettings) ? data.memberBlockSettings : []
+      );
+      setMemberSchedules(
+        Object.fromEntries(
+          (Array.isArray(data.memberSchedules) ? data.memberSchedules : []).map(
+            (schedule: BriefingSchedule) => [schedule.memberId, schedule.weekdays]
+          )
+        )
       );
       setSettingsLoaded(true);
     } catch {
@@ -450,6 +442,7 @@ export function DailyBriefingManagement() {
 
       const data = (await response.json()) as { blockOrder: BlockOrderInstance[] };
       setBlockOrder(data.blockOrder);
+      setSettingsChanged(true);
     } catch (cause) {
       setBlockOrderError(
         cause instanceof LocalizedApiError
@@ -504,6 +497,7 @@ export function DailyBriefingManagement() {
         ),
         updated,
       ]);
+      setSettingsChanged(true);
     } catch (cause) {
       setBlockSettingsError(
         cause instanceof LocalizedApiError
@@ -560,17 +554,10 @@ export function DailyBriefingManagement() {
     if (targetType) commitBlockTypeMove(blockType, targetType);
   }
 
-  /** Confirms the (member, date) pair to preview — the `<img>` itself performs the GET (same-
-   * origin cookie auth applies automatically); this only decides WHAT to request. */
-  function showPreview() {
-    if (!previewMemberId || !previewDate) return;
-    setPreviewError(null);
-    setPreviewRequest({ memberId: previewMemberId, date: previewDate, cacheBust: Date.now() });
-  }
-
   async function loadMembers() {
     setLoading(true);
     setError(null);
+    setMembersLoadFailed(false);
 
     try {
       const [membersResponse, optInsResponse] = await Promise.all([
@@ -588,17 +575,14 @@ export function DailyBriefingManagement() {
       const nextOptIns = Object.fromEntries(
         persistedOptIns.map((state) => [state.memberId, state.enabled])
       );
-      const firstActiveMemberId = nextActiveMembers[0]?.id ?? "";
-      const firstOptedInMemberId =
-        nextActiveMembers.find((member) => nextOptIns[member.id])?.id ?? "";
+      const firstPillMemberId = pillMembers(nextActiveMembers, nextOptIns)[0]?.id ?? "";
 
       setActiveMembers(nextActiveMembers);
       setOptIns(nextOptIns);
-      setBlockSettingsMemberId((current) => current || firstActiveMemberId);
-      setPreviewMemberId((current) => current || firstActiveMemberId);
-      setSelectedMemberId((current) => current || firstOptedInMemberId);
+      setBlockSettingsMemberId((current) => current || firstPillMemberId);
     } catch {
       setError(t("dailyBriefing.management.loadError"));
+      setMembersLoadFailed(true);
     } finally {
       setLoading(false);
     }
@@ -628,15 +612,6 @@ export function DailyBriefingManagement() {
       const state = (await response.json()) as OptInState;
       generationRequestId.current += 1;
       setOptIns((previous) => ({ ...previous, [state.memberId]: state.enabled }));
-      setSelectedMemberId((previous) => {
-        if (state.enabled && !previous) return state.memberId;
-        if (previous !== state.memberId || state.enabled) return previous;
-
-        return (
-          activeMembers.find((member) => member.id !== state.memberId && optIns[member.id])?.id ??
-          ""
-        );
-      });
       setMemberStatuses((previous) => {
         if (state.enabled || previous[state.memberId] === undefined) return previous;
 
@@ -644,13 +619,6 @@ export function DailyBriefingManagement() {
         delete next[state.memberId];
         return next;
       });
-      if (!state.enabled && generatedBriefing?.memberId === state.memberId) {
-        setGeneratedBriefing(null);
-      }
-      if (!state.enabled && selectedMemberId === state.memberId) {
-        setGeneratedBriefing(null);
-        setError(null);
-      }
     } catch (cause) {
       setError(
         cause instanceof LocalizedApiError
@@ -666,56 +634,12 @@ export function DailyBriefingManagement() {
     }
   }
 
-  async function generate() {
-    if (hasPendingOptInUpdates || !selectedMemberId || !optIns[selectedMemberId]) return;
-
-    const requestId = ++generationRequestId.current;
-    setGenerating(true);
-    setError(null);
-    setGeneratedBriefing(null);
-    // Nit 5: clears a stale already_running note so it
-    // never sits next to a newer single-member status.
-    setGenerateAllInfo(null);
-
-    try {
-      const input: Pick<Briefing, "memberId"> = { memberId: selectedMemberId };
-      const response = await authFetch("/api/daily-briefing/generate", {
-        method: "POST",
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(input),
-      });
-      if (!response.ok) {
-        throw new LocalizedApiError(
-          await responseMessage(response, t("dailyBriefing.management.generateError"))
-        );
-      }
-
-      const briefing = (await response.json()) as Briefing;
-      if (generationRequestId.current === requestId) {
-        setGeneratedBriefing(briefing);
-        setMemberStatuses((previous) => ({ ...previous, [briefing.memberId]: briefing.status }));
-      }
-    } catch (cause) {
-      if (generationRequestId.current === requestId) {
-        setError(
-          cause instanceof LocalizedApiError
-            ? cause.message
-            : t("dailyBriefing.management.generateError")
-        );
-      }
-    } finally {
-      setGenerating(false);
-    }
-  }
-
   async function generateAll() {
     if (hasPendingOptInUpdates || optedInMembers.length === 0) return;
 
     const requestId = ++generationRequestId.current;
     setGeneratingAll(true);
     setError(null);
-    setGeneratedBriefing(null);
     setGenerateAllInfo(null);
 
     try {
@@ -754,27 +678,64 @@ export function DailyBriefingManagement() {
     }
   }
 
-  function selectMember(memberId: string) {
-    generationRequestId.current += 1;
-    setSelectedMemberId(memberId);
-    setGeneratedBriefing(null);
-    setError(null);
+  const blockMemberSchedule: readonly Weekday[] =
+    memberSchedules[blockSettingsMemberId] ?? CANONICAL_WEEKDAY_ORDER;
+
+  async function toggleScheduleDay(day: Weekday) {
+    const memberId = blockSettingsMemberId;
+    if (!memberId) return;
+    const current = new Set(memberSchedules[memberId] ?? CANONICAL_WEEKDAY_ORDER);
+    if (current.has(day)) current.delete(day);
+    else current.add(day);
+    const weekdays = CANONICAL_WEEKDAY_ORDER.filter((d) => current.has(d));
+    setScheduleSaving(true);
+    setScheduleError(null);
+    try {
+      const response = await authFetch(`/api/daily-briefing/schedule/${memberId}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ weekdays }),
+      });
+      if (!response.ok) {
+        throw new LocalizedApiError(
+          await responseMessage(response, t("dailyBriefing.admin.scheduleSaveError"))
+        );
+      }
+      const saved = (await response.json()) as BriefingSchedule;
+      setMemberSchedules((previous) => ({ ...previous, [saved.memberId]: saved.weekdays }));
+      setSettingsChanged(true);
+    } catch (cause) {
+      setScheduleError(
+        cause instanceof LocalizedApiError
+          ? cause.message
+          : t("dailyBriefing.admin.scheduleSaveError")
+      );
+    } finally {
+      setScheduleSaving(false);
+    }
+  }
+
+  function selectBlockMember(memberId: string) {
+    setBlockSettingsMemberId(memberId);
+    setSettingsChanged(false);
   }
 
   const optedInMembers = activeMembers.filter((member) => optIns[member.id]);
   const hasPendingOptInUpdates = pendingOptInMemberIds.size > 0;
-  const previewSrc = previewRequest
-    ? appUrl(
-        `/api/daily-briefing/${previewRequest.memberId}/${previewRequest.date}/preview.png?v=${previewRequest.cacheBust}`
-      )
-    : null;
+  const briefingMembers = pillMembers(activeMembers, optIns);
+  const briefingMemberIds = briefingMembers.map((member) => member.id).join(",");
+
+  // Keep the Blocks member valid when the pill set changes (opt-in toggled, member archived).
+  useEffect(() => {
+    if (loading) return;
+    const ids = briefingMemberIds ? briefingMemberIds.split(",") : [];
+    if (!ids.includes(blockSettingsMemberId)) setBlockSettingsMemberId(ids[0] ?? "");
+  }, [loading, briefingMemberIds, blockSettingsMemberId]);
 
   if (loading) {
     return (
-      <AdminPanel
-        title={t("dailyBriefing.management.title")}
-        data-testid="daily-briefing-management"
-      >
+      <AdminPanel title={t("admin.sidebar.briefing")} data-testid="daily-briefing-management">
         <p className="text-muted-foreground text-control">
           {t("dailyBriefing.management.loading")}
         </p>
@@ -784,13 +745,13 @@ export function DailyBriefingManagement() {
 
   return (
     <AdminPanel
-      title={t("dailyBriefing.management.title")}
+      title={t("admin.sidebar.briefing")}
       description={t("dailyBriefing.management.description")}
       data-testid="daily-briefing-management"
     >
       <div
         role="tablist"
-        aria-label={t("dailyBriefing.management.title")}
+        aria-label={t("admin.sidebar.briefing")}
         className="flex w-fit gap-1 rounded-lg border bg-muted p-1"
       >
         <Button
@@ -816,6 +777,16 @@ export function DailyBriefingManagement() {
       </div>
 
       <ErrorNotice message={error} />
+      {membersLoadFailed && (
+        <Button
+          type="button"
+          variant="outline"
+          data-testid="daily-briefing-retry"
+          onClick={() => void loadMembers()}
+        >
+          {t("dailyBriefing.admin.retry")}
+        </Button>
+      )}
 
       <div
         hidden={workspace !== "preview"}
@@ -842,24 +813,10 @@ export function DailyBriefingManagement() {
                       key={member.id}
                       className="flex items-center gap-2 rounded-full border bg-background p-1 pr-3 text-control"
                     >
-                      <Button
-                        type="button"
-                        role="tab"
-                        size="sm"
-                        variant={selectedMemberId === member.id ? "default" : "ghost"}
-                        aria-selected={selectedMemberId === member.id}
-                        data-testid={`daily-briefing-preview-member-${member.id}`}
-                        onClick={() => {
-                          selectMember(member.id);
-                          setPreviewMemberId(member.id);
-                        }}
-                        className="rounded-full"
-                      >
-                        {member.displayName}
-                      </Button>
+                      <span className="pl-2 font-medium">{member.displayName}</span>
                       <CheckboxField
                         checked={isOptedIn}
-                        disabled={isUpdating || generating || generatingAll}
+                        disabled={isUpdating || generatingAll || workspaceBusy}
                         data-testid={`daily-briefing-opt-in-${member.id}`}
                         onChange={(checked) => void setOptIn(member.id, checked)}
                         label={
@@ -893,62 +850,16 @@ export function DailyBriefingManagement() {
                 </p>
               ) : (
                 <div className="flex gap-3 items-end flex-wrap">
-                  <label className="sr-only">
-                    {t("dailyBriefing.management.selectMember")}
-                    <select
-                      value={selectedMemberId}
-                      data-testid="daily-briefing-member-select"
-                      disabled={generating || generatingAll || hasPendingOptInUpdates}
-                      onChange={(event) => selectMember(event.target.value)}
-                      className={NATIVE_SELECT_CLASSES}
-                    >
-                      <option value="">
-                        {t("dailyBriefing.management.selectMemberPlaceholder")}
-                      </option>
-                      {optedInMembers.map((member) => (
-                        <option key={member.id} value={member.id}>
-                          {member.displayName}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <Button
-                    type="button"
-                    data-testid="daily-briefing-generate"
-                    disabled={
-                      !selectedMemberId || generating || generatingAll || hasPendingOptInUpdates
-                    }
-                    onClick={() => void generate()}
-                  >
-                    {generating
-                      ? t("dailyBriefing.management.generating")
-                      : t("dailyBriefing.management.generate")}
-                  </Button>
                   <Button
                     type="button"
                     data-testid="daily-briefing-generate-all"
-                    disabled={generating || generatingAll || hasPendingOptInUpdates}
+                    disabled={generatingAll || hasPendingOptInUpdates || workspaceBusy}
                     onClick={() => void generateAll()}
                   >
                     {generatingAll
                       ? t("dailyBriefing.management.generatingAll")
                       : t("dailyBriefing.management.generateAll")}
                   </Button>
-                </div>
-              )}
-
-              {generatedBriefing && (
-                <div className="mt-4 space-y-3">
-                  <p className="text-sm" data-testid="daily-briefing-status" aria-live="polite">
-                    {t("dailyBriefing.management.status")}:{" "}
-                    {t(`dailyBriefing.status.${generatedBriefing.status}`)}
-                  </p>
-                  <pre
-                    data-testid="daily-briefing-generated-payload"
-                    className="max-h-96 overflow-auto rounded-lg border bg-muted p-4 text-xs whitespace-pre-wrap break-all"
-                  >
-                    {JSON.stringify(generatedBriefing.payload, null, 2)}
-                  </pre>
                 </div>
               )}
 
@@ -982,6 +893,22 @@ export function DailyBriefingManagement() {
                 </div>
               )}
             </div>
+
+            <BriefingWorkspace
+              members={briefingMembers}
+              optIns={optIns}
+              active={workspace === "preview"}
+              blocked={generatingAll || hasPendingOptInUpdates}
+              onBusyChange={setWorkspaceBusy}
+              onGenerated={(briefing) => {
+                setMemberStatuses((previous) => ({
+                  ...previous,
+                  [briefing.memberId]: briefing.status,
+                }));
+                setSettingsChanged(false);
+                setGenerateAllInfo(null);
+              }}
+            />
           </>
         )}
       </div>
@@ -994,21 +921,30 @@ export function DailyBriefingManagement() {
         data-testid="daily-briefing-blocks-workspace"
         className="space-y-6"
       >
-        <div className="flex flex-wrap gap-2" role="tablist">
-          {activeMembers.map((member) => (
-            <Button
-              key={member.id}
-              type="button"
-              role="tab"
-              variant={blockSettingsMemberId === member.id ? "default" : "outline"}
-              aria-selected={blockSettingsMemberId === member.id}
-              data-testid={`daily-briefing-block-member-${member.id}`}
-              onClick={() => setBlockSettingsMemberId(member.id)}
-            >
-              {member.displayName}
-            </Button>
-          ))}
-        </div>
+        {briefingMembers.length === 0 ? (
+          <p className="text-muted-foreground text-control">
+            {t("dailyBriefing.admin.noPillMembers")}
+          </p>
+        ) : (
+          <BriefingMemberPills
+            members={briefingMembers}
+            selectedId={blockSettingsMemberId}
+            onSelect={selectBlockMember}
+            testIdPrefix="daily-briefing-block-member"
+            label={t("dailyBriefing.admin.memberBlockSelectMember")}
+          />
+        )}
+
+        {settingsChanged && (
+          <p
+            role="status"
+            aria-live="polite"
+            data-testid="daily-briefing-settings-changed"
+            className="rounded-lg border bg-accent px-4 py-3 text-control text-accent-foreground"
+          >
+            {t("dailyBriefing.admin.settingsChanged")}
+          </p>
+        )}
 
         <Card data-testid="daily-briefing-admin-settings">
           <CardHeader>
@@ -1019,6 +955,17 @@ export function DailyBriefingManagement() {
               message={settingsError}
               data-testid="daily-briefing-admin-settings-error"
             />
+            {!settingsLoading && !settingsLoaded && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-fit"
+                data-testid="daily-briefing-settings-retry"
+                onClick={() => void loadAdminSettings()}
+              >
+                {t("dailyBriefing.admin.retry")}
+              </Button>
+            )}
             {settingsLoading ? (
               <p className="text-sm text-muted-foreground">
                 {t("dailyBriefing.management.loading")}
@@ -1210,19 +1157,26 @@ export function DailyBriefingManagement() {
               <select
                 data-testid="daily-briefing-admin-block-settings-member-select"
                 value={blockSettingsMemberId}
-                onChange={(event) => setBlockSettingsMemberId(event.target.value)}
+                onChange={(event) => selectBlockMember(event.target.value)}
                 className={NATIVE_SELECT_CLASSES}
               >
                 <option value="">
                   {t("dailyBriefing.admin.memberBlockSelectMemberPlaceholder")}
                 </option>
-                {activeMembers.map((member) => (
+                {briefingMembers.map((member) => (
                   <option key={member.id} value={member.id}>
                     {member.displayName}
                   </option>
                 ))}
               </select>
             </Label>
+
+            {blockSettingsMemberId && settingsLoaded && (
+              <p className="text-sm text-muted-foreground">
+                {t("dailyBriefing.admin.scheduleCaption")}
+              </p>
+            )}
+            <ErrorNotice message={scheduleError} data-testid="daily-briefing-schedule-error" />
 
             {blockSettingsMemberId && settingsLoaded && (
               <div className="overflow-x-auto rounded-lg border">
@@ -1241,7 +1195,18 @@ export function DailyBriefingManagement() {
                           className="border-b px-2 py-2 text-center font-medium"
                           data-testid={`daily-briefing-block-weekday-heading-${day}`}
                         >
-                          {weekdayLabels(t)[day]}
+                          <div className="flex flex-col items-center gap-1">
+                            {weekdayLabels(t)[day]}
+                            <CheckboxField
+                              data-testid={`daily-briefing-schedule-day-${day}`}
+                              checked={blockMemberSchedule.includes(day)}
+                              disabled={scheduleSaving || !settingsLoaded}
+                              onChange={() => void toggleScheduleDay(day)}
+                              label={t("dailyBriefing.admin.scheduleDayLabel")}
+                              aria-label={`${weekdayLabels(t)[day]}: ${t("dailyBriefing.admin.scheduleDayLabel")}`}
+                              className="justify-center"
+                            />
+                          </div>
                         </th>
                       ))}
                     </tr>
@@ -1417,6 +1382,9 @@ export function DailyBriefingManagement() {
                                 setBlockWeekdays(blockSettingsMemberId, blockType, next)
                               }
                               disabled={saving}
+                              disabledDays={CANONICAL_WEEKDAY_ORDER.filter(
+                                (d) => !blockMemberSchedule.includes(d)
+                              )}
                               labels={weekdayLabels(t)}
                               groupLabel={t("dailyBriefing.admin.blockWeekdaysLabel")}
                               testIdPrefix={`daily-briefing-admin-block-weekday-${blockType}`}
@@ -1433,61 +1401,6 @@ export function DailyBriefingManagement() {
           </CardContent>
         </Card>
       </div>
-
-      <Card hidden={workspace !== "preview"} data-testid="daily-briefing-admin-preview">
-        <CardHeader>
-          <CardTitle>{t("dailyBriefing.admin.previewTitle")}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <ErrorNotice message={previewError} data-testid="daily-briefing-admin-preview-error" />
-          <div className="flex flex-wrap items-end gap-3">
-            <Label className="sr-only">
-              {t("dailyBriefing.admin.previewSelectMember")}
-              <select
-                data-testid="daily-briefing-admin-preview-member-select"
-                value={previewMemberId}
-                onChange={(event) => setPreviewMemberId(event.target.value)}
-                className={NATIVE_SELECT_CLASSES}
-              >
-                <option value="">{t("dailyBriefing.admin.previewSelectMemberPlaceholder")}</option>
-                {activeMembers.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.displayName}
-                  </option>
-                ))}
-              </select>
-            </Label>
-            <Label className="flex flex-col items-start gap-1">
-              {t("dailyBriefing.admin.previewDateLabel")}
-              <Input
-                type="date"
-                data-testid="daily-briefing-admin-preview-date"
-                value={previewDate}
-                onChange={(event) => setPreviewDate(event.target.value)}
-                className="w-40"
-              />
-            </Label>
-            <Button
-              type="button"
-              data-testid="daily-briefing-admin-preview-show"
-              disabled={!previewMemberId || !previewDate}
-              onClick={showPreview}
-            >
-              {t("dailyBriefing.admin.previewShowButton")}
-            </Button>
-          </div>
-
-          {previewSrc && (
-            <img
-              data-testid="daily-briefing-admin-preview-image"
-              src={previewSrc}
-              alt={t("dailyBriefing.admin.previewImageAlt")}
-              className="max-w-full rounded-md border"
-              onError={() => setPreviewError(t("dailyBriefing.admin.previewError"))}
-            />
-          )}
-        </CardContent>
-      </Card>
     </AdminPanel>
   );
 }
