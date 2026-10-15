@@ -34,15 +34,16 @@ export function toWeatherFormState(weather: WeatherSettingsObject): WeatherFormS
   };
 }
 
-/** Why the pair cannot be written: only one coordinate filled, or a non-numeric one. */
+// Plain decimals only: `Number()` would also accept `0x10`, `0b10` or `1e3` and save a
+// location other than the one typed.
+const DECIMAL = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
+
+/** Why the pair cannot be written: only one coordinate filled, or a non-decimal one. */
 export function weatherFormProblem(form: WeatherFormState): "partial" | "invalid" | null {
   const lat = form.lat.trim();
   const lon = form.lon.trim();
   if ((lat === "") !== (lon === "")) return "partial";
-  if (
-    (lat !== "" && !Number.isFinite(Number(lat))) ||
-    (lon !== "" && !Number.isFinite(Number(lon)))
-  ) {
+  if ((lat !== "" && !DECIMAL.test(lat)) || (lon !== "" && !DECIMAL.test(lon))) {
     return "invalid";
   }
   return null;

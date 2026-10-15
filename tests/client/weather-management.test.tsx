@@ -50,6 +50,13 @@ describe("weather form helpers", () => {
     expect(weatherFormProblem({ lat: "1", lon: "", label: "" })).toBe("partial");
     expect(weatherFormProblem({ lat: "1", lon: "x", label: "" })).toBe("invalid");
   });
+  it("accepts only plain decimal coordinates", () => {
+    expect(weatherFormProblem({ lat: "-39.78", lon: "+.5", label: "" })).toBeNull();
+    expect(weatherFormProblem({ lat: "40.", lon: "-3", label: "" })).toBeNull();
+    for (const literal of ["0x10", "0b10", "0o7", "1e3", "Infinity", "1_000", "."]) {
+      expect(weatherFormProblem({ lat: literal, lon: "2", label: "" })).toBe("invalid");
+    }
+  });
   it("compares forms field by field", () => {
     expect(weatherFormDirty(EMPTY_WEATHER_FORM, { ...EMPTY_WEATHER_FORM })).toBe(false);
     expect(weatherFormDirty(EMPTY_WEATHER_FORM, { ...EMPTY_WEATHER_FORM, label: "x" })).toBe(true);
