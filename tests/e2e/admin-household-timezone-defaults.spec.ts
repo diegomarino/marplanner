@@ -48,6 +48,7 @@ test("admin date defaults use the household timezone, not the browser timezone (
     },
   });
   expect(reminderResponse.status()).toBe(201);
+  const reminderId = ((await reminderResponse.json()) as { id: string }).id;
 
   await unlockAdmin(page, ADMIN_PIN);
   await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
@@ -81,9 +82,7 @@ test("admin date defaults use the household timezone, not the browser timezone (
   await expect(page.getByTestId("meals-entry-date-input")).toHaveValue(HOUSEHOLD_TODAY);
 
   await openAdminSection(page, "admin-nav-reminders-management");
-  const reminderCard = page.locator(".border.rounded-lg.p-4.mb-4", {
-    hasText: reminderText,
-  });
+  const reminderCard = page.getByTestId(`reminder-${reminderId}`);
   await reminderCard.getByRole("button", { name: m["reminders.dryRun.toggleShow"] }).click();
   await expect(reminderCard.locator('input[type="date"]')).toHaveValue(HOUSEHOLD_TODAY);
 });

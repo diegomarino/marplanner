@@ -8,7 +8,7 @@ import { unlockAdmin } from "./admin-unlock";
  * Flow: access gate → provision → API-seed 2 active members → admin unlock →
  * Reminders tab → create an `apply_to_all` scheduled reminder (US1/AC-03) AND
  * a `specific` reminder with per-member weekday assignments via the create
- * form's assignment matrix (US2/INV-09/AC-03) → assert live emissions via
+ * dialog's assignment matrix (US2/INV-09/AC-03) → assert live emissions via
  * `GET /api/reminders/emissions` for the right member/date (quickstart
  * Scenarios B and C).
  * Anti-flakiness (memory e2e-flakiness — burned on /): unique
@@ -17,13 +17,10 @@ import { unlockAdmin } from "./admin-unlock";
  * whose weekdays are pairwise-distinct (any 4 consecutive calendar days fall
  * on 4 distinct weekdays), so assertions never depend on the run date's
  * actual weekday.
- * No data-testids exist yet on RemindersManagement.tsx (out of this module's
- * write-boundary), so this spec locates elements structurally: the create
- * form's text input/weekday checkboxes/create button are each the single
- * such element on the page at interaction time (no reminder card is ever in
- * edit/matrix-open state on a fresh page load), and the assignment matrix's
- * per-member checkboxes are scoped to that member's `<tr>` by weekday
- * column index (mon..sun, matching WEEKDAYS order in the component).
+ * The create/edit form is a Dialog (`reminder-form-dialog`) opened by "Add rule"; rows and
+ * actions carry data-testids, and the assignment matrix's per-member checkboxes are scoped to
+ * that member's `<tr>` inside the dialog by weekday column index (mon..sun). The last step edits
+ * the apply_to_all rule into a specific one (PATCH carrying targetingMode + assignments).
  */
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
@@ -126,29 +123,35 @@ test("reminders admin author→read: apply_to_all + specific-with-matrix (US1/US
     timeout: 10_000,
   });
 
+  const dialog = page.getByTestId("reminder-form-dialog");
+  const addRule = page.getByTestId("reminders-add-rule");
+
   // --- 7) Create an apply_to_all scheduled reminder (US1/AC-03) ---
   const applyToAllText = `Sacar la basura ${rid}`;
-  await page.getByPlaceholder(m["reminders.management.textPlaceholder"]).fill(applyToAllText);
+  await addRule.click();
+  await dialog.getByPlaceholder(m["reminders.management.textPlaceholder"]).fill(applyToAllText);
   // targetingMode defaults to apply_to_all — only the weekday checkbox row needs a toggle.
-  await page.getByLabel(m[`reminders.weekday.${weekdayAll}` as MessageKey]).check();
+  await dialog.getByLabel(m[`reminders.weekday.${weekdayAll}` as MessageKey]).check();
 
   const [applyToAllCreateResp] = await Promise.all([
     page.waitForResponse(
       (r) => r.url().endsWith("/api/reminders") && r.request().method() === "POST"
     ),
-    page.getByRole("button", { name: m["reminders.action.create"] }).click(),
+    dialog.getByTestId("reminder-save").click(),
   ]);
   expect(applyToAllCreateResp.status()).toBe(201);
   const applyToAllReminder = (await applyToAllCreateResp.json()) as Reminder;
   expect(applyToAllReminder.targetingMode).toBe("apply_to_all");
+  await expect(dialog).toBeHidden();
   await expect(page.getByText(applyToAllText)).toBeVisible({ timeout: 10_000 });
 
   // --- 8) Create a specific reminder with per-member assignments via the matrix (US2/INV-09/AC-03) ---
   const specificText = `Coges el bus ${rid}`;
-  await page.getByPlaceholder(m["reminders.management.textPlaceholder"]).fill(specificText);
-  await page.getByLabel(m["reminders.management.targetingSpecific"]).check();
+  await addRule.click();
+  await dialog.getByPlaceholder(m["reminders.management.textPlaceholder"]).fill(specificText);
+  await dialog.getByLabel(m["reminders.management.targetingSpecific"]).check();
 
-  const rowOf = (memberName: string) => page.locator("tr").filter({ hasText: memberName });
+  const rowOf = (memberName: string) => dialog.locator("tr").filter({ hasText: memberName });
   await rowOf(memberAName)
     .locator('input[type="checkbox"]')
     .nth(WEEKDAY_ORDER.indexOf(weekdayA))
@@ -162,11 +165,12 @@ test("reminders admin author→read: apply_to_all + specific-with-matrix (US1/US
     page.waitForResponse(
       (r) => r.url().endsWith("/api/reminders") && r.request().method() === "POST"
     ),
-    page.getByRole("button", { name: m["reminders.action.create"] }).click(),
+    dialog.getByTestId("reminder-save").click(),
   ]);
   expect(specificCreateResp.status()).toBe(201);
   const specificReminder = (await specificCreateResp.json()) as Reminder;
   expect(specificReminder.targetingMode).toBe("specific");
+  await expect(dialog).toBeHidden();
   await expect(page.getByText(specificText)).toBeVisible({ timeout: 10_000 });
 
   // --- 9) Assert emissions via GET /api/reminders/emissions for the right member/date ---
@@ -191,4 +195,25 @@ test("reminders admin author→read: apply_to_all + specific-with-matrix (US1/US
   expect(await emissionIds(memberAId, dateSpecificB)).not.toContain(specificReminder.id);
   expect(await emissionIds(memberBId, dateSpecificB)).toContain(specificReminder.id);
   expect(await emissionIds(memberBId, dateSpecificA)).not.toContain(specificReminder.id);
+
+  // --- 10) Edit the apply_to_all rule into a specific one for member A only (targetingMode edit) ---
+  await page.getByTestId(`reminder-edit-${applyToAllReminder.id}`).click();
+  await dialog.getByLabel(m["reminders.management.targetingSpecific"]).check();
+  await rowOf(memberAName)
+    .locator('input[type="checkbox"]')
+    .nth(WEEKDAY_ORDER.indexOf(weekdayAll))
+    .check();
+  const [editResp] = await Promise.all([
+    page.waitForResponse(
+      (r) =>
+        r.url().endsWith(`/api/reminders/${applyToAllReminder.id}`) &&
+        r.request().method() === "PATCH"
+    ),
+    dialog.getByTestId("reminder-save").click(),
+  ]);
+  expect(editResp.status()).toBe(200);
+  expect(((await editResp.json()) as Reminder).targetingMode).toBe("specific");
+  await expect(dialog).toBeHidden();
+  expect(await emissionIds(memberAId, dateAllYes)).toContain(applyToAllReminder.id);
+  expect(await emissionIds(memberBId, dateAllYes)).not.toContain(applyToAllReminder.id);
 });
