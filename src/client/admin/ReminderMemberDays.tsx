@@ -1,5 +1,5 @@
-import { MemberPills, WeekdayPicker } from "@/ui";
-import type { WeekdayLabels } from "@/components/WeekdayPicker";
+import { MemberPills } from "@/components/MemberPills";
+import { WeekdayPicker, type WeekdayLabels } from "@/components/WeekdayPicker";
 import type { Member, Weekday } from "../../shared";
 
 /** Per-member weekday selection for a "specific members" scheduled rule. Every active member gets a

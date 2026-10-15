@@ -22,7 +22,9 @@ import { AdminPanel } from "@/components/AdminPanel";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { WeekdayPicker, type WeekdayLabels } from "@/components/WeekdayPicker";
-import { ChoicePills, MemberPills, PillToggle } from "@/ui";
+import { ChoicePills } from "@/components/ChoicePills";
+import { MemberPills } from "@/components/MemberPills";
+import { PillToggle } from "@/components/PillToggle";
 import { ReminderMemberDays } from "./ReminderMemberDays";
 import { Button } from "@/components/ui/button";
 import {
