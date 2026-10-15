@@ -23,7 +23,7 @@
  * `tests/client/daily-briefing-admin-mirror-fence.test.tsx`) — this file does not repeat that
  * surface area; it only proves the migration-specific guarantees exists to prove.
  */
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
