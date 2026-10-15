@@ -50,6 +50,8 @@ interface Backend {
   previewStatus?: Record<string, number>;
   generate?: (body: Record<string, unknown>) => Response;
   print?: () => Response;
+  /** Ben has no stored briefings at all. */
+  noHistory?: boolean;
   /** Dates with no stored briefing for Ben. */
   notGenerated?: string[];
   /** Holds the read of a date until the promise resolves. */
@@ -73,12 +75,13 @@ function mockBackend(backend: Backend = {}) {
       }
       return json({
         today: TODAY,
-        entries: url.endsWith("member-ben")
-          ? [
-              { id: "b1", date: TODAY, status: "ready", updatedAt: 2 },
-              { id: "b0", date: PAST, status: "render-failed", updatedAt: 1 },
-            ]
-          : [],
+        entries:
+          url.endsWith("member-ben") && !backend.noHistory
+            ? [
+                { id: "b1", date: TODAY, status: "ready", updatedAt: 2 },
+                { id: "b0", date: PAST, status: "render-failed", updatedAt: 1 },
+              ]
+            : [],
       });
     }
     const preview = url.match(/^\/api\/daily-briefing\/[^/]+\/(\d{4}-\d{2}-\d{2})\/preview\.png/);
@@ -219,7 +222,7 @@ describe("BriefingWorkspace", () => {
     await screen.findByTestId(`daily-briefing-history-entry-${TODAY}`);
     fireEvent.click(screen.getByTestId("daily-briefing-generate"));
     expect(await screen.findByTestId("daily-briefing-paused-notice")).toHaveTextContent(
-      `Ben is paused on ${TODAY}`
+      `Ben's briefing is paused on ${TODAY}`
     );
     expect(onGenerated).not.toHaveBeenCalled();
   });
@@ -382,11 +385,26 @@ describe("BriefingWorkspace", () => {
     const { onOpenBlocks } = renderWorkspace({ briefingDays: ["mon", "tue", "wed", "fri"] });
     // TODAY (2026-10-15) is a Thursday.
     expect(await screen.findByTestId("daily-briefing-paused-notice")).toHaveTextContent(
-      `Ben is paused on ${TODAY}`
+      `Ben's briefing is paused on ${TODAY}`
     );
     expect(screen.getByTestId("daily-briefing-generate")).toBeDisabled();
     fireEvent.click(screen.getByTestId("daily-briefing-paused-open-blocks"));
     expect(onOpenBlocks).toHaveBeenCalledTimes(1);
+  });
+
+  it("says only once that there is nothing yet for a member with no briefings", async () => {
+    mockBackend({ noHistory: true, notGenerated: [TODAY] });
+    renderWorkspace();
+    expect(await screen.findByTestId("daily-briefing-history-empty")).toBeVisible();
+    await waitFor(() =>
+      expect(
+        vi
+          .mocked(globalThis.fetch)
+          .mock.calls.some(([u]) => String(u) === `/api/daily-briefing/member-ben/${TODAY}`)
+      ).toBe(true)
+    );
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByTestId("daily-briefing-no-briefing")).not.toBeInTheDocument();
   });
 
   it("fetches nothing while the tab is hidden", () => {
