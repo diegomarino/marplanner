@@ -28,6 +28,7 @@ Success criteria:
   - Single: a native `<select>` (the default) or `renderAs="radio"`, a `role="radiogroup"` of `RadioField`s.
 
   It always renders `CANONICAL_WEEKDAY_ORDER` (mon..sun) and ignores the household week start. `onChange` in multi mode emits canonical order. Call sites: Routines `AssignmentDialog`, Reminders (create form and inline edit), Time announcements, Daily briefing block matrix (with `disabledDays`, and `className="grid grid-cols-7 gap-2"` under a `<thead>` that also maps `CANONICAL_WEEKDAY_ORDER`), and Meals (single select).
+
 - `src/client/daily-briefing/admin/BriefingMemberPills.tsx` is a `role="tablist"` of `Button role="tab"` with a colour dot from a static `MEMBER_DOT_CLASS` map. It also exports `pillMembers()`. It is used twice: `BriefingWorkspace` and `DailyBriefingManagement`. Unit tests assert `aria-selected` on two pills (`tests/client/daily-briefing-management.test.tsx:100`).
 - `src/client/admin/SettingsManagement.tsx` has a local `ChoicePills` (described as "not a shared primitive"): a `role="radiogroup"` of `Button role="radio" aria-checked`, used for language and week start. Tests assert `aria-checked` (`tests/client/settings-management.test.tsx:218,234`, `tests/e2e/admin-settings.spec.ts:54`).
 - The household week start comes from `useHouseholdSettings().weekStartDay` (`src/client/lib/householdSettings.tsx`). It is `null` outside a provider or before the load completes. The server accepts only 0 or 1.
@@ -47,6 +48,7 @@ Success criteria:
 **D3 — Segmented choice = new `ChoicePills<T extends string>`** (`src/client/components/ChoicePills.tsx`). It is a `role="radiogroup"` of radio pills that share one `useId()` name, so arrow keys and exclusivity are native. It looks the same as `PillToggle`, so single-choice and multi-choice pills read as one visual language. It is not a joined segmented track. Settings' local `ChoicePills` is replaced by it; the local wrapper that adds the caption and description is renamed `ChoiceRow`. `PillToggle` is not stretched to cover radios, because its `onChange(checked)` contract is checkbox-shaped.
 
 **D4 — Member pills = new `MemberPills`** (`src/client/components/MemberPills.tsx`). It has two modes, mirroring `WeekdayPicker`:
+
 - `mode: "single"`: a radiogroup, `value: string | null`, `onChange(memberId)`.
 - `mode?: "multi"` (the default): a `role="group"` of checkboxes, `value: readonly string[]`, `onChange(next)`. `next` lists the members in `members` order and keeps any selected id that isn't in `members` (it never silently drops a hidden member), appended in its original order.
 
@@ -55,6 +57,7 @@ Every pill shows a member-colour dot through a static class map (`MEMBER_DOT_CLA
 Per-member `disabled`. Per-member `inactiveLabel?: string`: when set, the pill is drawn inactive (dashed border) and shows `(inactiveLabel)` after the name, which also becomes part of the accessible name, so colour is never the only signal. Callers own every string; shared components don't call `useT()`, which is the existing convention.
 
 **D5 — `WeekdayPicker` is extended, not duplicated.**
+
 - Multi mode renders `PillToggle`s with `className="px-3"` (compact; `cn` merges this over `px-4`) in a `flex flex-wrap gap-1.5` group, so seven pills fit on one line in a `sm:max-w-xl` dialog at kiosk density. The estimate is about 62px per pill plus gaps ≈ 470px against about 500px of content width.
 - `renderAs="radio"` renders through `ChoicePills`.
 - The `select` rendering is unchanged.
@@ -69,11 +72,13 @@ Per-member `disabled`. Per-member `inactiveLabel?: string`: when set, the pill i
 **D7 — Keep the Daily briefing matrix aligned.** Its `<thead>` maps `CANONICAL_WEEKDAY_ORDER` above a `grid-cols-7` `WeekdayPicker`. With a Sunday-first household, the header and the pills would no longer line up. This wave changes that one header map to `weekdayDisplayOrder(useHouseholdSettings().weekStartDay)`. Nothing else in the file changes, apart from removing the import if it becomes unused (it doesn't, because lines 682–690, 1218 and 1380 still use the canonical order for data).
 
 **D8 — Cheap migrations done in this wave:**
+
 - `BriefingMemberPills`: the file and its props stay, but its body becomes `<MemberPills mode="single" …>`. Semantics change from tab to radio, and two unit assertions move from `aria-selected` to `toBeChecked()`. The call sites are untouched, and `pillMembers()` stays.
 - Settings: uses the shared `ChoicePills`. Two unit assertions and one e2e assertion move from `aria-checked` to `toBeChecked()`.
 - Every existing `WeekdayPicker` call site (Routines dialog, Reminders, Time announcements, Briefing) gets the pill look and week-start order automatically, with no call-site edit.
 
 **D9 — Left for page workers (listed, not migrated):**
+
 - Display-only weekday loops that still use the canonical order and should switch to `weekdayDisplayOrder(...)` when their page is reworked:
   - `src/client/routines/admin/RoutineWeekGrid.tsx:57`
   - `src/client/admin/RemindersManagement.tsx:928,941` (`AssignmentMatrixGrid`)
@@ -148,7 +153,9 @@ export type MemberPillsProps = MemberPillsSingleProps | MemberPillsMultiProps;
 export function MemberPills(props: MemberPillsProps): JSX.Element;
 
 // src/client/components/WeekdayPicker.tsx (additions only; everything existing is unchanged)
-export function weekdayDisplayOrder(weekStartDay: number | null | undefined): readonly WeekdayCode[];
+export function weekdayDisplayOrder(
+  weekStartDay: number | null | undefined
+): readonly WeekdayCode[];
 // WeekdayPickerCommonProps gains:
 //   /** Overrides the household week start (tests, previews). Normally omitted. */
 //   weekStartDay?: 0 | 1;
@@ -156,15 +163,15 @@ export function weekdayDisplayOrder(weekStartDay: number | null | undefined): re
 
 Usage cheat sheet for page workers:
 
-| Need                                  | Use                                                                             |
-| ------------------------------------- | ------------------------------------------------------------------------------- |
-| One independent on/off pill           | `PillToggle`                                                                    |
-| Exactly one of 2–4 options            | `ChoicePills`                                                                   |
-| One member / several members          | `MemberPills mode="single"` / `MemberPills` (multi)                             |
+| Need                                  | Use                                                                              |
+| ------------------------------------- | -------------------------------------------------------------------------------- |
+| One independent on/off pill           | `PillToggle`                                                                     |
+| Exactly one of 2–4 options            | `ChoicePills`                                                                    |
+| One member / several members          | `MemberPills mode="single"` / `MemberPills` (multi)                              |
 | Set of weekdays (one line)            | `WeekdayPicker` (multi), with `disabledDays` when a parent switch rules days out |
-| One weekday                           | `WeekdayPicker mode="single"` (select by default, `renderAs="radio"` for pills) |
-| Display-only weekday loop (grid, row) | `weekdayDisplayOrder(useHouseholdSettings().weekStartDay)`                      |
-| Storing or sorting weekdays           | `CANONICAL_WEEKDAY_ORDER`                                                       |
+| One weekday                           | `WeekdayPicker mode="single"` (select by default, `renderAs="radio"` for pills)  |
+| Display-only weekday loop (grid, row) | `weekdayDisplayOrder(useHouseholdSettings().weekStartDay)`                       |
+| Storing or sorting weekdays           | `CANONICAL_WEEKDAY_ORDER`                                                        |
 
 ## Visual and behavioural rules
 
