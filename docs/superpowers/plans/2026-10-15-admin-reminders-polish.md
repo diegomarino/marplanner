@@ -48,6 +48,7 @@ You work in your own worktree branched from main AFTER the shared-pills wave mer
 **Files:** Create `src/client/admin/ReminderMemberDays.tsx`, `tests/client/reminder-member-days.test.tsx`; modify `src/client/i18n/messages.ts` (keys, used by Task 2 but defined here).
 
 **Interfaces:**
+
 - Produces: `ReminderMemberDays(props: ReminderMemberDaysProps)`; testids `reminders-member-<id>` (pill input), `reminders-weekday-<id>-<day>` (day input), `reminders-member-row-<id>` (block), `reminders-member-hint-<id>`.
 
 - [ ] **Step 1: Add i18n keys.** In `messages.ts`, after the last key of the `en` admin block (after the last `// admin-*` block's entries, before the next non-admin section, keeping the file's existing ordering convention) add:
@@ -57,12 +58,15 @@ You work in your own worktree branched from main AFTER the shared-pills wave mer
     "reminders.specific.membersLabel": "Members and weekdays",
     "reminders.specific.membersHint": "Pick at least one weekday.",
 ```
+
 and in `es`:
+
 ```ts
     // admin-reminders-polish
     "reminders.specific.membersLabel": "Miembros y días de la semana",
     "reminders.specific.membersHint": "Elige al menos un día de la semana.",
 ```
+
 Other pages add blocks at the same spot; keep yours contiguous.
 
 - [ ] **Step 2: Write the failing test** `tests/client/reminder-member-days.test.tsx`:
@@ -76,14 +80,24 @@ import type { WeekdayLabels } from "@/components/WeekdayPicker";
 import type { Member, Weekday } from "../../src/shared";
 
 const LABELS: WeekdayLabels = {
-  mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun",
+  mon: "Mon",
+  tue: "Tue",
+  wed: "Wed",
+  thu: "Thu",
+  fri: "Fri",
+  sat: "Sat",
+  sun: "Sun",
 };
 const ARI = { id: "m1", displayName: "Ari", colorKey: "blue" } as Member;
 const BEA = { id: "m2", displayName: "Bea", colorKey: "teal" } as Member;
 
 afterEach(cleanup);
 
-function setup(value: Record<string, Weekday[]>, members: Member[] = [ARI, BEA], weekStartDay?: 0 | 1) {
+function setup(
+  value: Record<string, Weekday[]>,
+  members: Member[] = [ARI, BEA],
+  weekStartDay?: 0 | 1
+) {
   const onChange = vi.fn();
   render(
     <ReminderMemberDays
@@ -130,14 +144,18 @@ describe("ReminderMemberDays", () => {
 
   it("explains a selected member with no days", () => {
     setup({ m1: [] });
-    expect(screen.getByTestId("reminders-member-hint-m1")).toHaveTextContent("Pick at least one weekday.");
+    expect(screen.getByTestId("reminders-member-hint-m1")).toHaveTextContent(
+      "Pick at least one weekday."
+    );
     expect(screen.queryByTestId("reminders-member-hint-m2")).not.toBeInTheDocument();
   });
 
   it("puts Sunday first for a Sunday-first household without changing emitted order", () => {
     const onChange = setup({ m1: ["sun"] }, [ARI], 0);
     const group = screen.getByRole("group", { name: "Ari — Weekdays" });
-    const labels = within(group).getAllByRole("checkbox").map((c) => c.closest("label")?.textContent?.trim());
+    const labels = within(group)
+      .getAllByRole("checkbox")
+      .map((c) => c.closest("label")?.textContent?.trim());
     expect(labels[0]).toBe("Sun");
     fireEvent.click(screen.getByTestId("reminders-weekday-m1-mon"));
     expect(onChange).toHaveBeenCalledWith({ m1: ["mon", "sun"] });
@@ -243,6 +261,7 @@ export function ReminderMemberDays({
   );
 }
 ```
+
 If `@/ui` does not export these names, import from their component files.
 
 - [ ] **Step 5: Run, expect PASS**; run `npx tsc --noEmit -p .` (or `npm run typecheck`) and `npx eslint src/client/admin/ReminderMemberDays.tsx tests/client/reminder-member-days.test.tsx`.
@@ -282,7 +301,9 @@ If `@/ui` does not export these names, import from their component files.
   <span className="text-muted-foreground text-control">{t("reminders.management.kindLabel")}</span>
   {editing ? (
     <span className="text-control font-medium">
-      {kind === "calendar_gated" ? t("reminders.kind.calendarGated") : t("reminders.kind.scheduled")}
+      {kind === "calendar_gated"
+        ? t("reminders.kind.calendarGated")
+        : t("reminders.kind.scheduled")}
     </span>
   ) : (
     <ChoicePills<ReminderKind>
@@ -290,15 +311,24 @@ If `@/ui` does not export these names, import from their component files.
       onChange={setKind}
       groupLabel={t("reminders.management.kindLabel")}
       options={[
-        { value: "scheduled", label: t("reminders.kind.scheduled"), "data-testid": "reminder-kind-scheduled" },
-        { value: "calendar_gated", label: t("reminders.kind.calendarGated"), "data-testid": "reminder-kind-calendar_gated" },
+        {
+          value: "scheduled",
+          label: t("reminders.kind.scheduled"),
+          "data-testid": "reminder-kind-scheduled",
+        },
+        {
+          value: "calendar_gated",
+          label: t("reminders.kind.calendarGated"),
+          "data-testid": "reminder-kind-calendar_gated",
+        },
       ]}
     />
   )}
 </div>
 ```
-  - Targeting block: same pattern, `ChoicePills<TargetingMode>`, `groupLabel={t("reminders.management.targetingLabel")}`, options apply_to_all (`targetingApplyToAll`) and specific (`targetingSpecific`) with testids `reminder-targeting-apply_to_all` / `reminder-targeting-specific`.
-  - Scheduled + specific branch becomes:
+
+- Targeting block: same pattern, `ChoicePills<TargetingMode>`, `groupLabel={t("reminders.management.targetingLabel")}`, options apply_to_all (`targetingApplyToAll`) and specific (`targetingSpecific`) with testids `reminder-targeting-apply_to_all` / `reminder-targeting-specific`.
+- Scheduled + specific branch becomes:
 
 ```tsx
 <div className="flex flex-col gap-2">
@@ -314,9 +344,10 @@ If `@/ui` does not export these names, import from their component files.
   />
 </div>
 ```
-  - Calendar-gated: match text becomes `<label className="flex flex-col gap-1 text-sm">{label}<Input .../></label>` (drop `w-auto`); the query-fields row becomes `<div role="group" aria-label={t("reminders.calendarGated.queryFieldsLabel")} className="flex flex-wrap gap-2">` of `QUERY_FIELDS.map(field => <PillToggle key checked={queryFields.includes(field)} onChange={() => toggleQueryField(field)} label={t(QUERY_FIELD_LABEL_KEYS[field])} data-testid={`reminders-query-field-${field}`} />)`; specific members block becomes the caption span plus, when `activeMembers.length === 0`, the `reminders.calendarGated.noActiveMembers` paragraph, otherwise `<MemberPills members={activeMembers} value={cgMemberIds} onChange={setCgMemberIds} groupLabel={t("reminders.calendarGated.membershipTitle")} testIdPrefix="reminders-cg-member" />`.
-  - Delete `toggleAssignmentDay`, `toggleCgMember`, `QueryFieldsPicker`, `MembershipChecklist`, `AssignmentMatrixGrid` and their prop interfaces. Keep `draftToAssignments` and `membershipToAssignments`.
-  - `MemberPills` `onChange` yields ids in member order and keeps unknown ids (a hidden archived member stays selected), which preserves the old behaviour of cgMemberIds.
+
+- Calendar-gated: match text becomes `<label className="flex flex-col gap-1 text-sm">{label}<Input .../></label>` (drop `w-auto`); the query-fields row becomes `<div role="group" aria-label={t("reminders.calendarGated.queryFieldsLabel")} className="flex flex-wrap gap-2">` of `QUERY_FIELDS.map(field => <PillToggle key checked={queryFields.includes(field)} onChange={() => toggleQueryField(field)} label={t(QUERY_FIELD_LABEL_KEYS[field])} data-testid={`reminders-query-field-${field}`} />)`; specific members block becomes the caption span plus, when `activeMembers.length === 0`, the `reminders.calendarGated.noActiveMembers` paragraph, otherwise `<MemberPills members={activeMembers} value={cgMemberIds} onChange={setCgMemberIds} groupLabel={t("reminders.calendarGated.membershipTitle")} testIdPrefix="reminders-cg-member" />`.
+- Delete `toggleAssignmentDay`, `toggleCgMember`, `QueryFieldsPicker`, `MembershipChecklist`, `AssignmentMatrixGrid` and their prop interfaces. Keep `draftToAssignments` and `membershipToAssignments`.
+- `MemberPills` `onChange` yields ids in member order and keeps unknown ids (a hidden archived member stays selected), which preserves the old behaviour of cgMemberIds.
 
 - [ ] **Step 5: Fix density tests** in `reminders.test.tsx`. Expected counts: the add-dialog phase stays 26 (radios become radio inputs, weekdays checkboxes). The edit-specific dialog is now: close 1, text 1, targeting radios 2, per member pill 2 + days 14, Cancel 1, Save 1 = 22, plus 4 on the page = 26 (was 24); update the number and the derivation comment. Any other count that drifts: derive it from the DOM and write the arithmetic in the comment, never guess.
 
@@ -339,13 +370,16 @@ await dialog.getByTestId(`reminders-weekday-${memberBId}-${weekdayB}`).check();
 
 // The seven weekday pills of one member share one line.
 const ys = await Promise.all(
-  WEEKDAY_ORDER.map(async (day) =>
-    (await dialog.getByTestId(`reminders-weekday-${memberAId}-${day}`).boundingBox())!.y
+  WEEKDAY_ORDER.map(
+    async (day) =>
+      (await dialog.getByTestId(`reminders-weekday-${memberAId}-${day}`).boundingBox())!.y
   )
 );
 expect(new Set(ys).size).toBe(1);
 ```
-  In step 10 replace the `rowOf(memberAName)... nth(...)` with member and weekday testids for `weekdayAll`. Remove the now-unused `rowOf`. Update the header comment ("assignment matrix" becomes "member pills with weekday rows"). `WEEKDAY_ORDER` stays (used for the type and the line check).
+
+In step 10 replace the `rowOf(memberAName)... nth(...)` with member and weekday testids for `weekdayAll`. Remove the now-unused `rowOf`. Update the header comment ("assignment matrix" becomes "member pills with weekday rows"). `WEEKDAY_ORDER` stays (used for the type and the line check).
+
 - [ ] **Step 2: `reminders-calendar-gated.spec.ts`** line 226: replace `createForm.getByLabel(memberName).check()` with the member's pill testid `reminders-cg-member-<memberId>` (use the id the spec already holds or reads from its member seed; if only the name is known, keep `getByLabel(memberName, { exact: true })`, which resolves to the pill's native checkbox). The kind/targeting `getByLabel(...).check()` calls work unchanged.
 - [ ] **Step 3: docs.** In `docs/ui/household-contract.md`, extend the Reminders paragraph: "The dialog's choices are pills: kind and applies-to as segmented choices, weekdays in the household's week-start order, and for specific members a pill in each member's colour with a weekday-pill row beneath it while selected."
 - [ ] **Step 4: Run e2e** (own ports): `PORT=43223 MP_E2E_WEATHER_FIXTURE_PORT=44423 MP_E2E_QUOTE_FIXTURE_PORT=44433 npx playwright test tests/e2e/reminders.spec.ts tests/e2e/reminders-calendar-gated.spec.ts --workers=3`. Fix until green.
@@ -373,13 +407,17 @@ New/changed source: `src/client/admin/ReminderMemberDays.tsx` (new), `src/client
 export MP_CANDIDATE_ID=$(node tools/candidate-identity.mjs)
 npm run check:standard
 ```
+
 Expected exit 0. On `check:coverage`/`check:test-cohorts:standard` failure, redo Task 4 in your worktree, commit, and rerun on the new HEAD. If `check:ui-debt` rises you added an inline style; remove it. If `check:accessible-names` or `check:ui-catalog` fails, fix the cause (do not edit the audit).
+
 - [ ] **Step 3:**
 
 ```bash
 PORT=43223 MP_E2E_WEATHER_FIXTURE_PORT=44423 MP_E2E_QUOTE_FIXTURE_PORT=44433 npm run check:aggregate-only
 ```
+
 It also verifies the Playwright inventory; on mismatch fix the cohort fixture (Task 4 note), recommit, and rerun both gates.
+
 - [ ] **Step 4:** Ensure everything is committed on the worktree branch. Write `REPORT-reminders-polish.md` (outside tracked files is fine; at the worktree root, do not commit it if it would dirty a gated tree) with: what changed, gate outputs, final coverage rates, any shared-API adaptations. Reply `DONE`.
 
 ## Self-review
