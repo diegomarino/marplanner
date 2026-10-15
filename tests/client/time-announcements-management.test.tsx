@@ -523,6 +523,28 @@ describe("TimeAnnouncementsManagement", () => {
     expect(row).toHaveTextContent("Mon, Tue, Wed, Thu, Fri");
   });
 
+  it("weekday circles follow a Sunday-first household week", async () => {
+    currentSettings.weekStartDay = 0;
+    vi.mocked(globalThis.fetch).mockImplementation(async () =>
+      jsonResponse([{ ...RULE_MORNING, weekDays: ["mon", "sun"] }])
+    );
+    renderManagement();
+    const row = await screen.findByTestId("time-announcements-rule-rule-morning");
+
+    const circles = within(row).getAllByTestId(/^time-announcements-day-/);
+    expect(circles.map((c) => c.textContent).join("")).toBe("SMTWTFS");
+    expect(circles.map((c) => c.getAttribute("data-on"))).toEqual([
+      "true",
+      "true",
+      "false",
+      "false",
+      "false",
+      "false",
+      "false",
+    ]);
+    expect(row).toHaveTextContent("Sun, Mon");
+  });
+
   it("closing is blocked while a save is in flight", async () => {
     vi.mocked(globalThis.fetch).mockImplementation(async (...args: FetchCall) => {
       const [, init] = args;

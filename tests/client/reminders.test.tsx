@@ -87,6 +87,7 @@ function mockBackend(
     reminders: () => Response;
     members: () => Response;
     language: string;
+    weekStartDay: number;
   }> = {}
 ) {
   const mockFetch = vi.fn((input: string | URL, init?: Parameters<typeof fetch>[1]) => {
@@ -95,7 +96,13 @@ function mockBackend(
 
     if (url.includes("/api/settings")) {
       return Promise.resolve(
-        json({ locale: { timezone: "UTC", language: overrides.language ?? "en" } })
+        json({
+          locale: {
+            timezone: "UTC",
+            language: overrides.language ?? "en",
+            weekStartDay: overrides.weekStartDay ?? 1,
+          },
+        })
       );
     }
 
@@ -490,6 +497,45 @@ describe("RemindersManagement — the add/edit dialog", () => {
     await waitFor(() =>
       expect(screen.queryByTestId("reminder-form-dialog")).not.toBeInTheDocument()
     );
+  });
+
+  it("orders the member x weekday matrix by the household week start", async () => {
+    const mockFetch = mockBackend({ weekStartDay: 0 });
+    renderSurface();
+    await screen.findByText("Take out the trash");
+
+    fireEvent.click(screen.getByTestId("reminders-add-rule"));
+    const dialog = await screen.findByTestId("reminder-form-dialog");
+    fireEvent.change(within(dialog).getByPlaceholderText("Reminder text"), {
+      target: { value: "Bus day" },
+    });
+    fireEvent.click(within(dialog).getByLabelText("Specific members"));
+    await waitFor(() =>
+      expect(
+        within(dialog)
+          .getAllByRole("columnheader")
+          .slice(1)
+          .map((th) => th.textContent)
+      ).toEqual(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"])
+    );
+    expect(
+      within(within(dialog).getByRole("table"))
+        .getAllByRole("checkbox")
+        .map((box) => box.getAttribute("aria-label"))[0]
+    ).toBe("Ari — Sun");
+
+    // Storage order is unchanged: picking Sunday then Monday still saves mon..sun order.
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: "Ari — Sun" }));
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: "Ari — Mon" }));
+    fireEvent.click(within(dialog).getByTestId("reminder-save"));
+    await waitFor(() => {
+      const post = (mockFetch.mock.calls as FetchCall[]).find(
+        ([u, init]) => String(u) === "/api/reminders" && init?.method === "POST"
+      );
+      expect(JSON.parse(String(post![1]!.body)).assignments).toEqual([
+        { memberId: "m1", weekdays: ["mon", "sun"] },
+      ]);
+    });
   });
 
   it("Enter in the text field submits a valid form", async () => {
