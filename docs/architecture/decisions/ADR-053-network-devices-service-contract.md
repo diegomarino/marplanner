@@ -4,6 +4,11 @@ Status: accepted
 Owner: product + architecture
 Decision date: 2026-06-29
 
+> Note (2026-10-15, owner decision): the device-key exclusion in section 6 is **superseded**.
+> Network Devices reads and writes now accept a provisioned device `*` cookie like every other
+> household-tier admin endpoint, aligned with the single household trust tier of `ADR-058`. The
+> routes keep the `network:admin` capability check; the Admin PIN stays a UI-only gate (FR-002).
+
 ## Decision
 
 Network Devices is a **plugin** that maintains a **curated list of household devices the
@@ -114,8 +119,8 @@ Ask "do I need it?" before "how do I protect it?":
 
 ### 6. Permissions & audit (calibrated, no new tiers)
 
-- **No new capability tier — but device `*` kiosk keys are excluded (v2 requirement, not a
-  seam).** All Network Devices reads + writes require **management/admin scope** under the
+- **~~No new capability tier — but device `*` kiosk keys are excluded~~ (superseded
+  2026-10-15, see the note at the top; kept for history).** All Network Devices reads + writes required **management/admin scope** under the
   _existing_ ADR-030/031 distinction (the integration/admin key class), which
   device-provisioned `*` kiosk keys do **not** carry. This is not a new capability — it
   reuses the existing device-vs-management split. **Route placement alone is insufficient**

@@ -1,11 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import Fastify from "fastify";
 import { getDb } from "../../src/server/db/client";
 import { hashKey } from "../../src/server/auth/credentials";
 import { reconcileManagement } from "../../src/server/auth/reconcile";
-import { authBoundary } from "../../src/server/auth/boundary";
-import { requireManagementKey } from "../../src/server/auth/capability";
-import { AUTH_SCOPE_DENIED_CODE } from "../../src/shared";
 import { main } from "../../src/server/index";
 import { readWeekStartDay } from "../../src/server/lib/household-date";
 import { readSettingsObject } from "../../src/server/lib/settings-objects";
@@ -188,43 +184,6 @@ describe("foundation runtime persistence", () => {
       release?.();
       configurePluginJobLifecycleGate(undefined);
       await scheduler.stop();
-    }
-  });
-
-  it("keeps management routes inaccessible to a provisioned device key", async () => {
-    const now = Date.now();
-    for (const [id, kind] of [
-      ["device", "device"],
-      ["operator", "integration"],
-    ]) {
-      getDb()
-        .prepare(
-          "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', ?, ?)"
-        )
-        .run(id, hashKey(`mpk-${id}`), kind, now);
-    }
-    const app = Fastify();
-    await authBoundary(app);
-    app.get("/api/plugins/management-probe", { preHandler: requireManagementKey() }, async () => ({
-      ok: true,
-    }));
-    try {
-      const denied = await app.inject({
-        method: "GET",
-        url: "/api/plugins/management-probe",
-        cookies: { mp_device_key: "mpk-device" },
-      });
-      expect(denied.statusCode).toBe(403);
-      expect(denied.json().code).toBe(AUTH_SCOPE_DENIED_CODE);
-      const allowed = await app.inject({
-        method: "GET",
-        url: "/api/plugins/management-probe",
-        headers: { authorization: "Bearer mpk-operator" },
-      });
-      expect(allowed.statusCode).toBe(200);
-      expect(allowed.json()).toEqual({ ok: true });
-    } finally {
-      await app.close();
     }
   });
 

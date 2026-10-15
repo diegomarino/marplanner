@@ -13,7 +13,6 @@ import {
   type UnifiFixtureClient,
 } from "../../tests/e2e/unifi-fixture-server";
 
-const DEFAULT_MANAGEMENT_KEY = "mpk-local-management-change-me";
 const FRESH_TIMEOUT_MS = 120_000;
 const POLL_INTERVAL_MS = 2_000;
 
@@ -60,20 +59,46 @@ function flagValue(args: string[], name: string): string | undefined {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Cookie transport: Bearer is accepted only on `/api/plugins*` (docs/operations.md). */
-function cookieHeader(managementKey: string): string {
+/** Cookie transport: Bearer is accepted only on `/api/plugins*` (docs/operations.md). The tool
+ * provisions a normal device key with the bootstrap key, like a kiosk does on first connect
+ * (network-devices accepts the household device key, ADR-058), and returns its cookie header. */
+async function provisionCookie(base: string): Promise<string> {
   const token = process.env.MP_ACCESS_TOKEN?.trim() ?? "";
-  const gate = createHash("sha256").update(token).digest("hex");
-  return `mp_gate=${gate}; mp_device_key=${managementKey}`;
+  const bootstrapKey = process.env.MP_BOOTSTRAP_KEY?.trim() ?? "";
+  const gate = `mp_gate=${createHash("sha256").update(token).digest("hex")}`;
+  const res = await fetch(`${base}/api/auth/provision`, {
+    method: "POST",
+    headers: { cookie: gate, authorization: `Bearer ${bootstrapKey}` },
+  });
+  if (!res.ok) {
+    throw new Error(
+      `Provisioning failed (HTTP ${res.status}): check MP_ACCESS_TOKEN and MP_BOOTSTRAP_KEY and that the dev server uses them.`
+    );
+  }
+  const device = res.headers
+    .getSetCookie()
+    .map((c) => c.split(";")[0])
+    .find((c) => c.startsWith("mp_device_key="));
+  if (!device) throw new Error("Provisioning did not set an mp_device_key cookie.");
+  return `${gate}; ${device}`;
 }
 
-async function registerDemoDevices(api: string, managementKey: string): Promise<void> {
+async function registerDemoDevices(api: string): Promise<void> {
   const base = api.replace(/\/$/, "");
-  const headers = { cookie: cookieHeader(managementKey), "content-type": "application/json" };
-  const refused = () =>
-    new Error(
-      "The management key was refused: check MP_MANAGEMENT_KEY and that the dev server was started with it."
-    );
+  const refused = () => new Error("The device key was refused by the network devices API.");
+  console.log(`Waiting for the dev server at ${base} ...`);
+  let cookie = "";
+  const upDeadline = Date.now() + FRESH_TIMEOUT_MS;
+  while (cookie === "") {
+    try {
+      cookie = await provisionCookie(base);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.startsWith("Provisioning") || Date.now() > upDeadline) throw err;
+      await sleep(POLL_INTERVAL_MS);
+    }
+  }
+  const headers = { cookie, "content-type": "application/json" };
 
   console.log(`Waiting up to ${FRESH_TIMEOUT_MS / 1000}s for a fresh live cache at ${base} ...`);
   const deadline = Date.now() + FRESH_TIMEOUT_MS;
@@ -90,7 +115,7 @@ async function registerDemoDevices(api: string, managementKey: string): Promise<
         }
       }
     } catch (err) {
-      if (err instanceof Error && err.message.startsWith("The management key")) throw err;
+      if (err instanceof Error && err.message.startsWith("The device key")) throw err;
       // The dev server may not be up yet: keep retrying until the deadline.
     }
     await sleep(POLL_INTERVAL_MS);
@@ -156,7 +181,6 @@ async function main(): Promise<void> {
 
   const port = Number(flagValue(args, "--port") ?? "0");
   const api = flagValue(args, "--api");
-  const managementKey = process.env.MP_MANAGEMENT_KEY?.trim() || DEFAULT_MANAGEMENT_KEY;
 
   const fixture = await startUnifiFixtureServer(DEMO_CLIENTS, { port });
   const origin = fixture.origin;
@@ -165,7 +189,7 @@ async function main(): Promise<void> {
   );
   console.log(
     `  UNIFI_API_KEY=fixture-key UNIFI_SITE_ID=default UNIFI_HOST=${origin} ` +
-      `NODE_EXTRA_CA_CERTS=${fixture.certPath} MP_MANAGEMENT_KEY=${managementKey} npm run dev`
+      `NODE_EXTRA_CA_CERTS=${fixture.certPath} npm run dev`
   );
   console.log(
     "The certificate is regenerated on every run: restart the dev server after restarting this tool."
@@ -179,7 +203,7 @@ async function main(): Promise<void> {
 
   if (api && !args.includes("--no-register")) {
     try {
-      await registerDemoDevices(api, managementKey);
+      await registerDemoDevices(api);
       console.log("Done. Leave this tool running so the live cache keeps a controller to poll.");
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err));
