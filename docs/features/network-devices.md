@@ -87,6 +87,22 @@ blocked device succeeds locally and the admin accepts that the block lingers ups
 
 - **FR-018**: Given a plugin needing UniFi credentials, when it reads them, then it MUST read them only via the host operator-config interface, and the secret MUST never appear in `GET /settings`, a backup, or telemetry. Contract: NETWORK-DEVICES-AC-08.
 
+### Admin console
+
+- **FR-019**: Given the admin Network devices page, when it renders, then it MUST offer two tabs, "Registered devices" and "Add device", and the page heading MUST equal the sidebar label. The active tab is local page state, not a URL sub-route.
+
+- **FR-020**: Given a registered device, when its row renders, then it MUST show a status dot (success colour for online, destructive colour for online and blocked, muted for unknown, a warning glyph for not detected) and status chips, and the text label MUST remain the accessible carrier (colour is never the sole signal). Last-seen MUST never be shown next to "online".
+
+- **FR-021**: Given the registered list is open and the browser tab is visible, when 30 seconds pass, then the list MUST refresh silently (no loading state), MUST NOT refresh while the tab is hidden, and a refresh that was in flight while the user blocked, unblocked, edited, deleted or registered a device MUST NOT overwrite that newer local result.
+
+- **FR-022**: Given a device, when it is edited or registered, then the form MUST open in a dialog that never shows a raw MAC; the registration dialog MUST prefill the alias from the client's name (empty when unnamed, at most 80 characters).
+
+- **FR-023**: Given a delete action, when it is requested, then a confirmation dialog MUST be shown, using the stranded-upstream-block wording whenever the device is blocked or its belief diverged, and nothing is deleted until it is confirmed.
+
+- **FR-024**: Given the Add tab, when it lists live clients, then it MUST be sortable by name and by MAC address, MUST dim already-registered MACs (compared case-insensitively) with an "Already added" badge instead of an Add button, and MUST return to the registered list after a successful registration. The discovery table is the one place a MAC is shown.
+
+- **FR-025**: Given the page is opened with a credential denied on scope (a device kiosk key, FR-016), when a read answers 403 `scope_denied`, then the page MUST say that network access rules need the household management key instead of a generic load failure, and every load failure MUST offer Retry.
+
 ### Key Entities
 
 - **Registered device**: one row in the curated list — a canonical MAC (natural
@@ -126,3 +142,14 @@ blocked device succeeds locally and the admin accepts that the block lingers ups
   (ADR-039), never imported into any table.
 - The concrete block mechanism (`block-sta` vs `acl_rule_id`) is deferred to
   implementation, constrained only to keep blocked-state poll-readable.
+
+## Exercising the page without a controller
+
+- Component tests (`tests/client/network-devices-management.test.tsx`) cover every live-cache state with a fetch fake.
+- The e2e spec (`tests/e2e/network-devices.spec.ts`) starts a local self-signed HTTPS controller (`tests/e2e/unifi-fixture-server.ts`) and its own server with the scheduler enabled.
+- For manual use, `npm run dev:unifi-fixture` starts the same fixture with six demo clients (one unnamed). Order matters:
+  1. Run `npm run dev:unifi-fixture -- --api http://127.0.0.1:3100` first; it prints the environment (`UNIFI_API_KEY`, `UNIFI_SITE_ID`, `UNIFI_HOST`, `NODE_EXTRA_CA_CERTS`, `MP_MANAGEMENT_KEY`).
+  2. Start the dev server with that environment (and the seeded `DATA_DIR`). The tool waits for a fresh live cache, registers the first four demo clients through the real API and blocks one.
+  3. Open the SPA, then `npm run dev:session -- --management` swaps the browser's `mp_device_key` cookie to `MP_MANAGEMENT_KEY`. Do not reload afterwards: `/api/plugins*` rejects the management cookie, so navigate inside the SPA.
+- Limitation: a "not detected" device cannot be produced this way (registration needs the device in the live cache); the component tests cover that state.
+- `UNIFI_TLS_INSECURE` is not used (Node 24 undici mismatch, see the fixture server's docblock); the certificate is trusted through `NODE_EXTRA_CA_CERTS` and is regenerated on every run, so restart the dev server after restarting the tool.

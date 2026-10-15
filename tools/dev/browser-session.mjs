@@ -18,13 +18,16 @@ import {
 } from "./chrome-dev-shared.mjs";
 
 function usage() {
-  return `Usage: node tools/dev/browser-session.mjs [--origin <url>]
+  return `Usage: node tools/dev/browser-session.mjs [--origin <url>] [--management]
 
-npm run dev:session
+npm run dev:session [-- --management]
 
 Uses MP_ACCESS_TOKEN and MP_BOOTSTRAP_KEY from the environment / .env.local.
 Connects to CHROME_CDP_PORT (default 9222), launching Chrome when needed.
 Locks density to comfortable while DensityControl is deferred.
+--management: as the last step, swap the browser's mp_device_key cookie to MP_MANAGEMENT_KEY so
+  the Network devices admin page (management key required) is reachable. Do NOT reload afterwards:
+  /api/plugins* rejects the management cookie; navigate inside the SPA.
 Never enabled in production builds.
 `;
 }
@@ -115,9 +118,21 @@ async function main() {
       }),
       { key: DENSITY_STORAGE_KEY }
     );
+    const management = process.argv.includes("--management");
+    if (management) {
+      const managementKey = process.env.MP_MANAGEMENT_KEY?.trim();
+      if (!managementKey?.startsWith("mpk-")) {
+        throw new Error('MP_MANAGEMENT_KEY must be set to an "mpk-…" value for --management');
+      }
+      await context.addCookies([{ name: "mp_device_key", value: managementKey, url: origin }]);
+      console.error(
+        "Management cookie set. Do not reload: /api/plugins* rejects the management cookie; navigate inside the SPA."
+      );
+    }
     console.log(
       JSON.stringify({
         type: "session-ready",
+        management,
         origin,
         density,
         chrome: chrome.reused ? "reused" : "launched",

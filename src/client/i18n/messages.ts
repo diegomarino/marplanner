@@ -1178,16 +1178,16 @@ export const messages = {
     // registry list, picker-modal registration, block/unblock divergence display. Raw MAC
     // is NEVER rendered here except inside the PICKER's own client list (a distinct,
     // pre-naming surface — see NetworkDevicesManagement.tsx's module comment).
-    "networkDevices.management.title": "Network Devices",
+    "networkDevices.management.title": "Network devices",
     "networkDevices.management.description":
-      "The household's curated device registry — register devices from the live network list, then rename, reassign, block, or delete them.",
+      "Register family devices and control their internet access.",
     "networkDevices.management.loading": "Loading network devices…",
     "networkDevices.management.loadError": "Failed to load network devices.",
     "networkDevices.management.empty": "No devices registered yet.",
     "networkDevices.error.membersLoadError":
       "Failed to load members; assigning a device to a member is unavailable for now.",
 
-    "networkDevices.action.register": "Register a Device",
+    "networkDevices.action.register": "Add device",
     "networkDevices.action.edit": "Edit",
     "networkDevices.action.save": "Save",
     "networkDevices.action.saving": "Saving…",
@@ -1238,7 +1238,7 @@ export const messages = {
     "networkDevices.picker.memberLabel": "Assign to member (optional)",
     "networkDevices.picker.memberNone": "No member",
     "networkDevices.picker.unnamedDevice": "(unnamed device)",
-    "networkDevices.picker.select": "Select",
+    "networkDevices.picker.select": "Add",
     "networkDevices.picker.changeSelection": "Choose a different device",
     "networkDevices.picker.submit": "Register",
     "networkDevices.picker.submitting": "Registering…",
@@ -1327,6 +1327,26 @@ export const messages = {
     "provisioning.gate.throttled": "Too many failed attempts. Wait before trying again.",
     "provisioning.gate.retryAfter":
       "Too many failed attempts. Wait at least {seconds} seconds before trying again.",
+
+    // admin-network-devices
+    "networkDevices.tabs.label": "Network devices sections",
+    "networkDevices.tabs.registered": "Registered devices",
+    "networkDevices.tabs.add": "Add device",
+    "networkDevices.action.retry": "Retry",
+    "networkDevices.action.refresh": "Refresh",
+    "networkDevices.management.emptyAdd": "Add a device",
+    "networkDevices.error.managementRequired":
+      "This browser's credential can't manage network devices. Network access rules need the household management key; see the operations guide.",
+    "networkDevices.edit.title": "Edit device",
+    "networkDevices.edit.description": "Change the device's name or the member it belongs to.",
+    "networkDevices.delete.title": "Delete this device?",
+    "networkDevices.discover.columnName": "Name",
+    "networkDevices.discover.columnMac": "MAC address",
+    "networkDevices.discover.sortBy": "Sort by {column}",
+    "networkDevices.discover.alreadyAdded": "Already added",
+    "networkDevices.register.title": "Register a device",
+    "networkDevices.register.description":
+      "Give this device a friendly name and, optionally, a member.",
 
     // FR-002/FR-002a — the per-device kiosk-density control
     // (`src/client/shell/DensityControl.tsx`), shell chrome mounted alongside the printer
@@ -2545,16 +2565,16 @@ export const messages = {
     "weather.condition.unknown": "Tiempo desconocido",
 
     // Network Devices admin panel — Spanish parity for the en block above.
-    "networkDevices.management.title": "Dispositivos de Red",
+    "networkDevices.management.title": "Dispositivos de red",
     "networkDevices.management.description":
-      "El registro curado de dispositivos del hogar — registra dispositivos desde la lista de red en vivo y luego renómbralos, reasígnalos, bloquéalos o elimínalos.",
+      "Registra los dispositivos de la familia y controla su acceso a internet.",
     "networkDevices.management.loading": "Cargando dispositivos de red…",
     "networkDevices.management.loadError": "No se pudieron cargar los dispositivos de red.",
     "networkDevices.management.empty": "Todavía no hay dispositivos registrados.",
     "networkDevices.error.membersLoadError":
       "No se pudieron cargar los miembros; asignar un dispositivo a un miembro no está disponible por ahora.",
 
-    "networkDevices.action.register": "Registrar un dispositivo",
+    "networkDevices.action.register": "Añadir dispositivo",
     "networkDevices.action.edit": "Editar",
     "networkDevices.action.save": "Guardar",
     "networkDevices.action.saving": "Guardando…",
@@ -2600,7 +2620,7 @@ export const messages = {
     "networkDevices.picker.memberLabel": "Asignar a un miembro (opcional)",
     "networkDevices.picker.memberNone": "Sin miembro",
     "networkDevices.picker.unnamedDevice": "(dispositivo sin nombre)",
-    "networkDevices.picker.select": "Seleccionar",
+    "networkDevices.picker.select": "Añadir",
     "networkDevices.picker.changeSelection": "Elegir otro dispositivo",
     "networkDevices.picker.submit": "Registrar",
     "networkDevices.picker.submitting": "Registrando…",
@@ -2680,6 +2700,27 @@ export const messages = {
       "Demasiados intentos fallidos. Espera antes de volver a intentarlo.",
     "provisioning.gate.retryAfter":
       "Demasiados intentos fallidos. Espera al menos {seconds} segundos antes de volver a intentarlo.",
+
+    // admin-network-devices
+    "networkDevices.tabs.label": "Secciones de dispositivos de red",
+    "networkDevices.tabs.registered": "Dispositivos registrados",
+    "networkDevices.tabs.add": "Añadir dispositivo",
+    "networkDevices.action.retry": "Reintentar",
+    "networkDevices.action.refresh": "Actualizar",
+    "networkDevices.management.emptyAdd": "Añadir un dispositivo",
+    "networkDevices.error.managementRequired":
+      "La credencial de este navegador no puede gestionar dispositivos de red. Las reglas de acceso a la red requieren la clave de gestión del hogar; consulta la guía de operaciones.",
+    "networkDevices.edit.title": "Editar dispositivo",
+    "networkDevices.edit.description":
+      "Cambia el nombre del dispositivo o el miembro al que pertenece.",
+    "networkDevices.delete.title": "¿Eliminar este dispositivo?",
+    "networkDevices.discover.columnName": "Nombre",
+    "networkDevices.discover.columnMac": "Dirección MAC",
+    "networkDevices.discover.sortBy": "Ordenar por {column}",
+    "networkDevices.discover.alreadyAdded": "Ya añadido",
+    "networkDevices.register.title": "Registrar un dispositivo",
+    "networkDevices.register.description":
+      "Dale a este dispositivo un nombre y, si quieres, un miembro.",
 
     // See the en block's comment for behavior details.
     "shell.density.accessibleName": "Modo kiosco",
