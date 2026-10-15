@@ -11,8 +11,10 @@ import {
 import { todayInHouseholdTz } from "../../src/server/host-api";
 import { useIsolatedDb } from "../helpers/db";
 import {
+  __setQuoteSourceForTests,
   generateAllBriefings,
   generateBriefing,
+  isBriefingGenerating,
 } from "../../src/server/modules/daily-briefing/index";
 import { isMissed, regenerateFailedBriefings } from "../../src/server/modules/daily-briefing/job";
 import { findBriefingRow, seedBriefingRow, seedMember } from "../helpers/daily-briefing-seed";
@@ -340,6 +342,80 @@ describe("daily-briefing admin parity", () => {
       const inactive = await print("m-errors", "2026-08-02");
       expect(inactive.statusCode).toBe(409);
       expect(inactive.json()).toMatchObject({ error: "plugin_inactive" });
+    });
+  });
+
+  describe("still rendering", () => {
+    const DATE = "2026-09-07";
+    let release: () => void = () => {};
+
+    beforeEach(() => {
+      __setPrintingPluginActiveForTests(false);
+      const gate = new Promise<null>((resolve) => {
+        release = () => resolve(null);
+      });
+      // quoteOfDay is an external block: generation awaits this port before it can finish.
+      __setQuoteSourceForTests(() => gate);
+    });
+
+    afterEach(() => {
+      release();
+      __setQuoteSourceForTests(undefined);
+    });
+
+    async function preview(memberId: string) {
+      return app.inject({
+        method: "GET",
+        url: `/api/daily-briefing/${memberId}/${DATE}/preview.png`,
+        cookies: auth(),
+      });
+    }
+
+    it("answers 202 while a first generation is in flight, then the final state", async () => {
+      seedMember("m-render");
+      const pending = generateBriefing("m-render", DATE);
+      expect(isBriefingGenerating("m-render", DATE)).toBe(true);
+      const during = await preview("m-render");
+      expect(during.statusCode).toBe(202);
+      expect(during.json()).toEqual({ status: "rendering" });
+
+      release();
+      await pending;
+      expect(isBriefingGenerating("m-render", DATE)).toBe(false);
+      expect((await preview("m-render")).statusCode).toBe(409); // Printing off: no raster
+    });
+
+    it("stays generating until the last overlapping generation finishes", async () => {
+      seedMember("m-overlap");
+      const first = generateBriefing("m-overlap", DATE);
+      const second = generateBriefing("m-overlap", DATE);
+      expect(isBriefingGenerating("m-overlap", DATE)).toBe(true);
+      release();
+      await Promise.all([first, second]);
+      expect(isBriefingGenerating("m-overlap", DATE)).toBe(false);
+    });
+
+    it("clears the in-flight mark when generation throws", async () => {
+      seedMember("m-throws");
+      setMemberSchedule("m-throws", ["tue"]); // Monday paused: throws inside the read transaction
+      await expect(generateBriefing("m-throws", DATE)).rejects.toThrow();
+      expect(isBriefingGenerating("m-throws", DATE)).toBe(false);
+    });
+
+    it("keeps serving a stored PNG while a regeneration is in flight", async () => {
+      seedMember("m-stored");
+      const { PNG } = await import("pngjs");
+      const png = PNG.sync.write(new PNG({ width: 2, height: 2 }));
+      getDb()
+        .prepare(
+          `INSERT INTO daily_briefing (id, member_id, date, status, payload, png, created_at, updated_at)
+           VALUES ('stored', 'm-stored', ?, 'ready', '{}', ?, 1, 1)`
+        )
+        .run(DATE, Buffer.from(png));
+      const pending = generateBriefing("m-stored", DATE);
+      expect((await preview("m-stored")).statusCode).toBe(200);
+      release();
+      await pending;
     });
   });
 });

@@ -23,7 +23,12 @@ import {
 } from "../modules/daily-briefing/settings";
 import { setMemberSchedule } from "../modules/daily-briefing/schedule";
 import { isStrictCalendarDate, runJobNow } from "../host-api";
-import type { Briefing, GenerateAllResponse, GenerateSkippedResponse } from "../../shared";
+import type {
+  Briefing,
+  BriefingPreviewRendering,
+  GenerateAllResponse,
+  GenerateSkippedResponse,
+} from "../../shared";
 
 const ALLOWED_GENERATE_KEYS = new Set(["memberId", "date"]);
 const ALLOWED_GENERATE_ALL_KEYS = new Set(["date"]);
@@ -204,18 +209,21 @@ export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
       const { memberId, date } = request.params as { memberId: string; date: string };
       try {
         const result = readBriefingPng(memberId, date);
+        if (result.png) {
+          return reply.code(200).header("content-type", "image/png").send(result.png);
+        }
+        if (result.generating) {
+          return reply.code(202).send({ status: "rendering" } satisfies BriefingPreviewRendering);
+        }
         if (!result.found) {
           return reply
             .code(404)
             .send({ error: "not_found", message: "No briefing for this member/date" });
         }
-        if (!result.png) {
-          return reply.code(409).send({
-            error: "printable_raster_missing",
-            message: "This briefing has no stored printable raster",
-          });
-        }
-        return reply.code(200).header("content-type", "image/png").send(result.png);
+        return reply.code(409).send({
+          error: "printable_raster_missing",
+          message: "This briefing has no stored printable raster",
+        });
       } catch (err) {
         return handleDailyBriefingError(err, reply);
       }
