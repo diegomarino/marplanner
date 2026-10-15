@@ -19,6 +19,10 @@ export function assertWeekdayIntegrity(): void {
         : table === "daily_briefing_optin"
           ? "member_id"
           : "id";
+    // A column a later migration adds holds no data yet on a database whose lineage predates
+    // it (e.g. a restore through an older migration set) — there is nothing to validate.
+    const columns = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+    if (!columns.some((info) => info.name === column)) continue;
     const rows = db.prepare(`SELECT ${id} AS id, ${column} AS value FROM ${table}`).all() as {
       id: string;
       value: unknown;
