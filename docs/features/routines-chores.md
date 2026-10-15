@@ -72,9 +72,13 @@ snapshots.
 
 - **FR-014**: Given a write, when a weekday outside the 7-code enum is supplied, then it MUST be rejected, and when an impossible date is supplied, then it MUST be rejected. Contract: ROUTINES-CHORES-AC-05.
 
+- **FR-015**: Given a routine edit that names a `dayPeriodId`, when it is applied, then the id MUST be a non-blank string naming an existing day period or the whole edit MUST be rejected (400) with nothing written; when accepted, the routine moves to that period and the board shows it there immediately. Admins MUST be warned that moving a routine changes the live streak before they confirm (FR-009).
+
+- **FR-016**: Given the admin routine list, when it is read, then active routines MUST be ordered by their day period's start time, then by name (case-insensitive).
+
 ### Key Entities
 
-- **Routine**: a named active/inactive template attached to exactly one day period.
+- **Routine**: a named active/inactive template attached to exactly one day period, which an admin may change (FR-015).
 - **Chore**: a named active/inactive task within one routine, carrying a sort order.
 - **Assignment**: a rule linking one routine to one active child on a set of weekday
   codes (`mon..sun`); reactivation reuses the existing routine/member logical row.

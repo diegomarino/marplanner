@@ -74,7 +74,7 @@ components:
           minLength: 1
         dayPeriodId:
           type: string
-          description: immutable after creation (FR-017).
+          description: Day period the routine belongs to; PATCH may move it (FR-015).
         active:
           type: boolean
     RoutineInput:
@@ -83,7 +83,7 @@ components:
         - name
         - dayPeriodId
       additionalProperties: false
-      description: Create payload. dayPeriodId is write-once — absent from RoutineEditInput.
+      description: Create payload.
       properties:
         name:
           type: string
@@ -94,7 +94,7 @@ components:
     RoutineEditInput:
       type: object
       additionalProperties: false
-      description: Edit payload — name and/or active only; dayPeriodId is immutable (FR-017).
+      description: Edit payload — any of name, active and dayPeriodId (FR-015).
       properties:
         name:
           type: string
@@ -102,7 +102,9 @@ components:
         active:
           type: boolean
         dayPeriodId:
-          description: Accepted and ignored for compatibility; the stored period is immutable.
+          type: string
+          minLength: 1
+          description: Moves the routine to another existing day period; blank or unknown values are rejected (FR-015).
     Chore:
       type: object
       required:
@@ -324,7 +326,7 @@ components:
 paths:
   /api/routines:
     get:
-      summary: List active routines (admin config).
+      summary: List active routines, ordered by day-period start time, then name (FR-016).
       security:
         - deviceKeyCookie: []
       responses:
@@ -341,7 +343,7 @@ paths:
         "401":
           description: missing/invalid device key
     post:
-      summary: Create a routine, attached to one day period (immutable thereafter, FR-017).
+      summary: Create a routine attached to one day period.
       security:
         - deviceKeyCookie: []
       requestBody:
@@ -395,7 +397,7 @@ paths:
         "404":
           description: no such routine ever existed
     patch:
-      summary: Edit a routine's name/active — dayPeriodId is immutable (FR-017).
+      summary: Edit a routine's name, active flag and/or day period (FR-015).
       security:
         - deviceKeyCookie: []
       parameters:
@@ -420,7 +422,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Routine"
         "400":
-          description: validation
+          description: validation (blank name, non-boolean active, blank or unknown dayPeriodId)
           content:
             application/json:
               schema:

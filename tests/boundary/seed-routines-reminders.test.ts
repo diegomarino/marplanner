@@ -45,9 +45,29 @@ describe("routines and reminders demo seed boundary", () => {
         active: true,
       },
       {
+        id: "demo:routine:after-school",
+        name: "After school",
+        dayPeriodId: "afternoon",
+        active: true,
+      },
+      {
         id: "demo:routine:evening-reset",
         name: "Evening reset",
         dayPeriodId: "evening",
+        active: true,
+      },
+    ]);
+    expect(listRoutineAssignments("demo:routine:after-school")).toEqual([
+      {
+        id: "demo:routine-assignment:after-school:bart",
+        memberId: "demo:member:bart",
+        weekdays: ["mon", "wed", "fri"],
+        active: true,
+      },
+      {
+        id: "demo:routine-assignment:after-school:lisa",
+        memberId: "demo:member:lisa",
+        weekdays: ["mon", "tue", "wed", "thu"],
         active: true,
       },
     ]);

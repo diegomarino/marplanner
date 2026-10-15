@@ -289,12 +289,13 @@ export interface RoutineInput {
   dayPeriodId: string;
 }
 
-/** RoutineEditInput — edit payload (name and/or active only).
- * (no `required` list — both fields optional).
+/** RoutineEditInput — edit payload: name, active flag and/or day period (FR-015).
+ * (no `required` list — all fields optional).
  */
 export interface RoutineEditInput {
   name?: string;
   active?: boolean;
+  dayPeriodId?: string;
 }
 
 /** Chore — a named, ordered task within one routine.
