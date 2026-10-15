@@ -142,6 +142,7 @@ async function reopenPrintingPanel(page: Page): Promise<void> {
   await openAdminSection(page, "admin-nav-members-management");
   await openAdminSection(page, "admin-nav-printing");
   await expect(page.getByTestId("printing-management")).toBeVisible();
+  await page.getByTestId("printing-tab-diagnostics").click();
 }
 
 test("admin test-print → claim → degrade → retry → ack → printed; re-trigger → alreadyPrinted (#)", async ({
@@ -197,6 +198,7 @@ test("admin test-print → claim → degrade → retry → ack → printed; re-t
   await openAdminSection(page, "admin-nav-printing");
   const management = page.getByTestId("printing-management");
   await expect(management).toBeVisible();
+  await management.getByTestId("printing-tab-diagnostics").click();
 
   const firstFailureResponse = page.waitForResponse(
     (response) =>
@@ -297,6 +299,39 @@ test("admin test-print → claim → degrade → retry → ack → printed; re-t
   const allJobsBody = (await allJobsRes.json()) as { jobs: PrintJobDto[] };
   const testPrintJobsToday = allJobsBody.jobs.filter((j) => j.recordKey === "test-print");
   expect(testPrintJobsToday.map((j) => j.id)).toEqual([jobId]);
+
+  // 11) Reset today's print (FR-016) through the real UI: the same record becomes printable and
+  // a new test print is enqueued and printed by the paired executor.
+  const resetResponse = page.waitForResponse(
+    (response) =>
+      response.url().includes("/api/printing/reset-today") && response.request().method() === "POST"
+  );
+  await page.getByTestId("printing-reset-today").click();
+  await page.getByTestId("printing-reset-today-confirm").click();
+  const resetBody = (await (await resetResponse).json()) as {
+    resetRecords: number;
+    cancelledJobs: number;
+  };
+  expect(resetBody.resetRecords).toBeGreaterThanOrEqual(1);
+  await expect(page.getByTestId("printing-reset-today-result")).toBeVisible();
+
+  const thirdTriggerResponse = page.waitForResponse(
+    (response) =>
+      response.url().includes("/api/printing/test-print") && response.request().method() === "POST"
+  );
+  await page.getByTestId("printing-trigger-test-print").click();
+  const thirdTriggerBody = (await (await thirdTriggerResponse).json()) as {
+    enqueued: boolean;
+    jobId: string | null;
+  };
+  expect(thirdTriggerBody.enqueued).toBe(true);
+  expect(thirdTriggerBody.jobId).not.toBe(jobId);
+  await expect
+    .poll(async () => (await fetchJob(page.request, thirdTriggerBody.jobId!))?.derivedState, {
+      timeout: 15_000,
+      intervals: [100],
+    })
+    .toBe("printed");
 });
 
 test("printing administration uses the same pair action as printer attention", async ({
@@ -318,4 +353,27 @@ test("printing administration uses the same pair action as printer attention", a
   await expect(page.getByTestId("printing-management-pair")).toBeVisible();
   await page.getByTestId("printing-management-pair").click();
   await expect(page.getByTestId("printing-management-pair")).toBeHidden({ timeout: 10_000 });
+
+  // Pairing fills the printer fields from the fake transport; Save writes printerTransport.
+  try {
+    await expect(page.getByTestId("printer-device-id")).toHaveValue("fake-printer");
+    const saveResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/settings") && response.request().method() === "PUT"
+    );
+    await page.getByTestId("printer-settings-save").click();
+    expect((await saveResponse).status()).toBe(200);
+    await expect(page.getByTestId("printer-settings-saved")).toBeVisible();
+    const stored = (await (await page.request.get("/api/settings")).json()) as {
+      printerTransport?: { deviceId: string };
+    };
+    expect(stored.printerTransport?.deviceId).toBe("fake-printer");
+  } finally {
+    await page.request.put("/api/settings", {
+      data: {
+        object: "printerTransport",
+        settings: { deviceId: "", name: "", serviceUuid: "", characteristicUuid: "" },
+      },
+    });
+  }
 });
