@@ -97,10 +97,7 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
 
     expect(screen.getByTestId("daily-briefing-block-member-member-ada")).toBeVisible();
     expect(screen.getByTestId("daily-briefing-block-member-member-ben")).toBeVisible();
-    expect(screen.getByTestId("daily-briefing-block-member-member-ada")).toHaveAttribute(
-      "aria-selected",
-      "true"
-    );
+    expect(screen.getByTestId("daily-briefing-block-member-member-ada")).toBeChecked();
     expect(screen.getByTestId("daily-briefing-block-matrix")).toBeVisible();
     for (const day of ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]) {
       expect(screen.getByTestId(`daily-briefing-block-weekday-heading-${day}`)).toBeVisible();

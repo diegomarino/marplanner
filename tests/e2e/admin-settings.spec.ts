@@ -51,10 +51,7 @@ test("settings: pill change saves in one click and survives a reload; overview s
     await page.reload();
     await unlockAdmin(page, ADMIN_PIN);
     await openAdminSection(page, "admin-nav-settings");
-    await expect(page.getByTestId(`settings-week-start-${target}`)).toHaveAttribute(
-      "aria-checked",
-      "true"
-    );
+    await expect(page.getByTestId(`settings-week-start-${target}`)).toBeChecked();
   } finally {
     await page.request.put("/api/settings", {
       data: { object: "locale", settings: before.locale },

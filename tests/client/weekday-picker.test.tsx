@@ -10,13 +10,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CANONICAL_WEEKDAY_ORDER,
   WeekdayPicker,
+  weekdayDisplayOrder,
   type WeekdayLabels,
 } from "@/components/WeekdayPicker";
 import { assertKioskDensityCompliant } from "./helpers/density";
 import { injectDensityStyles } from "./helpers/densityStyles";
 
+const household = vi.hoisted(() => ({ weekStartDay: null as number | null }));
+vi.mock("@/lib/householdSettings", () => ({ useHouseholdSettings: () => household }));
+
 afterEach(() => {
   cleanup();
+  household.weekStartDay = null;
   document.documentElement.removeAttribute("data-density");
 });
 
@@ -404,5 +409,86 @@ describe("WeekdayPicker — disabledDays", () => {
     expect(screen.getByTestId("picker-sun")).toBeDisabled();
     expect(screen.getByTestId("picker-mon")).toBeEnabled();
     expect(screen.getByTestId("picker-tue")).toBeChecked();
+  });
+});
+
+const SUNDAY_FIRST_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+describe("weekdayDisplayOrder", () => {
+  it("puts Sunday first only for a Sunday week start", () => {
+    expect(weekdayDisplayOrder(0)).toEqual(["sun", "mon", "tue", "wed", "thu", "fri", "sat"]);
+    for (const start of [1, null, undefined, 7]) {
+      expect(weekdayDisplayOrder(start)).toEqual(EXPECTED_CODE_ORDER);
+    }
+  });
+});
+
+describe("WeekdayPicker — household week start", () => {
+  const shownLabels = () =>
+    within(screen.getByRole("group"))
+      .getAllByRole("checkbox")
+      .map((c) => c.closest("label")?.textContent);
+
+  it("shows Sunday first when the household week starts on Sunday", () => {
+    household.weekStartDay = 0;
+    render(<WeekdayPicker labels={LABELS} groupLabel="Weekdays" value={[]} onChange={() => {}} />);
+    expect(shownLabels()).toEqual(SUNDAY_FIRST_LABELS);
+  });
+
+  it("lets the weekStartDay prop override the household setting", () => {
+    household.weekStartDay = 0;
+    render(
+      <WeekdayPicker
+        labels={LABELS}
+        groupLabel="Weekdays"
+        value={[]}
+        onChange={() => {}}
+        weekStartDay={1}
+      />
+    );
+    expect(shownLabels()).toEqual(EXPECTED_LABEL_ORDER);
+  });
+
+  it("still emits the canonical order when shown Sunday first", () => {
+    household.weekStartDay = 0;
+    const onChange = vi.fn();
+    render(
+      <WeekdayPicker labels={LABELS} groupLabel="Weekdays" value={["sat"]} onChange={onChange} />
+    );
+    fireEvent.click(screen.getByRole("checkbox", { name: "Sun" }));
+    expect(onChange).toHaveBeenCalledWith(["sat", "sun"]);
+  });
+
+  it("orders the single-day select and the radio pills by the week start", () => {
+    household.weekStartDay = 0;
+    render(
+      <>
+        <WeekdayPicker
+          mode="single"
+          labels={LABELS}
+          groupLabel="Day"
+          value="mon"
+          onChange={() => {}}
+        />
+        <WeekdayPicker
+          mode="single"
+          renderAs="radio"
+          labels={LABELS}
+          groupLabel="Radio day"
+          value="mon"
+          onChange={() => {}}
+        />
+      </>
+    );
+    expect(
+      within(screen.getByRole("combobox", { name: "Day" }))
+        .getAllByRole("option")
+        .map((o) => o.textContent)
+    ).toEqual(SUNDAY_FIRST_LABELS);
+    expect(
+      within(screen.getByRole("radiogroup", { name: "Radio day" }))
+        .getAllByRole("radio")
+        .map((r) => r.closest("label")?.textContent)
+    ).toEqual(SUNDAY_FIRST_LABELS);
   });
 });
