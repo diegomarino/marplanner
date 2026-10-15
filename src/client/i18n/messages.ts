@@ -390,7 +390,7 @@ export const messages = {
     "dailyBriefing.admin.printQueued": "Sent to the printer queue.",
     "dailyBriefing.admin.printAlreadyQueued": "Already waiting in the printer queue.",
     "dailyBriefing.admin.pausedNotice":
-      "{name} is paused on {date} — switch the day back on in {blocks} to generate.",
+      "{name} is paused on {date} — switch the day back on in {blocks} to generate or regenerate it.",
     "dailyBriefing.admin.noBriefingForDate": "No briefing for {date}.",
     "dailyBriefing.admin.briefingLoadError": "Failed to load the briefing.",
     "dailyBriefing.admin.payloadTitle": "Technical details",
@@ -1066,12 +1066,12 @@ export const messages = {
     "dailyBriefing.scope.member": "Personal",
 
     // ─── Daily Briefing admin settings-layer extensions (FR-022) ─────────────────────────────
-    "dailyBriefing.admin.settingsLoadError": "Failed to load Daily Briefing settings.",
+    "dailyBriefing.admin.settingsLoadError": "Failed to load the daily briefing settings.",
     "dailyBriefing.admin.generationTimeLabel": "Generation time",
     "dailyBriefing.admin.triggerBindingLabel": "Automatic printing on morning-complete",
     "dailyBriefing.admin.settingsSaveButton": "Save",
     "dailyBriefing.admin.settingsSaving": "Saving…",
-    "dailyBriefing.admin.settingsSaveError": "Failed to save Daily Briefing settings.",
+    "dailyBriefing.admin.settingsSaveError": "Failed to save the daily briefing settings.",
     "dailyBriefing.admin.blockOrderSaveError": "Failed to save block order.",
     "dailyBriefing.admin.blockLevelLabel": "Level",
     "dailyBriefing.admin.blockDifficultyLabel": "Difficulty",
@@ -1888,7 +1888,7 @@ export const messages = {
     "dailyBriefing.admin.printQueued": "Enviado a la cola de impresión.",
     "dailyBriefing.admin.printAlreadyQueued": "Ya está esperando en la cola de impresión.",
     "dailyBriefing.admin.pausedNotice":
-      "{name} está en pausa el {date}: vuelve a activar el día en {blocks} para generarlo.",
+      "{name} está en pausa el {date}: vuelve a activar el día en {blocks} para generarlo o regenerarlo.",
     "dailyBriefing.admin.noBriefingForDate": "No hay resumen para el {date}.",
     "dailyBriefing.admin.briefingLoadError": "No se pudo cargar el resumen.",
     "dailyBriefing.admin.payloadTitle": "Detalles técnicos",
@@ -2577,13 +2577,13 @@ export const messages = {
 
     // ─── Daily Briefing admin settings-layer extensions (FR-022) ─────────────────────────────
     "dailyBriefing.admin.settingsLoadError":
-      "No se pudo cargar la configuración del Resumen Diario.",
+      "No se pudieron cargar los ajustes del resumen diario.",
     "dailyBriefing.admin.generationTimeLabel": "Hora de generación",
     "dailyBriefing.admin.triggerBindingLabel": "Impresión automática al completar la mañana",
     "dailyBriefing.admin.settingsSaveButton": "Guardar",
     "dailyBriefing.admin.settingsSaving": "Guardando…",
     "dailyBriefing.admin.settingsSaveError":
-      "No se pudo guardar la configuración del Resumen Diario.",
+      "No se pudieron guardar los ajustes del resumen diario.",
     "dailyBriefing.admin.blockOrderSaveError": "No se pudo guardar el orden de bloques.",
     "dailyBriefing.admin.blockLevelLabel": "Nivel",
     "dailyBriefing.admin.blockDifficultyLabel": "Dificultad",

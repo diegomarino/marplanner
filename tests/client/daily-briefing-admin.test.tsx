@@ -181,7 +181,7 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
     fireEvent.click(screen.getByTestId("daily-briefing-admin-settings-save"));
 
     expect(await screen.findByTestId("daily-briefing-admin-settings-error")).toHaveTextContent(
-      "Failed to save Daily Briefing settings."
+      "Failed to save the daily briefing settings."
     );
     assertNoImplicitRegenerate(mockFetch);
   });

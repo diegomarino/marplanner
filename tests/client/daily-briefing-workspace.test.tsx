@@ -275,7 +275,7 @@ describe("BriefingWorkspace", () => {
     await screen.findByTestId(`daily-briefing-history-entry-${TODAY}`);
     fireEvent.click(screen.getByTestId("daily-briefing-generate"));
     expect(await screen.findByTestId("daily-briefing-paused-notice")).toHaveTextContent(
-      /in Blocks to generate/
+      /in Blocks to generate or regenerate it/
     );
     fireEvent.click(screen.getByTestId("daily-briefing-paused-open-blocks"));
     expect(onOpenBlocks).toHaveBeenCalledTimes(1);

@@ -517,6 +517,12 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     });
     renderManagement();
 
+    // The load error explains the empty page; it must not also claim there are no members.
+    await screen.findByTestId("daily-briefing-retry");
+    expect(screen.queryByText("No active members are available.")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Turn on the daily briefing for a member below to generate.")
+    ).not.toBeInTheDocument();
     membersFail = false;
     fireEvent.click(await screen.findByTestId("daily-briefing-retry"));
     expect(await screen.findByTestId("daily-briefing-member-row-member-ben")).toBeVisible();
@@ -558,6 +564,48 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     );
     expect(screen.getByTestId("daily-briefing-member-status-member-ben")).toHaveTextContent(
       "Not generated"
+    );
+  });
+
+  it("lets the tab bar wrap so long tab names never widen the page", async () => {
+    mockBackend();
+    renderManagement();
+    expect(await screen.findByRole("tablist")).toHaveClass("max-w-full", "flex-wrap");
+  });
+
+  it("marks a paused member once settings arrive after the stored results", async () => {
+    let releaseSettings: () => void = () => {};
+    const settingsGate = new Promise<void>((resolve) => {
+      releaseSettings = resolve;
+    });
+    mockBackend({
+      optIns: ["member-ben"],
+      settings: () => settingsResponse(),
+      handle: (url) =>
+        url === "/api/daily-briefing/settings"
+          ? settingsGate.then(() =>
+              settingsResponse({
+                memberSchedules: [
+                  { memberId: "member-ben", weekdays: ["mon", "tue", "wed", "thu", "fri"] },
+                ],
+              })
+            )
+          : undefined,
+    });
+    renderManagement();
+    fireEvent.change(await screen.findByTestId("daily-briefing-generate-date"), {
+      target: { value: "2026-10-18" },
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-member-status-member-ben")).toHaveTextContent(
+        "Not generated"
+      )
+    );
+    releaseSettings();
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-member-status-member-ben")).toHaveTextContent(
+        "Paused"
+      )
     );
   });
 
