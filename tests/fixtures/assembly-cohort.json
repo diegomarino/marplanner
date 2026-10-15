@@ -267,6 +267,10 @@
     },
     {
       "method": "GET",
+      "path": "/api/daily-briefing/history/{memberId}"
+    },
+    {
+      "method": "GET",
       "path": "/api/daily-briefing/opt-in"
     },
     {
@@ -407,6 +411,10 @@
     },
     {
       "method": "POST",
+      "path": "/api/daily-briefing/{memberId}/{date}/print"
+    },
+    {
+      "method": "POST",
       "path": "/api/meal-entries"
     },
     {
@@ -472,6 +480,10 @@
     {
       "method": "PUT",
       "path": "/api/daily-briefing/opt-in/{memberId}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/daily-briefing/schedule/{memberId}"
     },
     {
       "method": "PUT",

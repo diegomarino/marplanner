@@ -160,6 +160,7 @@ describe("daily content demo seed integration", () => {
             updatedAt: NOW_MS,
           },
         ],
+        memberSchedules: [],
       });
       expect(await read(app, "/api/daily-briefing/opt-in", options)).toEqual([
         { memberId: "demo:member:bart", enabled: false },
