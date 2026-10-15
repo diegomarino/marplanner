@@ -27,7 +27,10 @@ Ports for every Playwright run: `PORT=43226 MP_E2E_WEATHER_FIXTURE_PORT=44426 MP
 <div className="flex flex-wrap items-center justify-between gap-2">
   <MemberChip member={child} className="self-start text-base" />
   {assignment !== undefined && !assignment.active && (
-    <span className="text-muted-foreground text-sm" data-testid={`routine-assignment-${child.id}-inactive`}>
+    <span
+      className="text-muted-foreground text-sm"
+      data-testid={`routine-assignment-${child.id}-inactive`}
+    >
       {t("routines.assignments.statusInactive")}
     </span>
   )}
@@ -49,7 +52,7 @@ Ports for every Playwright run: `PORT=43226 MP_E2E_WEATHER_FIXTURE_PORT=44426 MP
   2. Sunday-first (`weekStartDay: 0`): named Sun, Mon..Sat; clicking Wed then Mon and Save calls `onSave(id, ["mon","wed"])` (canonical order, new assignment so no confirmation).
   3. `screen.getByTestId("assignment-dialog")` has class `sm:max-w-2xl` and not `sm:max-w-xl`.
   4. Inactive marker: with `assignments=[{ id, memberId, weekdays: ["mon"], active: false }]` the marker shows; with an active one it does not.
-  Use the `Assignment`/`Member` types from `src/shared` to build fixtures (check the required fields by reading `src/shared`; copy the shapes the existing `routines.test.tsx` `CHILD` constant uses).
+     Use the `Assignment`/`Member` types from `src/shared` to build fixtures (check the required fields by reading `src/shared`; copy the shapes the existing `routines.test.tsx` `CHILD` constant uses).
 - [ ] `npx prettier --write` both files, then `npx vitest run tests/client/routines.test.tsx tests/client/assignment-dialog.test.tsx tests/client/weekday-picker.test.tsx`. Expected: all pass.
 
 ## Task 3: e2e
