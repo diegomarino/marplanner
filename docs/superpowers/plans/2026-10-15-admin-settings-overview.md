@@ -59,6 +59,7 @@
 ### Task 1: Uptime on the system status (backend, docs, Overview row)
 
 **Files:**
+
 - Modify: `src/shared/index.ts:653-658`
 - Modify: `src/server/routes/telemetry.ts:125-129`
 - Modify: `docs/api/telemetry/openapi.yaml:177-193`
@@ -68,6 +69,7 @@
 - Test: `tests/boundary/system-status.test.ts`, `tests/client/admin-overview.test.tsx`
 
 **Interfaces:**
+
 - Produces: `SystemStatus.uptimeSeconds: number`; `export function formatUptime(totalSeconds: number, locale: string): string` from `src/client/admin/AdminOverview.tsx`; test id `admin-overview-uptime`.
 
 - [ ] **Step 1: Write the failing boundary test.** In `tests/boundary/system-status.test.ts`, test "tells an admin-capable device what is deployed": change the key assertion and add the uptime check.
@@ -108,12 +110,12 @@ const status: SystemStatus = {
 `docs/api/telemetry/openapi.yaml` schema `SystemStatus`: add `uptimeSeconds` to `required` and `properties`:
 
 ```yaml
-        - uptimeSeconds
+- uptimeSeconds
 ...
-        uptimeSeconds:
-          type: integer
-          minimum: 0
-          description: Whole seconds since the server process started.
+uptimeSeconds:
+  type: integer
+  minimum: 0
+  description: Whole seconds since the server process started.
 ```
 
 - [ ] **Step 4: Run boundary test and OpenAPI checks.** `npx vitest run tests/boundary/system-status.test.ts --environment node` PASS; `npm run check:openapi && npm run check:openapi-shapes` PASS.
@@ -207,17 +209,26 @@ Add `admin.overview.uptime` to both locales (en "Uptime", es "Tiempo en marcha")
 ### Task 2: Curated time zone module
 
 **Files:**
+
 - Create: `src/client/admin/timezones.ts`
 - Test: `tests/client/settings-timezones.test.ts`
 
 **Interfaces:**
+
 - Produces:
 
 ```ts
-export interface TimeZoneOption { value: string; label: string }
-export type TimeZoneGroupId = "current" | "utc" | "europe" | "americas" | "asiaPacific" | "africaMiddleEast";
-export interface TimeZoneGroup { id: TimeZoneGroupId; options: TimeZoneOption[] }
-export function timeZoneGroups(current: string): TimeZoneGroup[]
+export interface TimeZoneOption {
+  value: string;
+  label: string;
+}
+export type TimeZoneGroupId =
+  "current" | "utc" | "europe" | "americas" | "asiaPacific" | "africaMiddleEast";
+export interface TimeZoneGroup {
+  id: TimeZoneGroupId;
+  options: TimeZoneOption[];
+}
+export function timeZoneGroups(current: string): TimeZoneGroup[];
 ```
 
 - [ ] **Step 1: Write the failing test** `tests/client/settings-timezones.test.ts`:
@@ -290,12 +301,7 @@ export interface TimeZoneOption {
   label: string;
 }
 export type TimeZoneGroupId =
-  | "current"
-  | "utc"
-  | "europe"
-  | "americas"
-  | "asiaPacific"
-  | "africaMiddleEast";
+  "current" | "utc" | "europe" | "americas" | "asiaPacific" | "africaMiddleEast";
 export interface TimeZoneGroup {
   id: TimeZoneGroupId;
   options: TimeZoneOption[];
@@ -338,28 +344,35 @@ NOTE the test "keeps a stored zone outside the list selectable" expects label `A
 ### Task 3: WeatherManagement becomes a controlled panel
 
 **Files:**
+
 - Modify: `src/client/admin/WeatherManagement.tsx` (rewrite)
 - Modify: `tests/client/weather-management.test.tsx` (rewrite)
 - Modify: `tests/client/network-weather-admin.test.tsx` (weather describes only, from `describe("WeatherManagement — kiosk density` to end of file, and the `mockWeatherBackend`/`renderWeather` helpers)
 - Modify: `src/client/i18n/messages.ts` (delete now-unused `weather.management.loading|loadError|save|saving|saveError|clearError`, both locales; keep every other `weather.management.*` key)
 
 **Interfaces:**
+
 - Produces (all exported from `src/client/admin/WeatherManagement.tsx`):
 
 ```ts
-export interface WeatherFormState { lat: string; lon: string; label: string }
-export const EMPTY_WEATHER_FORM: WeatherFormState
-export function toWeatherFormState(weather: WeatherSettingsObject): WeatherFormState
-export function weatherFormProblem(form: WeatherFormState): "partial" | "invalid" | null
-export function weatherFormDirty(a: WeatherFormState, b: WeatherFormState): boolean
-export function weatherPayload(form: WeatherFormState): Record<string, unknown>
+export interface WeatherFormState {
+  lat: string;
+  lon: string;
+  label: string;
+}
+export const EMPTY_WEATHER_FORM: WeatherFormState;
+export function toWeatherFormState(weather: WeatherSettingsObject): WeatherFormState;
+export function weatherFormProblem(form: WeatherFormState): "partial" | "invalid" | null;
+export function weatherFormDirty(a: WeatherFormState, b: WeatherFormState): boolean;
+export function weatherPayload(form: WeatherFormState): Record<string, unknown>;
 export interface WeatherManagementProps {
   value: WeatherFormState;
   onChange: (patch: Partial<WeatherFormState>) => void;
   disabled?: boolean;
 }
-export function WeatherManagement(props: WeatherManagementProps): JSX.Element
+export function WeatherManagement(props: WeatherManagementProps): JSX.Element;
 ```
+
 - Test ids kept: `weather-management`, `weather-lat-input`, `weather-lon-input`, `weather-label-input`, `weather-locate`, `weather-clear`, `weather-error`. New: `weather-hint`. Removed: `weather-save`.
 
 - [ ] **Step 1: Write the failing tests.** Replace `tests/client/weather-management.test.tsx` with a harness-based suite (keep the file header comment style; keep the `@/lib/householdSettings` mock so `LanguageProvider` resolves synchronously):
@@ -391,7 +404,10 @@ function Harness({ initial = EMPTY_WEATHER_FORM }: { initial?: WeatherFormState 
   const [value, setValue] = useState(initial);
   return (
     <LanguageProvider>
-      <WeatherManagement value={value} onChange={(patch) => setValue((c) => ({ ...c, ...patch }))} />
+      <WeatherManagement
+        value={value}
+        onChange={(patch) => setValue((c) => ({ ...c, ...patch }))}
+      />
     </LanguageProvider>
   );
 }
@@ -505,7 +521,11 @@ Note: the test file uses `admin.settings.weatherIncomplete`, added in Task 4 Ste
 - [ ] **Step 3: Rewrite `WeatherManagement.tsx`.** Keep the AdminPanel frame, the three `<label className={LABEL_INLINE_CLASSES}>` inputs with the same test ids, the geolocation helper functions, `formatGeolocationCoordinate`, and the `hasGeolocation()` guard. Remove: all fetching, `loading`, Save, `saved`, persisted state. New pieces:
 
 ```tsx
-export interface WeatherFormState { lat: string; lon: string; label: string }
+export interface WeatherFormState {
+  lat: string;
+  lon: string;
+  label: string;
+}
 export const EMPTY_WEATHER_FORM: WeatherFormState = { lat: "", lon: "", label: "" };
 
 export function toWeatherFormState(weather: WeatherSettingsObject): WeatherFormState {
@@ -520,7 +540,10 @@ export function weatherFormProblem(form: WeatherFormState): "partial" | "invalid
   const lat = form.lat.trim();
   const lon = form.lon.trim();
   if ((lat === "") !== (lon === "")) return "partial";
-  if ((lat !== "" && !Number.isFinite(Number(lat))) || (lon !== "" && !Number.isFinite(Number(lon)))) {
+  if (
+    (lat !== "" && !Number.isFinite(Number(lat))) ||
+    (lon !== "" && !Number.isFinite(Number(lon)))
+  ) {
     return "invalid";
   }
   return null;
@@ -570,11 +593,13 @@ Component: props `{ value, onChange, disabled = false }`; local state only `loca
 ### Task 4: SettingsManagement rework
 
 **Files:**
+
 - Modify: `src/client/admin/SettingsManagement.tsx` (rewrite)
 - Modify: `src/client/i18n/messages.ts` (the `// admin-settings-overview` block, both locales)
 - Modify: `tests/client/settings-management.test.tsx` (rewrite)
 
 **Interfaces:**
+
 - Consumes: `timeZoneGroups` (Task 2), `WeatherManagement`, `WeatherFormState`, `toWeatherFormState`, `weatherFormProblem`, `weatherFormDirty`, `weatherPayload` (Task 3), `formatUptime` not needed.
 - Produces: test ids `settings-management`, `settings-language-en|es`, `settings-week-start-1|0`, `settings-timezone`, `settings-save`, `settings-saved`, `settings-error`, `settings-retry`.
 
@@ -661,15 +686,27 @@ function fromSettings(data: EffectiveSettings): SettingsFormState {
 
 /** A single-choice row drawn as pills. Local to this page (brief: no new shared primitive). */
 function ChoicePills<T extends string>({
-  labelId, label, description, value, options, onChange, disabled,
+  labelId,
+  label,
+  description,
+  value,
+  options,
+  onChange,
+  disabled,
 }: {
-  labelId: string; label: string; description: string; value: T;
+  labelId: string;
+  label: string;
+  description: string;
+  value: T;
   options: { value: T; label: string; testId: string }[];
-  onChange: (value: T) => void; disabled?: boolean;
+  onChange: (value: T) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <span id={labelId} className="text-control font-semibold">{label}</span>
+      <span id={labelId} className="text-control font-semibold">
+        {label}
+      </span>
       <p className="text-muted-foreground text-control">{description}</p>
       <div role="radiogroup" aria-labelledby={labelId} className="flex flex-wrap gap-2">
         {options.map((option) => {
@@ -755,7 +792,8 @@ async function save() {
 <p className="text-muted-foreground text-control">{t("admin.settings.timezoneDescription")}</p>
 ```
 
-  Memoize `timeZoneGroups` on `form.locale.timezone` is NOT required (`useMemo` is fine, but the current zone changing must regenerate the groups; do not memoize on `persisted`). Note: a user who picks a listed zone after starting from an unlisted one loses the "current" group on re-render; that is acceptable, but to keep the original reachable until Save, compute groups from `persisted.locale.timezone`, not the form value. Do that (`timeZoneGroups(persisted.locale.timezone)`), and add a test asserting the original unlisted zone is still offered after choosing another (extend test 2).
+Memoize `timeZoneGroups` on `form.locale.timezone` is NOT required (`useMemo` is fine, but the current zone changing must regenerate the groups; do not memoize on `persisted`). Note: a user who picks a listed zone after starting from an unlisted one loses the "current" group on re-render; that is acceptable, but to keep the original reachable until Save, compute groups from `persisted.locale.timezone`, not the form value. Do that (`timeZoneGroups(persisted.locale.timezone)`), and add a test asserting the original unlisted zone is still offered after choosing another (extend test 2).
+
 - Below the AdminPanel: `<PluginContribution pluginId="weather" group="admin" contributionId="weather">{form.weather && <WeatherManagement value={form.weather} onChange={changeWeather} disabled={saving} />}</PluginContribution>`.
 - Save row: `ErrorNotice` (`settings-error`) for `loadFailed ? loadError : error`; when `loadFailed` render `<Button type="button" variant="outline" data-testid="settings-retry">` with `t("admin.settings.retry")` instead of the form. Otherwise: `<Button data-testid="settings-save" disabled={!canSave}>` showing `t("admin.settings.saving")` while saving else `t("admin.settings.save")`; next to it `{saved && <span role="status" data-testid="settings-saved" className="text-success text-control">{t("admin.settings.saved")}</span>}`; then `<p className="text-muted-foreground text-control">{t("admin.settings.scopeNote")}</p>`.
 - Finally `<DayPeriodsManagement />`.
@@ -772,19 +810,20 @@ async function save() {
 ### Task 5: E2E
 
 **Files:**
+
 - Modify: `tests/e2e/weather.spec.ts` (helper `saveWeatherLocation`, ~lines 205-225)
 - Create: `tests/e2e/admin-settings.spec.ts`
 
 - [ ] **Step 1: Adapt the weather helper.** Replace the body after `waitForResponse` setup:
 
 ```ts
-  if (location === null) {
-    await page.getByTestId("weather-clear").click();
-  } else {
-    await page.getByTestId("weather-lat-input").fill(String(location.lat));
-    await page.getByTestId("weather-lon-input").fill(String(location.lon));
-  }
-  await page.getByTestId("settings-save").click();
+if (location === null) {
+  await page.getByTestId("weather-clear").click();
+} else {
+  await page.getByTestId("weather-lat-input").fill(String(location.lat));
+  await page.getByTestId("weather-lon-input").fill(String(location.lon));
+}
+await page.getByTestId("settings-save").click();
 ```
 
 Clear now needs a prior location (otherwise Save is disabled and no PUT happens); the spec only clears after saving a location, but check the call site (`grep -n "saveWeatherLocation(page, null)" tests/e2e/weather.spec.ts`) and, if a null call can run against an already-blank location, skip the helper's response wait for that case and assert the pill instead.
@@ -792,7 +831,9 @@ Clear now needs a prior location (otherwise Save is disabled and no PUT happens)
 - [ ] **Step 2: Write `tests/e2e/admin-settings.spec.ts`.** Prelude copied from `tests/e2e/day-periods.spec.ts` lines 20-41 (access gate, provision, `unlockAdmin`, wait for `admin-overview`). Test body:
 
 ```ts
-test("settings: pill change saves in one click and survives a reload; overview shows uptime", async ({ page }) => {
+test("settings: pill change saves in one click and survives a reload; overview shows uptime", async ({
+  page,
+}) => {
   // prelude
   await expect(page.getByTestId("admin-overview-uptime")).toHaveText(/\d/);
 
@@ -818,9 +859,14 @@ test("settings: pill change saves in one click and survives a reload; overview s
     await page.reload();
     await unlockAdmin(page, ADMIN_PIN);
     await openAdminSection(page, "admin-nav-settings");
-    await expect(page.getByTestId(`settings-week-start-${target}`)).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId(`settings-week-start-${target}`)).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
   } finally {
-    await page.request.put("/api/settings", { data: { object: "locale", settings: before.locale } });
+    await page.request.put("/api/settings", {
+      data: { object: "locale", settings: before.locale },
+    });
   }
 });
 ```
@@ -835,6 +881,7 @@ Use the same imports/constants as `day-periods.spec.ts` (`openAdminSection`, `un
 ### Task 6: Docs
 
 **Files:**
+
 - Modify: `docs/features/weather.md` (the admin location behaviour)
 - Modify: `docs/ui/household-contract.md` (item 13 and the overview paragraph; keep edits to those lines)
 

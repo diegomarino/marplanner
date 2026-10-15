@@ -28,7 +28,7 @@ update OpenAPI and feature docs for the backend change; keep edits to shared fil
   `Intl.supportedValuesOf("timeZone")` plus `UTC` plus the current value) and week start. A Save
   button writes `PUT /api/settings {object:"locale", settings}`, then `household.retry()`. It embeds
   `DayPeriodsManagement` and, inside `<PluginContribution pluginId="weather" group="admin"
-  contributionId="weather">`, `WeatherManagement`.
+contributionId="weather">`, `WeatherManagement`.
 - `src/client/admin/WeatherManagement.tsx`: self-contained. It does its own `GET /api/settings`,
   has its own Save (`PUT {object:"weather"}`) and an immediate Clear (`PUT {lat:null,lon:null}`),
   a "Use current location" geolocation prefill (never persisted until Save, FR-010), and
@@ -43,7 +43,7 @@ update OpenAPI and feature docs for the backend change; keep edits to shared fil
 - Overview: `src/client/admin/AdminOverview.tsx` reads `GET /api/telemetry/system-status`
   (`src/server/routes/telemetry.ts:~120`, type `SystemStatus` at `src/shared/index.ts:654`,
   OpenAPI schema `SystemStatus` in `docs/api/telemetry/openapi.yaml:177`, `additionalProperties:
-  false`). Boundary test: `tests/boundary/system-status.test.ts` pins the exact key list.
+false`). Boundary test: `tests/boundary/system-status.test.ts` pins the exact key list.
 - Tests that pin today's behaviour: `tests/client/settings-management.test.tsx`,
   `tests/client/weather-management.test.tsx`, the weather describes (from "WeatherManagement —
   kiosk density" to the end) in `tests/client/network-weather-admin.test.tsx`,
@@ -146,23 +146,23 @@ New keys, in one block per locale, placed after `"admin.overview.logs.loadError"
 `"admin.notFound.description"` (the last existing admin keys in each locale), under the comment
 `// admin-settings-overview`:
 
-| Key | en | es |
-| --- | --- | --- |
-| `admin.overview.uptime` | Uptime | Tiempo en marcha |
-| `admin.settings.languageDescription` | The language used across the household screens. | El idioma de todas las pantallas del hogar. |
-| `admin.settings.weekStartDescription` | The first day shown in weekly views. | El primer día que se muestra en las vistas semanales. |
-| `admin.settings.timezoneDescription` | Used for dates, schedules and daily rollovers. | Se usa para fechas, horarios y cambios de día. |
-| `admin.settings.tzGroup.current` | Current setting | Valor actual |
-| `admin.settings.tzGroup.utc` | UTC | UTC |
-| `admin.settings.tzGroup.europe` | Europe | Europa |
-| `admin.settings.tzGroup.americas` | Americas | América |
-| `admin.settings.tzGroup.asiaPacific` | Asia-Pacific | Asia-Pacífico |
-| `admin.settings.tzGroup.africaMiddleEast` | Africa & Middle East | África y Oriente Medio |
-| `admin.settings.saved` | Saved | Guardado |
-| `admin.settings.saving` | Saving… | Guardando… |
-| `admin.settings.retry` | Retry | Reintentar |
-| `admin.settings.weatherIncomplete` | Enter both latitude and longitude, or clear both. | Introduce latitud y longitud, o borra ambas. |
-| `admin.settings.scopeNote` | Save applies to language, week start, time zone and weather. Day periods are saved on their own. | Guardar aplica al idioma, el inicio de semana, la zona horaria y el tiempo. Los periodos del día se guardan por separado. |
+| Key                                       | en                                                                                               | es                                                                                                                        |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `admin.overview.uptime`                   | Uptime                                                                                           | Tiempo en marcha                                                                                                          |
+| `admin.settings.languageDescription`      | The language used across the household screens.                                                  | El idioma de todas las pantallas del hogar.                                                                               |
+| `admin.settings.weekStartDescription`     | The first day shown in weekly views.                                                             | El primer día que se muestra en las vistas semanales.                                                                     |
+| `admin.settings.timezoneDescription`      | Used for dates, schedules and daily rollovers.                                                   | Se usa para fechas, horarios y cambios de día.                                                                            |
+| `admin.settings.tzGroup.current`          | Current setting                                                                                  | Valor actual                                                                                                              |
+| `admin.settings.tzGroup.utc`              | UTC                                                                                              | UTC                                                                                                                       |
+| `admin.settings.tzGroup.europe`           | Europe                                                                                           | Europa                                                                                                                    |
+| `admin.settings.tzGroup.americas`         | Americas                                                                                         | América                                                                                                                   |
+| `admin.settings.tzGroup.asiaPacific`      | Asia-Pacific                                                                                     | Asia-Pacífico                                                                                                             |
+| `admin.settings.tzGroup.africaMiddleEast` | Africa & Middle East                                                                             | África y Oriente Medio                                                                                                    |
+| `admin.settings.saved`                    | Saved                                                                                            | Guardado                                                                                                                  |
+| `admin.settings.saving`                   | Saving…                                                                                          | Guardando…                                                                                                                |
+| `admin.settings.retry`                    | Retry                                                                                            | Reintentar                                                                                                                |
+| `admin.settings.weatherIncomplete`        | Enter both latitude and longitude, or clear both.                                                | Introduce latitud y longitud, o borra ambas.                                                                              |
+| `admin.settings.scopeNote`                | Save applies to language, week start, time zone and weather. Day periods are saved on their own. | Guardar aplica al idioma, el inicio de semana, la zona horaria y el tiempo. Los periodos del día se guardan por separado. |
 
 Existing keys reused unchanged: `admin.settings.title|description|language|timezone|weekStart|monday|
 sunday|save|loadError|saveError`, `weather.management.*` (loading/loadError/saveError/clearError/
