@@ -77,9 +77,7 @@ test("admin date defaults use the household timezone, not the browser timezone (
   await expect(page.getByTestId("daily-messages-previous-window")).toBeDisabled();
 
   await openAdminSection(page, "admin-nav-meals-management");
-  await expect(page.getByTestId("meals-menu-date-input")).toHaveValue(HOUSEHOLD_TODAY);
-  await expect(page.getByTestId("meals-week-date-input")).toHaveValue(HOUSEHOLD_TODAY);
-  await expect(page.getByTestId("meals-entry-date-input")).toHaveValue(HOUSEHOLD_TODAY);
+  await expect(page.getByTestId(`meal-day-heading-${HOUSEHOLD_TODAY}`)).toBeVisible();
 
   await openAdminSection(page, "admin-nav-reminders-management");
   const reminderCard = page.getByTestId(`reminder-${reminderId}`);

@@ -3563,15 +3563,21 @@
             "MealEntryDialog keeps submit disabled with localized guidance until recipe or note content is present",
             "MealEntryDialog creates a one-off recipe entry for the selected date and slot",
             "MealEntryDialog prepopulates note edits, filters slots, and does not make date or slot editable",
-            "MealEntryDialog localizes note and delete accessible names from the household language"
+            "MealEntryDialog localizes note and delete accessible names from the household language",
+            "MealEntryDialog shows no Repeat choice without plans (family board unchanged)",
+            "MealEntryDialog creates a recurring entry in the chosen active plan for the date's weekday",
+            "MealEntryDialog derives the weekday from the date itself, Sunday included",
+            "MealEntryDialog disables weekly repeat with a hint when no plan is active",
+            "MealEntryDialog does not offer Repeat when editing an entry"
           ],
           "tests/client/meals-all-slot-picker.test.tsx": [
-            "MealsManagement — entry-authoring all-slot picker (FR-002) offers a recipe with absent slots in every slot's picker"
+            "MealsManagement — recurring-entry all-slot picker (FR-002) offers a recipe with absent slots in every slot's picker"
           ],
           "tests/client/meals-board.test.tsx": [
             "MealsBoard weekly planner searches recipes from the weekly board and displays matching results",
             "MealsBoard weekly planner renders seven dates, fixed slot rows, duplicate labels, and an add affordance",
             "MealsBoard weekly planner uses the week range as the main title with compact navigation and v1 day headings",
+            "MealsBoard weekly planner renders the week range as an h3 below a page heading when asked",
             "MealsBoard weekly planner fills the available height with the rounded meal-plan shell",
             "MealsBoard weekly planner makes the empty cell the add control and reveals its plus only on hover or focus",
             "MealsBoard weekly planner keeps multiple meals as separate warm cards in stable order",
@@ -3583,7 +3589,7 @@
             "MealsBoard weekly planner keeps every slot interactive when a valid week contains no entries"
           ],
           "tests/client/meals-household-timezone-error-retry.test.tsx": [
-            "MealsManagement — household timezone setup error shows a retry action when settings fail, then loads dates after retry succeeds"
+            "MealsManagement — household timezone setup error shows a retry action when settings fail, then loads the household week after retry succeeds"
           ],
           "tests/client/meals-i18n-parity.test.ts": [
             "meals-i18n-parity en and es catalogs have identical keys (both directions)",
@@ -3592,26 +3598,36 @@
             "meals-i18n-parity meals.*/admin.nav.mealsManagement keys resolve to the expected strings in both languages"
           ],
           "tests/client/meals-management.test.tsx": [
-            "MealsManagement — kiosk density (SC-001, SC-002, SC-003, FR-011) meets kiosk density across every rendered control — recipe edit, plan rename, an open ConfirmDialog, expanded plan panel, and both content modes across three phases",
+            "MealsManagement — kiosk density (SC-001, SC-002, SC-003, FR-011) meets kiosk density across every rendered control — recipe edit, plan rename, an open ConfirmDialog, plan entries, the in-card recurring form, the grid entry dialog, and both content modes across four phases",
             "MealsManagement — kiosk density (SC-001, SC-002, SC-003, FR-011) DELIBERATE NEGATIVE — forcing one of this surface's own controls below the kiosk minimum makes the assertion fail",
             "MealsManagement — error states are announced (SC-011) announces the pre-ready settings-load failure",
             "MealsManagement — error states are announced (SC-011) announces the general recipes-load failure",
-            "MealsManagement — error states are announced (SC-011) announces the day-menu load failure",
+            "MealsManagement — error states are announced (SC-011) announces the week-menu load failure and Retry reloads it",
+            "MealsManagement — error states are announced (SC-011) retries the plan list after a load failure",
+            "MealsManagement — error states are announced (SC-011) retries the recipe list after a load failure",
             "MealsManagement — error states are announced (SC-011) announces the meal-plans load failure",
             "MealsManagement — error states are announced (SC-011) announces the week-menu load failure",
-            "MealsManagement — error states are announced (SC-011) announces a plan's entries-load failure once its panel is expanded",
+            "MealsManagement — error states are announced (SC-011) announces a plan's entries-load failure inside its card, and the card's Retry reloads it",
             "MealsManagement — ConfirmDialog replaces window.confirm for recipe/entry deletion does not delete the recipe until the ConfirmDialog is confirmed, and deletes on confirm",
             "MealsManagement — ConfirmDialog replaces window.confirm for recipe/entry deletion does not delete a recurring entry until the ConfirmDialog is confirmed, and deletes on confirm",
-            "MealsManagement — SLOT_LABEL_KEYS maps each slot to its own translation key (HIGH-2) labels the entry-authoring slot select with each slot's own name, in slot order",
-            "MealsManagement — WEEKDAY_LABEL_KEYS maps each weekday to its own translation key, through i18n (HIGH-2 parity) labels the recurring-entry weekday select with each weekday's own translated name, in canonical order, under a non-English household locale",
+            "MealsManagement — SLOT_LABEL_KEYS maps each slot to its own translation key (HIGH-2) labels the recurring-entry slot select with each slot's own name, in slot order",
+            "MealsManagement — WEEKDAY_LABEL_KEYS maps each weekday to its own translation key, through i18n (HIGH-2 parity) labels the recurring-entry weekday radios with each weekday's own translated name, in canonical order, under a non-English household locale",
             "MealsManagement — recipe-create textareas keep their explicit label association (Codex, independent review on PR #760) gives the ingredients and instructions textareas their own accessible name",
             "MealsManagement — RecipeCard edit-mode controls carry visible, associated labels (#764) gives the name/ingredients/instructions edit-mode controls their own accessible name via the shared Field component",
-            "MealsManagement — the four -orphaned controls carry real accessible names (#771) names the one-off, plan-rename, plan-entry and recurring recipe/name controls",
+            "MealsManagement — the four -orphaned controls carry real accessible names (#771) names the grid-dialog, plan-rename, plan-entry and recurring recipe/name controls",
             "MealsManagement — adopts the AdminPanel L2 frame (M20, independent review on PR #760; heading half retrofitted by c) wraps the surface in a landmark region labelled by its own title, with a heading of the same name",
-            "MealsManagement — accessible names (MEDIUM-b, MEDIUM-c) gives the recurring-entry weekday select its own accessible group name",
+            "MealsManagement — accessible names (MEDIUM-b, MEDIUM-c) gives the recurring-entry weekday radios their own accessible group name",
             "MealsManagement — accessible names (MEDIUM-b, MEDIUM-c) gives the recipe-create slots fieldset its accessible group name",
             "MealsManagement — MealPlanCard's StatusToggle accessible name is state-invariant (#781) gives an active plan's toggle just its name as the accessible name, action-shaped visible text, and aria-pressed=true",
-            "MealsManagement — MealPlanCard's StatusToggle accessible name is state-invariant (#781) gives an inactive plan's toggle just its OWN name — not appended with a state word — action-shaped visible text, and aria-pressed=false"
+            "MealsManagement — MealPlanCard's StatusToggle accessible name is state-invariant (#781) gives an inactive plan's toggle just its OWN name — not appended with a state word — action-shaped visible text, and aria-pressed=false",
+            "MealsManagement — each plan card contains its recurring entries lists a plan's entries without a toggle, grouped by weekday",
+            "MealsManagement — each plan card contains its recurring entries orders weekday groups and slots inside the card (week-start order, then slot order)",
+            "MealsManagement — each plan card contains its recurring entries shows the inactive hint on an inactive plan only",
+            "MealsManagement — writes keep the week grid and plan cards coherent re-reads the week menu after a plan is deactivated",
+            "MealsManagement — writes keep the week grid and plan cards coherent keeps a plan's entries visible with an error when saving one fails",
+            "MealsManagement — writes keep the week grid and plan cards coherent shows a failed week-grid write inside the dialog, not as a page error",
+            "MealsManagement — writes keep the week grid and plan cards coherent keeps an entry edit open in one plan card while another card adds a recurring entry",
+            "MealsManagement — writes keep the week grid and plan cards coherent shows a failed recurring add inside its plan card, next to the form"
           ],
           "tests/client/meals-recipe-edit-clear-fields.test.tsx": [
             "MealsManagement — recipe edit clears fields correctly (verify-pr #446) PATCHes instructions: '' (never omitted) and ingredients: [] when both are cleared"
@@ -3619,8 +3635,12 @@
           "tests/client/meals-view-refresh-coherence.test.tsx": [
             "MealsManagement — view refresh coherence (rework #448) shows a newly-added one-off entry in the week grid without a manual reload",
             "MealsManagement — view refresh coherence (rework #448) removes a deleted recipe's entries from the week grid without a manual reload",
-            "MealsManagement — view refresh coherence (rework #448) shows a newly-added recurring entry in an already-expanded plan panel",
-            "MealsManagement — view refresh coherence (rework #448) removes a deleted recipe's cascaded recurring entry from an already-expanded plan panel"
+            "MealsManagement — view refresh coherence (rework #448) shows a newly-added recurring entry in its plan card",
+            "MealsManagement — view refresh coherence (rework #448) removes a deleted recipe's cascaded recurring entry from its plan card",
+            "MealsManagement — view refresh coherence (rework #448) shows a recurring entry added from the week grid in its plan card",
+            "MealsManagement — view refresh coherence (rework #448) updates the plan card when a recurring meal is edited from the week grid",
+            "MealsManagement — view refresh coherence (rework #448) keeps the newer week when an older week response arrives late",
+            "MealsManagement — view refresh coherence (rework #448) keeps the week the user moved to when a slow plan write finishes"
           ],
           "tests/client/meals-workspace.test.tsx": [
             "useMealsWorkspace anchors the initial week to the household timezone and configured week start",
@@ -5272,6 +5292,7 @@
           "tests/e2e/admin-household-timezone-defaults.spec.ts": [
             "d2c923e8dbd7b5ee6d04-0031c1d54f8f4e93fae5"
           ],
+          "tests/e2e/admin-meals.spec.ts": ["c759391cf6cc4591686f-f56c885cfe0f7d4a9bcb"],
           "tests/e2e/admin-routines.spec.ts": ["9039bdc4f4b37608b18c-2d67652f4c452d3453f0"],
           "tests/e2e/admin-settings.spec.ts": ["f375f71858043ffaa49e-780f363c12847aa39921"],
           "tests/e2e/admin-unlock-resilience.spec.ts": [
@@ -5474,16 +5495,16 @@
       "src/client/admin/MealsManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 368,
-          "statements": 415,
-          "functions": 146,
-          "branches": 214
+          "lines": 354,
+          "statements": 403,
+          "functions": 138,
+          "branches": 204
         },
         "minimumRates": {
-          "lines": 72.82,
-          "statements": 69.63,
-          "functions": 65.06,
-          "branches": 69.15
+          "lines": 81.07,
+          "statements": 78.16,
+          "functions": 72.46,
+          "branches": 73.52
         }
       },
       "src/client/admin/MembersManagement.tsx": {
@@ -6719,16 +6740,16 @@
       "src/client/meals/MealEntryDialog.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 40,
-          "statements": 45,
-          "functions": 16,
-          "branches": 60
+          "lines": 51,
+          "statements": 58,
+          "functions": 20,
+          "branches": 74
         },
         "minimumRates": {
-          "lines": 77.5,
-          "statements": 73.33,
+          "lines": 80.39,
+          "statements": 77.58,
           "functions": 75,
-          "branches": 78.33
+          "branches": 89.18
         }
       },
       "src/client/meals/MealPlanGrid.tsx": {
@@ -6737,13 +6758,13 @@
           "lines": 10,
           "statements": 10,
           "functions": 7,
-          "branches": 10
+          "branches": 13
         },
         "minimumRates": {
           "lines": 100,
           "statements": 100,
           "functions": 100,
-          "branches": 80
+          "branches": 92.3
         }
       },
       "src/client/meals/MealsBoard.tsx": {
