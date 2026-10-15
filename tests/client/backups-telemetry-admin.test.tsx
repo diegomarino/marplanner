@@ -253,7 +253,7 @@ describe("BackupsManagement — kiosk density across every reachable state (SC-0
     }
   });
 
-  it("meets kiosk density with an EMPTY shelf — Snapshot Now + the upload file field + the upload button (3 controls)", async () => {
+  it("meets kiosk density with an EMPTY shelf — Snapshot Now + the upload file field (2 controls)", async () => {
     mockBackupsBackend();
     const uninject = await injectDensityStyles();
     document.documentElement.setAttribute("data-density", "kiosk");
@@ -262,14 +262,14 @@ describe("BackupsManagement — kiosk density across every reachable state (SC-0
       renderBackups();
       await screen.findByTestId("backups-empty");
 
-      expect(countInteractiveControls(document.body)).toBe(3);
+      expect(countInteractiveControls(document.body)).toBe(2);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
     }
   });
 
-  it("meets kiosk density with ONE backup row — base 3 + the row's 4 action controls (7 total)", async () => {
+  it("meets kiosk density with ONE backup row — base 2 + the row's 4 action controls (6 total)", async () => {
     mockBackupsBackend({ list: () => jsonResponse(backupsList([makeBackup()])) });
     const uninject = await injectDensityStyles();
     document.documentElement.setAttribute("data-density", "kiosk");
@@ -278,14 +278,14 @@ describe("BackupsManagement — kiosk density across every reachable state (SC-0
       renderBackups();
       await screen.findByTestId("backups-table");
 
-      expect(countInteractiveControls(document.body)).toBe(7);
+      expect(countInteractiveControls(document.body)).toBe(6);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
     }
   });
 
-  it("meets kiosk density with the restore-confirm panel OPEN (+3: the typed-confirm input, submit, cancel — 10 total), including while the restore submit is IN-FLIGHT", async () => {
+  it("meets kiosk density with the restore-confirm panel OPEN (+3: the typed-confirm input, submit, cancel — 9 total), including while the restore submit is IN-FLIGHT", async () => {
     let resolveRestore: (() => void) | undefined;
     const filename = "scheduled-20260901-033000-000.db";
     mockBackupsBackend({
@@ -307,7 +307,7 @@ describe("BackupsManagement — kiosk density across every reachable state (SC-0
       fireEvent.click(screen.getByTestId(`backups-restore-select-${filename}`));
       await screen.findByTestId("backups-restore-confirm-input");
 
-      expect(countInteractiveControls(document.body)).toBe(10);
+      expect(countInteractiveControls(document.body)).toBe(9);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
       // In-flight: the submit button disables but stays MOUNTED (still counted) — the census
@@ -318,7 +318,7 @@ describe("BackupsManagement — kiosk density across every reachable state (SC-0
       fireEvent.click(screen.getByTestId("backups-restore-submit"));
       await waitFor(() => expect(screen.getByTestId("backups-restore-submit")).toBeDisabled());
 
-      expect(countInteractiveControls(document.body)).toBe(10);
+      expect(countInteractiveControls(document.body)).toBe(9);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
       resolveRestore?.();
@@ -327,7 +327,7 @@ describe("BackupsManagement — kiosk density across every reachable state (SC-0
     }
   });
 
-  it("CENSUS FIRES ON REMOVAL — deleting a backup drops its row's 4 controls from the count (11 -> 7), not a synthetic shrink", async () => {
+  it("CENSUS FIRES ON REMOVAL — deleting a backup drops its row's 4 controls from the count (10 -> 6), not a synthetic shrink", async () => {
     const keepFilename = "scheduled-keep.db";
     const deleteFilename = "scheduled-delete.db";
     let listCalls = 0;
@@ -351,8 +351,8 @@ describe("BackupsManagement — kiosk density across every reachable state (SC-0
       renderBackups();
       await screen.findByTestId("backups-table");
 
-      // Base 3 + two rows * 4 controls each = 11.
-      expect(countInteractiveControls(document.body)).toBe(11);
+      // Base 2 + two rows * 4 controls each = 10.
+      expect(countInteractiveControls(document.body)).toBe(10);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
       fireEvent.click(screen.getByTestId(`backups-delete-${deleteFilename}`));
@@ -362,9 +362,9 @@ describe("BackupsManagement — kiosk density across every reachable state (SC-0
       );
 
       // The deleted row's own 4 controls (download, download-sql, restore-select, delete) are
-      // gone — base 3 + one remaining row's 4 controls = 7. A census that failed to actually
-      // recompute (a stale/memoized count) would still read 11 here.
-      expect(countInteractiveControls(document.body)).toBe(7);
+      // gone — base 2 + one remaining row's 4 controls = 6. A census that failed to actually
+      // recompute (a stale/memoized count) would still read 10 here.
+      expect(countInteractiveControls(document.body)).toBe(6);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
@@ -705,7 +705,6 @@ describe("BackupsManagement — every error state is announced through ErrorNoti
     const fileInput = await screen.findByTestId("backups-upload-input");
     const file = new File(["x"], "huge.db", { type: "application/octet-stream" });
     fireEvent.change(fileInput, { target: { files: [file] } });
-    fireEvent.click(screen.getByTestId("backups-upload-submit"));
 
     const alert = await screen.findByTestId("backups-upload-error");
     expect(alert).toHaveTextContent("exceeds the upload size limit");
