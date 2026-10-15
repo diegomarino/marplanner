@@ -70,7 +70,8 @@ describe("admin business-date defaults", () => {
     // from the household IANA timezone returned by /api/settings.
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(FROZEN_NOW);
-    vi.stubGlobal("fetch", vi.fn(mockFetch));
+    const fetchSpy = vi.fn(mockFetch);
+    vi.stubGlobal("fetch", fetchSpy);
 
     render(
       <HouseholdSettingsProvider>
@@ -91,9 +92,11 @@ describe("admin business-date defaults", () => {
       </LanguageProvider>
     );
     await waitFor(() => {
-      expect(screen.getByTestId("meals-menu-date-input")).toHaveValue(HOUSEHOLD_TODAY);
-      expect(screen.getByTestId("meals-week-date-input")).toHaveValue(HOUSEHOLD_TODAY);
-      expect(screen.getByTestId("meals-entry-date-input")).toHaveValue(HOUSEHOLD_TODAY);
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`/api/menu/week?date=${HOUSEHOLD_TODAY}`),
+        expect.anything()
+      );
+      expect(screen.getByTestId(`meal-day-heading-${HOUSEHOLD_TODAY}`)).toBeInTheDocument();
     });
     cleanup();
 

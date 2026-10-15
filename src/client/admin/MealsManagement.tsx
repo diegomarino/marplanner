@@ -1,5 +1,5 @@
 import { Textarea } from "@/components/ui/textarea";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { authFetch } from "@/lib/credential";
 import { todayInHouseholdTimezone } from "@/lib/household-date";
 import {
@@ -27,13 +27,19 @@ import { CheckboxField } from "@/components/CheckboxField";
 import { RadioField } from "@/components/RadioField";
 import { StatusToggle } from "@/components/StatusToggle";
 import { Field } from "@/components/Field";
-import { WeekdayPicker, type WeekdayLabels } from "@/components/WeekdayPicker";
+import { WeekdayPicker, weekdayDisplayOrder, type WeekdayLabels } from "@/components/WeekdayPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LABEL_INLINE_CLASSES, NATIVE_SELECT_CLASSES } from "@/lib/recipes";
+import { useHouseholdSettings } from "@/lib/householdSettings";
+import { addCalendarDays, buildWeekDays } from "@/calendar/calendar-presentation";
+import { MealEntryDialog, type MealEntryTarget } from "@/meals/MealEntryDialog";
+import { MealPlanGrid } from "@/meals/MealPlanGrid";
+import { MEALS_CHANGED_EVENT } from "@/meals/useMealsWorkspace";
 
-/** Manage recipes, one-off meals, recurring entries and retained meal plans.
- * Recipe deletion confirms dependent counts; inactive plans remain editable but leave the derived menu. */
+/** Manage the week menu (the family meal grid, editable here), meal plans with their recurring
+ * entries, and recipes. Recipe deletion confirms dependent counts; inactive plans remain editable
+ * but leave the derived menu. */
 
 const SLOTS: Slot[] = ["breakfast", "lunch", "snack", "dinner"];
 
@@ -97,33 +103,33 @@ interface SettingsResponse {
 
 export function MealsManagement() {
   const { t } = useTranslation();
+  const { weekStartDay } = useHouseholdSettings();
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [searchInput, setSearchInput] = useState("");
   const [loading, setLoading] = useState(true);
+  const [recipesLoadFailed, setRecipesLoadFailed] = useState(false);
   const [settingsReady, setSettingsReady] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [settingsRetryToken, setSettingsRetryToken] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const [viewDate, setViewDate] = useState("");
-  const [slotFilter, setSlotFilter] = useState<Slot | "">("");
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [menuLoading, setMenuLoading] = useState(true);
-  const [menuError, setMenuError] = useState<string | null>(null);
-
   const [plans, setPlans] = useState<MealPlan[]>([]);
   const [plansLoading, setPlansLoading] = useState(true);
   const [plansError, setPlansError] = useState<string | null>(null);
-  const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
-  // Bumped after any recurring-entry write so an already-expanded PlanEntriesPanel
-  // refetches instead of showing a cached list that predates the write.
+  const [plansLoadFailed, setPlansLoadFailed] = useState(false);
+  // Bumped after any entry write so every plan card refetches its recurring entries instead of
+  // showing a list that predates the write (a recurring meal added from the week grid included).
   const [planEntriesRefreshToken, setPlanEntriesRefreshToken] = useState(0);
 
+  const [todayDate, setTodayDate] = useState("");
   const [weekAnchorDate, setWeekAnchorDate] = useState("");
   const [weekMenu, setWeekMenu] = useState<Record<string, Record<Slot, MenuItem[]>>>({});
   const [weekLoading, setWeekLoading] = useState(true);
   const [weekError, setWeekError] = useState<string | null>(null);
+  // Only the newest week request may write the grid: a slow earlier week must not overwrite it.
+  const weekGeneration = useRef(0);
+  const [entryTarget, setEntryTarget] = useState<MealEntryTarget | null>(null);
 
   useEffect(() => {
     void loadRecipes("");
@@ -132,10 +138,6 @@ export function MealsManagement() {
   useEffect(() => {
     void loadHouseholdDate();
   }, [settingsRetryToken]);
-
-  useEffect(() => {
-    void loadMenu();
-  }, [viewDate, slotFilter]);
 
   useEffect(() => {
     void loadPlans();
@@ -148,6 +150,7 @@ export function MealsManagement() {
   async function loadRecipes(search: string) {
     setLoading(true);
     setError(null);
+    setRecipesLoadFailed(false);
     try {
       const qs = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : "";
       const res = await authFetch(`/api/recipes${qs}`, { credentials: "include" });
@@ -155,55 +158,44 @@ export function MealsManagement() {
       setRecipes((await res.json()) as Recipe[]);
     } catch {
       setError(t("meals.management.error"));
+      setRecipesLoadFailed(true);
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function loadMenu() {
-    if (!viewDate) return;
-    setMenuLoading(true);
-    setMenuError(null);
-    try {
-      const qs = slotFilter ? `?date=${viewDate}&slot=${slotFilter}` : `?date=${viewDate}`;
-      const res = await authFetch(`/api/menu${qs}`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load menu");
-      setMenuItems((await res.json()) as MenuItem[]);
-    } catch {
-      setMenuError(t("meals.menu.error"));
-    } finally {
-      setMenuLoading(false);
     }
   }
 
   async function loadPlans() {
     setPlansLoading(true);
     setPlansError(null);
+    setPlansLoadFailed(false);
     try {
       const res = await authFetch("/api/meal-plans", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to load meal plans");
       setPlans((await res.json()) as MealPlan[]);
     } catch {
       setPlansError(t("meals.plan.error"));
+      setPlansLoadFailed(true);
     } finally {
       setPlansLoading(false);
     }
   }
 
-  async function loadWeekMenu() {
-    if (!weekAnchorDate) return;
+  async function loadWeekMenu(anchor = weekAnchorDate) {
+    if (!anchor) return;
+    const generation = ++weekGeneration.current;
     setWeekLoading(true);
     setWeekError(null);
     try {
-      const res = await authFetch(`/api/menu/week?date=${weekAnchorDate}`, {
+      const res = await authFetch(`/api/menu/week?date=${encodeURIComponent(anchor)}`, {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to load week menu");
-      setWeekMenu((await res.json()) as Record<string, Record<Slot, MenuItem[]>>);
+      const next = (await res.json()) as Record<string, Record<Slot, MenuItem[]>>;
+      if (generation === weekGeneration.current) setWeekMenu(next);
     } catch {
-      setWeekError(t("meals.week.error"));
+      if (generation === weekGeneration.current) setWeekError(t("meals.week.error"));
     } finally {
-      setWeekLoading(false);
+      if (generation === weekGeneration.current) setWeekLoading(false);
     }
   }
 
@@ -214,7 +206,7 @@ export function MealsManagement() {
       if (!response.ok) throw new Error("Failed to load settings");
       const settings = (await response.json()) as SettingsResponse;
       const today = todayInHouseholdTimezone(settings.locale.timezone);
-      setViewDate(today);
+      setTodayDate(today);
       setWeekAnchorDate(today);
       setSettingsReady(true);
     } catch {
@@ -222,9 +214,11 @@ export function MealsManagement() {
     }
   }
 
-  /** Refresh both derived-menu views after any write that can change what they show. */
+  /** After any write that can change the derived menu: re-read the week and tell the family
+   * widgets (today's meals) to refresh too. */
   async function refreshMenus() {
-    await Promise.all([loadMenu(), loadWeekMenu()]);
+    await loadWeekMenu();
+    window.dispatchEvent(new Event(MEALS_CHANGED_EVENT));
   }
 
   async function createRecipe(input: RecipeInput): Promise<boolean> {
@@ -237,7 +231,6 @@ export function MealsManagement() {
       });
       if (!res.ok) throw new Error("Failed to create recipe");
       await loadRecipes(searchInput);
-      await refreshMenus();
       return true;
     } catch {
       setError(t("meals.management.error"));
@@ -255,8 +248,7 @@ export function MealsManagement() {
       });
       if (!res.ok) throw new Error("Failed to update recipe");
       await loadRecipes(searchInput);
-      // A rename changes the label any entry referencing this recipe shows in
-      // the day/week menus — both must be re-read, not just the recipe list.
+      // A rename changes the label any entry referencing this recipe shows in the week grid.
       await refreshMenus();
       return true;
     } catch {
@@ -300,33 +292,35 @@ export function MealsManagement() {
       });
       if (!res.ok) throw new Error("Failed to delete recipe");
       await loadRecipes(searchInput);
-      // A cascade-deleted recipe also removes every entry referencing it —
-      // both the day AND week menus can change, not just the day.
+      // A cascade-deleted recipe also removes every entry referencing it — from the week grid
+      // and from the plan cards, which would otherwise keep a phantom entry (edit/delete -> 404).
       await refreshMenus();
-      // The cascade also deletes any recurring entry referencing this recipe
-      // server-side — an already-expanded plan panel must refetch or it keeps
-      // showing the now-deleted entry as a phantom (edit/delete -> 404).
       setPlanEntriesRefreshToken((n) => n + 1);
     } catch {
       setError(t("meals.management.error"));
     }
   }
 
-  async function createEntry(input: MealEntryInput): Promise<boolean> {
+  /** Week-grid writes (the shared `MealEntryDialog`): the dialog shows its own error when this
+   * returns false, so the page error stays untouched. */
+  async function mutateEntry(
+    url: string,
+    method: "POST" | "PATCH" | "DELETE",
+    body?: unknown
+  ): Promise<boolean> {
     try {
-      const res = await authFetch("/api/meal-entries", {
-        method: "POST",
+      const res = await authFetch(url, {
+        method,
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
+        ...(body === undefined
+          ? {}
+          : { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
       });
-      if (!res.ok) throw new Error("Failed to add entry");
-      // The new entry's date may fall inside the displayed week regardless of
-      // whether it matches the day view's `viewDate` — refresh both.
+      if (!res.ok) throw new Error(`${method} ${url}: ${res.status}`);
       await refreshMenus();
+      setPlanEntriesRefreshToken((n) => n + 1);
       return true;
     } catch {
-      setError(t("meals.entries.error"));
       return false;
     }
   }
@@ -358,6 +352,7 @@ export function MealsManagement() {
       });
       if (!res.ok) throw new Error("Failed to update meal plan");
       await loadPlans();
+      // Activating or deactivating a plan adds or removes its meals from the week grid.
       await refreshMenus();
       return true;
     } catch {
@@ -416,9 +411,90 @@ export function MealsManagement() {
     );
   }
 
+  const menuDates = Object.keys(weekMenu);
+  const weekDates =
+    menuDates.length > 0 || !weekAnchorDate
+      ? menuDates
+      : buildWeekDays(weekAnchorDate, weekStartDay === 0 ? 0 : 1);
+
   return (
-    <AdminPanel title={t("meals.management.title")} description={t("meals.management.description")}>
+    <AdminPanel title={t("admin.sidebar.meals")} description={t("meals.management.description")}>
       <ErrorNotice message={error} />
+      {recipesLoadFailed && (
+        <Button
+          type="button"
+          variant="secondary"
+          className="mt-3"
+          data-testid="meals-recipes-retry"
+          onClick={() => void loadRecipes(searchInput)}
+        >
+          {t("meals.management.retry")}
+        </Button>
+      )}
+
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold mb-2">{t("meals.week.title")}</h3>
+        <p className="text-muted-foreground text-sm mb-4">{t("meals.week.editHint")}</p>
+        {weekError && (
+          <div className="mb-4">
+            <ErrorNotice message={weekError} />
+            <Button
+              type="button"
+              variant="secondary"
+              className="mt-3"
+              data-testid="meals-week-retry"
+              onClick={() => void loadWeekMenu()}
+            >
+              {t("meals.week.retry")}
+            </Button>
+          </div>
+        )}
+        <MealPlanGrid
+          titleAs="h3"
+          weekDates={weekDates}
+          weekMenu={weekMenu}
+          todayDate={todayDate || null}
+          pending={weekLoading}
+          onPrevious={() => setWeekAnchorDate((date) => addCalendarDays(date, -7))}
+          onCurrent={() => setWeekAnchorDate(todayDate)}
+          onNext={() => setWeekAnchorDate((date) => addCalendarDays(date, 7))}
+          onAdd={(date, slot) => setEntryTarget({ date, slot })}
+          onSelect={(date, item) => setEntryTarget({ date, slot: item.slot, item })}
+        />
+        {entryTarget && (
+          <MealEntryDialog
+            open
+            target={entryTarget}
+            recipes={recipes}
+            plans={plans}
+            onClose={() => setEntryTarget(null)}
+            onCreate={(input) => mutateEntry("/api/meal-entries", "POST", input)}
+            onEdit={(id, input) =>
+              mutateEntry(`/api/meal-entries/${encodeURIComponent(id)}`, "PATCH", input)
+            }
+            onDelete={(id) => mutateEntry(`/api/meal-entries/${encodeURIComponent(id)}`, "DELETE")}
+          />
+        )}
+      </div>
+
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold mb-2">{t("meals.plan.title")}</h3>
+        <MealPlanManagement
+          t={t}
+          plans={plans}
+          loading={plansLoading}
+          error={plansError}
+          loadFailed={plansLoadFailed}
+          onRetry={() => void loadPlans()}
+          recipes={recipes}
+          onCreate={createPlan}
+          onRename={renamePlan}
+          onToggleActive={togglePlanActive}
+          onCreateRecurring={createRecurringEntry}
+          onEntriesChanged={refreshMenus}
+          entriesRefreshToken={planEntriesRefreshToken}
+        />
+      </div>
 
       <div className="mt-6">
         <h3 className="text-lg font-semibold mb-2">{t("meals.recipes.title")}</h3>
@@ -461,65 +537,6 @@ export function MealsManagement() {
             ))}
           </div>
         )}
-      </div>
-
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">{t("meals.entries.title")}</h3>
-        <EntryAuthoringForm t={t} recipes={recipes} defaultDate={viewDate} onCreate={createEntry} />
-      </div>
-
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">{t("meals.menu.title")}</h3>
-        <DayMenuView
-          t={t}
-          viewDate={viewDate}
-          onViewDateChange={setViewDate}
-          slotFilter={slotFilter}
-          onSlotFilterChange={setSlotFilter}
-          items={menuItems}
-          loading={menuLoading}
-          error={menuError}
-        />
-      </div>
-
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">{t("meals.plan.title")}</h3>
-        <MealPlanManagement
-          t={t}
-          plans={plans}
-          loading={plansLoading}
-          error={plansError}
-          recipes={recipes}
-          expandedPlanId={expandedPlanId}
-          onToggleExpanded={(id) => setExpandedPlanId((prev) => (prev === id ? null : id))}
-          onCreate={createPlan}
-          onRename={renamePlan}
-          onToggleActive={togglePlanActive}
-          onEntriesChanged={refreshMenus}
-          entriesRefreshToken={planEntriesRefreshToken}
-        />
-      </div>
-
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">{t("meals.plan.recurringEntryTitle")}</h3>
-        <RecurringEntryAuthoringForm
-          t={t}
-          recipes={recipes}
-          plans={plans}
-          onCreate={createRecurringEntry}
-        />
-      </div>
-
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">{t("meals.week.title")}</h3>
-        <WeekMenuView
-          t={t}
-          anchorDate={weekAnchorDate}
-          onAnchorDateChange={setWeekAnchorDate}
-          week={weekMenu}
-          loading={weekLoading}
-          error={weekError}
-        />
       </div>
     </AdminPanel>
   );
@@ -786,207 +803,12 @@ function RecipeCard({ recipe, t, onSave, onPrepareDelete, onConfirmDelete }: Rec
   );
 }
 
-interface EntryAuthoringFormProps {
-  t: (key: MessageKey) => string;
-  recipes: Recipe[];
-  defaultDate: string;
-  onCreate: (input: MealEntryInput) => Promise<boolean>;
-}
-
-function EntryAuthoringForm({ t, recipes, defaultDate, onCreate }: EntryAuthoringFormProps) {
-  const [date, setDate] = useState(defaultDate);
-  const [slot, setSlot] = useState<Slot>("breakfast");
-  const [contentMode, setContentMode] = useState<"recipe" | "note">("recipe");
-  const [recipeId, setRecipeId] = useState("");
-  const [note, setNote] = useState("");
-
-  const availableRecipes = recipes.filter((recipe) => isRecipeAvailableForSlot(recipe, slot));
-
-  const canSubmit = !!date.trim() && (contentMode === "recipe" ? !!recipeId : !!note.trim());
-
-  const reset = () => {
-    setRecipeId("");
-    setNote("");
-  };
-
-  return (
-    <div className="bg-card p-4 rounded-lg shadow mb-6">
-      <div className="flex flex-col gap-2">
-        <div className="flex gap-2 items-center flex-wrap">
-          <label className={LABEL_INLINE_CLASSES}>
-            {t("meals.entries.dateLabel")}
-            <Input
-              type="date"
-              data-testid="meals-entry-date-input"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          </label>
-          <label className={LABEL_INLINE_CLASSES}>
-            {t("meals.entries.slotLabel")}
-            <select
-              data-testid="meals-entry-slot-select"
-              value={slot}
-              onChange={(e) => {
-                setSlot(e.target.value as Slot);
-                setRecipeId("");
-              }}
-              className={NATIVE_SELECT_CLASSES}
-            >
-              {SLOTS.map((s) => (
-                <option key={s} value={s}>
-                  {t(SLOT_LABEL_KEYS[s])}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <div className="flex gap-2 items-center flex-wrap">
-          <RadioField
-            name="meals-entry-content-mode"
-            value="recipe"
-            checked={contentMode === "recipe"}
-            onChange={() => setContentMode("recipe")}
-            label={t("meals.entries.contentModeRecipe")}
-          />
-          <RadioField
-            name="meals-entry-content-mode"
-            value="note"
-            checked={contentMode === "note"}
-            onChange={() => setContentMode("note")}
-            label={t("meals.entries.contentModeNote")}
-          />
-        </div>
-
-        {contentMode === "recipe" ? (
-          availableRecipes.length === 0 ? (
-            <p className="text-muted-foreground text-xs">{t("meals.entries.noRecipesForSlot")}</p>
-          ) : (
-            <select
-              data-testid="meals-entry-recipe-select"
-              aria-label={t("meals.entries.recipeSelectLabel")}
-              value={recipeId}
-              onChange={(e) => setRecipeId(e.target.value)}
-              className={NATIVE_SELECT_CLASSES}
-            >
-              <option value="">{t("meals.entries.recipeSelectPlaceholder")}</option>
-              {availableRecipes.map((recipe) => (
-                <option key={recipe.id} value={recipe.id}>
-                  {recipe.name}
-                </option>
-              ))}
-            </select>
-          )
-        ) : (
-          <Input
-            type="text"
-            aria-label={t("meals.entries.notePlaceholder")}
-            placeholder={t("meals.entries.notePlaceholder")}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
-        )}
-
-        <Button
-          onClick={() => {
-            if (!canSubmit) return;
-            void (async () => {
-              const input: MealEntryInput =
-                contentMode === "recipe"
-                  ? { kind: "oneoff", date, slot, recipeId }
-                  : { kind: "oneoff", date, slot, note: note.trim() };
-              const succeeded = await onCreate(input);
-              if (succeeded) reset();
-            })();
-          }}
-          disabled={!canSubmit}
-          className="self-start"
-        >
-          {t("meals.entries.action.add")}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-interface DayMenuViewProps {
-  t: (key: MessageKey) => string;
-  viewDate: string;
-  onViewDateChange: (date: string) => void;
-  slotFilter: Slot | "";
-  onSlotFilterChange: (slot: Slot | "") => void;
-  items: MenuItem[];
-  loading: boolean;
-  error: string | null;
-}
-
-function DayMenuView({
-  t,
-  viewDate,
-  onViewDateChange,
-  slotFilter,
-  onSlotFilterChange,
-  items,
-  loading,
-  error,
-}: DayMenuViewProps) {
-  return (
-    <div className="bg-card p-4 rounded-lg shadow">
-      <div className="flex gap-2 items-center flex-wrap mb-4">
-        <label className={LABEL_INLINE_CLASSES}>
-          {t("meals.menu.dateLabel")}
-          <Input
-            type="date"
-            data-testid="meals-menu-date-input"
-            value={viewDate}
-            onChange={(e) => onViewDateChange(e.target.value)}
-          />
-        </label>
-        <label className={LABEL_INLINE_CLASSES}>
-          {t("meals.menu.slotFilterLabel")}
-          <select
-            data-testid="meals-menu-slot-filter-select"
-            value={slotFilter}
-            onChange={(e) => onSlotFilterChange(e.target.value as Slot | "")}
-            className={NATIVE_SELECT_CLASSES}
-          >
-            <option value="">{t("meals.menu.slotFilterAll")}</option>
-            {SLOTS.map((s) => (
-              <option key={s} value={s}>
-                {t(SLOT_LABEL_KEYS[s])}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <ErrorNotice message={error} className="mb-2" />
-
-      {loading ? (
-        <p>{t("meals.menu.loading")}</p>
-      ) : items.length === 0 ? (
-        <p className="text-muted-foreground">{t("meals.menu.empty")}</p>
-      ) : (
-        <ul className="space-y-1">
-          {items.map((item) => (
-            <li key={item.entryId} className="text-sm flex gap-2">
-              <span className="font-semibold">{t(SLOT_LABEL_KEYS[item.slot])}:</span>
-              <span>{item.isTombstone ? t("meals.menu.tombstoneLabel") : item.label}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 /* ------------------------------------------------------------------ */
 /* meal_plan management — create/rename/activate/deactivate; */
-/* no delete control (FR-017/FR-025). A deactivated plan's entries */
-/* stay reachable (and editable/deletable) via its expandable panel, */
-/* which reads GET /api/meal-plans/:id/entries — not the derived menu, */
-/* which excludes inactive plans. */
+/* no delete control (FR-017/FR-025). Each plan card always lists its */
+/* recurring entries from GET /api/meal-plans/:id/entries — not the */
+/* derived menu, which excludes inactive plans — so a deactivated */
+/* plan's entries stay visible, editable and deletable. */
 /* ------------------------------------------------------------------ */
 
 interface MealPlanManagementProps {
@@ -994,12 +816,14 @@ interface MealPlanManagementProps {
   plans: MealPlan[];
   loading: boolean;
   error: string | null;
+  /** The plan list itself failed to load (as opposed to a create/update failure). */
+  loadFailed: boolean;
+  onRetry: () => void;
   recipes: Recipe[];
-  expandedPlanId: string | null;
-  onToggleExpanded: (id: string) => void;
   onCreate: (input: MealPlanInput) => Promise<boolean>;
   onRename: (id: string, name: string) => Promise<boolean>;
   onToggleActive: (id: string) => Promise<boolean>;
+  onCreateRecurring: (input: MealEntryInput) => Promise<boolean>;
   onEntriesChanged: () => Promise<void>;
   entriesRefreshToken: number;
 }
@@ -1009,12 +833,13 @@ function MealPlanManagement({
   plans,
   loading,
   error,
+  loadFailed,
+  onRetry,
   recipes,
-  expandedPlanId,
-  onToggleExpanded,
   onCreate,
   onRename,
   onToggleActive,
+  onCreateRecurring,
   onEntriesChanged,
   entriesRefreshToken,
 }: MealPlanManagementProps) {
@@ -1048,7 +873,22 @@ function MealPlanManagement({
         </div>
       </div>
 
-      <ErrorNotice message={error} className="mb-4" />
+      {error && (
+        <div className="mb-4">
+          <ErrorNotice message={error} />
+          {loadFailed && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="mt-3"
+              data-testid="meals-plans-retry"
+              onClick={onRetry}
+            >
+              {t("meals.management.retry")}
+            </Button>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <p>{t("meals.plan.loading")}</p>
@@ -1062,10 +902,9 @@ function MealPlanManagement({
               t={t}
               plan={plan}
               recipes={recipes}
-              expanded={expandedPlanId === plan.id}
-              onToggleExpanded={() => onToggleExpanded(plan.id)}
               onRename={(newName) => onRename(plan.id, newName)}
               onToggleActive={() => onToggleActive(plan.id)}
+              onCreateRecurring={onCreateRecurring}
               onEntriesChanged={onEntriesChanged}
               entriesRefreshToken={entriesRefreshToken}
             />
@@ -1080,10 +919,9 @@ interface MealPlanCardProps {
   t: (key: MessageKey) => string;
   plan: MealPlan;
   recipes: Recipe[];
-  expanded: boolean;
-  onToggleExpanded: () => void;
   onRename: (name: string) => Promise<boolean>;
   onToggleActive: () => Promise<boolean>;
+  onCreateRecurring: (input: MealEntryInput) => Promise<boolean>;
   onEntriesChanged: () => Promise<void>;
   entriesRefreshToken: number;
 }
@@ -1092,15 +930,15 @@ function MealPlanCard({
   t,
   plan,
   recipes,
-  expanded,
-  onToggleExpanded,
   onRename,
   onToggleActive,
+  onCreateRecurring,
   onEntriesChanged,
   entriesRefreshToken,
 }: MealPlanCardProps) {
   const [editing, setEditing] = useState(false);
   const [nameDraft, setNameDraft] = useState(plan.name);
+  const [adding, setAdding] = useState(false);
 
   const startEdit = () => {
     setNameDraft(plan.name);
@@ -1176,28 +1014,40 @@ function MealPlanCard({
             accessibleName={plan.name}
             onPress={() => void onToggleActive()}
           />
-          <Button
-            variant="ghost"
-            className="text-muted-foreground hover:text-foreground"
-            aria-expanded={expanded}
-            data-testid="meals-plan-toggle-entries"
-            onClick={onToggleExpanded}
-          >
-            {expanded ? t("meals.plan.hideEntries") : t("meals.plan.showEntries")}
-          </Button>
         </div>
       </div>
-      {expanded && (
-        <div className="mt-3 pl-2 border-l-2">
-          <PlanEntriesPanel
-            t={t}
-            planId={plan.id}
-            recipes={recipes}
-            onChanged={onEntriesChanged}
-            refreshToken={entriesRefreshToken}
-          />
-        </div>
+      {!plan.active && (
+        <p className="text-muted-foreground text-sm mt-2">{t("meals.plan.inactiveHint")}</p>
       )}
+      <div className="mt-3">
+        <PlanEntriesPanel
+          t={t}
+          planId={plan.id}
+          recipes={recipes}
+          onChanged={onEntriesChanged}
+          refreshToken={entriesRefreshToken}
+        />
+      </div>
+      <div className="mt-3">
+        <Button
+          type="button"
+          variant="outline"
+          aria-expanded={adding}
+          data-testid="meals-plan-add-recurring"
+          onClick={() => setAdding((open) => !open)}
+        >
+          {t("meals.plan.addRecurring")}
+        </Button>
+        {adding && (
+          <RecurringEntryAuthoringForm
+            t={t}
+            recipes={recipes}
+            mealPlanId={plan.id}
+            onCreate={onCreateRecurring}
+            onDone={() => setAdding(false)}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -1207,20 +1057,23 @@ interface PlanEntriesPanelProps {
   planId: string;
   recipes: Recipe[];
   onChanged: () => Promise<void>;
-  /** Bumped after any recurring-entry write elsewhere on the page (e.g. the
-   * top-level authoring form) so this already-expanded panel refetches. */
+  /** Bumped after any entry write elsewhere on the page (the week grid, another card's form)
+   * so this card refetches. */
   refreshToken: number;
 }
 
 /** A plan's retained entries, fetched from GET /api/meal-plans/:id/entries —
  * NOT the derived menu, which excludes inactive plans (this is the key UX
  * requirement: a deactivated plan's entries stay editable/deletable here
- * without reactivating the plan).
+ * without reactivating the plan). Grouped by weekday in the household week-start
+ * order, then by slot, then by creation time.
  */
 function PlanEntriesPanel({ t, planId, recipes, onChanged, refreshToken }: PlanEntriesPanelProps) {
+  const { weekStartDay } = useHouseholdSettings();
   const [entries, setEntries] = useState<MealEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [writeError, setWriteError] = useState<string | null>(null);
 
   useEffect(() => {
     void load();
@@ -1228,7 +1081,7 @@ function PlanEntriesPanel({ t, planId, recipes, onChanged, refreshToken }: PlanE
 
   async function load() {
     setLoading(true);
-    setError(null);
+    setLoadError(null);
     try {
       const res = await authFetch(`/api/meal-plans/${planId}/entries`, {
         credentials: "include",
@@ -1236,13 +1089,14 @@ function PlanEntriesPanel({ t, planId, recipes, onChanged, refreshToken }: PlanE
       if (!res.ok) throw new Error("Failed to load plan entries");
       setEntries((await res.json()) as MealEntry[]);
     } catch {
-      setError(t("meals.plan.entriesError"));
+      setLoadError(t("meals.plan.entriesError"));
     } finally {
       setLoading(false);
     }
   }
 
   async function saveEntry(id: string, updates: MealEntryEditInput): Promise<boolean> {
+    setWriteError(null);
     try {
       const res = await authFetch(`/api/meal-entries/${id}`, {
         method: "PATCH",
@@ -1255,12 +1109,13 @@ function PlanEntriesPanel({ t, planId, recipes, onChanged, refreshToken }: PlanE
       await onChanged();
       return true;
     } catch {
-      setError(t("meals.plan.entriesError"));
+      setWriteError(t("meals.plan.entriesError"));
       return false;
     }
   }
 
   async function removeEntry(id: string) {
+    setWriteError(null);
     try {
       const res = await authFetch(`/api/meal-entries/${id}`, {
         method: "DELETE",
@@ -1270,30 +1125,68 @@ function PlanEntriesPanel({ t, planId, recipes, onChanged, refreshToken }: PlanE
       await load();
       await onChanged();
     } catch {
-      setError(t("meals.plan.entriesError"));
+      setWriteError(t("meals.plan.entriesError"));
     }
   }
 
   if (loading) return <p>{t("meals.plan.loading")}</p>;
 
+  if (loadError) {
+    return (
+      <div>
+        <ErrorNotice message={loadError} />
+        <Button
+          type="button"
+          variant="secondary"
+          className="mt-3"
+          data-testid="meals-plan-entries-retry"
+          onClick={() => void load()}
+        >
+          {t("meals.management.retry")}
+        </Button>
+      </div>
+    );
+  }
+
+  const order = weekdayDisplayOrder(weekStartDay);
+  const sorted = [...entries].sort(
+    (a, b) =>
+      order.indexOf(a.weekday!) - order.indexOf(b.weekday!) ||
+      SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot) ||
+      a.createdAt - b.createdAt
+  );
+  const groups = order
+    .map((day) => ({ day, items: sorted.filter((entry) => entry.weekday === day) }))
+    .filter((group) => group.items.length > 0);
+
   return (
-    <div>
-      <ErrorNotice message={error} className="mb-2" />
-      {entries.length === 0 ? (
+    <div data-testid={`meals-plan-entries-${planId}`}>
+      <h5 className="text-sm font-semibold mb-2">{t("meals.plan.entriesTitle")}</h5>
+      <ErrorNotice message={writeError} className="mb-2" />
+      {groups.length === 0 ? (
         <p className="text-muted-foreground text-sm">{t("meals.plan.entriesEmpty")}</p>
       ) : (
-        <ul className="space-y-2">
-          {entries.map((entry) => (
-            <PlanEntryRow
-              key={entry.id}
-              t={t}
-              entry={entry}
-              recipes={recipes}
-              onSave={(updates) => saveEntry(entry.id, updates)}
-              onDelete={() => void removeEntry(entry.id)}
-            />
+        <div className="space-y-3">
+          {groups.map((group) => (
+            <div key={group.day}>
+              <h6 className="text-muted-foreground text-xs font-semibold uppercase mb-1">
+                {weekdayLabel(t, group.day)}
+              </h6>
+              <ul className="space-y-2">
+                {group.items.map((entry) => (
+                  <PlanEntryRow
+                    key={entry.id}
+                    t={t}
+                    entry={entry}
+                    recipes={recipes}
+                    onSave={(updates) => saveEntry(entry.id, updates)}
+                    onDelete={() => void removeEntry(entry.id)}
+                  />
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );
@@ -1409,9 +1302,8 @@ function PlanEntryRow({ t, entry, recipes, onSave, onDelete }: PlanEntryRowProps
       ) : (
         <div className="flex justify-between items-center gap-2">
           <div className="text-sm">
-            <span className="font-semibold">
-              {weekdayLabel(t, entry.weekday)} · {t(SLOT_LABEL_KEYS[entry.slot])}:
-            </span>{" "}
+            {/* The weekday is the group heading above the row. */}
+            <span className="font-semibold">{t(SLOT_LABEL_KEYS[entry.slot])}:</span>{" "}
             <span>{recipeName ?? entry.note}</span>
           </div>
           <div className="flex gap-2">
@@ -1442,24 +1334,26 @@ function PlanEntryRow({ t, entry, recipes, onSave, onDelete }: PlanEntryRowProps
 }
 
 /* ------------------------------------------------------------------ */
-/* Recurring-entry authoring — kind:"recurring", mealPlanId + */
-/* weekday; content recipeId xor note (FR-025). */
+/* Recurring-entry authoring inside a plan card — kind:"recurring" in */
+/* that plan, one weekday; content recipeId xor note (FR-025). */
 /* ------------------------------------------------------------------ */
 
 interface RecurringEntryAuthoringFormProps {
   t: (key: MessageKey) => string;
   recipes: Recipe[];
-  plans: MealPlan[];
+  mealPlanId: string;
   onCreate: (input: MealEntryInput) => Promise<boolean>;
+  /** Called after a successful add (the card collapses the form). */
+  onDone: () => void;
 }
 
 function RecurringEntryAuthoringForm({
   t,
   recipes,
-  plans,
+  mealPlanId,
   onCreate,
+  onDone,
 }: RecurringEntryAuthoringFormProps) {
-  const [mealPlanId, setMealPlanId] = useState("");
   const [weekday, setWeekday] = useState<Weekday>("mon");
   const [slot, setSlot] = useState<Slot>("breakfast");
   const [contentMode, setContentMode] = useState<"recipe" | "note">("recipe");
@@ -1467,224 +1361,111 @@ function RecurringEntryAuthoringForm({
   const [note, setNote] = useState("");
 
   const availableRecipes = recipes.filter((recipe) => isRecipeAvailableForSlot(recipe, slot));
-  const canSubmit = !!mealPlanId && (contentMode === "recipe" ? !!recipeId : !!note.trim());
-
-  const reset = () => {
-    setRecipeId("");
-    setNote("");
-  };
+  const canSubmit = contentMode === "recipe" ? !!recipeId : !!note.trim();
+  // Unique per card: several plan cards can have their form open at once.
+  const contentModeName = `meals-recurring-content-mode-${mealPlanId}`;
 
   return (
-    <div className="bg-card p-4 rounded-lg shadow mb-6">
-      {plans.length === 0 ? (
-        <p className="text-muted-foreground text-xs">{t("meals.plan.noPlansForRecurring")}</p>
-      ) : (
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2 items-center flex-wrap">
-            <label className={LABEL_INLINE_CLASSES}>
-              {t("meals.plan.selectLabel")}
-              <select
-                data-testid="meals-recurring-plan-select"
-                value={mealPlanId}
-                onChange={(e) => setMealPlanId(e.target.value)}
-                className={NATIVE_SELECT_CLASSES}
-              >
-                <option value="">{t("meals.plan.selectPlaceholder")}</option>
-                {plans.map((plan) => (
-                  <option key={plan.id} value={plan.id}>
-                    {plan.name}
-                    {plan.active ? "" : ` (${t("meals.plan.statusInactive")})`}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground text-xs">{t("meals.plan.weekdayLabel")}</span>
-              <WeekdayPicker
-                mode="single"
-                value={weekday}
-                onChange={setWeekday}
-                labels={weekdayLabels(t)}
-                groupLabel={t("meals.plan.weekdayLabel")}
-                testIdPrefix="meals-recurring-weekday"
-              />
-            </div>
-            <label className={LABEL_INLINE_CLASSES}>
-              {t("meals.entries.slotLabel")}
-              <select
-                data-testid="meals-recurring-slot-select"
-                value={slot}
-                onChange={(e) => {
-                  setSlot(e.target.value as Slot);
-                  setRecipeId("");
-                }}
-                className={NATIVE_SELECT_CLASSES}
-              >
-                {SLOTS.map((s) => (
-                  <option key={s} value={s}>
-                    {t(SLOT_LABEL_KEYS[s])}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className="flex gap-2 items-center flex-wrap">
-            <RadioField
-              name="meals-recurring-content-mode"
-              value="recipe"
-              checked={contentMode === "recipe"}
-              onChange={() => setContentMode("recipe")}
-              label={t("meals.entries.contentModeRecipe")}
-            />
-            <RadioField
-              name="meals-recurring-content-mode"
-              value="note"
-              checked={contentMode === "note"}
-              onChange={() => setContentMode("note")}
-              label={t("meals.entries.contentModeNote")}
-            />
-          </div>
-
-          {contentMode === "recipe" ? (
-            availableRecipes.length === 0 ? (
-              <p className="text-muted-foreground text-xs">{t("meals.entries.noRecipesForSlot")}</p>
-            ) : (
-              <select
-                data-testid="meals-recurring-recipe-select"
-                aria-label={t("meals.entries.recipeSelectLabel")}
-                value={recipeId}
-                onChange={(e) => setRecipeId(e.target.value)}
-                className={NATIVE_SELECT_CLASSES}
-              >
-                <option value="">{t("meals.entries.recipeSelectPlaceholder")}</option>
-                {availableRecipes.map((recipe) => (
-                  <option key={recipe.id} value={recipe.id}>
-                    {recipe.name}
-                  </option>
-                ))}
-              </select>
-            )
-          ) : (
-            <Input
-              type="text"
-              data-testid="meals-recurring-note-input"
-              aria-label={t("meals.entries.notePlaceholder")}
-              placeholder={t("meals.entries.notePlaceholder")}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
-          )}
-
-          <Button
-            onClick={() => {
-              if (!canSubmit) return;
-              void (async () => {
-                const input: MealEntryInput =
-                  contentMode === "recipe"
-                    ? { kind: "recurring", mealPlanId, weekday, slot, recipeId }
-                    : { kind: "recurring", mealPlanId, weekday, slot, note: note.trim() };
-                const succeeded = await onCreate(input);
-                if (succeeded) reset();
-              })();
-            }}
-            disabled={!canSubmit}
-            className="self-start"
-          >
-            {t("meals.plan.recurringEntryAction")}
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Week view — GET /api/menu/week: date -> slot -> MenuItem[], */
-/* rendered as a 7-day x slot grid. Total order preserved (no */
-/* re-sorting of items within a cell); tombstone-localized. */
-/* ------------------------------------------------------------------ */
-
-interface WeekMenuViewProps {
-  t: (key: MessageKey) => string;
-  anchorDate: string;
-  onAnchorDateChange: (date: string) => void;
-  week: Record<string, Record<Slot, MenuItem[]>>;
-  loading: boolean;
-  error: string | null;
-}
-
-function WeekMenuView({
-  t,
-  anchorDate,
-  onAnchorDateChange,
-  week,
-  loading,
-  error,
-}: WeekMenuViewProps) {
-  const dates = Object.keys(week);
-
-  return (
-    <div className="bg-card p-4 rounded-lg shadow">
-      <div className="flex gap-2 items-center flex-wrap mb-4">
-        <label className={LABEL_INLINE_CLASSES}>
-          {t("meals.week.dateLabel")}
-          <Input
-            type="date"
-            data-testid="meals-week-date-input"
-            value={anchorDate}
-            onChange={(e) => onAnchorDateChange(e.target.value)}
+    <div className="mt-3 rounded-md border p-3">
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-2 items-center flex-wrap">
+          <span className="text-muted-foreground text-xs">{t("meals.plan.weekdayLabel")}</span>
+          <WeekdayPicker
+            mode="single"
+            renderAs="radio"
+            value={weekday}
+            onChange={setWeekday}
+            labels={weekdayLabels(t)}
+            groupLabel={t("meals.plan.weekdayLabel")}
+            testIdPrefix="meals-recurring-weekday"
           />
-        </label>
-      </div>
-
-      <ErrorNotice message={error} className="mb-2" />
-
-      {loading ? (
-        <p>{t("meals.week.loading")}</p>
-      ) : dates.length === 0 ? (
-        <p className="text-muted-foreground">{t("meals.week.empty")}</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm" data-testid="meals-week-grid">
-            <thead>
-              <tr>
-                <th className="text-left p-2"></th>
-                {dates.map((date) => (
-                  <th key={date} className="text-left p-2 font-semibold">
-                    {date}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {SLOTS.map((slot) => (
-                <tr key={slot}>
-                  <td className="p-2 font-semibold align-top">{t(SLOT_LABEL_KEYS[slot])}</td>
-                  {dates.map((date) => {
-                    const items = week[date]?.[slot] ?? [];
-                    return (
-                      <td key={date} className="p-2 align-top">
-                        {items.length === 0 ? (
-                          <span className="text-muted-foreground">—</span>
-                        ) : (
-                          <ul className="space-y-1">
-                            {items.map((item) => (
-                              <li key={item.entryId} className="text-xs">
-                                {item.isTombstone ? t("meals.menu.tombstoneLabel") : item.label}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
-      )}
+        <div className="flex gap-2 items-center flex-wrap">
+          <label className={LABEL_INLINE_CLASSES}>
+            {t("meals.entries.slotLabel")}
+            <select
+              data-testid="meals-recurring-slot-select"
+              value={slot}
+              onChange={(e) => {
+                setSlot(e.target.value as Slot);
+                setRecipeId("");
+              }}
+              className={NATIVE_SELECT_CLASSES}
+            >
+              {SLOTS.map((s) => (
+                <option key={s} value={s}>
+                  {t(SLOT_LABEL_KEYS[s])}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="flex gap-2 items-center flex-wrap">
+          <RadioField
+            name={contentModeName}
+            value="recipe"
+            checked={contentMode === "recipe"}
+            onChange={() => setContentMode("recipe")}
+            label={t("meals.entries.contentModeRecipe")}
+          />
+          <RadioField
+            name={contentModeName}
+            value="note"
+            checked={contentMode === "note"}
+            onChange={() => setContentMode("note")}
+            label={t("meals.entries.contentModeNote")}
+          />
+        </div>
+
+        {contentMode === "recipe" ? (
+          availableRecipes.length === 0 ? (
+            <p className="text-muted-foreground text-xs">{t("meals.entries.noRecipesForSlot")}</p>
+          ) : (
+            <select
+              data-testid="meals-recurring-recipe-select"
+              aria-label={t("meals.entries.recipeSelectLabel")}
+              value={recipeId}
+              onChange={(e) => setRecipeId(e.target.value)}
+              className={NATIVE_SELECT_CLASSES}
+            >
+              <option value="">{t("meals.entries.recipeSelectPlaceholder")}</option>
+              {availableRecipes.map((recipe) => (
+                <option key={recipe.id} value={recipe.id}>
+                  {recipe.name}
+                </option>
+              ))}
+            </select>
+          )
+        ) : (
+          <Input
+            type="text"
+            data-testid="meals-recurring-note-input"
+            aria-label={t("meals.entries.notePlaceholder")}
+            placeholder={t("meals.entries.notePlaceholder")}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+        )}
+
+        <Button
+          onClick={() => {
+            if (!canSubmit) return;
+            void (async () => {
+              const input: MealEntryInput =
+                contentMode === "recipe"
+                  ? { kind: "recurring", mealPlanId, weekday, slot, recipeId }
+                  : { kind: "recurring", mealPlanId, weekday, slot, note: note.trim() };
+              const succeeded = await onCreate(input);
+              if (succeeded) onDone();
+            })();
+          }}
+          disabled={!canSubmit}
+          className="self-start"
+        >
+          {t("meals.plan.recurringEntryAction")}
+        </Button>
+      </div>
     </div>
   );
 }
