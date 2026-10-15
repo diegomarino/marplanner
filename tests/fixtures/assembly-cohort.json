@@ -5632,6 +5632,21 @@
           "branches": 85.95
         }
       },
+      "src/client/admin/timezones.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 4,
+          "statements": 7,
+          "functions": 3,
+          "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100.0,
+          "statements": 100.0,
+          "functions": 100.0,
+          "branches": 100.0
+        }
+      },
       "src/client/calendar/CalendarMonthView.tsx": {
         "layer": "client",
         "minimumTotals": {
