@@ -971,6 +971,16 @@ export interface PrintingStatusResponse {
   active: boolean;
 }
 
+/** ResetTodayPrintsResponse — `POST /api/printing/reset-today`'s envelope: how many of the
+ * household's today print records were made printable again and how many queued jobs were
+ * cancelled. Declared HERE for shapes-gate coverage (see `ErrorResponse` above).
+ */
+export interface ResetTodayPrintsResponse {
+  targetDate: string;
+  resetRecords: number;
+  cancelledJobs: number;
+}
+
 // ─── Auth-layer error codes ──────────────────────────────────────────────
 
 /** Machine-readable `code` values on the cross-cutting auth-layer `Error` response

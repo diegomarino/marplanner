@@ -24,6 +24,7 @@ import type {
   JobsListResponse,
   TestPrintResponse,
   PrintFailureErrorCode,
+  ResetTodayPrintsResponse,
 } from "../../../shared";
 
 /** 120s lease (observed real transmission ~18s + v1's 3x GATT retries + margin). */
@@ -548,6 +549,38 @@ export function supersedePrintRecordTxn(recordKey: string, targetDate: string, n
 export function supersedePrintRecord(recordKey: string, targetDate: string, now: number): void {
   supersedePrintRecordTxn(recordKey, targetDate, now);
   notifyPrintingClaimSettled();
+}
+
+/** Admin "reset today's print" (FR-016): supersedes EVERY print record of the household's today,
+ * whatever its producer, so each becomes printable again — the test print can be re-enqueued and
+ * daily-briefing's level-triggered auto-print re-enqueues on its next evaluation (new generation,
+ * no dead-letter in it). Cancels today's pending and claimed-not-yet-fetched jobs through the same
+ * `supersedePrintRecordTxn` regeneration uses; fetched-in-flight jobs finish (H2). Printed rows keep
+ * their history. Plugin-gated like enqueue/claim (INV-06). Admin-only: not exported through the
+ * host-api barrel.
+ */
+export function resetTodaysPrints(now: number): ResetTodayPrintsResponse {
+  if (!isPrintingPluginActive()) throw new PrintingPluginInactiveError();
+  const db = getDb();
+  const targetDate = todayInHouseholdTz(now);
+
+  const result = db.transaction((): ResetTodayPrintsResponse => {
+    const records = db
+      .prepare("SELECT record_key FROM print_records WHERE target_date = ? ORDER BY created_at ASC")
+      .all(targetDate) as Array<Pick<PrintRecordRow, "record_key">>;
+    const { cancelled } = db
+      .prepare(
+        `SELECT COUNT(*) AS cancelled FROM print_jobs
+         WHERE record_id IN (SELECT id FROM print_records WHERE target_date = ?)
+           AND (state = 'pending' OR (state = 'claimed' AND payload_served_at IS NULL))`
+      )
+      .get(targetDate) as { cancelled: number };
+    for (const record of records) supersedePrintRecordTxn(record.record_key, targetDate, now);
+    return { targetDate, resetRecords: records.length, cancelledJobs: cancelled };
+  })();
+
+  if (result.resetRecords > 0) notifyPrintingClaimSettled();
+  return result;
 }
 
 // ── Core operations ────────────────────────────────────────────────────
