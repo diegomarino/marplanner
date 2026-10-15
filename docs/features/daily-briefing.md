@@ -35,6 +35,13 @@ reported as unavailable rather than an error. A read of a never-generated briefi
 not-generated without creating a row, and a read recovers canonical printed-status from
 Printing when the local derived value was lost.
 
+### User Story 4 — Admin page: pause, history, regenerate, view and print
+
+A parent pauses a member's briefing on chosen weekdays, browses that member's last 30 briefings,
+regenerates any date, opens its image, and sends it to the printer queue on demand. A paused
+weekday produces no briefing and no automatic print; a manual regenerate on that day reports that
+the member is paused instead of generating.
+
 ### Edge Cases
 
 - A single block failing does not abort the run: surviving blocks render and the status
@@ -91,6 +98,12 @@ Printing when the local derived value was lost.
 - **FR-021**: Given an active parent with Daily Briefing opt-in, when Daily Briefing generation runs, then that parent MUST be eligible for a briefing. Contract: MEMBERS-AC-05.
 
 - **FR-022**: Given an active child without Daily Briefing opt-in, when Daily Briefing generation runs, then a briefing MUST NOT be generated for that child. Contract: MEMBERS-AC-06.
+- **FR-023**: Given a member's weekday schedule, when one of their weekdays is switched off, then scheduled, catch-up, retry and Generate-all generation MUST skip that member on that weekday and the auto-print trigger MUST NOT evaluate them; a member with no stored schedule runs every day. Contract: none (admin parity, 2026-10-15).
+- **FR-024**: Given a manual generate for a member paused on that date's weekday, then no row MUST be written and the API MUST answer `200 {skipped: true, reason: "paused", memberId, date}`. Contract: none (admin parity).
+- **FR-025**: Given a schedule write, then weekdays MUST be canonical tokens (stored in mon..sun order, duplicates collapsed, an empty list allowed), the member MUST be active, unknown body fields MUST be rejected, and the write MUST NOT regenerate or invalidate any briefing. Contract: none (admin parity).
+- **FR-026**: Given a history read for a member, then it MUST return the household business date and at most 30 of the member's briefings, newest date first, without writing. Contract: none (admin parity).
+- **FR-027**: Given a manual print of a stored briefing, then Daily Briefing MUST enqueue it through Printing's producer seam under the record key `daily-briefing:<memberId>:manual:<date>` with the household today as target date and the dated output reference, MUST reuse a job still waiting, MUST supersede and re-enqueue a record already printed, MUST NOT change the automatic print's dedup or the briefing's derived printed-status, and MUST refuse with 404 (no briefing), 409 `plugin_inactive`, 409 `printable_raster_missing` or 400 (inactive member, bad date). Contract: none (admin parity).
+- **FR-028**: Given a preview read while a generation for that member/date is in flight and no PNG is stored, then it MUST answer `202 {status: "rendering"}`; a stored PNG is served even during a regeneration. Contract: none (admin parity).
 
 ### Key Entities
 
@@ -104,6 +117,7 @@ Printing when the local derived value was lost.
 - **Shared daily block cache**: one generated payload per date + shared block type, reused
   across members.
 - **Status**: `pending | ready | partial | failed | render-failed`, derived from surviving blocks.
+- **Member schedule**: the weekdays on which a member's briefing runs, stored with the opt-in (NULL = every day); pausing a weekday never deletes existing briefings.
 
 ## Success Criteria
 
