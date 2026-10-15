@@ -57,4 +57,14 @@ describe("CheckboxField", () => {
       uninject();
     }
   });
+
+  it("keeps a hidden label as the accessible name when labelHidden is set", () => {
+    render(
+      <CheckboxField checked={false} onChange={() => {}} label="Weather on Mon" labelHidden />
+    );
+    const checkbox = screen.getByRole("checkbox", { name: "Weather on Mon" });
+    expect(checkbox.closest("label")?.querySelector(".sr-only")?.textContent).toBe(
+      "Weather on Mon"
+    );
+  });
 });
