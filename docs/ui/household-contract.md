@@ -62,7 +62,7 @@ keeps its 14-day editor and offers Retry when a load fails.
 Routines and chores are managed from `/admin/routines`: a list of routines grouped by day period,
 in start-time order, beside the selected routine's detail — a weekday grid of the children it is
 assigned to, its chores (drag to reorder, also with the keyboard) and actions to edit, assign, add a
-chore or delete. Routines, chores and assignments are edited in dialogs. Deleting a routine or a
+chore or delete. Routines, chores and assignments are edited in dialogs. The assignment dialog lists each child with their colour chip and a one-line weekday pill row in the household week-start order; an assignment that was deactivated is marked as such. Deleting a routine or a
 chore, changing, reactivating or deactivating an existing assignment, and moving a routine to
 another day period ask for confirmation, because each changes the live streak.
 

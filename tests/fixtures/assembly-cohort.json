@@ -3079,6 +3079,12 @@
             "WeekdayPicker adoption (DailyBriefingManagement) — group accessible name AND canonical emission order (SC-009) unchecking fri then mon on wordOfDay emits the canonical mon..sun-minus-those-two order at the PUT boundary, regardless of click order",
             "DailyBriefingManagement — WEEKDAY_LABEL_KEYS maps each weekday to its OWN translation key (SC-007's cast removal, pinned) every weekday maps to its own key, by ITERATING the map"
           ],
+          "tests/client/assignment-dialog.test.tsx": [
+            "AssignmentDialog lists the weekday pills Monday-first when the week starts on Monday",
+            "AssignmentDialog lists Sunday first and still saves weekdays in canonical order",
+            "AssignmentDialog is wide enough for one pill row",
+            "AssignmentDialog marks a deactivated assignment and only that"
+          ],
           "tests/client/backups-i18n-parity.test.ts": [
             "backups-i18n-parity every backups key in en exists in es",
             "backups-i18n-parity every backups key in es exists in en",
@@ -6927,13 +6933,13 @@
           "lines": 20,
           "statements": 26,
           "functions": 14,
-          "branches": 21
+          "branches": 24
         },
         "minimumRates": {
           "lines": 95,
           "statements": 92.3,
           "functions": 92.85,
-          "branches": 80.95
+          "branches": 83.33
         }
       },
       "src/client/routines/admin/ChoreFormDialog.tsx": {
