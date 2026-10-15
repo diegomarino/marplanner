@@ -3560,6 +3560,16 @@
           "tests/client/members-management-mount.test.tsx": [
             "MembersManagement — loads on mount (#683) renders the members list without clicking Refresh"
           ],
+          "tests/client/network-devices-data.test.ts": [
+            "network-devices data helpers maps the three controller codes and falls back to the neutral generic key",
+            "network-devices data helpers only a scope-denied 403 maps to the management-required message",
+            "useNetworkDevicesData loads devices, cache state and only ACTIVE members",
+            "useNetworkDevicesData a scope-denied 403 on the list sets the management-required key; a members failure stays independent",
+            "useNetworkDevicesData refreshes silently every REFRESH_MS, without flipping loading",
+            "useNetworkDevicesData skips the refresh while the tab is hidden",
+            "useNetworkDevicesData discards a refresh that was in flight while a mutation happened",
+            "useNetworkDevicesData stops refreshing after unmount"
+          ],
           "tests/client/network-devices-i18n-parity.test.ts": [
             "network-devices-i18n-parity en and es catalogs have identical keys (both directions)",
             "network-devices-i18n-parity networkDevices.* keys have identical coverage in en and es (both directions, non-vacuous)",
@@ -3608,7 +3618,20 @@
             "NetworkDevicesManagement PR-E review P2-3: a pre-response transport failure registering a device renders the localized fallback, never the raw exception",
             "NetworkDevicesManagement PR-E review P2-3: a pre-response transport failure blocking a device renders the localized fallback, never the raw exception",
             "NetworkDevicesManagement delete: the confirmation for a BLOCKED device names the stranded upstream block",
-            "NetworkDevicesManagement delete: cancelling the confirmation performs NO request and keeps the row"
+            "NetworkDevicesManagement delete: cancelling the confirmation performs NO request and keeps the row",
+            "NetworkDevicesManagement — reworked page a scope-denied 403 on the list shows the management-required message, Retry, and keeps the add button",
+            "NetworkDevicesManagement — reworked page Retry reloads the list after a failure",
+            "NetworkDevicesManagement — reworked page the page heading equals the sidebar label",
+            "NetworkDevicesManagement — reworked page the empty state links to the Add tab",
+            "NetworkDevicesManagement — reworked page shows a green/red/muted dot or a warning glyph per state, with the text label still present",
+            "NetworkDevicesManagement — reworked page Add tab: already-registered MACs (compared case-insensitively) are dimmed with an Already added badge and no Add button",
+            "NetworkDevicesManagement — reworked page Add tab: sorting by name then MAC reorders the rows and toggles aria-sort",
+            "NetworkDevicesManagement — reworked page register dialog prefills the alias from the client name, never shows the MAC, and returns to the list after success",
+            "NetworkDevicesManagement — reworked page a 403 on live-clients shows the management-required message with Retry",
+            "NetworkDevicesManagement — reworked page an unnamed client opens the dialog with an empty alias",
+            "discovery helpers sorts by name ascending with unnamed clients last, in either direction",
+            "discovery helpers sorts by MAC and does not mutate its input",
+            "discovery helpers prefills the alias from the client name, empty for unnamed, cut to 80 chars"
           ],
           "tests/client/network-weather-admin.test.tsx": [
             "NetworkDevicesManagement — kiosk density (SC-001, SC-002) meets kiosk density across the collapsed list, an open edit row, and the registration picker (both before and after selecting a client)",
@@ -3620,7 +3643,7 @@
             "NetworkDevicesManagement — every error channel is announced (SC-011) announces a row-scoped action failure (block) through ErrorNotice's live region",
             "NetworkDevicesManagement — every error channel is announced (SC-011) announces the picker's alias-required validation error through ErrorNotice's live region",
             "NetworkDevicesManagement — every error channel is announced (SC-011) announces the picker's live-clients load failure through ErrorNotice's live region",
-            "NetworkDevicesManagement — unchanged behaviour after migration (regression guard) still confirms delete via window.confirm (ConfirmDialog deliberately NOT adopted, e2e-load-bearing)",
+            "NetworkDevicesManagement — unchanged behaviour after migration (regression guard) still confirms delete before deleting (ConfirmDialog)",
             "NetworkDevicesManagement — unchanged behaviour after migration (regression guard) still locates Block/Unblock by the ACTION word (StatusToggle deliberately NOT adopted, e2e-load-bearing)",
             "WeatherManagement — kiosk density (SC-001, SC-002) meets kiosk density across its single, static control set",
             "WeatherManagement — kiosk density (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own Save button below the kiosk minimum makes the assertion fail",
@@ -5260,16 +5283,16 @@
       "src/client/admin/NetworkDevicesManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 167,
-          "statements": 195,
-          "functions": 52,
-          "branches": 150
+          "lines": 12,
+          "statements": 12,
+          "functions": 6,
+          "branches": 10
         },
         "minimumRates": {
-          "lines": 94.61,
-          "statements": 91.28,
-          "functions": 88.46,
-          "branches": 86.66
+          "lines": 91.66,
+          "statements": 91.66,
+          "functions": 83.33,
+          "branches": 100.0
         }
       },
       "src/client/admin/PrintingManagement.tsx": {
@@ -5375,6 +5398,66 @@
           "statements": 93.4,
           "functions": 90.47,
           "branches": 86.44
+        }
+      },
+      "src/client/admin/network-devices/DeviceStatus.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 18,
+          "statements": 22,
+          "functions": 4,
+          "branches": 41
+        },
+        "minimumRates": {
+          "lines": 100.0,
+          "statements": 86.36,
+          "functions": 100.0,
+          "branches": 87.8
+        }
+      },
+      "src/client/admin/network-devices/DiscoverDevices.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 78,
+          "statements": 90,
+          "functions": 23,
+          "branches": 91
+        },
+        "minimumRates": {
+          "lines": 94.87,
+          "statements": 90.0,
+          "functions": 82.6,
+          "branches": 79.12
+        }
+      },
+      "src/client/admin/network-devices/RegisteredDevices.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 84,
+          "statements": 93,
+          "functions": 23,
+          "branches": 68
+        },
+        "minimumRates": {
+          "lines": 91.66,
+          "statements": 88.17,
+          "functions": 86.95,
+          "branches": 77.94
+        }
+      },
+      "src/client/admin/network-devices/data.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 62,
+          "statements": 80,
+          "functions": 25,
+          "branches": 32
+        },
+        "minimumRates": {
+          "lines": 100.0,
+          "statements": 98.75,
+          "functions": 100.0,
+          "branches": 93.75
         }
       },
       "src/client/calendar/CalendarMonthView.tsx": {
