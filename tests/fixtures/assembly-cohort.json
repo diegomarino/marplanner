@@ -2249,6 +2249,12 @@
             "printing core supersedePrintRecord — the matrix across job states (H2/ADR-022) does not disturb an already-printed job, but the record becomes re-printable",
             "printing core supersedePrintRecord — the matrix across job states (H2/ADR-022) is a no-op (never throws) against a record that was never enqueued",
             "printing core supersedePrintRecord — the matrix across job states (H2/ADR-022) re-enqueuing after supersede creates a genuinely NEW job row",
+            "printing core resetTodaysPrints — admin reset of today's print (FR-016) makes a printed record printable again; the next enqueue creates a new job",
+            "printing core resetTodaysPrints — admin reset of today's print (FR-016) cancels today's pending jobs and leaves other dates alone",
+            "printing core resetTodaysPrints — admin reset of today's print (FR-016) leaves a fetched-in-flight job running and does not count it (H2)",
+            "printing core resetTodaysPrints — admin reset of today's print (FR-016) clears a dead-letter gate so a level-triggered producer can enqueue again",
+            "printing core resetTodaysPrints — admin reset of today's print (FR-016) returns zeros when nothing exists for today",
+            "printing core resetTodaysPrints — admin reset of today's print (FR-016) throws PrintingPluginInactiveError while the plugin is inactive",
             "printing core registerPrintableProvider — fetch-at-execute resolution (research D4) a fetch AFTER regeneration serves the CURRENT provider output, not a stale enqueue-time snapshot",
             "printing core registerPrintableProvider — fetch-at-execute resolution (research D4) a MISSING provider dead-letters the job as render_failure and emits printing.failed",
             "printing core registerPrintableProvider — fetch-at-execute resolution (research D4) an ERRORING provider dead-letters the job as render_failure too",
@@ -2298,7 +2304,10 @@
             "printing routes POST /test-print — 400 when targetDate is not strictly calendar-valid",
             "printing routes POST /test-print — 400 on a malformed (non-calendar-shaped) targetDate",
             "printing routes POST /test-print — a valid targetDate override enqueues against THAT date",
-            "printing routes 409 plugin-inactive on test-print and claim while the printing plugin is inactive (FR-013)"
+            "printing routes 409 plugin-inactive on test-print and claim while the printing plugin is inactive (FR-013)",
+            "printing routes POST /reset-today — 200 makes today's test print printable again",
+            "printing routes POST /reset-today — 400 when the body carries any field",
+            "printing routes POST /reset-today — 409 plugin_inactive while the printing plugin is inactive"
           ],
           "tests/boundary/printing-rule-b.test.ts": [
             "printing-rule-b — config-drift tripwire import-x/no-restricted-paths (the printing zone) rejects a core-internal import from src/server/modules/printing (e.g. ../../db/client)",
@@ -2632,6 +2641,7 @@
             "settings-write PUT valid locale (all three fields) replaces the object and round-trips",
             "settings-write a write to one object does not disturb the other (atomicity is per-object)",
             "settings-write printing active with no printerTransport row fills empty defaults (APP-SETTINGS-REGISTRY-AC-06)",
+            "settings-write PUT printerTransport accepts any well-formed 128-bit UUID, whatever its version nibble",
             "settings-write PUT printerTransport nested type/config shape is rejected as invalid_settings (flat schema)"
           ],
           "tests/boundary/static-serving.test.ts": [
@@ -3677,6 +3687,36 @@
             "PrinterAttention opens with dialog focus, uses the shared pair action, and returns focus after Escape",
             "PrinterAttention does not render the attention pill when the real plugin-status boundary reports inactive"
           ],
+          "tests/client/printer-diagnostics-tab.test.tsx": [
+            "PrinterDiagnosticsTab — recent prints renders member, source, status, attempts and failure reason per job",
+            "PrinterDiagnosticsTab — recent prints still renders the table with '—' when the members read fails",
+            "PrinterDiagnosticsTab — recent prints shows at most RECENT_PRINTS_LIMIT rows and says so",
+            "PrinterDiagnosticsTab — recent prints shows the empty state",
+            "PrinterDiagnosticsTab — recent prints offers Retry after a jobs load failure and recovers",
+            "PrinterDiagnosticsTab — recent prints Refresh reloads the jobs",
+            "PrinterDiagnosticsTab — test print shows the trigger outcome (0)",
+            "PrinterDiagnosticsTab — test print shows the trigger outcome (1)",
+            "PrinterDiagnosticsTab — test print shows the trigger outcome (2)",
+            "PrinterDiagnosticsTab — test print shows the trigger outcome (3)",
+            "PrinterDiagnosticsTab — reset today's print confirms, posts, reports the counts and reloads the table",
+            "PrinterDiagnosticsTab — reset today's print says when there was nothing to reset",
+            "PrinterDiagnosticsTab — reset today's print announces a 409 failure",
+            "PrinterDiagnosticsTab — reset today's print announces a 500 failure",
+            "PrinterDiagnosticsTab — reset today's print Cancel closes the dialog without posting"
+          ],
+          "tests/client/printer-settings-tab.test.tsx": [
+            "printer settings helpers parsePaperWidth accepts whole numbers > 0 only",
+            "printer settings helpers isTransportValid mirrors the server rule",
+            "PrinterSettingsTab shows plugin state, auto-print state, paper width and the stored printer",
+            "PrinterSettingsTab offers Retry when the settings cannot be loaded",
+            "PrinterSettingsTab auto-print read failure shows its own Retry and does not block the form",
+            "PrinterSettingsTab saves only the changed object and shows Saved",
+            "PrinterSettingsTab blocks Save on an invalid width or a half-filled printer",
+            "PrinterSettingsTab keeps the edits and shows the error when the transport save fails after the width saved",
+            "PrinterSettingsTab pairing fills the printer fields, keeps an unsaved width edit, and Save persists them",
+            "PrinterSettingsTab passes the stored UUIDs as the pairing preference",
+            "PrinterSettingsTab a pairing that completes while the settings are still loading is not overwritten"
+          ],
           "tests/client/printing-executor-fr013.test.tsx": [
             "PrintExecutor — FR-013 hiding (issue #691) renders nothing (fail-safe hidden default) before the status read resolves",
             "PrintExecutor — FR-013 hiding (issue #691) exposes the compact attention presentation, not the removed executor card, once status reports active: true",
@@ -3685,29 +3725,31 @@
             "PrintExecutor — FR-013 hiding (issue #691) stays hidden when the status read answers a non-2xx status — even with an active:true body"
           ],
           "tests/client/printing-executor.test.tsx": [
+            "PrintExecutor exposes the paired device identity after a successful pair",
+            "PrintExecutor passes a pairing preference through to the transport",
             "PrintExecutor is intrinsically headless when mounted directly",
             "PrintExecutor renders the unpaired state + pairing affordance, and makes NO fetch calls at rest",
             "PrintExecutor renders the unpaired state in Spanish",
             "PrintExecutor poll PAUSES entirely while unpaired: no claim call ever fires without pairing",
             "PrintExecutor registers capability BEFORE the first claim, then renders paired",
+            "PrintExecutor prints newly queued work immediately without a polling tick",
+            "PrintExecutor retains a queue wakeup received while a claim is in flight",
             "PrintExecutor re-registers capability when /claim answers 403 printer_capability_missing",
             "PrintExecutor shows the printing state while a claimed job is mid-transmit",
             "PrintExecutor scripted transport failure calls /fail with the lease token and NEVER calls /ack",
             "PrintExecutor transitions to disconnected + shows the re-pair affordance when the transport reports a dropped connection",
+            "PrintExecutor stays unpaired and surfaces the error when pair() itself fails",
             "PrintExecutor DEFAULT_POLL_INTERVAL_MS is 15 seconds",
             "PrintExecutor the payload request URL carries the claim's leaseToken (lease-token fencing, P1-3a)",
             "PrintExecutor the ack body's leaseToken matches the claim's token, and rotates across a re-claim (P1-3b)",
             "PrintExecutor a network-level ack failure after a SUCCESSFUL transmit does NOT call /fail (SC-002, P1-2)",
             "PrintExecutor overlapping-tick guard: a printJob spanning two poll intervals fires only ONE /claim (P2-7c)",
+            "PrintExecutor P2-3: disconnects the transport if capability registration fails right after a successful pair()",
             "PrintExecutor FOLD-1(a): transmit ok + ack network failure → next tick issues /ack with the SAME token and NO /claim",
             "PrintExecutor FOLD-1(b): a retried ack that succeeds clears pendingAck/error, with no duplicate print and no /fail",
             "PrintExecutor FOLD-1(c): an ack retry that gets 409 drops pendingAck, and the NEXT tick claims normally",
             "PrintExecutor FOLD-2(d): a scripted onDisconnect event transitions to disconnected without any write",
-            "PrintExecutor FOLD-2(e): transport not-ready at a poll tick fires zero /claim and transitions to disconnected",
-            "PrintExecutor prints newly queued work immediately without a polling tick",
-            "PrintExecutor retains a queue wakeup received while a claim is in flight",
-            "PrintExecutor stays unpaired and surfaces the error when pair() itself fails",
-            "PrintExecutor P2-3: disconnects the transport if capability registration fails right after a successful pair()"
+            "PrintExecutor FOLD-2(e): transport not-ready at a poll tick fires zero /claim and transitions to disconnected"
           ],
           "tests/client/printing-i18n-parity.test.ts": [
             "printing-i18n-parity every printing key in en exists in es",
@@ -3717,13 +3759,7 @@
             "printing-i18n-parity admin.nav.printing resolves in both languages"
           ],
           "tests/client/printing-management.test.tsx": [
-            "PrintingManagement shows the empty state when there are no jobs",
-            "PrintingManagement shows a load error and suppresses the empty-state text on a failed list read",
-            "PrintingManagement renders dead-letter and retrying DISTINCTLY from pending — never collapsed (SC-003)",
-            "PrintingManagement test-print trigger: enqueued response shows the enqueued message and refreshes the list",
-            "PrintingManagement test-print trigger: alreadyPrinted response shows the dedup message (FR-012)",
-            "PrintingManagement test-print trigger: plugin-inactive (409) shows that message distinctly (FR-013)",
-            "PrintingManagement test-print trigger: a generic failure shows the error message"
+            "PrintingManagement is titled like the sidebar and opens on Settings; Diagnostics loads the jobs"
           ],
           "tests/client/printing-plugin-status-retry.test.tsx": [
             "usePrintingPluginActive — transient-failure retry (Codex #700) (1) a transient 503 retries after backoff and flips active true on the next successful read, cleaning up its timer",
@@ -3739,8 +3775,9 @@
           "tests/client/printing-surfaces.test.tsx": [
             "PrintingManagement — the shared L2 panel was actually ADOPTED (FR-009) renders through AdminPanel, not a hand-rolled wrapper",
             "PrintingManagement — shared printer session uses the globally owned session for its pair action",
-            "PrintingManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density across the jobs list (mixed healthy/unhealthy states), an in-flight trigger, and an unhealthy trigger result — three phases, one control throughout",
-            "PrintingManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density when the jobs list itself fails to load — the trigger button is still the surface's only control",
+            "PrintingManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density on the Settings tab",
+            "PrintingManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density across the jobs table (mixed healthy/unhealthy states), an in-flight trigger, and an unhealthy trigger result — three phases, five controls throughout",
+            "PrintingManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density when the jobs list itself fails to load — Retry is the one added control",
             "PrintingManagement — kiosk density across every reachable state (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own trigger button below the kiosk minimum makes the assertion fail, and reverting restores compliance",
             "PrintingManagement — error states are announced through ErrorNotice's live region (SC-011) announces a jobs-list load failure",
             "PrintingManagement — error states are announced through ErrorNotice's live region (SC-011) announces a dead-lettered job's state distinctly from a healthy job's — only the unhealthy one is an alert",
@@ -3762,6 +3799,9 @@
             "retryWithDelay (v1 parity: GATT-connect retry/backoff) with no options at all, retries exactly GATT_CONNECT_RETRIES (3) times using the real default backoff",
             "PrintTransportError carries its code and message",
             "createBluetoothPrintTransport pair() requestDevice filter shape (P1-1 regression) filters on BLUETOOTH_PRINTER_FILTER_SERVICE alone, with all three candidates as optionalServices",
+            "createBluetoothPrintTransport pair() requestDevice filter shape (P1-1 regression) orderCandidateServices puts a preferred service first without duplicating it",
+            "createBluetoothPrintTransport pair() requestDevice filter shape (P1-1 regression) pair() resolves the device identity and prefers the stored service and characteristic",
+            "createFakePrintTransport (byte recorder + scriptable failures/disconnects) pair() resolves the fake identity, honouring a preferred service/characteristic",
             "createFakePrintTransport (byte recorder + scriptable failures/disconnects) starts unready, becomes ready after pair(), and records printJob's chunked bytes",
             "createFakePrintTransport (byte recorder + scriptable failures/disconnects) scriptPairFailure rejects the NEXT pair() call once, then pair() succeeds normally",
             "createFakePrintTransport (byte recorder + scriptable failures/disconnects) scriptPrintFailure rejects the NEXT printJob() call without recording bytes, honestly (no false ack)",
@@ -5279,16 +5319,16 @@
       "src/client/admin/PrintingManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 38,
-          "statements": 40,
-          "functions": 7,
-          "branches": 40
+          "lines": 7,
+          "statements": 7,
+          "functions": 4,
+          "branches": 4
         },
         "minimumRates": {
           "lines": 100,
           "statements": 100,
           "functions": 100,
-          "branches": 97.5
+          "branches": 100
         }
       },
       "src/client/admin/RemindersManagement.tsx": {
@@ -5379,6 +5419,36 @@
           "statements": 93.4,
           "functions": 90.47,
           "branches": 86.44
+        }
+      },
+      "src/client/admin/printer/PrinterDiagnosticsTab.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 72,
+          "statements": 79,
+          "functions": 17,
+          "branches": 52
+        },
+        "minimumRates": {
+          "lines": 98.61,
+          "statements": 98.73,
+          "functions": 94.11,
+          "branches": 96.15
+        }
+      },
+      "src/client/admin/printer/PrinterSettingsTab.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 111,
+          "statements": 124,
+          "functions": 34,
+          "branches": 121
+        },
+        "minimumRates": {
+          "lines": 96.39,
+          "statements": 95.16,
+          "functions": 91.17,
+          "branches": 85.95
         }
       },
       "src/client/calendar/CalendarMonthView.tsx": {
@@ -6434,24 +6504,24 @@
       "src/client/printing/PrintExecutor.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 116,
-          "statements": 132,
-          "functions": 23,
-          "branches": 86
+          "lines": 130,
+          "statements": 146,
+          "functions": 24,
+          "branches": 90
         },
         "minimumRates": {
-          "lines": 96.55,
-          "statements": 92.42,
-          "functions": 86.95,
-          "branches": 83.72
+          "lines": 96.92,
+          "statements": 93.15,
+          "functions": 87.5,
+          "branches": 84.44
         }
       },
       "src/client/printing/PrinterAttention.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 4,
-          "statements": 5,
-          "functions": 1,
+          "lines": 5,
+          "statements": 6,
+          "functions": 2,
           "branches": 6
         },
         "minimumRates": {
@@ -6509,16 +6579,16 @@
       "src/client/printing/transport.ts": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 129,
-          "statements": 142,
-          "functions": 38,
-          "branches": 61
+          "lines": 139,
+          "statements": 154,
+          "functions": 41,
+          "branches": 71
         },
         "minimumRates": {
-          "lines": 68.21,
-          "statements": 66.9,
-          "functions": 71.05,
-          "branches": 68.85
+          "lines": 82.01,
+          "statements": 79.87,
+          "functions": 80.48,
+          "branches": 74.64
         }
       },
       "src/client/shell/DensityControl.tsx": {
@@ -8490,16 +8560,16 @@
       "src/server/modules/printing/index.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 195,
-          "statements": 221,
-          "functions": 45,
-          "branches": 119
+          "lines": 205,
+          "statements": 234,
+          "functions": 47,
+          "branches": 123
         },
         "minimumRates": {
-          "lines": 96.41,
-          "statements": 92.82,
-          "functions": 91.11,
-          "branches": 88.23
+          "lines": 96.58,
+          "statements": 94.87,
+          "functions": 91.48,
+          "branches": 90.24
         }
       },
       "src/server/modules/reminders/index.ts": {
@@ -8538,13 +8608,13 @@
           "lines": 65,
           "statements": 75,
           "functions": 20,
-          "branches": 82
+          "branches": 84
         },
         "minimumRates": {
-          "lines": 98.46,
-          "statements": 96,
+          "lines": 100,
+          "statements": 97.33,
           "functions": 100,
-          "branches": 95.12
+          "branches": 97.61
         }
       },
       "src/server/modules/time-announcements/index.ts": {
@@ -8850,16 +8920,16 @@
       "src/server/routes/printing.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 90,
-          "statements": 93,
-          "functions": 13,
-          "branches": 61
+          "lines": 100,
+          "statements": 103,
+          "functions": 14,
+          "branches": 70
         },
         "minimumRates": {
-          "lines": 87.77,
-          "statements": 88.17,
+          "lines": 88,
+          "statements": 88.34,
           "functions": 100,
-          "branches": 80.32
+          "branches": 81.42
         }
       },
       "src/server/routes/provision.ts": {
