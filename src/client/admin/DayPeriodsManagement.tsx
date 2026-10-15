@@ -64,9 +64,8 @@ function DayPeriodsManagementContent() {
   const [periods, setPeriods] = useState<DayPeriodDTO[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [editingPeriodId, setEditingPeriodId] = useState<PeriodId | null>(null);
-  const [editingStart, setEditingStart] = useState("");
-  const [savingEdit, setSavingEdit] = useState(false);
+  const [drafts, setDrafts] = useState<Partial<Record<PeriodId, string>>>({});
+  const [savingId, setSavingId] = useState<PeriodId | null>(null);
   const [activePeriodId, setActivePeriodId] = useState<PeriodId | null>(null);
   const [timezone, setTimezone] = useState<string>("Europe/Madrid");
 
@@ -75,8 +74,9 @@ function DayPeriodsManagementContent() {
     en: "en-GB",
   };
 
+  // A refresh after the first load is silent, so the cards never flash "Loading…" or move.
   const refreshPeriods = () => {
-    setLoading(true);
+    if (periods.length === 0) setLoading(true);
     setError(null);
 
     authFetch("/api/day-periods", { credentials: "include" })
@@ -146,25 +146,13 @@ function DayPeriodsManagementContent() {
     };
   }, [periods, timezone]);
 
-  const handleStartEdit = (period: DayPeriodDTO) => {
-    setEditingPeriodId(period.id);
-    setEditingStart(period.start);
-  };
+  const handleSave = (id: PeriodId) => {
+    const start = (drafts[id] ?? "").trim();
 
-  const handleCancelEdit = () => {
-    setEditingPeriodId(null);
-    setEditingStart("");
-  };
-
-  const handleSaveEdit = () => {
-    if (!editingPeriodId) return;
-
-    setSavingEdit(true);
+    setSavingId(id);
     setError(null);
 
-    const proposed = periods.map((p) =>
-      p.id === editingPeriodId ? { ...p, start: editingStart.trim() } : p
-    );
+    const proposed = periods.map((p) => (p.id === id ? { ...p, start } : p));
 
     try {
       validateStartOrdering(proposed);
@@ -186,15 +174,15 @@ function DayPeriodsManagementContent() {
       }
 
       setError(message);
-      setSavingEdit(false);
+      setSavingId(null);
       return;
     }
 
-    authFetch(`/api/day-periods/${editingPeriodId}`, {
+    authFetch(`/api/day-periods/${id}`, {
       method: "PATCH",
       credentials: "include",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ start: editingStart.trim() }),
+      body: JSON.stringify({ start }),
     })
       .then((res) => {
         if (!res.ok)
@@ -208,13 +196,13 @@ function DayPeriodsManagementContent() {
       })
       .then(() => {
         refreshPeriods();
-        handleCancelEdit();
+        setDrafts(({ [id]: _saved, ...rest }) => rest);
       })
       .catch(() => {
         setError(t("dayPeriods.action.saveError"));
       })
       .finally(() => {
-        setSavingEdit(false);
+        setSavingId(null);
       });
   };
 
@@ -224,89 +212,91 @@ function DayPeriodsManagementContent() {
       description={t("dayPeriods.management.description")}
       data-testid="day-periods-management"
     >
-      {loading && <p className="text-muted-foreground">{t("dayPeriods.management.loading")}</p>}
+      {loading && periods.length === 0 && (
+        <p className="text-muted-foreground">{t("dayPeriods.management.loading")}</p>
+      )}
 
       <ErrorNotice message={error} data-testid="day-periods-error" />
 
+      {error !== null && !loading && periods.length === 0 && (
+        <div>
+          <Button
+            type="button"
+            variant="outline"
+            data-testid="day-periods-retry"
+            onClick={refreshPeriods}
+          >
+            {t("dayPeriods.management.retry")}
+          </Button>
+        </div>
+      )}
+
       {!loading && periods.length === 0 ? (
-        <p className="text-muted-foreground" data-testid="day-periods-empty">
-          {t("dayPeriods.management.noPeriods")}
-        </p>
+        error === null && (
+          <p className="text-muted-foreground" data-testid="day-periods-empty">
+            {t("dayPeriods.management.noPeriods")}
+          </p>
+        )
       ) : (
-        <div className="flex flex-col gap-2">
+        <div
+          data-testid="day-periods-grid"
+          className="grid grid-cols-1 gap-3 @md:grid-cols-2 @4xl:grid-cols-4"
+        >
           {periods.map((period) => {
             try {
               const derivedEnd = derivedEndMinutes(periods, period.id);
               const derivedEndTimeStr = minutesToHhmm(derivedEnd);
               const isActive = activePeriodId === period.id;
-              const isEditing = editingPeriodId === period.id;
+              const draft = drafts[period.id];
+              const dirty = draft !== undefined && draft !== period.start;
 
               return (
                 <div
                   key={period.id}
+                  role="group"
+                  aria-labelledby={`day-period-title-${period.id}`}
                   data-testid={`day-period-${period.id}`}
                   className={cn(
                     "flex flex-col gap-2 rounded-md border p-3",
                     isActive && "border-primary bg-primary/5"
                   )}
                 >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <strong>{t(DAY_PERIOD_LABEL_KEYS[period.id])}</strong>
+                  <div className="flex min-h-8 flex-wrap items-center gap-2">
+                    <strong id={`day-period-title-${period.id}`}>
+                      {t(DAY_PERIOD_LABEL_KEYS[period.id])}
+                    </strong>
                     {isActive && (
                       <span className="bg-primary/10 text-primary rounded px-2 py-0.5 text-xs">
                         {t("dayPeriods.activeNow")}
                       </span>
                     )}
-                    {!isEditing && (
-                      <span className="text-muted-foreground text-control">
-                        {period.start} – {derivedEndTimeStr}
-                      </span>
-                    )}
                   </div>
-
-                  {isEditing ? (
-                    <div className="flex flex-wrap items-end gap-3">
-                      <Field label={t("dayPeriods.action.editStartLabel")}>
-                        <Input
-                          type="time"
-                          value={editingStart}
-                          data-testid={`day-periods-start-input-${period.id}`}
-                          onChange={(e) => setEditingStart(e.target.value)}
-                        />
-                      </Field>
-                      <Button
-                        type="button"
-                        size="sm"
-                        data-testid={`day-periods-save-${period.id}`}
-                        onClick={handleSaveEdit}
-                        disabled={savingEdit || !editingStart}
-                      >
-                        {savingEdit
-                          ? t("dayPeriods.management.saving")
-                          : t("dayPeriods.action.save")}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        data-testid={`day-periods-cancel-${period.id}`}
-                        onClick={handleCancelEdit}
-                      >
-                        {t("dayPeriods.action.cancel")}
-                      </Button>
-                    </div>
-                  ) : (
-                    <div>
-                      <Button
-                        type="button"
-                        size="sm"
-                        data-testid={`day-periods-edit-${period.id}`}
-                        onClick={() => handleStartEdit(period)}
-                      >
-                        {t("dayPeriods.action.edit")}
-                      </Button>
-                    </div>
-                  )}
+                  <span className="text-muted-foreground text-control">
+                    {period.start} – {derivedEndTimeStr}
+                  </span>
+                  <Field label={t("dayPeriods.action.editStartLabel")}>
+                    <Input
+                      type="time"
+                      value={draft ?? period.start}
+                      disabled={savingId !== null}
+                      data-testid={`day-periods-start-input-${period.id}`}
+                      onChange={(e) => {
+                        setError(null);
+                        setDrafts((d) => ({ ...d, [period.id]: e.target.value }));
+                      }}
+                    />
+                  </Field>
+                  <Button
+                    type="button"
+                    size="sm"
+                    data-testid={`day-periods-save-${period.id}`}
+                    onClick={() => handleSave(period.id)}
+                    disabled={!dirty || !draft || savingId !== null}
+                  >
+                    {savingId === period.id
+                      ? t("dayPeriods.management.saving")
+                      : t("dayPeriods.action.save")}
+                  </Button>
                 </div>
               );
             } catch {
