@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LanguageProvider } from "@/i18n";
 import { messages } from "@/i18n/messages";
 import { NetworkDevicesManagement } from "@/admin/NetworkDevicesManagement";
+import { initialAlias, sortClients } from "@/admin/network-devices/DiscoverDevices";
 import type {
   LiveCacheState,
   LiveClient,
@@ -979,5 +980,28 @@ describe("NetworkDevicesManagement", () => {
 
     expect(screen.getByTestId("network-devices-row-dev-keep")).toBeInTheDocument();
     confirmSpy.mockRestore();
+  });
+});
+
+describe("discovery helpers", () => {
+  const c = (mac: string, displayName: string | null): LiveClient => ({
+    mac,
+    displayName,
+    isBlocked: false,
+  });
+  it("sorts by name ascending with unnamed clients last, in either direction", () => {
+    const list = [c("bb", null), c("aa", "Zed"), c("cc", "Amy")];
+    expect(sortClients(list, "name", "asc", "en").map((x) => x.mac)).toEqual(["cc", "aa", "bb"]);
+    expect(sortClients(list, "name", "desc", "en").map((x) => x.mac)).toEqual(["aa", "cc", "bb"]);
+  });
+  it("sorts by MAC and does not mutate its input", () => {
+    const list = [c("bb:00", "x"), c("aa:00", "y")];
+    expect(sortClients(list, "mac", "asc", "en").map((x) => x.mac)).toEqual(["aa:00", "bb:00"]);
+    expect(list[0].mac).toBe("bb:00");
+  });
+  it("prefills the alias from the client name, empty for unnamed, cut to 80 chars", () => {
+    expect(initialAlias(c("a", "Marta's iPad"))).toBe("Marta's iPad");
+    expect(initialAlias(c("a", null))).toBe("");
+    expect(initialAlias(c("a", "x".repeat(100)))).toHaveLength(80);
   });
 });
