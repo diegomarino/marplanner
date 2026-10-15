@@ -219,6 +219,25 @@ components:
             current printing-plugin-active state (INV-06); the client-side read FR-013's
             family-facing hiding gates on (issue 691) — PrintExecutor and the admin nav entry for
             PrintingManagement both hide when false
+    ResetTodayPrintsResponse:
+      type: object
+      required:
+        - targetDate
+        - resetRecords
+        - cancelledJobs
+      additionalProperties: false
+      properties:
+        targetDate:
+          type: string
+          description: household-local today (YYYY-MM-DD) whose print records were reset
+        resetRecords:
+          type: integer
+          minimum: 0
+          description: print records made printable again (superseded)
+        cancelledJobs:
+          type: integer
+          minimum: 0
+          description: pending or claimed-not-yet-fetched jobs cancelled; fetched jobs finish (H2)
 paths:
   /api/printing/test-print:
     post:
@@ -266,6 +285,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/printing/reset-today:
+    post:
+      summary: >-
+        admin "reset today's print" (FR-016) — supersede every print record of household-today so
+        it can print again; cancels pending and claimed-not-yet-fetched jobs. Takes no body.
+      responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
+        "200":
+          description: today's print records were reset (zero counts when nothing existed)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResetTodayPrintsResponse"
+        "400":
+          description: a request body with any field
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing, ambiguous or invalid API credential (shared authentication boundary).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUnauthorized"
+        "409":
+          description: printing plugin inactive (FR-013)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: The owning plugin is inactive or unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginUnavailable"
   /api/printing/jobs:
     get:
       summary: admin list with derived states (SC-003 visibility)
