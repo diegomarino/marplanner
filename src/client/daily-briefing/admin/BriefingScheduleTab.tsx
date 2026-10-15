@@ -37,6 +37,8 @@ export interface BriefingScheduleTabProps {
   results: ScheduleResults | null;
   onOpen: (memberId: string, tab: Exclude<BriefingTab, "schedule">) => void;
   weekStartDay?: 0 | 1;
+  /** Members could not be loaded: the page's error and Retry explain the empty lists. */
+  membersLoadFailed?: boolean;
 }
 
 const RESULT_KEYS: Record<MemberResult, MessageKey> = {
@@ -130,11 +132,13 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
                     : t("dailyBriefing.admin.generateAllButton")}
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {anyOn
-                ? t("dailyBriefing.admin.generateAllHint")
-                : t("dailyBriefing.management.noOptedInMembers")}
-            </p>
+            {!props.membersLoadFailed && (
+              <p className="text-sm text-muted-foreground">
+                {anyOn
+                  ? t("dailyBriefing.admin.generateAllHint")
+                  : t("dailyBriefing.management.noOptedInMembers")}
+              </p>
+            )}
             {props.generateAllInfo && (
               <p
                 className="text-control text-muted-foreground"
@@ -155,9 +159,11 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
         </CardHeader>
         <CardContent>
           {props.members.length === 0 ? (
-            <p className="text-control text-muted-foreground">
-              {t("dailyBriefing.management.noActiveMembers")}
-            </p>
+            !props.membersLoadFailed && (
+              <p className="text-control text-muted-foreground">
+                {t("dailyBriefing.management.noActiveMembers")}
+              </p>
+            )
           ) : (
             <div className="overflow-x-auto">
               <table

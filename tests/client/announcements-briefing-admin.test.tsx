@@ -676,7 +676,7 @@ describe("DailyBriefingManagement — error states are announced (SC-011)", () =
     expect(alert).toHaveAttribute("role", "alert");
     expect(alert).toHaveAttribute("aria-live", "assertive");
     expect(alert).toHaveClass("text-destructive");
-    expect(alert).toHaveTextContent("Failed to save Daily Briefing settings.");
+    expect(alert).toHaveTextContent("Failed to save the daily briefing settings.");
   });
 
   it("announces the settings-load failure once, above the tabs, with Retry", async () => {

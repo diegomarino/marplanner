@@ -230,7 +230,7 @@ export function DailyBriefingManagement() {
         statuses: Object.fromEntries(entries.filter((entry) => entry !== null)),
       });
     });
-  }, [tab, shownDate, optedInKey]);
+  }, [tab, shownDate, optedInKey, settings?.schedules]);
   const selected = members.find((member) => member.id === selectedId);
   const selectedOn = Boolean(selected && optIns[selected.id]);
 
@@ -420,7 +420,7 @@ export function DailyBriefingManagement() {
       <div
         role="tablist"
         aria-label={t("admin.sidebar.briefing")}
-        className="flex w-fit gap-1 rounded-lg border bg-muted p-1"
+        className="flex w-fit max-w-full flex-wrap gap-1 rounded-lg border bg-muted p-1"
       >
         {(["schedule", "blocks", "preview"] as const).map((id) => (
           <Button
@@ -468,6 +468,7 @@ export function DailyBriefingManagement() {
 
       <div hidden={tab !== "schedule"} data-testid="daily-briefing-schedule-workspace">
         <BriefingScheduleTab
+          membersLoadFailed={membersLoadFailed}
           members={members}
           optIns={optIns}
           pendingOptInIds={pendingOptIns}
@@ -493,9 +494,11 @@ export function DailyBriefingManagement() {
 
       <div hidden={tab === "schedule"} className="flex flex-col gap-6">
         {members.length === 0 ? (
-          <p className="text-control text-muted-foreground">
-            {t("dailyBriefing.management.noActiveMembers")}
-          </p>
+          !membersLoadFailed && (
+            <p className="text-control text-muted-foreground">
+              {t("dailyBriefing.management.noActiveMembers")}
+            </p>
+          )
         ) : (
           <BriefingMemberBar
             members={members}
@@ -516,9 +519,14 @@ export function DailyBriefingManagement() {
               data-testid="daily-briefing-blocks-workspace"
               className="flex flex-col gap-4"
             >
-              <p className="text-sm text-muted-foreground">
-                {t("dailyBriefing.admin.blocksCaption").replaceAll("{name}", selected.displayName)}
-              </p>
+              {settings && (
+                <p className="text-sm text-muted-foreground">
+                  {t("dailyBriefing.admin.blocksCaption").replaceAll(
+                    "{name}",
+                    selected.displayName
+                  )}
+                </p>
+              )}
               {settingsChanged && (
                 <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-accent px-4 py-3 text-control text-accent-foreground">
                   <p role="status" aria-live="polite" data-testid="daily-briefing-settings-changed">
