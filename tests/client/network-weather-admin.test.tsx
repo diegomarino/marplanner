@@ -11,12 +11,12 @@
  * live region (SC-011).
  * Component adoption for this module (recorded in full in each surface file's own header, cited
  * not restated here): `AdminPanel`/`ErrorNotice`/`Button`/`Input` are adopted on both surfaces.
- * `ConfirmDialog`/`StatusToggle`/`WeekdayPicker`/`CheckboxField`/`RadioField` are NOT adopted on
- * either surface — see `src/client/admin/NetworkDevicesManagement.tsx` and
- * `src/client/admin/WeatherManagement.tsx` file headers for the per-component reasoning (the
- * `ConfirmDialog`/`StatusToggle` non-adoptions on `NetworkDevicesManagement` are e2e-load-bearing:
- * `tests/e2e/network-devices.spec.ts` depends on the native `window.confirm` dialog AND on the
- * block/unblock button's accessible name being the action word, not a state-invariant name).
+ * `StatusToggle`/`WeekdayPicker`/`CheckboxField`/`RadioField` are NOT adopted on either surface
+ * (the `StatusToggle` non-adoption on `NetworkDevicesManagement` is e2e-load-bearing:
+ * `tests/e2e/network-devices.spec.ts` depends on the block/unblock button's accessible name being
+ * the action word, not a state-invariant name). `ConfirmDialog` IS adopted for delete on
+ * `NetworkDevicesManagement` (it replaced `window.confirm`; the e2e spec drives the dialog), and
+ * edit/register use `Dialog`.
  * Neither surface declares an `as MessageKey`-cast label map (SC-007 does not apply — the debt
  * counter measured zero `translationCasts` in both files before this migration), so there is no
  * label map to pin here.
@@ -217,33 +217,35 @@ describe("NetworkDevicesManagement — kiosk density (SC-001, SC-002)", () => {
       const { container } = renderNetworkDevices();
       await screen.findByText("Kid's Tablet");
 
-      // Phase A: collapsed list — Register + (Edit, Block/Unblock, Delete) per device.
-      expect(countControls(container)).toBe(7);
+      // Phase A: collapsed list — Add device + the two tabs + (Edit, Block/Unblock, Delete) per
+      // device (2 devices).
+      expect(countControls(container)).toBe(9);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
-      // Phase B: an edit row open — d1's Edit/Toggle/Delete become alias input + member
-      // select + Save/Cancel; d2's row is untouched.
+      // Phase B: the edit Dialog open. It renders in a portal under document.body, so the census
+      // reads the body: the 9 page controls (unchanged, now behind the dialog) + the dialog's
+      // alias input, member select, Save, Cancel and its close button.
       fireEvent.click(screen.getByTestId("network-devices-edit-d1"));
       await screen.findByTestId("network-devices-save-d1");
-      expect(countControls(container)).toBe(8);
+      expect(countControls(document.body)).toBe(14);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
       fireEvent.click(screen.getByTestId("network-devices-cancel-edit-d1"));
       await waitFor(() => expect(screen.queryByTestId("network-devices-save-d1")).toBeNull());
 
-      // Phase C: the registration picker open, before a client is selected — the underlying
-      // list is unchanged, plus one Select button per live client (one fixture) and the
-      // picker's own Cancel.
+      // Phase C: the Add tab, before a client is selected — the "Add device" header button is
+      // hidden on this tab, leaving the two tabs + Refresh + the two sort headers + one Select
+      // button per live client (one fixture).
       fireEvent.click(screen.getByTestId("network-devices-open-picker"));
       await screen.findByTestId("network-devices-picker");
       await screen.findByTestId(`network-devices-picker-client-${LIVE_CLIENT_PHONE.mac}`);
-      expect(countControls(container)).toBe(9);
+      expect(countControls(container)).toBe(6);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
-      // Phase D: a client selected — the client list is replaced by change-selection + alias
-      // input + member select + Submit, plus the picker's own Cancel stays.
+      // Phase D: a client selected — the register Dialog (portal) adds alias input, member
+      // select, Submit, Cancel and its close button to the 6 table-tab controls.
       fireEvent.click(screen.getByTestId(`network-devices-picker-select-${LIVE_CLIENT_PHONE.mac}`));
       await screen.findByTestId("network-devices-picker-submit");
-      expect(countControls(container)).toBe(12);
+      expect(countControls(document.body)).toBe(11);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
@@ -291,9 +293,9 @@ describe("NetworkDevicesManagement — kiosk density (SC-001, SC-002)", () => {
     const { container } = renderNetworkDevices();
     await screen.findByText("Kid's Tablet");
 
-    expect(countControls(container)).toBe(7);
+    expect(countControls(container)).toBe(9);
     screen.getByTestId("network-devices-delete-d2").remove();
-    expect(countControls(container)).toBe(6);
+    expect(countControls(container)).toBe(8);
   });
 });
 
@@ -303,18 +305,18 @@ describe("NetworkDevicesManagement — adopts the AdminPanel L2 frame (per-batch
     renderNetworkDevices();
 
     // Anchor on fixture-specific, loaded-only content FIRST — the loading skeleton renders the
-    // SAME AdminPanel title ("Network Devices"), so asserting the region/heading before this
+    // SAME AdminPanel title ("Network devices"), so asserting the region/heading before this
     // would pass vacuously against the skeleton (verification policy's own documented trap).
     await screen.findByText("Kid's Tablet");
 
     // A bare `<div>` in place of `AdminPanel` passes every functional test in this file — this
     // is the only assertion that would catch it (mirrors `members-admin.test.tsx`).
-    expect(await screen.findByRole("region", { name: "Network Devices" })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "Network devices" })).toBeInTheDocument();
     // Region alone is bypassable: `AdminPanel` names its region via `aria-labelledby` pointing
-    // at its own heading, so a hand-rolled `<section aria-label="Network Devices">` with NO
+    // at its own heading, so a hand-rolled `<section aria-label="Network devices">` with NO
     // heading reproduces the landmark and its name and passes. The heading is the half a
     // substitute would have to reproduce the component to satisfy (verification policy).
-    expect(screen.getByRole("heading", { name: "Network Devices" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Network devices" })).toBeInTheDocument();
   });
 });
 
@@ -364,6 +366,10 @@ describe("NetworkDevicesManagement — every error channel is announced (SC-011)
     fireEvent.click(
       await screen.findByTestId(`network-devices-picker-select-${LIVE_CLIENT_PHONE.mac}`)
     );
+    // The dialog prefills the alias from the client name: clear it to hit the validation.
+    fireEvent.change(await screen.findByTestId("network-devices-picker-alias-input"), {
+      target: { value: "" },
+    });
     fireEvent.click(screen.getByTestId("network-devices-picker-submit"));
 
     const alert = await screen.findByTestId("network-devices-picker-error");
@@ -389,19 +395,20 @@ describe("NetworkDevicesManagement — every error channel is announced (SC-011)
 });
 
 describe("NetworkDevicesManagement — unchanged behaviour after migration (regression guard)", () => {
-  it("still confirms delete via window.confirm (ConfirmDialog deliberately NOT adopted, e2e-load-bearing)", async () => {
+  it("still confirms delete before deleting (ConfirmDialog)", async () => {
     mockNetworkDevicesBackend();
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     renderNetworkDevices();
 
     await screen.findByText("Kid's Tablet");
     fireEvent.click(screen.getByTestId("network-devices-delete-d1"));
 
-    await waitFor(() => expect(confirmSpy).toHaveBeenCalledTimes(1));
-    expect(confirmSpy).toHaveBeenCalledWith("Delete this device? This cannot be undone.");
+    expect(
+      await screen.findByText("Delete this device? This cannot be undone.")
+    ).toBeInTheDocument();
+    // Nothing is deleted until the dialog is confirmed.
+    expect(screen.getByText("Kid's Tablet")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("network-devices-delete-confirm"));
     await waitFor(() => expect(screen.queryByText("Kid's Tablet")).toBeNull());
-
-    confirmSpy.mockRestore();
   });
 
   it("still locates Block/Unblock by the ACTION word (StatusToggle deliberately NOT adopted, e2e-load-bearing)", async () => {
