@@ -3246,6 +3246,14 @@
             "CheckboxField renders the disabled attribute when disabled is set",
             "CheckboxField meets kiosk density"
           ],
+          "tests/client/choice-pills.test.tsx": [
+            "ChoicePills is a radiogroup named by groupLabel, options in order, only the value checked",
+            "ChoicePills checks nothing when value is null",
+            "ChoicePills emits the clicked option's value and puts testids on the inputs",
+            "ChoicePills disables the whole group or a single option",
+            "ChoicePills gives two groups different native names",
+            "ChoicePills meets kiosk density"
+          ],
           "tests/client/chores-board-empty-state.test.tsx": [
             "ChoresBoard — zero-active-children empty state (#415) renders the noChildren message and omits the board grid"
           ],
@@ -3608,6 +3616,20 @@
           "tests/client/member-i18n-parity.test.ts": [
             "member-i18n-parity en and es catalogs have identical keys (both directions)"
           ],
+          "tests/client/member-pills.test.tsx": [
+            "MemberPills — multi (default) is a named group of checkboxes, one per member, in order",
+            "MemberPills — multi (default) emits the selection in members order, not click order",
+            "MemberPills — multi (default) removes a member that is already selected",
+            "MemberPills — multi (default) keeps selected ids that are not shown",
+            "MemberPills — multi (default) disables one member or the whole group",
+            "MemberPills — multi (default) names an inactive member with its marker and draws it dashed",
+            "MemberPills — multi (default) wears the member's colour only while selected",
+            "MemberPills — single is a named radiogroup and emits the chosen member id",
+            "MemberPills — single checks nothing when value is null",
+            "MemberPills — single single mode isolates groups",
+            "MemberPills — density meets kiosk density in multi mode",
+            "MemberPills — density meets kiosk density in single mode"
+          ],
           "tests/client/member-shell-boundary.test.tsx": [
             "B1 shell boundary matches the reviewed complete family and admin route cohort",
             "B1 shell boundary keeps an unprovisioned direct admin route behind the gate without any request",
@@ -3963,6 +3985,7 @@
             "RemindersManagement — rows name their members and days summarises all-members, specific and calendar-gated rules",
             "RemindersManagement — rows name their members and days shows Off for an inactive rule",
             "RemindersManagement — the add/edit dialog creates a specific scheduled rule from the matrix",
+            "RemindersManagement — the add/edit dialog orders the member x weekday matrix by the household week start",
             "RemindersManagement — the add/edit dialog Enter in the text field submits a valid form",
             "RemindersManagement — the add/edit dialog edits an all-members rule into a specific one (PATCH carries targetingMode and assignments)",
             "RemindersManagement — the add/edit dialog edits a specific calendar-gated rule back to all members (no assignments sent)",
@@ -3972,6 +3995,10 @@
             "label maps are transcribed correctly (SC-007's cast removal, pinned) every weekday maps to its own key",
             "label maps are transcribed correctly (SC-007's cast removal, pinned) every query field maps to its own key",
             "label maps are transcribed correctly (SC-007's cast removal, pinned) every dry-run reason maps to its own key"
+          ],
+          "tests/client/routine-week-grid.test.tsx": [
+            "RoutineWeekGrid — week start is Monday-first by default",
+            "RoutineWeekGrid — week start is Sunday-first for a Sunday household and keeps each assignment on its day"
           ],
           "tests/client/routines-admin-order.test.ts": [
             "groupRoutinesByPeriod orders groups by period start, keeps arrival order inside a group and drops empty periods",
@@ -4245,6 +4272,7 @@
             "TimeAnnouncementsManagement shows the selected voice name, or a no-voice hint",
             "TimeAnnouncementsManagement inactive rules are dimmed and tagged",
             "TimeAnnouncementsManagement weekday circles show initials and on/off state",
+            "TimeAnnouncementsManagement weekday circles follow a Sunday-first household week",
             "TimeAnnouncementsManagement closing is blocked while a save is in flight",
             "localizes browser exceptions on rule creation (en)",
             "localizes browser exceptions on rule creation (es)"
@@ -4508,7 +4536,12 @@
             "WeekdayPicker — density meets kiosk density in single mode (renderAs=\"select\", default)",
             "WeekdayPicker — density meets kiosk density in single mode (renderAs=\"radio\")",
             "WeekdayPicker — radio group isolation gives two prefix-less radio pickers DIFFERENT native group names",
-            "WeekdayPicker — disabledDays disables only the listed days in multi mode"
+            "WeekdayPicker — disabledDays disables only the listed days in multi mode",
+            "weekdayDisplayOrder puts Sunday first only for a Sunday week start",
+            "WeekdayPicker — household week start shows Sunday first when the household week starts on Sunday",
+            "WeekdayPicker — household week start lets the weekStartDay prop override the household setting",
+            "WeekdayPicker — household week start still emits the canonical order when shown Sunday first",
+            "WeekdayPicker — household week start orders the single-day select and the radio pills by the week start"
           ],
           "tests/integration/backups-lineage.test.ts": [
             "backup restore lineage integration restores a baseline backup and applies a temporary later migration",
@@ -5445,7 +5478,7 @@
           "lines": 91.66,
           "statements": 91.66,
           "functions": 83.33,
-          "branches": 100.0
+          "branches": 100
         }
       },
       "src/client/admin/PrintingManagement.tsx": {
@@ -5562,9 +5595,9 @@
           "branches": 41
         },
         "minimumRates": {
-          "lines": 100.0,
+          "lines": 100,
           "statements": 86.36,
-          "functions": 100.0,
+          "functions": 100,
           "branches": 87.8
         }
       },
@@ -5578,7 +5611,7 @@
         },
         "minimumRates": {
           "lines": 94.87,
-          "statements": 90.0,
+          "statements": 90,
           "functions": 82.6,
           "branches": 79.12
         }
@@ -5607,7 +5640,7 @@
           "branches": 26
         },
         "minimumRates": {
-          "lines": 100.0,
+          "lines": 100,
           "statements": 97.33,
           "functions": 95.65,
           "branches": 92.3
@@ -5652,10 +5685,10 @@
           "branches": 4
         },
         "minimumRates": {
-          "lines": 100.0,
-          "statements": 100.0,
-          "functions": 100.0,
-          "branches": 100.0
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/client/calendar/CalendarMonthView.tsx": {
@@ -5913,6 +5946,21 @@
           "branches": 100
         }
       },
+      "src/client/components/ChoicePills.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 4,
+          "statements": 4,
+          "functions": 3,
+          "branches": 2
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/client/components/ConfirmDialog.tsx": {
         "layer": "client",
         "minimumTotals": {
@@ -5958,13 +6006,43 @@
           "branches": 100
         }
       },
-      "src/client/components/PillToggle.tsx": {
+      "src/client/components/MemberPills.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 21,
+          "statements": 25,
+          "functions": 11,
+          "branches": 12
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/client/components/PillControl.tsx": {
         "layer": "client",
         "minimumTotals": {
           "lines": 2,
           "statements": 2,
           "functions": 2,
-          "branches": 4
+          "branches": 8
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/client/components/PillToggle.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 1,
+          "statements": 1,
+          "functions": 1,
+          "branches": 0
         },
         "minimumRates": {
           "lines": 100,
@@ -6156,10 +6234,10 @@
       "src/client/daily-briefing/admin/BriefingMemberPills.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 6,
-          "statements": 7,
-          "functions": 5,
-          "branches": 4
+          "lines": 2,
+          "statements": 3,
+          "functions": 3,
+          "branches": 2
         },
         "minimumRates": {
           "lines": 100,

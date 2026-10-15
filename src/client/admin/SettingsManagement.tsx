@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AdminPanel } from "@/components/AdminPanel";
 import { ErrorNotice } from "@/components/ErrorNotice";
+import { ChoicePills } from "@/components/ChoicePills";
 import { Field } from "@/components/Field";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,9 +52,8 @@ function fromSettings(data: EffectiveSettings): SettingsFormState {
   return { locale: data.locale, weather: data.weather ? toWeatherFormState(data.weather) : null };
 }
 
-/** A single-choice row drawn as pills. Local to this page: it is not a shared primitive. */
-function ChoicePills<T extends string>({
-  labelId,
+/** A setting drawn as a caption, a description and a one-of-few choice. */
+function ChoiceRow<T extends string>({
   label,
   description,
   value,
@@ -61,7 +61,6 @@ function ChoicePills<T extends string>({
   onChange,
   disabled,
 }: {
-  labelId: string;
   label: string;
   description: string;
   value: T;
@@ -71,29 +70,19 @@ function ChoicePills<T extends string>({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <span id={labelId} className="text-control font-semibold">
-        {label}
-      </span>
+      <span className="text-control font-semibold">{label}</span>
       <p className="text-muted-foreground text-control">{description}</p>
-      <div role="radiogroup" aria-labelledby={labelId} className="flex flex-wrap gap-2">
-        {options.map((option) => {
-          const selected = option.value === value;
-          return (
-            <Button
-              key={option.value}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              variant={selected ? "default" : "outline"}
-              disabled={disabled}
-              data-testid={option.testId}
-              onClick={() => onChange(option.value)}
-            >
-              {option.label}
-            </Button>
-          );
-        })}
-      </div>
+      <ChoicePills
+        value={value}
+        onChange={onChange}
+        groupLabel={label}
+        disabled={disabled}
+        options={options.map((option) => ({
+          value: option.value,
+          label: option.label,
+          "data-testid": option.testId,
+        }))}
+      />
     </div>
   );
 }
@@ -242,8 +231,7 @@ export function SettingsManagement() {
         )}
         {form ? (
           <div className="bg-card flex flex-col gap-6 rounded-lg p-4 shadow">
-            <ChoicePills
-              labelId="settings-language-label"
+            <ChoiceRow
               label={t("admin.settings.language")}
               description={t("admin.settings.languageDescription")}
               value={form.locale.language}
@@ -254,8 +242,7 @@ export function SettingsManagement() {
                 { value: "es", label: "Español", testId: "settings-language-es" },
               ]}
             />
-            <ChoicePills
-              labelId="settings-week-start-label"
+            <ChoiceRow
               label={t("admin.settings.weekStart")}
               description={t("admin.settings.weekStartDescription")}
               value={String(form.locale.weekStartDay)}

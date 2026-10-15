@@ -8,6 +8,7 @@ import { CheckboxField } from "@/components/CheckboxField";
 import {
   WeekdayPicker,
   CANONICAL_WEEKDAY_ORDER,
+  weekdayDisplayOrder,
   type WeekdayCode,
   type WeekdayLabels,
 } from "@/components/WeekdayPicker";
@@ -16,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NATIVE_SELECT_CLASSES } from "@/lib/recipes";
+import { useHouseholdSettings } from "@/lib/householdSettings";
 import { BriefingWorkspace } from "@/daily-briefing/admin/BriefingWorkspace";
 import { BriefingMemberPills, pillMembers } from "@/daily-briefing/admin/BriefingMemberPills";
 import type {
@@ -271,6 +273,7 @@ function defaultMemberBlockSettings(
 
 export function DailyBriefingManagement() {
   const t = useT();
+  const { weekStartDay } = useHouseholdSettings();
   const [workspace, setWorkspace] = useState<"blocks" | "preview">("blocks");
   const [activeMembers, setActiveMembers] = useState<MemberDTO[]>([]);
   const [optIns, setOptIns] = useState<Record<string, boolean>>({});
@@ -1189,7 +1192,7 @@ export function DailyBriefingManagement() {
                       <th className="w-64 border-b px-3 py-2 text-left">
                         {t("dailyBriefing.admin.memberBlockSettingsTitle")}
                       </th>
-                      {CANONICAL_WEEKDAY_ORDER.map((day) => (
+                      {weekdayDisplayOrder(weekStartDay).map((day) => (
                         <th
                           key={day}
                           className="border-b px-2 py-2 text-center font-medium"

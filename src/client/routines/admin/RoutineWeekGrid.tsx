@@ -2,7 +2,8 @@ import type { Assignment, Member, Weekday } from "../../../shared";
 import type { MessageKey } from "@/i18n/messages";
 import { useT } from "@/i18n";
 import { Button } from "@/components/ui/button";
-import { CANONICAL_WEEKDAY_ORDER, type WeekdayLabels } from "@/components/WeekdayPicker";
+import { weekdayDisplayOrder, type WeekdayLabels } from "@/components/WeekdayPicker";
+import { useHouseholdSettings } from "@/lib/householdSettings";
 import { MemberChip } from "./MemberChip";
 
 export const WEEKDAY_LABEL_KEYS: Record<Weekday, MessageKey> = {
@@ -40,6 +41,7 @@ export function RoutineWeekGrid({
   onOpen: () => void;
 }) {
   const t = useT();
+  const { weekStartDay } = useHouseholdSettings();
   const byId = new Map(members.map((member) => [member.id, member]));
   const active = assignments.filter((assignment) => assignment.active);
 
@@ -54,7 +56,7 @@ export function RoutineWeekGrid({
       onClick={onOpen}
     >
       <span className="grid w-full grid-cols-7 gap-1">
-        {CANONICAL_WEEKDAY_ORDER.map((day) => (
+        {weekdayDisplayOrder(weekStartDay).map((day) => (
           <span
             key={day}
             className="flex min-w-0 flex-col items-center gap-1"

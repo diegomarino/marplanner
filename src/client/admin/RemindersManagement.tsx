@@ -24,6 +24,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   WeekdayPicker,
   CANONICAL_WEEKDAY_ORDER,
+  weekdayDisplayOrder,
   type WeekdayLabels,
 } from "@/components/WeekdayPicker";
 import { CheckboxField } from "@/components/CheckboxField";
@@ -45,7 +46,8 @@ import { NATIVE_SELECT_CLASSES, BARE_CHECKBOX_INPUT_CLASSES } from "@/lib/recipe
  * members), a per-row dry-run panel for calendar_gated rules, and a themed delete ConfirmDialog.
  * Only the first load and an explicit Retry show the loading state; later refreshes are silent so
  * open dialogs and panels survive. `AssignmentMatrixGrid` is `WeekdayPicker`'s documented
- * deliberate exception (a member x weekday table), so it imports `CANONICAL_WEEKDAY_ORDER`. */
+ * deliberate exception (a member x weekday table), so it orders its own columns with
+ * `weekdayDisplayOrder`. */
 
 export const WEEKDAY_LABEL_KEYS: Record<Weekday, MessageKey> = {
   mon: "reminders.weekday.mon",
@@ -593,7 +595,14 @@ function ReminderFormDialog({
   const toggleAssignmentDay = (memberId: string, day: Weekday) => {
     setAssignmentDraft((prev) => {
       const current = prev[memberId] ?? [];
-      const next = current.includes(day) ? current.filter((d) => d !== day) : [...current, day];
+      const selected = new Set(current);
+      if (selected.has(day)) {
+        selected.delete(day);
+      } else {
+        selected.add(day);
+      }
+      // Stored in canonical mon..sun order whatever the click or display order.
+      const next = CANONICAL_WEEKDAY_ORDER.filter((d) => selected.has(d));
       return { ...prev, [memberId]: next };
     });
   };
@@ -902,8 +911,8 @@ interface AssignmentMatrixGridProps {
 /** The ONE render site `WeekdayPicker`'s own file header names as its deliberate exception: a
  * member × weekday table, not an independently-toggled set — day labels appear once in
  * `<thead>`, and each `<td>` holds a bare checkbox whose `onChange` carries a `memberId`
- * dimension `WeekdayPicker`'s signature has no room for. Imports `CANONICAL_WEEKDAY_ORDER`
- * directly (SC-009's "one canonical order, not five" still holds without migrating the markup),
+ * dimension `WeekdayPicker`'s signature has no room for. Its columns follow the household week
+ * start through `weekdayDisplayOrder` (storage order stays canonical; the matrix only displays),
  * and styles each cell's checkbox via the `BARE_CHECKBOX_INPUT_CLASSES` recipe (—
  * see the style guide) rather than `CheckboxField`, which would render a visible day label in
  * every cell instead of the one already in the column header.
@@ -914,6 +923,7 @@ function AssignmentMatrixGrid({
   weekdaysByMember,
   onToggle,
 }: AssignmentMatrixGridProps) {
+  const order = weekdayDisplayOrder(useHouseholdSettings().weekStartDay);
   if (members.length === 0) {
     return (
       <p className="text-muted-foreground text-control">{t("reminders.matrix.noActiveMembers")}</p>
@@ -925,7 +935,7 @@ function AssignmentMatrixGrid({
       <thead>
         <tr>
           <th className="text-left pr-2">{t("reminders.matrix.member")}</th>
-          {CANONICAL_WEEKDAY_ORDER.map((day) => (
+          {order.map((day) => (
             <th key={day} className="px-1 text-xs font-normal">
               {t(WEEKDAY_LABEL_KEYS[day])}
             </th>
@@ -938,7 +948,7 @@ function AssignmentMatrixGrid({
           return (
             <tr key={member.id}>
               <td className="pr-2">{member.displayName}</td>
-              {CANONICAL_WEEKDAY_ORDER.map((day) => (
+              {order.map((day) => (
                 <td key={day} className="text-center">
                   <input
                     type="checkbox"

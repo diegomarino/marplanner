@@ -12,11 +12,7 @@ import { AdminPanel } from "@/components/AdminPanel";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { CheckboxField } from "@/components/CheckboxField";
-import {
-  CANONICAL_WEEKDAY_ORDER,
-  WeekdayPicker,
-  type WeekdayLabels,
-} from "@/components/WeekdayPicker";
+import { weekdayDisplayOrder, WeekdayPicker, type WeekdayLabels } from "@/components/WeekdayPicker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -82,7 +78,8 @@ export function TimeAnnouncementsManagement() {
       active_overlap: t("timeAnnouncements.management.activeOverlap"),
       validation_error: t("timeAnnouncements.management.invalidRule"),
     });
-  const { language } = useHouseholdSettings();
+  const { language, weekStartDay } = useHouseholdSettings();
+  const dayOrder = weekdayDisplayOrder(weekStartDay);
   const lang = resolveLang(language ?? undefined);
 
   const [rules, setRules] = useState<TimeAnnouncementRule[]>([]);
@@ -324,7 +321,7 @@ export function TimeAnnouncementsManagement() {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <div className={cn("flex items-center gap-2", !rule.isActive && "opacity-60")}>
-                  {CANONICAL_WEEKDAY_ORDER.map((day) => {
+                  {dayOrder.map((day) => {
                     const on = rule.weekDays.includes(day);
                     return (
                       <span
@@ -344,7 +341,8 @@ export function TimeAnnouncementsManagement() {
                     );
                   })}
                   <span className="sr-only">
-                    {CANONICAL_WEEKDAY_ORDER.filter((day) => rule.weekDays.includes(day))
+                    {dayOrder
+                      .filter((day) => rule.weekDays.includes(day))
                       .map((day) => t(WEEKDAY_LABEL_KEYS[day]))
                       .join(", ")}
                   </span>

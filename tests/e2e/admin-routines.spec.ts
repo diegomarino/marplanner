@@ -79,6 +79,12 @@ test("routines admin: create, add a chore, assign a child and move to another pe
   await detail.getByTestId("routine-assign").click();
   const assign = page.getByTestId("assignment-dialog");
   const row = assign.getByTestId(`routine-assignment-${memberId}`);
+  // The seven weekday pills fit one line inside the dialog.
+  const dayTops = await row
+    .locator(`input[data-testid^="routines-weekday-${memberId}-"]`)
+    .evaluateAll((inputs) => inputs.map((input) => Math.round(input.getBoundingClientRect().top)));
+  expect(dayTops).toHaveLength(7);
+  expect(new Set(dayTops).size).toBe(1);
   await row.getByTestId(`routines-weekday-${memberId}-mon`).check();
   await row.getByTestId(`routines-assignment-${memberId}-save`).click();
   await expect(row.getByTestId(`routines-assignment-${memberId}-deactivate`)).toBeVisible();
