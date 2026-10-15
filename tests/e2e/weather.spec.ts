@@ -202,7 +202,7 @@ async function returnToHome(page: Page): Promise<void> {
   await expect(page.getByTestId("home-surface")).toBeVisible();
 }
 
-/** Opens the weather panel, fills lat/lon, saves, and waits for the PUT to resolve. */
+/** Opens Settings, edits the weather location, saves once, and waits for the PUT to resolve. */
 async function saveWeatherLocation(
   page: Page,
   location: { lat: number; lon: number } | null
@@ -214,13 +214,14 @@ async function saveWeatherLocation(
     (res) => res.url().includes("/api/settings") && res.request().method() === "PUT"
   );
 
+  // Clear is staged like any edit; the page's single Save writes it.
   if (location === null) {
     await page.getByTestId("weather-clear").click();
   } else {
     await page.getByTestId("weather-lat-input").fill(String(location.lat));
     await page.getByTestId("weather-lon-input").fill(String(location.lon));
-    await page.getByTestId("weather-save").click();
   }
+  await page.getByTestId("settings-save").click();
 
   const response = await responsePromise;
   expect(response.status()).toBe(200);
