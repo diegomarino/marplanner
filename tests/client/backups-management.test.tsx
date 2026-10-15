@@ -1,7 +1,13 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { BackupsManagement } from "@/admin/BackupsManagement";
+import {
+  BackupsManagement,
+  TYPE_KEYS,
+  TYPE_PILL_CLASSES,
+  formatRelativeAge,
+  isDbFile,
+} from "@/admin/BackupsManagement";
 import { HouseholdSettingsProvider } from "@/lib/householdSettings";
 import { LanguageProvider } from "@/i18n";
 import type { BackupListResponse } from "../../src/shared";
@@ -123,7 +129,11 @@ describe("BackupsManagement", () => {
     renderManagement();
 
     const row = await screen.findByTestId("backups-row-scheduled-20260901-033000-000.db");
-    await waitFor(() => expect(row).toHaveTextContent(expected));
+    await waitFor(() => expect(row.querySelector("time")).toHaveAttribute("title", expected));
+    expect(row.querySelector("time")).toHaveAttribute(
+      "datetime",
+      new Date(createdAt).toISOString()
+    );
   });
 
   it("renders the empty state when the shelf has no backups", async () => {
@@ -348,7 +358,6 @@ describe("BackupsManagement", () => {
     const fileInput = await screen.findByTestId("backups-upload-input");
     const file = new File(["SQLite format 3\0"], "mine.db", { type: "application/octet-stream" });
     fireEvent.change(fileInput, { target: { files: [file] } });
-    fireEvent.click(screen.getByTestId("backups-upload-submit"));
 
     await waitFor(() => {
       expect(
@@ -358,6 +367,9 @@ describe("BackupsManagement", () => {
       ).toHaveLength(1);
     });
     expect(screen.queryByTestId("backups-upload-error")).not.toBeInTheDocument();
+    expect(await screen.findByTestId("backups-upload-success")).toHaveTextContent(
+      "Uploaded as upload-20260901-033000-000.db."
+    );
   });
 
   it("surfaces an oversized-upload refusal (413)", async () => {
@@ -385,11 +397,245 @@ describe("BackupsManagement", () => {
     const fileInput = await screen.findByTestId("backups-upload-input");
     const file = new File(["x"], "huge.db", { type: "application/octet-stream" });
     fireEvent.change(fileInput, { target: { files: [file] } });
-    fireEvent.click(screen.getByTestId("backups-upload-submit"));
 
     expect(await screen.findByTestId("backups-upload-error")).toHaveTextContent(
       "nothing was written to disk"
     );
+  });
+
+  it("rejects a non-.db selection before any request and shows the unsupported message", async () => {
+    const mockFetch = vi.mocked(globalThis.fetch);
+    mockFetch.mockImplementation(async (...args: FetchCall) => {
+      const url = String(args[0]);
+      if (url === "/api/settings") {
+        return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
+      }
+      if (url === "/api/backups") return jsonResponse(EMPTY_LIST);
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    renderManagement();
+    const fileInput = await screen.findByTestId("backups-upload-input");
+    expect(fileInput).toHaveAttribute("accept", ".db");
+    fireEvent.change(fileInput, { target: { files: [new File(["x"], "notes.sql")] } });
+    expect(await screen.findByTestId("backups-upload-error")).toHaveTextContent(
+      "Only .db backup files can be uploaded."
+    );
+    expect(
+      (mockFetch.mock.calls as FetchCall[]).some(([i]) => String(i) === "/api/backups/upload")
+    ).toBe(false);
+  });
+
+  it("uploads a dropped .db file and toggles the drag-active state", async () => {
+    const mockFetch = vi.mocked(globalThis.fetch);
+    mockFetch.mockImplementation(async (...args: FetchCall) => {
+      const [input, init] = args;
+      const url = String(input);
+      if (url === "/api/settings") {
+        return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
+      }
+      if (url === "/api/backups") return jsonResponse(EMPTY_LIST);
+      if (url === "/api/backups/upload" && init?.method === "POST") {
+        return jsonResponse({ filename: "upload-dropped.db" });
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    renderManagement();
+    const zone = await screen.findByTestId("backups-upload-dropzone");
+    fireEvent.dragOver(zone);
+    expect(zone).toHaveAttribute("data-drag-active", "true");
+    fireEvent.dragLeave(zone);
+    expect(zone).toHaveAttribute("data-drag-active", "false");
+    const file = new File(["SQLite format 3\0"], "dropped.db");
+    fireEvent.drop(zone, { dataTransfer: { files: [file] } });
+    expect(await screen.findByTestId("backups-upload-success")).toHaveTextContent(
+      "Uploaded as upload-dropped.db."
+    );
+  });
+
+  it("names the created snapshot in a success banner and keeps already_running separate", async () => {
+    let snapshotResult: unknown = { status: "completed", filename: "snapshot-X.db" };
+    const mockFetch = vi.mocked(globalThis.fetch);
+    mockFetch.mockImplementation(async (...args: FetchCall) => {
+      const [input, init] = args;
+      const url = String(input);
+      if (url === "/api/settings") {
+        return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
+      }
+      if (url === "/api/backups") return jsonResponse(EMPTY_LIST);
+      if (url === "/api/backups/snapshot" && init?.method === "POST") {
+        return jsonResponse(snapshotResult);
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    renderManagement();
+    fireEvent.click(await screen.findByTestId("backups-snapshot-now"));
+    const banner = await screen.findByTestId("backups-snapshot-success");
+    expect(banner).toHaveTextContent("Snapshot snapshot-X.db created.");
+    expect(banner).toHaveAttribute("role", "status");
+
+    snapshotResult = { status: "already_running" };
+    fireEvent.click(screen.getByTestId("backups-snapshot-now"));
+    expect(await screen.findByTestId("backups-snapshot-info")).toBeInTheDocument();
+    expect(screen.queryByTestId("backups-snapshot-success")).not.toBeInTheDocument();
+  });
+
+  it("renders the type as a colour-coded pill with the localized label", async () => {
+    const mockFetch = vi.mocked(globalThis.fetch);
+    mockFetch.mockImplementation(async (...args: FetchCall) => {
+      const url = String(args[0]);
+      if (url === "/api/settings") {
+        return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
+      }
+      if (url === "/api/backups") return jsonResponse(ONE_BACKUP_LIST);
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    renderManagement();
+    const pill = await screen.findByTestId("backups-type-scheduled-20260901-033000-000.db");
+    expect(pill).toHaveTextContent("Scheduled");
+    for (const token of TYPE_PILL_CLASSES.scheduled.split(" ")) {
+      expect(pill).toHaveClass(token);
+    }
+  });
+
+  it("shows a relative label for a recent backup and the absolute date beyond 30 days", async () => {
+    const now = Date.now();
+    const mockFetch = vi.mocked(globalThis.fetch);
+    mockFetch.mockImplementation(async (...args: FetchCall) => {
+      const url = String(args[0]);
+      if (url === "/api/settings") {
+        return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
+      }
+      if (url === "/api/backups") {
+        return jsonResponse({
+          ...ONE_BACKUP_LIST,
+          backups: [
+            { ...ONE_BACKUP_LIST.backups[0], filename: "recent.db", createdAt: now - 5 * 60_000 },
+            { ...ONE_BACKUP_LIST.backups[0], filename: "old.db", createdAt: now - 40 * 86_400_000 },
+          ],
+        });
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    renderManagement();
+    const recent = await screen.findByTestId("backups-row-recent.db");
+    expect(recent.querySelector("time")).toHaveTextContent("5 minutes ago");
+    const old = screen.getByTestId("backups-row-old.db").querySelector("time");
+    expect(old?.textContent).toBe(old?.getAttribute("title"));
+  });
+
+  it("shows a spinner only on the clicked download button and saves the blob", async () => {
+    const filename = ONE_BACKUP_LIST.backups[0].filename;
+    let release: (value: Response) => void = () => {};
+    const pending = new Promise<Response>((resolve) => {
+      release = resolve;
+    });
+    const mockFetch = vi.mocked(globalThis.fetch);
+    mockFetch.mockImplementation(async (...args: FetchCall) => {
+      const url = String(args[0]);
+      if (url === "/api/settings") {
+        return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
+      }
+      if (url === "/api/backups") return jsonResponse(ONE_BACKUP_LIST);
+      if (url === `/api/backups/${filename}/download`) return pending;
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    const createObjectURL = vi.fn(() => "blob:x");
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL, revokeObjectURL }));
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    try {
+      renderManagement();
+      const button = await screen.findByTestId(`backups-download-${filename}`);
+      fireEvent.click(button);
+      await waitFor(() => expect(button).toBeDisabled());
+      expect(button).toHaveAttribute("aria-busy", "true");
+      expect(screen.getByTestId(`backups-download-sql-${filename}`)).toBeEnabled();
+      release(new Response(new Blob(["x"]), { status: 200 }));
+      await waitFor(() => expect(button).toBeEnabled());
+      expect(createObjectURL).toHaveBeenCalled();
+      expect(click).toHaveBeenCalled();
+      expect(revokeObjectURL).toHaveBeenCalledWith("blob:x");
+    } finally {
+      click.mockRestore();
+    }
+  });
+
+  it("downloads the SQL export under <filename>.sql and surfaces a download failure", async () => {
+    const filename = ONE_BACKUP_LIST.backups[0].filename;
+    const mockFetch = vi.mocked(globalThis.fetch);
+    mockFetch.mockImplementation(async (...args: FetchCall) => {
+      const url = String(args[0]);
+      if (url === "/api/settings") {
+        return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
+      }
+      if (url === "/api/backups") return jsonResponse(ONE_BACKUP_LIST);
+      if (url === `/api/backups/${filename}/download-sql`) {
+        return jsonResponse({ error: "not_found" }, 404);
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    renderManagement();
+    const button = await screen.findByTestId(`backups-download-sql-${filename}`);
+    fireEvent.click(button);
+    expect(await screen.findByTestId("backups-download-error")).toBeInTheDocument();
+    await waitFor(() => expect(button).toBeEnabled());
+  });
+
+  it("offers Retry after a load failure and hides the empty state", async () => {
+    let calls = 0;
+    const mockFetch = vi.mocked(globalThis.fetch);
+    mockFetch.mockImplementation(async (...args: FetchCall) => {
+      const url = String(args[0]);
+      if (url === "/api/settings") {
+        return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
+      }
+      if (url === "/api/backups") {
+        calls += 1;
+        return calls === 1 ? jsonResponse({}, 500) : jsonResponse(ONE_BACKUP_LIST);
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    renderManagement();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Failed to load backups.");
+    expect(screen.queryByTestId("backups-empty")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("backups-retry"));
+    expect(await screen.findByTestId("backups-table")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+});
+
+describe("backups helpers", () => {
+  const now = Date.parse("2026-09-01T12:00:00Z");
+  const rtfEn = new Intl.RelativeTimeFormat("en-GB", { numeric: "auto" });
+
+  it("formats relative ages up to 30 days and null beyond", () => {
+    expect(formatRelativeAge(now - 20_000, now, "en")).toBe(rtfEn.format(0, "second"));
+    expect(formatRelativeAge(now - 5 * 60_000, now, "en")).toBe("5 minutes ago");
+    expect(formatRelativeAge(now - 3 * 3_600_000, now, "en")).toBe("3 hours ago");
+    expect(formatRelativeAge(now - 86_400_000, now, "en")).toBe("yesterday");
+    expect(formatRelativeAge(now - 3 * 86_400_000, now, "en")).toBe("3 days ago");
+    expect(formatRelativeAge(now - 40 * 86_400_000, now, "en")).toBeNull();
+    expect(formatRelativeAge(now + 60_000, now, "en")).toBe(rtfEn.format(0, "second"));
+    expect(formatRelativeAge(now - 5 * 60_000, now, "es")).toBe(
+      new Intl.RelativeTimeFormat("es-ES", { numeric: "auto" }).format(-5, "minute")
+    );
+  });
+
+  it("accepts only .db names (case-insensitive)", () => {
+    expect(isDbFile("a.db")).toBe(true);
+    expect(isDbFile("A.DB")).toBe(true);
+    expect(isDbFile("a.sql")).toBe(false);
+    expect(isDbFile("a.db.sql")).toBe(false);
+    expect(isDbFile("db")).toBe(false);
+  });
+
+  it("covers every backup type with semantic token classes only", () => {
+    expect(Object.keys(TYPE_PILL_CLASSES).sort()).toEqual(Object.keys(TYPE_KEYS).sort());
+    for (const value of Object.values(TYPE_PILL_CLASSES)) {
+      expect(value).not.toMatch(
+        /\b(bg|text|border)-(red|blue|green|amber|purple|gray|slate|yellow|orange)-\d/
+      );
+    }
   });
 });
 
@@ -454,7 +700,7 @@ it("formats backup dates with Spanish household locale and timezone", async () =
       dateStyle: "medium",
       timeStyle: "medium",
     }).format(new Date(createdAt));
-    await waitFor(() => expect(row).toHaveTextContent(expected));
+    await waitFor(() => expect(row.querySelector("time")).toHaveAttribute("title", expected));
   } finally {
     cleanup();
     vi.unstubAllGlobals();
