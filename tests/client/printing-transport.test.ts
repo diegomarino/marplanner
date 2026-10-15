@@ -9,6 +9,8 @@ import {
   createBluetoothPrintTransport,
   createFakePrintTransport,
   createPrintTransport,
+  FAKE_PRINTER_IDENTITY,
+  orderCandidateServices,
   PrintTransportError,
   retryWithDelay,
   writeChunks,
@@ -203,9 +205,75 @@ describe("createBluetoothPrintTransport pair() requestDevice filter shape (P1-1 
     const call = requestDevice.mock.calls[0][0] as { filters: Array<{ services: unknown[] }> };
     expect(call.filters[0].services).toHaveLength(1);
   });
+
+  it("orderCandidateServices puts a preferred service first without duplicating it", () => {
+    expect(orderCandidateServices()).toEqual(BLUETOOTH_PRINTER_CANDIDATE_SERVICES);
+    const preferred = "49535343-FE7D-4AE5-8FA9-9FAFD205E455";
+    const ordered = orderCandidateServices(preferred);
+    expect(ordered[0]).toBe(preferred.toLowerCase());
+    expect(ordered).toHaveLength(BLUETOOTH_PRINTER_CANDIDATE_SERVICES.length);
+  });
+
+  it("pair() resolves the device identity and prefers the stored service and characteristic", async () => {
+    const preferredService = "49535343-fe7d-4ae5-8fa9-9fafd205e455";
+    const preferredCharacteristic = "49535343-8841-43f4-a8d4-ecbe34729bb3";
+    const writable = (uuid: string) => ({
+      uuid,
+      properties: { write: true, writeWithoutResponse: false },
+    });
+    const getPrimaryService = vi.fn(async (id: number | string) => ({
+      uuid: String(id),
+      getCharacteristics: async () => [
+        writable("0000ffff-0000-1000-8000-00805f9b34fb"),
+        writable(preferredCharacteristic),
+      ],
+    }));
+    const device = {
+      id: "dev-1",
+      name: "Thermal X",
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      gatt: {
+        connected: true,
+        connect: vi.fn(async () => ({ getPrimaryService })),
+        disconnect: vi.fn(),
+      },
+    };
+    const requestDevice = vi.fn().mockResolvedValue(device);
+    vi.stubGlobal("navigator", { ...globalThis.navigator, bluetooth: { requestDevice } });
+
+    const identity = await createBluetoothPrintTransport().pair({
+      serviceUuid: preferredService,
+      characteristicUuid: preferredCharacteristic,
+    });
+
+    expect(requestDevice.mock.calls[0][0].optionalServices[0]).toBe(preferredService);
+    expect(getPrimaryService).toHaveBeenNthCalledWith(1, preferredService);
+    expect(identity).toEqual({
+      deviceId: "dev-1",
+      name: "Thermal X",
+      serviceUuid: preferredService,
+      characteristicUuid: preferredCharacteristic,
+    });
+  });
 });
 
 describe("createFakePrintTransport (byte recorder + scriptable failures/disconnects)", () => {
+  it("pair() resolves the fake identity, honouring a preferred service/characteristic", async () => {
+    const fake = createFakePrintTransport();
+    await expect(fake.pair()).resolves.toEqual(FAKE_PRINTER_IDENTITY);
+    await expect(
+      fake.pair({
+        serviceUuid: "000018f0-0000-1000-8000-00805f9b34fb",
+        characteristicUuid: "00002af1-0000-1000-8000-00805f9b34fb",
+      })
+    ).resolves.toEqual({
+      ...FAKE_PRINTER_IDENTITY,
+      serviceUuid: "000018f0-0000-1000-8000-00805f9b34fb",
+      characteristicUuid: "00002af1-0000-1000-8000-00805f9b34fb",
+    });
+  });
+
   it("starts unready, becomes ready after pair(), and records printJob's chunked bytes", async () => {
     const fake = createFakePrintTransport();
     expect(fake.isReady()).toBe(false);
