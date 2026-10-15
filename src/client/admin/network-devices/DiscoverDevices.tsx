@@ -297,11 +297,13 @@ export function DiscoverDevices({
                     data-testid={`network-devices-picker-client-${client.mac}`}
                     className={added ? "opacity-50" : undefined}
                   >
-                    <td>{client.displayName ?? t("networkDevices.picker.unnamedDevice")}</td>
+                    <td className="py-2 pr-4">
+                      {client.displayName ?? t("networkDevices.picker.unnamedDevice")}
+                    </td>
                     {/* Deliberate MAC render — the discovery table is the ONLY identity signal
                         before an alias exists (FR-015 scope; the one documented exception). */}
-                    <td className="font-mono">{client.mac}</td>
-                    <td className="text-right">
+                    <td className="py-2 pr-4 font-mono">{client.mac}</td>
+                    <td className="py-2 text-right">
                       {added ? (
                         <span
                           className="rounded-full border px-2 py-0.5 text-xs"

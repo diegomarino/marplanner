@@ -36,6 +36,7 @@
     "dev:server": "node --env-file-if-exists=.env.local --import tsx --watch src/server/index.ts",
     "dev:session": "node tools/dev/browser-session.mjs",
     "dev:session-reset": "node tools/dev/browser-reset.mjs",
+    "dev:unifi-fixture": "node --import tsx tools/dev/unifi-fixture.ts",
     "dev": "node tools/dev/start-local.mjs",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
