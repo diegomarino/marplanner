@@ -1,10 +1,10 @@
-import { useId, useState } from "react";
+import { useState } from "react";
 
 import { AdminPanel } from "@/components/AdminPanel";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/Field";
 import { useT } from "@/i18n";
 import type { WeatherSettingsObject } from "../../shared";
 
@@ -81,7 +81,6 @@ export interface WeatherManagementProps {
 
 export function WeatherManagement({ value, onChange, disabled = false }: WeatherManagementProps) {
   const t = useT();
-  const uid = useId();
   const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -120,39 +119,39 @@ export function WeatherManagement({ value, onChange, disabled = false }: Weather
           data-testid="weather-fields"
           className="grid grid-cols-1 items-center gap-x-3 gap-y-3 @sm:grid-cols-[max-content_1fr]"
         >
-          <Label htmlFor={`${uid}-lat`}>{t("weather.management.latLabel")}</Label>
-          <Input
-            id={`${uid}-lat`}
-            type="text"
-            inputMode="decimal"
-            data-testid="weather-lat-input"
-            value={value.lat}
-            disabled={disabled}
-            onChange={(e) => onChange({ lat: e.target.value })}
-            className="w-full min-w-0"
-          />
-          <Label htmlFor={`${uid}-lon`}>{t("weather.management.lonLabel")}</Label>
-          <Input
-            id={`${uid}-lon`}
-            type="text"
-            inputMode="decimal"
-            data-testid="weather-lon-input"
-            value={value.lon}
-            disabled={disabled}
-            onChange={(e) => onChange({ lon: e.target.value })}
-            className="w-full min-w-0"
-          />
-          <Label htmlFor={`${uid}-label`}>{t("weather.management.labelLabel")}</Label>
-          <Input
-            id={`${uid}-label`}
-            type="text"
-            data-testid="weather-label-input"
-            value={value.label}
-            disabled={disabled}
-            onChange={(e) => onChange({ label: e.target.value })}
-            placeholder={t("weather.management.labelPlaceholder")}
-            className="w-full min-w-0"
-          />
+          <Field label={t("weather.management.latLabel")} className="contents">
+            <Input
+              type="text"
+              inputMode="decimal"
+              data-testid="weather-lat-input"
+              value={value.lat}
+              disabled={disabled}
+              onChange={(e) => onChange({ lat: e.target.value })}
+              className="w-full min-w-0"
+            />
+          </Field>
+          <Field label={t("weather.management.lonLabel")} className="contents">
+            <Input
+              type="text"
+              inputMode="decimal"
+              data-testid="weather-lon-input"
+              value={value.lon}
+              disabled={disabled}
+              onChange={(e) => onChange({ lon: e.target.value })}
+              className="w-full min-w-0"
+            />
+          </Field>
+          <Field label={t("weather.management.labelLabel")} className="contents">
+            <Input
+              type="text"
+              data-testid="weather-label-input"
+              value={value.label}
+              disabled={disabled}
+              onChange={(e) => onChange({ label: e.target.value })}
+              placeholder={t("weather.management.labelPlaceholder")}
+              className="w-full min-w-0"
+            />
+          </Field>
         </div>
 
         {problem !== null && (
