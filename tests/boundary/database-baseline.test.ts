@@ -8,6 +8,7 @@ const CALENDAR_FEED_SYNC_MIGRATION = "0001_calendar_feed_sync.sql";
 const PLUGIN_LIFECYCLE_MIGRATION = "0002_plugin_lifecycle.sql";
 const CALENDAR_EVENT_DETAILS_MIGRATION = "0003_calendar_event_details.sql";
 const MEMBER_PALETTE_MIGRATION = "0004_member_palette.sql";
+const DAILY_BRIEFING_SCHEDULE_MIGRATION = "0005_daily_briefing_schedule.sql";
 
 describe("database lifecycle current baseline", () => {
   it("keeps the current baseline plus the reviewed forward migrations", () => {
@@ -21,6 +22,7 @@ describe("database lifecycle current baseline", () => {
       PLUGIN_LIFECYCLE_MIGRATION,
       CALENDAR_EVENT_DETAILS_MIGRATION,
       MEMBER_PALETTE_MIGRATION,
+      DAILY_BRIEFING_SCHEDULE_MIGRATION,
     ]);
     expect(migrationFiles.filter((file) => file.startsWith("0001"))).toEqual([
       CALENDAR_FEED_SYNC_MIGRATION,

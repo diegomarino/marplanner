@@ -365,7 +365,7 @@ test("admin opt-in -> Generate -> complete ordered catalogue and raster preview 
   await openAdminSection(page, "admin-nav-daily-briefing-management");
   const management = page.getByTestId("daily-briefing-management");
   await expect(
-    management.getByRole("heading", { name: m["dailyBriefing.management.title"], exact: true })
+    management.getByRole("heading", { name: m["admin.sidebar.briefing"], exact: true })
   ).toBeVisible();
   await management.getByTestId("daily-briefing-tab-preview").click();
 
@@ -527,6 +527,38 @@ test("admin opt-in -> Generate -> complete ordered catalogue and raster preview 
       preview.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)
     )
     .toBe(true);
+
+  // History lists the briefing just generated for the selected member.
+  await expect(
+    management.getByTestId(`daily-briefing-history-entry-${householdToday}`)
+  ).toBeVisible();
+
+  // Pause today's weekday for secondMember: a regenerate is skipped, then resume.
+  const todayCode = weekdayCode(householdToday);
+  async function toggleToday(): Promise<void> {
+    await management.getByTestId("daily-briefing-tab-blocks").click();
+    await management.getByTestId(`daily-briefing-block-member-${secondMember.id}`).click();
+    const scheduleResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/api/daily-briefing/schedule/${secondMember.id}`) &&
+        response.request().method() === "PUT"
+    );
+    await management.getByTestId(`daily-briefing-schedule-day-${todayCode}`).click();
+    expect((await scheduleResponse).status()).toBe(200);
+  }
+  await toggleToday();
+  await expect(management.getByTestId("daily-briefing-settings-changed")).toBeVisible();
+  await management.getByTestId("daily-briefing-tab-preview").click();
+  await management.getByTestId(`daily-briefing-preview-member-${secondMember.id}`).click();
+  const skippedResponse = page.waitForResponse(
+    (response) =>
+      response.url().includes("/api/daily-briefing/generate") &&
+      response.request().method() === "POST"
+  );
+  await management.getByTestId("daily-briefing-generate").click();
+  expect(await (await skippedResponse).json()).toMatchObject({ skipped: true, reason: "paused" });
+  await expect(management.getByTestId("daily-briefing-paused-notice")).toBeVisible();
+  await toggleToday(); // resume, so later specs sharing the data dir are unaffected
 });
 
 /** (docs/features/daily-briefing.md Phase 7, FR-017) — the trigger -> print e2e
@@ -807,7 +839,7 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   await openAdminSection(page, "admin-nav-daily-briefing-management");
   const management = page.getByTestId("daily-briefing-management");
   await expect(
-    management.getByRole("heading", { name: m["dailyBriefing.management.title"], exact: true })
+    management.getByRole("heading", { name: m["admin.sidebar.briefing"], exact: true })
   ).toBeVisible();
   // Idempotent: checks the binding regardless of whatever state a previously-interrupted run
   // left it in (this spec's own teardown restores it to unbound, but defends against a crash

@@ -152,6 +152,7 @@ const GET_ROUTE_TEMPLATES = [
   "/api/chores/board",
   "/api/daily-briefing/:memberId/:date",
   "/api/daily-briefing/:memberId/:date/preview.png",
+  "/api/daily-briefing/history/:memberId",
   "/api/daily-briefing/opt-in",
   "/api/daily-briefing/settings",
   "/api/daily-messages",

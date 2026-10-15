@@ -74,7 +74,7 @@ The ordered capability table is:
 4. `/admin/reminders` — reminders
 5. `/admin/meals` — meals and recipes
 6. `/admin/daily-messages` — daily messages
-7. `/admin/daily-briefing` — briefing configuration/generation/preview
+7. `/admin/daily-briefing` — Briefing: Blocks tab (member pills, per-weekday pause switches over the block matrix, block order, generation time and auto-print binding, "settings changed" notice) and Preview / Generate tab (opt-in, Generate all, member pills, 30-day history, regenerate, view PNG, print to the queue, payload, image states); tabs are local state, no sub-paths
 8. `/admin/telemetry` — client telemetry
 9. `/admin/backups` — backups: snapshot with success feedback, drag-and-drop .db upload, colour-coded types, relative dates, typed-filename restore, download with progress
 10. `/admin/time-announcements` — time announcements (card list; create/edit dialog; delete confirmation)

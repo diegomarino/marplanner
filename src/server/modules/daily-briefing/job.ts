@@ -21,6 +21,7 @@ import {
 } from "../../host-api";
 import type { StopHandle } from "../../host-api";
 import { registerAutoPrintTrigger } from "./trigger";
+import { isBriefingScheduledOn } from "./schedule";
 
 /** The scheduler job ids this module registers under. */
 export const DAILY_BRIEFING_JOB_ID = "daily-briefing.generate-all";
@@ -133,6 +134,7 @@ export function isMissed(date: string): boolean {
 
   return optedIn.some(({ member_id: memberId }) => {
     if (!isActiveMember(memberId)) return false;
+    if (!isBriefingScheduledOn(memberId, date)) return false;
     const row = db
       .prepare("SELECT 1 FROM daily_briefing WHERE member_id = ? AND date = ?")
       .get(memberId, date);
@@ -160,7 +162,7 @@ function extractDate(arg: unknown): string | undefined {
  * provider requests, and deterministic corpus selection uses the same date/member.
  * Eligibility is rechecked by generateBriefing before committing each result.
  */
-async function regenerateFailedBriefings(requestedDate?: string): Promise<void> {
+export async function regenerateFailedBriefings(requestedDate?: string): Promise<void> {
   const date = requestedDate ?? todayInHouseholdTz(Date.now());
   const candidates = getDb()
     .prepare(
@@ -172,6 +174,7 @@ async function regenerateFailedBriefings(requestedDate?: string): Promise<void> 
 
   for (const { member_id: memberId } of candidates) {
     if (!isActiveMember(memberId)) continue;
+    if (!isBriefingScheduledOn(memberId, date)) continue;
     try {
       await generateBriefing(memberId, date);
     } catch (err) {

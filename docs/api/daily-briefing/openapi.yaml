@@ -369,6 +369,47 @@ components:
               type: string
               enum:
                 - already_running
+    GenerateSkippedResponse:
+      type: object
+      additionalProperties: false
+      required: [skipped, reason, memberId, date]
+      properties:
+        skipped:
+          type: boolean
+          const: true
+        reason:
+          type: string
+          enum: [paused]
+        memberId:
+          type: string
+        date:
+          type: string
+    BriefingHistoryEntry:
+      type: object
+      additionalProperties: false
+      required: [id, date, status, updatedAt]
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+        status:
+          $ref: "#/components/schemas/BriefingStatus"
+        updatedAt:
+          type: integer
+    BriefingHistoryResponse:
+      type: object
+      additionalProperties: false
+      required: [today, entries]
+      properties:
+        today:
+          type: string
+          description: household-timezone business date (YYYY-MM-DD).
+        entries:
+          type: array
+          maxItems: 30
+          items:
+            $ref: "#/components/schemas/BriefingHistoryEntry"
     OptInState:
       type: object
       required:
@@ -493,11 +534,13 @@ paths:
         "429":
           $ref: "#/components/responses/AuthenticationBackoff"
         "200":
-          description: generated briefing shell.
+          description: generated briefing, or skipped because the member is paused on that weekday (FR-024).
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Briefing"
+                oneOf:
+                  - $ref: "#/components/schemas/Briefing"
+                  - $ref: "#/components/schemas/GenerateSkippedResponse"
         "400":
           description: invalid input, invalid date, inactive member, or member not opted-in.
           content:
@@ -638,6 +681,42 @@ paths:
                 oneOf:
                   - $ref: "#/components/schemas/ValidationErrorResponse"
                   - $ref: "#/components/schemas/FastifyParseErrorResponse"
+        "401":
+          description: missing or invalid device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedErrorResponse"
+        "403":
+          description: revoked or expired device key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenErrorResponse"
+        "500":
+          description: unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalErrorResponse"
+  /api/daily-briefing/history/{memberId}:
+    get:
+      summary: List a member's latest briefings, newest first (admin, FR-026).
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "429":
+          $ref: "#/components/responses/AuthenticationBackoff"
+        "200":
+          description: household today plus at most 30 history entries; a pure read.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BriefingHistoryResponse"
         "401":
           description: missing or invalid device key.
           content:
