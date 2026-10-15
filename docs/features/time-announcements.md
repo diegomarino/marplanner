@@ -19,7 +19,8 @@ household-local minute on those weekdays.
 
 An admin lists rules (including inactive ones, ordered by time), edits or toggles a rule
 active/inactive, or deletes it permanently; the system rejects a second active rule that
-collides with an existing active rule at the same time on a shared weekday.
+collides with an existing active rule at the same time on a shared weekday. The admin page
+presents rules as cards with an in-dialog editor (FR-020).
 
 ### User Story 3 — Speak reliably without new failure surface
 
@@ -76,6 +77,8 @@ dedupe, or timezone-format failure.
 - **FR-018**: Given the rule surface, when CRUD is invoked, then a create/edit/toggle/delete MUST require admin write capability, and listing MUST be kiosk-visible. Contract: TIME-ANNOUNCEMENTS-AC-07.
 
 - **FR-019**: Given the v2 settings surface, when it is inspected, then no master switch, quiet hours, per-device, or audio-control setting MUST exist, and announcements MUST stay household-wide. Contract: TIME-ANNOUNCEMENTS-AC-08.
+
+- **FR-020**: Given the admin Time announcements page, when an admin creates or edits a rule, then a single dialog MUST collect time (default 07:00), weekdays and active state, MUST show the voice the kiosk will use for the household language, MUST keep the dialog open with the server message on a rejected write, and MUST close and refresh the list on success; deleting a rule MUST require confirmation in an in-app dialog; a failed list load MUST offer Retry. No API contract changes.
 
 ### Key Entities
 
