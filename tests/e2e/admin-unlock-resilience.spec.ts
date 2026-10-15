@@ -102,8 +102,7 @@ const adminDestinations: ReadonlyArray<{
   },
   {
     path: "/admin/reminders",
-    primary: (page, m) =>
-      page.getByRole("button", { name: m["reminders.action.create"], exact: true }),
+    primary: (page) => page.getByTestId("reminders-add-rule"),
   },
   {
     path: "/admin/meals",

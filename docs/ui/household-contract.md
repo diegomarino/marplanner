@@ -53,6 +53,12 @@ colour held by another active member cannot be picked while a free one remains. 
 the same rule, and a restored member whose colour was taken meanwhile comes back with the first
 free one.
 
+Reminders are listed at `/admin/reminders`, one row per rule naming who it applies to and on which
+days with an Active/Off badge. "Add rule" and the row's edit icon open one dialog; editing can switch
+a rule between all members and specific members. Deleting asks for confirmation. A failed load can
+be retried; a calendar-gated rule's row opens its dry-run panel. Messages (`/admin/daily-messages`)
+keeps its 14-day editor and offers Retry when a load fails.
+
 The ordered capability table is:
 
 1. `/admin` — overview
