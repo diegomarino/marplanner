@@ -57,6 +57,7 @@ const UPTIME_UNITS: ["day" | "hour" | "minute", number][] = [
 /** Whole-second uptime as the two largest non-zero units ("2d 3h"), or seconds under a minute. */
 export function formatUptime(totalSeconds: number, locale: string): string {
   const unit = (value: number, name: Intl.NumberFormatOptions["unit"]) =>
+    // eslint-disable-next-line ui-policy/debt -- Intl option `style`, not a DOM style attribute
     new Intl.NumberFormat(locale, { style: "unit", unit: name, unitDisplay: "narrow" }).format(
       value
     );

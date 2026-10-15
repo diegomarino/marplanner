@@ -1,36 +1,32 @@
-import { LocalizedApiError, responseMessage } from "@/lib/api-error";
-import { useEffect, useState } from "react";
-import { authFetch } from "@/lib/credential";
-import { useT } from "@/i18n";
-import type { MessageKey } from "@/i18n/messages";
-import type { EffectiveSettings, WeatherSettingsObject } from "../../shared";
+import { useState } from "react";
+
 import { AdminPanel } from "@/components/AdminPanel";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/i18n";
 import { LABEL_INLINE_CLASSES } from "@/lib/recipes";
+import type { WeatherSettingsObject } from "../../shared";
 
 /**
- * Edit the household weather location. Geolocation only prefills inputs; Save persists them.
- * Fetch settings on each mount because the household context does not refresh after writes.
- * A stale context would seed an empty form and could overwrite the saved location.
- * Clear is immediate; unavailable geolocation disables Locate.
+ * The household weather location, as a controlled panel: the Settings page owns the values and
+ * the single Save. Geolocation only prefills the fields (FR-010); Clear empties them locally and
+ * Save persists the result. Unavailable geolocation disables Locate.
  */
 
-interface WeatherFormState {
+export interface WeatherFormState {
   lat: string;
   lon: string;
   label: string;
 }
 
-const EMPTY_FORM: WeatherFormState = { lat: "", lon: "", label: "" };
+export const EMPTY_WEATHER_FORM: WeatherFormState = { lat: "", lon: "", label: "" };
 
 function formatGeolocationCoordinate(value: number): string {
   return String(Math.round(value * 10_000) / 10_000);
 }
 
-function toFormState(weather: WeatherSettingsObject | undefined): WeatherFormState {
-  if (!weather) throw new Error("Weather settings are unavailable");
+export function toWeatherFormState(weather: WeatherSettingsObject): WeatherFormState {
   return {
     lat: weather.lat === null ? "" : String(weather.lat),
     lon: weather.lon === null ? "" : String(weather.lon),
@@ -38,42 +34,54 @@ function toFormState(weather: WeatherSettingsObject | undefined): WeatherFormSta
   };
 }
 
+/** Why the pair cannot be written: only one coordinate filled, or a non-numeric one. */
+export function weatherFormProblem(form: WeatherFormState): "partial" | "invalid" | null {
+  const lat = form.lat.trim();
+  const lon = form.lon.trim();
+  if ((lat === "") !== (lon === "")) return "partial";
+  if (
+    (lat !== "" && !Number.isFinite(Number(lat))) ||
+    (lon !== "" && !Number.isFinite(Number(lon)))
+  ) {
+    return "invalid";
+  }
+  return null;
+}
+
+export function weatherFormDirty(a: WeatherFormState, b: WeatherFormState): boolean {
+  return a.lat !== b.lat || a.lon !== b.lon || a.label !== b.label;
+}
+
+/**
+ * The `weather` settings object to write. The object is replaced as a whole, so a blank label
+ * is left out and thereby cleared.
+ */
+export function weatherPayload(form: WeatherFormState): Record<string, unknown> {
+  const lat = form.lat.trim();
+  const lon = form.lon.trim();
+  const label = form.label.trim();
+  const settings: Record<string, unknown> = {
+    lat: lat === "" ? null : Number(lat),
+    lon: lon === "" ? null : Number(lon),
+  };
+  if (label !== "") settings.label = label;
+  return settings;
+}
+
 function hasGeolocation(): boolean {
   return typeof navigator !== "undefined" && "geolocation" in navigator;
 }
 
-export function WeatherManagement() {
+export interface WeatherManagementProps {
+  value: WeatherFormState;
+  onChange: (patch: Partial<WeatherFormState>) => void;
+  disabled?: boolean;
+}
+
+export function WeatherManagement({ value, onChange, disabled = false }: WeatherManagementProps) {
   const t = useT();
-
-  const [form, setForm] = useState<WeatherFormState>(EMPTY_FORM);
-  const [persistedForm, setPersistedForm] = useState<WeatherFormState>(EMPTY_FORM);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [locating, setLocating] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    void loadSettings();
-  }, []);
-
-  async function loadSettings() {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await authFetch("/api/settings", { credentials: "include" });
-      if (!response.ok) throw new Error("load failed");
-      const data = (await response.json()) as EffectiveSettings;
-      const nextForm = toFormState(data.weather);
-      setForm(nextForm);
-      setPersistedForm(nextForm);
-      setSaved(false);
-    } catch {
-      setError(t("weather.management.loadError"));
-    } finally {
-      setLoading(false);
-    }
-  }
 
   function locate() {
     if (!hasGeolocation() || locating) return;
@@ -81,13 +89,10 @@ export function WeatherManagement() {
     setError(null);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        // Prefill only — NEVER persisted until Save is explicitly clicked (FR-010).
-        setForm((prev) => ({
-          ...prev,
+        onChange({
           lat: formatGeolocationCoordinate(position.coords.latitude),
           lon: formatGeolocationCoordinate(position.coords.longitude),
-        }));
-        setSaved(false);
+        });
         setLocating(false);
       },
       () => {
@@ -97,77 +102,7 @@ export function WeatherManagement() {
     );
   }
 
-  async function writeWeather(
-    settings: Record<string, unknown>,
-    fallbackErrorKey: MessageKey
-  ): Promise<boolean> {
-    setSaving(true);
-    setError(null);
-    try {
-      const response = await authFetch("/api/settings", {
-        method: "PUT",
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ object: "weather", settings }),
-      });
-      if (!response.ok) {
-        throw new LocalizedApiError(await responseMessage(response, t(fallbackErrorKey)));
-      }
-      const data = (await response.json()) as EffectiveSettings;
-      const nextForm = toFormState(data.weather);
-      setForm(nextForm);
-      setPersistedForm(nextForm);
-      return true;
-    } catch (cause) {
-      setError(cause instanceof LocalizedApiError ? cause.message : t(fallbackErrorKey));
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function save() {
-    if (saving || saveDisabled) return;
-    const latTrim = form.lat.trim();
-    const lonTrim = form.lon.trim();
-    const labelTrim = form.label.trim();
-    const settings: Record<string, unknown> = {
-      lat: latTrim === "" ? null : Number(latTrim),
-      lon: lonTrim === "" ? null : Number(lonTrim),
-    };
-    if (labelTrim !== "") settings.label = labelTrim;
-    if (await writeWeather(settings, "weather.management.saveError")) {
-      setSaved(true);
-    }
-  }
-
-  async function clearLocation() {
-    if (saving) return;
-    if (await writeWeather({ lat: null, lon: null }, "weather.management.clearError")) {
-      setSaved(false);
-    }
-  }
-
-  const latTrim = form.lat.trim();
-  const lonTrim = form.lon.trim();
-  const latEmpty = latTrim === "";
-  const lonEmpty = lonTrim === "";
-  const partial = latEmpty !== lonEmpty;
-  const latInvalid = !latEmpty && !Number.isFinite(Number(latTrim));
-  const lonInvalid = !lonEmpty && !Number.isFinite(Number(lonTrim));
-  const dirty =
-    form.lat !== persistedForm.lat ||
-    form.lon !== persistedForm.lon ||
-    form.label !== persistedForm.label;
-  const saveDisabled = saving || !dirty || partial || latInvalid || lonInvalid;
-
-  if (loading) {
-    return (
-      <AdminPanel title={t("weather.management.title")}>
-        <p className="text-muted-foreground text-control">{t("weather.management.loading")}</p>
-      </AdminPanel>
-    );
-  }
+  const blank = value.lat === "" && value.lon === "" && value.label === "";
 
   return (
     <AdminPanel
@@ -177,18 +112,16 @@ export function WeatherManagement() {
     >
       <ErrorNotice message={error} data-testid="weather-error" />
 
-      <div className="bg-card p-4 rounded-lg shadow flex flex-col gap-2">
+      <div className="bg-card flex flex-col gap-2 rounded-lg p-4 shadow">
         <label className={LABEL_INLINE_CLASSES}>
           {t("weather.management.latLabel")}
           <Input
             type="number"
             step="any"
             data-testid="weather-lat-input"
-            value={form.lat}
-            onChange={(e) => {
-              setForm({ ...form, lat: e.target.value });
-              setSaved(false);
-            }}
+            value={value.lat}
+            disabled={disabled}
+            onChange={(e) => onChange({ lat: e.target.value })}
             className="w-auto"
           />
         </label>
@@ -198,11 +131,9 @@ export function WeatherManagement() {
             type="number"
             step="any"
             data-testid="weather-lon-input"
-            value={form.lon}
-            onChange={(e) => {
-              setForm({ ...form, lon: e.target.value });
-              setSaved(false);
-            }}
+            value={value.lon}
+            disabled={disabled}
+            onChange={(e) => onChange({ lon: e.target.value })}
             className="w-auto"
           />
         </label>
@@ -211,44 +142,36 @@ export function WeatherManagement() {
           <Input
             type="text"
             data-testid="weather-label-input"
-            value={form.label}
-            onChange={(e) => {
-              setForm({ ...form, label: e.target.value });
-              setSaved(false);
-            }}
+            value={value.label}
+            disabled={disabled}
+            onChange={(e) => onChange({ label: e.target.value })}
             placeholder={t("weather.management.labelPlaceholder")}
             className="w-auto"
           />
         </label>
+
+        {weatherFormProblem(value) !== null && (
+          <p data-testid="weather-hint" className="text-muted-foreground text-control">
+            {t("admin.settings.weatherIncomplete")}
+          </p>
+        )}
 
         <div className="flex gap-2">
           <Button
             type="button"
             variant="outline"
             data-testid="weather-locate"
-            disabled={!hasGeolocation() || locating || saving}
+            disabled={!hasGeolocation() || locating || disabled}
             onClick={locate}
           >
             {locating ? t("weather.management.locating") : t("weather.management.locate")}
           </Button>
           <Button
             type="button"
-            data-testid="weather-save"
-            disabled={saveDisabled}
-            onClick={() => void save()}
-          >
-            {saving
-              ? t("weather.management.saving")
-              : saved
-                ? `✓ ${t("weather.management.save")}`
-                : t("weather.management.save")}
-          </Button>
-          <Button
-            type="button"
             variant="outline"
             data-testid="weather-clear"
-            disabled={saving}
-            onClick={() => void clearLocation()}
+            disabled={disabled || blank}
+            onClick={() => onChange({ lat: "", lon: "", label: "" })}
           >
             {t("weather.management.clear")}
           </Button>

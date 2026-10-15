@@ -22,17 +22,16 @@
  * label map to pin here.
  */
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { NetworkDevicesManagement } from "@/admin/NetworkDevicesManagement";
-import { WeatherManagement } from "@/admin/WeatherManagement";
+import { WeatherManagement, type WeatherFormState } from "@/admin/WeatherManagement";
 import { HouseholdSettingsProvider } from "@/lib/householdSettings";
 import { LanguageProvider } from "@/i18n";
 import { Role } from "../../src/shared";
 import { DensityViolationError, assertKioskDensityCompliant } from "./helpers/density";
 import { injectDensityStyles } from "./helpers/densityStyles";
-
-type FetchCall = Parameters<typeof globalThis.fetch>;
 
 function json(body: unknown, status = 200): Response {
   return new Response(body === null ? null : JSON.stringify(body), { status });
@@ -152,27 +151,6 @@ function mockNetworkDevicesBackend(
   return mockFetch;
 }
 
-function mockWeatherBackend(
-  overrides: Partial<{ settingsGet: () => Response; settingsPut: () => Response }> = {}
-) {
-  const mockFetch = vi.fn((input: string | URL, init?: Parameters<typeof fetch>[1]) => {
-    const url = String(input);
-    const method = init?.method ?? "GET";
-
-    if (url.includes("/api/settings") && method === "PUT") {
-      return Promise.resolve(overrides.settingsPut ? overrides.settingsPut() : json(SETTINGS_BODY));
-    }
-    if (url.includes("/api/settings")) {
-      return Promise.resolve(overrides.settingsGet ? overrides.settingsGet() : json(SETTINGS_BODY));
-    }
-
-    throw new Error(`unexpected fetch: ${url} (${method})`);
-  });
-
-  vi.stubGlobal("fetch", mockFetch);
-  return mockFetch;
-}
-
 function renderNetworkDevices() {
   return render(
     <HouseholdSettingsProvider>
@@ -183,13 +161,18 @@ function renderNetworkDevices() {
   );
 }
 
-function renderWeather() {
+function WeatherHarness({ initial }: { initial: WeatherFormState }) {
+  const [value, setValue] = useState(initial);
+  return (
+    <WeatherManagement value={value} onChange={(patch) => setValue((c) => ({ ...c, ...patch }))} />
+  );
+}
+
+function renderWeather(initial: WeatherFormState = { lat: "10", lon: "20", label: "" }) {
   return render(
-    <HouseholdSettingsProvider>
-      <LanguageProvider>
-        <WeatherManagement />
-      </LanguageProvider>
-    </HouseholdSettingsProvider>
+    <LanguageProvider>
+      <WeatherHarness initial={initial} />
+    </LanguageProvider>
   );
 }
 
@@ -418,34 +401,30 @@ describe("NetworkDevicesManagement — unchanged behaviour after migration (regr
 
 describe("WeatherManagement — kiosk density (SC-001, SC-002)", () => {
   it("meets kiosk density across its single, static control set", async () => {
-    mockWeatherBackend();
     const uninject = await injectDensityStyles();
     document.documentElement.setAttribute("data-density", "kiosk");
 
     try {
       const { container } = renderWeather();
-      // Anchored on the loaded-only lat input — the loading skeleton shares the SAME
-      // AdminPanel title ("Weather") and would satisfy a title-only assertion by accident.
       await screen.findByTestId("weather-lat-input");
 
-      expect(countControls(container)).toBe(6); // 3 inputs + Locate/Save/Clear
+      expect(countControls(container)).toBe(5); // 3 inputs + Locate/Clear
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
     }
   });
 
-  it("DELIBERATE NEGATIVE — forcing this surface's own Save button below the kiosk minimum makes the assertion fail", async () => {
-    mockWeatherBackend();
+  it("DELIBERATE NEGATIVE — forcing this surface's own Clear button below the kiosk minimum makes the assertion fail", async () => {
     const uninject = await injectDensityStyles();
     document.documentElement.setAttribute("data-density", "kiosk");
 
     try {
       const { container } = renderWeather();
-      const saveButton = await screen.findByTestId("weather-save");
+      const clearButton = await screen.findByTestId("weather-clear");
 
-      saveButton.style.height = "10px";
-      saveButton.style.fontSize = "8px";
+      clearButton.style.height = "10px";
+      clearButton.style.fontSize = "8px";
 
       let thrown: unknown;
       try {
@@ -459,8 +438,8 @@ describe("WeatherManagement — kiosk density (SC-001, SC-002)", () => {
       expect(message).toMatch(/height 10px is below the kiosk minimum 48px/);
       expect(message).toMatch(/font-size 8px is below the kiosk minimum 18px/);
 
-      saveButton.style.height = "";
-      saveButton.style.fontSize = "";
+      clearButton.style.height = "";
+      clearButton.style.fontSize = "";
       expect(() => assertKioskDensityCompliant(container)).not.toThrow();
     } finally {
       uninject();
@@ -468,19 +447,17 @@ describe("WeatherManagement — kiosk density (SC-001, SC-002)", () => {
   });
 
   it("the census control count reacts to a control's removal (proves the count is not vacuous)", async () => {
-    mockWeatherBackend();
     const { container } = renderWeather();
     await screen.findByTestId("weather-lat-input");
 
-    expect(countControls(container)).toBe(6);
-    screen.getByTestId("weather-clear").remove();
     expect(countControls(container)).toBe(5);
+    screen.getByTestId("weather-clear").remove();
+    expect(countControls(container)).toBe(4);
   });
 });
 
 describe("WeatherManagement — adopts the AdminPanel L2 frame (per-batch DoD)", () => {
-  it("wraps the surface in a landmark region labelled by its own title, anchored on LOADED content", async () => {
-    mockWeatherBackend();
+  it("wraps the surface in a landmark region labelled by its own title", async () => {
     renderWeather();
 
     await screen.findByTestId("weather-lat-input");
@@ -491,51 +468,20 @@ describe("WeatherManagement — adopts the AdminPanel L2 frame (per-batch DoD)",
 });
 
 describe("WeatherManagement — every error state is announced (SC-011)", () => {
-  it("announces a load failure through ErrorNotice's live region", async () => {
-    mockWeatherBackend({ settingsGet: () => json(null, 500) });
-    renderWeather();
-
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Failed to load weather settings.");
-    expect(alert).toHaveAttribute("aria-live", "assertive");
-    expect(alert).toHaveAttribute("data-testid", "weather-error");
-  });
-
-  it("announces a save failure through ErrorNotice's live region", async () => {
-    mockWeatherBackend({ settingsPut: () => json({ message: "boom" }, 500) });
-    renderWeather();
-
-    await screen.findByTestId("weather-lat-input");
-    fireEvent.change(screen.getByTestId("weather-lat-input"), { target: { value: "10" } });
-    fireEvent.change(screen.getByTestId("weather-lon-input"), { target: { value: "20" } });
-    fireEvent.click(screen.getByTestId("weather-save"));
-
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Failed to save the weather location.");
-    expect(alert).toHaveAttribute("aria-live", "assertive");
-  });
-});
-
-describe("WeatherManagement — unchanged behaviour after migration (regression guard)", () => {
-  it("still writes the household weather location via PUT /api/settings on Save", async () => {
-    const mockFetch = mockWeatherBackend();
-    renderWeather();
-
-    await screen.findByTestId("weather-lat-input");
-    fireEvent.change(screen.getByTestId("weather-lat-input"), { target: { value: "41.4" } });
-    fireEvent.change(screen.getByTestId("weather-lon-input"), { target: { value: "2.2" } });
-    fireEvent.click(screen.getByTestId("weather-save"));
-
-    await waitFor(() => {
-      const putCall = (mockFetch.mock.calls as FetchCall[]).find(
-        ([reqInput, init]) => String(reqInput).includes("/api/settings") && init?.method === "PUT"
-      );
-      expect(putCall).toBeDefined();
-      const body = JSON.parse(String(putCall?.[1]?.body)) as {
-        object: string;
-        settings: { lat: number; lon: number };
-      };
-      expect(body).toMatchObject({ object: "weather", settings: { lat: 41.4, lon: 2.2 } });
+  it("announces a refused geolocation through ErrorNotice's live region", async () => {
+    Object.defineProperty(navigator, "geolocation", {
+      value: { getCurrentPosition: (_ok: unknown, fail: () => void) => fail() },
+      configurable: true,
     });
+    try {
+      renderWeather();
+      fireEvent.click(await screen.findByTestId("weather-locate"));
+
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveAttribute("aria-live", "assertive");
+      expect(alert).toHaveAttribute("data-testid", "weather-error");
+    } finally {
+      Reflect.deleteProperty(navigator, "geolocation");
+    }
   });
 });
