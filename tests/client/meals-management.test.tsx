@@ -61,6 +61,10 @@ function mockBackend(overrides: Partial<Record<string, () => Response>> = {}) {
       return Promise.resolve(json({ locale: { timezone: "UTC", language: "en" } }));
     }
 
+    if (method !== "GET" && !/\/api\/recipes\/[^/]+$/.test(url)) {
+      return Promise.resolve(overrides.write ? overrides.write() : json({}));
+    }
+
     if (overrides.recipes && url.startsWith("/api/recipes") && method === "GET") {
       return Promise.resolve(overrides.recipes());
     }
@@ -750,5 +754,73 @@ describe("MealsManagement — each plan card contains its recurring entries", ()
     ).toHaveLength(1);
     // An inactive plan still lists (and can edit) its entries.
     expect(await screen.findByTestId("meals-plan-entries-p2")).toBeInTheDocument();
+  });
+});
+
+describe("MealsManagement — writes keep the week grid and plan cards coherent", () => {
+  function calls(
+    mockFetch: ReturnType<typeof mockBackend>,
+    match: (url: string, method: string) => boolean
+  ) {
+    return (mockFetch.mock.calls as FetchCall[]).filter(([input, init]) =>
+      match(String(input), init?.method ?? "GET")
+    );
+  }
+
+  it("re-reads the week menu after a plan is deactivated", async () => {
+    const mockFetch = mockBackend();
+    renderSurface();
+
+    await screen.findByTestId("meal-plan-grid");
+    const weekReads = calls(mockFetch, (url) => url.startsWith("/api/menu/week")).length;
+    fireEvent.click(await screen.findByRole("button", { name: PLAN.name }));
+
+    await waitFor(() =>
+      expect(
+        calls(mockFetch, (url, method) => url === "/api/meal-plans/p1" && method === "PATCH")
+      ).toHaveLength(1)
+    );
+    const [, init] = calls(
+      mockFetch,
+      (url, method) => url === "/api/meal-plans/p1" && method === "PATCH"
+    )[0];
+    expect(JSON.parse(init!.body as string)).toEqual({ active: false });
+    await waitFor(() =>
+      expect(calls(mockFetch, (url) => url.startsWith("/api/menu/week")).length).toBeGreaterThan(
+        weekReads
+      )
+    );
+  });
+
+  it("keeps a plan's entries visible with an error when saving one fails", async () => {
+    mockBackend({ write: () => json(null, 500) });
+    renderSurface();
+
+    const entryRow = await screen.findByTestId("meals-plan-entry-row");
+    fireEvent.click(within(entryRow).getByRole("button", { name: "Edit" }));
+    fireEvent.click(within(entryRow).getByRole("button", { name: "Save" }));
+
+    const alert = await within(planCard()).findByRole("alert");
+    expect(alert).toHaveTextContent("Failed to update plan entries.");
+    // A write failure is not a load failure: the list stays, with no Retry.
+    expect(screen.getByTestId("meals-plan-entry-row")).toBeInTheDocument();
+    expect(screen.queryByTestId("meals-plan-entries-retry")).toBeNull();
+  });
+
+  it("shows a failed week-grid write inside the dialog, not as a page error", async () => {
+    mockBackend({ write: () => json(null, 500) });
+    renderSurface();
+
+    await screen.findByTestId("meal-day-heading-2026-01-12");
+    fireEvent.click(screen.getAllByRole("button", { name: /^Add dinner on/ })[0]);
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("radio", { name: "Note" }));
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Note" }), {
+      target: { value: "Soup" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add Entry" }));
+
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("Failed to add entry.");
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 });
