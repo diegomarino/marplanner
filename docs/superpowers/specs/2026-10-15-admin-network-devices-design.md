@@ -37,7 +37,7 @@ Out of scope: any backend change. No endpoint, shared type, OpenAPI file or migr
 Cause (verified by reading code, not a runtime fault):
 
 1. Every route of the domain is registered with `preHandler = [requireManagementKey(),
-   requireCapability("network:admin")]` (`src/server/routes/network-devices.ts:56-61`).
+requireCapability("network:admin")]` (`src/server/routes/network-devices.ts:56-61`).
 2. `requireManagementKey` (`src/server/auth/capability.ts`) answers 403
    `{error:"forbidden", code: AUTH_SCOPE_DENIED_CODE}` for any API key whose `kind === "device"`.
 3. A browser that went through the normal provisioning screen (and the dev helper
@@ -80,6 +80,7 @@ prefix matching for admin sub-paths first.
 
 D2. Component split (one responsibility each), all under `src/client/admin/network-devices/` except
 the entry file which keeps its path and export name so `AdminRoutes.tsx` is untouched:
+
 - `NetworkDevicesManagement.tsx` (entry): AdminPanel, tablist, "Add device" header button, owns data.
 - `network-devices/data.ts`: the `useNetworkDevicesData` hook (devices, cacheState, members, errors,
   30 s refresh, `attemptedBlockTarget`) plus the pure helpers `parseErrorCode`,

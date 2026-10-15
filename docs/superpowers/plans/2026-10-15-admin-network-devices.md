@@ -53,10 +53,12 @@
 ## Task 1: Data hook and pure helpers (`data.ts`)
 
 **Files:**
+
 - Create: `src/client/admin/network-devices/data.ts`
 - Create: `tests/client/network-devices-data.test.ts` (jsdom; vitest environment for `tests/client` is already jsdom)
 
 **Interfaces:**
+
 - Produces (all exported from `data.ts`):
   - `const REFRESH_MS = 30_000`
   - `parseErrorCode(response: Response): Promise<string | undefined>`
@@ -139,7 +141,10 @@ describe("useNetworkDevicesData", () => {
     Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true });
   });
 
-  function route(handlers: { devices: () => Response | Promise<Response>; members?: () => Response }) {
+  function route(handlers: {
+    devices: () => Response | Promise<Response>;
+    members?: () => Response;
+  }) {
     vi.mocked(globalThis.fetch).mockImplementation(async (input) => {
       const url = String(input);
       if (url === "/api/network-devices") return handlers.devices();
@@ -410,6 +415,7 @@ export type NetworkDevicesData = ReturnType<typeof useNetworkDevicesData>;
 ## Task 2: i18n keys
 
 **Files:**
+
 - Modify: `src/client/i18n/messages.ts` (en near lines 1127-1285, es near 2413-2564)
 
 - [ ] **Step 1:** Change VALUES of existing keys (en then es), keys unchanged:
@@ -418,17 +424,19 @@ export type NetworkDevicesData = ReturnType<typeof useNetworkDevicesData>;
   - `networkDevices.action.register`: "Add device" / "Añadir dispositivo"
   - `networkDevices.picker.select`: "Add" / "Añadir"
 - [ ] **Step 2:** Add the new keys listed in spec section 7 as one block per locale headed by `// admin-network-devices`, at the end of that locale's admin keys. Use the exact keys and English/Spanish strings from the spec, except replace `networkDevices.discover.sortBy` with the template `"Sort by {column}"` / `"Ordenar por {column}"` (interpolated with `.replace`).
-  Locate "end of the existing admin keys" by searching for the last `admin.`/`networkDevices.`-adjacent block in each locale; other workers add their own `// admin-<page>` blocks near the end of the same area, so keep yours contiguous and self-contained to keep merge conflicts mechanical.
+      Locate "end of the existing admin keys" by searching for the last `admin.`/`networkDevices.`-adjacent block in each locale; other workers add their own `// admin-<page>` blocks near the end of the same area, so keep yours contiguous and self-contained to keep merge conflicts mechanical.
 - [ ] **Step 3:** `npx vitest run tests/client/network-devices-i18n-parity.test.ts` PASS; `npx tsc -b` has no new errors from keys.
 - [ ] **Step 4: Commit** `feat(admin): add network devices admin strings`.
 
 ## Task 3: Status presentation (`DeviceStatus.tsx`)
 
 **Files:**
+
 - Create: `src/client/admin/network-devices/DeviceStatus.tsx`
 - Test: extended in Task 6 through the component tests (existing status assertions)
 
 **Interfaces:**
+
 - Produces: `export function DeviceStatus(props: { device: RegisteredDevice; cacheState: LiveCacheState | null; attemptedBlockTarget?: boolean }): JSX.Element` and `export function MemberLabel(props: { device: RegisteredDevice }): JSX.Element`.
 - Consumes: `useTranslation` from `@/i18n` (`{ t, language }`), `cn` from `@/lib/utils`.
 
@@ -443,18 +451,21 @@ export type NetworkDevicesData = ReturnType<typeof useNetworkDevicesData>;
 ## Task 4: Registered devices tab (`RegisteredDevices.tsx`)
 
 **Files:**
+
 - Create: `src/client/admin/network-devices/RegisteredDevices.tsx`
 
 **Interfaces:**
+
 - Consumes: `NetworkDevicesData` and helpers from `./data`, `DeviceStatus`/`MemberLabel` from `./DeviceStatus`.
 - Produces: `export function RegisteredDevices(props: { data: NetworkDevicesData; onAdd: () => void }): JSX.Element`.
 
 Behaviour (port the logic of the old `saveEdit`, `deleteDevice`, `toggleBlock` verbatim except as stated):
+
 - Renders: `<ErrorNotice message={listError} data-testid="network-devices-error" />` where `listError = data.listErrorKey ? t(data.listErrorKey) : null`; when `listError` is set also `<Button type="button" variant="secondary" onClick={() => void data.reloadAll()} data-testid="network-devices-retry">{t("networkDevices.action.retry")}</Button>`; `<ErrorNotice ... data-testid="network-devices-members-error" />` for `membersErrorKey`.
 - Empty (no `listError`, no devices): `<p data-testid="network-devices-empty">{t("networkDevices.management.empty")}</p>` followed by `<Button type="button" variant="link" onClick={onAdd} data-testid="network-devices-empty-add">{t("networkDevices.management.emptyAdd")}</Button>`. Both inside one wrapper.
 - List: `<ul data-testid="network-devices-list">`, rows `li data-testid="network-devices-row-${id}"` with `flex flex-wrap items-start justify-between gap-2`. Left: `<strong data-testid="network-devices-alias-${id}">`, `<DeviceStatus .../>`, `<MemberLabel .../>`. Right: three text buttons, same testids and labels as before: Edit (`network-devices-edit-${id}`, variant outline), Block/Unblock (`network-devices-toggle-block-${id}`, variant outline, busy labels as before), Delete (`network-devices-delete-${id}`, variant destructive). Row `ErrorNotice` `network-devices-row-error-${id}` stays.
 - Block/unblock: same code as old `toggleBlock`, plus `data.markMutation()` before the request, `data.applyDevice(updated)` and `data.setAttemptedBlockTarget(device.id, targetIsBlocked)` on success; 502 still maps via `controllerErrorMessageKey(await parseErrorCode(response))`.
-- Edit Dialog (state `editing: RegisteredDevice | null`, `draft {alias, memberId}`, `savingEdit`, `editError`): 
+- Edit Dialog (state `editing: RegisteredDevice | null`, `draft {alias, memberId}`, `savingEdit`, `editError`):
   ```tsx
   <Dialog open={editing !== null} onOpenChange={(open) => { if (!open && !savingEdit) closeEdit(); }}>
     <DialogContent closeLabel={t("networkDevices.action.cancel")} data-testid="network-devices-edit-dialog" className="sm:max-w-md">
@@ -478,11 +489,22 @@ Behaviour (port the logic of the old `saveEdit`, `deleteDevice`, `toggleBlock` v
   Copy the member `<option>` logic from the old edit block unchanged (blank "No member" option, disabled option for an inactive current member, disabled option when the members read failed, then `data.members`). `saveEdit`: trim alias; blank gives `setEditError(t("networkDevices.error.aliasRequired"))` and returns; PATCH body `{alias, memberId: draft.memberId === "" ? null : draft.memberId}`; success `data.applyDevice(updated)` then close; failure `setEditError(t("networkDevices.error.editGeneric"))`. Guard `editing` being non-null before rendering testids (render `DialogContent` children only when `editing`). Radix needs a Dialog title always present: keep `DialogTitle` outside the conditional.
 - Delete: `deleting: RegisteredDevice | null` set by the Delete button, then
   ```tsx
-  <ConfirmDialog open={deleting !== null} onOpenChange={(open) => { if (!open) setDeleting(null); }}
+  <ConfirmDialog
+    open={deleting !== null}
+    onOpenChange={(open) => {
+      if (!open) setDeleting(null);
+    }}
     title={t("networkDevices.delete.title")}
-    description={deleting && (deleting.isBlocked || deleting.beliefDiverged) ? t("networkDevices.action.deleteConfirmBlocked") : t("networkDevices.action.deleteConfirm")}
-    confirmLabel={t("networkDevices.action.delete")} cancelLabel={t("networkDevices.action.cancel")}
-    confirmTestId="network-devices-delete-confirm" onConfirm={() => deleting && void deleteDevice(deleting)} />
+    description={
+      deleting && (deleting.isBlocked || deleting.beliefDiverged)
+        ? t("networkDevices.action.deleteConfirmBlocked")
+        : t("networkDevices.action.deleteConfirm")
+    }
+    confirmLabel={t("networkDevices.action.delete")}
+    cancelLabel={t("networkDevices.action.cancel")}
+    confirmTestId="network-devices-delete-confirm"
+    onConfirm={() => deleting && void deleteDevice(deleting)}
+  />
   ```
   `deleteDevice` = old body minus `window.confirm`; `data.markMutation()` first; 404 still counts as success; success `data.removeDevice(id)`.
 - Keep the old comments explaining WHY (stronger warning when divergent; 404 as success).
@@ -492,15 +514,18 @@ Behaviour (port the logic of the old `saveEdit`, `deleteDevice`, `toggleBlock` v
 ## Task 5: Discover and register tab (`DiscoverDevices.tsx`)
 
 **Files:**
+
 - Create: `src/client/admin/network-devices/DiscoverDevices.tsx`
 
 **Interfaces:**
+
 - Consumes: `NetworkDevicesData`, `LoadFailure`, `loadFailureMessageKey`, `parseErrorCode` from `./data`; `LiveClient`, `LiveCacheState`, `LiveClientsResponse` from shared.
 - Produces: `export function DiscoverDevices(props: { data: NetworkDevicesData; onRegistered: () => void }): JSX.Element`.
 - Pure helper exported for tests: `export function sortClients(clients: LiveClient[], key: "name" | "mac", dir: "asc" | "desc", language: string): LiveClient[]` (stable copy; name sort uses `(a.displayName ?? "")`, unnamed clients LAST for both directions of name sort; MAC sort plain string compare).
 - Also exported: `export function initialAlias(client: LiveClient): string` returning `(client.displayName ?? "").trim().slice(0, 80)`.
 
 Behaviour:
+
 - On mount and on Refresh (`network-devices-discover-refresh`, `Button variant="outline"`, label `networkDevices.action.refresh`): `GET /api/network-devices/live-clients`; state `{phase:"loading"} | {phase:"loadError"; key: MessageKey} | {phase:"ready"; state; clients}`. Non-ok: `new LoadFailure(status, code)` mapped with `loadFailureMessageKey(status, code, "networkDevices.error.pickerLoadError")`.
 - Wrapper `<section aria-labelledby=... data-testid="network-devices-picker">` with `h3` = `networkDevices.picker.title`, description `networkDevices.picker.description` (keep the old rationale comment about not nesting an `AdminPanel`).
 - Exactly one of: loading (`network-devices-picker-state`, `networkDevices.picker.state.loading`); load error (`ErrorNotice` testid `network-devices-picker-state` plus Retry button `network-devices-picker-retry`); non-fresh state message (`network-devices-picker-state`, the four existing `networkDevices.picker.state.*` keys); `fresh` with zero clients shows `freshEmpty` text; otherwise the table.
@@ -513,7 +538,11 @@ Behaviour:
 
 ```ts
 describe("discovery helpers", () => {
-  const c = (mac: string, displayName: string | null): LiveClient => ({ mac, displayName, isBlocked: false });
+  const c = (mac: string, displayName: string | null): LiveClient => ({
+    mac,
+    displayName,
+    isBlocked: false,
+  });
   it("sorts by name ascending with unnamed clients last, in either direction", () => {
     const list = [c("bb", null), c("aa", "Zed"), c("cc", "Amy")];
     expect(sortClients(list, "name", "asc", "en").map((x) => x.mac)).toEqual(["cc", "aa", "bb"]);
@@ -531,15 +560,19 @@ describe("discovery helpers", () => {
   });
 });
 ```
-  Run it, see it fail (module missing), then write the file, then see it pass.
+
+Run it, see it fail (module missing), then write the file, then see it pass.
+
 - [ ] **Step 2: Commit** `feat(admin): add the network device discovery tab`.
 
 ## Task 6: Entry component and wiring
 
 **Files:**
+
 - Modify (rewrite): `src/client/admin/NetworkDevicesManagement.tsx` (same path, same `NetworkDevicesManagement` export; keep the module header doc, updated: tabs are local state, delete uses `ConfirmDialog`).
 
 Contents:
+
 ```tsx
 export function NetworkDevicesManagement() {
   const { t } = useTranslation();
@@ -549,7 +582,9 @@ export function NetworkDevicesManagement() {
   if (data.loading && tab === "registered") {
     return (
       <AdminPanel title={t("networkDevices.management.title")}>
-        <p className="text-muted-foreground text-control">{t("networkDevices.management.loading")}</p>
+        <p className="text-muted-foreground text-control">
+          {t("networkDevices.management.loading")}
+        </p>
       </AdminPanel>
     );
   }
@@ -558,12 +593,23 @@ export function NetworkDevicesManagement() {
       title={t("networkDevices.management.title")}
       description={t("networkDevices.management.description")}
       data-testid="network-devices-management"
-      actions={tab === "registered" ? (
-        <Button type="button" data-testid="network-devices-open-picker" onClick={() => setTab("add")}>
-          {t("networkDevices.action.register")}
-        </Button>) : undefined}
+      actions={
+        tab === "registered" ? (
+          <Button
+            type="button"
+            data-testid="network-devices-open-picker"
+            onClick={() => setTab("add")}
+          >
+            {t("networkDevices.action.register")}
+          </Button>
+        ) : undefined
+      }
     >
-      <div role="tablist" aria-label={t("networkDevices.tabs.label")} className="flex w-fit gap-1 rounded-lg border bg-muted p-1">
+      <div
+        role="tablist"
+        aria-label={t("networkDevices.tabs.label")}
+        className="flex w-fit gap-1 rounded-lg border bg-muted p-1"
+      >
         {/* two Button role="tab": variant default when selected else ghost, aria-selected, testids network-devices-tab-registered / network-devices-tab-add, labels networkDevices.tabs.registered / networkDevices.tabs.add */}
       </div>
       {tab === "registered" ? (
@@ -575,6 +621,7 @@ export function NetworkDevicesManagement() {
   );
 }
 ```
+
 Important: the loading early-return must not hide the "Add device" button after a load error (it only shows while `data.loading`); `data.loading` is false once the first load settles (including failure), which keeps the primary control reachable with a 403.
 
 - [ ] **Step 1:** Rewrite the file as above (delete the moved code, helper functions, and the stale comment block about "inline modal panel").
@@ -585,10 +632,12 @@ Important: the loading early-return must not hide the "Add device" button after 
 ## Task 7: Update and extend component tests (TDD against the new behaviour)
 
 **Files:**
+
 - Modify: `tests/client/network-devices-management.test.tsx`, `tests/client/network-weather-admin.test.tsx`
 - Verify unchanged-green: `tests/client/admin-gate-panel-reset.test.tsx`, `tests/client/network-devices-i18n-parity.test.ts`
 
 Edits to `network-devices-management.test.tsx` (keep titles; test ids with an id suffix are intentionally kept):
+
 - Edit tests (`PATCH updates alias/member`, `the MAC-shape scan ALSO holds once a row enters edit mode`, `editing a device linked to an INACTIVE member`, `edit: with a failing members load...`): the form is now in a Dialog rendered in a portal, so query with `screen`/`document.body` instead of a container, and for the MAC-shape scan assert on `document.body.textContent`. The testids `network-devices-edit-alias-<id>`, `-edit-member-<id>`, `-save-<id>`, `-cancel-edit-<id>` are unchanged.
 - Delete tests (`delete: ... BLOCKED ...`, `delete: cancelling ...`, `delete: a device with isBlocked=false + beliefDiverged=true ...`): remove `vi.spyOn(window, "confirm")`; click `network-devices-delete-<id>`, then assert the dialog text (`messages.en["networkDevices.action.deleteConfirmBlocked"]` or `deleteConfirm`) is visible and click `network-devices-delete-confirm` (or the Cancel button, name `messages.en["networkDevices.action.cancel"]`, and assert no DELETE fetch).
 - Picker tests: `fireEvent.click(getByTestId("network-devices-open-picker"))` now switches to the Add tab and everything under `network-devices-picker*` is unchanged. The "state=fresh renders the client list" test now sees a table (the regexp queries still work). `register: a successful submission adds the device to the list and closes the picker`: after submit, assert the Registered tab is active (`network-devices-tab-registered` has `aria-selected="true"`), the dialog is gone, and the new alias is in `network-devices-list`.
@@ -633,11 +682,15 @@ it("the page heading equals the sidebar label", async () => {
   vi.mocked(globalThis.fetch).mockImplementation(mockRouter({ devices: [] }));
   renderManagement();
   await screen.findByTestId("network-devices-empty");
-  expect(screen.getByRole("heading", { name: messages.en["admin.sidebar.networkDevices"] })).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: messages.en["admin.sidebar.networkDevices"] })
+  ).toBeInTheDocument();
 });
 
 it("the empty state links to the Add tab", async () => {
-  vi.mocked(globalThis.fetch).mockImplementation(mockRouter({ devices: [], liveClients: { state: "fresh", clients: [] } }));
+  vi.mocked(globalThis.fetch).mockImplementation(
+    mockRouter({ devices: [], liveClients: { state: "fresh", clients: [] } })
+  );
   renderManagement();
   fireEvent.click(await screen.findByTestId("network-devices-empty-add"));
   expect(screen.getByTestId("network-devices-tab-add")).toHaveAttribute("aria-selected", "true");
@@ -653,10 +706,13 @@ it("Add tab: already-registered MACs (compared case-insensitively) are dimmed wi
   vi.mocked(globalThis.fetch).mockImplementation(
     mockRouter({
       devices: [device({ mac: MAC.toUpperCase() })],
-      liveClients: { state: "fresh", clients: [
-        { mac: MAC, displayName: "Taken", isBlocked: false },
-        { mac: "11:22:33:44:55:66", displayName: "Free", isBlocked: false },
-      ] },
+      liveClients: {
+        state: "fresh",
+        clients: [
+          { mac: MAC, displayName: "Taken", isBlocked: false },
+          { mac: "11:22:33:44:55:66", displayName: "Free", isBlocked: false },
+        ],
+      },
     })
   );
   renderManagement();
@@ -666,17 +722,27 @@ it("Add tab: already-registered MACs (compared case-insensitively) are dimmed wi
   expect(screen.getByTestId("network-devices-picker-select-11:22:33:44:55:66")).toBeInTheDocument();
 });
 
-it("Add tab: sorting by name then MAC reorders the rows and toggles aria-sort", async () => { /* click network-devices-sort-mac, read row order via getAllByTestId(/^network-devices-picker-client-/) */ });
+it("Add tab: sorting by name then MAC reorders the rows and toggles aria-sort", async () => {
+  /* click network-devices-sort-mac, read row order via getAllByTestId(/^network-devices-picker-client-/) */
+});
 
-it("register dialog prefills the alias from the client name, never shows the MAC, and returns to the list after success", async () => { /* select a client, expect the alias input value, expect dialog textContent not to match MAC_SHAPED, submit, expect list tab selected */ });
+it("register dialog prefills the alias from the client name, never shows the MAC, and returns to the list after success", async () => {
+  /* select a client, expect the alias input value, expect dialog textContent not to match MAC_SHAPED, submit, expect list tab selected */
+});
 
-it("a 403 on live-clients shows the management-required message with Retry", async () => { /* ... network-devices-picker-state + network-devices-picker-retry */ });
+it("a 403 on live-clients shows the management-required message with Retry", async () => {
+  /* ... network-devices-picker-state + network-devices-picker-retry */
+});
 
-it("an unnamed client opens the dialog with an empty alias", async () => { /* displayName: null */ });
+it("an unnamed client opens the dialog with an empty alias", async () => {
+  /* displayName: null */
+});
 ```
+
 Fill the commented bodies with concrete code following the neighbouring tests' style (they are short); do not leave comments in place of assertions. Import `AUTH_SCOPE_DENIED_CODE` and `LiveClient` from `../../src/shared` if missing, and `sortClients`/`initialAlias` from `@/admin/network-devices/DiscoverDevices` for the Task 5 helper block.
 
 Edits to `network-weather-admin.test.tsx`:
+
 - Update the file header comment (it claims `ConfirmDialog` is deliberately not adopted and e2e depends on `window.confirm`): now adopted; the e2e spec drives the ConfirmDialog.
 - Test `still confirms delete via window.confirm` (around line 392): rewrite to click delete, assert the ConfirmDialog shows `"Delete this device? This cannot be undone."`, click `network-devices-delete-confirm`, expect the DELETE fetch, and keep the title (rename title to `still confirms delete before deleting (ConfirmDialog)`; titles are in the cohort fixture, resynced in Task 10).
 - Density census tests (lines ~210-290): the control counts per phase change (tabs add 2 controls, the "Add device" button moves into the header, rows are unchanged, dialogs are closed). Run, read the failure numbers, confirm each change is explained by the new tabs/Retry button, then update the expected numbers. Do not weaken `assertKioskDensityCompliant`.
@@ -689,6 +755,7 @@ Edits to `network-weather-admin.test.tsx`:
 ## Task 8: E2E fixture and spec
 
 **Files:**
+
 - Modify: `tests/e2e/unifi-fixture-server.ts` (two small additions)
 - Modify: `tests/e2e/network-devices.spec.ts`
 
@@ -708,25 +775,34 @@ await context.addCookies([{ name: "mp_device_key", value: MP_MANAGEMENT_KEY, url
 await page.getByTestId("network-devices-retry").click();
 await expect(page.getByTestId("network-devices-empty")).toBeVisible();
 ```
-  This means the existing early `context.addCookies([{ name: "mp_device_key", value: MP_MANAGEMENT_KEY ...}])` (right after the catalog response) must move to the Retry step, BUT the test also polls `/api/network-devices/live-clients` with `page.request` before unlocking admin (needs the management cookie). Resolve: poll with an explicit header-less request using a separate `request` context created via `playwright.request.newContext({ extraHTTPHeaders: { Cookie: \`mp_gate=${gateCookieValue(MP_ACCESS_TOKEN)}; mp_device_key=${MP_MANAGEMENT_KEY}\` } })`, or simply poll after the Retry step. Pick the second: do the 403 assertion and the cookie swap first, then the cache poll, then continue in the UI. Use the order: unlock admin, open section, assert 403 message, swap cookie, Retry, assert empty state, poll the live cache until `fresh`.
-  Then:
+
+This means the existing early `context.addCookies([{ name: "mp_device_key", value: MP_MANAGEMENT_KEY ...}])` (right after the catalog response) must move to the Retry step, BUT the test also polls `/api/network-devices/live-clients` with `page.request` before unlocking admin (needs the management cookie). Resolve: poll with an explicit header-less request using a separate `request` context created via `playwright.request.newContext({ extraHTTPHeaders: { Cookie: \`mp_gate=${gateCookieValue(MP_ACCESS_TOKEN)}; mp_device_key=${MP_MANAGEMENT_KEY}\` } })`, or simply poll after the Retry step. Pick the second: do the 403 assertion and the cookie swap first, then the cache poll, then continue in the UI. Use the order: unlock admin, open section, assert 403 message, swap cookie, Retry, assert empty state, poll the live cache until `fresh`.
+Then:
+
 ```ts
 // --- Add tab: discovery table, sort, register in a dialog ---
 await page.getByTestId("network-devices-empty-add").click();
 await expect(page.getByTestId("network-devices-picker")).toBeVisible();
 const macLower = mac.toLowerCase();
-await expect(page.getByTestId(`network-devices-picker-client-${macLower}`)).toBeVisible({ timeout: 10_000 });
+await expect(page.getByTestId(`network-devices-picker-client-${macLower}`)).toBeVisible({
+  timeout: 10_000,
+});
 await page.getByTestId("network-devices-sort-mac").click();
 await page.getByTestId(`network-devices-picker-select-${macLower}`).click();
 const dialog = page.getByTestId("network-devices-register-dialog");
 await expect(dialog).toBeVisible();
-await expect(dialog.getByTestId("network-devices-picker-alias-input")).toHaveValue(`Fixture ${suffix}`);
+await expect(dialog.getByTestId("network-devices-picker-alias-input")).toHaveValue(
+  `Fixture ${suffix}`
+);
 await expect(dialog).not.toContainText(macLower);
 await dialog.getByTestId("network-devices-picker-alias-input").fill(alias);
 await dialog.getByTestId("network-devices-picker-submit").click();
 
 // Returned to the list, not the Add tab.
-await expect(page.getByTestId("network-devices-tab-registered")).toHaveAttribute("aria-selected", "true");
+await expect(page.getByTestId("network-devices-tab-registered")).toHaveAttribute(
+  "aria-selected",
+  "true"
+);
 const row = page.locator("li").filter({ hasText: alias });
 await expect(row).toHaveCount(1);
 
@@ -748,15 +824,22 @@ await expect(page.getByText(renamed)).toBeVisible();
 // --- Block, then delete through the ConfirmDialog (blocked wording) ---
 const renamedRow = page.locator("li").filter({ hasText: renamed });
 await renamedRow.getByRole("button", { name: m["networkDevices.action.block"] }).click();
-await expect(renamedRow.getByText(m["networkDevices.badge.blocked"])).toBeVisible({ timeout: 10_000 });
+await expect(renamedRow.getByText(m["networkDevices.badge.blocked"])).toBeVisible({
+  timeout: 10_000,
+});
 await renamedRow.getByRole("button", { name: m["networkDevices.action.delete"] }).click();
-const confirm = page.getByRole("alertdialog").or(page.getByRole("dialog")).filter({ hasText: m["networkDevices.action.deleteConfirmBlocked"] });
+const confirm = page
+  .getByRole("alertdialog")
+  .or(page.getByRole("dialog"))
+  .filter({ hasText: m["networkDevices.action.deleteConfirmBlocked"] });
 await expect(confirm).toBeVisible();
 await page.getByTestId("network-devices-delete-confirm").click();
 await expect(page.getByText(renamed)).toHaveCount(0);
 await expect(page.getByTestId("network-devices-empty")).toBeVisible();
 ```
-  Remove the old `page.once("dialog", ...)` handler. Use Playwright's exact role from `ConfirmDialog` (read `src/client/components/ConfirmDialog.tsx` to confirm `alertdialog` vs `dialog`; simplify the locator once known). The spec stays a single test with `test.setTimeout(60_000)` (raise to 90_000 if the added steps need it).
+
+Remove the old `page.once("dialog", ...)` handler. Use Playwright's exact role from `ConfirmDialog` (read `src/client/components/ConfirmDialog.tsx` to confirm `alertdialog` vs `dialog`; simplify the locator once known). The spec stays a single test with `test.setTimeout(60_000)` (raise to 90_000 if the added steps need it).
+
 - [ ] **Step 3:** Build and run: `npm run build` then
   ```bash
   PORT=43205 npx playwright test tests/e2e/network-devices.spec.ts tests/e2e/admin-unlock-resilience.spec.ts --workers=3
@@ -767,6 +850,7 @@ await expect(page.getByTestId("network-devices-empty")).toBeVisible();
 ## Task 9: Dev fixture for exercising the page without UniFi
 
 **Files:**
+
 - Create: `tools/dev/unifi-fixture.ts`
 - Modify: `package.json` (script `"dev:unifi-fixture": "node --import tsx tools/dev/unifi-fixture.ts"`)
 - Modify: `tools/dev/browser-session.mjs` (opt-in `--management`)
@@ -797,6 +881,7 @@ await expect(page.getByTestId("network-devices-empty")).toBeVisible();
 ## Task 10: Docs and cohort fixture
 
 **Files:**
+
 - Modify: `docs/features/network-devices.md`, `docs/ui/household-contract.md`, `tests/fixtures/assembly-cohort.json`
 
 - [ ] **Step 1: `docs/features/network-devices.md`.** Add a section "### Admin console" under Functional Requirements with next free ids (grep `docs/` for `FR-019` first; if taken pick the next free range) stating, in the file's existing "Given/when/then" style: tabs (Registered devices, Add device); status dot and chips with the text label as carrier; 30 s silent refresh paused when hidden and never overwriting a newer local action; edit and register in dialogs, MAC never shown in dialogs; delete through a confirmation dialog naming the stranded upstream block; Add tab dims already-registered MACs; scope-denied 403 shows a specific message; Retry on load errors. Add "### Exercising the page without a controller" documenting: the e2e fixture, `npm run dev:unifi-fixture` usage (order: fixture first, then dev server with the printed env, cookie swap with `dev:session -- --management`, no reload), and the limitation (no `notDetected` row via registration).
@@ -813,8 +898,8 @@ await expect(page.getByTestId("network-devices-empty")).toBeVisible();
   ```
   All must pass. If `plugin-lifecycle-visual` fails for a reason unrelated to network devices (check by running it on the base commit), report it, do not hide it.
 - [ ] **Step 3: Commit on the worktree branch and report.** Commit any remaining fixes on the worktree branch (never push, never touch `main`). Your final report must contain: branch name and commit list; the evidence lines from `check:standard` (last lines) and the Playwright summary with the PORT used; what you saw when exercising `dev:unifi-fixture` (or that you could not); any deviation from this plan with reasons; and the coordination notes below.
-  Coordination notes to include verbatim: (1) tabs are local state because `Shell.tsx`'s `AdminUnlockRouteReset` relocks the admin on any non-exact `/admin/*` path (`resolveHouseholdRoute`); sub-routes for any page need prefix matching in `src/client/shell/routes.ts` first. (2) `networkDevices.management.title` now equals the sidebar label. (3) Page is reachable only with the management key cookie (spec section 9 open question).
-  Note for the orchestrator: if your worktree cannot run git (see memory "Subagent worktrees cannot run git"), skip commits and instead produce a patch file of all changes and report its path.
+      Coordination notes to include verbatim: (1) tabs are local state because `Shell.tsx`'s `AdminUnlockRouteReset` relocks the admin on any non-exact `/admin/*` path (`resolveHouseholdRoute`); sub-routes for any page need prefix matching in `src/client/shell/routes.ts` first. (2) `networkDevices.management.title` now equals the sidebar label. (3) Page is reachable only with the management key cookie (spec section 9 open question).
+      Note for the orchestrator: if your worktree cannot run git (see memory "Subagent worktrees cannot run git"), skip commits and instead produce a patch file of all changes and report its path.
 
 ---
 
