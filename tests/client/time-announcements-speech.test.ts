@@ -81,6 +81,31 @@ describe("time-announcements speech", () => {
     vi.restoreAllMocks();
   });
 
+  it("voiceNameFor returns the name of the voice speak() would pick for the language", async () => {
+    installFakeSynth({
+      voices: [
+        { lang: "de-DE", name: "Anna" },
+        { lang: "es-ES", name: "Monica" },
+      ] as Array<{ lang: string }>,
+    });
+    const { voiceNameFor } = await freshSpeech();
+    expect(voiceNameFor("es")).toBe("Monica");
+  });
+
+  it("voiceNameFor is null when no voice matches, the API is absent, or getVoices throws", async () => {
+    installFakeSynth({ voices: [{ lang: "de-DE" }] });
+    let speech = await freshSpeech();
+    expect(speech.voiceNameFor("en")).toBeNull();
+
+    installFakeSynth({ throwOnGetVoices: true });
+    speech = await freshSpeech();
+    expect(speech.voiceNameFor("en")).toBeNull();
+
+    vi.unstubAllGlobals();
+    speech = await freshSpeech();
+    expect(speech.voiceNameFor("en")).toBeNull();
+  });
+
   it("TIME-ANNOUNCEMENTS-INV-09/I18N-LOCALIZATION-INV-11: utterance.lang is ALWAYS the household locale, matching voice present -> no miss logged", async () => {
     const { spoken } = installFakeSynth({ voices: [{ lang: "es-ES" }] });
     const { speak, markPrimed, logSpy } = await freshSpeechWithLoggerSpy();
