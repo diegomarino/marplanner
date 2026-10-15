@@ -48,6 +48,30 @@ function StatusCard({
   );
 }
 
+const UPTIME_UNITS: ["day" | "hour" | "minute", number][] = [
+  ["day", 86_400],
+  ["hour", 3_600],
+  ["minute", 60],
+];
+
+/** Whole-second uptime as the two largest non-zero units ("2d 3h"), or seconds under a minute. */
+export function formatUptime(totalSeconds: number, locale: string): string {
+  const unit = (value: number, name: Intl.NumberFormatOptions["unit"]) =>
+    // eslint-disable-next-line ui-policy/debt -- Intl option `style`, not a DOM style attribute
+    new Intl.NumberFormat(locale, { style: "unit", unit: name, unitDisplay: "narrow" }).format(
+      value
+    );
+  let remaining = Math.max(0, Math.floor(totalSeconds));
+  if (remaining < 60) return unit(remaining, "second");
+  const parts: string[] = [];
+  for (const [name, size] of UPTIME_UNITS) {
+    const value = Math.floor(remaining / size);
+    remaining -= value * size;
+    if (value > 0) parts.push(unit(value, name));
+  }
+  return parts.slice(0, 2).join(" ");
+}
+
 function StatusRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <>
@@ -137,6 +161,15 @@ export function AdminOverview({ onOpenTelemetry }: { onOpenTelemetry: () => void
                     timeStyle: "medium",
                   }).format(new Date(status.checkedAt))
                 : "—"}
+            </StatusRow>
+            <StatusRow label={t("admin.overview.uptime")}>
+              <span data-testid="admin-overview-uptime">
+                {status
+                  ? typeof status.uptimeSeconds === "number"
+                    ? formatUptime(status.uptimeSeconds, locale)
+                    : "—"
+                  : "—"}
+              </span>
             </StatusRow>
             <StatusRow label={t("admin.overview.deploy")}>
               <span className="font-mono">{serverSha ?? unknown}</span>
