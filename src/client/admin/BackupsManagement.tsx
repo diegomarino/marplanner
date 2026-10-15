@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/credential";
 import { useHouseholdSettings } from "@/lib/householdSettings";
+import { STATUS_BANNER_CLASSES, TYPE_PILL_CLASSES } from "@/lib/recipes";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n";
 import type { MessageKey } from "@/i18n/messages";
@@ -72,15 +73,6 @@ export const TYPE_KEYS: Record<BackupType, MessageKey> = {
   upload: "backups.management.type.upload",
 };
 
-/** Semantic token classes only (no Tailwind scale colours: check:ui-debt). The pill keeps the
- * localized label, so colour is never the only signal. */
-export const TYPE_PILL_CLASSES: Record<BackupType, string> = {
-  scheduled: "bg-accent text-accent-foreground",
-  snapshot: "bg-primary/10 text-primary",
-  upload: "bg-secondary text-secondary-foreground",
-  "pre-restore": "bg-destructive/10 text-destructive",
-};
-
 /** Relative label for ages up to 30 days; `null` means "show the absolute date instead". */
 export function formatRelativeAge(createdAt: number, now: number, language: string): string | null {
   const seconds = Math.max(0, Math.trunc((now - createdAt) / 1000));
@@ -99,9 +91,6 @@ export function formatRelativeAge(createdAt: number, now: number, language: stri
 export function isDbFile(name: string): boolean {
   return name.toLowerCase().endsWith(".db");
 }
-
-const SUCCESS_BANNER_CLASSES =
-  "rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-control font-medium text-primary";
 
 export const BACKUP_ERROR_KEYS: Record<BackupErrorCode, MessageKey> = {
   validation_error: "backups.error.validation_error",
@@ -473,7 +462,7 @@ export function BackupsManagement() {
         )}
         {snapshotSuccess && (
           <p
-            className={cn("mt-2", SUCCESS_BANNER_CLASSES)}
+            className={cn("mt-2", STATUS_BANNER_CLASSES)}
             role="status"
             aria-live="polite"
             data-testid="backups-snapshot-success"
@@ -706,7 +695,7 @@ export function BackupsManagement() {
         <ErrorNotice message={uploadError} className="mt-2" data-testid="backups-upload-error" />
         {uploadSuccess && (
           <p
-            className={cn("mt-2", SUCCESS_BANNER_CLASSES)}
+            className={cn("mt-2", STATUS_BANNER_CLASSES)}
             role="status"
             aria-live="polite"
             data-testid="backups-upload-success"
