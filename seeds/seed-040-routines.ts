@@ -1,10 +1,11 @@
 import { validateWeekdays } from "../src/shared/weekdays";
 import type { SeedModule } from "../src/server/db/seeds/types";
 
-const WEEKDAYS = ["mon", "tue", "wed", "thu", "fri"] as const;
+const MON_TO_FRI = ["mon", "tue", "wed", "thu", "fri"] as const;
 
 const ROUTINES = [
   { id: "demo:routine:morning-launch", name: "Morning launch", dayPeriodId: "morning" },
+  { id: "demo:routine:after-school", name: "After school", dayPeriodId: "afternoon" },
   { id: "demo:routine:evening-reset", name: "Evening reset", dayPeriodId: "evening" },
 ] as const;
 
@@ -44,6 +45,34 @@ const CHORES = [
     icon: "🐈",
     sortOrder: 1,
   },
+  {
+    id: "demo:chore:evening-reset:shower",
+    routineId: "demo:routine:evening-reset",
+    name: "Take a shower",
+    icon: "🚿",
+    sortOrder: 2,
+  },
+  {
+    id: "demo:chore:after-school:snack",
+    routineId: "demo:routine:after-school",
+    name: "Have a snack",
+    icon: "🍎",
+    sortOrder: 0,
+  },
+  {
+    id: "demo:chore:after-school:homework",
+    routineId: "demo:routine:after-school",
+    name: "Homework",
+    icon: "📚",
+    sortOrder: 1,
+  },
+  {
+    id: "demo:chore:after-school:water-plants",
+    routineId: "demo:routine:after-school",
+    name: "Water the plants",
+    icon: "🪴",
+    sortOrder: 2,
+  },
 ] as const;
 
 const ASSIGNMENTS = [
@@ -51,21 +80,37 @@ const ASSIGNMENTS = [
     id: "demo:routine-assignment:morning-launch:bart",
     routineId: "demo:routine:morning-launch",
     memberId: "demo:member:bart",
+    weekdays: MON_TO_FRI,
   },
   {
     id: "demo:routine-assignment:morning-launch:lisa",
     routineId: "demo:routine:morning-launch",
     memberId: "demo:member:lisa",
+    weekdays: MON_TO_FRI,
   },
   {
     id: "demo:routine-assignment:evening-reset:bart",
     routineId: "demo:routine:evening-reset",
     memberId: "demo:member:bart",
+    weekdays: MON_TO_FRI,
   },
   {
     id: "demo:routine-assignment:evening-reset:lisa",
     routineId: "demo:routine:evening-reset",
     memberId: "demo:member:lisa",
+    weekdays: MON_TO_FRI,
+  },
+  {
+    id: "demo:routine-assignment:after-school:lisa",
+    routineId: "demo:routine:after-school",
+    memberId: "demo:member:lisa",
+    weekdays: ["mon", "tue", "wed", "thu"],
+  },
+  {
+    id: "demo:routine-assignment:after-school:bart",
+    routineId: "demo:routine:after-school",
+    memberId: "demo:member:bart",
+    weekdays: ["mon", "wed", "fri"],
   },
 ] as const;
 
@@ -135,7 +180,6 @@ const seedRoutines: SeedModule = {
       );
     }
 
-    const weekdays = JSON.stringify(validateWeekdays(WEEKDAYS));
     const upsertAssignment = db.prepare(
       `INSERT INTO routine_assignments
          (id, routine_id, member_id, weekdays, active, created_at, updated_at)
@@ -154,7 +198,7 @@ const seedRoutines: SeedModule = {
         assignment.id,
         assignment.routineId,
         assignment.memberId,
-        weekdays,
+        JSON.stringify(validateWeekdays(assignment.weekdays)),
         nowMs,
         nowMs
       );
