@@ -137,15 +137,18 @@ it("enables Save on any edit and disables it again when the edit is reverted", a
   expect(save).toBeDisabled();
 });
 
-it.each(["0x10", "1e3", "abc"])("keeps Save blocked for the non-decimal latitude %s", async (bad) => {
-  mockApi(SETTINGS);
-  renderSettings();
-  const save = await screen.findByTestId("settings-save");
-  fireEvent.change(screen.getByTestId("weather-lat-input"), { target: { value: bad } });
-  fireEvent.change(screen.getByTestId("weather-lon-input"), { target: { value: "2" } });
-  expect(save).toBeDisabled();
-  expect(screen.getByTestId("weather-hint")).toBeInTheDocument();
-});
+it.each(["0x10", "1e3", "abc"])(
+  "keeps Save blocked for the non-decimal latitude %s",
+  async (bad) => {
+    mockApi(SETTINGS);
+    renderSettings();
+    const save = await screen.findByTestId("settings-save");
+    fireEvent.change(screen.getByTestId("weather-lat-input"), { target: { value: bad } });
+    fireEvent.change(screen.getByTestId("weather-lon-input"), { target: { value: "2" } });
+    expect(save).toBeDisabled();
+    expect(screen.getByTestId("weather-hint")).toBeInTheDocument();
+  }
+);
 ```
 
 If the existing helpers pass `SETTINGS` without a weather object, give the test its own settings including `weather: { lat: 40.4, lon: -3.7, label: "Home" }`.
@@ -245,8 +248,12 @@ it("saves one card with PATCH, keeps other drafts, and never shows Loading again
   const { patches } = stubPeriods();
   renderManagement();
   await screen.findByTestId("day-periods-grid");
-  fireEvent.change(screen.getByTestId("day-periods-start-input-afternoon"), { target: { value: "11:30" } });
-  fireEvent.change(screen.getByTestId("day-periods-start-input-evening"), { target: { value: "18:30" } });
+  fireEvent.change(screen.getByTestId("day-periods-start-input-afternoon"), {
+    target: { value: "11:30" },
+  });
+  fireEvent.change(screen.getByTestId("day-periods-start-input-evening"), {
+    target: { value: "18:30" },
+  });
   fireEvent.click(screen.getByTestId("day-periods-save-afternoon"));
   await waitFor(() => expect(patches).toEqual([["afternoon", { start: "11:30" }]]));
   expect(screen.queryByText("Loading…")).toBeNull();
@@ -284,27 +291,57 @@ it("offers Retry when the list cannot be loaded", async () => {
   - Render: after `ErrorNotice`, when the first load failed (`error` set and `periods.length === 0` and not loading) render `<Button type="button" variant="outline" data-testid="day-periods-retry" onClick={refreshPeriods}>{t("dayPeriods.management.retry")}</Button>`. The list:
 
 ```tsx
-<div data-testid="day-periods-grid" className="grid grid-cols-1 gap-3 @md:grid-cols-2 @4xl:grid-cols-4">
+<div
+  data-testid="day-periods-grid"
+  className="grid grid-cols-1 gap-3 @md:grid-cols-2 @4xl:grid-cols-4"
+>
   {periods.map((period) => {
     // derivedEnd etc. inside the existing try/catch
     const draft = drafts[period.id];
     const dirty = draft !== undefined && draft !== period.start;
     return (
-      <div key={period.id} role="group" aria-labelledby={`day-period-title-${period.id}`}
+      <div
+        key={period.id}
+        role="group"
+        aria-labelledby={`day-period-title-${period.id}`}
         data-testid={`day-period-${period.id}`}
-        className={cn("flex flex-col gap-2 rounded-md border p-3", isActive && "border-primary bg-primary/5")}>
+        className={cn(
+          "flex flex-col gap-2 rounded-md border p-3",
+          isActive && "border-primary bg-primary/5"
+        )}
+      >
         <div className="flex min-h-8 flex-wrap items-center gap-2">
-          <strong id={`day-period-title-${period.id}`}>{t(DAY_PERIOD_LABEL_KEYS[period.id])}</strong>
-          {isActive && (<span className="bg-primary/10 text-primary rounded px-2 py-0.5 text-xs">{t("dayPeriods.activeNow")}</span>)}
+          <strong id={`day-period-title-${period.id}`}>
+            {t(DAY_PERIOD_LABEL_KEYS[period.id])}
+          </strong>
+          {isActive && (
+            <span className="bg-primary/10 text-primary rounded px-2 py-0.5 text-xs">
+              {t("dayPeriods.activeNow")}
+            </span>
+          )}
         </div>
-        <span className="text-muted-foreground text-control">{period.start} – {derivedEndTimeStr}</span>
+        <span className="text-muted-foreground text-control">
+          {period.start} – {derivedEndTimeStr}
+        </span>
         <Field label={t("dayPeriods.action.editStartLabel")}>
-          <Input type="time" value={draft ?? period.start} disabled={savingId !== null}
+          <Input
+            type="time"
+            value={draft ?? period.start}
+            disabled={savingId !== null}
             data-testid={`day-periods-start-input-${period.id}`}
-            onChange={(e) => { setError(null); setDrafts((d) => ({ ...d, [period.id]: e.target.value })); }} />
+            onChange={(e) => {
+              setError(null);
+              setDrafts((d) => ({ ...d, [period.id]: e.target.value }));
+            }}
+          />
         </Field>
-        <Button type="button" size="sm" data-testid={`day-periods-save-${period.id}`}
-          onClick={() => handleSave(period.id)} disabled={!dirty || !draft || savingId !== null}>
+        <Button
+          type="button"
+          size="sm"
+          data-testid={`day-periods-save-${period.id}`}
+          onClick={() => handleSave(period.id)}
+          disabled={!dirty || !draft || savingId !== null}
+        >
           {savingId === period.id ? t("dayPeriods.management.saving") : t("dayPeriods.action.save")}
         </Button>
       </div>
@@ -313,15 +350,16 @@ it("offers Retry when the list cannot be loaded", async () => {
 </div>
 ```
 
-  The page root `@container` from Task 2 drives `@md:`/`@4xl:`. Note the e2e text assertion `afternoonCard toContainText(/\d{2}:\d{2}\s*–\s*\d{2}:\d{2}/)` still matches the range line.
-  - i18n: add `"dayPeriods.management.retry"` (en "Retry", es "Reintentar") in the `// admin-settings-polish` block of both locales. Then `grep -rn "dayPeriods.action.edit\"\|dayPeriods.action.cancel" src tests`; if only `messages.ts` remains, delete both keys in both locales (and the i18n parity test needs no change; run it).
+The page root `@container` from Task 2 drives `@md:`/`@4xl:`. Note the e2e text assertion `afternoonCard toContainText(/\d{2}:\d{2}\s*–\s*\d{2}:\d{2}/)` still matches the range line.
+
+- i18n: add `"dayPeriods.management.retry"` (en "Retry", es "Reintentar") in the `// admin-settings-polish` block of both locales. Then `grep -rn "dayPeriods.action.edit\"\|dayPeriods.action.cancel" src tests`; if only `messages.ts` remains, delete both keys in both locales (and the i18n parity test needs no change; run it).
 
 - [ ] **Step 4:** run `tests/client/day-periods-management.test.tsx` -> pass.
 - [ ] **Step 5: Update density tests** in `tests/client/day-periods-messages-admin.test.tsx` (the "DayPeriodsManagement kiosk density" describe): keep the zero-control census test; replace the next three plus the deliberate-negative with:
   - "meets kiosk density with all four periods editable (4 inputs + 4 Save buttons = 8 controls)": `countInteractiveControls(document.body)` is `8`, `assertKioskDensityCompliant` does not throw.
   - "census fires on change: editing a time does not add or remove controls": after `fireEvent.change(getByTestId("day-periods-start-input-afternoon"), {target:{value:"11:30"}})` still `8` and compliant.
   - deliberate negative: shrink `day-periods-save-morning` (height 16px, font-size 10px) and expect the same `DensityViolationError` messages as before, then revert.
-  Remove the edit/cancel clicks (6 -> 4 test).
+    Remove the edit/cancel clicks (6 -> 4 test).
 - [ ] **Step 6: e2e.**
   - `tests/e2e/day-periods.spec.ts`: US2 edit: drop the Edit click; `const timeInput = page.getByTestId("day-periods-start-input-afternoon")`; read its value; `fill("11:30")`; click `afternoonCard.getByRole("button", { name: m["dayPeriods.action.save"] })` (cards are groups so the scoped name is unambiguous); same assertions after. Negative: fill "04:00", click Save, expect `day-periods-error`; then restore by `fill(newAfternoonStart)` instead of the Cancel click (assert Save disabled). Add: before editing, record `boundingBox()` of the four cards and assert equal `y` (one row at 1280px) and equal heights; after typing a value assert the boxes unchanged (no layout jump).
   - `tests/e2e/accessible-names-audit.spec.ts` "Day Periods edit mode" test: remove the Edit click and the `input[type="time"]` wait; wait for `getByTestId("day-period-afternoon")` instead and rename the test "Day Periods (always editable) has no unnamed control". If the first Day Periods test is now identical, keep both only if the second types a draft first (fill `day-periods-start-input-afternoon` with "11:31" without saving, so the enabled Save state is audited).
@@ -342,7 +380,7 @@ it("offers Retry when the list cannot be loaded", async () => {
   - Vitest: new/renamed test names for files in `testCohorts.runners.vitest.files` come from `.quality/vitest-list.json` (`npm run test:cohorts:vitest:list`). Files touched here: `tests/client/settings-management.test.tsx`, `weather-management.test.tsx`, `day-periods-management.test.tsx`, `day-periods-messages-admin.test.tsx` (renamed/removed density cases). Replace each file's case list with the listed names. No new vitest files are expected; if you add one, add it.
   - Coverage: `coveragePolicy.files` entries for `src/client/admin/SettingsManagement.tsx`, `WeatherManagement.tsx`, `DayPeriodsManagement.tsx`: update `minimumTotals`/`minimumRates` to the remeasured values from `coverage/coverage-final.json` only if the report says they dropped below the minimums or the check demands it; no new source files are expected.
   - Playwright: no new spec files; test titles in `admin-settings.spec.ts`, `day-periods.spec.ts`, `accessible-names-audit.spec.ts` that you renamed must be updated under `testCohorts.runners.playwright.files` keyed by spec id (from `playwright test --list --reporter=json`, i.e. `.quality/playwright-list.json`).
-  Re-run `check:standard` until green; commit the fixture: `chore: resync the reviewed inventory for the Settings polish`.
+    Re-run `check:standard` until green; commit the fixture: `chore: resync the reviewed inventory for the Settings polish`.
 - [ ] `PORT=43221 MP_E2E_WEATHER_FIXTURE_PORT=44421 MP_E2E_QUOTE_FIXTURE_PORT=44431 fnm exec --using=24.21.0 npm run check:aggregate-only` (verifies the Playwright inventory). Fix inventory drift (fixture again) until green, commit.
 - [ ] Final: commit everything on the worktree branch (clean tree), write `REPORT-settings-polish.md` at the worktree root (not committed): commits, what was done, deviations, gate numbers, open issues. Reply DONE.
 
