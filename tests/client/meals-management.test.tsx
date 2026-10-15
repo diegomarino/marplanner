@@ -49,7 +49,7 @@ function json(body: unknown, status = 200): Response {
 
 /** A fully-loaded, happy-path mock backend — recipes, an active plan, an empty day/week menu.
  * `overrides` lets a single test redirect one endpoint to a failure without re-declaring the rest. */
-function mockBackend(overrides: Partial<Record<string, () => Response>> = {}) {
+function mockBackend(overrides: Partial<Record<string, () => Response | Promise<Response>>> = {}) {
   const mockFetch = vi.fn((input: string | URL, init?: Parameters<typeof fetch>[1]) => {
     const url = String(input);
     const method = init?.method ?? "GET";
@@ -822,5 +822,57 @@ describe("MealsManagement — writes keep the week grid and plan cards coherent"
 
     expect(await within(dialog).findByRole("alert")).toHaveTextContent("Failed to add entry.");
     expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("keeps an entry edit open in one plan card while another card adds a recurring entry", async () => {
+    // A real network round trip: each card's entries arrive a macrotask later, so a refetch
+    // renders its loading state (an instantly resolved mock would batch it away).
+    const mockFetch = mockBackend({
+      plans: () => json([PLAN, INACTIVE_PLAN]),
+      planEntries: () =>
+        new Promise<Response>((resolve) => setTimeout(() => resolve(json([RECURRING_ENTRY])), 20)),
+    });
+    const firstCardReads = () =>
+      (mockFetch.mock.calls as FetchCall[]).filter(
+        ([input]) => String(input) === "/api/meal-plans/p1/entries"
+      ).length;
+    renderSurface();
+
+    const cards = await screen.findAllByTestId("meals-plan-card");
+    const firstRow = await within(cards[0]).findByTestId("meals-plan-entry-row");
+    fireEvent.click(within(firstRow).getByRole("button", { name: "Edit" }));
+    expect(within(cards[0]).getByTestId("meals-plan-entry-recipe-select")).toBeInTheDocument();
+
+    // The second card's own form adds a recurring note, which refreshes every card.
+    fireEvent.click(within(cards[1]).getByTestId("meals-plan-add-recurring"));
+    fireEvent.click(within(cards[1]).getByRole("radio", { name: "Note" }));
+    fireEvent.change(within(cards[1]).getByTestId("meals-recurring-note-input"), {
+      target: { value: "Pancakes" },
+    });
+    fireEvent.click(within(cards[1]).getByRole("button", { name: "Add Recurring Entry" }));
+    await waitFor(() =>
+      expect(within(cards[1]).queryByTestId("meals-recurring-note-input")).toBeNull()
+    );
+
+    // The first card refetches; that must not unmount its rows (and their edit drafts).
+    await waitFor(() => expect(firstCardReads()).toBe(2));
+    await waitFor(() => expect(within(cards[0]).queryByText("Loading…")).toBeNull());
+    expect(within(cards[0]).getByTestId("meals-plan-entry-recipe-select")).toBeInTheDocument();
+  });
+
+  it("shows a failed recurring add inside its plan card, next to the form", async () => {
+    mockBackend({ write: () => json(null, 500) });
+    renderSurface();
+
+    fireEvent.click(await screen.findByTestId("meals-plan-add-recurring"));
+    fireEvent.click(within(planCard()).getByRole("radio", { name: "Note" }));
+    fireEvent.change(within(planCard()).getByTestId("meals-recurring-note-input"), {
+      target: { value: "Pancakes" },
+    });
+    fireEvent.click(within(planCard()).getByRole("button", { name: "Add Recurring Entry" }));
+
+    expect(await within(planCard()).findByRole("alert")).toHaveTextContent("Failed to add entry.");
+    // The form stays open with the typed note.
+    expect(within(planCard()).getByTestId("meals-recurring-note-input")).toHaveValue("Pancakes");
   });
 });

@@ -3607,7 +3607,9 @@
             "MealsManagement — each plan card contains its recurring entries shows the inactive hint on an inactive plan only",
             "MealsManagement — writes keep the week grid and plan cards coherent re-reads the week menu after a plan is deactivated",
             "MealsManagement — writes keep the week grid and plan cards coherent keeps a plan's entries visible with an error when saving one fails",
-            "MealsManagement — writes keep the week grid and plan cards coherent shows a failed week-grid write inside the dialog, not as a page error"
+            "MealsManagement — writes keep the week grid and plan cards coherent shows a failed week-grid write inside the dialog, not as a page error",
+            "MealsManagement — writes keep the week grid and plan cards coherent keeps an entry edit open in one plan card while another card adds a recurring entry",
+            "MealsManagement — writes keep the week grid and plan cards coherent shows a failed recurring add inside its plan card, next to the form"
           ],
           "tests/client/meals-recipe-edit-clear-fields.test.tsx": [
             "MealsManagement — recipe edit clears fields correctly (verify-pr #446) PATCHes instructions: '' (never omitted) and ingredients: [] when both are cleared"
@@ -3619,7 +3621,8 @@
             "MealsManagement — view refresh coherence (rework #448) removes a deleted recipe's cascaded recurring entry from its plan card",
             "MealsManagement — view refresh coherence (rework #448) shows a recurring entry added from the week grid in its plan card",
             "MealsManagement — view refresh coherence (rework #448) updates the plan card when a recurring meal is edited from the week grid",
-            "MealsManagement — view refresh coherence (rework #448) keeps the newer week when an older week response arrives late"
+            "MealsManagement — view refresh coherence (rework #448) keeps the newer week when an older week response arrives late",
+            "MealsManagement — view refresh coherence (rework #448) keeps the week the user moved to when a slow plan write finishes"
           ],
           "tests/client/meals-workspace.test.tsx": [
             "useMealsWorkspace anchors the initial week to the household timezone and configured week start",
@@ -5457,16 +5460,16 @@
       "src/client/admin/MealsManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 348,
-          "statements": 397,
+          "lines": 354,
+          "statements": 403,
           "functions": 138,
-          "branches": 202
+          "branches": 204
         },
         "minimumRates": {
-          "lines": 80.17,
-          "statements": 77.07,
+          "lines": 81.07,
+          "statements": 78.16,
           "functions": 72.46,
-          "branches": 72.27
+          "branches": 73.52
         }
       },
       "src/client/admin/MembersManagement.tsx": {

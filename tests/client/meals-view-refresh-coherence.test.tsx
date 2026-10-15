@@ -57,6 +57,7 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
   const today = new Date().toISOString().slice(0, 10);
   const previousWeekAnchor = addCalendarDays(today, -7);
   let delayedWeeks: Map<string, Promise<void>>;
+  let delayedPlanWrite: Promise<void> | null;
 
   function toMenuItem(entry: (typeof entries)[number]) {
     const recipe = entry.recipeId ? recipes.find((r) => r.id === entry.recipeId) : undefined;
@@ -101,6 +102,7 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
   beforeEach(() => {
     nextEntryId = 1;
     delayedWeeks = new Map();
+    delayedPlanWrite = null;
     recipes = [
       {
         id: "r1",
@@ -163,6 +165,18 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
         const id = url.match(/\/api\/meal-plans\/([^/]+)\/entries$/)?.[1];
         const planEntries = entries.filter((e) => e.kind === "recurring" && e.mealPlanId === id);
         return Promise.resolve(new Response(JSON.stringify(planEntries), { status: 200 }));
+      }
+
+      if (/\/api\/meal-plans\/[^/]+$/.test(url) && method === "PATCH") {
+        const id = url.match(/\/api\/meal-plans\/([^/]+)$/)?.[1];
+        const body = JSON.parse(init!.body as string) as { active?: boolean };
+        const respond = () => {
+          plans = plans.map((plan) => (plan.id === id ? { ...plan, ...body } : plan));
+          return new Response(JSON.stringify(plans.find((plan) => plan.id === id)), {
+            status: 200,
+          });
+        };
+        return delayedPlanWrite ? delayedPlanWrite.then(respond) : Promise.resolve(respond());
       }
 
       if (url.startsWith("/api/meal-plans")) {
@@ -432,5 +446,30 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
     expect(
       screen.queryByTestId(`meal-day-heading-${addCalendarDays(today, -7)}`)
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps the week the user moved to when a slow plan write finishes", async () => {
+    let releasePlanWrite!: () => void;
+    delayedPlanWrite = new Promise<void>((resolve) => {
+      releasePlanWrite = resolve;
+    });
+    const nextWeekDate = addCalendarDays(today, 7);
+    renderSurface();
+
+    await screen.findByTestId(`meal-day-heading-${today}`);
+    // Deactivate the plan (slow), then move to next week before the write returns.
+    fireEvent.click(await screen.findByRole("button", { name: "Weeknights" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next week" }));
+    await screen.findByTestId(`meal-day-heading-${nextWeekDate}`);
+    const weekReads = () =>
+      fetchMock.mock.calls.filter(([input]) => String(input).includes("/api/menu/week"));
+    const readsBefore = weekReads().length;
+
+    releasePlanWrite();
+    // The write's menu refresh lands; it must re-read the week on screen, not the old one.
+    await waitFor(() => expect(weekReads().length).toBeGreaterThan(readsBefore));
+    expect(String(weekReads().at(-1)![0])).toContain(`date=${nextWeekDate}`);
+    await waitFor(() => expect(screen.queryByRole("status")).not.toBeInTheDocument());
+    expect(screen.getByTestId(`meal-day-heading-${nextWeekDate}`)).toBeInTheDocument();
   });
 });
