@@ -364,7 +364,6 @@ test("backups admin visibly restores data and deletes only the confirmed snapsho
     }
 
     await page.getByTestId("backups-upload-input").setInputFiles(downloadedPath);
-    await page.getByTestId("backups-upload-submit").click();
     const uploadRow = page.locator('[data-testid^="backups-row-upload-"]').first();
     await expect(uploadRow).toBeVisible();
     const uploadRowId = await uploadRow.getAttribute("data-testid");
