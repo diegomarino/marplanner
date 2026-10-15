@@ -43,6 +43,7 @@ values.
   its prior values.
 - A storage failure mid-write leaves every field of that object at its prior value
   (no partial object).
+- `printerTransport` UUIDs (`serviceUuid`, `characteristicUuid`) accept any well-formed 128-bit UUID (8-4-4-4-12 hex) whatever its version nibble, because vendor Bluetooth GATT UUIDs are often not RFC-4122 version 1-5; they are stored lower-case.
 - A non-flat / unknown-key `printerTransport` payload (e.g. nested `{ "type": "wifi", "config": {} }`) is rejected as schema-invalid; Bluetooth is the only shipped local transport and is encoded as flat pairing fields.
 - `daily_briefing_block_order` is not a settings object here — Daily Briefing owns
   its own block configuration.

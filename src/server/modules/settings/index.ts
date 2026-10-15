@@ -49,7 +49,9 @@ const PRINTER_TRANSPORT_DEFAULTS: PrinterTransportSettings = {
 const LOCALE_KEYS = new Set(["timezone", "language", "weekStartDay"]);
 const PRINTER_KEYS = new Set(["paperWidthDots"]);
 const PRINTER_TRANSPORT_KEYS = new Set(["deviceId", "name", "serviceUuid", "characteristicUuid"]);
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+/** Any well-formed 128-bit UUID (8-4-4-4-12 hex). Vendor GATT UUIDs often carry a non-RFC-4122
+ * version nibble, so the version and variant are not checked. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function isValidTimeZone(timezone: string): boolean {
   try {
