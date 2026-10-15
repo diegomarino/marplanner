@@ -62,117 +62,119 @@ Expected: all PASS.
 ### Task 1: Server — move a routine between day periods; list by period start then name
 
 **Files:**
+
 - Modify: `src/server/modules/routines/index.ts` (`editRoutine` ≈ lines 165-224, `listRoutines` ≈ lines 593-606)
 - Modify: `src/shared/index.ts` (`RoutineEditInput` ≈ lines 292-298)
 - Modify: `tests/boundary/routines-crud.test.ts` (header comment line 14; test at ≈ lines 284-317)
 - Modify: `docs/api/chores/openapi.yaml`, `docs/features/routines-chores.md`, `docs/quality/api-contract-audit.md` (line ≈ 50)
 
 **Interfaces:**
+
 - Produces: `PATCH /api/routines/:id` accepts optional `dayPeriodId: string` (existing day period id) → 200 `Routine`; invalid → 400 `{ error: "validation_error" }` and no write. `GET /api/routines` order: period `start_minutes` ASC, `name COLLATE NOCASE` ASC, `created_at` ASC. Shared `RoutineEditInput` gains `dayPeriodId?: string`.
 
 - [ ] **Step 1: Write the failing tests.** In `tests/boundary/routines-crud.test.ts`, change header line 14 to ` * Rule 2 — a routine may move to another existing day period (FR-015); unknown periods are rejected`. Replace the whole test `it("PATCH /api/routines/:id ignores dayPeriodId — stored value NEVER changes (Rule 2)", ...)` with these three tests (same helpers as the rest of the file):
 
 ```ts
-  it("PATCH /api/routines/:id moves the routine to another day period (FR-015)", async () => {
-    seedDayPeriods();
-    const { deviceKey } = seedKeys();
-    const { buildApp } = await import("../../src/server/app.ts");
-    const app = await buildApp();
-    try {
-      const cookies = { mp_device_key: deviceKey };
-      const created = (
-        await app.inject({
-          method: "POST",
-          url: "/api/routines",
-          cookies,
-          payload: { name: "Movable", dayPeriodId: "morning" },
-        })
-      ).json();
+it("PATCH /api/routines/:id moves the routine to another day period (FR-015)", async () => {
+  seedDayPeriods();
+  const { deviceKey } = seedKeys();
+  const { buildApp } = await import("../../src/server/app.ts");
+  const app = await buildApp();
+  try {
+    const cookies = { mp_device_key: deviceKey };
+    const created = (
+      await app.inject({
+        method: "POST",
+        url: "/api/routines",
+        cookies,
+        payload: { name: "Movable", dayPeriodId: "morning" },
+      })
+    ).json();
 
+    const res = await app.inject({
+      method: "PATCH",
+      url: `/api/routines/${created.id}`,
+      cookies,
+      payload: { dayPeriodId: "night" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ ...created, dayPeriodId: "night" });
+
+    const reread = await app.inject({ method: "GET", url: `/api/routines/${created.id}`, cookies });
+    expect(reread.json().dayPeriodId).toBe("night");
+  } finally {
+    await app.close();
+  }
+});
+
+it("PATCH /api/routines/:id rejects an unknown, blank or non-string dayPeriodId without changing the routine (FR-015)", async () => {
+  seedDayPeriods();
+  const { deviceKey } = seedKeys();
+  const { buildApp } = await import("../../src/server/app.ts");
+  const app = await buildApp();
+  try {
+    const cookies = { mp_device_key: deviceKey };
+    const created = (
+      await app.inject({
+        method: "POST",
+        url: "/api/routines",
+        cookies,
+        payload: { name: "Stays put", dayPeriodId: "morning" },
+      })
+    ).json();
+
+    for (const dayPeriodId of ["lunchtime", "   ", 7]) {
       const res = await app.inject({
         method: "PATCH",
         url: `/api/routines/${created.id}`,
         cookies,
-        payload: { dayPeriodId: "night" },
+        payload: { name: "Renamed", dayPeriodId },
       });
-      expect(res.statusCode).toBe(200);
-      expect(res.json()).toEqual({ ...created, dayPeriodId: "night" });
-
-      const reread = await app.inject({ method: "GET", url: `/api/routines/${created.id}`, cookies });
-      expect(reread.json().dayPeriodId).toBe("night");
-    } finally {
-      await app.close();
+      expect(res.statusCode, String(dayPeriodId)).toBe(400);
+      expect(res.json()).toMatchObject({ error: "validation_error", message: expect.any(String) });
     }
-  });
 
-  it("PATCH /api/routines/:id rejects an unknown, blank or non-string dayPeriodId without changing the routine (FR-015)", async () => {
-    seedDayPeriods();
-    const { deviceKey } = seedKeys();
-    const { buildApp } = await import("../../src/server/app.ts");
-    const app = await buildApp();
-    try {
-      const cookies = { mp_device_key: deviceKey };
-      const created = (
-        await app.inject({
-          method: "POST",
-          url: "/api/routines",
-          cookies,
-          payload: { name: "Stays put", dayPeriodId: "morning" },
-        })
-      ).json();
+    const reread = await app.inject({ method: "GET", url: `/api/routines/${created.id}`, cookies });
+    expect(reread.json()).toEqual(created);
+  } finally {
+    await app.close();
+  }
+});
 
-      for (const dayPeriodId of ["lunchtime", "   ", 7]) {
-        const res = await app.inject({
-          method: "PATCH",
-          url: `/api/routines/${created.id}`,
-          cookies,
-          payload: { name: "Renamed", dayPeriodId },
-        });
-        expect(res.statusCode, String(dayPeriodId)).toBe(400);
-        expect(res.json()).toMatchObject({ error: "validation_error", message: expect.any(String) });
-      }
-
-      const reread = await app.inject({ method: "GET", url: `/api/routines/${created.id}`, cookies });
-      expect(reread.json()).toEqual(created);
-    } finally {
-      await app.close();
+it("GET /api/routines lists active routines by day-period start, then name (FR-016)", async () => {
+  seedDayPeriods();
+  const { deviceKey } = seedKeys();
+  const { buildApp } = await import("../../src/server/app.ts");
+  const app = await buildApp();
+  try {
+    const cookies = { mp_device_key: deviceKey };
+    for (const [name, dayPeriodId] of [
+      ["zeta", "evening"],
+      ["Bravo", "morning"],
+      ["Night owl", "night"],
+      ["alpha", "morning"],
+      ["Lunch", "afternoon"],
+    ]) {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/routines",
+        cookies,
+        payload: { name, dayPeriodId },
+      });
+      expect(res.statusCode).toBe(201);
     }
-  });
-
-  it("GET /api/routines lists active routines by day-period start, then name (FR-016)", async () => {
-    seedDayPeriods();
-    const { deviceKey } = seedKeys();
-    const { buildApp } = await import("../../src/server/app.ts");
-    const app = await buildApp();
-    try {
-      const cookies = { mp_device_key: deviceKey };
-      for (const [name, dayPeriodId] of [
-        ["zeta", "evening"],
-        ["Bravo", "morning"],
-        ["Night owl", "night"],
-        ["alpha", "morning"],
-        ["Lunch", "afternoon"],
-      ]) {
-        const res = await app.inject({
-          method: "POST",
-          url: "/api/routines",
-          cookies,
-          payload: { name, dayPeriodId },
-        });
-        expect(res.statusCode).toBe(201);
-      }
-      const list = (await app.inject({ method: "GET", url: "/api/routines", cookies })).json();
-      expect(list.map((r: { name: string }) => r.name)).toEqual([
-        "alpha",
-        "Bravo",
-        "Lunch",
-        "zeta",
-        "Night owl",
-      ]);
-    } finally {
-      await app.close();
-    }
-  });
+    const list = (await app.inject({ method: "GET", url: "/api/routines", cookies })).json();
+    expect(list.map((r: { name: string }) => r.name)).toEqual([
+      "alpha",
+      "Bravo",
+      "Lunch",
+      "zeta",
+      "Night owl",
+    ]);
+  } finally {
+    await app.close();
+  }
+});
 ```
 
 - [ ] **Step 2: Run to verify they fail.** `npx vitest run tests/boundary/routines-crud.test.ts` → the three new tests FAIL (period not moved, 200 instead of 400, creation order instead of period order).
@@ -191,15 +193,15 @@ Replace the `editRoutine` doc comment with:
 Replace the comment line `// Only write name and active — dayPeriodId is NEVER written (Rule 2)` with `// Validate every supplied field first; the UPDATE runs only after all pass.` and add this block right after the `active` block (before `// If nothing to update, return current state`):
 
 ```ts
-  if ("dayPeriodId" in typed && typed.dayPeriodId !== undefined) {
-    if (typeof typed.dayPeriodId !== "string" || typed.dayPeriodId.trim().length === 0) {
-      throw new RoutineValidationError("dayPeriodId must be a non-blank string");
-    }
-    const dayPeriodId = typed.dayPeriodId.trim();
-    validateDayPeriodId(dayPeriodId);
-    updates.push("day_period_id = ?");
-    params.push(dayPeriodId);
+if ("dayPeriodId" in typed && typed.dayPeriodId !== undefined) {
+  if (typeof typed.dayPeriodId !== "string" || typed.dayPeriodId.trim().length === 0) {
+    throw new RoutineValidationError("dayPeriodId must be a non-blank string");
   }
+  const dayPeriodId = typed.dayPeriodId.trim();
+  validateDayPeriodId(dayPeriodId);
+  updates.push("day_period_id = ?");
+  params.push(dayPeriodId);
+}
 ```
 
 Replace `listRoutines` with:
@@ -249,17 +251,17 @@ export interface RoutineEditInput {
   - `RoutineEditInput.properties.dayPeriodId`: replace its single `description:` line with:
 
 ```yaml
-        dayPeriodId:
-          type: string
-          minLength: 1
-          description: Moves the routine to another existing day period; blank or unknown values are rejected (FR-015).
+dayPeriodId:
+  type: string
+  minLength: 1
+  description: Moves the routine to another existing day period; blank or unknown values are rejected (FR-015).
 ```
 
-  - `GET /api/routines` summary → `List active routines, ordered by day-period start time, then name (FR-016).`
-  - `POST /api/routines` summary → `Create a routine attached to one day period.`
-  - `PATCH /api/routines/{id}` summary → `Edit a routine's name, active flag and/or day period (FR-015).`; its `"400"` description → `validation (blank name, non-boolean active, blank or unknown dayPeriodId)`.
+- `GET /api/routines` summary → `List active routines, ordered by day-period start time, then name (FR-016).`
+- `POST /api/routines` summary → `Create a routine attached to one day period.`
+- `PATCH /api/routines/{id}` summary → `Edit a routine's name, active flag and/or day period (FR-015).`; its `"400"` description → `validation (blank name, non-boolean active, blank or unknown dayPeriodId)`.
 
-  In `docs/features/routines-chores.md` add after FR-014:
+In `docs/features/routines-chores.md` add after FR-014:
 
 ```markdown
 - **FR-015**: Given a routine edit that names a `dayPeriodId`, when it is applied, then the id MUST be a non-blank string naming an existing day period or the whole edit MUST be rejected (400) with nothing written; when accepted, the routine moves to that period and the board shows it there immediately. Admins MUST be warned that moving a routine changes the live streak before they confirm (FR-009).
@@ -267,9 +269,9 @@ export interface RoutineEditInput {
 - **FR-016**: Given the admin routine list, when it is read, then active routines MUST be ordered by their day period's start time, then by name (case-insensitive).
 ```
 
-  and change the Key Entities line to `- **Routine**: a named active/inactive template attached to exactly one day period, which an admin may change (FR-015).`
+and change the Key Entities line to `- **Routine**: a named active/inactive template attached to exactly one day period, which an admin may change (FR-015).`
 
-  In `docs/quality/api-contract-audit.md` replace `Routine edits continue to accept and ignore an immutable dayPeriodId.` with `Routine edits may move a routine to another existing day period (FR-015).`
+In `docs/quality/api-contract-audit.md` replace `Routine edits continue to accept and ignore an immutable dayPeriodId.` with `Routine edits may move a routine to another existing day period (FR-015).`
 
 - [ ] **Step 6: Commit.** `git add -A && git commit -m "feat(routines): let a routine move to another day period and list routines by period start"`
 
@@ -278,46 +280,47 @@ export interface RoutineEditInput {
 ### Task 2: Seed — afternoon routine, more chores, per-assignment weekdays
 
 **Files:**
+
 - Modify: `seeds/seed-040-routines.ts`
 - Modify: `tests/boundary/seed-routines-reminders.test.ts` (≈ lines 40-53), `tests/integration/seed-routines-reminders.test.ts` (≈ lines 41-54)
 
 - [ ] **Step 1: Write the failing tests.** In `tests/boundary/seed-routines-reminders.test.ts` replace the `expect(listRoutines()).toEqual([...])` block with:
 
 ```ts
-    expect(listRoutines()).toEqual([
-      {
-        id: "demo:routine:morning-launch",
-        name: "Morning launch",
-        dayPeriodId: "morning",
-        active: true,
-      },
-      {
-        id: "demo:routine:after-school",
-        name: "After school",
-        dayPeriodId: "afternoon",
-        active: true,
-      },
-      {
-        id: "demo:routine:evening-reset",
-        name: "Evening reset",
-        dayPeriodId: "evening",
-        active: true,
-      },
-    ]);
-    expect(listRoutineAssignments("demo:routine:after-school")).toEqual([
-      {
-        id: "demo:routine-assignment:after-school:lisa",
-        memberId: "demo:member:lisa",
-        weekdays: ["mon", "tue", "wed", "thu"],
-        active: true,
-      },
-      {
-        id: "demo:routine-assignment:after-school:bart",
-        memberId: "demo:member:bart",
-        weekdays: ["mon", "wed", "fri"],
-        active: true,
-      },
-    ]);
+expect(listRoutines()).toEqual([
+  {
+    id: "demo:routine:morning-launch",
+    name: "Morning launch",
+    dayPeriodId: "morning",
+    active: true,
+  },
+  {
+    id: "demo:routine:after-school",
+    name: "After school",
+    dayPeriodId: "afternoon",
+    active: true,
+  },
+  {
+    id: "demo:routine:evening-reset",
+    name: "Evening reset",
+    dayPeriodId: "evening",
+    active: true,
+  },
+]);
+expect(listRoutineAssignments("demo:routine:after-school")).toEqual([
+  {
+    id: "demo:routine-assignment:after-school:lisa",
+    memberId: "demo:member:lisa",
+    weekdays: ["mon", "tue", "wed", "thu"],
+    active: true,
+  },
+  {
+    id: "demo:routine-assignment:after-school:bart",
+    memberId: "demo:member:bart",
+    weekdays: ["mon", "wed", "fri"],
+    active: true,
+  },
+]);
 ```
 
 In `tests/integration/seed-routines-reminders.test.ts` replace the `expect(JSON.parse(routines.body)).toEqual([...])` array with the same three routine objects (same order).
@@ -360,7 +363,7 @@ In `tests/integration/seed-routines-reminders.test.ts` replace the `expect(JSON.
   },
 ```
 
-  - Give every existing `ASSIGNMENTS` entry `weekdays: MON_TO_FRI,` and append:
+- Give every existing `ASSIGNMENTS` entry `weekdays: MON_TO_FRI,` and append:
 
 ```ts
   {
@@ -377,9 +380,9 @@ In `tests/integration/seed-routines-reminders.test.ts` replace the `expect(JSON.
   },
 ```
 
-  - Delete the line `const weekdays = JSON.stringify(validateWeekdays(WEEKDAYS));` and in the assignment loop pass `JSON.stringify(validateWeekdays(assignment.weekdays))` instead of `weekdays`.
+- Delete the line `const weekdays = JSON.stringify(validateWeekdays(WEEKDAYS));` and in the assignment loop pass `JSON.stringify(validateWeekdays(assignment.weekdays))` instead of `weekdays`.
 
-  All four emojis are already in `src/client/chores/emoji-catalog.ts`, so `npm run check:noto-emojis` stays green.
+All four emojis are already in `src/client/chores/emoji-catalog.ts`, so `npm run check:noto-emojis` stays green.
 
 - [ ] **Step 4: Run to verify they pass.** Same command as Step 2 → PASS. Also `npx tsc -b` → no errors.
 - [ ] **Step 5: Commit.** `git add -A && git commit -m "feat(seeds): add an afternoon routine and per-assignment weekdays to the demo routines"`
@@ -389,20 +392,19 @@ In `tests/integration/seed-routines-reminders.test.ts` replace the `expect(JSON.
 ### Task 3: Strings — page title and the `// admin-routines` block
 
 **Files:**
+
 - Modify: `src/client/i18n/messages.ts`
 - Modify: `tests/client/routines-i18n-parity.test.ts` (lines 47 and 110)
 
 - [ ] **Step 1: Write the failing test.** In `tests/client/routines-i18n-parity.test.ts` change line 47 to `expect(messages.en["routines.management.title"]).toBe("Routines & Chores");` and line 110 to `expect(messages.es["routines.management.title"]).toBe("Rutinas y tareas");`, and add at the end of the same `it(...)` body:
 
 ```ts
-    expect(messages.en["routines.admin.selectPrompt"]).toBe(
-      "Select a routine to manage its chores"
-    );
-    expect(messages.es["routines.admin.selectPrompt"]).toBe(
-      "Selecciona una rutina para gestionar sus tareas"
-    );
-    expect(messages.en["routines.management.title"]).toBe(messages.en["admin.sidebar.routines"]);
-    expect(messages.es["routines.management.title"]).toBe(messages.es["admin.sidebar.routines"]);
+expect(messages.en["routines.admin.selectPrompt"]).toBe("Select a routine to manage its chores");
+expect(messages.es["routines.admin.selectPrompt"]).toBe(
+  "Selecciona una rutina para gestionar sus tareas"
+);
+expect(messages.en["routines.management.title"]).toBe(messages.en["admin.sidebar.routines"]);
+expect(messages.es["routines.management.title"]).toBe(messages.es["admin.sidebar.routines"]);
 ```
 
 - [ ] **Step 2: Run to verify it fails.** `npx vitest run tests/client/routines-i18n-parity.test.ts` → FAIL.
@@ -493,6 +495,7 @@ and directly after the es line `"admin.notFound.description": "Abre un destino d
 ### Task 4: Rebuild the page (master/detail, dialogs, drag reorder, assignments)
 
 **Files:**
+
 - Create: `src/client/routines/admin/routineOrder.ts`, `MemberChip.tsx`, `RoutineList.tsx`, `RoutineWeekGrid.tsx`, `SortableChoreRow.tsx`, `RoutineDetail.tsx`, `RoutineFormDialog.tsx`, `ChoreFormDialog.tsx`, `AssignmentDialog.tsx` (all under `src/client/routines/admin/`)
 - Rewrite: `src/client/admin/RoutinesManagement.tsx`
 - Delete: `src/client/admin/ChoreOrderControls.tsx`, `tests/client/chore-order-controls.test.tsx`
@@ -500,6 +503,7 @@ and directly after the es line `"admin.notFound.description": "Abre un destino d
 - Rewrite: `tests/client/routines.test.tsx`
 
 **Interfaces (produced here, used by later tasks/tests):**
+
 - `groupRoutinesByPeriod(routines: readonly Routine[], dayPeriods: readonly DayPeriodDTO[]): RoutineGroup[]`, `interface RoutineGroup { period: DayPeriodDTO; routines: Routine[] }`
 - `moveChore(chores: readonly Chore[], activeId: string, overId: string): Chore[] | null`
 - `WEEKDAY_LABEL_KEYS: Record<Weekday, MessageKey>`, `weekdayLabels(t): WeekdayLabels` (exported from `RoutineWeekGrid.tsx`)
@@ -640,7 +644,12 @@ interface Call {
 }
 
 const MORNING = { id: "morning", labelKey: "dayPeriod.morning", start: "06:00", sortOrder: 0 };
-const AFTERNOON = { id: "afternoon", labelKey: "dayPeriod.afternoon", start: "12:00", sortOrder: 1 };
+const AFTERNOON = {
+  id: "afternoon",
+  labelKey: "dayPeriod.afternoon",
+  start: "12:00",
+  sortOrder: 1,
+};
 const EVENING = { id: "evening", labelKey: "dayPeriod.evening", start: "17:00", sortOrder: 2 };
 const ROUTINE = { id: "r1", name: "Morning Routine", dayPeriodId: "morning", active: true };
 const ROUTINE_EVENING = { id: "r2", name: "Evening Routine", dayPeriodId: "evening", active: true };
@@ -698,7 +707,8 @@ function mockBackend(backend: Backend = {}): Call[] {
     if (url.includes("/api/settings")) {
       return json({ locale: { timezone: "UTC", language: backend.language ?? "en" } });
     }
-    if (url === "/api/day-periods") return json(backend.dayPeriods ?? [MORNING, AFTERNOON, EVENING]);
+    if (url === "/api/day-periods")
+      return json(backend.dayPeriods ?? [MORNING, AFTERNOON, EVENING]);
     if (url === "/api/members") return json(backend.members ?? [CHILD, PARENT]);
     if (url === "/api/routines" && method === "GET") return json(routines);
     if (url === "/api/routines" && method === "POST") {
@@ -722,14 +732,19 @@ function mockBackend(backend: Backend = {}): Call[] {
       );
     }
     if (choresMatch && method === "POST") {
-      return json({ id: "c-new", routineId: choresMatch[1], sortOrder: 3, active: true, ...(body as Json) }, 201);
+      return json(
+        { id: "c-new", routineId: choresMatch[1], sortOrder: 3, active: true, ...(body as Json) },
+        201
+      );
     }
     if (/\/chores\/order$/.test(url) && method === "PUT") {
       const ids = (body as { choreIds: string[] }).choreIds;
       return json(ids.map((id, sortOrder) => ({ ...CHORES.find((c) => c.id === id), sortOrder })));
     }
-    if (/^\/api\/chores\/[^/]+$/.test(url) && method === "PATCH") return json({ ...CHORES[0], ...(body as Json) });
-    if (/^\/api\/chores\/[^/]+$/.test(url) && method === "DELETE") return new Response(null, { status: 204 });
+    if (/^\/api\/chores\/[^/]+$/.test(url) && method === "PATCH")
+      return json({ ...CHORES[0], ...(body as Json) });
+    if (/^\/api\/chores\/[^/]+$/.test(url) && method === "DELETE")
+      return new Response(null, { status: 204 });
     if (/\/assignments$/.test(url) && method === "GET") return json(backend.assignments ?? []);
     const assignmentMatch = url.match(/\/assignments\/([^/]+)$/);
     if (assignmentMatch && method === "PUT") {
@@ -816,9 +831,9 @@ describe("RoutinesManagement — list and selection", () => {
     renderPage();
 
     await screen.findByTestId("routine-list-item-r1");
-    expect(
-      screen.getAllByTestId(/^routine-list-item-/).map((item) => item.dataset.testid)
-    ).toEqual(["routine-list-item-r1", "routine-list-item-r2"]);
+    expect(screen.getAllByTestId(/^routine-list-item-/).map((item) => item.dataset.testid)).toEqual(
+      ["routine-list-item-r1", "routine-list-item-r2"]
+    );
     expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent)).toEqual([
       "Morning",
       "Evening",
@@ -827,7 +842,9 @@ describe("RoutinesManagement — list and selection", () => {
       "Select a routine to manage its chores"
     );
     expect(screen.getByRole("region", { name: "Routines & Chores" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "Routines & Chores" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Routines & Chores" })
+    ).toBeInTheDocument();
   });
 
   it("shows the empty message without routines", async () => {
@@ -1427,7 +1444,13 @@ export interface RoutineListProps {
 }
 
 /** Master list: routines grouped by day period, in period start order. */
-export function RoutineList({ routines, dayPeriods, selectedId, onSelect, onNew }: RoutineListProps) {
+export function RoutineList({
+  routines,
+  dayPeriods,
+  selectedId,
+  onSelect,
+  onNew,
+}: RoutineListProps) {
   const t = useT();
   const groups = groupRoutinesByPeriod(routines, dayPeriods);
 
@@ -2697,6 +2720,7 @@ export function RoutinesManagement() {
 ### Task 5: Keep the other admin tests pointing at the page
 
 **Files:**
+
 - Modify: `tests/client/admin-gate-panel-reset.test.tsx` (routines entry ≈ lines 70-74)
 - Modify: `tests/e2e/admin-unlock-resilience.spec.ts` (routines entry ≈ lines 98-102)
 
@@ -2902,7 +2926,9 @@ for (const suite of report.testResults) {
   cases[file] = (suite.assertionResults ?? []).map((a) => a.fullName);
 }
 fixture.testCohorts.runners.vitest.files = Object.fromEntries(
-  Object.keys(cases).sort().map((file) => [file, cases[file]])
+  Object.keys(cases)
+    .sort()
+    .map((file) => [file, cases[file]])
 );
 
 const raw = JSON.parse(fs.readFileSync("coverage/coverage-final.json", "utf8"));
@@ -2910,7 +2936,8 @@ const policy = fixture.coveragePolicy.files;
 for (const file of Object.keys(policy)) {
   if (!fs.existsSync(file)) delete policy[file];
 }
-const floor2 = (covered, total) => (total === 0 ? 100 : Math.floor((10000 * covered) / total) / 100);
+const floor2 = (covered, total) =>
+  total === 0 ? 100 : Math.floor((10000 * covered) / total) / 100;
 for (const file of process.argv.slice(2)) {
   const item = raw[path.resolve(root, file)];
   if (!item) throw new Error(`${file} absent from coverage`);
@@ -2943,7 +2970,9 @@ for (const file of process.argv.slice(2)) {
   console.log(file, JSON.stringify(measured));
 }
 fixture.coveragePolicy.files = Object.fromEntries(
-  Object.keys(policy).sort().map((file) => [file, policy[file]])
+  Object.keys(policy)
+    .sort()
+    .map((file) => [file, policy[file]])
 );
 fs.writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n");
 ```
