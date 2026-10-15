@@ -56,7 +56,7 @@ already generated.
 
 - **FR-001**: Given a weather location, when it is stored, then Weather MUST keep no owned table — configuration MUST live in the App Settings `weather` object and weather history MUST live only in Daily Briefing snapshots, and the browser cache MUST be treated as client-local rather than domain state. Contract: WEATHER-INV-01.
 
-- **FR-002**: Given the weather location, when it is set or cleared, then it MUST be one atomic settings object `{lat, lon, label?}` set/cleared as a unit, and its `lat` MUST be range-validated to `[-90,90]` and `lon` to `[-180,180]` at the settings boundary, and a partial or invalid pair MUST disable weather without guessing. Contract: WEATHER-INV-02.
+- **FR-002**: Given the weather location, when it is set or cleared, then it MUST be one atomic settings object `{lat, lon, label?}` set/cleared as a unit, and its `lat` MUST be range-validated to `[-90,90]` and `lon` to `[-180,180]` at the settings boundary, and a partial or invalid pair MUST disable weather without guessing. Contract: WEATHER-INV-02. The admin Settings page edits the location together with the locale under one Save; Clear location empties the fields and is persisted by Save.
 
 - **FR-003**: Given a weather location lookup, when the location is resolved, then App Settings MUST be the single source of truth with no environment fallback, and a blank location MUST turn weather off on both kiosk and briefing. Contract: WEATHER-INV-03.
 
