@@ -7,15 +7,16 @@ import {
 } from "@/daily-briefing/admin/BriefingScheduleTab";
 import { BriefingAutomationCard } from "@/daily-briefing/admin/BriefingAutomationCard";
 import { messages } from "@/i18n/messages";
+import { Role, type MemberDTO } from "../../src/shared";
 
 afterEach(cleanup);
 
 const t = (key: keyof typeof messages.en) => messages.en[key];
-const member = (id: string, name: string) => ({
+const member = (id: string, name: string): MemberDTO => ({
   id,
   displayName: name,
   colorKey: "blue" as const,
-  role: "child" as const,
+  role: Role.child,
   lifecycle: "active" as const,
   createdAt: 1,
   updatedAt: 1,
