@@ -26,6 +26,9 @@ export interface CheckboxFieldProps {
    * mirror of what is already on screen, never an invisible name. Without it,
    * otherwise every row's checkbox announces identically when the visible label is repeated. */
   "aria-label"?: string;
+  /** Render `label` for assistive tech only (a matrix cell whose row and column headers carry
+   * the visible meaning). The wrapping `<label>` still names the checkbox. */
+  labelHidden?: boolean;
 }
 
 export function CheckboxField({
@@ -34,12 +37,14 @@ export function CheckboxField({
   label,
   disabled,
   className,
+  labelHidden,
   ...rest
 }: CheckboxFieldProps) {
   return (
     <label
       className={cn(
-        "inline-flex items-center gap-2 text-control",
+        "inline-flex items-center text-control",
+        !labelHidden && "gap-2",
         disabled && "opacity-50",
         className
       )}
@@ -63,7 +68,7 @@ export function CheckboxField({
         )}
         {...rest}
       />
-      {label}
+      {labelHidden ? <span className="sr-only">{label}</span> : label}
     </label>
   );
 }
