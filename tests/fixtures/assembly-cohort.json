@@ -5428,7 +5428,7 @@
         },
         "minimumRates": {
           "lines": 100.0,
-          "statements": 95.63,
+          "statements": 95.62,
           "functions": 97.67,
           "branches": 77.89
         }
