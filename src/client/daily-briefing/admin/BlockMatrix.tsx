@@ -89,7 +89,9 @@ export function BlockMatrix(props: BlockMatrixProps) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border">
+    // `relative` makes this box the containing block of the sr-only cell labels (absolutely
+    // positioned), so they stay inside its horizontal scroll instead of widening the page.
+    <div className="relative overflow-x-auto rounded-lg border">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -334,6 +336,7 @@ function ParamSelect({
   options: ReadonlyArray<{ value: string; label: string }>;
   onChange: (value: string) => void;
 }) {
+  const t = useT();
   return (
     <Label className="flex items-center gap-1 text-xs">
       {label}
@@ -344,7 +347,7 @@ function ParamSelect({
         onChange={(event) => onChange(event.target.value)}
         className={NATIVE_SELECT_CLASSES}
       >
-        <option value="">—</option>
+        <option value="">{t("dailyBriefing.admin.paramDefault")}</option>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}

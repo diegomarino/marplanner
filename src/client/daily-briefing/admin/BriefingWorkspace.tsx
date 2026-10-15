@@ -67,7 +67,8 @@ export function BriefingWorkspace({
   const printingActive = usePrintingPluginActive();
   const [history, setHistory] = useState<BriefingHistoryResponse | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
-  const [read, setRead] = useState<BriefingReadResult | null>(null);
+  // The read carries the date it answers, so a previous date's result never shows under a new one.
+  const [read, setRead] = useState<{ date: string; result: BriefingReadResult } | null>(null);
   const [readError, setReadError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
   const [generating, setGenerating] = useState(false);
@@ -105,22 +106,27 @@ export function BriefingWorkspace({
       });
       if (!response.ok) throw new Error("read");
       const data = (await response.json()) as BriefingReadResult;
-      if (latestRead.current === request) setRead(data);
+      if (latestRead.current === request) setRead({ date, result: data });
     } catch {
       if (latestRead.current === request) setReadError(t("dailyBriefing.admin.briefingLoadError"));
     }
   }
 
+  // A notice answers the last action; once the tab is left (for example to unpause a day in
+  // Blocks) it may no longer be true.
+  useEffect(() => {
+    if (!active) setNotice(null);
+  }, [active]);
+
   useEffect(() => {
     if (active) void loadHistory();
   }, [active, refreshKey]);
 
-  // A new date drops the previous date's payload and notice before its own read lands.
+  // A new date drops the previous date's notice.
   const shownDate = useRef(activeDate);
   useEffect(() => {
     if (shownDate.current === activeDate) return;
     shownDate.current = activeDate;
-    setRead(null);
     setNotice(null);
   }, [activeDate]);
 
@@ -128,7 +134,8 @@ export function BriefingWorkspace({
     if (active && activeDate) void loadRead(activeDate);
   }, [active, activeDate, version, refreshKey]);
 
-  const generated = read?.generated === true ? read.briefing : null;
+  const shownRead = read && read.date === activeDate ? read.result : null;
+  const generated = shownRead?.generated === true ? shownRead.briefing : null;
 
   async function generate() {
     if (blocked || generating) return;
@@ -347,50 +354,52 @@ export function BriefingWorkspace({
         )}
         <ErrorNotice message={actionError} data-testid="daily-briefing-action-error" />
 
-        <div className="flex min-w-0 flex-col gap-4 xl:flex-row">
-          <div className="min-w-0 flex-1">
-            {readError ? (
-              <div className="flex flex-col items-start gap-2">
-                <ErrorNotice message={readError} />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  data-testid="daily-briefing-read-retry"
-                  onClick={() => activeDate && void loadRead(activeDate)}
-                >
-                  {t("dailyBriefing.admin.retry")}
-                </Button>
-              </div>
-            ) : generated ? (
-              <div className="flex flex-col gap-2">
-                <p className="text-sm" data-testid="daily-briefing-status" aria-live="polite">
-                  {t("dailyBriefing.management.status")}:{" "}
-                  {t(`dailyBriefing.status.${generated.status}`)}
-                </p>
-                <h4 className="font-semibold">{t("dailyBriefing.admin.payloadTitle")}</h4>
-                <pre
-                  data-testid="daily-briefing-generated-payload"
-                  className="max-h-96 overflow-auto rounded-lg border bg-muted p-4 text-xs whitespace-pre-wrap break-all"
-                >
-                  {JSON.stringify(generated.payload, null, 2)}
-                </pre>
-              </div>
-            ) : read && activeDate ? (
-              <p className="text-sm text-muted-foreground" data-testid="daily-briefing-no-briefing">
-                {t("dailyBriefing.admin.noBriefingForDate").replace("{date}", activeDate)}
-              </p>
-            ) : null}
+        {readError ? (
+          <div className="flex flex-col items-start gap-2">
+            <ErrorNotice message={readError} />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              data-testid="daily-briefing-read-retry"
+              onClick={() => activeDate && void loadRead(activeDate)}
+            >
+              {t("dailyBriefing.admin.retry")}
+            </Button>
           </div>
-          {active && activeDate && (
-            <BriefingImage
-              memberId={memberId}
-              date={activeDate}
-              version={version + refreshKey}
-              status={generated?.status}
-            />
-          )}
-        </div>
+        ) : generated && activeDate ? (
+          // The rendered image is the briefing a parent recognises; the raw payload is only for
+          // troubleshooting, so it stays collapsed below it.
+          <div className="flex min-w-0 flex-col gap-3">
+            <p className="text-sm" data-testid="daily-briefing-status" aria-live="polite">
+              {t("dailyBriefing.management.status")}:{" "}
+              {t(`dailyBriefing.status.${generated.status}`)}
+            </p>
+            {active && (
+              <BriefingImage
+                memberId={memberId}
+                date={activeDate}
+                version={version + refreshKey}
+                status={generated.status}
+              />
+            )}
+            <details className="rounded-lg border">
+              <summary className="cursor-pointer px-4 py-2 text-sm font-semibold">
+                {t("dailyBriefing.admin.payloadTitle")}
+              </summary>
+              <pre
+                data-testid="daily-briefing-generated-payload"
+                className="max-h-96 overflow-auto bg-muted p-4 text-xs whitespace-pre-wrap break-all"
+              >
+                {JSON.stringify(generated.payload, null, 2)}
+              </pre>
+            </details>
+          </div>
+        ) : shownRead && activeDate ? (
+          <p className="text-sm text-muted-foreground" data-testid="daily-briefing-no-briefing">
+            {t("dailyBriefing.admin.noBriefingForDate").replace("{date}", activeDate)}
+          </p>
+        ) : null}
       </div>
     </div>
   );

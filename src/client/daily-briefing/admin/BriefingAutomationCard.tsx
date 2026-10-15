@@ -109,6 +109,7 @@ export function BriefingAutomationCard({
           label={t("dailyBriefing.admin.autoPrintLabel")}
         />
         <p className="text-sm text-muted-foreground">{t("dailyBriefing.admin.automationHint")}</p>
+        <p className="text-sm text-muted-foreground">{t("dailyBriefing.admin.autoPrintHint")}</p>
         <Button
           type="button"
           className="w-fit"
