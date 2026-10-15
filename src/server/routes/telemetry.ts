@@ -125,6 +125,7 @@ export async function telemetryRoutes(app: FastifyInstance): Promise<void> {
         const status: SystemStatus = {
           status: "ok",
           checkedAt: new Date().toISOString(),
+          uptimeSeconds: Math.floor(process.uptime()),
           build: getBuildInfo(),
         };
         return reply.code(200).send(status);

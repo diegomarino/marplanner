@@ -44,8 +44,8 @@ and the Options menu are not shown there. A sidebar holds the admin sections and
 appears in it once it has been redesigned, and until then it is reached from the overview's list
 of all sections.
 
-`/admin` is the overview: the deployed commit and server status, the commit this device runs and
-whether it matches, and the most recent warnings and errors from the client log.
+`/admin` is the overview: the deployed commit and server status and how long the server has been
+running, the commit this device runs and whether it matches, and the most recent warnings and errors from the client log.
 
 Members are created, edited, archived and restored from `/admin/members` in one form. A card
 opens it. Archiving and restoring ask for confirmation, an archived member opens read-only, and a
@@ -67,8 +67,9 @@ The ordered capability table is:
 10. `/admin/time-announcements` — time announcements
 11. `/admin/network-devices` — network devices
 12. `/admin/printing` — pair/re-pair, test print, print history
-13. `/admin/settings` — language, time zone and week start, plus the day periods and, while the
-    weather plugin is active, the weather location
+13. `/admin/settings` — language, week start and time zone, plus the day periods and, while the
+    weather plugin is active, the weather location, with one Save for language, week start, time
+    zone and weather (the day periods keep their own save)
 
 Every destination is reached from the admin sidebar, grouped as Household, Daily briefing and
 System.
