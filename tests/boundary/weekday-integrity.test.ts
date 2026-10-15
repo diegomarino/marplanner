@@ -36,6 +36,7 @@ describe("canonical weekday integrity", () => {
       ["routine_assignments", "weekdays"],
       ["reminder_assignment", "weekdays"],
       ["daily_briefing_member_block_settings", "weekdays"],
+      ["daily_briefing_optin", "weekdays"],
       ["time_announcements", "week_days"],
       ["meal_entries", "weekday"],
     ]) {

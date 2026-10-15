@@ -15,7 +15,8 @@ const activeMembers = [
   {
     id: "member-ada",
     displayName: "Ada",
-    role: "parent",
+    colorKey: "blue",
+    role: "child",
     lifecycle: "active",
     createdAt: 1,
     updatedAt: 1,

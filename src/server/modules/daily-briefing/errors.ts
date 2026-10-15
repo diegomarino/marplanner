@@ -13,3 +13,38 @@ export class DailyBriefingValidationError extends Error {
     this.name = "DailyBriefingValidationError";
   }
 }
+/** The member's briefing is paused on this weekday (spec D4). Deliberately NOT a validation
+ * error: the generate route answers 200 `{skipped: true}`, and batch callers skip it. */
+export class DailyBriefingPausedError extends Error {
+  constructor(
+    readonly memberId: string,
+    readonly date: string
+  ) {
+    super(`Daily briefing for member "${memberId}" is paused on ${date}`);
+    this.name = "DailyBriefingPausedError";
+  }
+}
+
+/** No briefing row exists for the requested member/date (404). */
+export class DailyBriefingNotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DailyBriefingNotFoundError";
+  }
+}
+
+/** Printing plugin inactive — nothing can be queued (409 `plugin_inactive`). */
+export class DailyBriefingPrintUnavailableError extends Error {
+  constructor() {
+    super("The Printing plugin is inactive");
+    this.name = "DailyBriefingPrintUnavailableError";
+  }
+}
+
+/** The briefing exists but has no stored printable raster (409 `printable_raster_missing`). */
+export class DailyBriefingRasterMissingError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DailyBriefingRasterMissingError";
+  }
+}

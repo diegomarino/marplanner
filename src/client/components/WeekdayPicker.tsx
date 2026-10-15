@@ -87,6 +87,9 @@ export interface WeekdayPickerMultiProps extends WeekdayPickerCommonProps {
   mode?: "multi";
   value: readonly WeekdayCode[];
   onChange: (next: readonly WeekdayCode[]) => void;
+  /** Days rendered disabled (still showing their value) — e.g. weekdays a parent setting has
+   * switched off. Multi mode only. */
+  disabledDays?: readonly WeekdayCode[];
 }
 
 export interface WeekdayPickerSingleProps extends WeekdayPickerCommonProps {
@@ -159,7 +162,7 @@ export function WeekdayPicker(props: WeekdayPickerProps) {
     );
   }
 
-  const { value, onChange } = props;
+  const { value, onChange, disabledDays } = props;
   /** Always emits in `CANONICAL_WEEKDAY_ORDER`, regardless of click order, so callers can
    * save weekdays without sorting them again. */
   const toggle = (day: WeekdayCode) => {
@@ -184,7 +187,7 @@ export function WeekdayPicker(props: WeekdayPickerProps) {
           checked={value.includes(day)}
           onChange={() => toggle(day)}
           label={labels[day]}
-          disabled={disabled}
+          disabled={disabled || disabledDays?.includes(day)}
           data-testid={testIdPrefix ? `${testIdPrefix}-${day}` : undefined}
         />
       ))}

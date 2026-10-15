@@ -1,3 +1,5 @@
+import type { WeekdayCode } from "./weekdays.js";
+
 // ─────────────────────────────────────────────────────────────────────
 // Daily Briefing DTOs — pure types, no I/O, no deps.
 // The payload shapes remain available before the daily-briefing plugin is installed.
@@ -138,4 +140,45 @@ export type BriefingReadResult =
 export interface OptInState {
   memberId: string;
   enabled: boolean;
+}
+
+/** BriefingSchedule — a member's weekday pause schedule: the weekdays (canonical mon..sun order)
+ * on which their briefing is generated and auto-printed. An empty array pauses every day. */
+export interface BriefingSchedule {
+  memberId: string;
+  weekdays: WeekdayCode[];
+}
+
+/** One row of a member's briefing history (newest first). */
+export interface BriefingHistoryEntry {
+  id: string;
+  date: string;
+  status: BriefingStatus;
+  updatedAt: number;
+}
+
+/** `GET /api/daily-briefing/history/:memberId` — `today` is the household business date. */
+export interface BriefingHistoryResponse {
+  today: string;
+  entries: BriefingHistoryEntry[];
+}
+
+/** `POST /api/daily-briefing/generate` answer when the member is paused on that weekday. */
+export interface GenerateSkippedResponse {
+  skipped: true;
+  reason: "paused";
+  memberId: string;
+  date: string;
+}
+
+/** `POST /api/daily-briefing/:memberId/:date/print` — `enqueued: false` means a job for this
+ * briefing is already waiting in the queue and was reused. */
+export interface BriefingPrintResponse {
+  jobId: string;
+  enqueued: boolean;
+}
+
+/** `GET .../preview.png` 202 body while a generation for that member/date is in flight. */
+export interface BriefingPreviewRendering {
+  status: "rendering";
 }

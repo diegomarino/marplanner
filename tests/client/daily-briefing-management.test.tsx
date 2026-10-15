@@ -10,6 +10,7 @@ const activeMembers = [
   {
     id: "member-ada",
     displayName: "Ada",
+    colorKey: "blue",
     role: "parent",
     lifecycle: "active",
     createdAt: 1,
@@ -19,6 +20,7 @@ const activeMembers = [
   {
     id: "member-ben",
     displayName: "Ben",
+    colorKey: "teal",
     role: "child",
     lifecycle: "active",
     createdAt: 1,
@@ -29,6 +31,21 @@ const activeMembers = [
 
 function jsonResponse(body: unknown) {
   return new Response(JSON.stringify(body), { status: 200 });
+}
+
+/** The Preview / Generate workspace's reads (history, stored briefing, image, Printing status). */
+function workspaceResponse(url: string): Response | undefined {
+  if (url === "/api/printing/status") return jsonResponse({ active: true });
+  if (url.startsWith("/api/daily-briefing/history/")) {
+    return jsonResponse({ today: "2026-10-15", entries: [] });
+  }
+  if (/^\/api\/daily-briefing\/[^/]+\/[^/]+\/preview\.png/.test(url)) {
+    return new Response("{}", { status: 404 });
+  }
+  if (/^\/api\/daily-briefing\/[^/]+\/\d{4}-\d{2}-\d{2}$/.test(url)) {
+    return jsonResponse({ generated: false });
+  }
+  return undefined;
 }
 
 function renderManagement() {
@@ -254,11 +271,14 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
           updatedAt: 1,
         });
       }
+      const workspace = workspaceResponse(url);
+      if (workspace) return workspace;
       throw new Error(`unexpected fetch: ${url}`);
     });
 
     renderManagement();
 
+    fireEvent.click(await screen.findByTestId("daily-briefing-tab-preview"));
     fireEvent.click(await screen.findByTestId("daily-briefing-generate-all"));
 
     const info = await screen.findByTestId("daily-briefing-generate-all-info");
@@ -273,9 +293,14 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     fireEvent.change(screen.getByTestId("daily-briefing-member-select"), {
       target: { value: "member-ada" },
     });
+    await screen.findByTestId("daily-briefing-history-empty");
     fireEvent.click(screen.getByTestId("daily-briefing-generate"));
-    await screen.findByTestId("daily-briefing-status");
-    expect(screen.queryByTestId("daily-briefing-generate-all-info")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByTestId("daily-briefing-generate-all-info")).not.toBeInTheDocument()
+    );
+    expect(screen.getByTestId("daily-briefing-member-status-member-ada")).toHaveTextContent(
+      "Ada: Ready"
+    );
   });
 
   it("keeps Generate-all disabled while an earlier opt-in PUT is still pending", async () => {
@@ -366,5 +391,103 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     ).toHaveLength(0);
 
     resolveAdaOptIn?.(jsonResponse({ memberId: "member-ada", enabled: false }));
+  });
+
+  it("pauses a weekday for the selected member, disables that column and shows the notice", async () => {
+    let scheduleBody: unknown;
+    vi.mocked(globalThis.fetch).mockImplementation(async (...args: FetchCall) => {
+      const [input, init] = args;
+      const url = String(input);
+      if (url === "/api/settings")
+        return jsonResponse({ locale: { timezone: "UTC", language: "en" } });
+      if (url === "/api/members") return jsonResponse(activeMembers);
+      if (url === "/api/daily-briefing/opt-in") {
+        return jsonResponse([{ memberId: "member-ada", enabled: true }]);
+      }
+      if (url === "/api/daily-briefing/settings") {
+        return jsonResponse({
+          generationTime: "06:00",
+          autoPrintTrigger: null,
+          blockOrder: [],
+          memberBlockSettings: [],
+          memberSchedules: [
+            { memberId: "member-ada", weekdays: ["mon", "tue", "wed", "thu", "fri"] },
+          ],
+        });
+      }
+      if (url === "/api/daily-briefing/schedule/member-ada" && init?.method === "PUT") {
+        scheduleBody = JSON.parse(String(init.body));
+        return jsonResponse({ memberId: "member-ada", ...(scheduleBody as object) });
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    renderManagement();
+
+    const sunday = await screen.findByTestId("daily-briefing-schedule-day-sun");
+    expect(sunday).not.toBeChecked();
+    expect(screen.getByTestId("daily-briefing-admin-block-weekday-weather-sun")).toBeDisabled();
+    expect(screen.getByTestId("daily-briefing-admin-block-weekday-weather-mon")).toBeEnabled();
+
+    fireEvent.click(screen.getByTestId("daily-briefing-schedule-day-mon"));
+    await waitFor(() => expect(scheduleBody).toEqual({ weekdays: ["tue", "wed", "thu", "fri"] }));
+    expect(await screen.findByTestId("daily-briefing-settings-changed")).toBeVisible();
+    expect(screen.getByTestId("daily-briefing-admin-block-weekday-weather-mon")).toBeDisabled();
+  });
+
+  it("offers Retry when members fail to load, and when settings fail to load", async () => {
+    let membersFail = true;
+    let settingsFail = true;
+    vi.mocked(globalThis.fetch).mockImplementation(async (...args: FetchCall) => {
+      const url = String(args[0]);
+      if (url === "/api/settings")
+        return jsonResponse({ locale: { timezone: "UTC", language: "en" } });
+      if (url === "/api/members") {
+        if (membersFail) return new Response("{}", { status: 500 });
+        return jsonResponse(activeMembers);
+      }
+      if (url === "/api/daily-briefing/opt-in") return jsonResponse([]);
+      if (url === "/api/daily-briefing/settings") {
+        if (settingsFail) return new Response("{}", { status: 500 });
+        return jsonResponse({
+          generationTime: "06:00",
+          autoPrintTrigger: null,
+          blockOrder: [],
+          memberBlockSettings: [],
+        });
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    renderManagement();
+
+    membersFail = false;
+    fireEvent.click(await screen.findByTestId("daily-briefing-retry"));
+    expect(await screen.findByTestId("daily-briefing-block-member-member-ben")).toBeVisible();
+
+    settingsFail = false;
+    fireEvent.click(screen.getByTestId("daily-briefing-settings-retry"));
+    expect(await screen.findByTestId("daily-briefing-block-matrix")).toBeVisible();
+  });
+
+  it("titles the page with its sidebar label", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(async (...args: FetchCall) => {
+      const url = String(args[0]);
+      if (url === "/api/settings")
+        return jsonResponse({ locale: { timezone: "UTC", language: "en" } });
+      if (url === "/api/members") return jsonResponse(activeMembers);
+      if (url === "/api/daily-briefing/opt-in") return jsonResponse([]);
+      if (url === "/api/daily-briefing/settings") {
+        return jsonResponse({
+          generationTime: "06:00",
+          autoPrintTrigger: null,
+          blockOrder: [],
+          memberBlockSettings: [],
+        });
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    renderManagement();
+    expect(await screen.findByRole("heading", { name: /^Briefing$/ })).toBeVisible();
   });
 });
