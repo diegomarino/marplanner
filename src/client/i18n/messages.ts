@@ -999,9 +999,16 @@ export const messages = {
     "backups.management.restoreError": "Failed to restore this backup.",
     "backups.management.uploadTitle": "Upload a backup",
     "backups.management.uploadFileLabel": "Backup file",
-    "backups.management.uploadSubmit": "Upload",
-    "backups.management.uploading": "Uploading…",
     "backups.management.uploadError": "Failed to upload this backup.",
+    // admin-backups
+    "backups.management.retry": "Retry",
+    "backups.management.snapshotCreated": "Snapshot {filename} created.",
+    "backups.management.uploadSuccess": "Uploaded as {filename}.",
+    "backups.management.uploadDropHint": "Drag a .db backup file here, or choose one.",
+    "backups.management.uploadUnsupported": "Only .db backup files can be uploaded.",
+    "backups.management.uploadingFile": "Uploading {filename}…",
+    "backups.management.downloadError": "Failed to download this backup.",
+    "backups.management.downloading": "Downloading…",
 
     // Time-announcements phrase-shape templates.
     // These are SENTENCE SHAPES only — `{hour}`/`{minute}` are placeholders the
@@ -2259,7 +2266,7 @@ export const messages = {
     "telemetry.management.loadingMore": "Cargando más…",
 
     // ─── Backups & Restore chrome ────────────────────────────────────────────
-    "backups.management.title": "Copias de Seguridad",
+    "backups.management.title": "Copias de seguridad",
     "backups.management.description":
       "Copias nocturnas y manuales, restauración, e importación/exportación.",
     "backups.management.loading": "Cargando copias de seguridad…",
@@ -2300,9 +2307,16 @@ export const messages = {
     "backups.management.restoreError": "Error al restaurar esta copia de seguridad.",
     "backups.management.uploadTitle": "Subir una copia de seguridad",
     "backups.management.uploadFileLabel": "Archivo de copia de seguridad",
-    "backups.management.uploadSubmit": "Subir",
-    "backups.management.uploading": "Subiendo…",
     "backups.management.uploadError": "Error al subir esta copia de seguridad.",
+    // admin-backups
+    "backups.management.retry": "Reintentar",
+    "backups.management.snapshotCreated": "Instantánea {filename} creada.",
+    "backups.management.uploadSuccess": "Subida como {filename}.",
+    "backups.management.uploadDropHint": "Arrastra aquí un archivo de copia .db, o elige uno.",
+    "backups.management.uploadUnsupported": "Solo se pueden subir archivos de copia .db.",
+    "backups.management.uploadingFile": "Subiendo {filename}…",
+    "backups.management.downloadError": "Error al descargar esta copia de seguridad.",
+    "backups.management.downloading": "Descargando…",
 
     // The es locale reproduces the phrase builder's 12-case golden table
     // verbatim (see the phrase builder + its test for the oracle); this block

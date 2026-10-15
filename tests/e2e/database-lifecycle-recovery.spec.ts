@@ -79,7 +79,6 @@ test("database recovery journey uses the existing Backups UI without a product r
     await expect(page.getByTestId("backups-management")).toBeVisible();
     await expect(page.getByTestId("backups-snapshot-now")).toBeVisible();
     await expect(page.getByTestId("backups-upload-input")).toBeVisible();
-    await expect(page.getByTestId("backups-upload-submit")).toBeDisabled();
 
     // List + snapshot: the only snapshot used for restoration is made through the UI.
     await page.getByTestId("backups-snapshot-now").click();
@@ -96,7 +95,6 @@ test("database recovery journey uses the existing Backups UI without a product r
       mimeType: "application/x-sqlite3",
       buffer: readFileSync(join(dataDirectory, "marplanner.db")),
     });
-    await page.getByTestId("backups-upload-submit").click();
     const uploaded = await waitForBackup(page, base, "upload");
     await expect(page.getByTestId(`backups-delete-${uploaded.filename}`)).toBeVisible();
     await page.getByTestId(`backups-delete-${uploaded.filename}`).click();

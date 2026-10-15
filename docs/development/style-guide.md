@@ -121,6 +121,21 @@ label reintroduces the unnamed-control defect this recipe's own adoption was mea
 
 ---
 
+### `STATUS_BANNER_CLASSES` and `TYPE_PILL_CLASSES`
+
+See `src/client/lib/recipes.ts` for the current class strings.
+
+**What they're for**: `STATUS_BANNER_CLASSES` is the in-page success line of an admin action
+(`role="status"`, `aria-live="polite"`), used by `admin/BackupsManagement.tsx` for "Snapshot …
+created." and "Uploaded as …". `TYPE_PILL_CLASSES` maps each `BackupType` to a pill colour.
+
+**Why they're recipes, not components** — **State**, **wiring** and **accessibility** are all
+absent: each is a class string on a `<p>`/`<span>` the caller owns. **Constraint on use**: the
+pill must always render the localized type label (colour is never the only signal), and both
+recipes use semantic tokens only — `check:ui-debt` rejects Tailwind scale colours.
+
+---
+
 ## Enforcement and review limits
 
 The recipe rule catches variables and object properties whose names end in `Classes` or `_CLASSES`, regardless of initializer shape (including concatenation, arrays, `join`, `cn`, casts and exports). It can flag unrelated values with those names; justify a necessary suppression at the line. Renamed values and inline class strings still need review. This is a naming-convention net, not a general expression evaluator.
