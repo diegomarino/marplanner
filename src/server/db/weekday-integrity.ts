@@ -9,11 +9,16 @@ export function assertWeekdayIntegrity(): void {
     ["reminder", "weekdays", true],
     ["reminder_assignment", "weekdays", false],
     ["daily_briefing_member_block_settings", "weekdays", true],
+    ["daily_briefing_optin", "weekdays", true],
     ["time_announcements", "week_days", false],
     ["meal_entries", "weekday", true],
   ] as const) {
     const id =
-      table === "daily_briefing_member_block_settings" ? "member_id || ':' || block_type" : "id";
+      table === "daily_briefing_member_block_settings"
+        ? "member_id || ':' || block_type"
+        : table === "daily_briefing_optin"
+          ? "member_id"
+          : "id";
     const rows = db.prepare(`SELECT ${id} AS id, ${column} AS value FROM ${table}`).all() as {
       id: string;
       value: unknown;

@@ -17,6 +17,11 @@ const CALENDAR_EVENT_DETAILS_MIGRATION = join(
   "0003_calendar_event_details.sql"
 );
 const MEMBER_PALETTE_MIGRATION = join(PROJECT_ROOT, "drizzle", "0004_member_palette.sql");
+const DAILY_BRIEFING_SCHEDULE_MIGRATION = join(
+  PROJECT_ROOT,
+  "drizzle",
+  "0005_daily_briefing_schedule.sql"
+);
 const DRIZZLE_KIT = join(PROJECT_ROOT, "node_modules", "drizzle-kit", "bin.cjs");
 const SCHEMA_FILE = join(PROJECT_ROOT, "src", "server", "db", "schema.ts");
 const LIFECYCLE_TABLES = new Set([
@@ -192,6 +197,7 @@ describe("database lifecycle fresh current baseline", () => {
           CALENDAR_FEED_SYNC_MIGRATION,
           CALENDAR_EVENT_DETAILS_MIGRATION,
           MEMBER_PALETTE_MIGRATION,
+          DAILY_BRIEFING_SCHEDULE_MIGRATION,
         ],
         join(tempDir, "baseline.sqlite")
       );
@@ -222,6 +228,7 @@ describe("database lifecycle fresh current baseline", () => {
       { fileName: "0002_plugin_lifecycle.sql" },
       { fileName: "0003_calendar_event_details.sql" },
       { fileName: "0004_member_palette.sql" },
+      { fileName: "0005_daily_briefing_schedule.sql" },
     ]);
 
     const foreignKeys = ALL_SCHEMA_TABLES.flatMap((table) =>
