@@ -554,17 +554,19 @@ test("admin opt-in -> Generate -> complete ordered catalogue and raster preview 
     expect((await scheduleResponse).status()).toBe(200);
   }
   await toggleToday();
-  await expect(management.getByTestId("daily-briefing-settings-changed")).toBeVisible();
+  // A pause changes no briefing already made, so it asks for no regenerate.
+  await expect(management.getByTestId("daily-briefing-settings-changed")).toHaveCount(0);
   await management.getByTestId("daily-briefing-tab-preview").click();
   await management.getByTestId(`daily-briefing-member-pill-${secondMember.id}`).click();
-  const skippedResponse = page.waitForResponse(
-    (response) =>
-      response.url().includes("/api/daily-briefing/generate") &&
-      response.request().method() === "POST"
-  );
-  await management.getByTestId("daily-briefing-generate").click();
-  expect(await (await skippedResponse).json()).toMatchObject({ skipped: true, reason: "paused" });
+  // Briefings explains the paused day up front and offers no Generate for it.
   await expect(management.getByTestId("daily-briefing-paused-notice")).toBeVisible();
+  await expect(management.getByTestId("daily-briefing-generate")).toBeDisabled();
+  // The server still refuses a paused day on its own (round-1 write-time recheck).
+  const skipped = await page.request.post("/api/daily-briefing/generate", {
+    data: { memberId: secondMember.id },
+  });
+  expect(skipped.status()).toBe(200);
+  expect(await skipped.json()).toMatchObject({ skipped: true, reason: "paused" });
   await management.getByTestId("daily-briefing-paused-open-blocks").click();
   await expect(management.getByTestId("daily-briefing-tab-blocks")).toHaveAttribute(
     "aria-selected",
