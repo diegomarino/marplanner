@@ -162,8 +162,9 @@ export function getRoutineById(id: string): Routine {
   return rowToRoutine(row);
 }
 
-/** Edit a routine's name and/or active flag.
- * dayPeriodId in the patch body is IGNORED — it is immutable after creation (FR-017).
+/** Edit a routine's name, active flag and/or day period.
+ * A dayPeriodId must be a non-blank string naming an existing day period (FR-015);
+ * every field is validated before anything is written.
  */
 export function editRoutine(id: string, patch: unknown): Routine {
   if (!patch || typeof patch !== "object") {
@@ -184,7 +185,7 @@ export function editRoutine(id: string, patch: unknown): Routine {
   const typed = patch as Record<string, unknown>;
   const now = Date.now();
 
-  // Only write name and active — dayPeriodId is NEVER written (Rule 2)
+  // Validate every supplied field first; the UPDATE runs only after all pass.
   const updates: string[] = [];
   const params: unknown[] = [];
 
@@ -202,6 +203,16 @@ export function editRoutine(id: string, patch: unknown): Routine {
     }
     updates.push("active = ?");
     params.push(typed.active ? 1 : 0);
+  }
+
+  if ("dayPeriodId" in typed && typed.dayPeriodId !== undefined) {
+    if (typeof typed.dayPeriodId !== "string" || typed.dayPeriodId.trim().length === 0) {
+      throw new RoutineValidationError("dayPeriodId must be a non-blank string");
+    }
+    const dayPeriodId = typed.dayPeriodId.trim();
+    validateDayPeriodId(dayPeriodId);
+    updates.push("day_period_id = ?");
+    params.push(dayPeriodId);
   }
 
   // If nothing to update, return current state
@@ -592,13 +603,19 @@ export function listChores(routineId: string): Chore[] {
 
 // ── List active routines ───────────────────────────────────────────────────
 
-/** List active routines only (active-only filter).
+/** List active routines, ordered by their day period's start time, then name (FR-016).
+ * LEFT JOIN so the ordering join can never drop a routine.
  */
 export function listRoutines(): Routine[] {
   const db = getDb();
   const rows = db
     .prepare(
-      "SELECT id, name, day_period_id, active FROM routines WHERE active = 1 ORDER BY created_at ASC"
+      `SELECT r.id, r.name, r.day_period_id, r.active
+         FROM routines r
+         LEFT JOIN day_periods dp ON dp.id = r.day_period_id
+        WHERE r.active = 1
+        ORDER BY dp.start_minutes IS NULL, dp.start_minutes ASC,
+                 r.name COLLATE NOCASE ASC, r.created_at ASC`
     )
     .all() as Array<{ id: string; name: string; day_period_id: string; active: number }>;
 
