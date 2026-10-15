@@ -102,6 +102,7 @@ export function WeatherManagement({ value, onChange, disabled = false }: Weather
     );
   }
 
+  const problem = weatherFormProblem(value);
   const blank = value.lat === "" && value.lon === "" && value.label === "";
 
   return (
@@ -116,8 +117,8 @@ export function WeatherManagement({ value, onChange, disabled = false }: Weather
         <label className={LABEL_INLINE_CLASSES}>
           {t("weather.management.latLabel")}
           <Input
-            type="number"
-            step="any"
+            type="text"
+            inputMode="decimal"
             data-testid="weather-lat-input"
             value={value.lat}
             disabled={disabled}
@@ -128,8 +129,8 @@ export function WeatherManagement({ value, onChange, disabled = false }: Weather
         <label className={LABEL_INLINE_CLASSES}>
           {t("weather.management.lonLabel")}
           <Input
-            type="number"
-            step="any"
+            type="text"
+            inputMode="decimal"
             data-testid="weather-lon-input"
             value={value.lon}
             disabled={disabled}
@@ -150,9 +151,11 @@ export function WeatherManagement({ value, onChange, disabled = false }: Weather
           />
         </label>
 
-        {weatherFormProblem(value) !== null && (
+        {problem !== null && (
           <p data-testid="weather-hint" className="text-muted-foreground text-control">
-            {t("admin.settings.weatherIncomplete")}
+            {problem === "invalid"
+              ? t("admin.settings.weatherInvalid")
+              : t("admin.settings.weatherIncomplete")}
           </p>
         )}
 

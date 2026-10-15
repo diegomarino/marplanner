@@ -214,7 +214,7 @@ describe("SettingsManagement", () => {
       messages.en["admin.settings.saveError"]
     );
     expect(screen.getByTestId("settings-save")).toBeEnabled();
-    expect(screen.getByTestId("weather-lat-input")).toHaveValue(41);
+    expect(screen.getByTestId("weather-lat-input")).toHaveValue("41");
     expect(screen.getByTestId("settings-week-start-0")).toHaveAttribute("aria-checked", "true");
     expect(retry).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId("settings-saved")).not.toBeInTheDocument();
