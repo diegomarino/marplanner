@@ -11,28 +11,27 @@
  * live region (SC-011).
  * Component adoption for this module (recorded in full in each surface file's own header, cited
  * not restated here): `AdminPanel`/`ErrorNotice`/`Button`/`Input` are adopted on both surfaces.
- * `ConfirmDialog`/`StatusToggle`/`WeekdayPicker`/`CheckboxField`/`RadioField` are NOT adopted on
- * either surface — see `src/client/admin/NetworkDevicesManagement.tsx` and
- * `src/client/admin/WeatherManagement.tsx` file headers for the per-component reasoning (the
- * `ConfirmDialog`/`StatusToggle` non-adoptions on `NetworkDevicesManagement` are e2e-load-bearing:
- * `tests/e2e/network-devices.spec.ts` depends on the native `window.confirm` dialog AND on the
- * block/unblock button's accessible name being the action word, not a state-invariant name).
+ * `StatusToggle`/`WeekdayPicker`/`CheckboxField`/`RadioField` are NOT adopted on either surface
+ * (the `StatusToggle` non-adoption on `NetworkDevicesManagement` is e2e-load-bearing:
+ * `tests/e2e/network-devices.spec.ts` depends on the block/unblock button's accessible name being
+ * the action word, not a state-invariant name). `ConfirmDialog` IS adopted for delete on
+ * `NetworkDevicesManagement` (it replaced `window.confirm`; the e2e spec drives the dialog), and
+ * edit/register use `Dialog`.
  * Neither surface declares an `as MessageKey`-cast label map (SC-007 does not apply — the debt
  * counter measured zero `translationCasts` in both files before this migration), so there is no
  * label map to pin here.
  */
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { NetworkDevicesManagement } from "@/admin/NetworkDevicesManagement";
-import { WeatherManagement } from "@/admin/WeatherManagement";
+import { WeatherManagement, type WeatherFormState } from "@/admin/WeatherManagement";
 import { HouseholdSettingsProvider } from "@/lib/householdSettings";
 import { LanguageProvider } from "@/i18n";
 import { Role } from "../../src/shared";
 import { DensityViolationError, assertKioskDensityCompliant } from "./helpers/density";
 import { injectDensityStyles } from "./helpers/densityStyles";
-
-type FetchCall = Parameters<typeof globalThis.fetch>;
 
 function json(body: unknown, status = 200): Response {
   return new Response(body === null ? null : JSON.stringify(body), { status });
@@ -152,27 +151,6 @@ function mockNetworkDevicesBackend(
   return mockFetch;
 }
 
-function mockWeatherBackend(
-  overrides: Partial<{ settingsGet: () => Response; settingsPut: () => Response }> = {}
-) {
-  const mockFetch = vi.fn((input: string | URL, init?: Parameters<typeof fetch>[1]) => {
-    const url = String(input);
-    const method = init?.method ?? "GET";
-
-    if (url.includes("/api/settings") && method === "PUT") {
-      return Promise.resolve(overrides.settingsPut ? overrides.settingsPut() : json(SETTINGS_BODY));
-    }
-    if (url.includes("/api/settings")) {
-      return Promise.resolve(overrides.settingsGet ? overrides.settingsGet() : json(SETTINGS_BODY));
-    }
-
-    throw new Error(`unexpected fetch: ${url} (${method})`);
-  });
-
-  vi.stubGlobal("fetch", mockFetch);
-  return mockFetch;
-}
-
 function renderNetworkDevices() {
   return render(
     <HouseholdSettingsProvider>
@@ -183,13 +161,18 @@ function renderNetworkDevices() {
   );
 }
 
-function renderWeather() {
+function WeatherHarness({ initial }: { initial: WeatherFormState }) {
+  const [value, setValue] = useState(initial);
+  return (
+    <WeatherManagement value={value} onChange={(patch) => setValue((c) => ({ ...c, ...patch }))} />
+  );
+}
+
+function renderWeather(initial: WeatherFormState = { lat: "10", lon: "20", label: "" }) {
   return render(
-    <HouseholdSettingsProvider>
-      <LanguageProvider>
-        <WeatherManagement />
-      </LanguageProvider>
-    </HouseholdSettingsProvider>
+    <LanguageProvider>
+      <WeatherHarness initial={initial} />
+    </LanguageProvider>
   );
 }
 
@@ -217,33 +200,35 @@ describe("NetworkDevicesManagement — kiosk density (SC-001, SC-002)", () => {
       const { container } = renderNetworkDevices();
       await screen.findByText("Kid's Tablet");
 
-      // Phase A: collapsed list — Register + (Edit, Block/Unblock, Delete) per device.
-      expect(countControls(container)).toBe(7);
+      // Phase A: collapsed list — Add device + the two tabs + (Edit, Block/Unblock, Delete) per
+      // device (2 devices).
+      expect(countControls(container)).toBe(9);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
-      // Phase B: an edit row open — d1's Edit/Toggle/Delete become alias input + member
-      // select + Save/Cancel; d2's row is untouched.
+      // Phase B: the edit Dialog open. It renders in a portal under document.body, so the census
+      // reads the body: the 9 page controls (unchanged, now behind the dialog) + the dialog's
+      // alias input, member select, Save, Cancel and its close button.
       fireEvent.click(screen.getByTestId("network-devices-edit-d1"));
       await screen.findByTestId("network-devices-save-d1");
-      expect(countControls(container)).toBe(8);
+      expect(countControls(document.body)).toBe(14);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
       fireEvent.click(screen.getByTestId("network-devices-cancel-edit-d1"));
       await waitFor(() => expect(screen.queryByTestId("network-devices-save-d1")).toBeNull());
 
-      // Phase C: the registration picker open, before a client is selected — the underlying
-      // list is unchanged, plus one Select button per live client (one fixture) and the
-      // picker's own Cancel.
+      // Phase C: the Add tab, before a client is selected — the "Add device" header button is
+      // hidden on this tab, leaving the two tabs + Refresh + the two sort headers + one Select
+      // button per live client (one fixture).
       fireEvent.click(screen.getByTestId("network-devices-open-picker"));
       await screen.findByTestId("network-devices-picker");
       await screen.findByTestId(`network-devices-picker-client-${LIVE_CLIENT_PHONE.mac}`);
-      expect(countControls(container)).toBe(9);
+      expect(countControls(container)).toBe(6);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
-      // Phase D: a client selected — the client list is replaced by change-selection + alias
-      // input + member select + Submit, plus the picker's own Cancel stays.
+      // Phase D: a client selected — the register Dialog (portal) adds alias input, member
+      // select, Submit, Cancel and its close button to the 6 table-tab controls.
       fireEvent.click(screen.getByTestId(`network-devices-picker-select-${LIVE_CLIENT_PHONE.mac}`));
       await screen.findByTestId("network-devices-picker-submit");
-      expect(countControls(container)).toBe(12);
+      expect(countControls(document.body)).toBe(11);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
@@ -291,9 +276,9 @@ describe("NetworkDevicesManagement — kiosk density (SC-001, SC-002)", () => {
     const { container } = renderNetworkDevices();
     await screen.findByText("Kid's Tablet");
 
-    expect(countControls(container)).toBe(7);
+    expect(countControls(container)).toBe(9);
     screen.getByTestId("network-devices-delete-d2").remove();
-    expect(countControls(container)).toBe(6);
+    expect(countControls(container)).toBe(8);
   });
 });
 
@@ -303,18 +288,18 @@ describe("NetworkDevicesManagement — adopts the AdminPanel L2 frame (per-batch
     renderNetworkDevices();
 
     // Anchor on fixture-specific, loaded-only content FIRST — the loading skeleton renders the
-    // SAME AdminPanel title ("Network Devices"), so asserting the region/heading before this
+    // SAME AdminPanel title ("Network devices"), so asserting the region/heading before this
     // would pass vacuously against the skeleton (verification policy's own documented trap).
     await screen.findByText("Kid's Tablet");
 
     // A bare `<div>` in place of `AdminPanel` passes every functional test in this file — this
     // is the only assertion that would catch it (mirrors `members-admin.test.tsx`).
-    expect(await screen.findByRole("region", { name: "Network Devices" })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "Network devices" })).toBeInTheDocument();
     // Region alone is bypassable: `AdminPanel` names its region via `aria-labelledby` pointing
-    // at its own heading, so a hand-rolled `<section aria-label="Network Devices">` with NO
+    // at its own heading, so a hand-rolled `<section aria-label="Network devices">` with NO
     // heading reproduces the landmark and its name and passes. The heading is the half a
     // substitute would have to reproduce the component to satisfy (verification policy).
-    expect(screen.getByRole("heading", { name: "Network Devices" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Network devices" })).toBeInTheDocument();
   });
 });
 
@@ -364,6 +349,10 @@ describe("NetworkDevicesManagement — every error channel is announced (SC-011)
     fireEvent.click(
       await screen.findByTestId(`network-devices-picker-select-${LIVE_CLIENT_PHONE.mac}`)
     );
+    // The dialog prefills the alias from the client name: clear it to hit the validation.
+    fireEvent.change(await screen.findByTestId("network-devices-picker-alias-input"), {
+      target: { value: "" },
+    });
     fireEvent.click(screen.getByTestId("network-devices-picker-submit"));
 
     const alert = await screen.findByTestId("network-devices-picker-error");
@@ -389,19 +378,20 @@ describe("NetworkDevicesManagement — every error channel is announced (SC-011)
 });
 
 describe("NetworkDevicesManagement — unchanged behaviour after migration (regression guard)", () => {
-  it("still confirms delete via window.confirm (ConfirmDialog deliberately NOT adopted, e2e-load-bearing)", async () => {
+  it("still confirms delete before deleting (ConfirmDialog)", async () => {
     mockNetworkDevicesBackend();
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     renderNetworkDevices();
 
     await screen.findByText("Kid's Tablet");
     fireEvent.click(screen.getByTestId("network-devices-delete-d1"));
 
-    await waitFor(() => expect(confirmSpy).toHaveBeenCalledTimes(1));
-    expect(confirmSpy).toHaveBeenCalledWith("Delete this device? This cannot be undone.");
+    expect(
+      await screen.findByText("Delete this device? This cannot be undone.")
+    ).toBeInTheDocument();
+    // Nothing is deleted until the dialog is confirmed.
+    expect(screen.getByText("Kid's Tablet")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("network-devices-delete-confirm"));
     await waitFor(() => expect(screen.queryByText("Kid's Tablet")).toBeNull());
-
-    confirmSpy.mockRestore();
   });
 
   it("still locates Block/Unblock by the ACTION word (StatusToggle deliberately NOT adopted, e2e-load-bearing)", async () => {
@@ -418,34 +408,30 @@ describe("NetworkDevicesManagement — unchanged behaviour after migration (regr
 
 describe("WeatherManagement — kiosk density (SC-001, SC-002)", () => {
   it("meets kiosk density across its single, static control set", async () => {
-    mockWeatherBackend();
     const uninject = await injectDensityStyles();
     document.documentElement.setAttribute("data-density", "kiosk");
 
     try {
       const { container } = renderWeather();
-      // Anchored on the loaded-only lat input — the loading skeleton shares the SAME
-      // AdminPanel title ("Weather") and would satisfy a title-only assertion by accident.
       await screen.findByTestId("weather-lat-input");
 
-      expect(countControls(container)).toBe(6); // 3 inputs + Locate/Save/Clear
+      expect(countControls(container)).toBe(5); // 3 inputs + Locate/Clear
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
     }
   });
 
-  it("DELIBERATE NEGATIVE — forcing this surface's own Save button below the kiosk minimum makes the assertion fail", async () => {
-    mockWeatherBackend();
+  it("DELIBERATE NEGATIVE — forcing this surface's own Clear button below the kiosk minimum makes the assertion fail", async () => {
     const uninject = await injectDensityStyles();
     document.documentElement.setAttribute("data-density", "kiosk");
 
     try {
       const { container } = renderWeather();
-      const saveButton = await screen.findByTestId("weather-save");
+      const clearButton = await screen.findByTestId("weather-clear");
 
-      saveButton.style.height = "10px";
-      saveButton.style.fontSize = "8px";
+      clearButton.style.height = "10px";
+      clearButton.style.fontSize = "8px";
 
       let thrown: unknown;
       try {
@@ -459,8 +445,8 @@ describe("WeatherManagement — kiosk density (SC-001, SC-002)", () => {
       expect(message).toMatch(/height 10px is below the kiosk minimum 48px/);
       expect(message).toMatch(/font-size 8px is below the kiosk minimum 18px/);
 
-      saveButton.style.height = "";
-      saveButton.style.fontSize = "";
+      clearButton.style.height = "";
+      clearButton.style.fontSize = "";
       expect(() => assertKioskDensityCompliant(container)).not.toThrow();
     } finally {
       uninject();
@@ -468,19 +454,17 @@ describe("WeatherManagement — kiosk density (SC-001, SC-002)", () => {
   });
 
   it("the census control count reacts to a control's removal (proves the count is not vacuous)", async () => {
-    mockWeatherBackend();
     const { container } = renderWeather();
     await screen.findByTestId("weather-lat-input");
 
-    expect(countControls(container)).toBe(6);
-    screen.getByTestId("weather-clear").remove();
     expect(countControls(container)).toBe(5);
+    screen.getByTestId("weather-clear").remove();
+    expect(countControls(container)).toBe(4);
   });
 });
 
 describe("WeatherManagement — adopts the AdminPanel L2 frame (per-batch DoD)", () => {
-  it("wraps the surface in a landmark region labelled by its own title, anchored on LOADED content", async () => {
-    mockWeatherBackend();
+  it("wraps the surface in a landmark region labelled by its own title", async () => {
     renderWeather();
 
     await screen.findByTestId("weather-lat-input");
@@ -491,51 +475,20 @@ describe("WeatherManagement — adopts the AdminPanel L2 frame (per-batch DoD)",
 });
 
 describe("WeatherManagement — every error state is announced (SC-011)", () => {
-  it("announces a load failure through ErrorNotice's live region", async () => {
-    mockWeatherBackend({ settingsGet: () => json(null, 500) });
-    renderWeather();
-
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Failed to load weather settings.");
-    expect(alert).toHaveAttribute("aria-live", "assertive");
-    expect(alert).toHaveAttribute("data-testid", "weather-error");
-  });
-
-  it("announces a save failure through ErrorNotice's live region", async () => {
-    mockWeatherBackend({ settingsPut: () => json({ message: "boom" }, 500) });
-    renderWeather();
-
-    await screen.findByTestId("weather-lat-input");
-    fireEvent.change(screen.getByTestId("weather-lat-input"), { target: { value: "10" } });
-    fireEvent.change(screen.getByTestId("weather-lon-input"), { target: { value: "20" } });
-    fireEvent.click(screen.getByTestId("weather-save"));
-
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Failed to save the weather location.");
-    expect(alert).toHaveAttribute("aria-live", "assertive");
-  });
-});
-
-describe("WeatherManagement — unchanged behaviour after migration (regression guard)", () => {
-  it("still writes the household weather location via PUT /api/settings on Save", async () => {
-    const mockFetch = mockWeatherBackend();
-    renderWeather();
-
-    await screen.findByTestId("weather-lat-input");
-    fireEvent.change(screen.getByTestId("weather-lat-input"), { target: { value: "41.4" } });
-    fireEvent.change(screen.getByTestId("weather-lon-input"), { target: { value: "2.2" } });
-    fireEvent.click(screen.getByTestId("weather-save"));
-
-    await waitFor(() => {
-      const putCall = (mockFetch.mock.calls as FetchCall[]).find(
-        ([reqInput, init]) => String(reqInput).includes("/api/settings") && init?.method === "PUT"
-      );
-      expect(putCall).toBeDefined();
-      const body = JSON.parse(String(putCall?.[1]?.body)) as {
-        object: string;
-        settings: { lat: number; lon: number };
-      };
-      expect(body).toMatchObject({ object: "weather", settings: { lat: 41.4, lon: 2.2 } });
+  it("announces a refused geolocation through ErrorNotice's live region", async () => {
+    Object.defineProperty(navigator, "geolocation", {
+      value: { getCurrentPosition: (_ok: unknown, fail: () => void) => fail() },
+      configurable: true,
     });
+    try {
+      renderWeather();
+      fireEvent.click(await screen.findByTestId("weather-locate"));
+
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveAttribute("aria-live", "assertive");
+      expect(alert).toHaveAttribute("data-testid", "weather-error");
+    } finally {
+      Reflect.deleteProperty(navigator, "geolocation");
+    }
   });
 });

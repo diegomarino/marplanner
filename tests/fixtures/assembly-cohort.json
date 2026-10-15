@@ -267,6 +267,10 @@
     },
     {
       "method": "GET",
+      "path": "/api/daily-briefing/history/{memberId}"
+    },
+    {
+      "method": "GET",
       "path": "/api/daily-briefing/opt-in"
     },
     {
@@ -407,6 +411,10 @@
     },
     {
       "method": "POST",
+      "path": "/api/daily-briefing/{memberId}/{date}/print"
+    },
+    {
+      "method": "POST",
       "path": "/api/meal-entries"
     },
     {
@@ -443,6 +451,10 @@
     },
     {
       "method": "POST",
+      "path": "/api/printing/reset-today"
+    },
+    {
+      "method": "POST",
       "path": "/api/printing/test-print"
     },
     {
@@ -472,6 +484,10 @@
     {
       "method": "PUT",
       "path": "/api/daily-briefing/opt-in/{memberId}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/daily-briefing/schedule/{memberId}"
     },
     {
       "method": "PUT",
@@ -1206,6 +1222,27 @@
             "credentials — mpk- diceware verifyKey returns false for empty/length-mismatched hash",
             "credentials — mpk- diceware verifyKey works with real generated keys end-to-end"
           ],
+          "tests/boundary/daily-briefing-admin-parity.test.ts": [
+            "daily-briefing admin parity weekday pause schedule defaults to every day and stores a canonical, de-duplicated list",
+            "daily-briefing admin parity weekday pause schedule allows pausing every day, and creates an opted-out row for a member with no opt-in",
+            "daily-briefing admin parity weekday pause schedule keeps the opt-in flag when the schedule changes and vice versa",
+            "daily-briefing admin parity weekday pause schedule PUT /schedule/:memberId saves and GET /settings returns memberSchedules",
+            "daily-briefing admin parity weekday pause schedule PUT /schedule rejects bad weekdays, unknown keys, missing weekdays and inactive members",
+            "daily-briefing admin parity paused weekdays are skipped generateBriefing writes nothing and the route answers skipped",
+            "daily-briefing admin parity paused weekdays are skipped Generate all skips a paused member but generates the others",
+            "daily-briefing admin parity paused weekdays are skipped the retry pass skips a member paused after their row was written",
+            "daily-briefing admin parity paused weekdays are skipped catch-up does not count a paused member as missed",
+            "daily-briefing admin parity history returns the household today and the latest 30 rows newest first",
+            "daily-briefing admin parity history is an empty, write-free read for an unknown member",
+            "daily-briefing admin parity manual print queues a past briefing for TODAY under the manual record key",
+            "daily-briefing admin parity manual print reuses a job still waiting in the queue",
+            "daily-briefing admin parity manual print re-arms and queues again after a completed print",
+            "daily-briefing admin parity manual print maps every refusal to its error code",
+            "daily-briefing admin parity still rendering answers 202 while a first generation is in flight, then the final state",
+            "daily-briefing admin parity still rendering stays generating until the last overlapping generation finishes",
+            "daily-briefing admin parity still rendering clears the in-flight mark when generation throws",
+            "daily-briefing admin parity still rendering keeps serving a stored PNG while a regeneration is in flight"
+          ],
           "tests/boundary/daily-briefing-assembly.test.ts": [
             "daily-briefing assembly registers the generate and pure-read routes, then returns a content-only briefing shell",
             "daily-briefing assembly rejects an unknown generate field without persisting a briefing or emitting an event",
@@ -1541,7 +1578,6 @@
             "foundation runtime persistence seeds a configured management key once and leaves revoked keys revoked",
             "foundation runtime persistence reads only persisted settings and rejects corrupt or incomplete weather locations",
             "foundation runtime persistence drains selected jobs by deadline and applies the lifecycle gate to manual runs",
-            "foundation runtime persistence keeps management routes inaccessible to a provisioned device key",
             "foundation runtime persistence boots the foundation listener and drains its scheduler on shutdown"
           ],
           "tests/boundary/foundation-telemetry-outage.test.ts": [
@@ -1909,16 +1945,15 @@
             "pre-migration recovery points retains distinct recovery points when later SQL fails"
           ],
           "tests/boundary/network-devices-auth.test.ts": [
-            "network-devices auth — requireManagementKey (RED-first) NETWORK-DEVICES-AC-06: a device key minted through the REAL provision.ts path is rejected 403",
-            "network-devices auth — requireManagementKey (RED-first) no authenticated apiKeyId attached → 403 (fail-closed)",
-            "network-devices auth — requireManagementKey (RED-first) an unknown apiKeyId (no matching row) → 403",
-            "network-devices auth — requireManagementKey (RED-first) composes with requireCapability (research D1's false-green matrix) THE FALSE GREEN D1 KILLS: a REAL provisioned device key (scope='*') is rejected even composed with requireCapability, despite '*' satisfying ANY capability alone",
-            "network-devices auth — requireManagementKey (RED-first) reconcileManagement — (maintainer decision 2026-09-04) MP_MANAGEMENT_KEY unset → creates no row (fail-closed default, mirrors reconcileBootstrap)",
-            "network-devices auth — requireManagementKey (RED-first) reconcileManagement — (maintainer decision 2026-09-04) is idempotent — running twice with the same MP_MANAGEMENT_KEY mints exactly one row",
-            "network-devices auth — requireManagementKey (RED-first) reconcileManagement — (maintainer decision 2026-09-04) Codex P1-b: a REVOKED management row is NOT resurrected by a later reconcile — stays revoked, guard still rejects it",
-            "network-devices auth — requireManagementKey (RED-first) authBoundary — unknown/missing key (#682 review fold, P1) an UNRECOGNIZED key presented as the device cookie → 401 'Invalid API key', code credential_invalid",
-            "network-devices auth — requireManagementKey (RED-first) a management key minted through the REAL reconcileManagement() path passes requireManagementKey",
-            "network-devices auth — requireManagementKey (RED-first) composes with requireCapability (research D1's false-green matrix) a management key minted through the REAL reconcileManagement() path passes BOTH requireManagementKey and requireCapability"
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) NETWORK-DEVICES-AC-06: a device key minted through the REAL provision.ts path is ACCEPTED",
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) a management key minted through the REAL reconcileManagement() path is accepted",
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) no authenticated apiKeyId attached → 403 credential_invalid (fail-closed)",
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) an unknown apiKeyId (no matching row) → 403",
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) a key scoped to OTHER capabilities is rejected 403 scope_denied (the capability check still runs)",
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) reconcileManagement — (maintainer decision 2026-09-04) MP_MANAGEMENT_KEY unset → creates no row (fail-closed default, mirrors reconcileBootstrap)",
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) reconcileManagement — (maintainer decision 2026-09-04) is idempotent — running twice with the same MP_MANAGEMENT_KEY mints exactly one row",
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) reconcileManagement — (maintainer decision 2026-09-04) Codex P1-b: a REVOKED management row is NOT resurrected by a later reconcile — stays revoked, guard still rejects it",
+            "network-devices auth — requireCapability (NETWORK-DEVICES-INV-09/AC-06) authBoundary — unknown/missing key (#682 review fold, P1) an UNRECOGNIZED key presented as the device cookie → 401 'Invalid API key', code credential_invalid"
           ],
           "tests/boundary/network-devices-cache.test.ts": [
             "network-devices cache starts cold before any fetch (never fetched, no error)",
@@ -2044,7 +2079,6 @@
             "network-devices registry liveStatus derivation matrix notDetected: never seen (lastSeenAt NULL) — the column is nullable in the schema even though register() never inserts NULL (INV-10)"
           ],
           "tests/boundary/network-devices-routes.test.ts": [
-            "network-devices routes NETWORK-DEVICES-AC-06: a REAL device key (kind='device', scope='*') is rejected 403 on EVERY endpoint x method",
             "network-devices routes a REAL management key (kind='integration', via reconcileManagement) passes the auth gate on EVERY endpoint x method (never 403)",
             "network-devices routes GET /api/network-devices/live-clients — cache state 'unconfigured' surfaces verbatim",
             "network-devices routes GET /api/network-devices/live-clients — cache state 'cold' surfaces verbatim",
@@ -2069,7 +2103,9 @@
             "network-devices routes POST /api/network-devices/:id/block and unblock — 502 on controller unconfigured (null), NOTHING mirrored (row unchanged)",
             "network-devices routes POST /api/network-devices/:id/block and unblock — 502 on controller rejected (401/403), NOTHING mirrored (row unchanged)",
             "network-devices routes POST /api/network-devices/:id/block and unblock — 502 on controller unreachable (timeout/network), NOTHING mirrored (row unchanged)",
-            "network-devices routes NetworkDeviceControllerUnavailableError carries no MAC in its message (sanity on the 502 body itself)"
+            "network-devices routes NetworkDeviceControllerUnavailableError carries no MAC in its message (sanity on the 502 body itself)",
+            "network-devices routes NETWORK-DEVICES-AC-06: a REAL device key (kind='device', scope='*') passes the auth gate on EVERY endpoint x method (never 403)",
+            "network-devices routes an unauthenticated request is rejected on EVERY endpoint x method"
           ],
           "tests/boundary/network-devices-rule-b.test.ts": [
             "network-devices-rule-b — config-drift tripwire import-x/no-restricted-paths (the network-devices zone) rejects a core-internal import from src/server/modules/network-devices (e.g. ../../db/client)",
@@ -2245,6 +2281,12 @@
             "printing core supersedePrintRecord — the matrix across job states (H2/ADR-022) does not disturb an already-printed job, but the record becomes re-printable",
             "printing core supersedePrintRecord — the matrix across job states (H2/ADR-022) is a no-op (never throws) against a record that was never enqueued",
             "printing core supersedePrintRecord — the matrix across job states (H2/ADR-022) re-enqueuing after supersede creates a genuinely NEW job row",
+            "printing core resetTodaysPrints — admin reset of today's print (FR-016) makes a printed record printable again; the next enqueue creates a new job",
+            "printing core resetTodaysPrints — admin reset of today's print (FR-016) cancels today's pending jobs and leaves other dates alone",
+            "printing core resetTodaysPrints — admin reset of today's print (FR-016) leaves a fetched-in-flight job running and does not count it (H2)",
+            "printing core resetTodaysPrints — admin reset of today's print (FR-016) clears a dead-letter gate so a level-triggered producer can enqueue again",
+            "printing core resetTodaysPrints — admin reset of today's print (FR-016) returns zeros when nothing exists for today",
+            "printing core resetTodaysPrints — admin reset of today's print (FR-016) throws PrintingPluginInactiveError while the plugin is inactive",
             "printing core registerPrintableProvider — fetch-at-execute resolution (research D4) a fetch AFTER regeneration serves the CURRENT provider output, not a stale enqueue-time snapshot",
             "printing core registerPrintableProvider — fetch-at-execute resolution (research D4) a MISSING provider dead-letters the job as render_failure and emits printing.failed",
             "printing core registerPrintableProvider — fetch-at-execute resolution (research D4) an ERRORING provider dead-letters the job as render_failure too",
@@ -2294,7 +2336,10 @@
             "printing routes POST /test-print — 400 when targetDate is not strictly calendar-valid",
             "printing routes POST /test-print — 400 on a malformed (non-calendar-shaped) targetDate",
             "printing routes POST /test-print — a valid targetDate override enqueues against THAT date",
-            "printing routes 409 plugin-inactive on test-print and claim while the printing plugin is inactive (FR-013)"
+            "printing routes 409 plugin-inactive on test-print and claim while the printing plugin is inactive (FR-013)",
+            "printing routes POST /reset-today — 200 makes today's test print printable again",
+            "printing routes POST /reset-today — 400 when the body carries any field",
+            "printing routes POST /reset-today — 409 plugin_inactive while the printing plugin is inactive"
           ],
           "tests/boundary/printing-rule-b.test.ts": [
             "printing-rule-b — config-drift tripwire import-x/no-restricted-paths (the printing zone) rejects a core-internal import from src/server/modules/printing (e.g. ../../db/client)",
@@ -2372,15 +2417,27 @@
             "reminders-crud boundary tests GET /api/reminders/:id with unknown id → 404",
             "reminders-crud boundary tests PATCH /api/reminders/:id edits text, active, and weekdays → 200",
             "reminders-crud boundary tests PATCH /api/reminders/:id with kind in body → 400 (immutable, FR-013)",
-            "reminders-crud boundary tests PATCH /api/reminders/:id with targetingMode in body → 400 (immutable, FR-013)",
+            "reminders-crud boundary tests PATCH /api/reminders/:id with an invalid targetingMode value → 400, nothing persisted",
             "reminders-crud boundary tests PATCH /api/reminders/:id with an unknown field (query) → 400, nothing persisted",
-            "reminders-crud boundary tests PATCH /api/reminders/:id with an unknown field (assignments) → 400, nothing persisted",
+            "reminders-crud boundary tests PATCH /api/reminders/:id with assignments on an apply_to_all rule that stays apply_to_all → 400, nothing persisted",
             "reminders-crud boundary tests PATCH /api/reminders/:id with an empty object {} → 400 (nothing to edit), nothing persisted",
             "reminders-crud boundary tests PATCH /api/reminders/:id with a JSON array body → 400, nothing persisted",
             "reminders-crud boundary tests PATCH /api/reminders/:id with weekdays on a SPECIFIC rule → 400 (not 500), nothing persisted (Codex rework)",
             "reminders-crud boundary tests PATCH /api/reminders/:id with unknown id → 404",
             "reminders-crud boundary tests DELETE /api/reminders/:id hard-deletes the rule → 204, subsequent GET → 404",
-            "reminders-crud boundary tests DELETE /api/reminders/:id with unknown id → 404"
+            "reminders-crud boundary tests DELETE /api/reminders/:id with unknown id → 404",
+            "reminders-crud boundary tests PATCH apply_to_all → specific with assignments → 200, weekdays cleared, emits only for the assigned member",
+            "reminders-crud boundary tests PATCH apply_to_all → specific without assignments → 400, nothing persisted",
+            "reminders-crud boundary tests PATCH apply_to_all → specific that also sends rule-level weekdays → 400, nothing persisted",
+            "reminders-crud boundary tests PATCH apply_to_all → specific with an unknown member → 400 and the rule is left apply_to_all (atomic)",
+            "reminders-crud boundary tests PATCH specific → apply_to_all with weekdays → 200, assignments deactivated not deleted",
+            "reminders-crud boundary tests PATCH specific → apply_to_all without weekdays → 400, nothing persisted",
+            "reminders-crud boundary tests switching specific → apply_to_all → specific reuses and reactivates the member's row",
+            "reminders-crud boundary tests PATCH on a specific rule with assignments replaces the set and edits text in one request",
+            "reminders-crud boundary tests PATCH re-saving a specific rule keeps an assigned member who has since been archived",
+            "reminders-crud boundary tests PATCH calendar_gated apply_to_all → specific with membership assignments → 200",
+            "reminders-crud boundary tests PATCH calendar_gated → specific with per-assignment weekdays → 400, nothing persisted",
+            "reminders-crud boundary tests PATCH calendar_gated specific → apply_to_all needs no extra fields and deactivates the memberships"
           ],
           "tests/boundary/reminders-discriminant.test.ts": [
             "reminders-discriminant boundary tests — apply_to_all half apply_to_all create with no weekdays → 400, nothing persisted (FR-006)",
@@ -2512,7 +2569,9 @@
             "routines-crud boundary tests (red-by-design) GET /api/routines/:id returns soft-deleted routine (Rule 1 — history read)",
             "routines-crud boundary tests (red-by-design) GET /api/routines/:id 404 for truly unknown id (Rule 1)",
             "routines-crud boundary tests (red-by-design) PATCH /api/routines/:id edits name and active (FR-001)",
-            "routines-crud boundary tests (red-by-design) PATCH /api/routines/:id ignores dayPeriodId — stored value NEVER changes (Rule 2)",
+            "routines-crud boundary tests (red-by-design) PATCH /api/routines/:id moves the routine to another day period (FR-015)",
+            "routines-crud boundary tests (red-by-design) PATCH /api/routines/:id rejects an unknown, blank or non-string dayPeriodId without changing the routine (FR-015)",
+            "routines-crud boundary tests (red-by-design) GET /api/routines lists active routines by day-period start, then name (FR-016)",
             "routines-crud boundary tests (red-by-design) DELETE /api/routines/:id soft-deletes (disappears from active list)",
             "routines-crud boundary tests (red-by-design) POST /api/routines/:id/chores → 201 with sortOrder appended (FR-001)",
             "routines-crud boundary tests (red-by-design) persists a Unicode chore icon and clears it explicitly with null",
@@ -2628,6 +2687,7 @@
             "settings-write PUT valid locale (all three fields) replaces the object and round-trips",
             "settings-write a write to one object does not disturb the other (atomicity is per-object)",
             "settings-write printing active with no printerTransport row fills empty defaults (APP-SETTINGS-REGISTRY-AC-06)",
+            "settings-write PUT printerTransport accepts any well-formed 128-bit UUID, whatever its version nibble",
             "settings-write PUT printerTransport nested type/config shape is rejected as invalid_settings (flat schema)"
           ],
           "tests/boundary/static-serving.test.ts": [
@@ -2970,7 +3030,10 @@
             "Admin shell navigation builds the breadcrumb trail from every registered page on the way",
             "Admin shell navigation navigates from the telemetry shortcut and the sidebar",
             "Admin shell navigation offers the overview from an unknown admin page",
-            "Admin shell navigation shows an item's subsections only while that item or one of them is open"
+            "Admin shell navigation shows an item's subsections only while that item or one of them is open",
+            "formatUptime shows the two largest non-zero units",
+            "formatUptime shows seconds below one minute and clamps nonsense to zero",
+            "AdminOverview uptime shows the uptime, or a dash when the server does not report it"
           ],
           "tests/client/admin-panel.test.tsx": [
             "AdminPanel renders a landmark region whose aria-labelledby points at its own heading",
@@ -2997,8 +3060,8 @@
           ],
           "tests/client/announcements-briefing-admin.test.tsx": [
             "TimeAnnouncementsManagement — the panel is a real landmark (FR-009 L2-adoption clause) exposes an AdminPanel region AND heading, both named for the panel title",
-            "TimeAnnouncementsManagement — kiosk density across reachable states (SC-001, SC-002, SC-003) meets kiosk density collapsed with two rules, then with one rule's edit form open",
-            "TimeAnnouncementsManagement — kiosk density across reachable states (SC-001, SC-002, SC-003) CENSUS FIRES ON REMOVAL — deleting a rule drops its collapsed row's 3 controls (17 -> 14), not a synthetic shrink",
+            "TimeAnnouncementsManagement — kiosk density across reachable states (SC-001, SC-002, SC-003) meets kiosk density collapsed with two rules, then with the create dialog open",
+            "TimeAnnouncementsManagement — kiosk density across reachable states (SC-001, SC-002, SC-003) CENSUS FIRES ON REMOVAL — deleting a rule drops its collapsed row's 3 controls (7 -> 4), not a synthetic shrink",
             "TimeAnnouncementsManagement — kiosk density across reachable states (SC-001, SC-002, SC-003) DELIBERATE NEGATIVE — forcing this surface's own Create button below the kiosk minimum makes the assertion fail",
             "TimeAnnouncementsManagement — error states are announced (SC-011) announces a data-load failure through ErrorNotice's live region",
             "TimeAnnouncementsManagement — error states are announced (SC-011) announces a create-rule failure through ErrorNotice's live region",
@@ -3033,6 +3096,17 @@
             "BackupsManagement surfaces a delete refusal (409 retention_floor) and keeps the row in the list",
             "BackupsManagement uploads the selected file as a raw application/octet-stream body and refreshes the list",
             "BackupsManagement surfaces an oversized-upload refusal (413)",
+            "BackupsManagement rejects a non-.db selection before any request and shows the unsupported message",
+            "BackupsManagement uploads a dropped .db file and toggles the drag-active state",
+            "BackupsManagement names the created snapshot in a success banner and keeps already_running separate",
+            "BackupsManagement renders the type as a colour-coded pill with the localized label",
+            "BackupsManagement shows a relative label for a recent backup and the absolute date beyond 30 days",
+            "BackupsManagement shows a spinner only on the clicked download button and saves the blob",
+            "BackupsManagement downloads the SQL export under <filename>.sql and surfaces a download failure",
+            "BackupsManagement offers Retry after a load failure and hides the empty state",
+            "backups helpers formats relative ages up to 30 days and null beyond",
+            "backups helpers accepts only .db names (case-insensitive)",
+            "backups helpers covers every backup type with semantic token classes only",
             "shows localized recovery guidance for a terminal restore failure (en)",
             "shows localized recovery guidance for a terminal restore failure (es)",
             "formats backup dates with Spanish household locale and timezone"
@@ -3041,10 +3115,10 @@
             "BackupsManagement / TelemetryManagement — the shared AdminPanel L2 frame was ADOPTED (FR-009) BackupsManagement wraps the surface in a landmark region labelled by its own title",
             "BackupsManagement / TelemetryManagement — the shared AdminPanel L2 frame was ADOPTED (FR-009) TelemetryManagement wraps the surface in a landmark region labelled by its own title",
             "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) renders the DELIBERATE zero-control census while the initial /api/backups fetch is unresolved",
-            "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with an EMPTY shelf — Snapshot Now + the upload file field + the upload button (3 controls)",
-            "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with ONE backup row — base 3 + the row's 4 action controls (7 total)",
-            "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with the restore-confirm panel OPEN (+3: the typed-confirm input, submit, cancel — 10 total), including while the restore submit is IN-FLIGHT",
-            "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) CENSUS FIRES ON REMOVAL — deleting a backup drops its row's 4 controls from the count (11 -> 7), not a synthetic shrink",
+            "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with an EMPTY shelf — Snapshot Now + the upload file field (2 controls)",
+            "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with ONE backup row — base 2 + the row's 4 action controls (6 total)",
+            "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with the restore-confirm panel OPEN (+3: the typed-confirm input, submit, cancel — 9 total), including while the restore submit is IN-FLIGHT",
+            "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) CENSUS FIRES ON REMOVAL — deleting a backup drops its row's 4 controls from the count (10 -> 6), not a synthetic shrink",
             "BackupsManagement — kiosk density across every reachable state (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own Snapshot Now button below the kiosk minimum makes the assertion fail, and reverting restores compliance",
             "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density while loading — the filter row (6 controls) is ALWAYS mounted, even before the first page resolves",
             "TelemetryManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with NO rows (still 6 — filters and diagnostic shortcut)",
@@ -3172,15 +3246,6 @@
             "CheckboxField renders the disabled attribute when disabled is set",
             "CheckboxField meets kiosk density"
           ],
-          "tests/client/chore-order-controls.test.tsx": [
-            "ChoreOrderControls — kiosk density (SC-001, SC-002, SC-003) meets kiosk density in BOTH states — the collapsed Reorder link and the expanded edit view",
-            "ChoreOrderControls — kiosk density (SC-001, SC-002, SC-003) DELIBERATE NEGATIVE — forcing this surface's own Save button below the kiosk minimum makes the assertion fail",
-            "ChoreOrderControls — reorder wiring (research.md R3) move-up/move-down reorder the LOCAL list before saving, with no fetch until Save",
-            "ChoreOrderControls — reorder wiring (research.md R3) Save persists the new order via PUT and calls onReorder with it; the panel collapses",
-            "ChoreOrderControls — reorder wiring (research.md R3) Cancel discards the local reorder — no fetch, order reverts, panel collapses",
-            "ChoreOrderControls — a failed save is announced (SC-011, MEDIUM-1) announces a failed order PUT through ErrorNotice's live region and stays in edit mode",
-            "ChoreOrderControls — a failed save is announced (SC-011, MEDIUM-1) starting a fresh edit, or cancelling, clears a previous save error"
-          ],
           "tests/client/chores-board-empty-state.test.tsx": [
             "ChoresBoard — zero-active-children empty state (#415) renders the noChildren message and omits the board grid"
           ],
@@ -3218,7 +3283,6 @@
             "authFetch / reportCredentialLoss (FR-013) does NOT clear the marker or dispatch on a successful (2xx) response",
             "authFetch / reportCredentialLoss (FR-013) preserves provisioning and passes through 429 without retrying or reporting credential loss",
             "authFetch / reportCredentialLoss (FR-013) reportCredentialLoss clears the marker and dispatches the event directly",
-            "authFetch — scope-403 vs credential-invalid (#682) does NOT clear the marker on a scope-403 (requireManagementKey rejecting a device key, real body shape)",
             "authFetch — scope-403 vs credential-invalid (#682) does NOT clear the marker on a scope-403 (requireCapability's 'not granted' branch, real body shape)",
             "authFetch — scope-403 vs credential-invalid (#682) STILL clears the marker on a credential-invalid 403 (revoked key, real authBoundary body shape)",
             "authFetch — scope-403 vs credential-invalid (#682) STILL clears the marker on a credential-invalid 401 (invalid key, real authBoundary body shape)",
@@ -3239,7 +3303,7 @@
             "DailyBriefingManagement — admin settings-layer extensions language select is absent on a non-corpus type and offers only the available languages",
             "DailyBriefingManagement — admin settings-layer extensions weekday toggles always send the canonical mon..sun order regardless of click order",
             "DailyBriefingManagement — admin settings-layer extensions surfaces onThisDay's default-disabled reality on its row",
-            "DailyBriefingManagement — admin settings-layer extensions preview shows an <img> whose src targets the endpoint for the selected member/date",
+            "DailyBriefingManagement — admin settings-layer extensions preview fetches the stored image for the selected member/date, honouring the base path",
             "DailyBriefingManagement — admin settings-layer extensions block order Save is disabled while the settings GET is pending, then enabled once it resolves",
             "DailyBriefingManagement — admin settings-layer extensions block order Save stays disabled after the settings GET fails",
             "translates block and parameter labels without changing persisted identifiers (en)",
@@ -3255,7 +3319,10 @@
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) reorders block rows by drag and persists the complete effective order",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) posts the empty Generate-all body and renders every returned member status",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) renders an already_running Generate-all response as a non-error informational message",
-            "DailyBriefingManagement — Generate-all opt-in interlock (#555) keeps Generate-all disabled while an earlier opt-in PUT is still pending"
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) keeps Generate-all disabled while an earlier opt-in PUT is still pending",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) pauses a weekday for the selected member, disables that column and shows the notice",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) offers Retry when members fail to load, and when settings fail to load",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) titles the page with its sidebar label"
           ],
           "tests/client/daily-briefing-view.test.tsx": [
             "DailyBriefingView — full block registry keeps existing scalar meal snapshots visible",
@@ -3282,6 +3349,21 @@
             "DailyBriefingView weather block renders the weather block localized in Spanish, via the shared condition-key map",
             "DailyBriefingView weather block renders NOTHING for an absent weather block — no placeholder card"
           ],
+          "tests/client/daily-briefing-workspace.test.tsx": [
+            "BriefingWorkspace shows the first member's history, today's payload and image",
+            "BriefingWorkspace selecting a past entry loads it; a 409 on a render-failed briefing says so",
+            "BriefingWorkspace regenerates today with only memberId, and a past date with the date",
+            "BriefingWorkspace reports a paused day instead of generating",
+            "BriefingWorkspace prints through the queue and says so; Print is disabled when Printing is off",
+            "BriefingWorkspace shows still-rendering with a Retry that refetches",
+            "BriefingWorkspace offers Retry when the history fails to load",
+            "BriefingWorkspace disables Generate for a member without the briefing turned on",
+            "BriefingWorkspace Show loads any typed date and refetches the image",
+            "BriefingWorkspace fetches nothing while the tab is hidden",
+            "BriefingWorkspace keeps the history when the current member is selected again",
+            "BriefingWorkspace keeps the payload when the already-selected history entry is clicked again",
+            "BriefingWorkspace ignores a slower read for a date that is no longer selected"
+          ],
           "tests/client/daily-messages-i18n-parity.test.ts": [
             "daily-messages-i18n-parity en and es catalogs have identical keys (both directions)",
             "daily-messages-i18n-parity dailyMessages.*/admin.nav.dailyMessagesManagement keys have identical coverage in en and es (both directions)",
@@ -3293,7 +3375,9 @@
             "DailyMessagesManagement 14-day editor upserts a changed non-empty row when its textarea loses focus",
             "DailyMessagesManagement 14-day editor preserves an existing note when its native textarea is cleared or blurred unchanged",
             "DailyMessagesManagement 14-day editor keeps the loaded editor visible when the active member is selected again",
-            "DailyMessagesManagement 14-day editor moves through 14-day windows without allowing navigation before today"
+            "DailyMessagesManagement 14-day editor moves through 14-day windows without allowing navigation before today",
+            "DailyMessagesManagement load failures can be retried offers Retry when the members request fails and recovers on click",
+            "DailyMessagesManagement load failures can be retried hides the day editor and offers Retry when the messages request fails"
           ],
           "tests/client/day-periods-i18n-parity.test.ts": [
             "day-periods-i18n-parity en and es catalogs have identical keys (both directions)",
@@ -3560,6 +3644,15 @@
           "tests/client/members-management-mount.test.tsx": [
             "MembersManagement — loads on mount (#683) renders the members list without clicking Refresh"
           ],
+          "tests/client/network-devices-data.test.ts": [
+            "network-devices data helpers maps the three controller codes and falls back to the neutral generic key",
+            "useNetworkDevicesData loads devices, cache state and only ACTIVE members",
+            "useNetworkDevicesData refreshes silently every REFRESH_MS, without flipping loading",
+            "useNetworkDevicesData skips the refresh while the tab is hidden",
+            "useNetworkDevicesData discards a refresh that was in flight while a mutation happened",
+            "useNetworkDevicesData stops refreshing after unmount",
+            "useNetworkDevicesData a 403 on the list sets the generic load-error key; a members failure stays independent"
+          ],
           "tests/client/network-devices-i18n-parity.test.ts": [
             "network-devices-i18n-parity en and es catalogs have identical keys (both directions)",
             "network-devices-i18n-parity networkDevices.* keys have identical coverage in en and es (both directions, non-vacuous)",
@@ -3608,7 +3701,20 @@
             "NetworkDevicesManagement PR-E review P2-3: a pre-response transport failure registering a device renders the localized fallback, never the raw exception",
             "NetworkDevicesManagement PR-E review P2-3: a pre-response transport failure blocking a device renders the localized fallback, never the raw exception",
             "NetworkDevicesManagement delete: the confirmation for a BLOCKED device names the stranded upstream block",
-            "NetworkDevicesManagement delete: cancelling the confirmation performs NO request and keeps the row"
+            "NetworkDevicesManagement delete: cancelling the confirmation performs NO request and keeps the row",
+            "NetworkDevicesManagement — reworked page Retry reloads the list after a failure",
+            "NetworkDevicesManagement — reworked page the page heading equals the sidebar label",
+            "NetworkDevicesManagement — reworked page the empty state links to the Add tab",
+            "NetworkDevicesManagement — reworked page shows a green/red/muted dot or a warning glyph per state, with the text label still present",
+            "NetworkDevicesManagement — reworked page Add tab: already-registered MACs (compared case-insensitively) are dimmed with an Already added badge and no Add button",
+            "NetworkDevicesManagement — reworked page Add tab: sorting by name then MAC reorders the rows and toggles aria-sort",
+            "NetworkDevicesManagement — reworked page register dialog prefills the alias from the client name, never shows the MAC, and returns to the list after success",
+            "NetworkDevicesManagement — reworked page an unnamed client opens the dialog with an empty alias",
+            "discovery helpers sorts by name ascending with unnamed clients last, in either direction",
+            "discovery helpers sorts by MAC and does not mutate its input",
+            "discovery helpers prefills the alias from the client name, empty for unnamed, cut to 80 chars",
+            "NetworkDevicesManagement — reworked page a 403 on the list shows the generic load error, Retry, and keeps the add button",
+            "NetworkDevicesManagement — reworked page a 403 on live-clients shows the generic picker load error with Retry"
           ],
           "tests/client/network-weather-admin.test.tsx": [
             "NetworkDevicesManagement — kiosk density (SC-001, SC-002) meets kiosk density across the collapsed list, an open edit row, and the registration picker (both before and after selecting a client)",
@@ -3620,15 +3726,13 @@
             "NetworkDevicesManagement — every error channel is announced (SC-011) announces a row-scoped action failure (block) through ErrorNotice's live region",
             "NetworkDevicesManagement — every error channel is announced (SC-011) announces the picker's alias-required validation error through ErrorNotice's live region",
             "NetworkDevicesManagement — every error channel is announced (SC-011) announces the picker's live-clients load failure through ErrorNotice's live region",
-            "NetworkDevicesManagement — unchanged behaviour after migration (regression guard) still confirms delete via window.confirm (ConfirmDialog deliberately NOT adopted, e2e-load-bearing)",
+            "NetworkDevicesManagement — unchanged behaviour after migration (regression guard) still confirms delete before deleting (ConfirmDialog)",
             "NetworkDevicesManagement — unchanged behaviour after migration (regression guard) still locates Block/Unblock by the ACTION word (StatusToggle deliberately NOT adopted, e2e-load-bearing)",
             "WeatherManagement — kiosk density (SC-001, SC-002) meets kiosk density across its single, static control set",
-            "WeatherManagement — kiosk density (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own Save button below the kiosk minimum makes the assertion fail",
+            "WeatherManagement — kiosk density (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own Clear button below the kiosk minimum makes the assertion fail",
             "WeatherManagement — kiosk density (SC-001, SC-002) the census control count reacts to a control's removal (proves the count is not vacuous)",
-            "WeatherManagement — adopts the AdminPanel L2 frame (per-batch DoD) wraps the surface in a landmark region labelled by its own title, anchored on LOADED content",
-            "WeatherManagement — every error state is announced (SC-011) announces a load failure through ErrorNotice's live region",
-            "WeatherManagement — every error state is announced (SC-011) announces a save failure through ErrorNotice's live region",
-            "WeatherManagement — unchanged behaviour after migration (regression guard) still writes the household weather location via PUT /api/settings on Save"
+            "WeatherManagement — adopts the AdminPanel L2 frame (per-batch DoD) wraps the surface in a landmark region labelled by its own title",
+            "WeatherManagement — every error state is announced (SC-011) announces a refused geolocation through ErrorNotice's live region"
           ],
           "tests/client/noto-emoji.test.tsx": [
             "emojiToCodepoint converts a single-codepoint emoji to its lowercase hex codepoint",
@@ -3673,6 +3777,36 @@
             "PrinterAttention opens with dialog focus, uses the shared pair action, and returns focus after Escape",
             "PrinterAttention does not render the attention pill when the real plugin-status boundary reports inactive"
           ],
+          "tests/client/printer-diagnostics-tab.test.tsx": [
+            "PrinterDiagnosticsTab — recent prints renders member, source, status, attempts and failure reason per job",
+            "PrinterDiagnosticsTab — recent prints still renders the table with '—' when the members read fails",
+            "PrinterDiagnosticsTab — recent prints shows at most RECENT_PRINTS_LIMIT rows and says so",
+            "PrinterDiagnosticsTab — recent prints shows the empty state",
+            "PrinterDiagnosticsTab — recent prints offers Retry after a jobs load failure and recovers",
+            "PrinterDiagnosticsTab — recent prints Refresh reloads the jobs",
+            "PrinterDiagnosticsTab — test print shows the trigger outcome (0)",
+            "PrinterDiagnosticsTab — test print shows the trigger outcome (1)",
+            "PrinterDiagnosticsTab — test print shows the trigger outcome (2)",
+            "PrinterDiagnosticsTab — test print shows the trigger outcome (3)",
+            "PrinterDiagnosticsTab — reset today's print confirms, posts, reports the counts and reloads the table",
+            "PrinterDiagnosticsTab — reset today's print says when there was nothing to reset",
+            "PrinterDiagnosticsTab — reset today's print announces a 409 failure",
+            "PrinterDiagnosticsTab — reset today's print announces a 500 failure",
+            "PrinterDiagnosticsTab — reset today's print Cancel closes the dialog without posting"
+          ],
+          "tests/client/printer-settings-tab.test.tsx": [
+            "printer settings helpers parsePaperWidth accepts whole numbers > 0 only",
+            "printer settings helpers isTransportValid mirrors the server rule",
+            "PrinterSettingsTab shows plugin state, auto-print state, paper width and the stored printer",
+            "PrinterSettingsTab offers Retry when the settings cannot be loaded",
+            "PrinterSettingsTab auto-print read failure shows its own Retry and does not block the form",
+            "PrinterSettingsTab saves only the changed object and shows Saved",
+            "PrinterSettingsTab blocks Save on an invalid width or a half-filled printer",
+            "PrinterSettingsTab keeps the edits and shows the error when the transport save fails after the width saved",
+            "PrinterSettingsTab pairing fills the printer fields, keeps an unsaved width edit, and Save persists them",
+            "PrinterSettingsTab passes the stored UUIDs as the pairing preference",
+            "PrinterSettingsTab a pairing that completes while the settings are still loading is not overwritten"
+          ],
           "tests/client/printing-executor-fr013.test.tsx": [
             "PrintExecutor — FR-013 hiding (issue #691) renders nothing (fail-safe hidden default) before the status read resolves",
             "PrintExecutor — FR-013 hiding (issue #691) exposes the compact attention presentation, not the removed executor card, once status reports active: true",
@@ -3681,29 +3815,31 @@
             "PrintExecutor — FR-013 hiding (issue #691) stays hidden when the status read answers a non-2xx status — even with an active:true body"
           ],
           "tests/client/printing-executor.test.tsx": [
+            "PrintExecutor exposes the paired device identity after a successful pair",
+            "PrintExecutor passes a pairing preference through to the transport",
             "PrintExecutor is intrinsically headless when mounted directly",
             "PrintExecutor renders the unpaired state + pairing affordance, and makes NO fetch calls at rest",
             "PrintExecutor renders the unpaired state in Spanish",
             "PrintExecutor poll PAUSES entirely while unpaired: no claim call ever fires without pairing",
             "PrintExecutor registers capability BEFORE the first claim, then renders paired",
+            "PrintExecutor prints newly queued work immediately without a polling tick",
+            "PrintExecutor retains a queue wakeup received while a claim is in flight",
             "PrintExecutor re-registers capability when /claim answers 403 printer_capability_missing",
             "PrintExecutor shows the printing state while a claimed job is mid-transmit",
             "PrintExecutor scripted transport failure calls /fail with the lease token and NEVER calls /ack",
             "PrintExecutor transitions to disconnected + shows the re-pair affordance when the transport reports a dropped connection",
+            "PrintExecutor stays unpaired and surfaces the error when pair() itself fails",
             "PrintExecutor DEFAULT_POLL_INTERVAL_MS is 15 seconds",
             "PrintExecutor the payload request URL carries the claim's leaseToken (lease-token fencing, P1-3a)",
             "PrintExecutor the ack body's leaseToken matches the claim's token, and rotates across a re-claim (P1-3b)",
             "PrintExecutor a network-level ack failure after a SUCCESSFUL transmit does NOT call /fail (SC-002, P1-2)",
             "PrintExecutor overlapping-tick guard: a printJob spanning two poll intervals fires only ONE /claim (P2-7c)",
+            "PrintExecutor P2-3: disconnects the transport if capability registration fails right after a successful pair()",
             "PrintExecutor FOLD-1(a): transmit ok + ack network failure → next tick issues /ack with the SAME token and NO /claim",
             "PrintExecutor FOLD-1(b): a retried ack that succeeds clears pendingAck/error, with no duplicate print and no /fail",
             "PrintExecutor FOLD-1(c): an ack retry that gets 409 drops pendingAck, and the NEXT tick claims normally",
             "PrintExecutor FOLD-2(d): a scripted onDisconnect event transitions to disconnected without any write",
-            "PrintExecutor FOLD-2(e): transport not-ready at a poll tick fires zero /claim and transitions to disconnected",
-            "PrintExecutor prints newly queued work immediately without a polling tick",
-            "PrintExecutor retains a queue wakeup received while a claim is in flight",
-            "PrintExecutor stays unpaired and surfaces the error when pair() itself fails",
-            "PrintExecutor P2-3: disconnects the transport if capability registration fails right after a successful pair()"
+            "PrintExecutor FOLD-2(e): transport not-ready at a poll tick fires zero /claim and transitions to disconnected"
           ],
           "tests/client/printing-i18n-parity.test.ts": [
             "printing-i18n-parity every printing key in en exists in es",
@@ -3713,13 +3849,7 @@
             "printing-i18n-parity admin.nav.printing resolves in both languages"
           ],
           "tests/client/printing-management.test.tsx": [
-            "PrintingManagement shows the empty state when there are no jobs",
-            "PrintingManagement shows a load error and suppresses the empty-state text on a failed list read",
-            "PrintingManagement renders dead-letter and retrying DISTINCTLY from pending — never collapsed (SC-003)",
-            "PrintingManagement test-print trigger: enqueued response shows the enqueued message and refreshes the list",
-            "PrintingManagement test-print trigger: alreadyPrinted response shows the dedup message (FR-012)",
-            "PrintingManagement test-print trigger: plugin-inactive (409) shows that message distinctly (FR-013)",
-            "PrintingManagement test-print trigger: a generic failure shows the error message"
+            "PrintingManagement is titled like the sidebar and opens on Settings; Diagnostics loads the jobs"
           ],
           "tests/client/printing-plugin-status-retry.test.tsx": [
             "usePrintingPluginActive — transient-failure retry (Codex #700) (1) a transient 503 retries after backoff and flips active true on the next successful read, cleaning up its timer",
@@ -3735,8 +3865,9 @@
           "tests/client/printing-surfaces.test.tsx": [
             "PrintingManagement — the shared L2 panel was actually ADOPTED (FR-009) renders through AdminPanel, not a hand-rolled wrapper",
             "PrintingManagement — shared printer session uses the globally owned session for its pair action",
-            "PrintingManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density across the jobs list (mixed healthy/unhealthy states), an in-flight trigger, and an unhealthy trigger result — three phases, one control throughout",
-            "PrintingManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density when the jobs list itself fails to load — the trigger button is still the surface's only control",
+            "PrintingManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density on the Settings tab",
+            "PrintingManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density across the jobs table (mixed healthy/unhealthy states), an in-flight trigger, and an unhealthy trigger result — three phases, five controls throughout",
+            "PrintingManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density when the jobs list itself fails to load — Retry is the one added control",
             "PrintingManagement — kiosk density across every reachable state (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own trigger button below the kiosk minimum makes the assertion fail, and reverting restores compliance",
             "PrintingManagement — error states are announced through ErrorNotice's live region (SC-011) announces a jobs-list load failure",
             "PrintingManagement — error states are announced through ErrorNotice's live region (SC-011) announces a dead-lettered job's state distinctly from a healthy job's — only the unhealthy one is an alert",
@@ -3758,6 +3889,9 @@
             "retryWithDelay (v1 parity: GATT-connect retry/backoff) with no options at all, retries exactly GATT_CONNECT_RETRIES (3) times using the real default backoff",
             "PrintTransportError carries its code and message",
             "createBluetoothPrintTransport pair() requestDevice filter shape (P1-1 regression) filters on BLUETOOTH_PRINTER_FILTER_SERVICE alone, with all three candidates as optionalServices",
+            "createBluetoothPrintTransport pair() requestDevice filter shape (P1-1 regression) orderCandidateServices puts a preferred service first without duplicating it",
+            "createBluetoothPrintTransport pair() requestDevice filter shape (P1-1 regression) pair() resolves the device identity and prefers the stored service and characteristic",
+            "createFakePrintTransport (byte recorder + scriptable failures/disconnects) pair() resolves the fake identity, honouring a preferred service/characteristic",
             "createFakePrintTransport (byte recorder + scriptable failures/disconnects) starts unready, becomes ready after pair(), and records printJob's chunked bytes",
             "createFakePrintTransport (byte recorder + scriptable failures/disconnects) scriptPairFailure rejects the NEXT pair() call once, then pair() succeeds normally",
             "createFakePrintTransport (byte recorder + scriptable failures/disconnects) scriptPrintFailure rejects the NEXT printJob() call without recording bytes, honestly (no false ack)",
@@ -3816,20 +3950,34 @@
             "reminders-i18n-parity reminders.*/admin.nav.remindersManagement keys resolve to the expected strings in both languages"
           ],
           "tests/client/reminders.test.tsx": [
-            "RemindersManagement — the panel is a real landmark (FR-009 L2-adoption clause) exposes an AdminPanel region AND heading, both named for the panel title",
-            "RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009) meets kiosk density collapsed, with both reminders' assignment panels open, the dry-run panel open, and an inline edit open",
+            "RemindersManagement — the panel is a real landmark (FR-009 L2-adoption clause) exposes an AdminPanel region AND heading named like the sidebar label, with a single such heading",
+            "RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009) meets kiosk density with the list, the dry-run panel, the add dialog and the edit dialog open",
+            "RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009) meets kiosk density with the edit dialog open on a specific rule (member matrix)",
             "RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009) meets kiosk density with the delete ConfirmDialog open, portalled OUTSIDE this surface's own subtree (SC-003)",
-            "RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009) DELIBERATE NEGATIVE — forcing this surface's own Create Reminder button below the kiosk minimum makes the assertion fail",
-            "RemindersManagement — error states are announced (SC-011) announces a data-load failure through ErrorNotice's live region",
-            "RemindersManagement — error states are announced (SC-011) announces a create-reminder failure through ErrorNotice's live region",
-            "RemindersManagement — error states are announced (SC-011) announces a matrix validation error (empty weekday set) through ErrorNotice's live region",
-            "RemindersManagement — error states are announced (SC-011) announces a dry-run failure through ErrorNotice's live region",
+            "RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009) DELIBERATE NEGATIVE — forcing this surface's own Add rule button below the kiosk minimum makes the assertion fail",
+            "RemindersManagement — error states are announced (SC-011) and recoverable announces a data-load failure through ErrorNotice's live region and offers Retry that recovers",
+            "RemindersManagement — error states are announced (SC-011) and recoverable keeps the add dialog open and announces a create failure inside it",
+            "RemindersManagement — error states are announced (SC-011) and recoverable announces a dry-run failure through ErrorNotice's live region",
+            "RemindersManagement — error states are announced (SC-011) and recoverable announces a toggle failure at page level",
             "RemindersManagement — deleting a reminder opens a themed ConfirmDialog instead of window.confirm (research D3/FR-005) does not delete until the ConfirmDialog is confirmed, and deletes on confirm",
+            "RemindersManagement — rows name their members and days summarises all-members, specific and calendar-gated rules",
+            "RemindersManagement — rows name their members and days shows Off for an inactive rule",
+            "RemindersManagement — the add/edit dialog creates a specific scheduled rule from the matrix",
+            "RemindersManagement — the add/edit dialog Enter in the text field submits a valid form",
+            "RemindersManagement — the add/edit dialog edits an all-members rule into a specific one (PATCH carries targetingMode and assignments)",
+            "RemindersManagement — the add/edit dialog edits a specific calendar-gated rule back to all members (no assignments sent)",
+            "RemindersManagement — the add/edit dialog a successful toggle refreshes silently: an open dry-run panel stays mounted",
             "RemindersManagement — WEEKDAY_LABEL_KEYS maps each weekday to its OWN translation key, through the shared WeekdayPicker labels the create form's WeekdayPicker with the household's own Spanish weekday abbreviations, in canonical mon..sun order",
             "WeekdayPicker adoption — the CANONICAL emission order is what separates the shared component from a replica (per-batch DoD, SC-009) toggling Wed then Mon emits mon..wed in canonical order, not click order",
             "label maps are transcribed correctly (SC-007's cast removal, pinned) every weekday maps to its own key",
             "label maps are transcribed correctly (SC-007's cast removal, pinned) every query field maps to its own key",
             "label maps are transcribed correctly (SC-007's cast removal, pinned) every dry-run reason maps to its own key"
+          ],
+          "tests/client/routines-admin-order.test.ts": [
+            "groupRoutinesByPeriod orders groups by period start, keeps arrival order inside a group and drops empty periods",
+            "groupRoutinesByPeriod returns no groups without routines",
+            "moveChore moves a chore onto another's slot and renumbers sortOrder",
+            "moveChore returns null when nothing moves or an id is unknown"
           ],
           "tests/client/routines-i18n-parity.test.ts": [
             "routines-i18n-parity en and es catalogs have identical keys (both directions)",
@@ -3838,24 +3986,39 @@
             "ChoresBoard — streak/progress suppression on null (SC-005) does not render the streak badge or progress indicator for a null column, but does for a populated one"
           ],
           "tests/client/routines.test.tsx": [
-            "RoutinesManagement — chore icon editing submits a selected icon on create and null when clearing an existing icon",
-            "RoutinesManagement — kiosk density (SC-001, SC-002, SC-003, SC-009) meets kiosk density collapsed, with chores expanded, with an ACTIVE assignment expanded, and with both inline-edit modes open",
-            "RoutinesManagement — kiosk density (SC-001, SC-002, SC-003, SC-009) meets kiosk density with the delete ConfirmDialog open, portalled OUTSIDE this surface's own subtree (SC-003)",
-            "RoutinesManagement — kiosk density (SC-001, SC-002, SC-003, SC-009) DELIBERATE NEGATIVE — forcing this surface's own Create Routine button below the kiosk minimum makes the assertion fail",
-            "RoutinesManagement — error states are announced (SC-011) announces a data-load failure through ErrorNotice's live region",
-            "RoutinesManagement — error states are announced (SC-011) announces a chore-creation failure through ErrorNotice's live region",
-            "RoutinesManagement — error states are announced (SC-011) announces an assignment-save failure through ErrorNotice's live region",
-            "RoutinesManagement — every streak-affecting action opens a themed ConfirmDialog instead of window.confirm (research D3/FR-005) does not delete a routine until the ConfirmDialog is confirmed, and deletes on confirm",
-            "RoutinesManagement — every streak-affecting action opens a themed ConfirmDialog instead of window.confirm (research D3/FR-005) does not delete a chore until the ConfirmDialog is confirmed, and deletes on confirm",
-            "RoutinesManagement — every streak-affecting action opens a themed ConfirmDialog instead of window.confirm (research D3/FR-005) a brand-new assignment saves immediately, with no confirmation",
-            "RoutinesManagement — every streak-affecting action opens a themed ConfirmDialog instead of window.confirm (research D3/FR-005) reassigning an already-active assignment requires confirmation before the PUT fires",
-            "RoutinesManagement — every streak-affecting action opens a themed ConfirmDialog instead of window.confirm (research D3/FR-005) does not deactivate an assignment until the ConfirmDialog is confirmed, and deactivates on confirm",
-            "RoutinesManagement — adopts the AdminPanel L2 frame (c retrofit) wraps the surface in a landmark region labelled by its own title, with a heading of the same name",
-            "RoutinesManagement — WEEKDAY_LABEL_KEYS maps each weekday to its OWN translation key, through the shared WeekdayPicker labels the WeekdayPicker with the household's own Spanish weekday abbreviations, in canonical mon..sun order",
-            "RoutinesManagement — DAY_PERIOD_LABEL_KEYS indexes each routine's OWN day period, through the shared map (#814) renders the morning routine's card with 'Mañana' and the evening routine's card with 'Tarde'",
-            "RoutinesManagement — DAY_PERIOD_LABEL_KEYS indexes each routine's OWN day period, through the shared map (#814) the create form's day-period Select lists each period under its OWN label (the second changed call site — a Radix popover no other test ever opens)",
-            "RoutinesManagement — chore icon editing renders the chore's vendored Noto SVG instead of the literal emoji glyph",
-            "RoutinesManagement — kiosk density (SC-001, SC-002, SC-003, SC-009) meets kiosk density with the chore emoji picker open"
+            "RoutinesManagement — list and selection groups routines by day period in start order, names the page like the sidebar and asks for a selection",
+            "RoutinesManagement — list and selection shows the empty message without routines",
+            "RoutinesManagement — list and selection announces a load failure and Retry loads again",
+            "RoutinesManagement — list and selection shows the selected routine's header and chores in order, with the vendored Noto icon",
+            "RoutinesManagement — list and selection shows the empty chore message for a routine without chores",
+            "RoutinesManagement — list and selection announces a detail load failure and Retry loads it again",
+            "RoutinesManagement — list and selection ignores a stale detail response after switching routines",
+            "RoutinesManagement — list and selection week grid shows only active assignments, per weekday, and opens the assignment dialog",
+            "RoutinesManagement — routine dialog never renders the previous routine's chores under a newly created routine",
+            "RoutinesManagement — routine dialog announces a list refresh that fails after a successful save",
+            "RoutinesManagement — routine dialog creates a routine: first period by default, submit disabled until named, new routine selected",
+            "RoutinesManagement — routine dialog renames a routine without a confirmation",
+            "RoutinesManagement — routine dialog moving a routine to another period asks for the streak confirmation first",
+            "RoutinesManagement — routine dialog keeps the dialog open and announces a failed save",
+            "RoutinesManagement — routine dialog deletes a routine only after confirmation and clears the selection",
+            "RoutinesManagement — chores adds a chore from the dialog: blank disables submit, Enter submits with the icon",
+            "RoutinesManagement — chores Enter twice creates the chore once",
+            "RoutinesManagement — chores edits a chore and clears its icon",
+            "RoutinesManagement — chores announces a failed chore save inside the dialog",
+            "RoutinesManagement — chores deletes a chore only after confirmation",
+            "RoutinesManagement — chores keyboard drag persists the complete new order",
+            "RoutinesManagement — chores a failed reorder restores the order and announces it",
+            "RoutinesManagement — chores a reorder that fails after switching routines leaves the new routine's chores alone",
+            "RoutinesManagement — assignments lists children only, and a brand-new assignment saves without confirmation",
+            "RoutinesManagement — assignments changing an existing assignment asks for the streak confirmation",
+            "RoutinesManagement — assignments deactivates only after confirmation",
+            "RoutinesManagement — assignments a deactivated assignment starts empty and re-saving it asks for confirmation",
+            "RoutinesManagement — assignments announces a failed assignment save inside the dialog",
+            "RoutinesManagement — assignments explains how to add a child when there is none",
+            "RoutinesManagement — Spanish labels renders period groups, the page name, weekday labels and period options in Spanish",
+            "RoutinesManagement — Spanish labels lists each period under its own Spanish label in the routine dialog",
+            "RoutinesManagement — kiosk density (SC-001, SC-002, SC-003) meets kiosk density with a routine selected and with the assignment dialog open",
+            "RoutinesManagement — kiosk density (SC-001, SC-002, SC-003) DELIBERATE NEGATIVE — forcing the New routine button below the kiosk minimum fails"
           ],
           "tests/client/schedule-x-week-view.test.ts": [
             "ScheduleXWeekView event projection does not format a stale portal after its event has been filtered out",
@@ -3868,13 +4031,29 @@
             "SelectItem — kiosk density on the rendered popover options (#790) DELIBERATE NEGATIVE — forcing a rendered option below the kiosk minimum makes the assertion fail, and reverting restores compliance"
           ],
           "tests/client/settings-management.test.tsx": [
-            "SettingsManagement shows the stored language, time zone and week start, with nothing to save yet",
-            "SettingsManagement offers UTC and the stored zone even when the runtime's list has neither",
-            "SettingsManagement hosts the day periods and the weather location on the same page",
-            "SettingsManagement saves the three values as one locale object and asks the app to reload them",
+            "SettingsManagement shows the stored values as pills and a time zone, with nothing to save yet",
+            "SettingsManagement offers UTC, the curated groups and a stored zone outside the list, each once",
+            "SettingsManagement saves a pill change as one locale object and asks the app to reload",
+            "SettingsManagement saves only the weather when only the weather changed",
+            "SettingsManagement saves locale then weather on one click",
+            "SettingsManagement keeps the weather edit and still reloads the app when the second request is refused",
             "SettingsManagement announces a refused save in its own words, never the server's, and keeps the edit",
             "SettingsManagement falls back to its own message when the save never reaches the server",
-            "SettingsManagement announces a failed load and offers no form to save"
+            "SettingsManagement stages Clear and writes it on Save",
+            "SettingsManagement blocks Save and says why while only one coordinate is filled",
+            "SettingsManagement leaves weather out when the plugin is inactive",
+            "SettingsManagement hides \"Saved\" by itself",
+            "SettingsManagement clears \"Saved\" as soon as the form is edited again",
+            "SettingsManagement announces a failed load and retries it",
+            "SettingsManagement hosts the day periods on the same page"
+          ],
+          "tests/client/settings-timezones.test.ts": [
+            "timeZoneGroups lists UTC first and the curated groups in order",
+            "timeZoneGroups gives curated zones a friendly label",
+            "timeZoneGroups has no duplicates and only zones the server accepts",
+            "timeZoneGroups keeps a stored zone outside the list selectable, once, in a leading group",
+            "timeZoneGroups does not add a current group for listed zones or UTC",
+            "timeZoneGroups replaces underscores in the label of an unlisted zone"
           ],
           "tests/client/shell-routes.test.tsx": [
             "household shell routes keeps all four named family links at /",
@@ -4052,7 +4231,7 @@
             "TimeAnnouncementsManagement lists ALL rules (inactive included) ordered by time, as returned by the server",
             "TimeAnnouncementsManagement renders the empty state when no rules exist",
             "TimeAnnouncementsManagement creates a rule via POST, refreshes the list, and dispatches the rules-changed event",
-            "TimeAnnouncementsManagement the Create button stays disabled until a time and at least one weekday are set",
+            "TimeAnnouncementsManagement the dialog submit stays disabled until a time and at least one weekday are set",
             "TimeAnnouncementsManagement edits a rule via PATCH with the edited time/weekdays/isActive",
             "TimeAnnouncementsManagement toggles active via a PATCH carrying only the inverted isActive value",
             "TimeAnnouncementsManagement deletes a rule via DELETE after confirmation",
@@ -4060,6 +4239,13 @@
             "TimeAnnouncementsManagement surfaces the server's 409 active-overlap message (naming the conflicting rule) on create",
             "TimeAnnouncementsManagement surfaces the server's 400 validation message on create",
             "TimeAnnouncementsManagement Test-voice speaks the UNSAVED form time via the speech seam and performs NO POST (FR-014)",
+            "TimeAnnouncementsManagement shows a spinner while loading",
+            "TimeAnnouncementsManagement a failed load shows the error and a Retry that reloads",
+            "TimeAnnouncementsManagement Cancel closes the dialog without any write",
+            "TimeAnnouncementsManagement shows the selected voice name, or a no-voice hint",
+            "TimeAnnouncementsManagement inactive rules are dimmed and tagged",
+            "TimeAnnouncementsManagement weekday circles show initials and on/off state",
+            "TimeAnnouncementsManagement closing is blocked while a save is in flight",
             "localizes browser exceptions on rule creation (en)",
             "localizes browser exceptions on rule creation (es)"
           ],
@@ -4118,6 +4304,8 @@
             "time-announcements service — real Shell mount mounts and fetches its rules on a family route too (/chores)"
           ],
           "tests/client/time-announcements-speech.test.ts": [
+            "time-announcements speech voiceNameFor returns the name of the voice speak() would pick for the language",
+            "time-announcements speech voiceNameFor is null when no voice matches, the API is absent, or getVoices throws",
             "time-announcements speech TIME-ANNOUNCEMENTS-INV-09/I18N-LOCALIZATION-INV-11: utterance.lang is ALWAYS the household locale, matching voice present -> no miss logged",
             "time-announcements speech TIME-ANNOUNCEMENTS-AC-05: utterance.lang is set even with NO matching voice, and a voice-miss is logged",
             "time-announcements speech TIME-ANNOUNCEMENTS-INV-08: a throwing speechSynthesis.speak is swallowed as a no-op, and the NEXT call still works",
@@ -4252,23 +4440,18 @@
             "weather-i18n-parity render/labels.ts's weather.conditions is an exact uppercased mirror of weather.condition.*, all 16 keys, both languages"
           ],
           "tests/client/weather-management.test.tsx": [
-            "WeatherManagement reports unavailable settings when the weather plugin has no settings contribution",
-            "WeatherManagement loads the persisted location and prefills lat/lon/label",
-            "WeatherManagement renders blank inputs when the location is unset",
-            "WeatherManagement the Locate button is disabled when navigator.geolocation is absent (jsdom default)",
-            "WeatherManagement geolocation prefills lat/lon but issues NO write until Save is clicked (FR-010)",
-            "WeatherManagement the Save button is disabled when only one of lat/lon is filled (partial pair)",
-            "WeatherManagement Save PUTs {object:'weather', settings:{lat,lon,label}} and refreshes the form from the response",
-            "WeatherManagement Clear PUTs {lat:null, lon:null} with NO label key, and empties the label input too (FR-005 clear-as-unit)",
-            "WeatherManagement surfaces the server's error message on a failed save",
-            "WeatherManagement a pre-response transport failure (authFetch REJECTS) renders the localized fallback, never the raw exception message (Codex PR #654 P2)",
-            "localizes unknown and transport save failures (en, malformed)",
-            "localizes unknown and transport save failures (es, malformed)",
-            "localizes unknown and transport save failures (en, network)",
-            "localizes unknown and transport save failures (es, network)",
-            "localizes unknown and transport save failures (en, unknown)",
-            "localizes unknown and transport save failures (es, unknown)",
-            "announces geolocation refusal in Spanish without changing or saving the location"
+            "weather form helpers maps settings to strings and back to a payload without a blank label",
+            "weather form helpers flags a partial or non-numeric pair",
+            "weather form helpers compares forms field by field",
+            "WeatherManagement shows the values it is given and blank inputs when unset",
+            "WeatherManagement reports edits through onChange and never touches the network",
+            "WeatherManagement disables Locate when geolocation is absent",
+            "WeatherManagement geolocation prefills rounded lat/lon and writes nothing (FR-010)",
+            "WeatherManagement announces a refused geolocation without changing the fields",
+            "WeatherManagement Clear empties all three fields locally and is disabled once blank",
+            "WeatherManagement explains a half-filled pair",
+            "WeatherManagement reads typed text as it is, so a non-numeric value is flagged and never becomes a clear",
+            "weather form helpers accepts only plain decimal coordinates"
           ],
           "tests/client/weather-pill.test.tsx": [
             "WeatherPill renders nothing when no location is configured (silent absence, FR-022)",
@@ -4324,7 +4507,8 @@
             "WeekdayPicker — density meets kiosk density in multi mode",
             "WeekdayPicker — density meets kiosk density in single mode (renderAs=\"select\", default)",
             "WeekdayPicker — density meets kiosk density in single mode (renderAs=\"radio\")",
-            "WeekdayPicker — radio group isolation gives two prefix-less radio pickers DIFFERENT native group names"
+            "WeekdayPicker — radio group isolation gives two prefix-less radio pickers DIFFERENT native group names",
+            "WeekdayPicker — disabledDays disables only the listed days in multi mode"
           ],
           "tests/integration/backups-lineage.test.ts": [
             "backup restore lineage integration restores a baseline backup and applies a temporary later migration",
@@ -4644,7 +4828,8 @@
             "daily-briefing full generation corpus defaults follow the en household with English-only fallback",
             "daily-briefing full generation explicit corpus overrides win while household changes leave stored snapshots intact",
             "daily-briefing full generation contains malformed persisted external cache entries as block failures",
-            "daily-briefing full generation generates an enabled onThisDay block and contains its external failure"
+            "daily-briefing full generation generates an enabled onThisDay block and contains its external failure",
+            "daily-briefing full generation late-eligibility abort (FOLD-2, Codex #707 review) a weekday paused while the render is in-flight aborts that write: paused rejection, no row committed (PR #38 review)"
           ],
           "tests/integration/daily-briefing-job.test.ts": [
             "daily-briefing job registration (research D8/D9) isMissed predicate truth table (Codex review F1: per-member, never COUNT(*)==0) DAILY-BRIEFING-AC-10: no daily_briefing row for an opted-in active member — missed",
@@ -4760,6 +4945,7 @@
           ],
           "tests/integration/daily-briefing-trigger.test.ts": [
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) AC-1: the last morning chore completed -> exactly one print job enqueued",
+            "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) a member paused on today's weekday is not enqueued, and is again once resumed",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) AC-2 / toggle storm: un-complete + re-complete after the print -> still exactly one job",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) P2-5: once the job is ACTUALLY printed, a later re-complete dedups via the alreadyPrinted branch, not the pending-job branch",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) Codex #702 FOLD-1: a terminally-failed (dead-lettered) job gates the trigger — no unbounded re-enqueue",
@@ -4775,12 +4961,12 @@
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) FR-018 gate cascade — a failed gate is a silent no-op (except raster-missing) trigger binding absent -> nothing enqueued, even with predicate true and NO raster (mutation-hardened)",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) FR-018 gate cascade — a failed gate is a silent no-op (except raster-missing) member opt-in off -> nothing enqueued",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) FR-018 gate cascade — a failed gate is a silent no-op (except raster-missing) Printing plugin inactive -> nothing enqueued, and the raster gate is never even reached",
+            "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) records SQLITE_BUSY wakeup failures and recovers without duplicate print reservations",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) wakeup-hint re-reads state — a LYING event payload never substitutes for the real predicate",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) a duplicate/no-op completion event is harmless — still exactly one job",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) midnight rollover: the household date is re-derived per evaluation, never cached",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) the default sweep cadence never exceeds the spec's 60-second bound",
-            "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) registerAutoPrintTrigger arms a REAL scheduler interval job at the configured cadence, and each tick re-evaluates",
-            "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) records SQLITE_BUSY wakeup failures and recovers without duplicate print reservations"
+            "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) registerAutoPrintTrigger arms a REAL scheduler interval job at the configured cadence, and each tick re-evaluates"
           ],
           "tests/integration/database-baseline.test.ts": [
             "database lifecycle fresh current baseline is semantically equivalent to a clean Drizzle generation from the current TypeScript schema",
@@ -5018,6 +5204,8 @@
           "tests/e2e/admin-household-timezone-defaults.spec.ts": [
             "d2c923e8dbd7b5ee6d04-0031c1d54f8f4e93fae5"
           ],
+          "tests/e2e/admin-routines.spec.ts": ["9039bdc4f4b37608b18c-2d67652f4c452d3453f0"],
+          "tests/e2e/admin-settings.spec.ts": ["f375f71858043ffaa49e-780f363c12847aa39921"],
           "tests/e2e/admin-unlock-resilience.spec.ts": [
             "224608ef7363313c2282-9f89fbd41fbab627eca2",
             "224608ef7363313c2282-8d68d3e6e84b83b77ca0"
@@ -5076,6 +5264,9 @@
           "tests/e2e/telemetry-transport.spec.ts": [
             "d52575aebaf5180e5f75-990374b5befcaebf9c02",
             "d52575aebaf5180e5f75-c9d6222685f4b7444f83"
+          ],
+          "tests/e2e/time-announcements-admin.spec.ts": [
+            "b13f82e6f62fe0b345d2-671acadda6ab41163287"
           ],
           "tests/e2e/weather.spec.ts": [
             "d5f1906f292cab0ebdcd-89f4250569c3e2076408",
@@ -5167,28 +5358,13 @@
           "branches": 77.17
         }
       },
-      "src/client/admin/ChoreOrderControls.tsx": {
-        "layer": "client",
-        "minimumTotals": {
-          "lines": 36,
-          "statements": 44,
-          "functions": 14,
-          "branches": 16
-        },
-        "minimumRates": {
-          "lines": 86.11,
-          "statements": 84.09,
-          "functions": 85.71,
-          "branches": 68.75
-        }
-      },
       "src/client/admin/DailyBriefingManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 313,
-          "statements": 344,
-          "functions": 103,
-          "branches": 242
+          "lines": 295,
+          "statements": 325,
+          "functions": 95,
+          "branches": 218
         },
         "minimumRates": {
           "lines": 83.38,
@@ -5260,40 +5436,40 @@
       "src/client/admin/NetworkDevicesManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 167,
-          "statements": 195,
-          "functions": 52,
-          "branches": 150
+          "lines": 12,
+          "statements": 12,
+          "functions": 6,
+          "branches": 10
         },
         "minimumRates": {
-          "lines": 94.61,
-          "statements": 91.28,
-          "functions": 88.46,
-          "branches": 86.66
+          "lines": 91.66,
+          "statements": 91.66,
+          "functions": 83.33,
+          "branches": 100.0
         }
       },
       "src/client/admin/PrintingManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 38,
-          "statements": 40,
-          "functions": 7,
-          "branches": 40
+          "lines": 7,
+          "statements": 7,
+          "functions": 4,
+          "branches": 4
         },
         "minimumRates": {
           "lines": 100,
           "statements": 100,
           "functions": 100,
-          "branches": 97.5
+          "branches": 100
         }
       },
       "src/client/admin/RemindersManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 251,
-          "statements": 281,
-          "functions": 96,
-          "branches": 180
+          "lines": 196,
+          "statements": 218,
+          "functions": 81,
+          "branches": 178
         },
         "minimumRates": {
           "lines": 64.94,
@@ -5305,9 +5481,9 @@
       "src/client/admin/RoutinesManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 165,
-          "statements": 185,
-          "functions": 64,
+          "lines": 135,
+          "statements": 152,
+          "functions": 53,
           "branches": 80
         },
         "minimumRates": {
@@ -5365,16 +5541,121 @@
       "src/client/admin/WeatherManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 81,
-          "statements": 88,
-          "functions": 18,
-          "branches": 59
+          "lines": 35,
+          "statements": 38,
+          "functions": 14,
+          "branches": 44
         },
         "minimumRates": {
           "lines": 97.61,
           "statements": 93.4,
           "functions": 90.47,
           "branches": 86.44
+        }
+      },
+      "src/client/admin/network-devices/DeviceStatus.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 18,
+          "statements": 22,
+          "functions": 4,
+          "branches": 41
+        },
+        "minimumRates": {
+          "lines": 100.0,
+          "statements": 86.36,
+          "functions": 100.0,
+          "branches": 87.8
+        }
+      },
+      "src/client/admin/network-devices/DiscoverDevices.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 78,
+          "statements": 90,
+          "functions": 23,
+          "branches": 89
+        },
+        "minimumRates": {
+          "lines": 94.87,
+          "statements": 90.0,
+          "functions": 82.6,
+          "branches": 79.12
+        }
+      },
+      "src/client/admin/network-devices/RegisteredDevices.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 84,
+          "statements": 93,
+          "functions": 23,
+          "branches": 68
+        },
+        "minimumRates": {
+          "lines": 91.66,
+          "statements": 88.17,
+          "functions": 86.95,
+          "branches": 77.94
+        }
+      },
+      "src/client/admin/network-devices/data.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 57,
+          "statements": 75,
+          "functions": 23,
+          "branches": 26
+        },
+        "minimumRates": {
+          "lines": 100.0,
+          "statements": 97.33,
+          "functions": 95.65,
+          "branches": 92.3
+        }
+      },
+      "src/client/admin/printer/PrinterDiagnosticsTab.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 72,
+          "statements": 79,
+          "functions": 17,
+          "branches": 52
+        },
+        "minimumRates": {
+          "lines": 98.61,
+          "statements": 98.73,
+          "functions": 94.11,
+          "branches": 96.15
+        }
+      },
+      "src/client/admin/printer/PrinterSettingsTab.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 111,
+          "statements": 124,
+          "functions": 34,
+          "branches": 121
+        },
+        "minimumRates": {
+          "lines": 96.39,
+          "statements": 95.16,
+          "functions": 91.17,
+          "branches": 85.95
+        }
+      },
+      "src/client/admin/timezones.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 4,
+          "statements": 7,
+          "functions": 3,
+          "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100.0,
+          "statements": 100.0,
+          "functions": 100.0,
+          "branches": 100.0
         }
       },
       "src/client/calendar/CalendarMonthView.tsx": {
@@ -5728,7 +6009,7 @@
           "lines": 23,
           "statements": 24,
           "functions": 9,
-          "branches": 15
+          "branches": 17
         },
         "minimumRates": {
           "lines": 100,
@@ -5855,6 +6136,51 @@
           "statements": 92.02,
           "functions": 91.17,
           "branches": 82.55
+        }
+      },
+      "src/client/daily-briefing/admin/BriefingImage.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 30,
+          "statements": 38,
+          "functions": 6,
+          "branches": 30
+        },
+        "minimumRates": {
+          "lines": 93.33,
+          "statements": 89.47,
+          "functions": 100,
+          "branches": 80
+        }
+      },
+      "src/client/daily-briefing/admin/BriefingMemberPills.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 6,
+          "statements": 7,
+          "functions": 5,
+          "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/client/daily-briefing/admin/BriefingWorkspace.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 110,
+          "statements": 129,
+          "functions": 24,
+          "branches": 126
+        },
+        "minimumRates": {
+          "lines": 93.63,
+          "statements": 89.92,
+          "functions": 95.83,
+          "branches": 81.74
         }
       },
       "src/client/daily-briefing/blockRenderers.tsx": {
@@ -6430,24 +6756,24 @@
       "src/client/printing/PrintExecutor.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 116,
-          "statements": 132,
-          "functions": 23,
-          "branches": 86
+          "lines": 130,
+          "statements": 146,
+          "functions": 24,
+          "branches": 90
         },
         "minimumRates": {
-          "lines": 96.55,
-          "statements": 92.42,
-          "functions": 86.95,
-          "branches": 83.72
+          "lines": 96.92,
+          "statements": 93.15,
+          "functions": 87.5,
+          "branches": 84.44
         }
       },
       "src/client/printing/PrinterAttention.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 4,
-          "statements": 5,
-          "functions": 1,
+          "lines": 5,
+          "statements": 6,
+          "functions": 2,
           "branches": 6
         },
         "minimumRates": {
@@ -6505,16 +6831,151 @@
       "src/client/printing/transport.ts": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 129,
-          "statements": 142,
-          "functions": 38,
-          "branches": 61
+          "lines": 139,
+          "statements": 154,
+          "functions": 41,
+          "branches": 71
         },
         "minimumRates": {
-          "lines": 68.21,
-          "statements": 66.9,
-          "functions": 71.05,
-          "branches": 68.85
+          "lines": 82.01,
+          "statements": 79.87,
+          "functions": 80.48,
+          "branches": 74.64
+        }
+      },
+      "src/client/routines/admin/AssignmentDialog.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 20,
+          "statements": 26,
+          "functions": 14,
+          "branches": 21
+        },
+        "minimumRates": {
+          "lines": 95,
+          "statements": 92.3,
+          "functions": 92.85,
+          "branches": 80.95
+        }
+      },
+      "src/client/routines/admin/ChoreFormDialog.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 18,
+          "statements": 22,
+          "functions": 7,
+          "branches": 22
+        },
+        "minimumRates": {
+          "lines": 94.44,
+          "statements": 86.36,
+          "functions": 85.71,
+          "branches": 77.27
+        }
+      },
+      "src/client/routines/admin/MemberChip.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 1,
+          "statements": 1,
+          "functions": 1,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/client/routines/admin/RoutineDetail.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 20,
+          "statements": 25,
+          "functions": 14,
+          "branches": 16
+        },
+        "minimumRates": {
+          "lines": 95,
+          "statements": 92,
+          "functions": 92.85,
+          "branches": 62.5
+        }
+      },
+      "src/client/routines/admin/RoutineFormDialog.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 23,
+          "statements": 28,
+          "functions": 9,
+          "branches": 28
+        },
+        "minimumRates": {
+          "lines": 95.65,
+          "statements": 89.28,
+          "functions": 88.88,
+          "branches": 82.14
+        }
+      },
+      "src/client/routines/admin/RoutineList.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 7,
+          "statements": 7,
+          "functions": 4,
+          "branches": 6
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/client/routines/admin/RoutineWeekGrid.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 11,
+          "statements": 13,
+          "functions": 9,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/client/routines/admin/SortableChoreRow.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 6,
+          "statements": 7,
+          "functions": 4,
+          "branches": 8
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/client/routines/admin/routineOrder.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 9,
+          "statements": 13,
+          "functions": 9,
+          "branches": 5
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/client/shell/DensityControl.tsx": {
@@ -6760,10 +7221,10 @@
       "src/server/auth/capability.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 43,
-          "statements": 43,
-          "functions": 7,
-          "branches": 28
+          "lines": 31,
+          "statements": 31,
+          "functions": 5,
+          "branches": 22
         },
         "minimumRates": {
           "lines": 93.02,
@@ -7060,10 +7521,10 @@
       "src/server/db/weekday-integrity.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 12,
-          "statements": 15,
-          "functions": 1,
-          "branches": 12
+          "lines": 14,
+          "statements": 19,
+          "functions": 2,
+          "branches": 16
         },
         "minimumRates": {
           "lines": 100,
@@ -7736,9 +8197,9 @@
       "src/server/modules/daily-briefing/errors.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 2,
-          "statements": 2,
-          "functions": 1,
+          "lines": 12,
+          "statements": 12,
+          "functions": 5,
           "branches": 0
         },
         "minimumRates": {
@@ -7781,10 +8242,10 @@
       "src/server/modules/daily-briefing/index.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 276,
-          "statements": 316,
-          "functions": 57,
-          "branches": 227
+          "lines": 328,
+          "statements": 371,
+          "functions": 64,
+          "branches": 249
         },
         "minimumRates": {
           "lines": 93.52,
@@ -7796,10 +8257,10 @@
       "src/server/modules/daily-briefing/job.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 68,
-          "statements": 72,
+          "lines": 70,
+          "statements": 76,
           "functions": 16,
-          "branches": 27
+          "branches": 31
         },
         "minimumRates": {
           "lines": 91.17,
@@ -8243,6 +8704,21 @@
           "branches": 100
         }
       },
+      "src/server/modules/daily-briefing/schedule.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 15,
+          "statements": 17,
+          "functions": 8,
+          "branches": 2
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/server/modules/daily-briefing/settings.ts": {
         "layer": "server",
         "minimumTotals": {
@@ -8261,9 +8737,9 @@
       "src/server/modules/daily-briefing/trigger.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 43,
-          "statements": 51,
-          "functions": 14,
+          "lines": 44,
+          "statements": 52,
+          "functions": 15,
           "branches": 24
         },
         "minimumRates": {
@@ -8486,16 +8962,16 @@
       "src/server/modules/printing/index.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 195,
-          "statements": 221,
-          "functions": 45,
-          "branches": 119
+          "lines": 205,
+          "statements": 234,
+          "functions": 47,
+          "branches": 123
         },
         "minimumRates": {
-          "lines": 96.41,
-          "statements": 92.82,
-          "functions": 91.11,
-          "branches": 88.23
+          "lines": 96.58,
+          "statements": 94.87,
+          "functions": 91.48,
+          "branches": 90.24
         }
       },
       "src/server/modules/reminders/index.ts": {
@@ -8534,13 +9010,13 @@
           "lines": 65,
           "statements": 75,
           "functions": 20,
-          "branches": 82
+          "branches": 84
         },
         "minimumRates": {
-          "lines": 98.46,
-          "statements": 96,
+          "lines": 100,
+          "statements": 97.33,
           "functions": 100,
-          "branches": 95.12
+          "branches": 97.61
         }
       },
       "src/server/modules/time-announcements/index.ts": {
@@ -8741,10 +9217,10 @@
       "src/server/routes/daily-briefing.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 111,
-          "statements": 116,
-          "functions": 18,
-          "branches": 72
+          "lines": 144,
+          "statements": 150,
+          "functions": 22,
+          "branches": 89
         },
         "minimumRates": {
           "lines": 89.18,
@@ -8846,16 +9322,16 @@
       "src/server/routes/printing.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 90,
-          "statements": 93,
-          "functions": 13,
-          "branches": 61
+          "lines": 100,
+          "statements": 103,
+          "functions": 14,
+          "branches": 70
         },
         "minimumRates": {
-          "lines": 87.77,
-          "statements": 88.17,
+          "lines": 88,
+          "statements": 88.34,
           "functions": 100,
-          "branches": 80.32
+          "branches": 81.42
         }
       },
       "src/server/routes/provision.ts": {

@@ -11,7 +11,7 @@ import { useIsolatedDb } from "../helpers/db";
  * Covers: FR-001, FR-007, FR-017, FR-019
  * Rules tested:
  * Rule 1 — getRoutineById/getChoreById tolerant of soft-delete (404 only for unknown id)
- * Rule 2 — dayPeriodId is immutable after creation (editRoutine only writes name/active)
+ * Rule 2 — a routine may move to another existing day period (FR-015); unknown periods are rejected
  * Rule 3 — reorderChores is atomic with full-set validation, prior order intact on rejection
  */
 
@@ -281,34 +281,113 @@ describe("routines-crud boundary tests (red-by-design)", () => {
     }
   });
 
-  it("PATCH /api/routines/:id ignores dayPeriodId — stored value NEVER changes (Rule 2)", async () => {
+  it("PATCH /api/routines/:id moves the routine to another day period (FR-015)", async () => {
     seedDayPeriods();
     const { deviceKey } = seedKeys();
     const { buildApp } = await import("../../src/server/app.ts");
     const app = await buildApp();
     try {
-      // Create with dayPeriodId = "morning"
-      const createRes = await app.inject({
-        method: "POST",
-        url: "/api/routines",
-        cookies: { mp_device_key: deviceKey },
-        payload: { name: "Immutable Period", dayPeriodId: "morning" },
-      });
-      expect(createRes.statusCode).toBe(201);
-      const { id } = JSON.parse(createRes.body);
+      const cookies = { mp_device_key: deviceKey };
+      const created = (
+        await app.inject({
+          method: "POST",
+          url: "/api/routines",
+          cookies,
+          payload: { name: "Movable", dayPeriodId: "morning" },
+        })
+      ).json();
 
-      // Try to change dayPeriodId via PATCH (Rule 2: it must be ignored or rejected)
       const res = await app.inject({
         method: "PATCH",
-        url: `/api/routines/${id}`,
-        cookies: { mp_device_key: deviceKey },
+        url: `/api/routines/${created.id}`,
+        cookies,
         payload: { dayPeriodId: "night" },
       });
       expect(res.statusCode).toBe(200);
+      expect(res.json()).toEqual({ ...created, dayPeriodId: "night" });
 
-      const body = JSON.parse(res.body);
-      // Rule 2: dayPeriodId MUST NOT change — it is immutable after creation
-      expect(body.dayPeriodId).toBe("morning");
+      const reread = await app.inject({
+        method: "GET",
+        url: `/api/routines/${created.id}`,
+        cookies,
+      });
+      expect(reread.json().dayPeriodId).toBe("night");
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("PATCH /api/routines/:id rejects an unknown, blank or non-string dayPeriodId without changing the routine (FR-015)", async () => {
+    seedDayPeriods();
+    const { deviceKey } = seedKeys();
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    try {
+      const cookies = { mp_device_key: deviceKey };
+      const created = (
+        await app.inject({
+          method: "POST",
+          url: "/api/routines",
+          cookies,
+          payload: { name: "Stays put", dayPeriodId: "morning" },
+        })
+      ).json();
+
+      for (const dayPeriodId of ["lunchtime", "   ", 7]) {
+        const res = await app.inject({
+          method: "PATCH",
+          url: `/api/routines/${created.id}`,
+          cookies,
+          payload: { name: "Renamed", dayPeriodId },
+        });
+        expect(res.statusCode, String(dayPeriodId)).toBe(400);
+        expect(res.json()).toMatchObject({
+          error: "validation_error",
+          message: expect.any(String),
+        });
+      }
+
+      const reread = await app.inject({
+        method: "GET",
+        url: `/api/routines/${created.id}`,
+        cookies,
+      });
+      expect(reread.json()).toEqual(created);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("GET /api/routines lists active routines by day-period start, then name (FR-016)", async () => {
+    seedDayPeriods();
+    const { deviceKey } = seedKeys();
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    try {
+      const cookies = { mp_device_key: deviceKey };
+      for (const [name, dayPeriodId] of [
+        ["zeta", "evening"],
+        ["Bravo", "morning"],
+        ["Night owl", "night"],
+        ["alpha", "morning"],
+        ["Lunch", "afternoon"],
+      ]) {
+        const res = await app.inject({
+          method: "POST",
+          url: "/api/routines",
+          cookies,
+          payload: { name, dayPeriodId },
+        });
+        expect(res.statusCode).toBe(201);
+      }
+      const list = (await app.inject({ method: "GET", url: "/api/routines", cookies })).json();
+      expect(list.map((r: { name: string }) => r.name)).toEqual([
+        "alpha",
+        "Bravo",
+        "Lunch",
+        "zeta",
+        "Night owl",
+      ]);
     } finally {
       await app.close();
     }

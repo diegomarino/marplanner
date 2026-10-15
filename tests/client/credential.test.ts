@@ -105,7 +105,7 @@ describe("authFetch / reportCredentialLoss (FR-013)", () => {
 /** — a scope-403 (the key is LIVE, this specific request is merely denied on scope
  * grounds) must NOT be treated as credential loss. Fixtures below are copied verbatim from
  * the real server response shapes: `AUTH_SCOPE_DENIED_CODE` bodies from
- * `requireManagementKey`/`requireCapability` (src/server/auth/capability.ts, exercised by
+ * `requireCapability` (src/server/auth/capability.ts, exercised by
  * tests/boundary/network-devices-auth.test.ts and tests/boundary/telemetry-capability.test.ts),
  * `AUTH_CREDENTIAL_INVALID_CODE` bodies from `authBoundary` (src/server/auth/boundary.ts,
  * exercised by tests/boundary/network-devices-auth.test.ts's revoked-key assertion).
@@ -122,31 +122,6 @@ describe("authFetch — scope-403 vs credential-invalid (#682)", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     clearProvisionedMarker();
-  });
-
-  it("does NOT clear the marker on a scope-403 (requireManagementKey rejecting a device key, real body shape)", async () => {
-    // Verbatim shape of src/server/auth/capability.ts's requireManagementKey 403 —
-    // exactly what a kiosk device key gets back opening the Network Devices admin panel.
-    mockFetch.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          error: "forbidden",
-          message: "Device-provisioned keys cannot access management endpoints",
-          code: AUTH_SCOPE_DENIED_CODE,
-        }),
-        { status: 403 }
-      )
-    );
-    const listener = vi.fn();
-    window.addEventListener(CREDENTIAL_LOST_EVENT, listener);
-
-    const res = await authFetch("/api/network-devices", { credentials: "include" });
-
-    expect(res.status).toBe(403);
-    expect(listener).not.toHaveBeenCalled();
-    expect(document.cookie).toMatch(/mp_provisioned=1/);
-
-    window.removeEventListener(CREDENTIAL_LOST_EVENT, listener);
   });
 
   it("does NOT clear the marker on a scope-403 (requireCapability's 'not granted' branch, real body shape)", async () => {

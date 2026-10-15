@@ -7,9 +7,10 @@ import { LanguageProvider } from "@/i18n";
 import { messages } from "@/i18n/messages";
 import type { EffectiveSettings } from "../../src/shared";
 
-/** The Settings page: the household's language, time zone and week start, with the day periods
- * and the weather location on the same page. The Radix select is replaced by a native one so
- * the tests can pick a value; the two hosted panels are stubs, each has its own suite.
+/** The Settings page: language and week start as pills, a grouped time zone list, the weather
+ * location, and one Save for all of them, with the day periods on the same page. The Radix select
+ * is replaced by a native one so the tests can pick a value; the day periods panel is a stub, it
+ * has its own suite. WeatherManagement renders for real, it is part of this page's Save.
  */
 
 const retry = vi.fn();
@@ -22,9 +23,6 @@ vi.mock("@/lib/householdSettings", () => ({
 
 vi.mock("@/admin/DayPeriodsManagement", () => ({
   DayPeriodsManagement: () => <div data-testid="day-periods-stub" />,
-}));
-vi.mock("@/admin/WeatherManagement", () => ({
-  WeatherManagement: () => <div data-testid="weather-stub" />,
 }));
 
 vi.mock("@/components/ui/select", async () => {
@@ -53,17 +51,42 @@ vi.mock("@/components/ui/select", async () => {
     },
     SelectValue: () => null,
     SelectContent: ({ children }: Props) => <ul>{children}</ul>,
+    SelectGroup: ({ children }: Props) => <ul>{children}</ul>,
+    SelectLabel: ({ children }: Props) => <li data-group-label="">{children}</li>,
     SelectItem: ({ value }: Props) => <li data-option={value as string} />,
   };
 });
 
 const SETTINGS: EffectiveSettings = {
   locale: { timezone: "Europe/Madrid", language: "en", weekStartDay: 1 },
-  weather: { lat: null, lon: null },
+  weather: { lat: 40.4168, lon: -3.7038, label: "Madrid" },
 };
+const NO_WEATHER: EffectiveSettings = { locale: SETTINGS.locale };
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status });
+}
+
+/** The bodies of the PUTs made so far, in order. */
+function puts() {
+  return vi
+    .mocked(globalThis.fetch)
+    .mock.calls.filter(([, init]) => init?.method === "PUT")
+    .map(([, init]) => JSON.parse(String(init!.body)) as { object: string; settings: unknown });
+}
+
+/** A GET that returns `initial`; each PUT echoes the object it wrote into the stored settings
+ * unless `refuse` names that object.
+ */
+function mockApi(initial: EffectiveSettings, refuse?: "locale" | "weather") {
+  let stored = initial;
+  vi.mocked(globalThis.fetch).mockImplementation(async (_input, init) => {
+    if (init?.method !== "PUT") return jsonResponse(stored);
+    const body = JSON.parse(String(init.body)) as { object: "locale" | "weather"; settings: never };
+    if (body.object === refuse) return jsonResponse({ message: "Unknown time zone" }, 400);
+    stored = { ...stored, [body.object]: body.settings };
+    return jsonResponse(stored);
+  });
 }
 
 function renderSettings() {
@@ -73,6 +96,11 @@ function renderSettings() {
     </LanguageProvider>
   );
 }
+
+const optionValues = () =>
+  [...document.querySelectorAll("[data-option]")].map((option) =>
+    option.getAttribute("data-option")
+  );
 
 describe("SettingsManagement", () => {
   beforeEach(() => {
@@ -86,76 +114,124 @@ describe("SettingsManagement", () => {
     cleanup();
   });
 
-  it("shows the stored language, time zone and week start, with nothing to save yet", async () => {
-    vi.mocked(globalThis.fetch).mockResolvedValue(jsonResponse(SETTINGS));
+  it("shows the stored values as pills and a time zone, with nothing to save yet", async () => {
+    mockApi(SETTINGS);
     renderSettings();
 
-    expect(await screen.findByLabelText("Language")).toHaveValue("en");
+    await screen.findByTestId("settings-save");
+    expect(screen.getByRole("radio", { name: "English" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: "Español" })).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByRole("radio", { name: "Monday" })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByLabelText("Time zone")).toHaveValue("Europe/Madrid");
-    expect(screen.getByLabelText("Week starts on")).toHaveValue("1");
     expect(screen.getByTestId("settings-save")).toBeDisabled();
+    for (const key of [
+      "admin.settings.languageDescription",
+      "admin.settings.weekStartDescription",
+      "admin.settings.timezoneDescription",
+    ] as const) {
+      expect(screen.getByText(messages.en[key])).toBeInTheDocument();
+    }
   });
 
-  it("offers UTC and the stored zone even when the runtime's list has neither", async () => {
-    vi.spyOn(Intl, "supportedValuesOf").mockReturnValue(["Europe/Lisbon", "Europe/Madrid"]);
-    vi.mocked(globalThis.fetch).mockResolvedValue(
-      jsonResponse({ ...SETTINGS, locale: { ...SETTINGS.locale, timezone: "Etc/GMT+3" } })
-    );
+  it("offers UTC, the curated groups and a stored zone outside the list, each once", async () => {
+    mockApi({ ...SETTINGS, locale: { ...SETTINGS.locale, timezone: "Etc/GMT+3" } });
     renderSettings();
 
     await screen.findByTestId("settings-save");
-    const options = [...document.querySelectorAll("[data-option]")].map((option) =>
-      option.getAttribute("data-option")
-    );
-    expect(options).toEqual(expect.arrayContaining(["UTC", "Etc/GMT+3", "Europe/Lisbon"]));
-    expect(options.filter((option) => option === "UTC")).toHaveLength(1);
+    const options = optionValues();
+    expect(options).toEqual(expect.arrayContaining(["UTC", "Europe/Madrid", "Etc/GMT+3"]));
+    for (const zone of ["UTC", "Europe/Madrid", "Etc/GMT+3"]) {
+      expect(options.filter((option) => option === zone)).toHaveLength(1);
+    }
+    expect(
+      [...document.querySelectorAll("[data-group-label]")].map((label) => label.textContent)
+    ).toContain("Current setting");
+
+    // Picking another zone keeps the original reachable until Save.
+    fireEvent.change(screen.getByLabelText("Time zone"), { target: { value: "Europe/Madrid" } });
+    expect(optionValues()).toContain("Etc/GMT+3");
   });
 
-  it("hosts the day periods and the weather location on the same page", async () => {
-    vi.mocked(globalThis.fetch).mockResolvedValue(jsonResponse(SETTINGS));
+  it("saves a pill change as one locale object and asks the app to reload", async () => {
+    mockApi(SETTINGS);
     renderSettings();
 
     await screen.findByTestId("settings-save");
-    expect(screen.getByTestId("day-periods-stub")).toBeInTheDocument();
-    expect(screen.getByTestId("weather-stub")).toBeInTheDocument();
-  });
-
-  it("saves the three values as one locale object and asks the app to reload them", async () => {
-    const saved = { timezone: "Europe/Lisbon", language: "es", weekStartDay: 0 };
-    const mockFetch = vi.mocked(globalThis.fetch);
-    mockFetch.mockImplementation(async (_input, init) =>
-      init?.method === "PUT" ? jsonResponse({ ...SETTINGS, locale: saved }) : jsonResponse(SETTINGS)
-    );
-    renderSettings();
-
-    fireEvent.change(await screen.findByLabelText("Language"), { target: { value: "es" } });
-    fireEvent.change(screen.getByLabelText("Time zone"), { target: { value: "Europe/Lisbon" } });
-    fireEvent.change(screen.getByLabelText("Week starts on"), { target: { value: "0" } });
+    fireEvent.click(screen.getByTestId("settings-language-es"));
+    fireEvent.click(screen.getByTestId("settings-week-start-0"));
     fireEvent.click(screen.getByTestId("settings-save"));
 
     await waitFor(() => expect(retry).toHaveBeenCalledTimes(1));
-    const put = mockFetch.mock.calls.find(([, init]) => init?.method === "PUT")!;
-    expect(put[0]).toBe("/api/settings");
-    expect(JSON.parse(String(put[1]!.body))).toEqual({ object: "locale", settings: saved });
-    expect(screen.getByTestId("settings-save")).toHaveTextContent("✓ Save");
+    expect(puts()).toEqual([
+      {
+        object: "locale",
+        settings: { timezone: "Europe/Madrid", language: "es", weekStartDay: 0 },
+      },
+    ]);
+    expect(await screen.findByTestId("settings-saved")).toBeInTheDocument();
     expect(screen.getByTestId("settings-save")).toBeDisabled();
   });
 
-  it("announces a refused save in its own words, never the server's, and keeps the edit", async () => {
-    vi.mocked(globalThis.fetch).mockImplementation(async (_input, init) =>
-      init?.method === "PUT"
-        ? jsonResponse({ message: "Unknown time zone" }, 400)
-        : jsonResponse(SETTINGS)
-    );
+  it("saves only the weather when only the weather changed", async () => {
+    mockApi(SETTINGS);
     renderSettings();
 
-    fireEvent.change(await screen.findByLabelText("Week starts on"), { target: { value: "0" } });
+    await screen.findByTestId("settings-save");
+    fireEvent.change(screen.getByTestId("weather-lat-input"), { target: { value: "41" } });
+    fireEvent.click(screen.getByTestId("settings-save"));
+
+    await waitFor(() => expect(retry).toHaveBeenCalledTimes(1));
+    expect(puts()).toEqual([
+      { object: "weather", settings: { lat: 41, lon: -3.7038, label: "Madrid" } },
+    ]);
+  });
+
+  it("saves locale then weather on one click", async () => {
+    mockApi(SETTINGS);
+    renderSettings();
+
+    await screen.findByTestId("settings-save");
+    fireEvent.click(screen.getByTestId("settings-week-start-0"));
+    fireEvent.change(screen.getByTestId("weather-label-input"), { target: { value: "Home" } });
+    fireEvent.click(screen.getByTestId("settings-save"));
+
+    await waitFor(() => expect(retry).toHaveBeenCalledTimes(1));
+    expect(puts().map((put) => put.object)).toEqual(["locale", "weather"]);
+    expect(puts()[1]!.settings).toEqual({ lat: 40.4168, lon: -3.7038, label: "Home" });
+    expect(await screen.findByTestId("settings-saved")).toBeInTheDocument();
+  });
+
+  it("keeps the weather edit and still reloads the app when the second request is refused", async () => {
+    mockApi(SETTINGS, "weather");
+    renderSettings();
+
+    await screen.findByTestId("settings-save");
+    fireEvent.click(screen.getByTestId("settings-week-start-0"));
+    fireEvent.change(screen.getByTestId("weather-lat-input"), { target: { value: "41" } });
     fireEvent.click(screen.getByTestId("settings-save"));
 
     expect(await screen.findByTestId("settings-error")).toHaveTextContent(
       messages.en["admin.settings.saveError"]
     );
-    expect(screen.getByLabelText("Week starts on")).toHaveValue("0");
+    expect(screen.getByTestId("settings-save")).toBeEnabled();
+    expect(screen.getByTestId("weather-lat-input")).toHaveValue("41");
+    expect(screen.getByTestId("settings-week-start-0")).toHaveAttribute("aria-checked", "true");
+    expect(retry).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId("settings-saved")).not.toBeInTheDocument();
+  });
+
+  it("announces a refused save in its own words, never the server's, and keeps the edit", async () => {
+    mockApi(SETTINGS, "locale");
+    renderSettings();
+
+    await screen.findByTestId("settings-save");
+    fireEvent.click(screen.getByTestId("settings-week-start-0"));
+    fireEvent.click(screen.getByTestId("settings-save"));
+
+    expect(await screen.findByTestId("settings-error")).toHaveTextContent(
+      messages.en["admin.settings.saveError"]
+    );
+    expect(screen.getByTestId("settings-week-start-0")).toHaveAttribute("aria-checked", "true");
     expect(screen.getByTestId("settings-save")).toBeEnabled();
     expect(retry).not.toHaveBeenCalled();
   });
@@ -167,7 +243,8 @@ describe("SettingsManagement", () => {
     });
     renderSettings();
 
-    fireEvent.change(await screen.findByLabelText("Week starts on"), { target: { value: "0" } });
+    await screen.findByTestId("settings-save");
+    fireEvent.click(screen.getByTestId("settings-week-start-0"));
     fireEvent.click(screen.getByTestId("settings-save"));
 
     expect(await screen.findByTestId("settings-error")).toHaveTextContent(
@@ -175,13 +252,89 @@ describe("SettingsManagement", () => {
     );
   });
 
-  it("announces a failed load and offers no form to save", async () => {
-    vi.mocked(globalThis.fetch).mockResolvedValue(jsonResponse({}, 500));
+  it("stages Clear and writes it on Save", async () => {
+    mockApi(SETTINGS);
+    renderSettings();
+
+    await screen.findByTestId("settings-save");
+    fireEvent.click(screen.getByTestId("weather-clear"));
+    expect(puts()).toEqual([]);
+    fireEvent.click(screen.getByTestId("settings-save"));
+
+    await waitFor(() => expect(retry).toHaveBeenCalledTimes(1));
+    expect(puts()).toEqual([{ object: "weather", settings: { lat: null, lon: null } }]);
+  });
+
+  it("blocks Save and says why while only one coordinate is filled", async () => {
+    mockApi(SETTINGS);
+    renderSettings();
+
+    await screen.findByTestId("settings-save");
+    fireEvent.change(screen.getByTestId("weather-lon-input"), { target: { value: "" } });
+    expect(screen.getByTestId("settings-save")).toBeDisabled();
+    expect(screen.getByTestId("weather-hint")).toBeInTheDocument();
+    expect(puts()).toEqual([]);
+  });
+
+  it("leaves weather out when the plugin is inactive", async () => {
+    mockApi(NO_WEATHER);
+    renderSettings();
+
+    await screen.findByTestId("settings-save");
+    expect(screen.queryByTestId("weather-management")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("settings-language-es"));
+    fireEvent.click(screen.getByTestId("settings-save"));
+
+    await waitFor(() => expect(retry).toHaveBeenCalledTimes(1));
+    expect(puts().map((put) => put.object)).toEqual(["locale"]);
+  });
+
+  it('hides "Saved" by itself', { timeout: 10_000 }, async () => {
+    mockApi(SETTINGS);
+    renderSettings();
+
+    await screen.findByTestId("settings-save");
+    fireEvent.click(screen.getByTestId("settings-week-start-0"));
+    fireEvent.click(screen.getByTestId("settings-save"));
+    expect(await screen.findByTestId("settings-saved")).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByTestId("settings-saved")).not.toBeInTheDocument(), {
+      timeout: 5000,
+    });
+  });
+
+  it('clears "Saved" as soon as the form is edited again', async () => {
+    mockApi(SETTINGS);
+    renderSettings();
+
+    await screen.findByTestId("settings-save");
+    fireEvent.click(screen.getByTestId("settings-week-start-0"));
+    fireEvent.click(screen.getByTestId("settings-save"));
+    await screen.findByTestId("settings-saved");
+    fireEvent.click(screen.getByTestId("settings-language-es"));
+    expect(screen.queryByTestId("settings-saved")).not.toBeInTheDocument();
+  });
+
+  it("announces a failed load and retries it", async () => {
+    vi.mocked(globalThis.fetch)
+      .mockResolvedValueOnce(jsonResponse({}, 500))
+      .mockResolvedValue(jsonResponse(SETTINGS));
     renderSettings();
 
     expect(await screen.findByTestId("settings-error")).toHaveTextContent(
       messages.en["admin.settings.loadError"]
     );
     expect(screen.queryByTestId("settings-save")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("settings-retry"));
+
+    expect(await screen.findByTestId("settings-save")).toBeInTheDocument();
+    expect(screen.queryByTestId("settings-error")).not.toBeInTheDocument();
+  });
+
+  it("hosts the day periods on the same page", async () => {
+    mockApi(SETTINGS);
+    renderSettings();
+
+    await screen.findByTestId("settings-save");
+    expect(screen.getByTestId("day-periods-stub")).toBeInTheDocument();
   });
 });

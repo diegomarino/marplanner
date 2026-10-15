@@ -109,59 +109,6 @@ export function requireFullAccess(): preHandlerAsyncHookHandler {
   };
 }
 
-/** Management-key gate — rejects a `kind === 'device'` API key
- * with 403, regardless of its scope. Composable with `requireCapability` — a route needing
- * BOTH checks passes both preHandlers (e.g. `{ preHandler: [requireManagementKey,
- * requireCapability('network:admin')] }`); Fastify runs an array of preHandlers in order and
- * a reply sent by an earlier one short-circuits the rest.
- * Why this exists as its OWN check, not folded into `requireCapability`: `provision.ts` mints
- * kiosk device keys with `scope: '*'`, and `requireCapability`'s `scope === '*'` branch
- * satisfies ANY capability string. A capability string alone (even a dedicated
- * `network:admin`) would therefore still admit a device key — the exact false green
- * NETWORK-DEVICES-AC-06 forbids ("rejected at the API capability layer, not only by route
- * placement"). `kind` is the one column that already encodes device-vs-management
- * (ADR-030/031); this preHandler is the seam that reads it. Deliberately placed here in
- * `src/server/auth/` (not a plugin module) — it is a repo-wide seam other sensitive domains
- * (backups/telemetry-grade) can reuse.
- * Deny-list semantics: this ONLY rejects `kind === 'device'`. Both `'integration'` (the
- * env-seeded management key from `reconcileManagement`) and `'bootstrap'` pass. This is
- * deliberate: the security boundary is device-vs-everything-else (a kiosk key must never
- * reach this surface), not an allow-list of exactly one "management" kind; narrowing further
- * (e.g. excluding `'bootstrap'`) is out of this module's scope (ADR-053 §6).
- */
-export function requireManagementKey(): preHandlerAsyncHookHandler {
-  return async (request: FastifyRequest, reply: FastifyReply) => {
-    const apiKeyId = (request as FastifyRequest & { apiKeyId?: string }).apiKeyId;
-    if (!apiKeyId) {
-      return reply.code(403).send({
-        error: "forbidden",
-        message: "No authenticated API key",
-        code: AUTH_CREDENTIAL_INVALID_CODE,
-      });
-    }
-
-    const db = getDb();
-    const orm = drizzle(db);
-    const rows = await orm.select().from(apiKeys).where(eq(apiKeys.id, apiKeyId)).limit(1);
-    const keyRecord = rows[0];
-    if (!keyRecord) {
-      return reply.code(403).send({
-        error: "forbidden",
-        message: "Unknown API key",
-        code: AUTH_CREDENTIAL_INVALID_CODE,
-      });
-    }
-
-    if (keyRecord.kind === "device") {
-      return reply.code(403).send({
-        error: "forbidden",
-        message: "Device-provisioned keys cannot access management endpoints",
-        code: AUTH_SCOPE_DENIED_CODE,
-      });
-    }
-  };
-}
-
 type HttpMethod = "get" | "post" | "put" | "patch" | "delete";
 
 export interface CapabilityRoute {

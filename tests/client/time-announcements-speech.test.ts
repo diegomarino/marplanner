@@ -17,7 +17,7 @@ interface FakeUtterance {
 }
 
 function installFakeSynth(opts: {
-  voices?: Array<{ lang: string }>;
+  voices?: Array<{ lang: string; name?: string }>;
   throwOnSpeak?: boolean;
   throwOnCancel?: boolean;
   throwOnGetVoices?: boolean;
@@ -79,6 +79,31 @@ describe("time-announcements speech", () => {
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
     vi.restoreAllMocks();
+  });
+
+  it("voiceNameFor returns the name of the voice speak() would pick for the language", async () => {
+    installFakeSynth({
+      voices: [
+        { lang: "de-DE", name: "Anna" },
+        { lang: "es-ES", name: "Monica" },
+      ],
+    });
+    const { voiceNameFor } = await freshSpeech();
+    expect(voiceNameFor("es")).toBe("Monica");
+  });
+
+  it("voiceNameFor is null when no voice matches, the API is absent, or getVoices throws", async () => {
+    installFakeSynth({ voices: [{ lang: "de-DE" }] });
+    let speech = await freshSpeech();
+    expect(speech.voiceNameFor("en")).toBeNull();
+
+    installFakeSynth({ throwOnGetVoices: true });
+    speech = await freshSpeech();
+    expect(speech.voiceNameFor("en")).toBeNull();
+
+    vi.unstubAllGlobals();
+    speech = await freshSpeech();
+    expect(speech.voiceNameFor("en")).toBeNull();
   });
 
   it("TIME-ANNOUNCEMENTS-INV-09/I18N-LOCALIZATION-INV-11: utterance.lang is ALWAYS the household locale, matching voice present -> no miss logged", async () => {

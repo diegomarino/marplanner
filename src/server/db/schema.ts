@@ -683,6 +683,7 @@ export const dailyBriefings = sqliteTable(
 );
 
 /** Daily briefing opt-in — per-member opt-in flag (absent row = off, ADR-027).
+ * `weekdays` is the per-member pause schedule (drizzle/0005).
  * PLUGIN table (ADR-029) — `member_id` is a plain PK column, NO `.references` (ADR-039 §3 / INV-02).
  */
 export const dailyBriefingOptins = sqliteTable(
@@ -692,6 +693,8 @@ export const dailyBriefingOptins = sqliteTable(
     enabled: integer("enabled").notNull().default(0),
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
+    /** Weekday pause schedule (JSON weekday codes, canonical order); NULL = every day. */
+    weekdays: text("weekdays"),
   },
   (table) => ({
     enabledCheck: check("daily_briefing_optin_enabled_check", sql`${table.enabled} IN (0, 1)`),

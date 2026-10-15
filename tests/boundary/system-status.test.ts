@@ -28,7 +28,9 @@ describe("system status route", () => {
       });
       expect(res.statusCode).toBe(200);
       const body = JSON.parse(res.body) as Record<string, unknown>;
-      expect(Object.keys(body).sort()).toEqual(["build", "checkedAt", "status"]);
+      expect(Object.keys(body).sort()).toEqual(["build", "checkedAt", "status", "uptimeSeconds"]);
+      expect(Number.isInteger(body.uptimeSeconds)).toBe(true);
+      expect(body.uptimeSeconds as number).toBeGreaterThanOrEqual(0);
       expect(body.status).toBe("ok");
       expect(Number.isNaN(Date.parse(String(body.checkedAt)))).toBe(false);
       expect(Object.keys(body.build as object).sort()).toEqual(["builtAt", "sha", "subject"]);

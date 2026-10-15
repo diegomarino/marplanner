@@ -44,14 +44,27 @@ and the Options menu are not shown there. A sidebar holds the admin sections and
 appears in it once it has been redesigned, and until then it is reached from the overview's list
 of all sections.
 
-`/admin` is the overview: the deployed commit and server status, the commit this device runs and
-whether it matches, and the most recent warnings and errors from the client log.
+`/admin` is the overview: the deployed commit and server status and how long the server has been
+running, the commit this device runs and whether it matches, and the most recent warnings and errors from the client log.
 
 Members are created, edited, archived and restored from `/admin/members` in one form. A card
 opens it. Archiving and restoring ask for confirmation, an archived member opens read-only, and a
 colour held by another active member cannot be picked while a free one remains. The API enforces
 the same rule, and a restored member whose colour was taken meanwhile comes back with the first
 free one.
+
+Reminders are listed at `/admin/reminders`, one row per rule naming who it applies to and on which
+days with an Active/Off badge. "Add rule" and the row's edit icon open one dialog; editing can switch
+a rule between all members and specific members. Deleting asks for confirmation. A failed load can
+be retried; a calendar-gated rule's row opens its dry-run panel. Messages (`/admin/daily-messages`)
+keeps its 14-day editor and offers Retry when a load fails.
+
+Routines and chores are managed from `/admin/routines`: a list of routines grouped by day period,
+in start-time order, beside the selected routine's detail — a weekday grid of the children it is
+assigned to, its chores (drag to reorder, also with the keyboard) and actions to edit, assign, add a
+chore or delete. Routines, chores and assignments are edited in dialogs. Deleting a routine or a
+chore, changing, reactivating or deactivating an existing assignment, and moving a routine to
+another day period ask for confirmation, because each changes the live streak.
 
 The ordered capability table is:
 
@@ -61,14 +74,17 @@ The ordered capability table is:
 4. `/admin/reminders` — reminders
 5. `/admin/meals` — meals and recipes
 6. `/admin/daily-messages` — daily messages
-7. `/admin/daily-briefing` — briefing configuration/generation/preview
+7. `/admin/daily-briefing` — Briefing: Blocks tab (member pills, per-weekday pause switches over the block matrix, block order, generation time and auto-print binding, "settings changed" notice) and Preview / Generate tab (opt-in, Generate all, member pills, 30-day history, regenerate, view PNG, print to the queue, payload, image states); tabs are local state, no sub-paths
 8. `/admin/telemetry` — client telemetry
-9. `/admin/backups` — backup/restore
-10. `/admin/time-announcements` — time announcements
-11. `/admin/network-devices` — network devices
-12. `/admin/printing` — pair/re-pair, test print, print history
-13. `/admin/settings` — language, time zone and week start, plus the day periods and, while the
-    weather plugin is active, the weather location
+9. `/admin/backups` — backups: snapshot with success feedback, drag-and-drop .db upload, colour-coded types, relative dates, typed-filename restore, download with progress
+10. `/admin/time-announcements` — time announcements (card list; create/edit dialog; delete confirmation)
+11. `/admin/network-devices` — network devices (Registered devices and Add device tabs)
+12. `/admin/printing` — Printer: Settings tab (plugin and auto-print state, paper width, Bluetooth
+    printer with pair/re-pair, name, device id and UUIDs, saved to `printer`/`printerTransport`) and
+    Diagnostics tab (test print, reset today's print, recent prints)
+13. `/admin/settings` — language, week start and time zone, plus the day periods and, while the
+    weather plugin is active, the weather location, with one Save for language, week start, time
+    zone and weather (the day periods keep their own save)
 
 Every destination is reached from the admin sidebar, grouped as Household, Daily briefing and
 System.

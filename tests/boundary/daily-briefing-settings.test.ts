@@ -57,6 +57,7 @@ describe("daily-briefing settings boundary", () => {
       autoPrintTrigger: null,
       blockOrder: [],
       memberBlockSettings: [],
+      memberSchedules: [],
     });
   });
 

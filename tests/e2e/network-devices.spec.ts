@@ -14,19 +14,18 @@ import { prepareActivePlugins } from "./plugin-fixture-db";
 /** docs/features/network-devices.md — lifecycle e2e (FR-001, FR-009, FR-010; quickstart.md
  * scenario 10 + "Admin access posture"). Fake-client-backed instance: seed a live client via a
  * local self-signed HTTPS fixture standing in for the real UniFi controller, register it from the
- * picker, block it, then delete it (confirming the warning) — asserting UI state after each step.
+ * Add tab's dialog, edit it, block it, then delete it through the confirmation dialog (blocked
+ * wording) — asserting UI state after each step, all with the NORMAL provisioned device cookie
+ * (ADR-058 single household tier; the ADR-053 device-key carve-out was removed 2026-10-15).
  * OWN spawned server (backups-restore.spec.ts's pattern), NOT the shared Playwright `webServer`:
  * the shared server runs with `SCHEDULER_DISABLED=1` (playwright.config.ts), which never
  * registers the network-devices poller job at all (`src/server/index.ts`'s `startScheduler`) — the
  * live cache would stay `cold` forever and the picker could never show a fresh client. This spec's
  * own server runs with the scheduler ENABLED so `registerNetworkDevicesPollerJob`'s * run-on-startup poll actually populates the cache against the fixture below.
- * Auth posture (quickstart.md "Admin access posture", review 2026-09-04): a management cookie set
- * directly via `context.addCookies` — `mp_device_key` = the raw `MP_MANAGEMENT_KEY` value (the
- * `kind='integration'` row `reconcileManagement` seeds at boot) plus the non-HttpOnly
- * `mp_provisioned` marker `Shell.tsx` gates on (FR-031/ADR-059) — never the browser-driven
- * provisioning flow, which only ever mints a `kind='device'` key `requireManagementKey` rejects
- * (AC-06). The access-gate cookie (`mp_gate`, auth/gate.ts) is set the same way so the SPA loads
- * directly, without driving the HTML gate form.
+ * Auth posture: the browser keeps the `kind='device'` cookie minted by the REAL provisioning
+ * endpoint, plus the non-HttpOnly `mp_provisioned` marker `Shell.tsx` gates on (FR-031/ADR-059).
+ * The access-gate cookie (`mp_gate`, auth/gate.ts) is set via `context.addCookies` so the SPA
+ * loads directly, without driving the HTML gate form. No management key is configured at all.
  * FINDING (reported, not fixed here): `client.ts`'s `unifi.tlsInsecure` toggle is broken on this
  * repo's Node 24 — see `unifi-fixture-server.ts`'s docblock for the root cause (an `undici`
  * npm-package `Agent` passed as Node's built-in `fetch`'s `dispatcher`, a cross-major-version ABI
@@ -38,16 +37,13 @@ import { prepareActivePlugins } from "./plugin-fixture-db";
  * trusts it, keeping `client.ts` on its plain (dispatcher-free) `fetch` path.
  * Admin PIN seeding: `admin_config.pin_hash` (the row `AdminGate`'s PIN unlock compares against)
  * is seeded ONLY inside `POST /api/auth/provision`'s handler (`auth/provision.ts`) — there is no
- * standalone reconcile seam for it the way `reconcileManagement` covers the management key
- *. So this spec calls the REAL provision endpoint once, with the REAL bootstrap key, purely
- * as a seeding side effect (it also mints a throwaway `kind='device'` cookie pair, which the
- * subsequent `context.addCookies` call below immediately overwrites with the real management
- * key) — never driving the browser-side `ProvisioningScreen` UI itself.
+ * standalone reconcile seam. So this spec calls the REAL provision endpoint once, with the REAL
+ * bootstrap key (it also mints the `kind='device'` cookie pair the whole spec then uses) —
+ * never driving the browser-side `ProvisioningScreen` UI itself.
  */
 
 const MP_ACCESS_TOKEN = "mpg-e2e-network-devices-access-token";
 const MP_BOOTSTRAP_KEY = `mpk-e2e-network-devices-bootstrap-${Date.now()}`;
-const MP_MANAGEMENT_KEY = `mpk-e2e-network-devices-${Date.now()}`;
 const ADMIN_PIN = "1234";
 
 const SERVER_ENTRY = resolve(process.cwd(), "dist", "server", "index.js");
@@ -109,7 +105,6 @@ async function startServer(
       DATABASE_PATH: "marplanner.db",
       MP_ACCESS_TOKEN,
       MP_BOOTSTRAP_KEY,
-      MP_MANAGEMENT_KEY,
       ADMIN_PIN,
       // Scheduler ENABLED (no SCHEDULER_DISABLED) — see module docblock: the poller must
       // actually run for the picker to ever show a fresh client.
@@ -188,7 +183,7 @@ async function stopServer(child: ChildProcess): Promise<void> {
   }
 }
 
-test.setTimeout(60_000);
+test.setTimeout(90_000);
 
 test("network devices lifecycle: seed live client -> register from picker -> block -> delete (FR-001, FR-009, FR-010)", async ({
   page,
@@ -222,16 +217,14 @@ test("network devices lifecycle: seed live client -> register from picker -> blo
     server = await startServer(port, dataDir, fixture.origin, fixture.certPath);
 
     // Seed admin_config.pin_hash via the REAL provisioning endpoint (see module docblock's "Admin
-    // PIN seeding" note) — a throwaway call purely for that side effect; its own device-key cookie
-    // is overwritten by the addCookies call immediately below.
+    // PIN seeding" note); its device-key cookie is the credential the whole spec runs on.
     const provisionRes = await page.request.post(`${base}/api/auth/provision`, {
       headers: { Authorization: `Bearer ${MP_BOOTSTRAP_KEY}` },
     });
     expect(provisionRes.ok()).toBe(true);
 
     // Load the SPA with the provisioned device cookie so the plugin catalog's full-access browser
-    // transport resolves normally. The management cookie replaces it only after that one-time
-    // catalog read, before any network-device administration request is made.
+    // transport resolves normally.
     await context.addCookies([
       { name: "mp_gate", value: gateCookieValue(MP_ACCESS_TOKEN), url: base },
       { name: "mp_provisioned", value: "1", url: base },
@@ -242,7 +235,22 @@ test("network devices lifecycle: seed live client -> register from picker -> blo
     );
     await page.goto(`${base}/`);
     await catalogResponsePromise;
-    await context.addCookies([{ name: "mp_device_key", value: MP_MANAGEMENT_KEY, url: base }]);
+    // Resolve the household's current locale so we can assert against LOCALIZED literals
+    // (member-lifecycle.spec.ts's precedent) rather than hardcoding English/Spanish strings.
+    const settingsRes = await page.request.get(`${base}/api/settings`);
+    expect(settingsRes.ok()).toBe(true);
+    const settings = (await settingsRes.json()) as { locale?: { language?: string } };
+    const lang = resolveLang(settings.locale?.language);
+    const m = messages[lang];
+
+    // --- Admin unlock (long-press affordance + PIN, AdminGate.tsx) ---
+    await unlockAdmin(page, ADMIN_PIN);
+
+    await openAdminSection(page, "admin-nav-network-devices");
+
+    // --- The normal device key loads the list: no error, the empty state ---
+    await expect(page.getByTestId("network-devices-empty")).toBeVisible();
+    await expect(page.getByTestId("network-devices-error")).toHaveCount(0);
 
     // Wait for the REAL poller (registered because this server's own scheduler is enabled) to
     // observe the fixture at least once — the picker only shows clients from a `fresh` cache.
@@ -258,56 +266,62 @@ test("network devices lifecycle: seed live client -> register from picker -> blo
       )
       .toBe("fresh");
 
-    // Resolve the household's current locale so we can assert against LOCALIZED literals
-    // (member-lifecycle.spec.ts's precedent) rather than hardcoding English/Spanish strings.
-    const settingsRes = await page.request.get(`${base}/api/settings`);
-    expect(settingsRes.ok()).toBe(true);
-    const settings = (await settingsRes.json()) as { locale?: { language?: string } };
-    const lang = resolveLang(settings.locale?.language);
-    const m = messages[lang];
-
-    // --- Admin unlock (long-press affordance + PIN, AdminGate.tsx) ---
-    await unlockAdmin(page, ADMIN_PIN);
-
-    await openAdminSection(page, "admin-nav-network-devices");
-    await expect(page.getByTestId("network-devices-management")).toBeVisible();
-
-    // --- Register from the seeded picker (US1) ---
-    await page.getByTestId("network-devices-open-picker").click();
+    // --- Add tab: discovery table, sort, register in a dialog ---
+    await page.getByTestId("network-devices-empty-add").click();
     await expect(page.getByTestId("network-devices-picker")).toBeVisible();
 
     const macLower = mac.toLowerCase();
     await expect(page.getByTestId(`network-devices-picker-client-${macLower}`)).toBeVisible({
       timeout: 10_000,
     });
+    await page.getByTestId("network-devices-sort-mac").click();
     await page.getByTestId(`network-devices-picker-select-${macLower}`).click();
-    await page.getByTestId("network-devices-picker-alias-input").fill(alias);
-    await page.getByTestId("network-devices-picker-submit").click();
+    const dialog = page.getByTestId("network-devices-register-dialog");
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByTestId("network-devices-picker-alias-input")).toHaveValue(
+      `Fixture ${suffix}`
+    );
+    await expect(dialog).not.toContainText(macLower);
+    await dialog.getByTestId("network-devices-picker-alias-input").fill(alias);
+    await dialog.getByTestId("network-devices-picker-submit").click();
 
-    // Picker closes on success; the new row appears in the registry list.
-    await expect(page.getByTestId("network-devices-picker")).toHaveCount(0);
-    await expect(page.getByText(alias)).toBeVisible();
-
+    // Returned to the list, not the Add tab.
+    await expect(page.getByTestId("network-devices-tab-registered")).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
     const row = page.locator("li").filter({ hasText: alias });
     await expect(row).toHaveCount(1);
 
-    // --- Block (US2) ---
-    await row.getByRole("button", { name: m["networkDevices.action.block"] }).click();
-    await expect(row.getByText(m["networkDevices.badge.blocked"])).toBeVisible({
+    // --- Already added is dimmed on the Add tab ---
+    await page.getByTestId("network-devices-tab-add").click();
+    await expect(page.getByTestId(`network-devices-picker-added-${macLower}`)).toBeVisible();
+    await expect(page.getByTestId(`network-devices-picker-select-${macLower}`)).toHaveCount(0);
+    await page.getByTestId("network-devices-tab-registered").click();
+
+    // --- Edit in a dialog ---
+    await row.getByRole("button", { name: m["networkDevices.action.edit"] }).click();
+    const edit = page.getByTestId("network-devices-edit-dialog");
+    const renamed = `${alias} renamed`;
+    await edit.locator("input").fill(renamed);
+    await edit.getByRole("button", { name: m["networkDevices.action.save"] }).click();
+    await expect(edit).toBeHidden();
+    await expect(page.getByText(renamed)).toBeVisible();
+
+    // --- Block (US2), then delete through the ConfirmDialog with the blocked wording (US3) ---
+    const renamedRow = page.locator("li").filter({ hasText: renamed });
+    await renamedRow.getByRole("button", { name: m["networkDevices.action.block"] }).click();
+    await expect(renamedRow.getByText(m["networkDevices.badge.blocked"])).toBeVisible({
       timeout: 10_000,
     });
     await expect(
-      row.getByRole("button", { name: m["networkDevices.action.unblock"] })
+      renamedRow.getByRole("button", { name: m["networkDevices.action.unblock"] })
     ).toBeVisible();
+    await renamedRow.getByRole("button", { name: m["networkDevices.action.delete"] }).click();
+    await expect(page.getByText(m["networkDevices.action.deleteConfirmBlocked"])).toBeVisible();
+    await page.getByTestId("network-devices-delete-confirm").click();
 
-    // --- Delete, confirming the warning (US3) ---
-    page.once("dialog", (dialog) => {
-      expect(dialog.message()).toBe(m["networkDevices.action.deleteConfirmBlocked"]);
-      void dialog.accept();
-    });
-    await row.getByRole("button", { name: m["networkDevices.action.delete"] }).click();
-
-    await expect(page.getByText(alias)).toHaveCount(0);
+    await expect(page.getByText(renamed)).toHaveCount(0);
     await expect(page.getByTestId("network-devices-empty")).toBeVisible();
   } finally {
     if (server) await stopServer(server);

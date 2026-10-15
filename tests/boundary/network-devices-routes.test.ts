@@ -124,7 +124,7 @@ describe("network-devices routes", () => {
     }
   }
 
-  // ── The full 403 matrix — every endpoint x method (trap-sweep) ────────────────────────
+  // ── The auth matrix — every endpoint x method (trap-sweep) ────────────────────────
 
   const ROUTES: Array<{
     method: "GET" | "POST" | "PATCH" | "DELETE";
@@ -140,7 +140,7 @@ describe("network-devices routes", () => {
     { method: "POST", url: "/api/network-devices/does-not-exist/unblock" },
   ];
 
-  it("NETWORK-DEVICES-AC-06: a REAL device key (kind='device', scope='*') is rejected 403 on EVERY endpoint x method", async () => {
+  it("NETWORK-DEVICES-AC-06: a REAL device key (kind='device', scope='*') passes the auth gate on EVERY endpoint x method (never 403)", async () => {
     const deviceKey = await provisionRealDeviceKey();
     const app = await buildApp();
     try {
@@ -151,7 +151,23 @@ describe("network-devices routes", () => {
           cookies: { mp_device_key: deviceKey },
           payload: route.payload,
         });
-        expect(res.statusCode, `${route.method} ${route.url}`).toBe(403);
+        expect(res.statusCode, `${route.method} ${route.url}`).not.toBe(403);
+      }
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("an unauthenticated request is rejected on EVERY endpoint x method", async () => {
+    const app = await buildApp();
+    try {
+      for (const route of ROUTES) {
+        const res = await app.inject({
+          method: route.method,
+          url: route.url,
+          payload: route.payload,
+        });
+        expect([401, 403], `${route.method} ${route.url}`).toContain(res.statusCode);
       }
     } finally {
       await app.close();

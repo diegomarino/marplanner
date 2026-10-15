@@ -47,7 +47,7 @@ The repair preserves the original baseline above as historical evidence. Current
 contracts describe the versioned briefing envelope (including retired v1 names),
 nullable chore icons, kind-aware reminder targeting, strict calendar creation and
 partial edits, asynchronous external-source configuration, and per-entry telemetry
-drops. Routine edits continue to accept and ignore an immutable dayPeriodId.
+drops. Routine edits may move a routine to another existing day period (FR-015).
 Public member creation still generates UUIDs; the contract also recognizes the
 stable `demo:member:` namespace used by maintained public seeds. Ordinary member
 fixtures use UUIDs rather than relaxing the contract to arbitrary strings.

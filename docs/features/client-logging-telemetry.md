@@ -102,6 +102,8 @@ product database.
 
 - **FR-022**: Given a detected missing translation key, when the signal is emitted, then it MUST land as a telemetry write (the acceptance surface for the i18n-consumer invariant in FR-013/INV-13). _(Realizes: CLIENT-LOGGING-TELEMETRY-AC-08)_
 
+- **FR-023**: Given the admin overview reads `GET /api/telemetry/system-status`, when the server answers, then the body MUST include `uptimeSeconds`, the whole seconds since the server process started.
+
 ### Key Entities
 
 - **Client log entry**: one diagnostic row in `client_log` (id, eventTime, receivedAt,

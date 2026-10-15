@@ -1,13 +1,14 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { AdminOverview } from "@/admin/AdminOverview";
+import { AdminOverview, formatUptime } from "@/admin/AdminOverview";
 import { AdminRoutes, AdminSidebar, adminBreadcrumb } from "@/admin/AdminRoutes";
 import type { ClientLogRow, SystemStatus } from "../../src/shared";
 
 const STATUS: SystemStatus = {
   status: "ok",
   checkedAt: "2026-10-13T13:20:15.000Z",
+  uptimeSeconds: 183_720,
   build: { sha: "abc1234", subject: "fix: deliver briefings", builtAt: null },
 };
 
@@ -185,5 +186,32 @@ describe("Admin shell navigation", () => {
     rerender(<AdminSidebar pathname="/admin/members/roles" onLock={vi.fn()} sections={sections} />);
     expect(screen.getByRole("link", { name: "Calendars" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Members" })).not.toHaveAttribute("aria-current");
+  });
+});
+
+describe("formatUptime", () => {
+  it("shows the two largest non-zero units", () => {
+    expect(formatUptime(183_720, "en-GB")).toMatch(/^2\s?d\s?3\s?h$/);
+    expect(formatUptime(3_900, "en-GB")).toMatch(/^1\s?h\s?5\s?m(in)?$/);
+  });
+  it("shows seconds below one minute and clamps nonsense to zero", () => {
+    expect(formatUptime(42, "en-GB")).toMatch(/^42\s?s$/);
+    expect(formatUptime(-5, "en-GB")).toMatch(/^0\s?s$/);
+  });
+});
+
+describe("AdminOverview uptime", () => {
+  afterEach(() => cleanup());
+  it("shows the uptime, or a dash when the server does not report it", async () => {
+    mockBackend();
+    const { unmount } = render(<AdminOverview onOpenTelemetry={vi.fn()} />);
+    expect(await screen.findByTestId("admin-overview-uptime")).toHaveTextContent(/2\s?d\s?3\s?h/);
+    unmount();
+    cleanup();
+    const legacy: Partial<SystemStatus> = { ...STATUS };
+    delete legacy.uptimeSeconds;
+    mockBackend({ status: legacy });
+    render(<AdminOverview onOpenTelemetry={vi.fn()} />);
+    expect(await screen.findByTestId("admin-overview-uptime")).toHaveTextContent("—");
   });
 });

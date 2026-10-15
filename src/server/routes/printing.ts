@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import {
   enqueueTestPrint,
+  resetTodaysPrints,
   claimJob,
   getPayload,
   ackJob,
@@ -63,6 +64,29 @@ export async function printingRoutes(app: FastifyInstance): Promise<void> {
   // this file's own `/jobs` GET precedent (a plain read, not a printer-session action).
   app.get("/api/printing/status", async (_request: FastifyRequest, reply: FastifyReply) => {
     return reply.code(200).send({ active: isPrintingPluginActive() });
+  });
+
+  // FR-016: admin "reset today's print" — every print record of household-today becomes
+  // printable again (supersede); takes no body.
+  app.post("/api/printing/reset-today", async (request: FastifyRequest, reply: FastifyReply) => {
+    const body = request.body === undefined ? {} : request.body;
+    if (body === null || typeof body !== "object" || Array.isArray(body)) {
+      return reply
+        .code(400)
+        .send({ error: "validation_error", message: "Request body must be an object" });
+    }
+    const unknownKeys = Object.keys(body);
+    if (unknownKeys.length > 0) {
+      return reply.code(400).send({
+        error: "validation_error",
+        message: `Unsupported field(s) in reset-today body: ${unknownKeys.join(", ")}`,
+      });
+    }
+    try {
+      return reply.code(200).send(resetTodaysPrints(Date.now()));
+    } catch (err) {
+      return handlePrintingError(err, reply);
+    }
   });
 
   app.post("/api/printing/capability", async (request: FastifyRequest, reply: FastifyReply) => {
