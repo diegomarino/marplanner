@@ -1,6 +1,7 @@
 import { NATIVE_SELECT_CLASSES } from "@/lib/recipes";
 import { useEffect, useMemo, useState } from "react";
 
+import { ChoicePills } from "@/components/ChoicePills";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { Field } from "@/components/Field";
@@ -16,7 +17,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useTranslation } from "@/i18n";
-import type { MealEntryEditInput, MealEntryInput, MenuItem, Recipe, Slot } from "../../shared";
+import type {
+  MealEntryEditInput,
+  MealEntryInput,
+  MealPlan,
+  MenuItem,
+  Recipe,
+  Slot,
+} from "../../shared";
+import { weekdayOf } from "../../shared/householdTime";
 
 export interface MealEntryTarget {
   date: string;
@@ -28,6 +37,9 @@ interface MealEntryDialogProps {
   open: boolean;
   target: MealEntryTarget;
   recipes: Recipe[];
+  /** Admin only: when set, creating offers "Repeat every <weekday>" in one of the active plans.
+   * The family board omits it and only ever creates one-offs. */
+  plans?: MealPlan[];
   onClose(): void;
   onCreate(input: MealEntryInput): Promise<boolean>;
   onEdit(id: string, input: MealEntryEditInput): Promise<boolean>;
@@ -42,14 +54,25 @@ export function MealEntryDialog({
   open,
   target,
   recipes,
+  plans,
   onClose,
   onCreate,
   onEdit,
   onDelete,
 }: MealEntryDialogProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const editing = target.item !== undefined;
   const item = target.item;
+  const offerRepeat = !editing && plans !== undefined;
+  const activePlans = useMemo(() => (plans ?? []).filter((plan) => plan.active), [plans]);
+  const [repeat, setRepeat] = useState<"once" | "weekly">("once");
+  const [planId, setPlanId] = useState("");
+  // The weekday of a calendar date does not depend on the timezone (FR-017).
+  const weekday = weekdayOf(target.date, "UTC");
+  const weekdayName = new Intl.DateTimeFormat(language, {
+    weekday: "long",
+    timeZone: "UTC",
+  }).format(new Date(`${target.date}T12:00:00Z`));
   const [mode, setMode] = useState<"recipe" | "note">(
     item ? (item.note !== null ? "note" : "recipe") : "recipe"
   );
@@ -64,7 +87,9 @@ export function MealEntryDialog({
     setRecipeId(item?.recipeId ?? "");
     setNote(item?.note ?? "");
     setError(null);
-  }, [item, target.date, target.slot]);
+    setRepeat("once");
+    setPlanId(activePlans.length === 1 ? activePlans[0].id : "");
+  }, [item, target.date, target.slot, activePlans]);
 
   const availableRecipes = useMemo(
     () => recipes.filter((recipe) => recipeAllowed(recipe, target.slot)),
@@ -75,12 +100,13 @@ export function MealEntryDialog({
   async function submit() {
     setSaving(true);
     setError(null);
+    const content = mode === "recipe" ? { recipeId } : { note };
     const success = editing
-      ? await onEdit(item!.entryId, mode === "recipe" ? { recipeId } : { note })
+      ? await onEdit(item!.entryId, content)
       : await onCreate(
-          mode === "recipe"
-            ? { kind: "oneoff", date: target.date, slot: target.slot, recipeId }
-            : { kind: "oneoff", date: target.date, slot: target.slot, note }
+          repeat === "weekly"
+            ? { kind: "recurring", mealPlanId: planId, weekday, slot: target.slot, ...content }
+            : { kind: "oneoff", date: target.date, slot: target.slot, ...content }
         );
     setSaving(false);
     if (success) onClose();
@@ -128,6 +154,45 @@ export function MealEntryDialog({
                 <p role="note" className="text-muted-foreground">
                   {t("meals.entries.recurringWarning")}
                 </p>
+              )}
+              {offerRepeat && (
+                <div className="flex flex-col gap-2">
+                  <ChoicePills
+                    groupLabel={t("meals.entries.repeatLabel")}
+                    value={repeat}
+                    onChange={setRepeat}
+                    options={[
+                      { value: "once", label: t("meals.entries.repeatOnce") },
+                      {
+                        value: "weekly",
+                        label: `${t("meals.entries.repeatWeeklyPrefix")} ${weekdayName}`,
+                        disabled: activePlans.length === 0,
+                      },
+                    ]}
+                  />
+                  {activePlans.length === 0 && (
+                    <p className="text-muted-foreground text-sm">
+                      {t("meals.entries.repeatNoActivePlan")}
+                    </p>
+                  )}
+                  {repeat === "weekly" && (
+                    <Field label={t("meals.plan.selectLabel")}>
+                      <select
+                        value={planId}
+                        onChange={(event) => setPlanId(event.target.value)}
+                        aria-label={t("meals.plan.selectLabel")}
+                        className={NATIVE_SELECT_CLASSES}
+                      >
+                        <option value="">{t("meals.plan.selectPlaceholder")}</option>
+                        {activePlans.map((plan) => (
+                          <option key={plan.id} value={plan.id}>
+                            {plan.name}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  )}
+                </div>
               )}
               <div className="flex gap-4">
                 <RadioField
@@ -192,7 +257,11 @@ export function MealEntryDialog({
               {t("meals.action.cancel")}
             </Button>
             {!item?.isTombstone && (
-              <Button type="button" disabled={saving || !hasContent} onClick={() => void submit()}>
+              <Button
+                type="button"
+                disabled={saving || !hasContent || (repeat === "weekly" && !planId)}
+                onClick={() => void submit()}
+              >
                 {editing ? t("meals.action.save") : t("meals.entries.action.add")}
               </Button>
             )}
