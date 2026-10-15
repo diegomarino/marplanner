@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useT } from "@/i18n";
 import { authFetch } from "@/lib/credential";
 import { LocalizedApiError, responseMessage } from "@/lib/api-error";
@@ -28,7 +28,19 @@ export function BriefingAutomationCard({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => setDraft(stored), [stored.generationTime, stored.autoPrintBound]);
+  // Adopt new stored values (after a save) — never on mount, where a late passive effect could
+  // wipe an edit made right after the card appeared.
+  const shown = useRef(stored);
+  useEffect(() => {
+    if (
+      shown.current.generationTime === stored.generationTime &&
+      shown.current.autoPrintBound === stored.autoPrintBound
+    ) {
+      return;
+    }
+    shown.current = stored;
+    setDraft(stored);
+  }, [stored.generationTime, stored.autoPrintBound]);
 
   const dirty =
     draft.generationTime !== stored.generationTime ||

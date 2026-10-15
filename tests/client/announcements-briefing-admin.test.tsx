@@ -6,10 +6,12 @@
  * control-count census per phase, records a deliberate negative per surface proving the
  * assertion can fail on THAT surface's own controls, asserts every error state either surface
  * can render is announced through the shared `ErrorNotice` live region, asserts the shared
- * `AdminPanel` L2 frame was actually adopted (region + heading, not region alone), asserts BOTH
- * surfaces' adoption of the shared `WeekdayPicker` (SC-009) — the group's accessible name AND
- * that toggling emits the CANONICAL `mon..sun` order at the request boundary, not click order —
- * and pins both surfaces' `WEEKDAY_LABEL_KEYS` maps by iteration (SC-007).
+ * `AdminPanel` L2 frame was actually adopted (region + heading, not region alone), asserts
+ * TimeAnnouncements' adoption of the shared `WeekdayPicker` (SC-009) — the group's accessible
+ * name AND that toggling emits the CANONICAL `mon..sun` order at the request boundary, not click
+ * order — and the same two guarantees for the Briefing surface's blocks × weekdays matrix cells
+ * (it no longer uses `WeekdayPicker`: each cell is a checkbox named "<block> on <day>"), and pins
+ * both surfaces' `WEEKDAY_LABEL_KEYS` maps by iteration (SC-007).
  * * `ConfirmDialog`:* `TimeAnnouncementsManagement` uses it for rule delete (the old
  * `window.confirm` is gone); `DailyBriefingManagement` has no destructive action of any kind
  * (opt-in, generate, and the settings-layer writes are all non-destructive) — nothing to gate.
@@ -21,17 +23,15 @@
  * `tests/client/daily-briefing-admin-mirror-fence.test.tsx`) — this file does not repeat that
  * surface area; it only proves the migration-specific guarantees exists to prove.
  */
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   TimeAnnouncementsManagement,
   WEEKDAY_LABEL_KEYS as TIME_ANNOUNCEMENTS_WEEKDAY_LABEL_KEYS,
 } from "@/admin/TimeAnnouncementsManagement";
-import {
-  DailyBriefingManagement,
-  WEEKDAY_LABEL_KEYS as DAILY_BRIEFING_WEEKDAY_LABEL_KEYS,
-} from "@/admin/DailyBriefingManagement";
+import { DailyBriefingManagement } from "@/admin/DailyBriefingManagement";
+import { WEEKDAY_LABEL_KEYS as DAILY_BRIEFING_WEEKDAY_LABEL_KEYS } from "@/daily-briefing/admin/briefingBlocks";
 import { HouseholdSettingsProvider } from "@/lib/householdSettings";
 import { LanguageProvider } from "@/i18n";
 import { DensityViolationError, assertKioskDensityCompliant } from "./helpers/density";
@@ -545,68 +545,62 @@ describe("DailyBriefingManagement — every opt-in checkbox carries a DISTINCT a
 });
 
 describe("DailyBriefingManagement — kiosk density across reachable states (SC-001, SC-002)", () => {
-  it("meets kiosk density collapsed, opted-in, block-order added, then removed (CENSUS FIRES ON REMOVAL)", async () => {
-    const mockFetch = mockDailyBriefingBackend();
-    const uninject = await injectDensityStyles({
-      extraCandidates: ["size-[var(--control-height)]"],
-    });
-    document.documentElement.setAttribute("data-density", "kiosk");
-
-    try {
-      renderDailyBriefing();
-      await screen.findByTestId("daily-briefing-opt-in-member-ada");
-
-      // Phase 1 — Blocks workspace: the first member is selected immediately, so the complete
-      // 21-row matrix is visible with its drag handles, enabled controls, weekday cells, and
-      // applicable parameter selects, alongside the workspace/settings/order controls, plus the
-      // seven per-weekday pause checkboxes in the matrix header.
-      expect(countInteractiveControls(document.body)).toBe(219);
-      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
-
-      // Phase 2 — Preview / Generate workspace: opt Ada in and expose Generate all plus the
-      // briefing workspace (member pills, compatibility member-select, go-to-date, Generate,
-      // View PNG and Print), counted once its history and read have settled.
-      fireEvent.click(screen.getByTestId("daily-briefing-tab-preview"));
-      fireEvent.click(screen.getByTestId("daily-briefing-opt-in-member-ada"));
-      await waitFor(() => {
-        expect(
-          (mockFetch.mock.calls as FetchCall[]).some(
-            ([input, init]) =>
-              String(input) === "/api/daily-briefing/opt-in/member-ada" && init?.method === "PUT"
-          )
-        ).toBe(true);
+  // The Blocks phase measures ~190 controls (147 matrix cells); ~2 s alone, slower under load.
+  it(
+    "meets kiosk density on Schedule, Blocks and Briefings (CENSUS PER TAB)",
+    { timeout: 30_000 },
+    async () => {
+      const mockFetch = mockDailyBriefingBackend();
+      const uninject = await injectDensityStyles({
+        extraCandidates: ["size-[var(--control-height)]"],
       });
-      await screen.findByTestId("daily-briefing-member-select");
-      await screen.findByTestId("daily-briefing-history-empty");
-      await screen.findByTestId("daily-briefing-no-briefing");
-      expect(countInteractiveControls(document.body)).toBe(13);
-      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
+      document.documentElement.setAttribute("data-density", "kiosk");
 
-      // Phase 3 — add one block-order entry: the list appears with its 3 per-item action buttons
-      // (up/down/remove — up starts disabled at index 0, but a disabled, mounted control still
-      // counts, per the census convention every other batch's spec uses).
-      fireEvent.click(screen.getByTestId("daily-briefing-tab-blocks"));
-      const addSelect = screen.getByTestId("daily-briefing-admin-block-order-add-select");
-      fireEvent.change(addSelect, { target: { value: "dadJoke" } });
-      fireEvent.click(screen.getByTestId("daily-briefing-admin-block-order-add-button"));
-      expect(countInteractiveControls(document.body)).toBe(222);
-      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
+      try {
+        renderDailyBriefing();
+        await screen.findByTestId("daily-briefing-opt-in-member-ada");
+        await screen.findByTestId("daily-briefing-admin-settings-save");
 
-      // Phase 4 — CENSUS FIRES ON REMOVAL: removing that same entry drops its 3 per-item action
-      // buttons back out (222 -> 219) — a census that failed to actually recompute (a stale/
-      // memoized count) would still read 222 here.
-      fireEvent.click(screen.getByTestId("daily-briefing-admin-block-order-remove-0"));
-      await waitFor(() =>
-        expect(
-          screen.queryByTestId("daily-briefing-admin-block-order-item-0")
-        ).not.toBeInTheDocument()
-      );
-      expect(countInteractiveControls(document.body)).toBe(219);
-      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
-    } finally {
-      uninject();
+        // Phase 1 — Schedule tab (default), nobody opted in yet: the 3 tabs, the automation card
+        // (generation time, auto-print, Save), Generate briefings (date, Generate for all) and each
+        // member row's opt-in + Blocks + Briefings shortcuts (2 x 3) = 3 + 3 + 2 + 6.
+        expect(countInteractiveControls(document.body)).toBe(14);
+        expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
+
+        // Phase 2 — opt Ada in, then the Blocks tab (the matrix renders only for an opted-in member).
+        fireEvent.click(screen.getByTestId("daily-briefing-opt-in-member-ada"));
+        await waitFor(() => {
+          expect(
+            (mockFetch.mock.calls as FetchCall[]).some(
+              ([input, init]) =>
+                String(input) === "/api/daily-briefing/opt-in/member-ada" && init?.method === "PUT"
+            )
+          ).toBe(true);
+        });
+        await waitFor(() =>
+          expect(screen.getByTestId("daily-briefing-opt-in-member-ada")).toBeChecked()
+        );
+        fireEvent.click(screen.getByTestId("daily-briefing-tab-blocks"));
+        await screen.findByTestId("daily-briefing-block-matrix");
+        // The Schedule tab is hidden now. 3 tabs + 2 member pills + the matrix: 7 "Briefing runs"
+        // pause checkboxes, 21 drag handles, 21 x 7 = 147 cells and 12 param selects (level on
+        // wordOfDay, difficulty on trivia/wordSearch, language on the 9 corpus-backed types)
+        // = 3 + 2 + 7 + 21 + 147 + 12.
+        expect(countInteractiveControls(document.body)).toBe(192);
+        expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
+
+        // Phase 3 — the Briefings tab, counted once its history and read have settled.
+        fireEvent.click(screen.getByTestId("daily-briefing-tab-preview"));
+        await screen.findByTestId("daily-briefing-history-empty");
+        await screen.findByTestId("daily-briefing-no-briefing");
+        // 3 tabs + 2 member pills + the workspace's date, Generate, View PNG and Print.
+        expect(countInteractiveControls(document.body)).toBe(9);
+        expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
+      } finally {
+        uninject();
+      }
     }
-  });
+  );
 
   it("DELIBERATE NEGATIVE — forcing this surface's own settings Save button below the kiosk minimum makes the assertion fail", async () => {
     mockDailyBriefingBackend();
@@ -671,6 +665,11 @@ describe("DailyBriefingManagement — error states are announced (SC-011)", () =
       throw new Error(`unexpected fetch after override: ${url}`);
     });
 
+    // Save is enabled only while the draft differs from the stored values.
+    const timeInput = screen.getByTestId("daily-briefing-admin-generation-time");
+    fireEvent.change(timeInput, { target: { value: "07:30" } });
+    expect(timeInput).toHaveValue("07:30");
+    expect(screen.getByTestId("daily-briefing-admin-settings-save")).toBeEnabled();
     fireEvent.click(screen.getByTestId("daily-briefing-admin-settings-save"));
 
     const alert = await screen.findByTestId("daily-briefing-admin-settings-error");
@@ -680,111 +679,88 @@ describe("DailyBriefingManagement — error states are announced (SC-011)", () =
     expect(alert).toHaveTextContent("Failed to save Daily Briefing settings.");
   });
 
-  it("announces the settings-load failure through the block-order AND block-settings cards' own ErrorNotice (routed off the shared component now, closing #758's per-site debt)", async () => {
+  it("announces the settings-load failure once, above the tabs, with Retry", async () => {
     mockDailyBriefingBackend({ settings: () => json({ error: "internal_error" }, 500) });
     renderDailyBriefing();
 
-    const blockOrderAlert = await screen.findByTestId(
-      "daily-briefing-admin-block-order-load-error"
-    );
-    expect(blockOrderAlert).toHaveAttribute("role", "alert");
-    expect(blockOrderAlert).toHaveAttribute("aria-live", "assertive");
-
-    const blockSettingsAlert = await screen.findByTestId(
-      "daily-briefing-admin-block-settings-load-error"
-    );
-    expect(blockSettingsAlert).toHaveAttribute("role", "alert");
-    expect(blockSettingsAlert).toHaveAttribute("aria-live", "assertive");
+    const alert = await screen.findByTestId("daily-briefing-settings-load-error");
+    expect(alert).toHaveAttribute("role", "alert");
+    expect(alert).toHaveAttribute("aria-live", "assertive");
+    expect(screen.getAllByTestId("daily-briefing-settings-load-error")).toHaveLength(1);
+    expect(screen.getByTestId("daily-briefing-settings-retry")).toBeVisible();
+    // Above the tabs, not inside a tab panel: it precedes the Schedule workspace in the DOM.
+    expect(
+      alert.compareDocumentPosition(screen.getByTestId("daily-briefing-schedule-workspace")) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 });
 
-describe("WeekdayPicker adoption (DailyBriefingManagement) — group accessible name AND canonical emission order (SC-009)", () => {
-  it("labels a per-block WeekdayPicker group with the localized active-weekdays caption", async () => {
-    mockDailyBriefingBackend({ language: "es" });
+describe("Matrix cells (DailyBriefingManagement)", () => {
+  const ADA_OPTED_IN = () => json([{ memberId: "member-ada", enabled: true }]);
+
+  it("names every cell by block and localized day", async () => {
+    mockDailyBriefingBackend({ language: "es", optIns: ADA_OPTED_IN });
     renderDailyBriefing();
 
-    fireEvent.change(
-      await screen.findByTestId("daily-briefing-admin-block-settings-member-select"),
-      {
-        target: { value: "member-ada" },
-      }
-    );
-
-    // Every block-type row renders its own WeekdayPicker with the SAME group name — scope to
-    // one row (wordOfDay) rather than asserting a role that resolves to all 21.
-    const row = screen.getByTestId("daily-briefing-admin-block-settings-row-wordOfDay");
-    // findByRole, not getByRole: the testid anchors above are locale-independent, so the async
-    // /api/settings locale fetch may not have applied "es" yet (the same race fixed in the
-    // TimeAnnouncements twin of this test).
-    const group = await within(row).findByRole("group", { name: "Días activos" });
-    const dayLabels = within(group)
-      .getAllByRole("checkbox")
-      .map((checkbox) => checkbox.closest("label")?.textContent?.trim());
-    expect(dayLabels).toEqual(["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]);
+    fireEvent.click(await screen.findByTestId("daily-briefing-tab-blocks"));
+    const row = await screen.findByTestId("daily-briefing-admin-block-settings-row-wordOfDay");
+    // findByRole, not getByRole: the testid anchors are locale-independent, so the async
+    // /api/settings locale fetch may not have applied "es" yet.
+    // es: dailyBriefing.admin.blockType.wordOfDay = "Palabra del día",
+    // dailyBriefing.admin.weekday.mon = "Lun", cellLabel = "{block} el {day}".
+    const cell = await within(row).findByRole("checkbox", { name: "Palabra del día el Lun" });
+    expect(cell).toBe(screen.getByTestId("daily-briefing-block-cell-wordOfDay-mon"));
   });
 
-  it("unchecking fri then mon on wordOfDay emits the canonical mon..sun-minus-those-two order at the PUT boundary, regardless of click order", async () => {
-    // Mirrors the pre-existing `daily-briefing-admin.test.tsx` behavioural pin, but asserts
-    // through the SHARED component's own adoption rather than the surface's hand-rolled loop —
-    // the falsifier this module's DoD calls for is the shared picker itself, not a replica.
-    const mockFetch = mockDailyBriefingBackend();
+  it("unchecking fri then mon on wordOfDay emits the canonical order", async () => {
+    // A cell set that APPENDS on click passes every render-only assertion — the falsifier is the
+    // PUT body. The default mock echoes each body into the stored row.
+    const mockFetch = mockDailyBriefingBackend({ optIns: ADA_OPTED_IN });
     renderDailyBriefing();
 
-    fireEvent.change(
-      await screen.findByTestId("daily-briefing-admin-block-settings-member-select"),
-      {
-        target: { value: "member-ada" },
-      }
+    fireEvent.click(await screen.findByTestId("daily-briefing-tab-blocks"));
+    await screen.findByTestId("daily-briefing-block-matrix");
+    const cell = (day: string) => screen.getByTestId(`daily-briefing-block-cell-wordOfDay-${day}`);
+    const lastPut = () => {
+      const puts = mockFetch.mock.calls.filter(
+        ([input, init]) =>
+          String(input) === "/api/daily-briefing/block-settings/member-ada/wordOfDay" &&
+          init?.method === "PUT"
+      );
+      const last = puts[puts.length - 1];
+      return last ? JSON.parse(String(last[1]!.body)) : undefined;
+    };
+
+    fireEvent.click(cell("fri"));
+    await waitFor(() =>
+      expect(lastPut()).toEqual({
+        enabled: true,
+        weekdays: ["mon", "tue", "wed", "thu", "sat", "sun"],
+      })
     );
+    await waitFor(() => expect(cell("fri")).not.toBeChecked());
+    await waitFor(() => expect(cell("mon")).toBeEnabled());
 
-    fireEvent.click(screen.getByTestId("daily-briefing-admin-block-weekday-wordOfDay-fri"));
-    await waitFor(() => {
-      const put = mockFetch.mock.calls.find(
-        ([input, init]) =>
-          String(input) === "/api/daily-briefing/block-settings/member-ada/wordOfDay" &&
-          init?.method === "PUT"
-      );
-      expect(put, "the first weekday PUT must have fired").toBeTruthy();
-      const body = JSON.parse(String(put![1]!.body));
-      expect(body.weekdays).toEqual(["mon", "tue", "wed", "thu", "sat", "sun"]);
-    });
+    fireEvent.click(cell("mon"));
+    await waitFor(() =>
+      expect(lastPut(), "emission must be canonical, not click order").toEqual({
+        enabled: true,
+        weekdays: ["tue", "wed", "thu", "sat", "sun"],
+      })
+    );
+    await waitFor(() => expect(cell("mon")).not.toBeChecked());
+    await waitFor(() => expect(cell("fri")).toBeEnabled());
 
-    fireEvent.click(screen.getByTestId("daily-briefing-admin-block-weekday-wordOfDay-mon"));
-    await waitFor(() => {
-      const puts = mockFetch.mock.calls.filter(
-        ([input, init]) =>
-          String(input) === "/api/daily-briefing/block-settings/member-ada/wordOfDay" &&
-          init?.method === "PUT"
-      );
-      const last = puts[puts.length - 1];
-      const body = JSON.parse(String(last![1]!.body));
-      expect(body.weekdays, "emission must be canonical, not click order").toEqual([
-        "tue",
-        "wed",
-        "thu",
-        "sat",
-        "sun",
-      ]);
-    });
-
-    // RE-CHECK fri — the step that makes click order distinguishable. Unchecking from an
-    // already-canonical set preserves order under ANY implementation (independent review on this
-    // proved the two assertions above stay green under an insertion-order mutant); a re-added
-    // day lands LAST under insertion order, so this final assertion is the one that actually
-    // fails on the mutant: fri must come back BEFORE sat/sun, not appended.
-    fireEvent.click(screen.getByTestId("daily-briefing-admin-block-weekday-wordOfDay-fri"));
-    await waitFor(() => {
-      const puts = mockFetch.mock.calls.filter(
-        ([input, init]) =>
-          String(input) === "/api/daily-briefing/block-settings/member-ada/wordOfDay" &&
-          init?.method === "PUT"
-      );
-      const last = puts[puts.length - 1];
-      const body = JSON.parse(String(last![1]!.body));
-      expect(body.weekdays, "a re-added day must slot into canonical position, not append").toEqual(
-        ["tue", "wed", "thu", "fri", "sat", "sun"]
-      );
-    });
+    // RE-CHECK fri — the step that makes click order distinguishable: a re-added day lands LAST
+    // under insertion order, so fri must come back BEFORE sat/sun, not appended.
+    fireEvent.click(cell("fri"));
+    await waitFor(() =>
+      expect(lastPut(), "a re-added day must slot into canonical position, not append").toEqual({
+        enabled: true,
+        weekdays: ["tue", "wed", "thu", "fri", "sat", "sun"],
+      })
+    );
   });
 });
 
