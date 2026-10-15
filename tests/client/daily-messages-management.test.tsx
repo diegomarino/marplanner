@@ -16,7 +16,7 @@ function jsonResponse(body: unknown, status = 200): Response {
   return new Response(body === null ? null : JSON.stringify(body), { status });
 }
 
-function member(): Member {
+function member(overrides: Partial<Member> = {}): Member {
   return {
     id: "member-1",
     displayName: "Alex",
@@ -25,6 +25,7 @@ function member(): Member {
     lifecycle: "active",
     createdAt: 0,
     updatedAt: 0,
+    ...overrides,
   };
 }
 
@@ -40,19 +41,35 @@ function message(overrides: Partial<DailyMessage> = {}): DailyMessage {
   };
 }
 
-function renderManagement(messages: DailyMessage[] = []) {
+function renderManagement(
+  messages: DailyMessage[] = [],
+  options: {
+    members?: Member[];
+    weekStartDay?: 0 | 1;
+    byMember?: Record<string, DailyMessage[]>;
+  } = {}
+) {
   const mockFetch = vi.fn((input: string | URL, init?: Parameters<typeof fetch>[1]) => {
     const url = String(input);
     const method = init?.method ?? "GET";
 
     if (url === "/api/settings") {
-      return Promise.resolve(jsonResponse({ locale: { timezone: "UTC", language: "en" } }));
+      return Promise.resolve(
+        jsonResponse({
+          locale: {
+            timezone: "UTC",
+            language: "en",
+            ...(options.weekStartDay === undefined ? {} : { weekStartDay: options.weekStartDay }),
+          },
+        })
+      );
     }
     if (url === "/api/members" && method === "GET") {
-      return Promise.resolve(jsonResponse([member()]));
+      return Promise.resolve(jsonResponse(options.members ?? [member()]));
     }
     if (url.startsWith("/api/daily-messages?") && method === "GET") {
-      return Promise.resolve(jsonResponse(messages));
+      const memberId = new URL(url, "http://x").searchParams.get("memberId") ?? "";
+      return Promise.resolve(jsonResponse(options.byMember?.[memberId] ?? messages));
     }
     if (url === "/api/daily-messages" && method === "PUT") {
       const body = JSON.parse(String(init?.body)) as {
@@ -128,16 +145,34 @@ describe("DailyMessagesManagement 14-day editor", () => {
     expect(mockFetch.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(0);
   });
 
-  it("keeps the loaded editor visible when the active member is selected again", async () => {
-    renderManagement([message()]);
+  it("keeps the loaded editor visible when the checked member pill is clicked again", async () => {
+    const mockFetch = renderManagement([message()]);
     expect(await screen.findAllByTestId(/^daily-messages-day-/)).toHaveLength(14);
+    const callsBefore = mockFetch.mock.calls.length;
 
-    fireEvent.change(screen.getByTestId("daily-messages-select-member"), {
-      target: { value: "member-1" },
-    });
+    fireEvent.click(screen.getByTestId("daily-messages-member-member-1"));
 
     expect(screen.getAllByTestId(/^daily-messages-day-/)).toHaveLength(14);
     expect(screen.getByTestId("daily-messages-text-2026-01-15")).toHaveValue("Have a great day!");
+    expect(mockFetch.mock.calls.length).toBe(callsBefore);
+  });
+
+  it("selects members with pills, defaults to the first and loads the picked member's window", async () => {
+    renderManagement([], {
+      members: [member(), member({ id: "member-2", displayName: "Bo", colorKey: "green" })],
+      byMember: { "member-2": [message({ id: "m2", memberId: "member-2", text: "Bo's note" })] },
+    });
+    expect(await screen.findAllByTestId(/^daily-messages-day-/)).toHaveLength(14);
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.getByRole("radiogroup", { name: "Member" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Alex/ })).toBeChecked();
+
+    fireEvent.click(screen.getByRole("radio", { name: /Bo/ }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-messages-text-2026-01-15")).toHaveValue("Bo's note")
+    );
+    expect(screen.getByRole("radio", { name: /Bo/ })).toBeChecked();
   });
 
   it("moves through 14-day windows without allowing navigation before today", async () => {
@@ -164,6 +199,32 @@ describe("DailyMessagesManagement 14-day editor", () => {
 
     expect(await screen.findByTestId("daily-messages-day-2026-01-15")).toBeInTheDocument();
     expect(previousButton).toBeDisabled();
+  });
+});
+
+describe("DailyMessagesManagement week zebra", () => {
+  const bandOf = (date: string) =>
+    screen.getByTestId(`daily-messages-day-${date}`).getAttribute("data-week-band");
+
+  it("bands the 14 days by week from a Monday week start: plain, shaded, plain", async () => {
+    renderManagement([], { weekStartDay: 1 });
+    await screen.findAllByTestId(/^daily-messages-day-/);
+    await waitFor(() => expect(bandOf("2026-01-19")).toBe("shaded"));
+    expect(bandOf("2026-01-15")).toBe("plain");
+    expect(bandOf("2026-01-18")).toBe("plain");
+    expect(bandOf("2026-01-25")).toBe("shaded");
+    expect(bandOf("2026-01-26")).toBe("plain");
+    expect(screen.getByTestId("daily-messages-day-2026-01-19")).toHaveClass("bg-muted/50");
+    expect(screen.getByTestId("daily-messages-day-2026-01-15")).not.toHaveClass("bg-muted/50");
+  });
+
+  it("bands from a Sunday week start", async () => {
+    renderManagement([], { weekStartDay: 0 });
+    await screen.findAllByTestId(/^daily-messages-day-/);
+    await waitFor(() => expect(bandOf("2026-01-18")).toBe("shaded"));
+    expect(bandOf("2026-01-17")).toBe("plain");
+    expect(bandOf("2026-01-24")).toBe("shaded");
+    expect(bandOf("2026-01-25")).toBe("plain");
   });
 });
 

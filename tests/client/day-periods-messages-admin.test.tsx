@@ -436,7 +436,7 @@ describe("DailyMessagesManagement — kiosk density across every reachable state
     }
   });
 
-  it("meets kiosk density with an active member and an empty 14-day editor (2 navigation buttons + 1 selector + 14 textareas)", async () => {
+  it("meets kiosk density with an active member and an empty 14-day editor (2 navigation buttons + 1 member pill + 14 textareas)", async () => {
     mockDailyMessagesBackend();
     const uninject = await injectDensityStyles();
     document.documentElement.setAttribute("data-density", "kiosk");
@@ -446,6 +446,7 @@ describe("DailyMessagesManagement — kiosk density across every reachable state
       expect(await screen.findAllByTestId(/^daily-messages-day-/)).toHaveLength(14);
 
       expect(countInteractiveControls(document.body)).toBe(17);
+      expect(document.body.querySelector("select")).toBeNull();
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();

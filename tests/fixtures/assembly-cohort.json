@@ -3388,10 +3388,22 @@
             "DailyMessagesManagement 14-day editor renders every household date from today through the next thirteen days",
             "DailyMessagesManagement 14-day editor upserts a changed non-empty row when its textarea loses focus",
             "DailyMessagesManagement 14-day editor preserves an existing note when its native textarea is cleared or blurred unchanged",
-            "DailyMessagesManagement 14-day editor keeps the loaded editor visible when the active member is selected again",
+            "DailyMessagesManagement 14-day editor keeps the loaded editor visible when the checked member pill is clicked again",
+            "DailyMessagesManagement 14-day editor selects members with pills, defaults to the first and loads the picked member's window",
             "DailyMessagesManagement 14-day editor moves through 14-day windows without allowing navigation before today",
+            "DailyMessagesManagement week zebra bands the 14 days by week from a Monday week start: plain, shaded, plain",
+            "DailyMessagesManagement week zebra bands from a Sunday week start",
             "DailyMessagesManagement load failures can be retried offers Retry when the members request fails and recovers on click",
             "DailyMessagesManagement load failures can be retried hides the day editor and offers Retry when the messages request fails"
+          ],
+          "tests/client/daily-messages-weeks.test.ts": [
+            "weekBands Monday start, list starts mid-week (Thu 2026-01-15): plain lead-in, then shaded week, then plain",
+            "weekBands Sunday start, list starts mid-week (Thu): lead-in is Thu-Sat",
+            "weekBands list starting exactly on a Monday: first week plain, second shaded",
+            "weekBands list starting exactly on a Sunday with Sunday start: first week plain, second shaded",
+            "weekBands a Monday-start window under a Sunday-start household treats Monday as mid-week",
+            "weekBands falls back to Monday for null, undefined and unexpected values",
+            "weekBands returns an empty list for no dates"
           ],
           "tests/client/day-periods-i18n-parity.test.ts": [
             "day-periods-i18n-parity en and es catalogs have identical keys (both directions)",
@@ -3411,7 +3423,7 @@
             "DayPeriodsManagement — kiosk density across every reachable state (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own Edit button below the kiosk minimum makes the assertion fail, and reverting restores compliance",
             "DailyMessagesManagement — kiosk density across every reachable state (SC-001, SC-002) renders the DELIBERATE zero-control census while the initial /api/members fetch is unresolved",
             "DailyMessagesManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with NO active members (still 0 — just the empty-state message)",
-            "DailyMessagesManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with an active member and an empty 14-day editor (2 navigation buttons + 1 selector + 14 textareas)",
+            "DailyMessagesManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with an active member and an empty 14-day editor (2 navigation buttons + 1 member pill + 14 textareas)",
             "DailyMessagesManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with two saved messages (17 base + 2 delete controls)",
             "DailyMessagesManagement — kiosk density across every reachable state (SC-001, SC-002) keeps the same compliant control census when a message textarea expands on focus",
             "DailyMessagesManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with the delete-confirmation ConfirmDialog open outside the surface",
@@ -5432,16 +5444,16 @@
       "src/client/admin/DailyMessagesManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 138,
-          "statements": 173,
-          "functions": 41,
-          "branches": 84
+          "lines": 147,
+          "statements": 183,
+          "functions": 43,
+          "branches": 95
         },
         "minimumRates": {
-          "lines": 94.2,
-          "statements": 89.01,
-          "functions": 95.12,
-          "branches": 71.42
+          "lines": 100.0,
+          "statements": 95.62,
+          "functions": 97.67,
+          "branches": 77.89
         }
       },
       "src/client/admin/DayPeriodsManagement.tsx": {
@@ -5622,6 +5634,21 @@
           "statements": 93.4,
           "functions": 90.47,
           "branches": 86.44
+        }
+      },
+      "src/client/admin/daily-messages-weeks.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 5,
+          "statements": 6,
+          "functions": 2,
+          "branches": 8
+        },
+        "minimumRates": {
+          "lines": 100.0,
+          "statements": 100.0,
+          "functions": 100.0,
+          "branches": 100.0
         }
       },
       "src/client/admin/network-devices/DeviceStatus.tsx": {
