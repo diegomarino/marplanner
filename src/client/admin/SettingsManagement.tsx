@@ -211,111 +211,121 @@ export function SettingsManagement() {
   }
 
   return (
-    <div className="flex flex-col gap-8" data-testid="settings-management">
-      <AdminPanel title={t("admin.settings.title")} description={t("admin.settings.description")}>
-        <ErrorNotice
-          message={loadFailed ? t("admin.settings.loadError") : error}
-          data-testid="settings-error"
-        />
-        {loadFailed && (
-          <div>
-            <Button
-              type="button"
-              variant="outline"
-              data-testid="settings-retry"
-              onClick={retryLoad}
-            >
-              {t("admin.settings.retry")}
-            </Button>
-          </div>
-        )}
-        {form ? (
-          <div className="bg-card flex flex-col gap-6 rounded-lg p-4 shadow">
-            <ChoiceRow
-              label={t("admin.settings.language")}
-              description={t("admin.settings.languageDescription")}
-              value={form.locale.language}
-              disabled={saving}
-              onChange={(language) => changeLocale({ language })}
-              options={[
-                { value: "en", label: "English", testId: "settings-language-en" },
-                { value: "es", label: "Español", testId: "settings-language-es" },
-              ]}
-            />
-            <ChoiceRow
-              label={t("admin.settings.weekStart")}
-              description={t("admin.settings.weekStartDescription")}
-              value={String(form.locale.weekStartDay)}
-              disabled={saving}
-              onChange={(day) => changeLocale({ weekStartDay: Number(day) })}
-              options={[
-                { value: "1", label: t("admin.settings.monday"), testId: "settings-week-start-1" },
-                { value: "0", label: t("admin.settings.sunday"), testId: "settings-week-start-0" },
-              ]}
-            />
-            <div className="flex flex-col gap-1">
-              <Select
-                value={form.locale.timezone}
-                onValueChange={(timezone) => changeLocale({ timezone })}
-                disabled={saving}
+    <div className="@container flex flex-col gap-8" data-testid="settings-management">
+      <div className="grid items-start gap-6 @2xl:grid-cols-2" data-testid="settings-columns">
+        <AdminPanel title={t("admin.settings.title")} description={t("admin.settings.description")}>
+          <ErrorNotice
+            message={loadFailed ? t("admin.settings.loadError") : error}
+            data-testid="settings-error"
+          />
+          {loadFailed && (
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                data-testid="settings-retry"
+                onClick={retryLoad}
               >
-                <Field label={t("admin.settings.timezone")} className="w-72">
-                  <SelectTrigger data-testid="settings-timezone">
-                    <SelectValue />
-                  </SelectTrigger>
-                </Field>
-                <SelectContent>
-                  {zoneGroups.map((group) => (
-                    <SelectGroup key={group.id}>
-                      <SelectLabel>
-                        {t(`admin.settings.tzGroup.${group.id}` as MessageKey)}
-                      </SelectLabel>
-                      {group.options.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-muted-foreground text-control">
-                {t("admin.settings.timezoneDescription")}
-              </p>
+                {t("admin.settings.retry")}
+              </Button>
             </div>
-          </div>
-        ) : (
-          !loadFailed && <p className="text-muted-foreground text-control">…</p>
-        )}
-      </AdminPanel>
+          )}
+          {form ? (
+            <div className="bg-card flex flex-col gap-6 rounded-lg p-4 shadow">
+              <ChoiceRow
+                label={t("admin.settings.language")}
+                description={t("admin.settings.languageDescription")}
+                value={form.locale.language}
+                disabled={saving}
+                onChange={(language) => changeLocale({ language })}
+                options={[
+                  { value: "en", label: "English", testId: "settings-language-en" },
+                  { value: "es", label: "Español", testId: "settings-language-es" },
+                ]}
+              />
+              <ChoiceRow
+                label={t("admin.settings.weekStart")}
+                description={t("admin.settings.weekStartDescription")}
+                value={String(form.locale.weekStartDay)}
+                disabled={saving}
+                onChange={(day) => changeLocale({ weekStartDay: Number(day) })}
+                options={[
+                  {
+                    value: "1",
+                    label: t("admin.settings.monday"),
+                    testId: "settings-week-start-1",
+                  },
+                  {
+                    value: "0",
+                    label: t("admin.settings.sunday"),
+                    testId: "settings-week-start-0",
+                  },
+                ]}
+              />
+              <div className="flex flex-col gap-1">
+                <Select
+                  value={form.locale.timezone}
+                  onValueChange={(timezone) => changeLocale({ timezone })}
+                  disabled={saving}
+                >
+                  <Field label={t("admin.settings.timezone")} className="w-full">
+                    <SelectTrigger data-testid="settings-timezone">
+                      <SelectValue />
+                    </SelectTrigger>
+                  </Field>
+                  <SelectContent>
+                    {zoneGroups.map((group) => (
+                      <SelectGroup key={group.id}>
+                        <SelectLabel>
+                          {t(`admin.settings.tzGroup.${group.id}` as MessageKey)}
+                        </SelectLabel>
+                        {group.options.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-muted-foreground text-control">
+                  {t("admin.settings.timezoneDescription")}
+                </p>
+              </div>
+            </div>
+          ) : (
+            !loadFailed && <p className="text-muted-foreground text-control">…</p>
+          )}
+        </AdminPanel>
 
-      {form && (
-        <>
+        {form && (
           <PluginContribution pluginId="weather" group="admin" contributionId="weather">
             {form.weather && (
               <WeatherManagement value={form.weather} onChange={changeWeather} disabled={saving} />
             )}
           </PluginContribution>
+        )}
+      </div>
 
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                type="button"
-                data-testid="settings-save"
-                disabled={!canSave}
-                onClick={() => void save()}
-              >
-                {saving ? t("admin.settings.saving") : t("admin.settings.save")}
-              </Button>
-              {saved && (
-                <span role="status" data-testid="settings-saved" className="text-control">
-                  {t("admin.settings.saved")}
-                </span>
-              )}
-            </div>
-            <p className="text-muted-foreground text-control">{t("admin.settings.scopeNote")}</p>
+      {form && (
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              data-testid="settings-save"
+              disabled={!canSave}
+              onClick={() => void save()}
+            >
+              {saving ? t("admin.settings.saving") : t("admin.settings.save")}
+            </Button>
+            {saved && (
+              <span role="status" data-testid="settings-saved" className="text-control">
+                {t("admin.settings.saved")}
+              </span>
+            )}
           </div>
-        </>
+          <p className="text-muted-foreground text-control">{t("admin.settings.scopeNote")}</p>
+        </div>
       )}
 
       <DayPeriodsManagement />

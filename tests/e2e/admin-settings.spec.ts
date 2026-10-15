@@ -35,6 +35,27 @@ test("settings: pill change saves in one click and survives a reload; overview s
   const target = before.locale.weekStartDay === 1 ? 0 : 1;
   try {
     await openAdminSection(page, "admin-nav-settings");
+    const settingsPanel = page.getByTestId("settings-columns").locator("> *").first();
+    const weatherPanel = page.getByTestId("weather-management");
+    await expect(weatherPanel).toBeVisible();
+    const a = (await settingsPanel.boundingBox())!;
+    const b = (await weatherPanel.boundingBox())!;
+    expect(Math.abs(a.y - b.y)).toBeLessThan(1); // same row, side by side
+    expect(b.x).toBeGreaterThan(a.x + a.width - 1);
+    const boxes = await Promise.all(
+      ["weather-lat-input", "weather-lon-input", "weather-label-input"].map(
+        async (id) => (await page.getByTestId(id).boundingBox())!
+      )
+    );
+    for (const box of boxes) {
+      expect(Math.abs(box.x - boxes[0].x)).toBeLessThan(1);
+      expect(Math.abs(box.width - boxes[0].width)).toBeLessThan(1);
+    }
+    await expect(page.getByTestId("settings-save")).toBeDisabled();
+    await page.getByTestId(`settings-week-start-${target}`).click();
+    await expect(page.getByTestId("settings-save")).toBeEnabled();
+    await page.getByTestId(`settings-week-start-${before.locale.weekStartDay}`).click();
+    await expect(page.getByTestId("settings-save")).toBeDisabled();
     await page.getByTestId(`settings-week-start-${target}`).click();
     const put = page.waitForResponse(
       (res) => res.url().includes("/api/settings") && res.request().method() === "PUT"
