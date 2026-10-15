@@ -1218,6 +1218,27 @@
             "credentials — mpk- diceware verifyKey returns false for empty/length-mismatched hash",
             "credentials — mpk- diceware verifyKey works with real generated keys end-to-end"
           ],
+          "tests/boundary/daily-briefing-admin-parity.test.ts": [
+            "daily-briefing admin parity weekday pause schedule defaults to every day and stores a canonical, de-duplicated list",
+            "daily-briefing admin parity weekday pause schedule allows pausing every day, and creates an opted-out row for a member with no opt-in",
+            "daily-briefing admin parity weekday pause schedule keeps the opt-in flag when the schedule changes and vice versa",
+            "daily-briefing admin parity weekday pause schedule PUT /schedule/:memberId saves and GET /settings returns memberSchedules",
+            "daily-briefing admin parity weekday pause schedule PUT /schedule rejects bad weekdays, unknown keys, missing weekdays and inactive members",
+            "daily-briefing admin parity paused weekdays are skipped generateBriefing writes nothing and the route answers skipped",
+            "daily-briefing admin parity paused weekdays are skipped Generate all skips a paused member but generates the others",
+            "daily-briefing admin parity paused weekdays are skipped the retry pass skips a member paused after their row was written",
+            "daily-briefing admin parity paused weekdays are skipped catch-up does not count a paused member as missed",
+            "daily-briefing admin parity history returns the household today and the latest 30 rows newest first",
+            "daily-briefing admin parity history is an empty, write-free read for an unknown member",
+            "daily-briefing admin parity manual print queues a past briefing for TODAY under the manual record key",
+            "daily-briefing admin parity manual print reuses a job still waiting in the queue",
+            "daily-briefing admin parity manual print re-arms and queues again after a completed print",
+            "daily-briefing admin parity manual print maps every refusal to its error code",
+            "daily-briefing admin parity still rendering answers 202 while a first generation is in flight, then the final state",
+            "daily-briefing admin parity still rendering stays generating until the last overlapping generation finishes",
+            "daily-briefing admin parity still rendering clears the in-flight mark when generation throws",
+            "daily-briefing admin parity still rendering keeps serving a stored PNG while a regeneration is in flight"
+          ],
           "tests/boundary/daily-briefing-assembly.test.ts": [
             "daily-briefing assembly registers the generate and pure-read routes, then returns a content-only briefing shell",
             "daily-briefing assembly rejects an unknown generate field without persisting a briefing or emitting an event",
@@ -3251,7 +3272,7 @@
             "DailyBriefingManagement — admin settings-layer extensions language select is absent on a non-corpus type and offers only the available languages",
             "DailyBriefingManagement — admin settings-layer extensions weekday toggles always send the canonical mon..sun order regardless of click order",
             "DailyBriefingManagement — admin settings-layer extensions surfaces onThisDay's default-disabled reality on its row",
-            "DailyBriefingManagement — admin settings-layer extensions preview shows an <img> whose src targets the endpoint for the selected member/date",
+            "DailyBriefingManagement — admin settings-layer extensions preview fetches the stored image for the selected member/date, honouring the base path",
             "DailyBriefingManagement — admin settings-layer extensions block order Save is disabled while the settings GET is pending, then enabled once it resolves",
             "DailyBriefingManagement — admin settings-layer extensions block order Save stays disabled after the settings GET fails",
             "translates block and parameter labels without changing persisted identifiers (en)",
@@ -3267,7 +3288,10 @@
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) reorders block rows by drag and persists the complete effective order",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) posts the empty Generate-all body and renders every returned member status",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) renders an already_running Generate-all response as a non-error informational message",
-            "DailyBriefingManagement — Generate-all opt-in interlock (#555) keeps Generate-all disabled while an earlier opt-in PUT is still pending"
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) keeps Generate-all disabled while an earlier opt-in PUT is still pending",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) pauses a weekday for the selected member, disables that column and shows the notice",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) offers Retry when members fail to load, and when settings fail to load",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) titles the page with its sidebar label"
           ],
           "tests/client/daily-briefing-view.test.tsx": [
             "DailyBriefingView — full block registry keeps existing scalar meal snapshots visible",
@@ -3293,6 +3317,21 @@
           "tests/client/daily-briefing-weather-block.test.tsx": [
             "DailyBriefingView weather block renders the weather block localized in Spanish, via the shared condition-key map",
             "DailyBriefingView weather block renders NOTHING for an absent weather block — no placeholder card"
+          ],
+          "tests/client/daily-briefing-workspace.test.tsx": [
+            "BriefingWorkspace shows the first member's history, today's payload and image",
+            "BriefingWorkspace selecting a past entry loads it; a 409 on a render-failed briefing says so",
+            "BriefingWorkspace regenerates today with only memberId, and a past date with the date",
+            "BriefingWorkspace reports a paused day instead of generating",
+            "BriefingWorkspace prints through the queue and says so; Print is disabled when Printing is off",
+            "BriefingWorkspace shows still-rendering with a Retry that refetches",
+            "BriefingWorkspace offers Retry when the history fails to load",
+            "BriefingWorkspace disables Generate for a member without the briefing turned on",
+            "BriefingWorkspace Show loads any typed date and refetches the image",
+            "BriefingWorkspace fetches nothing while the tab is hidden",
+            "BriefingWorkspace keeps the history when the current member is selected again",
+            "BriefingWorkspace keeps the payload when the already-selected history entry is clicked again",
+            "BriefingWorkspace ignores a slower read for a date that is no longer selected"
           ],
           "tests/client/daily-messages-i18n-parity.test.ts": [
             "daily-messages-i18n-parity en and es catalogs have identical keys (both directions)",
@@ -4336,7 +4375,8 @@
             "WeekdayPicker — density meets kiosk density in multi mode",
             "WeekdayPicker — density meets kiosk density in single mode (renderAs=\"select\", default)",
             "WeekdayPicker — density meets kiosk density in single mode (renderAs=\"radio\")",
-            "WeekdayPicker — radio group isolation gives two prefix-less radio pickers DIFFERENT native group names"
+            "WeekdayPicker — radio group isolation gives two prefix-less radio pickers DIFFERENT native group names",
+            "WeekdayPicker — disabledDays disables only the listed days in multi mode"
           ],
           "tests/integration/backups-lineage.test.ts": [
             "backup restore lineage integration restores a baseline backup and applies a temporary later migration",
@@ -4772,6 +4812,7 @@
           ],
           "tests/integration/daily-briefing-trigger.test.ts": [
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) AC-1: the last morning chore completed -> exactly one print job enqueued",
+            "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) a member paused on today's weekday is not enqueued, and is again once resumed",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) AC-2 / toggle storm: un-complete + re-complete after the print -> still exactly one job",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) P2-5: once the job is ACTUALLY printed, a later re-complete dedups via the alreadyPrinted branch, not the pending-job branch",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) Codex #702 FOLD-1: a terminally-failed (dead-lettered) job gates the trigger — no unbounded re-enqueue",
@@ -4787,12 +4828,12 @@
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) FR-018 gate cascade — a failed gate is a silent no-op (except raster-missing) trigger binding absent -> nothing enqueued, even with predicate true and NO raster (mutation-hardened)",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) FR-018 gate cascade — a failed gate is a silent no-op (except raster-missing) member opt-in off -> nothing enqueued",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) FR-018 gate cascade — a failed gate is a silent no-op (except raster-missing) Printing plugin inactive -> nothing enqueued, and the raster gate is never even reached",
+            "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) records SQLITE_BUSY wakeup failures and recovers without duplicate print reservations",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) wakeup-hint re-reads state — a LYING event payload never substitutes for the real predicate",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) a duplicate/no-op completion event is harmless — still exactly one job",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) midnight rollover: the household date is re-derived per evaluation, never cached",
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) the default sweep cadence never exceeds the spec's 60-second bound",
-            "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) registerAutoPrintTrigger arms a REAL scheduler interval job at the configured cadence, and each tick re-evaluates",
-            "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) records SQLITE_BUSY wakeup failures and recovers without duplicate print reservations"
+            "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) registerAutoPrintTrigger arms a REAL scheduler interval job at the configured cadence, and each tick re-evaluates"
           ],
           "tests/integration/database-baseline.test.ts": [
             "database lifecycle fresh current baseline is semantically equivalent to a clean Drizzle generation from the current TypeScript schema",
@@ -5197,10 +5238,10 @@
       "src/client/admin/DailyBriefingManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 313,
-          "statements": 344,
-          "functions": 103,
-          "branches": 242
+          "lines": 295,
+          "statements": 325,
+          "functions": 95,
+          "branches": 218
         },
         "minimumRates": {
           "lines": 83.38,
@@ -5740,7 +5781,7 @@
           "lines": 23,
           "statements": 24,
           "functions": 9,
-          "branches": 15
+          "branches": 17
         },
         "minimumRates": {
           "lines": 100,
@@ -5867,6 +5908,51 @@
           "statements": 92.02,
           "functions": 91.17,
           "branches": 82.55
+        }
+      },
+      "src/client/daily-briefing/admin/BriefingImage.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 30,
+          "statements": 38,
+          "functions": 6,
+          "branches": 30
+        },
+        "minimumRates": {
+          "lines": 93.33,
+          "statements": 89.47,
+          "functions": 100,
+          "branches": 80
+        }
+      },
+      "src/client/daily-briefing/admin/BriefingMemberPills.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 6,
+          "statements": 7,
+          "functions": 5,
+          "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/client/daily-briefing/admin/BriefingWorkspace.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 110,
+          "statements": 129,
+          "functions": 24,
+          "branches": 126
+        },
+        "minimumRates": {
+          "lines": 93.63,
+          "statements": 89.92,
+          "functions": 95.83,
+          "branches": 81.74
         }
       },
       "src/client/daily-briefing/blockRenderers.tsx": {
@@ -7072,10 +7158,10 @@
       "src/server/db/weekday-integrity.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 12,
-          "statements": 15,
-          "functions": 1,
-          "branches": 12
+          "lines": 14,
+          "statements": 19,
+          "functions": 2,
+          "branches": 16
         },
         "minimumRates": {
           "lines": 100,
@@ -7748,9 +7834,9 @@
       "src/server/modules/daily-briefing/errors.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 2,
-          "statements": 2,
-          "functions": 1,
+          "lines": 12,
+          "statements": 12,
+          "functions": 5,
           "branches": 0
         },
         "minimumRates": {
@@ -7793,10 +7879,10 @@
       "src/server/modules/daily-briefing/index.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 276,
-          "statements": 316,
-          "functions": 57,
-          "branches": 227
+          "lines": 328,
+          "statements": 371,
+          "functions": 64,
+          "branches": 249
         },
         "minimumRates": {
           "lines": 93.52,
@@ -7808,10 +7894,10 @@
       "src/server/modules/daily-briefing/job.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 68,
-          "statements": 72,
+          "lines": 70,
+          "statements": 76,
           "functions": 16,
-          "branches": 27
+          "branches": 31
         },
         "minimumRates": {
           "lines": 91.17,
@@ -8255,6 +8341,21 @@
           "branches": 100
         }
       },
+      "src/server/modules/daily-briefing/schedule.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 15,
+          "statements": 17,
+          "functions": 8,
+          "branches": 2
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/server/modules/daily-briefing/settings.ts": {
         "layer": "server",
         "minimumTotals": {
@@ -8273,9 +8374,9 @@
       "src/server/modules/daily-briefing/trigger.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 43,
-          "statements": 51,
-          "functions": 14,
+          "lines": 44,
+          "statements": 52,
+          "functions": 15,
           "branches": 24
         },
         "minimumRates": {
@@ -8753,10 +8854,10 @@
       "src/server/routes/daily-briefing.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 111,
-          "statements": 116,
-          "functions": 18,
-          "branches": 72
+          "lines": 144,
+          "statements": 150,
+          "functions": 22,
+          "branches": 89
         },
         "minimumRates": {
           "lines": 89.18,
