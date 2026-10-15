@@ -15,6 +15,7 @@ import {
   writeBlockOrder,
   writeMemberBlockSettings,
 } from "../modules/daily-briefing/settings";
+import { setMemberSchedule } from "../modules/daily-briefing/schedule";
 import { isStrictCalendarDate, runJobNow } from "../host-api";
 import type { Briefing, GenerateAllResponse } from "../../shared";
 
@@ -23,6 +24,7 @@ const ALLOWED_GENERATE_ALL_KEYS = new Set(["date"]);
 const ALLOWED_OPT_IN_KEYS = new Set(["enabled"]);
 const ALLOWED_SETTINGS_KEYS = new Set(["generationTime", "autoPrintTrigger"]);
 const ALLOWED_BLOCK_SETTINGS_KEYS = new Set(["enabled", "weekdays", "params"]);
+const ALLOWED_SCHEDULE_KEYS = new Set(["weekdays"]);
 
 /** Thin HTTP boundary for the assembly seam's generate and pure-read routes. */
 export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
@@ -285,6 +287,32 @@ export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
         return reply
           .code(200)
           .send(writeMemberBlockSettings(memberId, blockType, { enabled, weekdays, params }));
+      } catch (err) {
+        return handleDailyBriefingError(err, reply);
+      }
+    }
+  );
+
+  app.put(
+    "/api/daily-briefing/schedule/:memberId",
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = request.body;
+      if (!body || typeof body !== "object" || Array.isArray(body)) {
+        return reply
+          .code(400)
+          .send({ error: "validation_error", message: "Request body must be an object" });
+      }
+      const unknownKeys = Object.keys(body).filter((key) => !ALLOWED_SCHEDULE_KEYS.has(key));
+      if (unknownKeys.length > 0) {
+        return reply.code(400).send({
+          error: "validation_error",
+          message: `Unsupported field(s) in daily briefing schedule body: ${unknownKeys.join(", ")}`,
+        });
+      }
+      const { weekdays } = body as { weekdays?: unknown };
+      const { memberId } = request.params as { memberId: string };
+      try {
+        return reply.code(200).send(setMemberSchedule(memberId, weekdays));
       } catch (err) {
         return handleDailyBriefingError(err, reply);
       }
