@@ -15,6 +15,24 @@ import { injectDensityStyles } from "./helpers/densityStyles";
 // (same file-local stub as members-admin.test.tsx).
 Element.prototype.scrollIntoView = Element.prototype.scrollIntoView ?? ((() => {}) as never);
 
+// Records every RoutineDetail render so a test can prove no frame ever paired one routine's
+// header with another routine's chores (the effect-driven reset would hide that from the DOM).
+const detailRenders = vi.hoisted(() => [] as Array<{ routine: string; chores: string[] }>);
+vi.mock("@/routines/admin/RoutineDetail", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/routines/admin/RoutineDetail")>();
+  const { createElement } = await import("react");
+  return {
+    ...mod,
+    RoutineDetail: (props: Parameters<typeof mod.RoutineDetail>[0]) => {
+      detailRenders.push({
+        routine: props.routine.id,
+        chores: props.chores.map((chore) => chore.routineId),
+      });
+      return createElement(mod.RoutineDetail, props);
+    },
+  };
+});
+
 type Json = Record<string, unknown>;
 interface Call {
   url: string;
@@ -68,6 +86,8 @@ interface Backend {
   language?: string;
   /** Return true to answer that request with a 500. */
   fail?: (url: string, method: string) => boolean;
+  /** Return a promise to hold that request until it settles. */
+  hold?: (url: string, method: string) => Promise<void> | undefined;
 }
 
 function json(body: unknown, status = 200): Response {
@@ -82,6 +102,7 @@ function mockBackend(backend: Backend = {}): Call[] {
     const method = init?.method ?? "GET";
     const body: unknown = init?.body ? JSON.parse(String(init.body)) : undefined;
     calls.push({ url, method, body });
+    await backend.hold?.(url, method);
     if (backend.fail?.(url, method)) return json({ error: "internal_error", message: "x" }, 500);
     if (url.includes("/api/settings")) {
       return json({ locale: { timezone: "UTC", language: backend.language ?? "en" } });
@@ -198,6 +219,7 @@ async function keyboardDragFirstChoreDown() {
 }
 
 afterEach(() => {
+  detailRenders.length = 0;
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   cleanup();
@@ -347,6 +369,67 @@ describe("RoutinesManagement — list and selection", () => {
 });
 
 describe("RoutinesManagement — routine dialog", () => {
+  it("never renders the previous routine's chores under a newly created routine", async () => {
+    let releaseNew!: () => void;
+    const newGate = new Promise<void>((resolve) => {
+      releaseNew = resolve;
+    });
+    mockBackend({
+      choresFor: async (routineId) => {
+        if (routineId === "r-new") {
+          await newGate;
+          return [];
+        }
+        return CHORES;
+      },
+    });
+    renderPage();
+    await selectRoutine("r1");
+    await screen.findByTestId("chore-c3");
+
+    fireEvent.click(screen.getByTestId("routines-new"));
+    const dialog = await screen.findByTestId("routine-form-dialog");
+    fireEvent.change(within(dialog).getByTestId("routine-form-name"), {
+      target: { value: "Fresh" },
+    });
+    fireEvent.click(within(dialog).getByTestId("routine-form-submit"));
+    await waitFor(() =>
+      expect(screen.queryByTestId("routine-form-dialog")).not.toBeInTheDocument()
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("routine-list-item-r-new")).toHaveAttribute("aria-current", "true")
+    );
+    expect(screen.queryByText("Brush teeth")).not.toBeInTheDocument();
+
+    await act(async () => {
+      releaseNew();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(await screen.findByTestId("routine-chores-empty")).toBeInTheDocument();
+    expect(detailRenders.filter((r) => r.chores.some((c) => c !== r.routine))).toEqual([]);
+  });
+
+  it("announces a list refresh that fails after a successful save", async () => {
+    let created = false;
+    const calls = mockBackend({
+      fail: (url, method) => {
+        if (url === "/api/routines" && method === "POST") created = true;
+        return created && url === "/api/routines" && method === "GET";
+      },
+    });
+    renderPage();
+    fireEvent.click(await screen.findByTestId("routines-new"));
+    const dialog = await screen.findByTestId("routine-form-dialog");
+    fireEvent.change(within(dialog).getByTestId("routine-form-name"), {
+      target: { value: "Fresh" },
+    });
+    fireEvent.click(within(dialog).getByTestId("routine-form-submit"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Failed to load data.");
+    expect(screen.queryByTestId("routine-form-dialog")).not.toBeInTheDocument();
+    expect(callsTo(calls, "POST", "/api/routines")).toHaveLength(1);
+  });
+
   it("creates a routine: first period by default, submit disabled until named, new routine selected", async () => {
     const calls = mockBackend();
     renderPage();
@@ -580,6 +663,36 @@ describe("RoutinesManagement — chores", () => {
       "Failed to save the new order. Please try again."
     );
     await waitFor(() => expect(choreOrder()).toEqual(["chore-c1", "chore-c2", "chore-c3"]));
+  });
+
+  it("a reorder that fails after switching routines leaves the new routine's chores alone", async () => {
+    let releaseOrder!: () => void;
+    const orderGate = new Promise<void>((resolve) => {
+      releaseOrder = resolve;
+    });
+    mockBackend({
+      choresFor: async (routineId) => (routineId === "r1" ? CHORES : [EVENING_CHORE]),
+      hold: (url) => (url === "/api/routines/r1/chores/order" ? orderGate : undefined),
+      fail: (url) => url === "/api/routines/r1/chores/order",
+    });
+    renderPage();
+    await selectRoutine("r1");
+    await screen.findByTestId("chore-c3");
+    await keyboardDragFirstChoreDown();
+
+    const detail = await selectRoutine("r2");
+    expect(await within(detail).findByText("Set table")).toBeInTheDocument();
+
+    await act(async () => {
+      releaseOrder();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Failed to save the new order. Please try again."
+    );
+    expect(screen.getByTestId("routine-detail")).toHaveAttribute("data-routine-id", "r2");
+    expect(choreOrder()).toEqual(["chore-c9"]);
+    expect(detailRenders.filter((r) => r.chores.some((c) => c !== r.routine))).toEqual([]);
   });
 });
 
