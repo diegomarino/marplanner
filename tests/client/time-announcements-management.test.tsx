@@ -1,8 +1,8 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LanguageProvider } from "@/i18n";
-import { testVoice } from "@/time-announcements/speech";
+import { testVoice, voiceNameFor } from "@/time-announcements/speech";
 import { RULES_CHANGED_EVENT } from "@/time-announcements/events";
 import { TimeAnnouncementsManagement } from "@/admin/TimeAnnouncementsManagement";
 import type { TimeAnnouncementRule } from "../../src/shared";
@@ -33,6 +33,7 @@ vi.mock("@/lib/householdSettings", () => ({
 
 vi.mock("@/time-announcements/speech", () => ({
   testVoice: vi.fn(),
+  voiceNameFor: vi.fn(() => null),
 }));
 
 type FetchCall = Parameters<typeof globalThis.fetch>;
@@ -59,6 +60,11 @@ function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status });
 }
 
+function openCreateDialog() {
+  fireEvent.click(screen.getByTestId("time-announcements-create"));
+  return screen.getByTestId("time-announcements-form-dialog");
+}
+
 function renderManagement() {
   render(
     <LanguageProvider>
@@ -72,6 +78,7 @@ describe("TimeAnnouncementsManagement", () => {
     currentSettings = { timezone: "Europe/Madrid", language: "en", weekStartDay: 1 };
     vi.stubGlobal("fetch", vi.fn());
     vi.mocked(testVoice).mockClear();
+    vi.mocked(voiceNameFor).mockReset().mockReturnValue(null);
   });
 
   afterEach(() => {
@@ -95,6 +102,7 @@ describe("TimeAnnouncementsManagement", () => {
     expect(morningRow).toHaveTextContent("07:00");
     expect(eveningRow).toHaveTextContent("20:00");
     expect(eveningRow).toHaveTextContent("Inactive");
+    expect(morningRow).not.toHaveTextContent("Inactive");
 
     // Server-returned order preserved (no client re-sort): morning before evening in the DOM.
     const rows = screen.getAllByTestId(/^time-announcements-rule-/);
@@ -135,13 +143,12 @@ describe("TimeAnnouncementsManagement", () => {
     renderManagement();
     await screen.findByTestId("time-announcements-empty");
 
-    fireEvent.change(screen.getByTestId("time-announcements-time-input"), {
-      target: { value: "07:00" },
-    });
+    openCreateDialog();
+    expect(screen.getByTestId("time-announcements-time-input")).toHaveValue("07:00");
     fireEvent.click(screen.getByTestId("time-announcements-weekday-mon"));
     fireEvent.click(screen.getByTestId("time-announcements-weekday-tue"));
 
-    fireEvent.click(screen.getByTestId("time-announcements-create"));
+    fireEvent.click(screen.getByTestId("time-announcements-submit"));
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
@@ -155,29 +162,33 @@ describe("TimeAnnouncementsManagement", () => {
       );
     });
 
+    await waitFor(() =>
+      expect(screen.queryByTestId("time-announcements-form-dialog")).not.toBeInTheDocument()
+    );
     await screen.findByTestId("time-announcements-rule-rule-morning");
     expect(changedListener).toHaveBeenCalledTimes(1);
 
     window.removeEventListener(RULES_CHANGED_EVENT, changedListener);
   });
 
-  it("the Create button stays disabled until a time and at least one weekday are set", async () => {
+  it("the dialog submit stays disabled until a time and at least one weekday are set", async () => {
     const mockFetch = vi.mocked(globalThis.fetch);
     mockFetch.mockImplementation(async () => jsonResponse([]));
 
     renderManagement();
     await screen.findByTestId("time-announcements-empty");
 
-    const createButton = screen.getByTestId("time-announcements-create");
-    expect(createButton).toBeDisabled();
-
-    fireEvent.change(screen.getByTestId("time-announcements-time-input"), {
-      target: { value: "07:00" },
-    });
-    expect(createButton).toBeDisabled();
+    openCreateDialog();
+    const submit = screen.getByTestId("time-announcements-submit");
+    expect(submit).toBeDisabled();
 
     fireEvent.click(screen.getByTestId("time-announcements-weekday-mon"));
-    expect(createButton).not.toBeDisabled();
+    expect(submit).not.toBeDisabled();
+
+    fireEvent.change(screen.getByTestId("time-announcements-time-input"), {
+      target: { value: "" },
+    });
+    expect(submit).toBeDisabled();
   });
 
   it("edits a rule via PATCH with the edited time/weekdays/isActive", async () => {
@@ -200,17 +211,19 @@ describe("TimeAnnouncementsManagement", () => {
     await screen.findByTestId("time-announcements-rule-rule-morning");
 
     fireEvent.click(screen.getByTestId("time-announcements-edit-rule-morning"));
+    expect(screen.getByTestId("time-announcements-time-input")).toHaveValue("07:00");
+    expect(screen.getByTestId("time-announcements-weekday-mon")).toBeChecked();
 
-    fireEvent.change(screen.getByTestId("time-announcements-edit-time-rule-morning"), {
+    fireEvent.change(screen.getByTestId("time-announcements-time-input"), {
       target: { value: "08:00" },
     });
     // Deselect every day but mon (rule-morning starts mon..fri).
     for (const day of ["tue", "wed", "thu", "fri"]) {
-      fireEvent.click(screen.getByTestId(`time-announcements-edit-weekday-rule-morning-${day}`));
+      fireEvent.click(screen.getByTestId(`time-announcements-weekday-${day}`));
     }
-    fireEvent.click(screen.getByTestId("time-announcements-edit-active-rule-morning"));
+    fireEvent.click(screen.getByTestId("time-announcements-active-checkbox"));
 
-    fireEvent.click(screen.getByTestId("time-announcements-save-rule-morning"));
+    fireEvent.click(screen.getByTestId("time-announcements-submit"));
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
@@ -256,7 +269,7 @@ describe("TimeAnnouncementsManagement", () => {
   });
 
   it("deletes a rule via DELETE after confirmation", async () => {
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const confirmSpy = vi.spyOn(window, "confirm");
     const mockFetch = vi.mocked(globalThis.fetch);
     let deleted = false;
     mockFetch.mockImplementation(async (...args: FetchCall) => {
@@ -276,16 +289,24 @@ describe("TimeAnnouncementsManagement", () => {
     await screen.findByTestId("time-announcements-rule-rule-morning");
 
     fireEvent.click(screen.getByTestId("time-announcements-delete-rule-morning"));
+    const dialog = await screen.findByRole("dialog", { name: "Delete announcement" });
+    expect(dialog).toHaveTextContent("Delete this time announcement rule?");
+    fireEvent.click(screen.getByTestId("time-announcements-delete-confirm"));
 
     await waitFor(() => {
       expect(screen.queryByTestId("time-announcements-rule-rule-morning")).not.toBeInTheDocument();
     });
-    expect(confirmSpy).toHaveBeenCalled();
+    expect(
+      mockFetch.mock.calls.some(
+        ([input, init]) =>
+          String(input) === "/api/time-announcements/rule-morning" && init?.method === "DELETE"
+      )
+    ).toBe(true);
+    expect(confirmSpy).not.toHaveBeenCalled();
     confirmSpy.mockRestore();
   });
 
   it("does NOT delete when the confirm dialog is dismissed", async () => {
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
     const mockFetch = vi.mocked(globalThis.fetch);
     mockFetch.mockImplementation(async (...args: FetchCall) => {
       const [input, init] = args;
@@ -298,14 +319,18 @@ describe("TimeAnnouncementsManagement", () => {
     await screen.findByTestId("time-announcements-rule-rule-morning");
 
     fireEvent.click(screen.getByTestId("time-announcements-delete-rule-morning"));
+    const dialog = await screen.findByRole("dialog", { name: "Delete announcement" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
 
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Delete announcement" })).not.toBeInTheDocument()
+    );
     expect(
       mockFetch.mock.calls.some(
         ([input, init]) => String(input).includes("rule-morning") && init?.method === "DELETE"
       )
     ).toBe(false);
     expect(screen.getByTestId("time-announcements-rule-rule-morning")).toBeInTheDocument();
-    confirmSpy.mockRestore();
   });
 
   it("surfaces the server's 409 active-overlap message (naming the conflicting rule) on create", async () => {
@@ -325,15 +350,16 @@ describe("TimeAnnouncementsManagement", () => {
     renderManagement();
     await screen.findByTestId("time-announcements-rule-rule-morning");
 
-    fireEvent.change(screen.getByTestId("time-announcements-time-input"), {
-      target: { value: "07:00" },
-    });
+    openCreateDialog();
     fireEvent.click(screen.getByTestId("time-announcements-weekday-mon"));
-    fireEvent.click(screen.getByTestId("time-announcements-create"));
+    fireEvent.click(screen.getByTestId("time-announcements-submit"));
 
-    expect(await screen.findByTestId("time-announcements-error")).toHaveTextContent(
+    expect(await screen.findByTestId("time-announcements-form-error")).toHaveTextContent(
       "An active rule already announces at this time on an overlapping weekday."
     );
+    // The dialog stays open with the form intact so the admin can fix it.
+    expect(screen.getByTestId("time-announcements-form-dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("time-announcements-weekday-mon")).toBeChecked();
   });
 
   it("surfaces the server's 400 validation message on create", async () => {
@@ -357,15 +383,15 @@ describe("TimeAnnouncementsManagement", () => {
     renderManagement();
     await screen.findByTestId("time-announcements-empty");
 
-    fireEvent.change(screen.getByTestId("time-announcements-time-input"), {
-      target: { value: "07:00" },
-    });
+    openCreateDialog();
     fireEvent.click(screen.getByTestId("time-announcements-weekday-mon"));
-    fireEvent.click(screen.getByTestId("time-announcements-create"));
+    fireEvent.click(screen.getByTestId("time-announcements-submit"));
 
-    expect(await screen.findByTestId("time-announcements-error")).toHaveTextContent(
+    expect(await screen.findByTestId("time-announcements-form-error")).toHaveTextContent(
       "The rule settings are invalid. Check the time and weekdays."
     );
+    expect(screen.getByTestId("time-announcements-form-dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("time-announcements-weekday-mon")).toBeChecked();
   });
 
   it("Test-voice speaks the UNSAVED form time via the speech seam and performs NO POST (FR-014)", async () => {
@@ -381,6 +407,7 @@ describe("TimeAnnouncementsManagement", () => {
     renderManagement();
     await screen.findByTestId("time-announcements-empty");
 
+    openCreateDialog();
     fireEvent.change(screen.getByTestId("time-announcements-time-input"), {
       target: { value: "17:45" },
     });
@@ -400,6 +427,120 @@ describe("TimeAnnouncementsManagement", () => {
       })
     ).toBe(false);
   });
+
+  it("shows a spinner while loading", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(() => new Promise<Response>(() => {}));
+    renderManagement();
+    expect(screen.getByRole("status")).toHaveTextContent("Loading time announcements…");
+  });
+
+  it("a failed load shows the error and a Retry that reloads", async () => {
+    let gets = 0;
+    vi.mocked(globalThis.fetch).mockImplementation(async () => {
+      gets += 1;
+      return gets === 1 ? jsonResponse({ error: "boom" }, 500) : jsonResponse([RULE_MORNING]);
+    });
+
+    renderManagement();
+    await screen.findByTestId("time-announcements-error");
+    expect(screen.queryByTestId("time-announcements-create")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("time-announcements-retry"));
+
+    await screen.findByTestId("time-announcements-rule-rule-morning");
+    expect(screen.getByTestId("time-announcements-create")).toBeInTheDocument();
+    expect(screen.queryByTestId("time-announcements-error")).not.toBeInTheDocument();
+  });
+
+  it("Cancel closes the dialog without any write", async () => {
+    const mockFetch = vi.mocked(globalThis.fetch);
+    mockFetch.mockImplementation(async () => jsonResponse([]));
+    renderManagement();
+    await screen.findByTestId("time-announcements-empty");
+
+    openCreateDialog();
+    fireEvent.click(screen.getByTestId("time-announcements-cancel"));
+
+    await waitFor(() =>
+      expect(screen.queryByTestId("time-announcements-form-dialog")).not.toBeInTheDocument()
+    );
+    expect(mockFetch.mock.calls.some(([, init]) => init?.method && init.method !== "GET")).toBe(
+      false
+    );
+  });
+
+  it("shows the selected voice name, or a no-voice hint", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(async () => jsonResponse([]));
+    vi.mocked(voiceNameFor).mockReturnValue("Monica");
+    renderManagement();
+    await screen.findByTestId("time-announcements-empty");
+
+    openCreateDialog();
+    expect(screen.getByTestId("time-announcements-voice")).toHaveTextContent("Voice: Monica");
+    expect(vi.mocked(voiceNameFor)).toHaveBeenCalledWith("en");
+
+    fireEvent.click(screen.getByTestId("time-announcements-cancel"));
+    await waitFor(() =>
+      expect(screen.queryByTestId("time-announcements-form-dialog")).not.toBeInTheDocument()
+    );
+    vi.mocked(voiceNameFor).mockReturnValue(null);
+    openCreateDialog();
+    expect(screen.getByTestId("time-announcements-voice")).toHaveTextContent(
+      "No voice available for this language"
+    );
+  });
+
+  it("inactive rules are dimmed and tagged", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(async () =>
+      jsonResponse([RULE_MORNING, RULE_EVENING_INACTIVE])
+    );
+    renderManagement();
+    const evening = await screen.findByTestId("time-announcements-rule-rule-evening");
+    const morning = await screen.findByTestId("time-announcements-rule-rule-morning");
+
+    expect(within(evening).getByText("20:00").className).toContain("opacity-60");
+    expect(within(morning).getByText("07:00").className).not.toContain("opacity-60");
+    expect(evening).toHaveTextContent("Inactive");
+  });
+
+  it("weekday circles show initials and on/off state", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(async () => jsonResponse([RULE_MORNING]));
+    renderManagement();
+    const row = await screen.findByTestId("time-announcements-rule-rule-morning");
+
+    const circles = within(row).getAllByTestId(/^time-announcements-day-/);
+    expect(circles).toHaveLength(7);
+    expect(circles.map((c) => c.getAttribute("data-on"))).toEqual([
+      "true",
+      "true",
+      "true",
+      "true",
+      "true",
+      "false",
+      "false",
+    ]);
+    expect(circles.map((c) => c.textContent).join("")).toBe("MTWTFSS");
+    expect(row).toHaveTextContent("Mon, Tue, Wed, Thu, Fri");
+  });
+
+  it("closing is blocked while a save is in flight", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(async (...args: FetchCall) => {
+      const [, init] = args;
+      if (init?.method === "POST") return new Promise<Response>(() => {});
+      return jsonResponse([]);
+    });
+    renderManagement();
+    await screen.findByTestId("time-announcements-empty");
+
+    openCreateDialog();
+    fireEvent.click(screen.getByTestId("time-announcements-weekday-mon"));
+    fireEvent.click(screen.getByTestId("time-announcements-submit"));
+    await waitFor(() => expect(screen.getByTestId("time-announcements-submit")).toBeDisabled());
+
+    fireEvent.keyDown(screen.getByTestId("time-announcements-form-dialog"), { key: "Escape" });
+
+    expect(screen.getByTestId("time-announcements-form-dialog")).toBeInTheDocument();
+  });
 });
 
 it.each(["en", "es"] as const)(
@@ -416,12 +557,13 @@ it.each(["en", "es"] as const)(
     try {
       renderManagement();
       await screen.findByRole("button", { name: language === "es" ? "Crear" : "Create" });
+      fireEvent.click(screen.getByTestId("time-announcements-create"));
       fireEvent.change(screen.getByTestId("time-announcements-time-input"), {
         target: { value: "07:00" },
       });
       fireEvent.click(screen.getByTestId("time-announcements-weekday-mon"));
-      fireEvent.click(screen.getByTestId("time-announcements-create"));
-      const notice = await screen.findByTestId("time-announcements-error");
+      fireEvent.click(screen.getByTestId("time-announcements-submit"));
+      const notice = await screen.findByTestId("time-announcements-form-error");
       expect(notice).toHaveTextContent(
         language === "es" ? "Error al crear esta regla." : "Failed to create this rule."
       );

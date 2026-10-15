@@ -1056,7 +1056,7 @@ export const messages = {
     // Time Announcements admin panel chrome (list/create/edit/
     // toggle/delete + Test-voice). Phrase CONTENT lives in the
     // `timeAnnouncements.phrase.*` block above; these are UI labels only.
-    "timeAnnouncements.management.title": "Time Announcements",
+    "timeAnnouncements.management.title": "Time announcements",
     "timeAnnouncements.management.description":
       "Rules the kiosk speaks out loud at the scheduled time, in the household language.",
     "timeAnnouncements.management.loading": "Loading time announcements…",
@@ -1312,6 +1312,22 @@ export const messages = {
     "reminders.status.off": "Off",
     "dailyMessages.management.retry": "Retry",
     "dailyMessages.management.deleteError": "Failed to delete the message.",
+    // admin-time-announcements
+    "timeAnnouncements.management.dialogEditTitle": "Edit announcement",
+    "timeAnnouncements.management.dialogDescription":
+      "Pick the time and the weekdays the kiosk should announce it.",
+    "timeAnnouncements.management.saving": "Saving…",
+    "timeAnnouncements.management.retry": "Retry",
+    "timeAnnouncements.management.voiceLabel": "Voice",
+    "timeAnnouncements.management.noVoice": "No voice available for this language",
+    "timeAnnouncements.management.deleteTitle": "Delete announcement",
+    "timeAnnouncements.weekdayInitial.mon": "M",
+    "timeAnnouncements.weekdayInitial.tue": "T",
+    "timeAnnouncements.weekdayInitial.wed": "W",
+    "timeAnnouncements.weekdayInitial.thu": "T",
+    "timeAnnouncements.weekdayInitial.fri": "F",
+    "timeAnnouncements.weekdayInitial.sat": "S",
+    "timeAnnouncements.weekdayInitial.sun": "S",
   },
   es: {
     "backups.error.validation_error": "La solicitud de copia de seguridad no es válida.",
@@ -2379,7 +2395,7 @@ export const messages = {
 
     // Time Announcements admin panel chrome, es mirror of the
     // en block above (same key set — parity test).
-    "timeAnnouncements.management.title": "Anuncios Horarios",
+    "timeAnnouncements.management.title": "Anuncios horarios",
     "timeAnnouncements.management.description":
       "Reglas que el kiosco dice en voz alta a la hora programada, en el idioma del hogar.",
     "timeAnnouncements.management.loading": "Cargando anuncios horarios…",
@@ -2609,6 +2625,22 @@ export const messages = {
     "reminders.status.off": "Apagado",
     "dailyMessages.management.retry": "Reintentar",
     "dailyMessages.management.deleteError": "Error al eliminar el mensaje.",
+    // admin-time-announcements
+    "timeAnnouncements.management.dialogEditTitle": "Editar anuncio",
+    "timeAnnouncements.management.dialogDescription":
+      "Elige la hora y los días de la semana en que el kiosco debe anunciarla.",
+    "timeAnnouncements.management.saving": "Guardando…",
+    "timeAnnouncements.management.retry": "Reintentar",
+    "timeAnnouncements.management.voiceLabel": "Voz",
+    "timeAnnouncements.management.noVoice": "No hay voz disponible para este idioma",
+    "timeAnnouncements.management.deleteTitle": "Eliminar anuncio",
+    "timeAnnouncements.weekdayInitial.mon": "L",
+    "timeAnnouncements.weekdayInitial.tue": "M",
+    "timeAnnouncements.weekdayInitial.wed": "X",
+    "timeAnnouncements.weekdayInitial.thu": "J",
+    "timeAnnouncements.weekdayInitial.fri": "V",
+    "timeAnnouncements.weekdayInitial.sat": "S",
+    "timeAnnouncements.weekdayInitial.sun": "D",
   },
 } as const;
 

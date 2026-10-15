@@ -3009,8 +3009,8 @@
           ],
           "tests/client/announcements-briefing-admin.test.tsx": [
             "TimeAnnouncementsManagement — the panel is a real landmark (FR-009 L2-adoption clause) exposes an AdminPanel region AND heading, both named for the panel title",
-            "TimeAnnouncementsManagement — kiosk density across reachable states (SC-001, SC-002, SC-003) meets kiosk density collapsed with two rules, then with one rule's edit form open",
-            "TimeAnnouncementsManagement — kiosk density across reachable states (SC-001, SC-002, SC-003) CENSUS FIRES ON REMOVAL — deleting a rule drops its collapsed row's 3 controls (17 -> 14), not a synthetic shrink",
+            "TimeAnnouncementsManagement — kiosk density across reachable states (SC-001, SC-002, SC-003) meets kiosk density collapsed with two rules, then with the create dialog open",
+            "TimeAnnouncementsManagement — kiosk density across reachable states (SC-001, SC-002, SC-003) CENSUS FIRES ON REMOVAL — deleting a rule drops its collapsed row's 3 controls (7 -> 4), not a synthetic shrink",
             "TimeAnnouncementsManagement — kiosk density across reachable states (SC-001, SC-002, SC-003) DELIBERATE NEGATIVE — forcing this surface's own Create button below the kiosk minimum makes the assertion fail",
             "TimeAnnouncementsManagement — error states are announced (SC-011) announces a data-load failure through ErrorNotice's live region",
             "TimeAnnouncementsManagement — error states are announced (SC-011) announces a create-rule failure through ErrorNotice's live region",
@@ -4085,7 +4085,7 @@
             "TimeAnnouncementsManagement lists ALL rules (inactive included) ordered by time, as returned by the server",
             "TimeAnnouncementsManagement renders the empty state when no rules exist",
             "TimeAnnouncementsManagement creates a rule via POST, refreshes the list, and dispatches the rules-changed event",
-            "TimeAnnouncementsManagement the Create button stays disabled until a time and at least one weekday are set",
+            "TimeAnnouncementsManagement the dialog submit stays disabled until a time and at least one weekday are set",
             "TimeAnnouncementsManagement edits a rule via PATCH with the edited time/weekdays/isActive",
             "TimeAnnouncementsManagement toggles active via a PATCH carrying only the inverted isActive value",
             "TimeAnnouncementsManagement deletes a rule via DELETE after confirmation",
@@ -4093,6 +4093,13 @@
             "TimeAnnouncementsManagement surfaces the server's 409 active-overlap message (naming the conflicting rule) on create",
             "TimeAnnouncementsManagement surfaces the server's 400 validation message on create",
             "TimeAnnouncementsManagement Test-voice speaks the UNSAVED form time via the speech seam and performs NO POST (FR-014)",
+            "TimeAnnouncementsManagement shows a spinner while loading",
+            "TimeAnnouncementsManagement a failed load shows the error and a Retry that reloads",
+            "TimeAnnouncementsManagement Cancel closes the dialog without any write",
+            "TimeAnnouncementsManagement shows the selected voice name, or a no-voice hint",
+            "TimeAnnouncementsManagement inactive rules are dimmed and tagged",
+            "TimeAnnouncementsManagement weekday circles show initials and on/off state",
+            "TimeAnnouncementsManagement closing is blocked while a save is in flight",
             "localizes browser exceptions on rule creation (en)",
             "localizes browser exceptions on rule creation (es)"
           ],
@@ -4151,6 +4158,8 @@
             "time-announcements service — real Shell mount mounts and fetches its rules on a family route too (/chores)"
           ],
           "tests/client/time-announcements-speech.test.ts": [
+            "time-announcements speech voiceNameFor returns the name of the voice speak() would pick for the language",
+            "time-announcements speech voiceNameFor is null when no voice matches, the API is absent, or getVoices throws",
             "time-announcements speech TIME-ANNOUNCEMENTS-INV-09/I18N-LOCALIZATION-INV-11: utterance.lang is ALWAYS the household locale, matching voice present -> no miss logged",
             "time-announcements speech TIME-ANNOUNCEMENTS-AC-05: utterance.lang is set even with NO matching voice, and a voice-miss is logged",
             "time-announcements speech TIME-ANNOUNCEMENTS-INV-08: a throwing speechSynthesis.speak is swallowed as a no-op, and the NEXT call still works",
@@ -5109,6 +5118,9 @@
           "tests/e2e/telemetry-transport.spec.ts": [
             "d52575aebaf5180e5f75-990374b5befcaebf9c02",
             "d52575aebaf5180e5f75-c9d6222685f4b7444f83"
+          ],
+          "tests/e2e/time-announcements-admin.spec.ts": [
+            "b13f82e6f62fe0b345d2-671acadda6ab41163287"
           ],
           "tests/e2e/weather.spec.ts": [
             "d5f1906f292cab0ebdcd-89f4250569c3e2076408",
