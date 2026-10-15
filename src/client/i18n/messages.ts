@@ -632,7 +632,7 @@ export const messages = {
     "todayChores.uncompleteConfirmDescription": "This marks it as not done.",
     "todayChores.uncompleteConfirmConfirm": "Undo",
     "todayChores.uncompleteConfirmCancel": "Cancel",
-    "reminders.management.title": "Reminders Management",
+    "reminders.management.title": "Reminders",
     "reminders.management.description":
       "Author scheduled reminders — apply to all members on shared weekdays, or target specific members on their own weekdays via the assignment matrix.",
     "reminders.management.loading": "Loading…",
@@ -812,7 +812,7 @@ export const messages = {
     "todayMeals.empty": "No meals planned for today.",
     "todayMeals.viewAll": "View all meals",
     "home.widgetError": "This section could not be displayed.",
-    "dailyMessages.management.title": "Daily Messages Management",
+    "dailyMessages.management.title": "Messages",
     "dailyMessages.management.description":
       "Author, replace, and remove per-member daily messages over a date window.",
     "dailyMessages.management.loading": "Loading…",
@@ -1302,6 +1302,16 @@ export const messages = {
     "shell.density.accessibleName": "Kiosk mode",
     "shell.density.enable": "Turn on kiosk mode",
     "shell.density.disable": "Turn off kiosk mode",
+    // admin-reminders-messages
+    "reminders.action.addRule": "Add rule",
+    "reminders.management.editTitle": "Edit reminder",
+    "reminders.management.saveError": "Failed to save the reminder.",
+    "reminders.management.actionError": "Failed to update the reminder.",
+    "reminders.management.retry": "Retry",
+    "reminders.management.targetingLabel": "Applies to",
+    "reminders.status.off": "Off",
+    "dailyMessages.management.retry": "Retry",
+    "dailyMessages.management.deleteError": "Failed to delete the message.",
   },
   es: {
     "backups.error.validation_error": "La solicitud de copia de seguridad no es válida.",
@@ -1946,7 +1956,7 @@ export const messages = {
     "todayChores.uncompleteConfirmDescription": "Esto la marca como no hecha.",
     "todayChores.uncompleteConfirmConfirm": "Deshacer",
     "todayChores.uncompleteConfirmCancel": "Cancelar",
-    "reminders.management.title": "Gestión de Recordatorios",
+    "reminders.management.title": "Recordatorios",
     "reminders.management.description":
       "Crea recordatorios programados — aplica a todos los miembros en días compartidos, o dirige a miembros específicos en sus propios días mediante la matriz de asignación.",
     "reminders.management.loading": "Cargando…",
@@ -2131,7 +2141,7 @@ export const messages = {
     "todayMeals.empty": "No hay comidas planeadas para hoy.",
     "todayMeals.viewAll": "Ver todas las comidas",
     "home.widgetError": "No se pudo mostrar esta sección.",
-    "dailyMessages.management.title": "Gestión de Mensajes Diarios",
+    "dailyMessages.management.title": "Mensajes",
     "dailyMessages.management.description":
       "Crea, reemplaza y elimina mensajes diarios por miembro sobre una ventana de fechas.",
     "dailyMessages.management.loading": "Cargando…",
@@ -2589,6 +2599,16 @@ export const messages = {
     "shell.density.accessibleName": "Modo kiosco",
     "shell.density.enable": "Activar modo kiosco",
     "shell.density.disable": "Desactivar modo kiosco",
+    // admin-reminders-messages
+    "reminders.action.addRule": "Añadir regla",
+    "reminders.management.editTitle": "Editar recordatorio",
+    "reminders.management.saveError": "Error al guardar el recordatorio.",
+    "reminders.management.actionError": "Error al actualizar el recordatorio.",
+    "reminders.management.retry": "Reintentar",
+    "reminders.management.targetingLabel": "Se aplica a",
+    "reminders.status.off": "Apagado",
+    "dailyMessages.management.retry": "Reintentar",
+    "dailyMessages.management.deleteError": "Error al eliminar el mensaje.",
   },
 } as const;
 

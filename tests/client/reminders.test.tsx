@@ -1,19 +1,12 @@
-/** RemindersManagement spec (FR-005/FR-009, — scheduled and
- * calendar_gated reminders, the fifth of five call sites names for the
- * pre-migration `WEEKDAYS` literal, and the one with a WeekdayPicker holdout —
- * `AssignmentMatrixGrid` deliberately keeps its own table markup, per `WeekdayPicker`'s own
- * file-header doc comment).
- * This is the executable evidence for the verification policy (verification policy): it CALLS
- * the frozen density assertion over this surface's rendered control set with kiosk density
- * active (not merely imports it) — across the collapsed state, both reminders' assignment
- * panels open (one scheduled/apply_to_all matrix, one calendar_gated membership checklist), the
- * dry-run panel open, and an inline edit open — records a deliberate negative proving the
- * assertion can fail on THIS surface's own controls, asserts every one of the three distinct
- * error states this surface can render is announced through the shared `ErrorNotice` live region
- * (SC-011: top-level load/mutation errors, the per-card matrix validation error, and the dry-run
- * network error), asserts the panel's own region+heading (the L2-adoption clause), and proves the
- * surface's own new behaviour: deleting a reminder now opens a themed `ConfirmDialog` instead of
- * `window.confirm` (FR-005, mirroring `RoutinesManagement.tsx`'s precedent).
+/** RemindersManagement spec (FR-005/FR-009) — the reminders admin page is a list of rules plus one
+ * add/edit Dialog (scheduled all/specific with the member x weekday matrix, calendar_gated with
+ * query and members), a per-row dry-run panel and a themed delete ConfirmDialog.
+ * This is the executable evidence for the verification policy: it CALLS the frozen density
+ * assertion over this surface's rendered control set with kiosk density active, records a
+ * deliberate negative proving the assertion can fail on THIS surface's own controls, asserts the
+ * announced error states (load with Retry, save inside the dialog, dry-run, toggle), asserts the
+ * panel's own region+heading (the L2-adoption clause), and pins the row summaries, the
+ * targetingMode edit payloads and the silent-refresh behaviour.
  */
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -64,6 +57,23 @@ const REMINDER_CALENDAR_GATED = {
   assignments: [{ id: "a1", memberId: "m1", weekdays: [], active: true }],
 };
 
+const MEMBER_B = { ...MEMBER, id: "m2", displayName: "Bea" };
+
+const REMINDER_SPECIFIC = {
+  id: "r3",
+  kind: "scheduled",
+  targetingMode: "specific",
+  text: "Pack the gym bag",
+  weekdays: null,
+  query: null,
+  queryFields: null,
+  active: true,
+  assignments: [
+    { id: "a2", memberId: "m1", weekdays: ["mon", "wed"], active: true },
+    { id: "a3", memberId: "m2", weekdays: ["fri"], active: true },
+  ],
+};
+
 function json(body: unknown, status = 200): Response {
   return new Response(body === null ? null : JSON.stringify(body), { status });
 }
@@ -75,6 +85,7 @@ function json(body: unknown, status = 200): Response {
 function mockBackend(
   overrides: Partial<{
     reminders: () => Response;
+    members: () => Response;
     language: string;
   }> = {}
 ) {
@@ -99,7 +110,7 @@ function mockBackend(
     }
 
     if (url === "/api/members") {
-      return Promise.resolve(json([MEMBER]));
+      return Promise.resolve(overrides.members ? overrides.members() : json([MEMBER]));
     }
 
     if (/\/api\/reminders\/[^/]+\/assignments$/.test(url) && method === "PUT") {
@@ -164,24 +175,19 @@ afterEach(() => {
 });
 
 describe("RemindersManagement — the panel is a real landmark (FR-009 L2-adoption clause)", () => {
-  it("exposes an AdminPanel region AND heading, both named for the panel title", async () => {
+  it("exposes an AdminPanel region AND heading named like the sidebar label, with a single such heading", async () => {
     mockBackend();
     renderSurface();
-    // The LOADED panel, not the loading skeleton: RemindersManagement renders a second
-    // AdminPanel with the SAME title while loading, and findByRole resolves synchronously
-    // against that skeleton — so without this anchor, replacing the loaded panel with a bare
-    // <section aria-label> (the DoD's own measured failure case) stayed green. Sixth batch with
-    // a non-biting adoption assertion; first where the loading skeleton is the cause.
     await screen.findByText("Take out the trash");
 
-    const region = await screen.findByRole("region", { name: "Reminders Management" });
-    const heading = within(region).getByRole("heading", { name: "Reminders Management" });
-    expect(heading).toBeInTheDocument();
+    const region = await screen.findByRole("region", { name: "Reminders" });
+    expect(within(region).getByRole("heading", { name: "Reminders" })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "Reminders" })).toHaveLength(1);
   });
 });
 
 describe("RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009)", () => {
-  it("meets kiosk density collapsed, with both reminders' assignment panels open, the dry-run panel open, and an inline edit open", async () => {
+  it("meets kiosk density with the list, the dry-run panel, the add dialog and the edit dialog open", async () => {
     mockBackend();
     const uninject = await injectDensityStyles({
       extraCandidates: ["size-[var(--control-height)]"],
@@ -193,36 +199,47 @@ describe("RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009)
       await screen.findByText("Take out the trash");
       await screen.findByText("Vet appointment prep");
 
-      // Phase 1 — collapsed: the create-form (kind/targeting-mode radios, text input, the
-      // apply_to_all WeekdayPicker's 7 checkboxes, and the Create button) + each reminder card's
-      // own collapsed action row (scheduled: Edit/Assignments/Activate.Deactivate/Delete;
-      // calendar_gated+specific additionally gets a Dry-run toggle).
-      expect(countInteractiveControls(document.body)).toBe(22);
+      // Phase 1 — list only. Page: Add rule (1). Row r1: Deactivate, Edit, Delete (3).
+      // Row r2 (calendar_gated): Deactivate, Dry-run, Edit, Delete (4). Total 8.
+      expect(countInteractiveControls(document.body)).toBe(8);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
-      // Phase 2 — the scheduled reminder's (apply_to_all) assignment matrix open: adds
-      // AssignmentMatrixGrid's one-member-by-seven-day checkboxes plus its Save button.
-      const scheduledCard = await screen.findByTestId("reminder-r1");
-      fireEvent.click(within(scheduledCard).getByRole("button", { name: "Assignments" }));
-      await screen.findByText("Assignment matrix");
-      expect(countInteractiveControls(document.body)).toBe(30);
-      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
-
-      // Phase 3 — the calendar_gated reminder's membership-checklist matrix open (one member
-      // checkbox) AND its dry-run panel open (member select, date input, Run button).
-      const cgCard = await screen.findByTestId("reminder-r2");
-      fireEvent.click(within(cgCard).getByRole("button", { name: "Assignments" }));
-      await screen.findByText("Assigned members");
-      fireEvent.click(within(cgCard).getByRole("button", { name: "Dry-run" }));
+      // Phase 2 — r2's dry-run panel open: member select, date input, Run (+3) = 11.
+      const cgRow = await screen.findByTestId("reminder-r2");
+      fireEvent.click(within(cgRow).getByRole("button", { name: "Dry-run" }));
       await screen.findByText("Dry-run / explain");
-      expect(countInteractiveControls(document.body)).toBe(35);
+      expect(countInteractiveControls(document.body)).toBe(11);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
-      // Phase 4 — the scheduled reminder's inline edit open: swaps its collapsed action row
-      // (Edit/Assignments/Activate/Delete) for the edit form (text input, its own WeekdayPicker,
-      // Save, Cancel) while its assignment matrix (opened in Phase 2) stays open underneath.
-      fireEvent.click(within(scheduledCard).getByRole("button", { name: "Edit" }));
-      expect(countInteractiveControls(document.body)).toBe(41);
+      // Phase 3 — add dialog (scheduled, all members): close X (1), kind radios (2), text (1),
+      // targeting radios (2), seven weekday checkboxes (7), Cancel (1), Create (1) = +15 = 26.
+      fireEvent.click(screen.getByTestId("reminders-add-rule"));
+      await screen.findByTestId("reminder-form-dialog");
+      expect(countInteractiveControls(document.body)).toBe(26);
+      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
+    } finally {
+      uninject();
+    }
+  });
+
+  it("meets kiosk density with the edit dialog open on a specific rule (member matrix)", async () => {
+    mockBackend({
+      reminders: () => json([REMINDER_SPECIFIC]),
+      members: () => json([MEMBER, MEMBER_B]),
+    });
+    const uninject = await injectDensityStyles({
+      extraCandidates: ["size-[var(--control-height)]"],
+    });
+    document.documentElement.setAttribute("data-density", "kiosk");
+
+    try {
+      renderSurface();
+      await screen.findByText("Pack the gym bag");
+      fireEvent.click(screen.getByTestId("reminder-edit-r3"));
+      await screen.findByTestId("reminder-form-dialog");
+      // Dialog: close X (1), text (1), targeting radios (2), matrix 2 members x 7 days (14),
+      // Cancel (1), Save (1) = 20; page behind it: Add rule, Deactivate, Edit, Delete = 4. Total 24.
+      expect(countInteractiveControls(document.body)).toBe(24);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
@@ -240,7 +257,7 @@ describe("RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009)
       renderSurface();
       const card = await screen.findByTestId("reminder-r1");
 
-      fireEvent.click(within(card).getByRole("button", { name: "Delete" }));
+      fireEvent.click(within(card).getByRole("button", { name: /^Delete/ }));
       await screen.findByRole("dialog");
 
       // Asserted over document.body — the one shape that reaches a control Radix mounted
@@ -251,7 +268,7 @@ describe("RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009)
     }
   });
 
-  it("DELIBERATE NEGATIVE — forcing this surface's own Create Reminder button below the kiosk minimum makes the assertion fail", async () => {
+  it("DELIBERATE NEGATIVE — forcing this surface's own Add rule button below the kiosk minimum makes the assertion fail", async () => {
     mockBackend();
     const uninject = await injectDensityStyles({
       extraCandidates: ["size-[var(--control-height)]"],
@@ -260,7 +277,7 @@ describe("RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009)
 
     try {
       const { container } = renderSurface();
-      const createButton = await screen.findByRole("button", { name: "Create Reminder" });
+      const createButton = await screen.findByTestId("reminders-add-rule");
 
       // A real control from this surface, not a synthetic fixture.
       createButton.style.height = "10px";
@@ -290,65 +307,62 @@ describe("RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009)
   });
 });
 
-describe("RemindersManagement — error states are announced (SC-011)", () => {
-  it("announces a data-load failure through ErrorNotice's live region", async () => {
-    mockBackend({ reminders: () => json(null, 500) });
+describe("RemindersManagement — error states are announced (SC-011) and recoverable", () => {
+  it("announces a data-load failure through ErrorNotice's live region and offers Retry that recovers", async () => {
+    let fail = true;
+    const mockFetch = mockBackend({
+      reminders: () => (fail ? json(null, 500) : json([REMINDER_SCHEDULED])),
+    });
     renderSurface();
 
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("Failed to load reminders.");
     expect(alert).toHaveAttribute("aria-live", "assertive");
+    expect(screen.queryByTestId("reminders-add-rule")).not.toBeInTheDocument();
+
+    fail = false;
+    fireEvent.click(screen.getByTestId("reminders-retry"));
+    expect(await screen.findByText("Take out the trash")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(
+      (mockFetch.mock.calls as FetchCall[]).filter(
+        ([u, init]) => String(u) === "/api/reminders" && (init?.method ?? "GET") === "GET"
+      ).length
+    ).toBeGreaterThanOrEqual(2);
   });
 
-  it("announces a create-reminder failure through ErrorNotice's live region", async () => {
+  it("keeps the add dialog open and announces a create failure inside it", async () => {
     const mockFetch = mockBackend();
     renderSurface();
-
     await screen.findByText("Take out the trash");
 
+    fireEvent.click(screen.getByTestId("reminders-add-rule"));
+    const dialog = await screen.findByTestId("reminder-form-dialog");
     mockFetch.mockImplementation((input: string | URL, init?: Parameters<typeof fetch>[1]) => {
       const url = String(input);
-      if (url === "/api/reminders" && init?.method === "POST") {
+      if (url === "/api/reminders" && init?.method === "POST")
         return Promise.resolve(json(null, 500));
-      }
       throw new Error(`unexpected fetch after override: ${url}`);
     });
 
-    fireEvent.change(screen.getByPlaceholderText("Reminder text"), {
+    fireEvent.change(within(dialog).getByPlaceholderText("Reminder text"), {
       target: { value: "New reminder" },
     });
-    fireEvent.click(screen.getByLabelText("Mon"));
-    fireEvent.click(screen.getByRole("button", { name: "Create Reminder" }));
+    fireEvent.click(within(dialog).getByLabelText("Mon"));
+    fireEvent.click(within(dialog).getByTestId("reminder-save"));
 
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Failed to load reminders.");
+    const alert = await within(dialog).findByRole("alert");
+    expect(alert).toHaveTextContent("Failed to save the reminder.");
     expect(alert).toHaveAttribute("aria-live", "assertive");
-  });
-
-  it("announces a matrix validation error (empty weekday set) through ErrorNotice's live region", async () => {
-    mockBackend();
-    renderSurface();
-
-    const card = await screen.findByTestId("reminder-r1");
-    fireEvent.click(within(card).getByRole("button", { name: "Assignments" }));
-    await screen.findByText("Assignment matrix");
-
-    // The shared apply_to_all set starts pre-populated with the reminder's own "mon" — clear it
-    // so the save click below hits the "select at least one weekday" validation path.
-    fireEvent.click(within(card).getByRole("checkbox", { name: "Ari — Mon" }));
-    fireEvent.click(within(card).getByRole("button", { name: "Save Assignments" }));
-
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Select at least one weekday.");
-    expect(alert).toHaveAttribute("aria-live", "assertive");
+    expect(screen.getByTestId("reminder-form-dialog")).toBeInTheDocument();
   });
 
   it("announces a dry-run failure through ErrorNotice's live region", async () => {
     const mockFetch = mockBackend();
     renderSurface();
 
-    const card = await screen.findByTestId("reminder-r2");
-    fireEvent.click(within(card).getByRole("button", { name: "Dry-run" }));
+    const row = await screen.findByTestId("reminder-r2");
+    fireEvent.click(within(row).getByRole("button", { name: "Dry-run" }));
     await screen.findByText("Dry-run / explain");
 
     mockFetch.mockImplementation((input: string | URL, init?: Parameters<typeof fetch>[1]) => {
@@ -359,12 +373,26 @@ describe("RemindersManagement — error states are announced (SC-011)", () => {
       throw new Error(`unexpected fetch after override: ${url}`);
     });
 
-    fireEvent.change(within(card).getByRole("combobox"), { target: { value: "m1" } });
-    fireEvent.click(within(card).getByRole("button", { name: "Run" }));
+    fireEvent.change(within(row).getByRole("combobox"), { target: { value: "m1" } });
+    fireEvent.click(within(row).getByRole("button", { name: "Run" }));
 
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("Failed to run dry-run.");
     expect(alert).toHaveAttribute("aria-live", "assertive");
+  });
+
+  it("announces a toggle failure at page level", async () => {
+    const mockFetch = mockBackend();
+    renderSurface();
+    const row = await screen.findByTestId("reminder-r1");
+    mockFetch.mockImplementation((input: string | URL, init?: Parameters<typeof fetch>[1]) => {
+      if (String(input) === "/api/reminders/r1" && init?.method === "PATCH") {
+        return Promise.resolve(json(null, 500));
+      }
+      throw new Error(`unexpected fetch after override: ${String(input)}`);
+    });
+    fireEvent.click(within(row).getByTestId("reminder-toggle-r1"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Failed to update the reminder.");
   });
 });
 
@@ -374,7 +402,7 @@ describe("RemindersManagement — deleting a reminder opens a themed ConfirmDial
     renderSurface();
 
     const card = await screen.findByTestId("reminder-r1");
-    fireEvent.click(within(card).getByRole("button", { name: "Delete" }));
+    fireEvent.click(within(card).getByRole("button", { name: /^Delete/ }));
     const dialog = await screen.findByRole("dialog");
     expect(dialog).toHaveTextContent("Delete this reminder?");
 
@@ -388,7 +416,7 @@ describe("RemindersManagement — deleting a reminder opens a themed ConfirmDial
     ).toHaveLength(0);
 
     // Now confirm.
-    fireEvent.click(within(card).getByRole("button", { name: "Delete" }));
+    fireEvent.click(within(card).getByRole("button", { name: /^Delete/ }));
     await screen.findByRole("dialog");
     fireEvent.click(screen.getByTestId("reminder-delete-confirm-r1"));
 
@@ -403,6 +431,150 @@ describe("RemindersManagement — deleting a reminder opens a themed ConfirmDial
   });
 });
 
+describe("RemindersManagement — rows name their members and days", () => {
+  it("summarises all-members, specific and calendar-gated rules", async () => {
+    mockBackend({
+      reminders: () => json([REMINDER_SCHEDULED, REMINDER_SPECIFIC, REMINDER_CALENDAR_GATED]),
+      members: () => json([MEMBER, MEMBER_B]),
+    });
+    renderSurface();
+    await screen.findByText("Pack the gym bag");
+
+    expect(
+      within(screen.getByTestId("reminder-r1")).getByText("All members · Mon")
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("reminder-r3")).getByText("Ari: Mon, Wed · Bea: Fri")
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("reminder-r2")).getByText("Match text: vet · Ari")
+    ).toBeInTheDocument();
+    expect(within(screen.getByTestId("reminder-r1")).getByText("Active")).toBeInTheDocument();
+  });
+
+  it("shows Off for an inactive rule", async () => {
+    mockBackend({ reminders: () => json([{ ...REMINDER_SCHEDULED, active: false }]) });
+    renderSurface();
+    expect(await screen.findByText("Off")).toBeInTheDocument();
+  });
+});
+
+describe("RemindersManagement — the add/edit dialog", () => {
+  it("creates a specific scheduled rule from the matrix", async () => {
+    const mockFetch = mockBackend();
+    renderSurface();
+    await screen.findByText("Take out the trash");
+
+    fireEvent.click(screen.getByTestId("reminders-add-rule"));
+    const dialog = await screen.findByTestId("reminder-form-dialog");
+    fireEvent.change(within(dialog).getByPlaceholderText("Reminder text"), {
+      target: { value: "Bus day" },
+    });
+    fireEvent.click(within(dialog).getByLabelText("Specific members"));
+    expect(within(dialog).getByTestId("reminder-save")).toBeDisabled();
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: "Ari — Mon" }));
+    fireEvent.click(within(dialog).getByTestId("reminder-save"));
+
+    await waitFor(() => {
+      const post = (mockFetch.mock.calls as FetchCall[]).find(
+        ([u, init]) => String(u) === "/api/reminders" && init?.method === "POST"
+      );
+      expect(post).toBeTruthy();
+      expect(JSON.parse(String(post![1]!.body))).toEqual({
+        kind: "scheduled",
+        targetingMode: "specific",
+        text: "Bus day",
+        assignments: [{ memberId: "m1", weekdays: ["mon"] }],
+      });
+    });
+    await waitFor(() =>
+      expect(screen.queryByTestId("reminder-form-dialog")).not.toBeInTheDocument()
+    );
+  });
+
+  it("Enter in the text field submits a valid form", async () => {
+    const mockFetch = mockBackend();
+    renderSurface();
+    await screen.findByText("Take out the trash");
+    fireEvent.click(screen.getByTestId("reminders-add-rule"));
+    const dialog = await screen.findByTestId("reminder-form-dialog");
+    const input = within(dialog).getByPlaceholderText("Reminder text");
+    fireEvent.change(input, { target: { value: "Enter submit" } });
+    fireEvent.click(within(dialog).getByLabelText("Tue"));
+    fireEvent.submit(input.closest("form")!);
+    await waitFor(() =>
+      expect(
+        (mockFetch.mock.calls as FetchCall[]).some(
+          ([u, init]) => String(u) === "/api/reminders" && init?.method === "POST"
+        )
+      ).toBe(true)
+    );
+  });
+
+  it("edits an all-members rule into a specific one (PATCH carries targetingMode and assignments)", async () => {
+    const mockFetch = mockBackend();
+    renderSurface();
+    await screen.findByText("Take out the trash");
+
+    fireEvent.click(screen.getByTestId("reminder-edit-r1"));
+    const dialog = await screen.findByTestId("reminder-form-dialog");
+    expect(within(dialog).queryByLabelText("Calendar-gated")).not.toBeInTheDocument(); // kind is fixed
+    expect(within(dialog).getByPlaceholderText("Reminder text")).toHaveValue("Take out the trash");
+
+    fireEvent.click(within(dialog).getByLabelText("Specific members"));
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: "Ari — Tue" }));
+    fireEvent.click(within(dialog).getByTestId("reminder-save"));
+
+    await waitFor(() => {
+      const patch = (mockFetch.mock.calls as FetchCall[]).find(
+        ([u, init]) => String(u) === "/api/reminders/r1" && init?.method === "PATCH"
+      );
+      expect(patch).toBeTruthy();
+      expect(JSON.parse(String(patch![1]!.body))).toEqual({
+        text: "Take out the trash",
+        targetingMode: "specific",
+        assignments: [{ memberId: "m1", weekdays: ["tue"] }],
+      });
+    });
+  });
+
+  it("edits a specific calendar-gated rule back to all members (no assignments sent)", async () => {
+    const mockFetch = mockBackend();
+    renderSurface();
+    await screen.findByText("Vet appointment prep");
+    fireEvent.click(screen.getByTestId("reminder-edit-r2"));
+    const dialog = await screen.findByTestId("reminder-form-dialog");
+    fireEvent.click(within(dialog).getByLabelText("All members"));
+    fireEvent.click(within(dialog).getByTestId("reminder-save"));
+    await waitFor(() => {
+      const patch = (mockFetch.mock.calls as FetchCall[]).find(
+        ([u, init]) => String(u) === "/api/reminders/r2" && init?.method === "PATCH"
+      );
+      expect(patch).toBeTruthy();
+      expect(JSON.parse(String(patch![1]!.body))).toEqual({
+        text: "Vet appointment prep",
+        targetingMode: "apply_to_all",
+        query: "vet",
+        queryFields: ["title", "description"],
+      });
+    });
+  });
+
+  it("a successful toggle refreshes silently: an open dry-run panel stays mounted", async () => {
+    mockBackend();
+    renderSurface();
+    const row = await screen.findByTestId("reminder-r2");
+    fireEvent.click(within(row).getByRole("button", { name: "Dry-run" }));
+    await screen.findByText("Dry-run / explain");
+
+    fireEvent.click(within(row).getByTestId("reminder-toggle-r2"));
+    await waitFor(() => expect(screen.getByTestId("reminder-r2")).toBeInTheDocument());
+    // the page never swapped to its loading panel, so the panel is still there
+    expect(screen.getByText("Dry-run / explain")).toBeInTheDocument();
+    expect(screen.queryByText("Loading…")).not.toBeInTheDocument();
+  });
+});
+
 // Independent review lesson carried from /: assert EVERY key a typed-map replaces a
 // literal `as MessageKey` cast with, not just the one obviously exercised — rendered in Spanish,
 // not English, so an accidental English-literal fallback would not coincidentally still read
@@ -413,6 +585,8 @@ describe("RemindersManagement — WEEKDAY_LABEL_KEYS maps each weekday to its OW
     renderSurface();
 
     await screen.findByText("Take out the trash");
+    fireEvent.click(screen.getByTestId("reminders-add-rule"));
+    await screen.findByTestId("reminder-form-dialog");
 
     const group = screen.getByRole("group", { name: "Días de la semana" });
     const dayLabels = within(group)
@@ -440,14 +614,16 @@ describe("WeekdayPicker adoption — the CANONICAL emission order is what separa
     const mockFetch = mockBackend();
     renderSurface();
     await screen.findByText("Take out the trash");
+    fireEvent.click(screen.getByTestId("reminders-add-rule"));
+    const dialog = await screen.findByTestId("reminder-form-dialog");
 
-    fireEvent.change(screen.getByPlaceholderText("Reminder text"), {
+    fireEvent.change(within(dialog).getByPlaceholderText("Reminder text"), {
       target: { value: "Order test" },
     });
     // Click order deliberately REVERSED from canonical order.
-    fireEvent.click(screen.getByLabelText("Wed"));
-    fireEvent.click(screen.getByLabelText("Mon"));
-    fireEvent.click(screen.getByRole("button", { name: "Create Reminder" }));
+    fireEvent.click(within(dialog).getByLabelText("Wed"));
+    fireEvent.click(within(dialog).getByLabelText("Mon"));
+    fireEvent.click(within(dialog).getByTestId("reminder-save"));
 
     await waitFor(() => {
       const post = mockFetch.mock.calls.find(

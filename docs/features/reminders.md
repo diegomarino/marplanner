@@ -34,6 +34,7 @@ is not mistaken for a broken feature.
 ### Edge Cases
 
 - A `specific`-mode rule with zero assignments is rejected at write (use `active:false`).
+- Switching a rule between all members and specific members never leaves a half-written rule: validation precedes the single transaction.
 - Editing or deleting a rule never rewrites an already-generated briefing snapshot.
 - An archived member silently drops from emission and self-heals on reactivation.
 
@@ -76,6 +77,7 @@ is not mistaken for a broken feature.
 - **FR-017**: Given a `calendar_gated` rule that did not emit, when the parent runs the dry-run/explain capability, then the non-emission MUST be explainable (no matching event / unassigned event / query miss). Contract: REMINDERS-AC-10.
 
 - **FR-018**: Given a rule write, when its `targeting_mode` and weekday placement are validated, then a `specific`-mode rule MUST hold N assignments each binding one active member to its own weekday set (`scheduled`) or membership only (`calendar_gated`), and invalid combinations MUST be rejected at the boundary — a rule-level weekday set on a `specific` rule, per-assignment weekdays on an `apply_to_all` rule, or any weekdays on a `calendar_gated` assignment. Contract: REMINDERS-INV-09.
+- **FR-019**: Given an existing rule, when its targeting is edited, then `targetingMode` MUST be switchable between `apply_to_all` and `specific` in one request that also carries what the new mode needs (`assignments` for `specific`, `weekdays` for a `scheduled` rule moving to `apply_to_all`), the rule row and its assignments MUST commit atomically, a rejected edit MUST persist nothing, switching to `apply_to_all` MUST deactivate rather than delete the rule's assignments, and `kind` MUST stay immutable. Contract: REMINDERS-INV-02, REMINDERS-INV-08, REMINDERS-INV-09.
 
 ### Key Entities
 

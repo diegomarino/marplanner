@@ -63,7 +63,13 @@ describe("reminders-i18n-parity", () => {
 
   it("reminders.*/admin.nav.remindersManagement keys resolve to the expected strings in both languages", () => {
     expect(messages.en["admin.nav.remindersManagement"]).toBe("Reminders Management");
-    expect(messages.en["reminders.management.title"]).toBe("Reminders Management");
+    expect(messages.en["reminders.management.title"]).toBe("Reminders");
+    expect(messages.en["reminders.action.addRule"]).toBe("Add rule");
+    expect(messages.en["reminders.management.retry"]).toBe("Retry");
+    expect(messages.en["reminders.status.off"]).toBe("Off");
+    expect(messages.es["reminders.action.addRule"]).toBe("Añadir regla");
+    expect(messages.es["reminders.management.retry"]).toBe("Reintentar");
+    expect(messages.es["reminders.status.off"]).toBe("Apagado");
     expect(messages.en["reminders.management.description"]).toBe(
       "Author scheduled reminders — apply to all members on shared weekdays, or target specific members on their own weekdays via the assignment matrix."
     );
@@ -107,7 +113,7 @@ describe("reminders-i18n-parity", () => {
     );
 
     expect(messages.es["admin.nav.remindersManagement"]).toBe("Gestión de Recordatorios");
-    expect(messages.es["reminders.management.title"]).toBe("Gestión de Recordatorios");
+    expect(messages.es["reminders.management.title"]).toBe("Recordatorios");
     expect(messages.es["reminders.management.description"]).toBe(
       "Crea recordatorios programados — aplica a todos los miembros en días compartidos, o dirige a miembros específicos en sus propios días mediante la matriz de asignación."
     );
