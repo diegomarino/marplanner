@@ -117,6 +117,9 @@ export function BriefingWorkspace({
   }, [active, memberId, activeDate, version]);
 
   function selectMember(id: string) {
+    // Re-selecting the current member keeps its state: the load effects key on `memberId` and
+    // would not refetch what this function clears.
+    if (id === currentMember.current) return;
     setMemberId(id);
     setSelectedDate(null);
     setDateInput("");
