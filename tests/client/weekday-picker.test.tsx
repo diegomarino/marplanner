@@ -379,3 +379,30 @@ describe("WeekdayPicker — radio group isolation", () => {
     expect(names.size).toBe(2);
   });
 });
+
+describe("WeekdayPicker — disabledDays", () => {
+  it("disables only the listed days in multi mode", () => {
+    render(
+      <WeekdayPicker
+        value={["mon", "tue"]}
+        onChange={() => {}}
+        labels={{
+          mon: "Mon",
+          tue: "Tue",
+          wed: "Wed",
+          thu: "Thu",
+          fri: "Fri",
+          sat: "Sat",
+          sun: "Sun",
+        }}
+        groupLabel="Days"
+        disabledDays={["tue", "sun"]}
+        testIdPrefix="picker"
+      />
+    );
+    expect(screen.getByTestId("picker-tue")).toBeDisabled();
+    expect(screen.getByTestId("picker-sun")).toBeDisabled();
+    expect(screen.getByTestId("picker-mon")).toBeEnabled();
+    expect(screen.getByTestId("picker-tue")).toBeChecked();
+  });
+});
