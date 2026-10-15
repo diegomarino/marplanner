@@ -181,6 +181,28 @@ describe("MealsBoard weekly planner", () => {
     expect(screen.getByTestId("meal-day-heading-2026-09-25")).toHaveClass("bg-accent/20");
   });
 
+  it("renders the week range as an h3 below a page heading when asked", () => {
+    render(
+      <LanguageProvider>
+        <MealPlanGrid
+          titleAs="h3"
+          weekDates={Object.keys(week())}
+          weekMenu={week()}
+          todayDate="2026-09-25"
+          pending={false}
+          onPrevious={vi.fn()}
+          onCurrent={vi.fn()}
+          onNext={vi.fn()}
+          onAdd={vi.fn()}
+          onSelect={vi.fn()}
+        />
+      </LanguageProvider>
+    );
+
+    expect(screen.getByRole("heading", { level: 3, name: "Sep 21 – Sep 27" })).toBeVisible();
+    expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
+  });
+
   it("fills the available height with the rounded meal-plan shell", () => {
     render(
       <LanguageProvider>
