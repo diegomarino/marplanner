@@ -68,18 +68,18 @@ describe("WeatherManagement", () => {
 
   it("shows the values it is given and blank inputs when unset", () => {
     render(<Harness initial={{ lat: "40.4168", lon: "-3.7038", label: "Madrid" }} />);
-    expect(screen.getByTestId("weather-lat-input")).toHaveValue(40.4168);
+    expect(screen.getByTestId("weather-lat-input")).toHaveValue("40.4168");
     expect(screen.getByTestId("weather-label-input")).toHaveValue("Madrid");
     cleanup();
     render(<Harness />);
-    expect(screen.getByTestId("weather-lat-input")).toHaveValue(null);
+    expect(screen.getByTestId("weather-lat-input")).toHaveValue("");
     expect(screen.getByTestId("weather-label-input")).toHaveValue("");
   });
 
   it("reports edits through onChange and never touches the network", () => {
     render(<Harness />);
     fireEvent.change(screen.getByTestId("weather-lat-input"), { target: { value: "10" } });
-    expect(screen.getByTestId("weather-lat-input")).toHaveValue(10);
+    expect(screen.getByTestId("weather-lat-input")).toHaveValue("10");
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
@@ -100,8 +100,8 @@ describe("WeatherManagement", () => {
     await act(async () => {
       fireEvent.click(screen.getByTestId("weather-locate"));
     });
-    expect(screen.getByTestId("weather-lat-input")).toHaveValue(51.5074);
-    expect(screen.getByTestId("weather-lon-input")).toHaveValue(-0.1278);
+    expect(screen.getByTestId("weather-lat-input")).toHaveValue("51.5074");
+    expect(screen.getByTestId("weather-lon-input")).toHaveValue("-0.1278");
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
@@ -117,13 +117,13 @@ describe("WeatherManagement", () => {
     expect(screen.getByTestId("weather-error")).toHaveTextContent(
       messages.en["weather.management.geolocationError"]
     );
-    expect(screen.getByTestId("weather-lat-input")).toHaveValue(1);
+    expect(screen.getByTestId("weather-lat-input")).toHaveValue("1");
   });
 
   it("Clear empties all three fields locally and is disabled once blank", () => {
     render(<Harness initial={{ lat: "1", lon: "2", label: "Home" }} />);
     fireEvent.click(screen.getByTestId("weather-clear"));
-    expect(screen.getByTestId("weather-lat-input")).toHaveValue(null);
+    expect(screen.getByTestId("weather-lat-input")).toHaveValue("");
     expect(screen.getByTestId("weather-label-input")).toHaveValue("");
     expect(screen.getByTestId("weather-clear")).toBeDisabled();
     expect(globalThis.fetch).not.toHaveBeenCalled();
@@ -133,6 +133,15 @@ describe("WeatherManagement", () => {
     render(<Harness initial={{ lat: "1", lon: "", label: "" }} />);
     expect(screen.getByTestId("weather-hint")).toHaveTextContent(
       messages.en["admin.settings.weatherIncomplete"]
+    );
+  });
+
+  it("reads typed text as it is, so a non-numeric value is flagged and never becomes a clear", () => {
+    render(<Harness initial={{ lat: "40.4", lon: "-3.7", label: "" }} />);
+    fireEvent.change(screen.getByTestId("weather-lat-input"), { target: { value: "40,4x" } });
+    expect(screen.getByTestId("weather-lat-input")).toHaveValue("40,4x");
+    expect(screen.getByTestId("weather-hint")).toHaveTextContent(
+      messages.en["admin.settings.weatherInvalid"]
     );
   });
 });

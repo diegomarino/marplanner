@@ -276,6 +276,7 @@ export const messages = {
     "admin.settings.saving": "Saving…",
     "admin.settings.retry": "Retry",
     "admin.settings.weatherIncomplete": "Enter both latitude and longitude, or clear both.",
+    "admin.settings.weatherInvalid": "Latitude and longitude must be numbers, for example 40.4168.",
     "admin.settings.scopeNote":
       "Save applies to language, week start, time zone and weather. Day periods are saved on their own.",
     "plugins.title": "Plugin Management",
@@ -1573,6 +1574,8 @@ export const messages = {
     "admin.settings.saving": "Guardando…",
     "admin.settings.retry": "Reintentar",
     "admin.settings.weatherIncomplete": "Introduce latitud y longitud, o borra ambas.",
+    "admin.settings.weatherInvalid":
+      "La latitud y la longitud deben ser números, por ejemplo 40.4168.",
     "admin.settings.scopeNote":
       "Guardar aplica al idioma, el inicio de semana, la zona horaria y el tiempo. Los periodos del día se guardan por separado.",
     "plugins.title": "Gestión de Complementos",
