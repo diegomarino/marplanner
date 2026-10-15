@@ -3,6 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > **For the executing agent:**
+>
 > - Work in your own git worktree on its own branch (slug `briefing-polish`), branched from `main` **after the shared-pills wave has merged**. Never work in the main checkout.
 > - The spec and this plan are untracked in the main checkout (`/Users/diego/Dev/marplanner-project`). Task 0 copies them into your branch.
 > - Use TDD: write the failing test, watch it fail, implement, watch it pass.
@@ -14,6 +15,7 @@
 **Goal:** Make `/admin/daily-briefing` coherent. It gets three scoped tabs (Schedule · Blocks · Briefings) and one compact per-member blocks × weekdays matrix that replaces the "Block order" card and the per-row Enabled + weekday pills. Opt-in gates every member-scoped tab. "Generate briefings" takes a date, and the member selectors use the shared member pills. An independent review loop runs before the gate.
 
 **Architecture:** This is a UI-only change; the server, OpenAPI and FRs stay as they are.
+
 - Pure helpers move out of the 1406-line page into `src/client/daily-briefing/admin/briefingBlocks.ts`.
 - The page keeps all data loading and writes, and renders three new presentational units (`BriefingScheduleTab`, `BlockMatrix`, `BriefingMemberBar`) plus the reworked `BriefingWorkspace`.
 - The selected member and the selected date are page state shared across tabs.
@@ -63,22 +65,22 @@
 
 ## File map
 
-| File | Change |
-|------|--------|
-| `src/client/daily-briefing/admin/briefingBlocks.ts` | create: pure helpers, registry mirror, label maps, types |
-| `src/client/components/CheckboxField.tsx` | add `labelHidden` |
-| `src/client/daily-briefing/admin/BlockMatrix.tsx` | create |
-| `src/client/daily-briefing/admin/BriefingAutomationCard.tsx` | create |
-| `src/client/daily-briefing/admin/BriefingScheduleTab.tsx` | create |
-| `src/client/daily-briefing/admin/BriefingMemberBar.tsx` | create |
-| `src/client/daily-briefing/admin/BriefingWorkspace.tsx` | rework props (member/date from the page) |
-| `src/client/daily-briefing/admin/BriefingMemberPills.tsx` | delete |
-| `src/client/admin/DailyBriefingManagement.tsx` | rewrite as the page shell (state, loading, writes, tabs) |
-| `src/client/i18n/messages.ts` | `// admin-briefing-polish` blocks; delete keys that become unused |
-| `docs/ui/household-contract.md` | rewrite item 7 |
-| Tests (new) | `tests/client/daily-briefing-blocks.test.ts`, `tests/client/daily-briefing-block-matrix.test.tsx`, `tests/client/daily-briefing-schedule-tab.test.tsx` |
-| Tests (changed) | `checkbox-field.test.tsx`, `daily-briefing-management.test.tsx`, `daily-briefing-workspace.test.tsx`, `daily-briefing-admin.test.tsx`, `announcements-briefing-admin.test.tsx`, `daily-briefing-admin-mirror-fence.test.tsx`, `tests/e2e/daily-briefing.spec.ts` |
-| `tests/fixtures/assembly-cohort.json` | vitest cases, Playwright ids, coverage |
+| File                                                         | Change                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/client/daily-briefing/admin/briefingBlocks.ts`          | create: pure helpers, registry mirror, label maps, types                                                                                                                                                                                                         |
+| `src/client/components/CheckboxField.tsx`                    | add `labelHidden`                                                                                                                                                                                                                                                |
+| `src/client/daily-briefing/admin/BlockMatrix.tsx`            | create                                                                                                                                                                                                                                                           |
+| `src/client/daily-briefing/admin/BriefingAutomationCard.tsx` | create                                                                                                                                                                                                                                                           |
+| `src/client/daily-briefing/admin/BriefingScheduleTab.tsx`    | create                                                                                                                                                                                                                                                           |
+| `src/client/daily-briefing/admin/BriefingMemberBar.tsx`      | create                                                                                                                                                                                                                                                           |
+| `src/client/daily-briefing/admin/BriefingWorkspace.tsx`      | rework props (member/date from the page)                                                                                                                                                                                                                         |
+| `src/client/daily-briefing/admin/BriefingMemberPills.tsx`    | delete                                                                                                                                                                                                                                                           |
+| `src/client/admin/DailyBriefingManagement.tsx`               | rewrite as the page shell (state, loading, writes, tabs)                                                                                                                                                                                                         |
+| `src/client/i18n/messages.ts`                                | `// admin-briefing-polish` blocks; delete keys that become unused                                                                                                                                                                                                |
+| `docs/ui/household-contract.md`                              | rewrite item 7                                                                                                                                                                                                                                                   |
+| Tests (new)                                                  | `tests/client/daily-briefing-blocks.test.ts`, `tests/client/daily-briefing-block-matrix.test.tsx`, `tests/client/daily-briefing-schedule-tab.test.tsx`                                                                                                           |
+| Tests (changed)                                              | `checkbox-field.test.tsx`, `daily-briefing-management.test.tsx`, `daily-briefing-workspace.test.tsx`, `daily-briefing-admin.test.tsx`, `announcements-briefing-admin.test.tsx`, `daily-briefing-admin-mirror-fence.test.tsx`, `tests/e2e/daily-briefing.spec.ts` |
+| `tests/fixtures/assembly-cohort.json`                        | vitest cases, Playwright ids, coverage                                                                                                                                                                                                                           |
 
 ---
 
@@ -103,6 +105,7 @@ npx vitest run tests/client/daily-briefing-management.test.tsx tests/client/dail
 ```
 
 Expected: PASS.
+
 - `member-pills.test.tsx` exists only once the shared-pills wave has merged. If it is missing, stop and report that the base is wrong.
 - Open `src/client/components/MemberPills.tsx` and `src/client/components/WeekdayPicker.tsx` and confirm `MemberPills` (props `mode`, `members`, `value`, `onChange`, `groupLabel`, `testIdPrefix`, per-member `inactiveLabel`) and `weekdayDisplayOrder(weekStartDay)`. Adapt later tasks if they differ.
 
@@ -115,10 +118,12 @@ This is known for isolated agent worktrees. Keep working, skip each "Commit" ste
 ## Task 1: Pure helpers module
 
 **Files:**
+
 - Create: `src/client/daily-briefing/admin/briefingBlocks.ts`
 - Test: `tests/client/daily-briefing-blocks.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - types `Weekday`, `AutoPrintTrigger`, `BlockParams`, `BlockOrderInstance`, `MemberBlockSettings`, `DailyBriefingSettingsView`, `BlockRegistryType`, `MemberResult`
   - constants `WEEKDAY_LABEL_KEYS`, `ALL_BLOCK_TYPES`, `BLOCK_LABEL_KEYS`, `DEFAULT_DISABLED_BLOCK_TYPES`, `LEVEL_BLOCK_TYPES`, `LEVELS`, `DIFFICULTY_BLOCK_TYPES`, `DIFFICULTIES`, `DIFFICULTY_LABEL_KEYS`, `CORPUS_LANGUAGE_AVAILABILITY`
@@ -181,7 +186,10 @@ describe("briefingBlocks — effective days and cell writes", () => {
 
   it("completing all seven days writes null (every day) in canonical order otherwise", () => {
     expect(
-      cellToggleInput(row({ enabled: true, weekdays: ["mon", "tue", "wed", "thu", "fri", "sat"] }), "sun")
+      cellToggleInput(
+        row({ enabled: true, weekdays: ["mon", "tue", "wed", "thu", "fri", "sat"] }),
+        "sun"
+      )
     ).toEqual({ enabled: true, weekdays: null });
     expect(cellToggleInput(row({ enabled: true, weekdays: null }), "mon")).toEqual({
       enabled: true,
@@ -243,6 +251,7 @@ Run: `npx vitest run tests/client/daily-briefing-blocks.test.ts`. Expected: FAIL
 - [ ] **Step 3: Implement** `src/client/daily-briefing/admin/briefingBlocks.ts`
 
 Move these definitions verbatim from `src/client/admin/DailyBriefingManagement.tsx` (lines 70–270) and export each one:
+
 - `WEEKDAY_LABEL_KEYS`, `weekdayLabels`
 - the `AutoPrintTrigger`, `BlockParams`, `BlockOrderInstance` and `MemberBlockSettings` types, and `DailyBriefingSettingsView` (with `memberSchedules?: BriefingSchedule[]`)
 - `ALL_BLOCK_TYPES`, `BlockRegistryType`, `BLOCK_LABEL_KEYS`
@@ -323,22 +332,22 @@ git commit -m "refactor(briefing): extract the admin block helpers and add cell-
 ## Task 2: `CheckboxField` `labelHidden`
 
 **Files:**
+
 - Modify: `src/client/components/CheckboxField.tsx`
 - Test: `tests/client/checkbox-field.test.tsx`
 
 **Interfaces:**
+
 - Produces: `CheckboxFieldProps.labelHidden?: boolean`. When true, the label text is rendered inside `<span className="sr-only">`.
 
 - [ ] **Step 1: Write the failing test.** Append inside `describe("CheckboxField", …)`:
 
 ```tsx
-  it("keeps a hidden label as the accessible name when labelHidden is set", () => {
-    render(<CheckboxField checked={false} onChange={() => {}} label="Weather on Mon" labelHidden />);
-    const checkbox = screen.getByRole("checkbox", { name: "Weather on Mon" });
-    expect(checkbox.closest("label")?.querySelector(".sr-only")?.textContent).toBe(
-      "Weather on Mon"
-    );
-  });
+it("keeps a hidden label as the accessible name when labelHidden is set", () => {
+  render(<CheckboxField checked={false} onChange={() => {}} label="Weather on Mon" labelHidden />);
+  const checkbox = screen.getByRole("checkbox", { name: "Weather on Mon" });
+  expect(checkbox.closest("label")?.querySelector(".sr-only")?.textContent).toBe("Weather on Mon");
+});
 ```
 
 - [ ] **Step 2: Run it and confirm it fails**
@@ -358,7 +367,9 @@ In `CheckboxFieldProps`, add:
 Destructure `labelHidden` in the function signature. Replace the trailing `{label}` with:
 
 ```tsx
-      {labelHidden ? <span className="sr-only">{label}</span> : label}
+{
+  labelHidden ? <span className="sr-only">{label}</span> : label;
+}
 ```
 
 When the label is hidden, drop the `gap-2`: change the wrapper class to `cn("inline-flex items-center text-control", !labelHidden && "gap-2", disabled && "opacity-50", className)`.
@@ -379,11 +390,13 @@ git commit -m "feat(ui): let CheckboxField hide its label for matrix cells"
 ## Task 3: i18n block and `BlockMatrix`
 
 **Files:**
+
 - Modify: `src/client/i18n/messages.ts`
 - Create: `src/client/daily-briefing/admin/BlockMatrix.tsx`
 - Test: `tests/client/daily-briefing-block-matrix.test.tsx`
 
 **Interfaces:**
+
 - Consumes (Task 1): `ALL_BLOCK_TYPES`, `BLOCK_LABEL_KEYS`, `BlockRegistryType`, `BlockOrderInstance`, `BlockParams`, `MemberBlockSettings`, `effectiveMatrixBlockTypes`, `effectiveBlockDays`, `WEEKDAY_LABEL_KEYS`, `DEFAULT_DISABLED_BLOCK_TYPES`, `LEVEL_BLOCK_TYPES`, `LEVELS`, `DIFFICULTY_BLOCK_TYPES`, `DIFFICULTIES`, `DIFFICULTY_LABEL_KEYS`, `CORPUS_LANGUAGE_AVAILABILITY`. Also `weekdayDisplayOrder` (shared wave) and `CheckboxField.labelHidden` (Task 2).
 - Produces:
 
@@ -582,7 +595,9 @@ describe("BlockMatrix", () => {
     for (const day of ALL) {
       expect(screen.getByTestId(`daily-briefing-block-cell-onThisDay-${day}`)).not.toBeChecked();
     }
-    expect(screen.getByTestId("daily-briefing-admin-block-default-disabled-onThisDay")).toBeVisible();
+    expect(
+      screen.getByTestId("daily-briefing-admin-block-default-disabled-onThisDay")
+    ).toBeVisible();
   });
 
   it("disables a paused column's cells but keeps their value, and toggles the pause", () => {
@@ -727,7 +742,10 @@ export function BlockMatrix(props: BlockMatrixProps) {
 
   function handleDragEnd(event: DragEndEvent) {
     if (!event.over || props.orderSaving || event.active.id === event.over.id) return;
-    props.onReorder(String(event.active.id) as BlockRegistryType, String(event.over.id) as BlockRegistryType);
+    props.onReorder(
+      String(event.active.id) as BlockRegistryType,
+      String(event.over.id) as BlockRegistryType
+    );
   }
 
   return (
@@ -745,7 +763,10 @@ export function BlockMatrix(props: BlockMatrixProps) {
               over
                 ? t("dailyBriefing.admin.dragOver")
                     .replace("{block}", blockName(active.id))
-                    .replace("{position}", String(types.indexOf(String(over.id) as BlockRegistryType) + 1))
+                    .replace(
+                      "{position}",
+                      String(types.indexOf(String(over.id) as BlockRegistryType) + 1)
+                    )
                 : "",
             onDragEnd: ({ active }) =>
               t("dailyBriefing.admin.dragEnded").replace("{block}", blockName(active.id)),
@@ -897,7 +918,9 @@ function BlockRow({
               disabled={saving}
               options={LEVELS.map((level) => ({ value: level, label: level }))}
               onChange={(value) =>
-                onParamChange(type, { level: value === "" ? undefined : (value as BlockParams["level"]) })
+                onParamChange(type, {
+                  level: value === "" ? undefined : (value as BlockParams["level"]),
+                })
               }
             />
           )}
@@ -908,7 +931,9 @@ function BlockRow({
               value={settings.params?.difficulty ?? ""}
               disabled={saving}
               options={DIFFICULTIES.map((d) => ({ value: d, label: t(DIFFICULTY_LABEL_KEYS[d]) }))}
-              onChange={(value) => onParamChange(type, { difficulty: value === "" ? undefined : value })}
+              onChange={(value) =>
+                onParamChange(type, { difficulty: value === "" ? undefined : value })
+              }
             />
           )}
           {languages && (
@@ -925,7 +950,9 @@ function BlockRow({
                     : "dailyBriefing.admin.language.en"
                 ),
               }))}
-              onChange={(value) => onParamChange(type, { language: value === "" ? undefined : value })}
+              onChange={(value) =>
+                onParamChange(type, { language: value === "" ? undefined : value })
+              }
             />
           )}
         </div>
@@ -1007,23 +1034,31 @@ git commit -m "feat(briefing): compact blocks x weekdays matrix with touch and k
 ## Task 4: Schedule tab (automation, generate briefings, members table)
 
 **Files:**
+
 - Create: `src/client/daily-briefing/admin/BriefingAutomationCard.tsx`
 - Create: `src/client/daily-briefing/admin/BriefingScheduleTab.tsx`
 - Test: `tests/client/daily-briefing-schedule-tab.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `MemberResult`, `WEEKDAY_LABEL_KEYS`, `AutoPrintTrigger` (Task 1); `weekdayDisplayOrder`; `MemberDTO` and `BriefingSchedule` from `../../../shared`.
 - Produces:
 
 ```ts
-export interface AutomationSettings { generationTime: string; autoPrintBound: boolean }
+export interface AutomationSettings {
+  generationTime: string;
+  autoPrintBound: boolean;
+}
 export function BriefingAutomationCard(props: {
   stored: AutomationSettings;
   onSaved: (next: AutomationSettings) => void;
 }): JSX.Element;
 
 export type BriefingTab = "schedule" | "blocks" | "preview";
-export interface ScheduleResults { date: string | null; statuses: Record<string, MemberResult> }
+export interface ScheduleResults {
+  date: string | null;
+  statuses: Record<string, MemberResult>;
+}
 export interface BriefingScheduleTabProps {
   members: MemberDTO[];
   optIns: Record<string, boolean>;
@@ -1151,7 +1186,10 @@ describe("BriefingScheduleTab", () => {
   });
 
   it("hides results that belong to another date", () => {
-    renderTab({ date: "2026-10-13", results: { date: "2026-10-12", statuses: { "m-lisa": "ready" } } });
+    renderTab({
+      date: "2026-10-13",
+      results: { date: "2026-10-12", statuses: { "m-lisa": "ready" } },
+    });
     expect(screen.getByTestId("daily-briefing-member-status-m-lisa")).toHaveTextContent("—");
   });
 
@@ -1174,13 +1212,20 @@ describe("BriefingAutomationCard", () => {
   it("enables Save only while a value differs from the stored one, then saves", async () => {
     vi.mocked(globalThis.fetch).mockResolvedValue(
       new Response(
-        JSON.stringify({ generationTime: "07:30", autoPrintTrigger: "morning_complete", updatedAt: 1 }),
+        JSON.stringify({
+          generationTime: "07:30",
+          autoPrintTrigger: "morning_complete",
+          updatedAt: 1,
+        }),
         { status: 200 }
       )
     );
     const onSaved = vi.fn();
     render(
-      <BriefingAutomationCard stored={{ generationTime: "06:00", autoPrintBound: false }} onSaved={onSaved} />
+      <BriefingAutomationCard
+        stored={{ generationTime: "06:00", autoPrintBound: false }}
+        onSaved={onSaved}
+      />
     );
     const save = screen.getByTestId("daily-briefing-admin-settings-save");
     expect(save).toBeDisabled();
@@ -1248,7 +1293,8 @@ export function BriefingAutomationCard({
   useEffect(() => setDraft(stored), [stored.generationTime, stored.autoPrintBound]);
 
   const dirty =
-    draft.generationTime !== stored.generationTime || draft.autoPrintBound !== stored.autoPrintBound;
+    draft.generationTime !== stored.generationTime ||
+    draft.autoPrintBound !== stored.autoPrintBound;
 
   async function save() {
     setSaving(true);
@@ -1278,7 +1324,9 @@ export function BriefingAutomationCard({
       });
     } catch (cause) {
       setError(
-        cause instanceof LocalizedApiError ? cause.message : t("dailyBriefing.admin.settingsSaveError")
+        cause instanceof LocalizedApiError
+          ? cause.message
+          : t("dailyBriefing.admin.settingsSaveError")
       );
     } finally {
       setSaving(false);
@@ -1318,7 +1366,9 @@ export function BriefingAutomationCard({
           disabled={!dirty || saving}
           onClick={() => void save()}
         >
-          {saving ? t("dailyBriefing.admin.settingsSaving") : t("dailyBriefing.admin.settingsSaveButton")}
+          {saving
+            ? t("dailyBriefing.admin.settingsSaving")
+            : t("dailyBriefing.admin.settingsSaveButton")}
         </Button>
       </CardContent>
     </Card>
@@ -1466,18 +1516,29 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-sm" data-testid="daily-briefing-members-table">
+              <table
+                className="w-full border-collapse text-sm"
+                data-testid="daily-briefing-members-table"
+              >
                 <thead>
                   <tr className="text-left">
-                    <th scope="col" className="border-b px-2 py-2">{t("dailyBriefing.admin.memberLabel")}</th>
-                    <th scope="col" className="border-b px-2 py-2">{t("dailyBriefing.admin.columnBriefing")}</th>
-                    <th scope="col" className="border-b px-2 py-2">{t("dailyBriefing.admin.columnDays")}</th>
+                    <th scope="col" className="border-b px-2 py-2">
+                      {t("dailyBriefing.admin.memberLabel")}
+                    </th>
+                    <th scope="col" className="border-b px-2 py-2">
+                      {t("dailyBriefing.admin.columnBriefing")}
+                    </th>
+                    <th scope="col" className="border-b px-2 py-2">
+                      {t("dailyBriefing.admin.columnDays")}
+                    </th>
                     <th scope="col" className="border-b px-2 py-2">
                       {shownDate
                         ? t("dailyBriefing.admin.columnResult").replace("{date}", shownDate)
                         : t("dailyBriefing.admin.columnResultNoDate")}
                     </th>
-                    <th scope="col" className="border-b px-2 py-2">{t("dailyBriefing.admin.columnOpen")}</th>
+                    <th scope="col" className="border-b px-2 py-2">
+                      {t("dailyBriefing.admin.columnOpen")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1494,7 +1555,10 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
                           <span className="inline-flex items-center gap-2">
                             <span
                               aria-hidden="true"
-                              className={cn("size-3 rounded-full border border-background", MEMBER_DOT_CLASS[member.colorKey])}
+                              className={cn(
+                                "size-3 rounded-full border border-background",
+                                MEMBER_DOT_CLASS[member.colorKey]
+                              )}
                             />
                             {member.displayName}
                           </span>
@@ -1509,10 +1573,18 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
                             aria-label={`${member.displayName}: ${enabledText}`}
                           />
                         </td>
-                        <td className="border-b px-2 py-2" data-testid={`daily-briefing-member-days-${member.id}`}>
-                          {on && props.schedules ? scheduleSummary(props.schedules[member.id], order, t) : "—"}
+                        <td
+                          className="border-b px-2 py-2"
+                          data-testid={`daily-briefing-member-days-${member.id}`}
+                        >
+                          {on && props.schedules
+                            ? scheduleSummary(props.schedules[member.id], order, t)
+                            : "—"}
                         </td>
-                        <td className="border-b px-2 py-2" data-testid={`daily-briefing-member-status-${member.id}`}>
+                        <td
+                          className="border-b px-2 py-2"
+                          data-testid={`daily-briefing-member-status-${member.id}`}
+                        >
                           {result ? t(RESULT_KEYS[result]) : "—"}
                         </td>
                         <td className="border-b px-2 py-2">
@@ -1522,7 +1594,10 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
                               variant="outline"
                               size="sm"
                               data-testid={`daily-briefing-open-blocks-${member.id}`}
-                              aria-label={t("dailyBriefing.admin.openBlocksAria").replace("{name}", member.displayName)}
+                              aria-label={t("dailyBriefing.admin.openBlocksAria").replace(
+                                "{name}",
+                                member.displayName
+                              )}
                               onClick={() => props.onOpen(member.id, "blocks")}
                             >
                               {t("dailyBriefing.admin.tabBlocks")}
@@ -1532,7 +1607,10 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
                               variant="outline"
                               size="sm"
                               data-testid={`daily-briefing-open-briefings-${member.id}`}
-                              aria-label={t("dailyBriefing.admin.openBriefingsAria").replace("{name}", member.displayName)}
+                              aria-label={t("dailyBriefing.admin.openBriefingsAria").replace(
+                                "{name}",
+                                member.displayName
+                              )}
                               onClick={() => props.onOpen(member.id, "preview")}
                             >
                               {t("dailyBriefing.admin.tabBriefings")}
@@ -1554,6 +1632,7 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
 ```
 
 Two points to check in this code:
+
 - `MEMBER_DOT_CLASS`: shared-pills spec D4 moved it into `MemberPills.tsx`. If that file does not export it, add `export` to its declaration there (a one-word change in a shared file; record it), or import it from wherever the wave put it. Do not copy the map.
 - `aria-label` on the Open buttons: the accessible-names audit prefers a visible name. If `check:accessible-names` flags the mismatch (visible "Blocks" vs name "Open blocks for Bart"), drop the `aria-label`. The test then uses `data-testid` instead of the role name.
 
@@ -1573,12 +1652,14 @@ git commit -m "feat(briefing): Schedule tab with automation, generate briefings 
 ## Task 5: Member bar with the opted-out gate, and the workspace rework
 
 **Files:**
+
 - Create: `src/client/daily-briefing/admin/BriefingMemberBar.tsx`
 - Modify: `src/client/daily-briefing/admin/BriefingWorkspace.tsx`
 - Delete: `src/client/daily-briefing/admin/BriefingMemberPills.tsx`
 - Test: `tests/client/daily-briefing-workspace.test.tsx`
 
 **Interfaces:**
+
 - Produces:
 
 ```ts
@@ -1592,13 +1673,13 @@ export function BriefingMemberBar(props: {
 }): JSX.Element;
 
 export interface BriefingWorkspaceProps {
-  member: MemberDTO;          // opted in: the page gates
-  date: string | null;        // page date; null = household today
-  today: string | null;       // household today from the shell timezone, when known
+  member: MemberDTO; // opted in: the page gates
+  date: string | null; // page date; null = household today
+  today: string | null; // household today from the shell timezone, when known
   onDateChange: (date: string) => void;
-  active: boolean;            // Briefings tab visible
-  blocked: boolean;           // generate-all running or an opt-in PUT pending
-  refreshKey: number;         // bumped after Generate briefings
+  active: boolean; // Briefings tab visible
+  blocked: boolean; // generate-all running or an opt-in PUT pending
+  refreshKey: number; // bumped after Generate briefings
   onGenerated: (briefing: Briefing) => void;
   onBusyChange: (busy: boolean) => void;
   onOpenBlocks: () => void;
@@ -1686,6 +1767,7 @@ export function BriefingMemberBar({
 ```
 
 Make it a small stateful harness: `function Harness() { const [date, setDate] = useState<string|null>(null); … }`, so date changes flow back as they do on the page. Keep every test title (the cohort pins them) except these:
+
 - "disables Generate for a member without the briefing turned on" → replace it with **"offers Open Blocks from the paused notice"**: it clicks `daily-briefing-paused-open-blocks` after the paused response and expects `onOpenBlocks` to have been called.
 - "Show loads any typed date and refetches the image" → rename to **"changing the date loads that date and refetches the image"**: it changes `daily-briefing-admin-preview-date` and expects the read and the image for the new date, with no Show button.
 - "keeps the history when the current member is selected again" → **delete** it. Member selection is now the page's job, and the workspace is keyed by member.
@@ -1697,6 +1779,7 @@ The paused-notice text now ends with "in Blocks" (the `{blocks}` placeholder is 
 Run: `npx vitest run tests/client/daily-briefing-workspace.test.tsx`. Expected: FAIL (props mismatch).
 
 - [ ] **Step 4: Rework** `BriefingWorkspace.tsx`
+
 1. Replace the props interface with `BriefingWorkspaceProps` above.
 2. Delete:
    - the `memberId`, `selectedDate` and `dateInput` state
@@ -1726,34 +1809,48 @@ useEffect(() => {
 }, [active, activeDate, version, refreshKey]);
 ```
 
-   `loadHistory()` and `loadRead(date)` lose their `forMember` parameter and use `memberId`. Keep the `latestRead` guard.
-5. History entry `onClick={() => onDateChange(entry.date)}`. `aria-pressed` stays `entry.date === activeDate`.
-6. The date input:
+`loadHistory()` and `loadRead(date)` lose their `forMember` parameter and use `memberId`. Keep the `latestRead` guard. 5. History entry `onClick={() => onDateChange(entry.date)}`. `aria-pressed` stays `entry.date === activeDate`. 6. The date input:
 
 ```tsx
-<Input type="date" data-testid="daily-briefing-admin-preview-date" value={activeDate ?? ""}
-  onChange={(event) => event.target.value && onDateChange(event.target.value)} className="w-40" />
+<Input
+  type="date"
+  data-testid="daily-briefing-admin-preview-date"
+  value={activeDate ?? ""}
+  onChange={(event) => event.target.value && onDateChange(event.target.value)}
+  className="w-40"
+/>
 ```
 
-   Move it into the actions row, before Generate, so date and actions read as one line. The image refetch on a date change comes from `BriefingImage`'s own `date` dependency.
-7. In `generate()`:
-   - the body is `isToday ? { memberId } : { memberId, date: activeDate }`
-   - the guard becomes `if (blocked || generating) return;`
-   - after success: `if (result.date !== activeDate) onDateChange(result.date); setVersion(v => v + 1); void loadHistory(); onGenerated(result);`
-   - drop the `currentMember` check (the page keys the component by member)
+Move it into the actions row, before Generate, so date and actions read as one line. The image refetch on a date change comes from `BriefingImage`'s own `date` dependency. 7. In `generate()`:
+
+- the body is `isToday ? { memberId } : { memberId, date: activeDate }`
+- the guard becomes `if (blocked || generating) return;`
+- after success: `if (result.date !== activeDate) onDateChange(result.date); setVersion(v => v + 1); void loadHistory(); onGenerated(result);`
+- drop the `currentMember` check (the page keys the component by member)
+
 8. The paused notice: `.replace("{name}", member.displayName)`, and `.replace("{blocks}", t("dailyBriefing.admin.tabBlocks"))`. Render it with a button:
 
 ```tsx
-{notice && (
-  <div className="flex flex-wrap items-center gap-3">
-    <p role="status" aria-live="polite" data-testid={notice.testId} className="text-control">{notice.text}</p>
-    {notice.testId === "daily-briefing-paused-notice" && (
-      <Button type="button" variant="outline" size="sm" data-testid="daily-briefing-paused-open-blocks" onClick={onOpenBlocks}>
-        {t("dailyBriefing.admin.openBlocks")}
-      </Button>
-    )}
-  </div>
-)}
+{
+  notice && (
+    <div className="flex flex-wrap items-center gap-3">
+      <p role="status" aria-live="polite" data-testid={notice.testId} className="text-control">
+        {notice.text}
+      </p>
+      {notice.testId === "daily-briefing-paused-notice" && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="daily-briefing-paused-open-blocks"
+          onClick={onOpenBlocks}
+        >
+          {t("dailyBriefing.admin.openBlocks")}
+        </Button>
+      )}
+    </div>
+  );
+}
 ```
 
 9. Pass `version + refreshKey` as `BriefingImage`'s `version`, so a Generate briefings run refetches the image.
@@ -1774,11 +1871,13 @@ git commit -m "feat(briefing): shared member bar with the opted-out gate; worksp
 ## Task 6: Rewrite the page shell
 
 **Files:**
+
 - Modify (rewrite): `src/client/admin/DailyBriefingManagement.tsx`
 - Modify: `src/client/i18n/messages.ts` (delete the keys that are now unused)
 - Test: `tests/client/daily-briefing-management.test.tsx`
 
 **Interfaces:**
+
 - Consumes everything from Tasks 1–5.
 - Produces: `export function DailyBriefingManagement(): JSX.Element`. It has no other exports. `WEEKDAY_LABEL_KEYS` and the other helpers live in `briefingBlocks.ts`.
 
@@ -1946,8 +2045,7 @@ export function DailyBriefingManagement() {
       setMembers(active);
       setOptIns(nextOptIns);
       setSelectedId(
-        (current) =>
-          current || (active.find((m) => nextOptIns[m.id]) ?? active[0])?.id || ""
+        (current) => current || (active.find((m) => nextOptIns[m.id]) ?? active[0])?.id || ""
       );
     } catch {
       setError(t("dailyBriefing.management.loadError"));
@@ -2015,7 +2113,9 @@ export function DailyBriefingManagement() {
       }
     } catch (cause) {
       setError(
-        cause instanceof LocalizedApiError ? cause.message : t("dailyBriefing.management.optInError")
+        cause instanceof LocalizedApiError
+          ? cause.message
+          : t("dailyBriefing.management.optInError")
       );
     } finally {
       setPendingOptIns((previous) => {
@@ -2110,16 +2210,17 @@ export function DailyBriefingManagement() {
         input,
         fallback
       )) as MemberBlockSettings;
-      setSettings((previous) =>
-        previous && {
-          ...previous,
-          blockSettings: [
-            ...previous.blockSettings.filter(
-              (row) => !(row.memberId === updated.memberId && row.blockType === updated.blockType)
-            ),
-            updated,
-          ],
-        }
+      setSettings(
+        (previous) =>
+          previous && {
+            ...previous,
+            blockSettings: [
+              ...previous.blockSettings.filter(
+                (row) => !(row.memberId === updated.memberId && row.blockType === updated.blockType)
+              ),
+              updated,
+            ],
+          }
       );
       setSettingsChanged(true);
     } catch (cause) {
@@ -2146,7 +2247,10 @@ export function DailyBriefingManagement() {
       )) as BriefingSchedule;
       setSettings(
         (previous) =>
-          previous && { ...previous, schedules: { ...previous.schedules, [saved.memberId]: saved.weekdays } }
+          previous && {
+            ...previous,
+            schedules: { ...previous.schedules, [saved.memberId]: saved.weekdays },
+          }
       );
       setSettingsChanged(true);
     } catch (cause) {
@@ -2196,7 +2300,9 @@ export function DailyBriefingManagement() {
   if (loading && members.length === 0 && !membersLoadFailed) {
     return (
       <AdminPanel title={t("admin.sidebar.briefing")} data-testid="daily-briefing-management">
-        <p className="text-control text-muted-foreground">{t("dailyBriefing.management.loading")}</p>
+        <p className="text-control text-muted-foreground">
+          {t("dailyBriefing.management.loading")}
+        </p>
       </AdminPanel>
     );
   }
@@ -2207,7 +2313,11 @@ export function DailyBriefingManagement() {
       description={t("dailyBriefing.admin.pageDescription")}
       data-testid="daily-briefing-management"
     >
-      <div role="tablist" aria-label={t("admin.sidebar.briefing")} className="flex w-fit gap-1 rounded-lg border bg-muted p-1">
+      <div
+        role="tablist"
+        aria-label={t("admin.sidebar.briefing")}
+        className="flex w-fit gap-1 rounded-lg border bg-muted p-1"
+      >
         {(["schedule", "blocks", "preview"] as const).map((id) => (
           <Button
             key={id}
@@ -2225,14 +2335,28 @@ export function DailyBriefingManagement() {
 
       <ErrorNotice message={error} />
       {membersLoadFailed && (
-        <Button type="button" variant="outline" className="w-fit" data-testid="daily-briefing-retry" onClick={() => void loadMembers()}>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-fit"
+          data-testid="daily-briefing-retry"
+          onClick={() => void loadMembers()}
+        >
           {t("dailyBriefing.admin.retry")}
         </Button>
       )}
       {!settingsLoading && settingsLoadError && (
         <div className="flex flex-col items-start gap-2">
-          <ErrorNotice message={settingsLoadError} data-testid="daily-briefing-settings-load-error" />
-          <Button type="button" variant="outline" data-testid="daily-briefing-settings-retry" onClick={() => void loadSettings()}>
+          <ErrorNotice
+            message={settingsLoadError}
+            data-testid="daily-briefing-settings-load-error"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            data-testid="daily-briefing-settings-retry"
+            onClick={() => void loadSettings()}
+          >
             {t("dailyBriefing.admin.retry")}
           </Button>
         </div>
@@ -2265,7 +2389,9 @@ export function DailyBriefingManagement() {
 
       <div hidden={tab === "schedule"} className="flex flex-col gap-6">
         {members.length === 0 ? (
-          <p className="text-control text-muted-foreground">{t("dailyBriefing.management.noActiveMembers")}</p>
+          <p className="text-control text-muted-foreground">
+            {t("dailyBriefing.management.noActiveMembers")}
+          </p>
         ) : (
           <BriefingMemberBar
             members={members}
@@ -2279,7 +2405,11 @@ export function DailyBriefingManagement() {
 
         {selected && selectedOn && (
           <>
-            <div hidden={tab !== "blocks"} data-testid="daily-briefing-blocks-workspace" className="flex flex-col gap-4">
+            <div
+              hidden={tab !== "blocks"}
+              data-testid="daily-briefing-blocks-workspace"
+              className="flex flex-col gap-4"
+            >
               <p className="text-sm text-muted-foreground">
                 {t("dailyBriefing.admin.blocksCaption").replaceAll("{name}", selected.displayName)}
               </p>
@@ -2288,7 +2418,13 @@ export function DailyBriefingManagement() {
                   <p role="status" aria-live="polite" data-testid="daily-briefing-settings-changed">
                     {t("dailyBriefing.admin.settingsChanged")}
                   </p>
-                  <Button type="button" variant="outline" size="sm" data-testid="daily-briefing-settings-changed-open" onClick={() => setTab("preview")}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    data-testid="daily-briefing-settings-changed-open"
+                    onClick={() => setTab("preview")}
+                  >
                     {t("dailyBriefing.admin.openBriefings")}
                   </Button>
                 </div>
@@ -2298,7 +2434,9 @@ export function DailyBriefingManagement() {
                 <BlockMatrix
                   memberName={selected.displayName}
                   blockOrder={settings.blockOrder}
-                  resolve={(type) => resolveMemberBlockSettings(settings.blockSettings, selected.id, type)}
+                  resolve={(type) =>
+                    resolveMemberBlockSettings(settings.blockSettings, selected.id, type)
+                  }
                   schedule={settings.schedules[selected.id] ?? CANONICAL_WEEKDAY_ORDER}
                   savingType={savingType}
                   scheduleSaving={scheduleSaving}
@@ -2306,11 +2444,18 @@ export function DailyBriefingManagement() {
                   onToggleCell={(type, day) =>
                     void saveBlock(
                       type,
-                      cellToggleInput(resolveMemberBlockSettings(settings.blockSettings, selected.id, type), day)
+                      cellToggleInput(
+                        resolveMemberBlockSettings(settings.blockSettings, selected.id, type),
+                        day
+                      )
                     )
                   }
                   onParamChange={(type, patch) => {
-                    const current = resolveMemberBlockSettings(settings.blockSettings, selected.id, type);
+                    const current = resolveMemberBlockSettings(
+                      settings.blockSettings,
+                      selected.id,
+                      type
+                    );
                     void saveBlock(type, { params: { ...current.params, ...patch } });
                   }}
                   onToggleDay={(day) => void toggleDay(day)}
@@ -2333,7 +2478,10 @@ export function DailyBriefingManagement() {
                 onGenerated={(briefing) => {
                   setResults((previous) =>
                     previous && previous.date === briefing.date
-                      ? { ...previous, statuses: { ...previous.statuses, [briefing.memberId]: briefing.status } }
+                      ? {
+                          ...previous,
+                          statuses: { ...previous.statuses, [briefing.memberId]: briefing.status },
+                        }
                       : { date: briefing.date, statuses: { [briefing.memberId]: briefing.status } }
                   );
                   setSettingsChanged(false);
@@ -2350,6 +2498,7 @@ export function DailyBriefingManagement() {
 ```
 
 Notes for the implementer:
+
 - `memberName` is passed so the matrix can be reused. If eslint flags it as unused inside `BlockMatrix`, drop the prop from both files.
 - `replaceAll` requires ES2021 lib. If `tsc` rejects it, use `.split("{name}").join(name)`.
 - Turn-on keeps the already-loaded `settings`, so nothing is refetched (Review Focus 5).
@@ -2397,6 +2546,7 @@ In every test that renders the page and needs Blocks content, the selected membe
     3. `{enabled:true, weekdays:["tue","wed","thu","fri","sat","sun"]}`
 
     The mock must echo each body into the stored row, so the next click starts from it.
+
   - L289 "surfaces onThisDay's default-disabled reality on its row": keep the title. Assert `daily-briefing-admin-block-default-disabled-onThisDay` is visible, every `daily-briefing-block-cell-onThisDay-<day>` is unchecked, and every `-dadJoke-<day>` is checked.
   - L329 (preview image): click `daily-briefing-tab-preview` (Ada is opted in). Then change `daily-briefing-admin-preview-date`; there is no Show click. The URL and base-path assertions are unchanged.
   - L393 "block order Save is disabled while the settings GET is pending…" and L432 "block order Save stays disabled after the settings GET fails": rename them to **"automation and matrix stay absent while the settings GET is pending, then appear"** and **"after the settings GET fails nothing can be written and Retry recovers"**.
@@ -2486,7 +2636,10 @@ Read the two admin tests first: "admin opt-in -> Generate -> complete ordered ca
 - [ ] **Step 3: Add one new test** in the same file, after the first admin test. Reuse that test's setup helpers: member creation through the API, the `m` messages, and `openAdminSection(page, "admin-nav-daily-briefing-management")`.
 
 ```ts
-test("admin briefing tabs: opt-in gate, matrix cell, keyboard reorder and Generate briefings for a date", async ({ page, request }) => {
+test("admin briefing tabs: opt-in gate, matrix cell, keyboard reorder and Generate briefings for a date", async ({
+  page,
+  request,
+}) => {
   // Create two children through the API exactly like the first admin test does
   // (reuse its helper; neither is opted in).
   // 1. Open the page: Schedule is the default tab; both rows show "—" days.
@@ -2588,18 +2741,20 @@ npm run test:cohorts:vitest
 ```
 
 Update `tests/fixtures/assembly-cohort.json`:
-  - **`testCohorts.runners.vitest.files`**:
-    - add the new files `tests/client/daily-briefing-blocks.test.ts`, `tests/client/daily-briefing-block-matrix.test.tsx` and `tests/client/daily-briefing-schedule-tab.test.tsx`;
-    - change the case lists of `checkbox-field.test.tsx`, `daily-briefing-management.test.tsx`, `daily-briefing-workspace.test.tsx`, `daily-briefing-admin.test.tsx`, `announcements-briefing-admin.test.tsx` and `daily-briefing-admin-mirror-fence.test.tsx`. Copy them exactly from `.quality/vitest-list.json`.
 
-    Then run `node tools/verify-test-cohorts.mjs --expected tests/fixtures/assembly-cohort.json --raw-dir .quality --candidate "$MP_CANDIDATE_ID" --runners node,vitest` and fix every difference.
-  - **`testCohorts.runners.playwright.files`**: run `npx playwright test --list --reporter=json > .quality/pw-list.json`. Add the new test's spec id under the `tests/e2e/daily-briefing.spec.ts` entry, keyed exactly as its siblings are. Existing titles do not change.
-  - **`coveragePolicy.files`**:
-    - Run `npm run check:coverage`.
-    - Add entries (layer `client`) for `src/client/daily-briefing/admin/briefingBlocks.ts`, `BlockMatrix.tsx`, `BriefingScheduleTab.tsx`, `BriefingAutomationCard.tsx` and `BriefingMemberBar.tsx`, with the observed totals and rates.
-    - **Remove** the `BriefingMemberPills.tsx` entry.
-    - For `DailyBriefingManagement.tsx`, `BriefingWorkspace.tsx` and `CheckboxField.tsx`, set the totals to the observed values. Keep each rate at or above its previous value; if a rate falls, add the missing test instead of lowering the floor.
-    - Touch only these entries.
+- **`testCohorts.runners.vitest.files`**:
+  - add the new files `tests/client/daily-briefing-blocks.test.ts`, `tests/client/daily-briefing-block-matrix.test.tsx` and `tests/client/daily-briefing-schedule-tab.test.tsx`;
+  - change the case lists of `checkbox-field.test.tsx`, `daily-briefing-management.test.tsx`, `daily-briefing-workspace.test.tsx`, `daily-briefing-admin.test.tsx`, `announcements-briefing-admin.test.tsx` and `daily-briefing-admin-mirror-fence.test.tsx`. Copy them exactly from `.quality/vitest-list.json`.
+
+  Then run `node tools/verify-test-cohorts.mjs --expected tests/fixtures/assembly-cohort.json --raw-dir .quality --candidate "$MP_CANDIDATE_ID" --runners node,vitest` and fix every difference.
+
+- **`testCohorts.runners.playwright.files`**: run `npx playwright test --list --reporter=json > .quality/pw-list.json`. Add the new test's spec id under the `tests/e2e/daily-briefing.spec.ts` entry, keyed exactly as its siblings are. Existing titles do not change.
+- **`coveragePolicy.files`**:
+  - Run `npm run check:coverage`.
+  - Add entries (layer `client`) for `src/client/daily-briefing/admin/briefingBlocks.ts`, `BlockMatrix.tsx`, `BriefingScheduleTab.tsx`, `BriefingAutomationCard.tsx` and `BriefingMemberBar.tsx`, with the observed totals and rates.
+  - **Remove** the `BriefingMemberPills.tsx` entry.
+  - For `DailyBriefingManagement.tsx`, `BriefingWorkspace.tsx` and `CheckboxField.tsx`, set the totals to the observed values. Keep each rate at or above its previous value; if a rate falls, add the missing test instead of lowering the floor.
+  - Touch only these entries.
 
 - [ ] **Step 6: Commit, then the standard gate from a clean tree**
 
@@ -2611,6 +2766,7 @@ MP_CANDIDATE_ID=$(node tools/candidate-identity.mjs) npm run check:standard
 ```
 
 Expected: PASS. Common fixes:
+
 - `npx prettier --write <touched files>`
 - `check:accessible-names`: every cell and pause checkbox is named through its hidden label, and the drag handles through `aria-label`.
 - `check:ui-debt`: inline styles go up by exactly 1, from the BlockMatrix row; never edit the baselines.
@@ -2647,6 +2803,7 @@ Expected: PASS. If it reports Playwright inventory drift, fix `testCohorts.runne
 ## Orchestrator addendum (from the shared-pills wave, PR #40)
 
 Shared components landed with the API in the shared-pills spec, no deviations. Address these leftovers from its final review in this rework:
+
 - `BriefingWorkspace` still renders an sr-only `<select>` next to the member radiogroup: screen readers get two controls for one choice. Remove it.
 - Arrow keys on the member radiogroup now select a member immediately (native radio behaviour). Make sure that selecting a member on arrow-key focus does not trigger expensive loads in a way that feels broken (debounce or load on settle), or document why it is fine.
 - If any weekday pill row remains inside a `grid-cols-7`, centre the pills under their headers (the shared `PillControl` base is left-aligned).
