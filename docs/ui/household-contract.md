@@ -67,8 +67,9 @@ The ordered capability table is:
 10. `/admin/time-announcements` — time announcements
 11. `/admin/network-devices` — network devices
 12. `/admin/printing` — pair/re-pair, test print, print history
-13. `/admin/settings` — language, time zone and week start, plus the day periods and, while the
-    weather plugin is active, the weather location
+13. `/admin/settings` — language, week start and time zone, plus the day periods and, while the
+    weather plugin is active, the weather location, with one Save for language, week start, time
+    zone and weather (the day periods keep their own save)
 
 Every destination is reached from the admin sidebar, grouped as Household, Daily briefing and
 System.
