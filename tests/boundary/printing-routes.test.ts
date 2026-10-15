@@ -670,7 +670,11 @@ describe("printing routes", () => {
       });
 
       expect(res.statusCode).toBe(200);
-      expect(JSON.parse(res.body)).toEqual({ targetDate: today, resetRecords: 1, cancelledJobs: 1 });
+      expect(JSON.parse(res.body)).toEqual({
+        targetDate: today,
+        resetRecords: 1,
+        cancelledJobs: 1,
+      });
     } finally {
       await app.close();
     }

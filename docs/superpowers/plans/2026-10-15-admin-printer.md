@@ -66,19 +66,21 @@ Run: `npx vitest run tests/client/printing-management.test.tsx tests/client/prin
 Expected: all PASS. If anything fails before you change code, stop and report it.
 
 - [ ] **Step 4: Commit** `git add docs/superpowers && git commit -m "docs(printer): add admin printer spec and plan"`.
-  If every git command is refused in your worktree (known for isolated agents in this repo), leave
-  all work uncommitted, keep going, and at the end report the full list of touched/created files.
+      If every git command is refused in your worktree (known for isolated agents in this repo), leave
+      all work uncommitted, keep going, and at the end report the full list of touched/created files.
 
 ---
 
 ### Task 1: Core `resetTodaysPrints`
 
 **Files:**
+
 - Modify: `src/shared/index.ts` (add DTO after `PrintingStatusResponse`, ~line 970)
 - Modify: `src/server/modules/printing/index.ts` (add function after `supersedePrintRecord`, ~line 549; extend the shared type import at lines 19-27)
 - Test: `tests/boundary/printing-core.test.ts`
 
 **Interfaces:**
+
 - Produces: `export interface ResetTodayPrintsResponse { targetDate: string; resetRecords: number; cancelledJobs: number; }` in `src/shared/index.ts`
 - Produces: `export function resetTodaysPrints(now: number): ResetTodayPrintsResponse` in `src/server/modules/printing/index.ts` (throws `PrintingPluginInactiveError` when inactive)
 
@@ -99,87 +101,87 @@ export interface ResetTodayPrintsResponse {
 - [ ] **Step 2: Write the failing tests.** In `tests/boundary/printing-core.test.ts` add `resetTodaysPrints` and `hasTerminalFailedJob` to the import list from `../../src/server/modules/printing/index` (lines 10-31), then add this `describe` block right before the `describe("registerPrintableProvider — fetch-at-execute resolution (research D4)"` block:
 
 ```ts
-  describe("resetTodaysPrints — admin reset of today's print (FR-016)", () => {
-    it("makes a printed record printable again; the next enqueue creates a new job", () => {
-      const params = { recordKey: "reset-printed", targetDate: TARGET_DATE, outputRef: "x" };
-      const first = enqueuePrintJob(params, ANCHOR_MS);
-      const claimed = claimJob(ANCHOR_MS)!;
-      ackJob(claimed.job.id, claimed.leaseToken, ANCHOR_MS + 1);
-      expect(enqueuePrintJob(params, ANCHOR_MS + 2).alreadyPrinted).toBe(true);
+describe("resetTodaysPrints — admin reset of today's print (FR-016)", () => {
+  it("makes a printed record printable again; the next enqueue creates a new job", () => {
+    const params = { recordKey: "reset-printed", targetDate: TARGET_DATE, outputRef: "x" };
+    const first = enqueuePrintJob(params, ANCHOR_MS);
+    const claimed = claimJob(ANCHOR_MS)!;
+    ackJob(claimed.job.id, claimed.leaseToken, ANCHOR_MS + 1);
+    expect(enqueuePrintJob(params, ANCHOR_MS + 2).alreadyPrinted).toBe(true);
 
-      expect(resetTodaysPrints(ANCHOR_MS + 3)).toEqual({
-        targetDate: TARGET_DATE,
-        resetRecords: 1,
-        cancelledJobs: 0,
-      });
-
-      const again = enqueuePrintJob(params, ANCHOR_MS + 4);
-      expect(again.enqueued).toBe(true);
-      expect(again.jobId).not.toBe(first.jobId);
-      const printed = listJobs(ANCHOR_MS).jobs.find((j) => j.id === first.jobId)!;
-      expect(printed.state).toBe("printed"); // history kept
+    expect(resetTodaysPrints(ANCHOR_MS + 3)).toEqual({
+      targetDate: TARGET_DATE,
+      resetRecords: 1,
+      cancelledJobs: 0,
     });
 
-    it("cancels today's pending jobs and leaves other dates alone", () => {
-      enqueuePrintJob(
-        { recordKey: "reset-pending", targetDate: TARGET_DATE, outputRef: "x" },
-        ANCHOR_MS
-      );
-      enqueuePrintJob(
-        { recordKey: "reset-other-day", targetDate: "2026-06-20", outputRef: "y" },
-        ANCHOR_MS
-      );
+    const again = enqueuePrintJob(params, ANCHOR_MS + 4);
+    expect(again.enqueued).toBe(true);
+    expect(again.jobId).not.toBe(first.jobId);
+    const printed = listJobs(ANCHOR_MS).jobs.find((j) => j.id === first.jobId)!;
+    expect(printed.state).toBe("printed"); // history kept
+  });
 
-      const result = resetTodaysPrints(ANCHOR_MS + 1);
+  it("cancels today's pending jobs and leaves other dates alone", () => {
+    enqueuePrintJob(
+      { recordKey: "reset-pending", targetDate: TARGET_DATE, outputRef: "x" },
+      ANCHOR_MS
+    );
+    enqueuePrintJob(
+      { recordKey: "reset-other-day", targetDate: "2026-06-20", outputRef: "y" },
+      ANCHOR_MS
+    );
 
-      expect(result).toEqual({ targetDate: TARGET_DATE, resetRecords: 1, cancelledJobs: 1 });
-      const jobs = listJobs(ANCHOR_MS + 1).jobs;
-      expect(jobs.find((j) => j.recordKey === "reset-pending")!.state).toBe("cancelled");
-      expect(jobs.find((j) => j.recordKey === "reset-other-day")!.state).toBe("pending");
-    });
+    const result = resetTodaysPrints(ANCHOR_MS + 1);
 
-    it("leaves a fetched-in-flight job running and does not count it (H2)", () => {
-      enqueuePrintJob(
-        { recordKey: "test-print:reset-inflight", targetDate: TARGET_DATE, outputRef: "x" },
-        ANCHOR_MS
-      );
-      const claimed = claimJob(ANCHOR_MS)!;
-      getPayload(claimed.job.id, claimed.leaseToken, ANCHOR_MS + 1);
+    expect(result).toEqual({ targetDate: TARGET_DATE, resetRecords: 1, cancelledJobs: 1 });
+    const jobs = listJobs(ANCHOR_MS + 1).jobs;
+    expect(jobs.find((j) => j.recordKey === "reset-pending")!.state).toBe("cancelled");
+    expect(jobs.find((j) => j.recordKey === "reset-other-day")!.state).toBe("pending");
+  });
 
-      const result = resetTodaysPrints(ANCHOR_MS + 2);
+  it("leaves a fetched-in-flight job running and does not count it (H2)", () => {
+    enqueuePrintJob(
+      { recordKey: "test-print:reset-inflight", targetDate: TARGET_DATE, outputRef: "x" },
+      ANCHOR_MS
+    );
+    const claimed = claimJob(ANCHOR_MS)!;
+    getPayload(claimed.job.id, claimed.leaseToken, ANCHOR_MS + 1);
 
-      expect(result.cancelledJobs).toBe(0);
-      const job = listJobs(ANCHOR_MS + 2).jobs.find((j) => j.id === claimed.job.id)!;
-      expect(job.state).toBe("claimed");
-    });
+    const result = resetTodaysPrints(ANCHOR_MS + 2);
 
-    it("clears a dead-letter gate so a level-triggered producer can enqueue again", () => {
-      enqueuePrintJob(
-        { recordKey: "reset-dead", targetDate: TARGET_DATE, outputRef: "x" },
-        ANCHOR_MS
-      );
-      const claimed = claimJob(ANCHOR_MS)!;
-      failJob(claimed.job.id, claimed.leaseToken, ANCHOR_MS + 1, "boom", "render_failure");
-      expect(hasTerminalFailedJob("reset-dead", TARGET_DATE)).toBe(true);
+    expect(result.cancelledJobs).toBe(0);
+    const job = listJobs(ANCHOR_MS + 2).jobs.find((j) => j.id === claimed.job.id)!;
+    expect(job.state).toBe("claimed");
+  });
 
-      resetTodaysPrints(ANCHOR_MS + 2);
+  it("clears a dead-letter gate so a level-triggered producer can enqueue again", () => {
+    enqueuePrintJob(
+      { recordKey: "reset-dead", targetDate: TARGET_DATE, outputRef: "x" },
+      ANCHOR_MS
+    );
+    const claimed = claimJob(ANCHOR_MS)!;
+    failJob(claimed.job.id, claimed.leaseToken, ANCHOR_MS + 1, "boom", "render_failure");
+    expect(hasTerminalFailedJob("reset-dead", TARGET_DATE)).toBe(true);
 
-      expect(hasTerminalFailedJob("reset-dead", TARGET_DATE)).toBe(false);
-    });
+    resetTodaysPrints(ANCHOR_MS + 2);
 
-    it("returns zeros when nothing exists for today", () => {
-      expect(resetTodaysPrints(ANCHOR_MS)).toEqual({
-        targetDate: TARGET_DATE,
-        resetRecords: 0,
-        cancelledJobs: 0,
-      });
-    });
+    expect(hasTerminalFailedJob("reset-dead", TARGET_DATE)).toBe(false);
+  });
 
-    it("throws PrintingPluginInactiveError while the plugin is inactive", () => {
-      __setPrintingPluginActiveForTests(false);
-      expect(() => resetTodaysPrints(ANCHOR_MS)).toThrow(PrintingPluginInactiveError);
+  it("returns zeros when nothing exists for today", () => {
+    expect(resetTodaysPrints(ANCHOR_MS)).toEqual({
+      targetDate: TARGET_DATE,
+      resetRecords: 0,
+      cancelledJobs: 0,
     });
   });
+
+  it("throws PrintingPluginInactiveError while the plugin is inactive", () => {
+    __setPrintingPluginActiveForTests(false);
+    expect(() => resetTodaysPrints(ANCHOR_MS)).toThrow(PrintingPluginInactiveError);
+  });
+});
 ```
 
 - [ ] **Step 3: Run and see it fail**
@@ -235,6 +237,7 @@ Expected: PASS (all, including the new block).
 ### Task 2: `POST /api/printing/reset-today` route, contract and docs
 
 **Files:**
+
 - Modify: `src/server/routes/printing.ts` (import list lines 2-17; new handler after the `GET /api/printing/status` handler)
 - Modify: `docs/api/printing/openapi.yaml` (schema after `PrintingStatusResponse`; path after `/api/printing/test-print`)
 - Modify: `tests/fixtures/assembly-cohort.json` (`pluginRoutes`)
@@ -242,6 +245,7 @@ Expected: PASS (all, including the new block).
 - Test: `tests/boundary/printing-routes.test.ts`
 
 **Interfaces:**
+
 - Consumes: `resetTodaysPrints(now)` and `ResetTodayPrintsResponse` from Task 1.
 - Produces: `POST /api/printing/reset-today` → 200 `ResetTodayPrintsResponse`; 400 `{error:"validation_error"}` for a non-object body or any body field; 409 `{error:"plugin_inactive"}`.
 
@@ -250,64 +254,64 @@ Expected: PASS (all, including the new block).
   - `enqueuePrintJob`, `todayInHouseholdTz` and `__setPrintingPluginActiveForTests` are already imported (lines 5-11); append these tests inside the top-level `describe` (before its closing `});`):
 
 ```ts
-  // ── POST /reset-today — admin "reset today's print" (FR-016) ──────────
+// ── POST /reset-today — admin "reset today's print" (FR-016) ──────────
 
-  it("POST /reset-today — 200 makes today's test print printable again", async () => {
-    const deviceKey = await provisionRealDeviceKey();
-    const app = await buildApp();
-    try {
-      const today = todayInHouseholdTz(Date.now());
-      enqueuePrintJob(
-        { recordKey: "test-print", targetDate: today, outputRef: `test-print:${today}` },
-        Date.now()
-      );
+it("POST /reset-today — 200 makes today's test print printable again", async () => {
+  const deviceKey = await provisionRealDeviceKey();
+  const app = await buildApp();
+  try {
+    const today = todayInHouseholdTz(Date.now());
+    enqueuePrintJob(
+      { recordKey: "test-print", targetDate: today, outputRef: `test-print:${today}` },
+      Date.now()
+    );
 
-      const res = await app.inject({
-        method: "POST",
-        url: "/api/printing/reset-today",
-        cookies: { mp_device_key: deviceKey },
-      });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/printing/reset-today",
+      cookies: { mp_device_key: deviceKey },
+    });
 
-      expect(res.statusCode).toBe(200);
-      expect(JSON.parse(res.body)).toEqual({ targetDate: today, resetRecords: 1, cancelledJobs: 1 });
-    } finally {
-      await app.close();
-    }
-  });
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(res.body)).toEqual({ targetDate: today, resetRecords: 1, cancelledJobs: 1 });
+  } finally {
+    await app.close();
+  }
+});
 
-  it("POST /reset-today — 400 when the body carries any field", async () => {
-    const deviceKey = await provisionRealDeviceKey();
-    const app = await buildApp();
-    try {
-      const res = await app.inject({
-        method: "POST",
-        url: "/api/printing/reset-today",
-        cookies: { mp_device_key: deviceKey },
-        payload: { targetDate: "2026-06-15" },
-      });
-      expect(res.statusCode).toBe(400);
-      expect(JSON.parse(res.body).error).toBe("validation_error");
-    } finally {
-      await app.close();
-    }
-  });
+it("POST /reset-today — 400 when the body carries any field", async () => {
+  const deviceKey = await provisionRealDeviceKey();
+  const app = await buildApp();
+  try {
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/printing/reset-today",
+      cookies: { mp_device_key: deviceKey },
+      payload: { targetDate: "2026-06-15" },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.body).error).toBe("validation_error");
+  } finally {
+    await app.close();
+  }
+});
 
-  it("POST /reset-today — 409 plugin_inactive while the printing plugin is inactive", async () => {
-    const deviceKey = await provisionRealDeviceKey();
-    const app = await buildApp();
-    try {
-      __setPrintingPluginActiveForTests(false);
-      const res = await app.inject({
-        method: "POST",
-        url: "/api/printing/reset-today",
-        cookies: { mp_device_key: deviceKey },
-      });
-      expect(res.statusCode).toBe(409);
-      expect(JSON.parse(res.body).error).toBe("plugin_inactive");
-    } finally {
-      await app.close();
-    }
-  });
+it("POST /reset-today — 409 plugin_inactive while the printing plugin is inactive", async () => {
+  const deviceKey = await provisionRealDeviceKey();
+  const app = await buildApp();
+  try {
+    __setPrintingPluginActiveForTests(false);
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/printing/reset-today",
+      cookies: { mp_device_key: deviceKey },
+    });
+    expect(res.statusCode).toBe(409);
+    expect(JSON.parse(res.body).error).toBe("plugin_inactive");
+  } finally {
+    await app.close();
+  }
+});
 ```
 
 - [ ] **Step 2: Run and see them fail**
@@ -318,28 +322,28 @@ Expected: the three new tests FAIL with 404 (the 401 matrix may already pass bec
 - [ ] **Step 3: Implement the route.** Add `resetTodaysPrints,` to the import list from `../modules/printing/index` and add after the `/api/printing/status` handler:
 
 ```ts
-  // FR-016: admin "reset today's print" — every print record of household-today becomes
-  // printable again (supersede); takes no body.
-  app.post("/api/printing/reset-today", async (request: FastifyRequest, reply: FastifyReply) => {
-    const body = request.body === undefined ? {} : request.body;
-    if (body === null || typeof body !== "object" || Array.isArray(body)) {
-      return reply
-        .code(400)
-        .send({ error: "validation_error", message: "Request body must be an object" });
-    }
-    const unknownKeys = Object.keys(body);
-    if (unknownKeys.length > 0) {
-      return reply.code(400).send({
-        error: "validation_error",
-        message: `Unsupported field(s) in reset-today body: ${unknownKeys.join(", ")}`,
-      });
-    }
-    try {
-      return reply.code(200).send(resetTodaysPrints(Date.now()));
-    } catch (err) {
-      return handlePrintingError(err, reply);
-    }
-  });
+// FR-016: admin "reset today's print" — every print record of household-today becomes
+// printable again (supersede); takes no body.
+app.post("/api/printing/reset-today", async (request: FastifyRequest, reply: FastifyReply) => {
+  const body = request.body === undefined ? {} : request.body;
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
+    return reply
+      .code(400)
+      .send({ error: "validation_error", message: "Request body must be an object" });
+  }
+  const unknownKeys = Object.keys(body);
+  if (unknownKeys.length > 0) {
+    return reply.code(400).send({
+      error: "validation_error",
+      message: `Unsupported field(s) in reset-today body: ${unknownKeys.join(", ")}`,
+    });
+  }
+  try {
+    return reply.code(200).send(resetTodaysPrints(Date.now()));
+  } catch (err) {
+    return handlePrintingError(err, reply);
+  }
+});
 ```
 
 - [ ] **Step 4: Run and see them pass**
@@ -350,68 +354,68 @@ Expected: PASS.
 - [ ] **Step 5: OpenAPI.** In `docs/api/printing/openapi.yaml`, add under `components/schemas` right after `PrintingStatusResponse`:
 
 ```yaml
-    ResetTodayPrintsResponse:
-      type: object
-      required:
-        - targetDate
-        - resetRecords
-        - cancelledJobs
-      additionalProperties: false
-      properties:
-        targetDate:
-          type: string
-          description: household-local today (YYYY-MM-DD) whose print records were reset
-        resetRecords:
-          type: integer
-          minimum: 0
-          description: print records made printable again (superseded)
-        cancelledJobs:
-          type: integer
-          minimum: 0
-          description: pending or claimed-not-yet-fetched jobs cancelled; fetched jobs finish (H2)
+ResetTodayPrintsResponse:
+  type: object
+  required:
+    - targetDate
+    - resetRecords
+    - cancelledJobs
+  additionalProperties: false
+  properties:
+    targetDate:
+      type: string
+      description: household-local today (YYYY-MM-DD) whose print records were reset
+    resetRecords:
+      type: integer
+      minimum: 0
+      description: print records made printable again (superseded)
+    cancelledJobs:
+      type: integer
+      minimum: 0
+      description: pending or claimed-not-yet-fetched jobs cancelled; fetched jobs finish (H2)
 ```
 
 and under `paths`, right after the whole `/api/printing/test-print:` block (before `/api/printing/jobs:`):
 
 ```yaml
-  /api/printing/reset-today:
-    post:
-      summary: >-
-        admin "reset today's print" (FR-016) — supersede every print record of household-today so
-        it can print again; cancels pending and claimed-not-yet-fetched jobs. Takes no body.
-      responses:
-        "429":
-          $ref: "#/components/responses/AuthenticationBackoff"
-        "200":
-          description: today's print records were reset (zero counts when nothing existed)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResetTodayPrintsResponse"
-        "400":
-          description: a request body with any field
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Missing, ambiguous or invalid API credential (shared authentication boundary).
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthUnauthorized"
-        "409":
-          description: printing plugin inactive (FR-013)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "503":
-          description: The owning plugin is inactive or unavailable.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PluginUnavailable"
+/api/printing/reset-today:
+  post:
+    summary: >-
+      admin "reset today's print" (FR-016) — supersede every print record of household-today so
+      it can print again; cancels pending and claimed-not-yet-fetched jobs. Takes no body.
+    responses:
+      "429":
+        $ref: "#/components/responses/AuthenticationBackoff"
+      "200":
+        description: today's print records were reset (zero counts when nothing existed)
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetTodayPrintsResponse"
+      "400":
+        description: a request body with any field
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ErrorResponse"
+      "401":
+        description: Missing, ambiguous or invalid API credential (shared authentication boundary).
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthUnauthorized"
+      "409":
+        description: printing plugin inactive (FR-013)
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ErrorResponse"
+      "503":
+        description: The owning plugin is inactive or unavailable.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PluginUnavailable"
 ```
 
 - [ ] **Step 6: Cohort route list.** In `tests/fixtures/assembly-cohort.json` `pluginRoutes`, insert between the `POST /api/printing/jobs/{id}/fail` and `POST /api/printing/test-print` entries:
@@ -441,10 +445,12 @@ Expected: both exit 0. (`check:openapi` reads the cohort route list; if it repor
 ### Task 3: Transport `pair()` returns the device identity and honours a preference
 
 **Files:**
+
 - Modify: `src/client/printing/transport.ts`
 - Test: `tests/client/printing-transport.test.ts`
 
 **Interfaces:**
+
 - Produces (exported from `src/client/printing/transport.ts`):
   - `export type PrinterEndpointPreference = Partial<Pick<PrinterTransportSettings, "serviceUuid" | "characteristicUuid">>;`
   - `PrintTransport.pair(preference?: PrinterEndpointPreference): Promise<PrinterTransportSettings>`
@@ -457,75 +463,75 @@ Expected: both exit 0. (`check:openapi` reads the cohort route list; if it repor
 Inside `describe("createFakePrintTransport (byte recorder + scriptable failures/disconnects)", ...)` add:
 
 ```ts
-  it("pair() resolves the fake identity, honouring a preferred service/characteristic", async () => {
-    const fake = createFakePrintTransport();
-    await expect(fake.pair()).resolves.toEqual(FAKE_PRINTER_IDENTITY);
-    await expect(
-      fake.pair({
-        serviceUuid: "000018f0-0000-1000-8000-00805f9b34fb",
-        characteristicUuid: "00002af1-0000-1000-8000-00805f9b34fb",
-      })
-    ).resolves.toEqual({
-      ...FAKE_PRINTER_IDENTITY,
+it("pair() resolves the fake identity, honouring a preferred service/characteristic", async () => {
+  const fake = createFakePrintTransport();
+  await expect(fake.pair()).resolves.toEqual(FAKE_PRINTER_IDENTITY);
+  await expect(
+    fake.pair({
       serviceUuid: "000018f0-0000-1000-8000-00805f9b34fb",
       characteristicUuid: "00002af1-0000-1000-8000-00805f9b34fb",
-    });
+    })
+  ).resolves.toEqual({
+    ...FAKE_PRINTER_IDENTITY,
+    serviceUuid: "000018f0-0000-1000-8000-00805f9b34fb",
+    characteristicUuid: "00002af1-0000-1000-8000-00805f9b34fb",
   });
+});
 ```
 
 Inside `describe("createBluetoothPrintTransport pair() requestDevice filter shape (P1-1 regression)", ...)` add:
 
 ```ts
-  it("orderCandidateServices puts a preferred service first without duplicating it", () => {
-    expect(orderCandidateServices()).toEqual(BLUETOOTH_PRINTER_CANDIDATE_SERVICES);
-    const preferred = "49535343-FE7D-4AE5-8FA9-9FAFD205E455";
-    const ordered = orderCandidateServices(preferred);
-    expect(ordered[0]).toBe(preferred.toLowerCase());
-    expect(ordered).toHaveLength(BLUETOOTH_PRINTER_CANDIDATE_SERVICES.length);
+it("orderCandidateServices puts a preferred service first without duplicating it", () => {
+  expect(orderCandidateServices()).toEqual(BLUETOOTH_PRINTER_CANDIDATE_SERVICES);
+  const preferred = "49535343-FE7D-4AE5-8FA9-9FAFD205E455";
+  const ordered = orderCandidateServices(preferred);
+  expect(ordered[0]).toBe(preferred.toLowerCase());
+  expect(ordered).toHaveLength(BLUETOOTH_PRINTER_CANDIDATE_SERVICES.length);
+});
+
+it("pair() resolves the device identity and prefers the stored service and characteristic", async () => {
+  const preferredService = "49535343-fe7d-4ae5-8fa9-9fafd205e455";
+  const preferredCharacteristic = "49535343-8841-43f4-a8d4-ecbe34729bb3";
+  const writable = (uuid: string) => ({
+    uuid,
+    properties: { write: true, writeWithoutResponse: false },
+  });
+  const getPrimaryService = vi.fn(async (id: number | string) => ({
+    uuid: String(id),
+    getCharacteristics: async () => [
+      writable("0000ffff-0000-1000-8000-00805f9b34fb"),
+      writable(preferredCharacteristic),
+    ],
+  }));
+  const device = {
+    id: "dev-1",
+    name: "Thermal X",
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    gatt: {
+      connected: true,
+      connect: vi.fn(async () => ({ getPrimaryService })),
+      disconnect: vi.fn(),
+    },
+  };
+  const requestDevice = vi.fn().mockResolvedValue(device);
+  vi.stubGlobal("navigator", { ...globalThis.navigator, bluetooth: { requestDevice } });
+
+  const identity = await createBluetoothPrintTransport().pair({
+    serviceUuid: preferredService,
+    characteristicUuid: preferredCharacteristic,
   });
 
-  it("pair() resolves the device identity and prefers the stored service and characteristic", async () => {
-    const preferredService = "49535343-fe7d-4ae5-8fa9-9fafd205e455";
-    const preferredCharacteristic = "49535343-8841-43f4-a8d4-ecbe34729bb3";
-    const writable = (uuid: string) => ({
-      uuid,
-      properties: { write: true, writeWithoutResponse: false },
-    });
-    const getPrimaryService = vi.fn(async (id: number | string) => ({
-      uuid: String(id),
-      getCharacteristics: async () => [
-        writable("0000ffff-0000-1000-8000-00805f9b34fb"),
-        writable(preferredCharacteristic),
-      ],
-    }));
-    const device = {
-      id: "dev-1",
-      name: "Thermal X",
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      gatt: {
-        connected: true,
-        connect: vi.fn(async () => ({ getPrimaryService })),
-        disconnect: vi.fn(),
-      },
-    };
-    const requestDevice = vi.fn().mockResolvedValue(device);
-    vi.stubGlobal("navigator", { ...globalThis.navigator, bluetooth: { requestDevice } });
-
-    const identity = await createBluetoothPrintTransport().pair({
-      serviceUuid: preferredService,
-      characteristicUuid: preferredCharacteristic,
-    });
-
-    expect(requestDevice.mock.calls[0][0].optionalServices[0]).toBe(preferredService);
-    expect(getPrimaryService).toHaveBeenNthCalledWith(1, preferredService);
-    expect(identity).toEqual({
-      deviceId: "dev-1",
-      name: "Thermal X",
-      serviceUuid: preferredService,
-      characteristicUuid: preferredCharacteristic,
-    });
+  expect(requestDevice.mock.calls[0][0].optionalServices[0]).toBe(preferredService);
+  expect(getPrimaryService).toHaveBeenNthCalledWith(1, preferredService);
+  expect(identity).toEqual({
+    deviceId: "dev-1",
+    name: "Thermal X",
+    serviceUuid: preferredService,
+    characteristicUuid: preferredCharacteristic,
   });
+});
 ```
 
 The existing filter-shape test (no preference) must keep passing unchanged: with no preference
@@ -559,7 +565,7 @@ Expected: FAIL (missing exports; `pair()` resolves `undefined`).
     },
 ```
 
-  4. After `BLUETOOTH_PRINTER_FILTER_SERVICE`, add:
+4. After `BLUETOOTH_PRINTER_FILTER_SERVICE`, add:
 
 ```ts
 /** The candidate services in try order: a stored preference (lower-cased) first, then the v1
@@ -575,7 +581,7 @@ export function orderCandidateServices(preferred?: string): (number | string)[] 
 }
 ```
 
-  5. Replace the Bluetooth transport's `pair()` body with:
+5. Replace the Bluetooth transport's `pair()` body with:
 
 ```ts
     async pair(preference) {
@@ -631,9 +637,9 @@ export function orderCandidateServices(preferred?: string): (number | string)[] 
     },
 ```
 
-  Also update the module doc's sentence "no persisted `deviceId`/`getDevices` silent-reconnect path"
-  to add: "the stored `printerTransport` UUIDs are only a try-first preference; pairing still needs
-  the gesture".
+Also update the module doc's sentence "no persisted `deviceId`/`getDevices` silent-reconnect path"
+to add: "the stored `printerTransport` UUIDs are only a try-first preference; pairing still needs
+the gesture".
 
 - [ ] **Step 4: Run and see them pass**
 
@@ -647,12 +653,14 @@ Expected: PASS. (Typecheck errors in `PrintExecutor.tsx` are fixed in Task 4; do
 ### Task 4: Printer session exposes `pairedDevice` and `pair(preference)`
 
 **Files:**
+
 - Modify: `src/client/printing/PrintExecutor.tsx`
 - Modify: `src/client/printing/PrinterAttention.tsx:39`
 - Modify: `src/client/admin/PrintingManagement.tsx:125` (temporary one-line fix; rewritten in Task 7)
 - Test: `tests/client/printing-executor.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `PrinterEndpointPreference`, `PrintTransport.pair(preference)` from Task 3.
 - Produces: `PrinterSession` (exported from `src/client/printing/PrintExecutor.tsx`, re-exported hook `usePrinterSession` from `@/printing/PrinterSession`):
 
@@ -672,12 +680,10 @@ export interface PrinterSession {
   - in `ExecutorSessionProbe`, change `onClick={session.pair}` to `onClick={() => session.pair()}` and add, after the pair button block:
 
 ```tsx
-      <output data-testid="print-executor-paired-device">
-        {session.pairedDevice?.deviceId ?? ""}
-      </output>
+<output data-testid="print-executor-paired-device">{session.pairedDevice?.deviceId ?? ""}</output>
 ```
 
-  - add inside `describe("PrintExecutor", ...)`:
+- add inside `describe("PrintExecutor", ...)`:
 
 ```ts
   it("exposes the paired device identity after a successful pair", async () => {
@@ -740,34 +746,34 @@ Expected: the two new tests FAIL (`pairedDevice` undefined / preference not forw
   - replace `handlePair` with:
 
 ```ts
-  const handlePair = useCallback(
-    (preference?: PrinterEndpointPreference) => {
-      setConnection("pairing");
-      setLastError(null);
-      transport
-        .pair(preference)
-        // FR-021/ADR-035: capability registration happens HERE, before this promise chain ever
-        // lets the poll effect see connection === "paired" (no first-claim race).
-        .then(async (identity) => {
-          await registerCapability();
-          return identity;
-        })
-        .then((identity) => {
-          setPairedDevice(identity);
-          setConnection("paired");
-        })
-        .catch((err: unknown) => {
-          // (keep the existing comment about disconnecting the orphaned GATT connection)
-          transport.disconnect();
-          setConnection("unpaired");
-          setLastError(describeError(err));
-        });
-    },
-    [registerCapability, transport]
-  );
+const handlePair = useCallback(
+  (preference?: PrinterEndpointPreference) => {
+    setConnection("pairing");
+    setLastError(null);
+    transport
+      .pair(preference)
+      // FR-021/ADR-035: capability registration happens HERE, before this promise chain ever
+      // lets the poll effect see connection === "paired" (no first-claim race).
+      .then(async (identity) => {
+        await registerCapability();
+        return identity;
+      })
+      .then((identity) => {
+        setPairedDevice(identity);
+        setConnection("paired");
+      })
+      .catch((err: unknown) => {
+        // (keep the existing comment about disconnecting the orphaned GATT connection)
+        transport.disconnect();
+        setConnection("unpaired");
+        setLastError(describeError(err));
+      });
+  },
+  [registerCapability, transport]
+);
 ```
 
-  - add `pairedDevice,` to BOTH provider values (the inactive-plugin value object and `session`).
+- add `pairedDevice,` to BOTH provider values (the inactive-plugin value object and `session`).
 - [ ] **Step 4: Fix the two other call sites** (TypeScript rejects passing a click event as the preference):
   - `src/client/printing/PrinterAttention.tsx:39`: `onClick={() => session.pair()}`
   - `src/client/admin/PrintingManagement.tsx:125`: `onClick={() => printerSession.pair()}`
@@ -784,12 +790,14 @@ Expected: PASS, typecheck exit 0.
 ### Task 5: i18n block and the Diagnostics tab
 
 **Files:**
+
 - Modify: `src/client/i18n/messages.ts` (two `// admin-printer` blocks)
 - Create: `src/client/admin/printer/PrinterDiagnosticsTab.tsx`
 - Create: `tests/client/helpers/fetchRoutes.ts`
 - Create: `tests/client/printer-diagnostics-tab.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `POST /api/printing/reset-today` (Task 2), `ResetTodayPrintsResponse` (Task 1).
 - Produces:
   - `export function PrinterDiagnosticsTab(): React.JSX.Element` (root `data-testid="printer-diagnostics"`)
@@ -1048,7 +1056,9 @@ describe("PrinterDiagnosticsTab — recent prints", () => {
     expect(within(brief).getByText("render_failure: provider error")).toBeInTheDocument();
     expect(screen.getByTestId("printing-job-state-j-brief")).toHaveTextContent("Dead-lettered");
     expect(screen.getByTestId("printing-job-state-j-brief")).toHaveAttribute("role", "alert");
-    expect(within(screen.getByTestId("printing-job-j-test")).getByText("Test print")).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("printing-job-j-test")).getByText("Test print")
+    ).toBeInTheDocument();
     const other = screen.getByTestId("printing-job-j-other");
     expect(within(other).getByText("custom-producer:1")).toBeInTheDocument();
     expect(within(other).getByText("—")).toBeInTheDocument(); // unknown member
@@ -1065,7 +1075,9 @@ describe("PrinterDiagnosticsTab — recent prints", () => {
   });
 
   it("shows at most RECENT_PRINTS_LIMIT rows and says so", async () => {
-    const many = Array.from({ length: RECENT_PRINTS_LIMIT + 5 }, (_, i) => makeJob({ id: `j${i}` }));
+    const many = Array.from({ length: RECENT_PRINTS_LIMIT + 5 }, (_, i) =>
+      makeJob({ id: `j${i}` })
+    );
     routes(many);
     renderTab();
     await flush();
@@ -1083,12 +1095,15 @@ describe("PrinterDiagnosticsTab — recent prints", () => {
   it("offers Retry after a jobs load failure and recovers", async () => {
     let fail = true;
     stubFetchRoutes({
-      "GET /api/printing/jobs": () => (fail ? json({ error: "x" }, 500) : json({ jobs: [makeJob()] })),
+      "GET /api/printing/jobs": () =>
+        fail ? json({ error: "x" }, 500) : json({ jobs: [makeJob()] }),
       "GET /api/members?lifecycle=all": () => json(MEMBERS),
     });
     renderTab();
     await flush();
-    expect(screen.getByTestId("printing-list-error")).toHaveTextContent("Failed to load print jobs.");
+    expect(screen.getByTestId("printing-list-error")).toHaveTextContent(
+      "Failed to load print jobs."
+    );
     fail = false;
     fireEvent.click(screen.getByTestId("printing-jobs-retry"));
     await flush();
@@ -1101,7 +1116,9 @@ describe("PrinterDiagnosticsTab — recent prints", () => {
     await flush();
     fireEvent.click(screen.getByTestId("printing-jobs-refresh"));
     await flush();
-    const jobReads = mock.mock.calls.filter(([input]) => String(input).endsWith("/api/printing/jobs"));
+    const jobReads = mock.mock.calls.filter(([input]) =>
+      String(input).endsWith("/api/printing/jobs")
+    );
     expect(jobReads).toHaveLength(2);
   });
 });
@@ -1109,7 +1126,11 @@ describe("PrinterDiagnosticsTab — recent prints", () => {
 describe("PrinterDiagnosticsTab — test print", () => {
   it.each([
     [json({ enqueued: true, jobId: "j9" }), "Test print enqueued.", false],
-    [json({ enqueued: false, jobId: "j9", alreadyPrinted: true }), "Already printed for today — not re-enqueued.", false],
+    [
+      json({ enqueued: false, jobId: "j9", alreadyPrinted: true }),
+      "Already printed for today — not re-enqueued.",
+      false,
+    ],
     [json({ error: "plugin_inactive" }, 409), "The Printing plugin is inactive.", true],
     [json({ error: "x" }, 500), "Failed to trigger the test print.", true],
   ])("shows the trigger outcome (%#)", async (response, message, isAlert) => {
@@ -1143,7 +1164,9 @@ describe("PrinterDiagnosticsTab — reset today's print", () => {
     expect(screen.getByTestId("printing-reset-today-result")).toHaveTextContent(
       "Today's print was reset: 2 record(s) can print again, 1 queued job(s) cancelled."
     );
-    const jobReads = mock.mock.calls.filter(([input]) => String(input).endsWith("/api/printing/jobs"));
+    const jobReads = mock.mock.calls.filter(([input]) =>
+      String(input).endsWith("/api/printing/jobs")
+    );
     expect(jobReads).toHaveLength(2);
   });
 
@@ -1421,7 +1444,10 @@ export function PrinterDiagnosticsTab(): React.JSX.Element {
           <p className="text-muted-foreground text-sm">{t("printing.management.loading")}</p>
         ) : listFailed ? (
           <div className="flex flex-col items-start gap-3">
-            <ErrorNotice message={t("printing.management.loadError")} data-testid="printing-list-error" />
+            <ErrorNotice
+              message={t("printing.management.loadError")}
+              data-testid="printing-list-error"
+            />
             <Button
               type="button"
               variant="outline"
@@ -1509,8 +1535,8 @@ export function PrinterDiagnosticsTab(): React.JSX.Element {
 }
 ```
 
-  The table cell `<ErrorNotice>` renders a `<p>` inside a `<td>`, which is valid. Only coloured
-  scale classes (`text-red-600`, `bg-gray-100`, …) count as UI debt; `text-sm`/`text-lg` are fine.
+The table cell `<ErrorNotice>` renders a `<p>` inside a `<td>`, which is valid. Only coloured
+scale classes (`text-red-600`, `bg-gray-100`, …) count as UI debt; `text-sm`/`text-lg` are fine.
 
 - [ ] **Step 5: Run and see them pass**
 
@@ -1524,10 +1550,12 @@ Expected: PASS / exit 0. If request keys never match, print `String(input)` once
 ### Task 6: Settings tab
 
 **Files:**
+
 - Create: `src/client/admin/printer/PrinterSettingsTab.tsx`
 - Create: `tests/client/printer-settings-tab.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `usePrinterSession()` → `PrinterSession` with `pairedDevice`, `pair(preference?)` (Task 4); `FAKE_PRINTER_IDENTITY` (Task 3, tests only); i18n keys (Task 5); `stubFetchRoutes`, `json` (Task 5).
 - Produces:
   - `export function PrinterSettingsTab(): React.JSX.Element` (root `data-testid="printer-settings"`)
@@ -1571,7 +1599,11 @@ const KITCHEN = {
 };
 
 function settings(printerTransport = EMPTY, paperWidthDots = 576) {
-  return { locale: { timezone: "Europe/Madrid", language: "en", weekStartDay: 1 }, printer: { paperWidthDots }, printerTransport };
+  return {
+    locale: { timezone: "Europe/Madrid", language: "en", weekStartDay: 1 },
+    printer: { paperWidthDots },
+    printerTransport,
+  };
 }
 
 async function flush(times = 30): Promise<void> {
@@ -1630,7 +1662,9 @@ describe("printer settings helpers", () => {
     expect(isTransportValid(KITCHEN)).toBe(true);
     expect(isTransportValid({ ...EMPTY, name: "Kitchen" })).toBe(false);
     // a UUID whose version nibble is not 1-5 is rejected, like the server does
-    expect(isTransportValid({ ...KITCHEN, serviceUuid: "49535343-fe7d-fae5-8fa9-9fafd205e455" })).toBe(false);
+    expect(
+      isTransportValid({ ...KITCHEN, serviceUuid: "49535343-fe7d-fae5-8fa9-9fafd205e455" })
+    ).toBe(false);
   });
 });
 
@@ -1651,7 +1685,9 @@ describe("PrinterSettingsTab", () => {
 
   it("offers Retry when the settings cannot be loaded", async () => {
     let fail = true;
-    baseRoutes({ "GET /api/settings": () => (fail ? json({ error: "x" }, 500) : json(settings())) });
+    baseRoutes({
+      "GET /api/settings": () => (fail ? json({ error: "x" }, 500) : json(settings())),
+    });
     renderTab();
     await flush();
     expect(screen.getByTestId("printer-settings-error")).toHaveTextContent(
@@ -1995,8 +2031,7 @@ export function PrinterSettingsTab(): React.JSX.Element {
   const transportValid = isTransportValid(transport);
   const widthChanged = baseline !== null && width !== null && width !== baseline.paperWidthDots;
   const transportChanged = baseline !== null && !sameTransport(transport, baseline.transport);
-  const canSave =
-    !saving && width !== null && transportValid && (widthChanged || transportChanged);
+  const canSave = !saving && width !== null && transportValid && (widthChanged || transportChanged);
 
   function editTransport(patch: Partial<PrinterTransportSettings>): void {
     setTransport((current) => ({ ...current, ...patch }));
@@ -2211,7 +2246,11 @@ export function PrinterSettingsTab(): React.JSX.Element {
           {saving ? t("admin.printer.saving") : t("admin.printer.save")}
         </Button>
         {saved && (
-          <p className="text-muted-foreground text-sm" data-testid="printer-settings-saved" role="status">
+          <p
+            className="text-muted-foreground text-sm"
+            data-testid="printer-settings-saved"
+            role="status"
+          >
             {t("admin.printer.saved")}
           </p>
         )}
@@ -2223,6 +2262,7 @@ export function PrinterSettingsTab(): React.JSX.Element {
 ```
 
 Notes for the implementer:
+
 - The form is a plain `div`, not `<form>`, so Enter does nothing surprising; Save is the only write.
 - `pairedUnsaved` clears only after a successful save, matching the test.
 - If `jsdom` reports `toHaveValue(576)` as a string for `type="number"`, keep the number assertion: Testing Library returns numbers for number inputs.
@@ -2239,11 +2279,13 @@ Expected: PASS / exit 0.
 ### Task 7: Page shell and the existing page tests
 
 **Files:**
+
 - Modify (rewrite): `src/client/admin/PrintingManagement.tsx`
 - Modify (rewrite): `tests/client/printing-management.test.tsx`
 - Modify: `tests/client/printing-surfaces.test.tsx` (the four `PrintingManagement — ...` describe blocks, lines 126-end)
 
 **Interfaces:**
+
 - Consumes: `PrinterSettingsTab`, `PrinterDiagnosticsTab` (Tasks 5-6).
 - Produces: `export function PrintingManagement(): React.JSX.Element` (unchanged name/export; root testid `printing-management`; tab testids `printing-tab-settings`, `printing-tab-diagnostics`).
 
@@ -2305,7 +2347,9 @@ describe("PrintingManagement", () => {
     expect(screen.getByTestId("printing-tab-settings")).toHaveAttribute("aria-selected", "true");
     expect(screen.getByTestId("printer-settings")).toBeInTheDocument();
     expect(screen.queryByTestId("printer-diagnostics")).not.toBeInTheDocument();
-    expect(mock.mock.calls.some(([input]) => String(input).endsWith("/api/printing/jobs"))).toBe(false);
+    expect(mock.mock.calls.some(([input]) => String(input).endsWith("/api/printing/jobs"))).toBe(
+      false
+    );
 
     fireEvent.click(screen.getByTestId("printing-tab-diagnostics"));
     await flush();
@@ -2409,14 +2453,15 @@ async function openDiagnostics(): Promise<void> {
 }
 ```
 
-  Then adapt each test:
-  - **AdminPanel adoption**: unchanged intent; assert the region is labelled "Printer".
-  - **shared printer session**: `printerRoutes([])`, render inside `PrinterSessionProvider`, `await screen.findByTestId("printing-management-pair")` (Settings tab), click, assert a call to `/api/printing/capability` (unchanged assertion).
-  - **kiosk density** (three tests): open Diagnostics before measuring. Census on Diagnostics with a loaded table = 5 controls (2 tabs + test print + reset + refresh); while the trigger is in flight = 5 (test print and reset disabled, still mounted); after an unhealthy result = 5. The jobs-load-failure variant = 6 (adds `printing-jobs-retry`). For the in-flight phase, register `"POST /api/printing/test-print"` in `extra` with a handler returning a promise you resolve later (`() => new Promise<Response>((resolve) => { resolveTrigger = () => resolve(jsonResponse({ error: "plugin_inactive" }, 409)); })`). Add one more phase on the Settings tab (no session provider, auto-print readable): expected 10 controls (2 tabs, plugin link, auto-print link, paper width, name, device id, service UUID, characteristic UUID, save). These counts are derived from the DOM described in Tasks 5-7; if the real census differs, print `Array.from(document.querySelectorAll(CENSUS_CONTROL_SELECTOR)).map((e) => e.outerHTML.slice(0, 80))`, confirm every counted control is intentional, use the real number, and write a one-line comment listing what is counted. `assertKioskDensityCompliant` must pass in every phase; if a control fails it (for example the readonly input or the in-`<details>` inputs), fix the component styling, not the test.
-  - **DELIBERATE NEGATIVE**: unchanged mechanics, on Diagnostics, targeting `printing-trigger-test-print`.
-  - **ErrorNotice announcements**: open Diagnostics first; the jobs-load failure alert text stays "Failed to load print jobs."; dead-letter row state is the alert, the pending row is not; plugin-inactive trigger result is an alert; enqueued result is not.
+Then adapt each test:
 
-  Note: with `stubFetchRoutes`, do not also call `vi.stubGlobal("fetch", ...)` in those tests.
+- **AdminPanel adoption**: unchanged intent; assert the region is labelled "Printer".
+- **shared printer session**: `printerRoutes([])`, render inside `PrinterSessionProvider`, `await screen.findByTestId("printing-management-pair")` (Settings tab), click, assert a call to `/api/printing/capability` (unchanged assertion).
+- **kiosk density** (three tests): open Diagnostics before measuring. Census on Diagnostics with a loaded table = 5 controls (2 tabs + test print + reset + refresh); while the trigger is in flight = 5 (test print and reset disabled, still mounted); after an unhealthy result = 5. The jobs-load-failure variant = 6 (adds `printing-jobs-retry`). For the in-flight phase, register `"POST /api/printing/test-print"` in `extra` with a handler returning a promise you resolve later (`() => new Promise<Response>((resolve) => { resolveTrigger = () => resolve(jsonResponse({ error: "plugin_inactive" }, 409)); })`). Add one more phase on the Settings tab (no session provider, auto-print readable): expected 10 controls (2 tabs, plugin link, auto-print link, paper width, name, device id, service UUID, characteristic UUID, save). These counts are derived from the DOM described in Tasks 5-7; if the real census differs, print `Array.from(document.querySelectorAll(CENSUS_CONTROL_SELECTOR)).map((e) => e.outerHTML.slice(0, 80))`, confirm every counted control is intentional, use the real number, and write a one-line comment listing what is counted. `assertKioskDensityCompliant` must pass in every phase; if a control fails it (for example the readonly input or the in-`<details>` inputs), fix the component styling, not the test.
+- **DELIBERATE NEGATIVE**: unchanged mechanics, on Diagnostics, targeting `printing-trigger-test-print`.
+- **ErrorNotice announcements**: open Diagnostics first; the jobs-load failure alert text stays "Failed to load print jobs."; dead-letter row state is the alert, the pending row is not; plugin-inactive trigger result is an alert; enqueued result is not.
+
+Note: with `stubFetchRoutes`, do not also call `vi.stubGlobal("fetch", ...)` in those tests.
 
 - [ ] **Step 5: Run the printing client suite**
 
@@ -2430,6 +2475,7 @@ Expected: PASS. `admin-gate*.test.tsx` and `shell-routes.test.tsx` only check th
 ### Task 8: E2E specs and UI contract doc
 
 **Files:**
+
 - Modify: `tests/e2e/printing.spec.ts`
 - Modify: `tests/e2e/daily-briefing.spec.ts:943-946` and `:1031-1034`
 - Modify: `tests/e2e/admin-unlock-resilience.spec.ts:141-143`
@@ -2444,74 +2490,73 @@ Expected: PASS. `admin-gate*.test.tsx` and `shell-routes.test.tsx` only check th
   3. At the end of the first test (after the `testPrintJobsToday` assertion, ~line 299) append:
 
 ```ts
-  // 11) Reset today's print (FR-016) through the real UI: the same record becomes printable and
-  // a new test print is enqueued and printed by the paired executor.
-  const resetResponse = page.waitForResponse(
-    (response) =>
-      response.url().includes("/api/printing/reset-today") && response.request().method() === "POST"
-  );
-  await page.getByTestId("printing-reset-today").click();
-  await page.getByTestId("printing-reset-today-confirm").click();
-  const resetBody = (await (await resetResponse).json()) as {
-    resetRecords: number;
-    cancelledJobs: number;
-  };
-  expect(resetBody.resetRecords).toBeGreaterThanOrEqual(1);
-  await expect(page.getByTestId("printing-reset-today-result")).toBeVisible();
+// 11) Reset today's print (FR-016) through the real UI: the same record becomes printable and
+// a new test print is enqueued and printed by the paired executor.
+const resetResponse = page.waitForResponse(
+  (response) =>
+    response.url().includes("/api/printing/reset-today") && response.request().method() === "POST"
+);
+await page.getByTestId("printing-reset-today").click();
+await page.getByTestId("printing-reset-today-confirm").click();
+const resetBody = (await (await resetResponse).json()) as {
+  resetRecords: number;
+  cancelledJobs: number;
+};
+expect(resetBody.resetRecords).toBeGreaterThanOrEqual(1);
+await expect(page.getByTestId("printing-reset-today-result")).toBeVisible();
 
-  const thirdTriggerResponse = page.waitForResponse(
-    (response) =>
-      response.url().includes("/api/printing/test-print") && response.request().method() === "POST"
-  );
-  await page.getByTestId("printing-trigger-test-print").click();
-  const thirdTriggerBody = (await (await thirdTriggerResponse).json()) as {
-    enqueued: boolean;
-    jobId: string | null;
-  };
-  expect(thirdTriggerBody.enqueued).toBe(true);
-  expect(thirdTriggerBody.jobId).not.toBe(jobId);
-  await expect
-    .poll(async () => (await fetchJob(page.request, thirdTriggerBody.jobId!))?.derivedState, {
-      timeout: 15_000,
-      intervals: [100],
-    })
-    .toBe("printed");
+const thirdTriggerResponse = page.waitForResponse(
+  (response) =>
+    response.url().includes("/api/printing/test-print") && response.request().method() === "POST"
+);
+await page.getByTestId("printing-trigger-test-print").click();
+const thirdTriggerBody = (await (await thirdTriggerResponse).json()) as {
+  enqueued: boolean;
+  jobId: string | null;
+};
+expect(thirdTriggerBody.enqueued).toBe(true);
+expect(thirdTriggerBody.jobId).not.toBe(jobId);
+await expect
+  .poll(async () => (await fetchJob(page.request, thirdTriggerBody.jobId!))?.derivedState, {
+    timeout: 15_000,
+    intervals: [100],
+  })
+  .toBe("printed");
 ```
 
-  4. In the second test, after `await expect(page.getByTestId("printing-management-pair")).toBeHidden({ timeout: 10_000 });` append (Settings tab is the default):
+4. In the second test, after `await expect(page.getByTestId("printing-management-pair")).toBeHidden({ timeout: 10_000 });` append (Settings tab is the default):
 
 ```ts
-  // Pairing fills the printer fields from the fake transport; Save writes printerTransport.
-  try {
-    await expect(page.getByTestId("printer-device-id")).toHaveValue("fake-printer");
-    const saveResponse = page.waitForResponse(
-      (response) =>
-        response.url().endsWith("/api/settings") && response.request().method() === "PUT"
-    );
-    await page.getByTestId("printer-settings-save").click();
-    expect((await saveResponse).status()).toBe(200);
-    await expect(page.getByTestId("printer-settings-saved")).toBeVisible();
-    const stored = (await (await page.request.get("/api/settings")).json()) as {
-      printerTransport?: { deviceId: string };
-    };
-    expect(stored.printerTransport?.deviceId).toBe("fake-printer");
-  } finally {
-    await page.request.put("/api/settings", {
-      data: {
-        object: "printerTransport",
-        settings: { deviceId: "", name: "", serviceUuid: "", characteristicUuid: "" },
-      },
-    });
-  }
+// Pairing fills the printer fields from the fake transport; Save writes printerTransport.
+try {
+  await expect(page.getByTestId("printer-device-id")).toHaveValue("fake-printer");
+  const saveResponse = page.waitForResponse(
+    (response) => response.url().endsWith("/api/settings") && response.request().method() === "PUT"
+  );
+  await page.getByTestId("printer-settings-save").click();
+  expect((await saveResponse).status()).toBe(200);
+  await expect(page.getByTestId("printer-settings-saved")).toBeVisible();
+  const stored = (await (await page.request.get("/api/settings")).json()) as {
+    printerTransport?: { deviceId: string };
+  };
+  expect(stored.printerTransport?.deviceId).toBe("fake-printer");
+} finally {
+  await page.request.put("/api/settings", {
+    data: {
+      object: "printerTransport",
+      settings: { deviceId: "", name: "", serviceUuid: "", characteristicUuid: "" },
+    },
+  });
+}
 ```
 
 - [ ] **Step 2: `tests/e2e/daily-briefing.spec.ts`**: after each of the two
-  `await expect(page.getByTestId("printing-management")).toBeVisible();` lines (943-944 and
-  1031-1032) insert `await page.getByTestId("printing-tab-diagnostics").click();`. Change nothing else
-  in that file (another worker edits it).
+      `await expect(page.getByTestId("printing-management")).toBeVisible();` lines (943-944 and
+      1031-1032) insert `await page.getByTestId("printing-tab-diagnostics").click();`. Change nothing else
+      in that file (another worker edits it).
 
 - [ ] **Step 3: `tests/e2e/admin-unlock-resilience.spec.ts:141-143`**: the printer page's primary
-  action is now the tab control visible on load:
+      action is now the tab control visible on load:
 
 ```ts
   {
@@ -2528,7 +2573,7 @@ Expected: PASS. `admin-gate*.test.tsx` and `shell-routes.test.tsx` only check th
     Diagnostics tab (test print, reset today's print, recent prints)
 ```
 
-  `docs/features/printing.md`: append after FR-016:
+`docs/features/printing.md`: append after FR-016:
 
 ```markdown
 - **FR-017**: Given the admin Printer page, when an admin edits the paper width or the Bluetooth printer and saves, then the client MUST write the `printer` and `printerTransport` settings objects (one object per request, only the changed ones); pairing MUST resolve the device identity (device id, name, service and characteristic UUIDs) and fill those fields without persisting them, and the stored UUIDs MUST be offered to the next pairing as a try-first preference. Pairing outside the admin page never writes settings. Auto-print stays owned by Daily Briefing and is shown read-only.
@@ -2550,11 +2595,12 @@ re-run only the failing spec, then re-run this full command.
 ### Task 9: Cohort resync and the verification gate
 
 **Files:**
+
 - Modify: `tests/fixtures/assembly-cohort.json` (`testCohorts`, `coveragePolicy`)
 
 - [ ] **Step 1: Commit everything first** — `check:standard` must run on a clean, committed tree
-  (`git status` shows nothing). If git is refused in your worktree, run the gate anyway and say so in
-  the report.
+      (`git status` shows nothing). If git is refused in your worktree, run the gate anyway and say so in
+      the report.
 
 - [ ] **Step 2: Run the gate once to collect evidence**
 
@@ -2602,9 +2648,9 @@ if any source changed since it last passed.
 ### Task 10: Commit on the worktree branch and report
 
 - [ ] **Step 1:** `git status` is clean and `git log --oneline main..HEAD` lists the task commits
-  (including the spec/plan copy).
+      (including the spec/plan copy).
 - [ ] **Step 2:** Report back: branch name, final commit SHA, `npm run check:standard` result,
-  the exact Playwright command and its pass count (PORT=43203), the list of files created/modified,
-  and any deviation from this plan with its reason (for example a changed density census count).
-  If git was refused in the worktree, report the worktree path and the full list of touched and
-  created files instead of a SHA so the coordinator can collect the work by patch.
+      the exact Playwright command and its pass count (PORT=43203), the list of files created/modified,
+      and any deviation from this plan with its reason (for example a changed density census count).
+      If git was refused in the worktree, report the worktree path and the full list of touched and
+      created files instead of a SHA so the coordinator can collect the work by patch.

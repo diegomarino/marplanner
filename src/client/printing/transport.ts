@@ -200,6 +200,7 @@ export const FAKE_PRINTER_IDENTITY: PrinterTransportSettings = {
   serviceUuid: "e7810a71-73ae-499d-8c15-faa9aef0c3f2",
   characteristicUuid: "bef8d6c9-9c21-4c9e-b632-bd58c1009f9f",
 };
+
 const DEFAULT_PRINT_FAILURE = (): PrintTransportError =>
   new PrintTransportError("write_failed", "scripted write failure");
 
