@@ -443,6 +443,10 @@
     },
     {
       "method": "POST",
+      "path": "/api/printing/reset-today"
+    },
+    {
+      "method": "POST",
       "path": "/api/printing/test-print"
     },
     {

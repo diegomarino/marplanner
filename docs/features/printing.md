@@ -78,6 +78,7 @@ can be printed again without a stale duplicate slipping through.
 - **FR-014**: Given a future producer rendering to the device render context, when it delivers a raster, then delivery MUST be unchanged. Contract: PRINTING-AC-07.
 
 - **FR-015**: Given a producer calls `supersedePrintRecord` on regeneration, when it is processed, then the print record MUST be superseded (re-printable) and any pending or claimed-not-yet-fetched print job MUST be cancelled; already-fetched bytes MAY finish transmitting, but their acknowledgement MUST NOT mark the replacement generation printed. Contract: PRINTING-AC-08.
+- **FR-016**: Given an admin resets today's print, when the request is processed, then every print record of the household's current date MUST be superseded (re-printable) and its pending or claimed-not-yet-fetched jobs cancelled exactly as FR-015, fetched-in-flight jobs MAY finish, printed job history MUST be kept, and the response MUST report the reset record and cancelled job counts. Inactive plugin: refused like enqueue (FR-013). Contract: `POST /api/printing/reset-today`.
 
 ### Key Entities
 
