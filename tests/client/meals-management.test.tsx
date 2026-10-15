@@ -95,6 +95,9 @@ function mockBackend(overrides: Partial<Record<string, () => Response>> = {}) {
     if (overrides.weekMenu && url.startsWith("/api/menu/week")) {
       return Promise.resolve(overrides.weekMenu());
     }
+    if (url.startsWith("/api/menu/week")) {
+      return Promise.resolve(json(emptyWeek()));
+    }
     if (url.startsWith("/api/menu")) {
       return Promise.resolve(json([]));
     }
@@ -104,6 +107,27 @@ function mockBackend(overrides: Partial<Record<string, () => Response>> = {}) {
 
   vi.stubGlobal("fetch", mockFetch);
   return mockFetch;
+}
+
+/** A 7-day week with every slot empty, as `GET /api/menu/week` returns it. */
+function emptyWeek(start = "2026-01-12") {
+  return Object.fromEntries(
+    Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(`${start}T12:00:00Z`);
+      d.setUTCDate(d.getUTCDate() + i);
+      return [d.toISOString().slice(0, 10), { breakfast: [], lunch: [], snack: [], dinner: [] }];
+    })
+  );
+}
+
+/** The recipe card (Recipes renders last, after the week grid and the plan cards). */
+function recipeCard(): HTMLElement {
+  return screen.getByRole("heading", { name: RECIPE.name }).closest("div.border") as HTMLElement;
+}
+
+/** The first plan card. */
+function planCard(): HTMLElement {
+  return screen.getAllByTestId("meals-plan-card")[0];
 }
 
 function renderSurface() {
@@ -154,8 +178,14 @@ afterEach(() => {
   document.documentElement.removeAttribute("data-density");
 });
 
+// Measured control counts per phase (re-measure when the surface gains or loses a control).
+const PHASE_1_COUNT = 74;
+const PHASE_2_COUNT = 74;
+const PHASE_3_COUNT = 69;
+const PHASE_4_COUNT = 76;
+
 describe("MealsManagement — kiosk density (SC-001, SC-002, SC-003, FR-011)", () => {
-  it("meets kiosk density across every rendered control — recipe edit, plan rename, an open ConfirmDialog, expanded plan panel, and both content modes across three phases", async () => {
+  it("meets kiosk density across every rendered control — recipe edit, plan rename, an open ConfirmDialog, plan entries, the in-card recurring form, the grid entry dialog, and both content modes across four phases", async () => {
     mockBackend();
     // CheckboxField/RadioField (recipe slots, content-mode) render a `size-[var(--control-height)]`
     // utility — outside the density helper's base candidate list (`densityStyles.ts` header),
@@ -171,38 +201,32 @@ describe("MealsManagement — kiosk density (SC-001, SC-002, SC-003, FR-011)", (
       await screen.findByRole("heading", { name: RECIPE.name });
       await screen.findByTestId("meals-plan-card");
 
-      // Phase 1 — the surface's DEFAULT content-mode state (independent, round
-      // 2, item 1): `EntryAuthoringForm`, `RecurringEntryAuthoringForm` and `PlanEntryRow` all
-      // start in "recipe" content mode (the latter because RECURRING_ENTRY carries a recipeId),
-      // so `#meals-entry-recipe-select` and `#meals-recurring-recipe-select` — measured by the
-      // original single-state test, then dropped by the two-phase revision that switched every
-      // content-mode group to "note" before ever asserting — are captured HERE, before phase 2
-      // switches away. `#meals-plan-rename-input` (never measured in ANY prior revision) is
-      // reached the same way: the plan's own "Edit" button, opened here and left open through
-      // every later phase (it does not conflict with content mode or the recipe/dialog state).
+      // Phase 1 — the surface's DEFAULT content-mode state: the in-card recurring form and the
+      // opened `PlanEntryRow` both start in "recipe" content mode (the latter because
+      // RECURRING_ENTRY carries a recipeId), so both recipe selects are captured HERE, before
+      // phase 2 switches away. The recipe edit form and the plan rename input are opened here and
+      // left open through the later phases.
       //
       // Done BEFORE any dialog opens: Radix marks the rest of the page `aria-hidden`/inert while
       // a dialog is open, so these controls could not be reached (by role, the correct way — a
       // real kiosk user could not reach them either) once phase 3 opens one.
 
-      // Switch the recipe into edit mode: name/ingredients/instructions/4 slot checkboxes.
-      // `getAllByRole` because MealPlanCard's own "Edit" (rename) button is already on the page
-      // too — the recipe's is first in document order (Recipes section renders before Meal
-      // Plans).
-      fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0]);
+      // Switch the recipe into edit mode: name/ingredients/instructions/4 slot checkboxes. The
+      // card element is captured first: its heading is gone while it is editing.
+      const recipe = recipeCard();
+      fireEvent.click(within(recipe).getByRole("button", { name: "Edit" }));
       await screen.findByTestId("meals-recipe-edit-name");
 
-      // Open the plan's OWN rename control — now the only remaining "Edit" button on the page
-      // (the recipe's is hidden while it is itself editing).
-      fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+      // Open the plan's OWN rename control — the first "Edit" inside the plan card (the entry
+      // row's own "Edit" follows it).
+      fireEvent.click(within(planCard()).getAllByRole("button", { name: "Edit" })[0]);
       await screen.findByTestId("meals-plan-rename-input");
 
-      // Expand the plan panel so PlanEntryRow's controls (weekday/slot text, edit/delete,
-      // and — once opened for edit — RadioField/select/Input, defaulting to "recipe" mode) are
-      // also in the measured set.
-      fireEvent.click(screen.getByTestId("meals-plan-toggle-entries"));
+      // Open the always-visible entry row for edit, and the card's own recurring-entry form.
       const entryRow = await screen.findByTestId("meals-plan-entry-row");
       fireEvent.click(within(entryRow).getByRole("button", { name: "Edit" }));
+      fireEvent.click(screen.getByTestId("meals-plan-add-recurring"));
+      await screen.findByTestId("meals-recurring-recipe-select");
 
       // Asserted over document.body rather than a local `container` throughout this test, even
       // before any dialog is open — matching the frozen helper's own SC-003 idiom and avoiding a
@@ -212,36 +236,43 @@ describe("MealsManagement — kiosk density (SC-001, SC-002, SC-003, FR-011)", (
       // control but fails to drive an interaction that reaches it shrinks this number — with no
       // count check, `assertKioskDensityCompliant` stays green regardless, because it only
       // checks the controls it WAS given, never how many there should have been.
-      expect(countInteractiveControls(document.body)).toBe(47);
+      expect(countInteractiveControls(document.body)).toBe(PHASE_1_COUNT);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
-      // Phase 2 — switch every content-mode radio group to "note" so the three note-mode inputs
-      // (the top-level entry form, the recurring-entry form, and this expanded PlanEntryRow) are
-      // ALSO measured. This is the other half of the original defect: the recipe-mode
-      // selects were measured in phase 1 above, so switching away from them here is a state
-      // transition, not a loss — nothing that was reachable in phase 1 was reachable ONLY in a
-      // state phase 2 then hides for good.
+      // Phase 2 — switch every content-mode radio group to "note" so the note-mode inputs (the
+      // in-card recurring form and the opened PlanEntryRow) are ALSO measured. The recipe-mode
+      // selects were measured in phase 1, so switching away from them here is a state
+      // transition, not a loss.
       for (const radio of screen.getAllByRole("radio", { name: "Note" })) {
         fireEvent.click(radio);
       }
       await screen.findAllByPlaceholderText("Entry note");
 
-      expect(countInteractiveControls(document.body)).toBe(47);
+      expect(countInteractiveControls(document.body)).toBe(PHASE_2_COUNT);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
       // Phase 3 — SC-003: an open ConfirmDialog, portalled by Radix to document.body, OUTSIDE
-      // the rendering surface. The recipe's Delete button only renders outside its own edit mode
-      // (mutually exclusive with phase 1's edit-mode controls in the same card), so cancel back
-      // out of it first — the FIRST "Cancel" in document order (Recipes section precedes Meal
-      // Plans; the plan rename and the expanded PlanEntryRow edit both stay open through this
-      // phase, untouched by this click).
-      fireEvent.click(screen.getAllByRole("button", { name: "Cancel" })[0]);
+      // the rendering surface. The recipe's Delete button only renders outside its own edit mode,
+      // so cancel back out of it first.
+      fireEvent.click(within(recipe).getByRole("button", { name: "Cancel" }));
       await waitFor(() => expect(screen.queryByTestId("meals-recipe-edit-name")).toBeNull());
 
-      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+      fireEvent.click(within(recipe).getByRole("button", { name: "Delete" }));
       await screen.findByRole("dialog");
 
-      expect(countInteractiveControls(document.body)).toBe(42);
+      expect(countInteractiveControls(document.body)).toBe(PHASE_3_COUNT);
+      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
+
+      // Phase 4 — the week grid's entry dialog, opened from an empty cell and switched to
+      // "Every <weekday>" so the Repeat pills and the plan select are measured too.
+      fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cancel" }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      fireEvent.click(screen.getAllByRole("button", { name: /^Add breakfast on/ })[0]);
+      const entryDialog = await screen.findByRole("dialog");
+      fireEvent.click(within(entryDialog).getByRole("radio", { name: /^Every / }));
+      await within(entryDialog).findByRole("combobox", { name: "Meal Plan" });
+
+      expect(countInteractiveControls(document.body)).toBe(PHASE_4_COUNT);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
@@ -301,12 +332,42 @@ describe("MealsManagement — error states are announced (SC-011)", () => {
     expect(alert).toHaveTextContent("Failed to load meals data.");
   });
 
-  it("announces the day-menu load failure", async () => {
-    mockBackend({ menu: () => json(null, 500) });
+  it("announces the week-menu load failure and Retry reloads it", async () => {
+    let weekFails = true;
+    mockBackend({ weekMenu: () => (weekFails ? json(null, 500) : json(emptyWeek())) });
     renderSurface();
 
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Failed to load the menu.");
+    expect(alert).toHaveTextContent("Failed to load the week menu.");
+
+    weekFails = false;
+    fireEvent.click(screen.getByTestId("meals-week-retry"));
+    await waitFor(() => expect(screen.queryByTestId("meals-week-retry")).toBeNull());
+    expect(screen.getByTestId("meal-plan-grid")).toBeInTheDocument();
+    expect(screen.getByTestId("meal-day-heading-2026-01-12")).toBeInTheDocument();
+  });
+
+  it("retries the plan list after a load failure", async () => {
+    let plansFail = true;
+    mockBackend({ plans: () => (plansFail ? json(null, 500) : json([PLAN])) });
+    renderSurface();
+
+    expect(await screen.findByText("Failed to load meal plans.")).toBeInTheDocument();
+    plansFail = false;
+    fireEvent.click(screen.getByTestId("meals-plans-retry"));
+    expect(await screen.findByTestId("meals-plan-card")).toBeInTheDocument();
+  });
+
+  it("retries the recipe list after a load failure", async () => {
+    let recipesFail = true;
+    mockBackend({ recipes: () => (recipesFail ? json(null, 500) : json([RECIPE])) });
+    renderSurface();
+
+    expect(await screen.findByText("Failed to load meals data.")).toBeInTheDocument();
+    recipesFail = false;
+    fireEvent.click(screen.getByTestId("meals-recipes-retry"));
+    expect(await screen.findByRole("heading", { name: RECIPE.name })).toBeInTheDocument();
+    expect(screen.queryByTestId("meals-recipes-retry")).toBeNull();
   });
 
   it("announces the meal-plans load failure", async () => {
@@ -325,15 +386,20 @@ describe("MealsManagement — error states are announced (SC-011)", () => {
     expect(alert).toHaveTextContent("Failed to load the week menu.");
   });
 
-  it("announces a plan's entries-load failure once its panel is expanded", async () => {
-    mockBackend({ planEntries: () => json(null, 500) });
+  it("announces a plan's entries-load failure inside its card, and the card's Retry reloads it", async () => {
+    let entriesFail = true;
+    mockBackend({
+      planEntries: () => (entriesFail ? json(null, 500) : json([RECURRING_ENTRY])),
+    });
     renderSurface();
 
     await screen.findByTestId("meals-plan-card");
-    fireEvent.click(screen.getByTestId("meals-plan-toggle-entries"));
-
-    const alert = await screen.findByRole("alert");
+    const alert = await within(planCard()).findByRole("alert");
     expect(alert).toHaveTextContent("Failed to update plan entries.");
+
+    entriesFail = false;
+    fireEvent.click(within(planCard()).getByTestId("meals-plan-entries-retry"));
+    expect(await screen.findByTestId("meals-plan-entry-row")).toBeInTheDocument();
   });
 });
 
@@ -343,7 +409,7 @@ describe("MealsManagement — ConfirmDialog replaces window.confirm for recipe/e
     renderSurface();
 
     await screen.findByRole("heading", { name: RECIPE.name });
-    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(within(recipeCard()).getByRole("button", { name: "Delete" }));
 
     const dialog = await screen.findByRole("dialog");
     expect(dialog).toHaveTextContent("Delete this recipe?");
@@ -358,7 +424,7 @@ describe("MealsManagement — ConfirmDialog replaces window.confirm for recipe/e
     ).toHaveLength(0);
 
     // Now confirm.
-    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(within(recipeCard()).getByRole("button", { name: "Delete" }));
     const dialogAgain = await screen.findByRole("dialog");
     fireEvent.click(within(dialogAgain).getByRole("button", { name: "Delete" }));
 
@@ -379,7 +445,6 @@ describe("MealsManagement — ConfirmDialog replaces window.confirm for recipe/e
     renderSurface();
 
     await screen.findByTestId("meals-plan-card");
-    fireEvent.click(screen.getByTestId("meals-plan-toggle-entries"));
     const entryRow = await screen.findByTestId("meals-plan-entry-row");
 
     fireEvent.click(within(entryRow).getByRole("button", { name: "Delete" }));
@@ -413,13 +478,14 @@ describe("MealsManagement — ConfirmDialog replaces window.confirm for recipe/e
 });
 
 describe("MealsManagement — SLOT_LABEL_KEYS maps each slot to its own translation key (HIGH-2)", () => {
-  it("labels the entry-authoring slot select with each slot's own name, in slot order", async () => {
+  it("labels the recurring-entry slot select with each slot's own name, in slot order", async () => {
     mockBackend();
     renderSurface();
 
     await screen.findByRole("heading", { name: RECIPE.name });
+    fireEvent.click(await screen.findByTestId("meals-plan-add-recurring"));
 
-    const slotSelect = screen.getByTestId("meals-entry-slot-select") as HTMLSelectElement;
+    const slotSelect = screen.getByTestId("meals-recurring-slot-select") as HTMLSelectElement;
     const optionLabels = Array.from(slotSelect.options).map((option) => option.textContent);
     // Deliberately not a set/sorted comparison — a mislabelled map (e.g. breakfast <-> lunch
     // swapped) preserves the SET of labels while breaking which slot gets which one; only an
@@ -435,7 +501,7 @@ describe("MealsManagement — SLOT_LABEL_KEYS maps each slot to its own translat
 // batch doing the SAME `as MessageKey` -> typed-map refactor: assert EVERY map the refactor
 // creates, not just the one you happened to think of first — a refactor rarely touches only one.
 describe("MealsManagement — WEEKDAY_LABEL_KEYS maps each weekday to its own translation key, through i18n (HIGH-2 parity)", () => {
-  it("labels the recurring-entry weekday select with each weekday's own translated name, in canonical order, under a non-English household locale", async () => {
+  it("labels the recurring-entry weekday radios with each weekday's own translated name, in canonical order, under a non-English household locale", async () => {
     // Rendered in Spanish, not English: this is what actually falsifies a `weekdayLabels` call
     // site that swapped a `t(WEEKDAY_LABEL_KEYS.mon)` lookup for the English literal "Monday" —
     // in English that mutant would still read wrong ("Monday" vs the real "Mon"), but only a
@@ -447,14 +513,17 @@ describe("MealsManagement — WEEKDAY_LABEL_KEYS maps each weekday to its own tr
     await screen.findByRole("heading", { name: RECIPE.name });
     await screen.findByTestId("meals-plan-card");
 
-    const weekdaySelect = (await screen.findByTestId(
-      "meals-recurring-weekday-select"
-    )) as HTMLSelectElement;
-    const optionLabels = Array.from(weekdaySelect.options).map((option) => option.textContent);
+    fireEvent.click(screen.getByTestId("meals-plan-add-recurring"));
+    const weekdayGroup = (await screen.findByTestId("meals-recurring-weekday-mon")).closest(
+      '[role="radiogroup"]'
+    ) as HTMLElement;
+    const radios = within(weekdayGroup).getAllByRole("radio");
     // Deliberately order-and-content, not a set comparison — same rationale as the slot
     // assertion above: a mon<->tue swap in WEEKDAY_LABEL_KEYS preserves the SET of labels while
     // breaking which weekday gets which one.
-    expect(optionLabels).toEqual(["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]);
+    const expected = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+    expect(radios).toHaveLength(expected.length);
+    radios.forEach((radio, index) => expect(radio).toHaveAccessibleName(expected[index]));
   });
 });
 
@@ -484,7 +553,7 @@ describe("MealsManagement — RecipeCard edit-mode controls carry visible, assoc
     renderSurface();
 
     await screen.findByRole("heading", { name: RECIPE.name });
-    fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0]);
+    fireEvent.click(within(recipeCard()).getByRole("button", { name: "Edit" }));
     await screen.findByTestId("meals-recipe-edit-name");
 
     // demands a VISIBLE label, and `toHaveAccessibleName` alone cannot enforce that — a
@@ -511,34 +580,32 @@ describe("MealsManagement — RecipeCard edit-mode controls carry visible, assoc
 });
 
 describe("MealsManagement — the four -orphaned controls carry real accessible names (#771)", () => {
-  it("names the one-off, plan-rename, plan-entry and recurring recipe/name controls", async () => {
+  it("names the grid-dialog, plan-rename, plan-entry and recurring recipe/name controls", async () => {
     mockBackend();
     renderSurface();
 
     await screen.findByRole("heading", { name: RECIPE.name });
     await screen.findByTestId("meals-plan-card");
 
-    // `MealsManagement.tsx:902` — EntryAuthoringForm's recipe picker (default content mode,
-    // rendered without any interaction).
-    expect(screen.getByTestId("meals-entry-recipe-select")).toHaveAccessibleName("Recipe");
-
-    // `MealsManagement.tsx:1582` — RecurringEntryAuthoringForm's recipe picker (default content
-    // mode, rendered as soon as a plan exists — no interaction needed either).
+    // The in-card recurring form's recipe picker (default content mode), once the form is open.
+    fireEvent.click(screen.getByTestId("meals-plan-add-recurring"));
     expect(screen.getByTestId("meals-recurring-recipe-select")).toHaveAccessibleName("Recipe");
 
-    // `MealsManagement.tsx:1149` — the plan-rename input, reached via the plan card's OWN "Edit"
-    // button. `getAllByRole` because RecipeCard's "Edit" is still on the page too (not entered);
-    // the plan's is the SECOND "Edit" in document order (Recipes section renders first).
-    fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[1]);
+    // The plan-rename input, reached via the plan card's OWN "Edit" button — the first "Edit"
+    // inside the card (the entry row's follows it).
+    fireEvent.click(within(planCard()).getAllByRole("button", { name: "Edit" })[0]);
     expect(screen.getByTestId("meals-plan-rename-input")).toHaveAccessibleName("Plan name");
 
-    // `MealsManagement.tsx:1391` — PlanEntryRow's recipe picker, reached by expanding the plan
-    // panel and opening its (recipe-mode by default, since RECURRING_ENTRY carries a recipeId)
-    // entry row for edit.
-    fireEvent.click(screen.getByTestId("meals-plan-toggle-entries"));
+    // PlanEntryRow's recipe picker, opened for edit (recipe-mode by default, since
+    // RECURRING_ENTRY carries a recipeId).
     const entryRow = await screen.findByTestId("meals-plan-entry-row");
     fireEvent.click(within(entryRow).getByRole("button", { name: "Edit" }));
     expect(screen.getByTestId("meals-plan-entry-recipe-select")).toHaveAccessibleName("Recipe");
+
+    // The week grid's entry dialog recipe picker, opened from an empty cell.
+    fireEvent.click(screen.getAllByRole("button", { name: /^Add dinner on/ })[0]);
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("combobox", { name: "Recipe" })).toBeInTheDocument();
   });
 });
 
@@ -559,20 +626,22 @@ describe("MealsManagement — adopts the AdminPanel L2 frame (M20, independent r
     // pointing at its own `<h2>`, not from anything this surface writes itself. Region alone was
     // asserted since; this file's own heading assertions were all recipe-card titles
     // (measured 2026-09-10) — never the panel's own heading — until this retrofit.
-    expect(screen.getByRole("region", { name: "Meals Management" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Meals Management" })).toBeInTheDocument();
+    // The heading equals the sidebar label ("Meals").
+    expect(screen.getByRole("region", { name: "Meals" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Meals" })).toBeInTheDocument();
   });
 });
 
 describe("MealsManagement — accessible names (MEDIUM-b, MEDIUM-c)", () => {
-  it("gives the recurring-entry weekday select its own accessible group name", async () => {
+  it("gives the recurring-entry weekday radios their own accessible group name", async () => {
     mockBackend();
     renderSurface();
 
     await screen.findByRole("heading", { name: RECIPE.name });
-    await screen.findByTestId("meals-plan-card");
+    fireEvent.click(await screen.findByTestId("meals-plan-add-recurring"));
 
-    expect(screen.getByTestId("meals-recurring-weekday-select")).toHaveAccessibleName("Weekday");
+    expect(screen.getByRole("radiogroup", { name: "Weekday" })).toBeInTheDocument();
+    expect(screen.getByTestId("meals-recurring-weekday-mon")).toHaveAttribute("type", "radio");
   });
 
   it("gives the recipe-create slots fieldset its accessible group name", async () => {
@@ -615,5 +684,71 @@ describe("MealsManagement — MealPlanCard's StatusToggle accessible name is sta
     expect(toggle).toHaveAccessibleName(INACTIVE_PLAN.name);
     expect(toggle).toHaveTextContent("Activate");
     expect(toggle).toHaveAttribute("aria-pressed", "false");
+  });
+});
+
+describe("MealsManagement — each plan card contains its recurring entries", () => {
+  it("lists a plan's entries without a toggle, grouped by weekday", async () => {
+    mockBackend();
+    renderSurface();
+
+    const entries = await screen.findByTestId("meals-plan-entries-p1");
+    expect(await within(entries).findByText("Lentil Soup")).toBeInTheDocument();
+    expect(within(entries).getByRole("heading", { name: "Mon" })).toBeInTheDocument();
+    expect(screen.queryByTestId("meals-plan-toggle-entries")).toBeNull();
+  });
+
+  it("orders weekday groups and slots inside the card (week-start order, then slot order)", async () => {
+    mockBackend({
+      planEntries: () =>
+        json([
+          {
+            ...RECURRING_ENTRY,
+            id: "e3",
+            weekday: "sun",
+            slot: "breakfast",
+            note: "Sunday brunch",
+            recipeId: null,
+          },
+          {
+            ...RECURRING_ENTRY,
+            id: "e2",
+            weekday: "mon",
+            slot: "dinner",
+            note: "Mon dinner",
+            recipeId: null,
+          },
+          {
+            ...RECURRING_ENTRY,
+            id: "e1",
+            weekday: "mon",
+            slot: "breakfast",
+            note: "Mon breakfast",
+            recipeId: null,
+          },
+        ]),
+    });
+    renderSurface();
+
+    const entries = await screen.findByTestId("meals-plan-entries-p1");
+    await within(entries).findByText("Sunday brunch");
+    const rows = within(entries).getAllByTestId("meals-plan-entry-row");
+    expect(rows.map((row) => row.textContent)).toEqual([
+      expect.stringContaining("Mon breakfast"),
+      expect.stringContaining("Mon dinner"),
+      expect.stringContaining("Sunday brunch"),
+    ]);
+  });
+
+  it("shows the inactive hint on an inactive plan only", async () => {
+    mockBackend({ plans: () => json([PLAN, INACTIVE_PLAN]) });
+    renderSurface();
+
+    await screen.findAllByTestId("meals-plan-card");
+    expect(
+      screen.getAllByText("Inactive: these meals don't appear in the week menu.")
+    ).toHaveLength(1);
+    // An inactive plan still lists (and can edit) its entries.
+    expect(await screen.findByTestId("meals-plan-entries-p2")).toBeInTheDocument();
   });
 });
