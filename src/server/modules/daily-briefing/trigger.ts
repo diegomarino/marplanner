@@ -25,6 +25,7 @@ import type { StopHandle } from "../../host-api";
 import type { BoardColumn } from "../../../shared";
 import { readSettings } from "./settings";
 import { listOptIns } from "./index";
+import { isBriefingScheduledOn } from "./schedule";
 
 const PRINTABLE_RECORD_KEY_PREFIX = "daily-briefing";
 
@@ -189,6 +190,8 @@ export function evaluateAutoPrintTrigger(now: number): void {
     // row remains after archive so that reactivation self-heals; it is skipped while inactive
     // rather than treated as an all-or-nothing error") — the same existence guard applies here.
     .filter((optIn) => isActiveMember(optIn.memberId))
+    // A member paused on today's weekday has no briefing to print (spec D4).
+    .filter((optIn) => isBriefingScheduledOn(optIn.memberId, date))
     .map((optIn) => optIn.memberId);
 
   if (eligibleMemberIds.length === 0) return;
