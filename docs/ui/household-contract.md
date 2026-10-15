@@ -65,7 +65,7 @@ The ordered capability table is:
 8. `/admin/telemetry` — client telemetry
 9. `/admin/backups` — backup/restore
 10. `/admin/time-announcements` — time announcements
-11. `/admin/network-devices` — network devices
+11. `/admin/network-devices` — network devices (Registered devices and Add device tabs)
 12. `/admin/printing` — pair/re-pair, test print, print history
 13. `/admin/settings` — language, time zone and week start, plus the day periods and, while the
     weather plugin is active, the weather location
