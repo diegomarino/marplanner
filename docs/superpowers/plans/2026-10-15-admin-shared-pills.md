@@ -5,6 +5,7 @@
 **Goal:** Ship three shared selection controls for the admin pages: `ChoicePills` (the segmented choice), `MemberPills` (one or several members, in member colours) and a pill-styled, week-start-aware `WeekdayPicker`. All three are built on one internal `PillControl`, and the cheap call sites that already use the same pattern are migrated.
 
 **Architecture:**
+
 - `PillControl` (internal) draws a pill and lays a native checkbox or radio invisibly over it, using the technique `PillToggle` uses today.
 - `PillToggle`, `ChoicePills` and `MemberPills` are thin wrappers around it.
 - `WeekdayPicker` keeps its API. It renders `PillToggle`s (multi mode) and `ChoicePills` (radio mode), and orders days by the household week start.
@@ -59,11 +60,13 @@ git add docs/superpowers && git commit -m "docs: add the shared admin pills spec
 ### Task 1: `PillControl` and `PillToggle` on top of it
 
 **Files:**
+
 - Create: `src/client/components/PillControl.tsx`
 - Modify: `src/client/components/PillToggle.tsx` (whole file)
 - Test: `tests/client/pill-toggle.test.tsx` (unchanged; it must still pass)
 
 **Interfaces:**
+
 - Produces: `PillControl(props: PillControlProps)` with `type: "checkbox" | "radio"`, `checked: boolean`, `onChange: (checked: boolean) => void`, `label: string`, `note?: string`, `adornment?: ReactNode`, `selectedStyle?: CSSProperties`, `name?: string`, `value?: string`, `disabled?: boolean`, `className?: string`, `"data-testid"?: string`. The `data-testid` goes on the native input.
 
 - [ ] **Step 1: Create `src/client/components/PillControl.tsx`:**
@@ -211,10 +214,12 @@ export function PillToggle({
 ### Task 2: `ChoicePills` (the segmented choice)
 
 **Files:**
+
 - Create: `src/client/components/ChoicePills.tsx`
 - Create: `tests/client/choice-pills.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `PillControl` (Task 1).
 - Produces: `ChoicePills<T extends string>(props: ChoicePillsProps<T>)`, `ChoicePillsOption<T>`, `ChoicePillsProps<T>`, exactly as in the spec.
 
@@ -400,10 +405,12 @@ export function ChoicePills<T extends string>({
 ### Task 3: `MemberPills`
 
 **Files:**
+
 - Create: `src/client/components/MemberPills.tsx`
 - Create: `tests/client/member-pills.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `PillControl` (Task 1) and `memberFilterStyle(key: MemberColorKey): CSSProperties` from `src/client/calendar/member-event-style.ts`.
 - Produces: `MemberPills`, `MemberPillsMember`, `MemberPillsSingleProps`, `MemberPillsMultiProps`, `MemberPillsProps`, exactly as in the spec. Each input's testid is `${testIdPrefix}-${member.id}`.
 
@@ -464,12 +471,7 @@ describe("MemberPills — multi (default)", () => {
   it("keeps selected ids that are not shown", () => {
     const onChange = vi.fn();
     render(
-      <MemberPills
-        members={MEMBERS}
-        value={["gone", "ben"]}
-        onChange={onChange}
-        groupLabel="Who"
-      />
+      <MemberPills members={MEMBERS} value={["gone", "ben"]} onChange={onChange} groupLabel="Who" />
     );
     fireEvent.click(screen.getByRole("checkbox", { name: "Ada" }));
     expect(onChange).toHaveBeenCalledWith(["ada", "ben", "gone"]);
@@ -511,7 +513,9 @@ describe("MemberPills — multi (default)", () => {
     );
     const pill = () => screen.getByRole("checkbox", { name: "Ada" }).closest("label");
     expect(pill()).not.toHaveAttribute("style");
-    rerender(<MemberPills members={MEMBERS} value={["ada"]} onChange={() => {}} groupLabel="Who" />);
+    rerender(
+      <MemberPills members={MEMBERS} value={["ada"]} onChange={() => {}} groupLabel="Who" />
+    );
     expect(pill()?.getAttribute("style")).toContain("--color-member-blue-500");
   });
 });
@@ -552,13 +556,28 @@ describe("MemberPills — single", () => {
   it("single mode isolates groups", () => {
     render(
       <>
-        <MemberPills mode="single" members={MEMBERS} value="ada" onChange={() => {}} groupLabel="A" />
-        <MemberPills mode="single" members={MEMBERS} value="ben" onChange={() => {}} groupLabel="B" />
+        <MemberPills
+          mode="single"
+          members={MEMBERS}
+          value="ada"
+          onChange={() => {}}
+          groupLabel="A"
+        />
+        <MemberPills
+          mode="single"
+          members={MEMBERS}
+          value="ben"
+          onChange={() => {}}
+          groupLabel="B"
+        />
       </>
     );
     const nameOf = (label: string) =>
-      (within(screen.getByRole("radiogroup", { name: label })).getAllByRole("radio")[0] as HTMLInputElement)
-        .name;
+      (
+        within(screen.getByRole("radiogroup", { name: label })).getAllByRole(
+          "radio"
+        )[0] as HTMLInputElement
+      ).name;
     expect(nameOf("A")).not.toBe(nameOf("B"));
   });
 });
@@ -570,7 +589,13 @@ describe("MemberPills — density", () => {
     try {
       const { container } = render(
         mode === "single" ? (
-          <MemberPills mode="single" members={MEMBERS} value="ada" onChange={() => {}} groupLabel="Who" />
+          <MemberPills
+            mode="single"
+            members={MEMBERS}
+            value="ada"
+            onChange={() => {}}
+            groupLabel="Who"
+          />
         ) : (
           <MemberPills members={MEMBERS} value={["ada"]} onChange={() => {}} groupLabel="Who" />
         )
@@ -736,17 +761,20 @@ export function MemberPills(props: MemberPillsProps) {
 ### Task 4: `WeekdayPicker` as pills, following the household week start
 
 **Files:**
+
 - Modify: `src/client/components/WeekdayPicker.tsx` (imports, the last paragraph of the header doc, `WeekdayPickerCommonProps`, a new `weekdayDisplayOrder`, and the `WeekdayPicker` body)
 - Modify: `src/client/admin/DailyBriefingManagement.tsx` (one import line, one hook line and the `<thead>` weekday map at about line 1192)
 - Test: `tests/client/weekday-picker.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `PillToggle` (Task 1), `ChoicePills` (Task 2), and `useHouseholdSettings()` from `@/lib/householdSettings` (returns `{ weekStartDay: number | null, ... }`).
 - Produces: `weekdayDisplayOrder(weekStartDay: number | null | undefined): readonly WeekdayCode[]` and the new optional prop `weekStartDay?: 0 | 1` on every `WeekdayPicker` mode.
 
 - [ ] **Step 1: Add the failing tests to `tests/client/weekday-picker.test.tsx`.**
 
 Make these edits:
+
 - Change the import from `@/components/WeekdayPicker` to also import `weekdayDisplayOrder`.
 - Add the household mock right after the imports.
 - Reset the mocked value in the existing `afterEach`.
@@ -812,7 +840,13 @@ describe("WeekdayPicker — household week start", () => {
     household.weekStartDay = 0;
     render(
       <>
-        <WeekdayPicker mode="single" labels={LABELS} groupLabel="Day" value="mon" onChange={() => {}} />
+        <WeekdayPicker
+          mode="single"
+          labels={LABELS}
+          groupLabel="Day"
+          value="mon"
+          onChange={() => {}}
+        />
         <WeekdayPicker
           mode="single"
           renderAs="radio"
@@ -954,11 +988,7 @@ export function WeekdayPicker(props: WeekdayPickerProps) {
   };
 
   return (
-    <div
-      role="group"
-      aria-label={groupLabel}
-      className={cn("flex flex-wrap gap-1.5", className)}
-    >
+    <div role="group" aria-label={groupLabel} className={cn("flex flex-wrap gap-1.5", className)}>
       {order.map((day) => (
         <PillToggle
           key={day}
@@ -991,8 +1021,9 @@ npx vitest run tests/client/weekday-picker.test.tsx tests/client/time-announceme
 ```
 
 Expected: PASS. The `daily-briefing-management` failure on `aria-selected` is fixed in Task 5. If it fails only there, continue.
-  - If some other test fails with "useHouseholdSettings is not a function", that test file has a `vi.mock("@/lib/householdSettings")` without a `useHouseholdSettings` export. Add `useHouseholdSettings: () => <the same object its useHouseholdSettingsContext returns>` to that mock. Do not change product code to dodge it.
-  - If a test asserted a specific weekday markup detail of `CheckboxField` (for example its classes), update it to the pill markup and record the change in your report.
+
+- If some other test fails with "useHouseholdSettings is not a function", that test file has a `vi.mock("@/lib/householdSettings")` without a `useHouseholdSettings` export. Add `useHouseholdSettings: () => <the same object its useHouseholdSettingsContext returns>` to that mock. Do not change product code to dodge it.
+- If a test asserted a specific weekday markup detail of `CheckboxField` (for example its classes), update it to the pill markup and record the change in your report.
 
 - [ ] **Step 6: Commit.** Prettier the changed files, then `git add -A src/client/components/WeekdayPicker.tsx src/client/admin/DailyBriefingManagement.tsx tests/client && git commit -m "feat(ui): draw weekday pickers as pills in the household week-start order"`
 
@@ -1001,12 +1032,14 @@ Expected: PASS. The `daily-briefing-management` failure on `aria-selected` is fi
 ### Task 5: Migrate Settings and Briefing member pills; publish the API
 
 **Files:**
+
 - Modify: `src/client/admin/SettingsManagement.tsx` (the local `ChoicePills`, lines ~52–96, and its two uses)
 - Modify: `src/client/daily-briefing/admin/BriefingMemberPills.tsx` (whole file; keep `pillMembers` and the props)
 - Modify: `src/client/ui.ts`, `COMPONENTS.md` (generated), `docs/ui/component-contract.md`
 - Test: `tests/client/settings-management.test.tsx:122-124,218,234`, `tests/client/daily-briefing-management.test.tsx:100-103`, `tests/e2e/admin-settings.spec.ts:54-57`
 
 **Interfaces:**
+
 - Consumes: `ChoicePills` (Task 2), `MemberPills` (Task 3).
 - Produces: the `@/ui` exports `ChoicePills`, `ChoicePillsOption`, `ChoicePillsProps`, `MemberPills`, `MemberPillsMember`, `MemberPillsMultiProps`, `MemberPillsProps`, `MemberPillsSingleProps` and `weekdayDisplayOrder`.
 
@@ -1015,9 +1048,9 @@ Expected: PASS. The `daily-briefing-management` failure on `aria-selected` is fi
 In `tests/client/settings-management.test.tsx`, lines 122–124 become:
 
 ```tsx
-    expect(screen.getByRole("radio", { name: "English" })).toBeChecked();
-    expect(screen.getByRole("radio", { name: "Español" })).not.toBeChecked();
-    expect(screen.getByRole("radio", { name: "Monday" })).toBeChecked();
+expect(screen.getByRole("radio", { name: "English" })).toBeChecked();
+expect(screen.getByRole("radio", { name: "Español" })).not.toBeChecked();
+expect(screen.getByRole("radio", { name: "Monday" })).toBeChecked();
 ```
 
 Lines 218 and 234 each become `expect(screen.getByTestId("settings-week-start-0")).toBeChecked();`.
@@ -1025,13 +1058,13 @@ Lines 218 and 234 each become `expect(screen.getByTestId("settings-week-start-0"
 In `tests/client/daily-briefing-management.test.tsx`, replace lines 100–103:
 
 ```tsx
-    expect(screen.getByTestId("daily-briefing-block-member-member-ada")).toBeChecked();
+expect(screen.getByTestId("daily-briefing-block-member-member-ada")).toBeChecked();
 ```
 
 In `tests/e2e/admin-settings.spec.ts`, replace the `toHaveAttribute("aria-checked", "true")` assertion at lines 54–57 with:
 
 ```ts
-    await expect(page.getByTestId(`settings-week-start-${target}`)).toBeChecked();
+await expect(page.getByTestId(`settings-week-start-${target}`)).toBeChecked();
 ```
 
 Run `npx vitest run tests/client/settings-management.test.tsx tests/client/daily-briefing-management.test.tsx`. Expected: FAIL. The current buttons are not checkable, and the tab is not a radio.
@@ -1078,7 +1111,7 @@ function ChoiceRow<T extends string>({
 }
 ```
 
-  Then rename the two `<ChoicePills` uses in `SettingsManagement()` to `<ChoiceRow` and delete their `labelId=...` props. Keep all other props as they are. If `Button` is still used elsewhere in the file (it is, for Retry and Save), keep its import.
+Then rename the two `<ChoicePills` uses in `SettingsManagement()` to `<ChoiceRow` and delete their `labelId=...` props. Keep all other props as they are. If `Button` is still used elsewhere in the file (it is, for Retry and Save), keep its import.
 
 - [ ] **Step 3: Briefing.** Replace `src/client/daily-briefing/admin/BriefingMemberPills.tsx` with:
 
@@ -1128,11 +1161,11 @@ export function BriefingMemberPills({
   - In `docs/ui/component-contract.md`, add these rows to the table in section 3, after the "Weekday picker" row:
 
 ```markdown
-| Choice pills           | the radiogroup, shared native name and pill look of a one-of-few choice |
-| Member pills           | member colours, the inactive marker and single/multi member selection   |
+| Choice pills | the radiogroup, shared native name and pill look of a one-of-few choice |
+| Member pills | member colours, the inactive marker and single/multi member selection |
 ```
 
-  Change the "Weekday picker" row's text to `five separate implementations of the same selection, and the household week-start order`. Then run `npx prettier --write docs/ui/component-contract.md` so the table realigns.
+Change the "Weekday picker" row's text to `five separate implementations of the same selection, and the household week-start order`. Then run `npx prettier --write docs/ui/component-contract.md` so the table realigns.
 
 - [ ] **Step 5: Verify:**
 
@@ -1152,17 +1185,18 @@ Expected: all PASS. If the accessible-names audit reports new NONE/WEAK rows in 
 ### Task 6: e2e — one-line weekday row in the Assign routine dialog
 
 **Files:**
+
 - Modify: `tests/e2e/admin-routines.spec.ts` (around line 82, inside the existing test; do not rename the test)
 
-- [ ] **Step 1:** Directly after `const row = assign.getByTestId(\`routine-assignment-${memberId}\`);` and before the `.check()` line, add:
+- [ ] **Step 1:** Directly after `const row = assign.getByTestId(\`routine-assignment-${memberId}\`);`and before the`.check()` line, add:
 
 ```ts
-  // The seven weekday pills fit one line inside the dialog.
-  const dayTops = await row
-    .locator(`input[data-testid^="routines-weekday-${memberId}-"]`)
-    .evaluateAll((inputs) => inputs.map((input) => Math.round(input.getBoundingClientRect().top)));
-  expect(dayTops).toHaveLength(7);
-  expect(new Set(dayTops).size).toBe(1);
+// The seven weekday pills fit one line inside the dialog.
+const dayTops = await row
+  .locator(`input[data-testid^="routines-weekday-${memberId}-"]`)
+  .evaluateAll((inputs) => inputs.map((input) => Math.round(input.getBoundingClientRect().top)));
+expect(dayTops).toHaveLength(7);
+expect(new Set(dayTops).size).toBe(1);
 ```
 
 - [ ] **Step 2:** Run `PORT=43211 MP_E2E_WEATHER_FIXTURE_PORT=44411 MP_E2E_QUOTE_FIXTURE_PORT=44421 npx playwright test tests/e2e/admin-routines.spec.ts tests/e2e/admin-settings.spec.ts --workers=3`. Expected: PASS. If the pills wrap, reduce the weekday gap in `WeekdayPicker` from `gap-1.5` to `gap-1`. Do not shrink the text or the control height, because density rules forbid it. Record what you changed.
@@ -1173,6 +1207,7 @@ Expected: all PASS. If the accessible-names audit reports new NONE/WEAK rows in 
 ### Task 7: Resync the reviewed inventory (coverage policy and test cohorts)
 
 `tests/fixtures/assembly-cohort.json` does two jobs:
+
 - `coveragePolicy.files` lists every production file under `src/` with its minimum coverage totals and rates.
 - `testCohorts.runners.{node,vitest,playwright}.files` lists every test case per runner.
 
@@ -1210,7 +1245,9 @@ for (const suite of report.testResults) {
   cases[file] = (suite.assertionResults ?? []).map((a) => a.fullName);
 }
 fixture.testCohorts.runners.vitest.files = Object.fromEntries(
-  Object.keys(cases).sort().map((file) => [file, cases[file]])
+  Object.keys(cases)
+    .sort()
+    .map((file) => [file, cases[file]])
 );
 
 const raw = JSON.parse(fs.readFileSync("coverage/coverage-final.json", "utf8"));
@@ -1218,7 +1255,8 @@ const policy = fixture.coveragePolicy.files;
 for (const file of Object.keys(policy)) {
   if (!fs.existsSync(file)) delete policy[file];
 }
-const floor2 = (covered, total) => (total === 0 ? 100 : Math.floor((10000 * covered) / total) / 100);
+const floor2 = (covered, total) =>
+  total === 0 ? 100 : Math.floor((10000 * covered) / total) / 100;
 for (const file of process.argv.slice(2)) {
   const item = raw[path.resolve(root, file)];
   if (!item) throw new Error(`${file} absent from coverage`);
@@ -1251,7 +1289,9 @@ for (const file of process.argv.slice(2)) {
   console.log(file, JSON.stringify(measured));
 }
 fixture.coveragePolicy.files = Object.fromEntries(
-  Object.keys(policy).sort().map((file) => [file, policy[file]])
+  Object.keys(policy)
+    .sort()
+    .map((file) => [file, policy[file]])
 );
 fs.writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n");
 ```
@@ -1289,8 +1329,9 @@ npm run check:standard
 ```
 
 Expected: exit 0. If `check:coverage` or `check:test-cohorts:standard` fails:
-  1. Fix the fixture in your worktree with Task 7 (rerun its Steps 1–4 there) and commit.
-  2. Recreate the verify worktree (`git worktree remove --force "$SCRATCH/verify"`) and rerun the gate on the new HEAD.
+
+1. Fix the fixture in your worktree with Task 7 (rerun its Steps 1–4 there) and commit.
+2. Recreate the verify worktree (`git worktree remove --force "$SCRATCH/verify"`) and rerun the gate on the new HEAD.
 
 If `check:ui-debt` reports more inline styles than before Task 1, you added a `style` outside `PillControl`. Remove it.
 
@@ -1310,6 +1351,7 @@ Expected: all PASS. A failure that clicks a weekday or member testid and then wa
 - [ ] **Step 4: Commit and report.** Commit anything left (`git add -A && git commit -m "chore(ui): final verification fixes"`, only if there are changes). Do not merge or push.
 
 Write `REPORT-shared-pills.md` in the worktree root. It is the report file the owner asked for; commit it with `git add REPORT-shared-pills.md && git commit -m "docs: report the shared admin pills wave"`. It must contain:
+
 - the branch name and worktree path
 - `git log --oneline main..HEAD`
 - the last lines of `check:standard`
