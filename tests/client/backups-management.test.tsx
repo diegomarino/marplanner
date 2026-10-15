@@ -4,10 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   BackupsManagement,
   TYPE_KEYS,
-  TYPE_PILL_CLASSES,
   formatRelativeAge,
   isDbFile,
 } from "@/admin/BackupsManagement";
+import { TYPE_PILL_CLASSES } from "@/lib/recipes";
 import { HouseholdSettingsProvider } from "@/lib/householdSettings";
 import { LanguageProvider } from "@/i18n";
 import type { BackupListResponse } from "../../src/shared";
