@@ -187,28 +187,32 @@ function generateCurrentSchemaCatalog(tempDir: string): Catalog {
 describe("database lifecycle fresh current baseline", () => {
   useIsolatedDb({ pluginState: "inactive" });
 
-  it("is semantically equivalent to a clean Drizzle generation from the current TypeScript schema", { timeout: 30_000 }, () => {
-    const tempDir = mkdtempSync(join(tmpdir(), "mp-current-baseline-catalog-"));
-    try {
-      const generated = generateCurrentSchemaCatalog(tempDir);
-      const committed = instantiateCatalog(
-        [
-          BASELINE_FILE,
-          CALENDAR_FEED_SYNC_MIGRATION,
-          CALENDAR_EVENT_DETAILS_MIGRATION,
-          MEMBER_PALETTE_MIGRATION,
-          DAILY_BRIEFING_SCHEDULE_MIGRATION,
-        ],
-        join(tempDir, "baseline.sqlite")
-      );
+  it(
+    "is semantically equivalent to a clean Drizzle generation from the current TypeScript schema",
+    { timeout: 30_000 },
+    () => {
+      const tempDir = mkdtempSync(join(tmpdir(), "mp-current-baseline-catalog-"));
+      try {
+        const generated = generateCurrentSchemaCatalog(tempDir);
+        const committed = instantiateCatalog(
+          [
+            BASELINE_FILE,
+            CALENDAR_FEED_SYNC_MIGRATION,
+            CALENDAR_EVENT_DETAILS_MIGRATION,
+            MEMBER_PALETTE_MIGRATION,
+            DAILY_BRIEFING_SCHEDULE_MIGRATION,
+          ],
+          join(tempDir, "baseline.sqlite")
+        );
 
-      expect(committed).toEqual({
-        tables: generated.tables.filter(({ name }) => !LIFECYCLE_TABLES.has(name)),
-      });
-    } finally {
-      rmSync(tempDir, { recursive: true, force: true });
+        expect(committed).toEqual({
+          tables: generated.tables.filter(({ name }) => !LIFECYCLE_TABLES.has(name)),
+        });
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
     }
-  });
+  );
 
   it("installs the re-derived schema, applies the reviewed migrations, and preserves foreign keys", () => {
     const db = getDb();
