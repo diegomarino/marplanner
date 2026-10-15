@@ -434,8 +434,10 @@ export interface ReminderInput {
 
 /** ReminderEditInput — edit payload. Scheduled fields (text/active/weekdays) coexist
  * with calendar_gated query/queryFields edits; omitting queryFields on PATCH preserves the
- * stored value; it is not reset to the create-time default.
- * The calendar-gated variant extends the scheduled edit shape.
+ * stored value. `targetingMode` may switch apply_to_all <-> specific: switching to specific
+ * requires `assignments`, switching a scheduled rule to apply_to_all requires `weekdays`.
+ * `assignments` (full-set replace) is accepted only when the resulting mode is specific.
+ * `kind` is immutable and is not part of this payload.
  */
 export interface ReminderEditInput {
   text?: string;
@@ -443,6 +445,8 @@ export interface ReminderEditInput {
   query?: string;
   queryFields?: ReminderQueryField[];
   active?: boolean;
+  targetingMode?: TargetingMode;
+  assignments?: ReminderAssignmentInput[];
 }
 
 /** ReminderAssignment — links a reminder to one member on a weekday set.
