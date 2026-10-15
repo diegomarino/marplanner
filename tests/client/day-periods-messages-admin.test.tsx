@@ -246,9 +246,9 @@ describe("DayPeriodsManagement / DailyMessagesManagement — the shared AdminPan
     renderDailyMessages();
 
     expect(
-      await screen.findByRole("region", { name: "Daily Messages Management" })
+      await screen.findByRole("region", { name: "Messages" })
     ).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Daily Messages Management" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Messages" })).toBeInTheDocument();
   });
 });
 

@@ -64,7 +64,9 @@ describe("daily-messages-i18n-parity", () => {
 
   it("dailyMessages.*/admin.nav.dailyMessagesManagement keys resolve to the expected strings in both languages", () => {
     expect(messages.en["admin.nav.dailyMessagesManagement"]).toBe("Daily Messages Management");
-    expect(messages.en["dailyMessages.management.title"]).toBe("Daily Messages Management");
+    expect(messages.en["dailyMessages.management.title"]).toBe("Messages");
+    expect(messages.en["dailyMessages.management.retry"]).toBe("Retry");
+    expect(messages.es["dailyMessages.management.retry"]).toBe("Reintentar");
     expect(messages.en["dailyMessages.management.description"]).toBe(
       "Author, replace, and remove per-member daily messages over a date window."
     );
@@ -93,7 +95,7 @@ describe("daily-messages-i18n-parity", () => {
     expect(messages.en["dailyMessages.action.deleteConfirm"]).toBe("Delete this message?");
 
     expect(messages.es["admin.nav.dailyMessagesManagement"]).toBe("Gestión de Mensajes Diarios");
-    expect(messages.es["dailyMessages.management.title"]).toBe("Gestión de Mensajes Diarios");
+    expect(messages.es["dailyMessages.management.title"]).toBe("Mensajes");
     expect(messages.es["dailyMessages.management.description"]).toBe(
       "Crea, reemplaza y elimina mensajes diarios por miembro sobre una ventana de fechas."
     );
