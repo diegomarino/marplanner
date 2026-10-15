@@ -27,8 +27,7 @@ const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
 const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
 
-const WEEKDAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
-type WeekdayCode = (typeof WEEKDAY_ORDER)[number];
+type WeekdayCode = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
 function ymd(d: Date): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(
@@ -151,15 +150,15 @@ test("reminders admin author→read: apply_to_all + specific-with-matrix (US1/US
   await dialog.getByPlaceholder(m["reminders.management.textPlaceholder"]).fill(specificText);
   await dialog.getByLabel(m["reminders.management.targetingSpecific"]).check();
 
-  const rowOf = (memberName: string) => dialog.locator("tr").filter({ hasText: memberName });
-  await rowOf(memberAName)
-    .locator('input[type="checkbox"]')
-    .nth(WEEKDAY_ORDER.indexOf(weekdayA))
-    .check();
-  await rowOf(memberBName)
-    .locator('input[type="checkbox"]')
-    .nth(WEEKDAY_ORDER.indexOf(weekdayB))
-    .check();
+  // Cells are picked by accessible name, not column position: the matrix follows the household
+  // week start, which a parallel spec (admin-settings) may switch to Sunday-first.
+  const dayCell = (memberName: string, day: WeekdayCode) =>
+    dialog.getByRole("checkbox", {
+      name: `${memberName} — ${m[`reminders.weekday.${day}` as MessageKey]}`,
+      exact: true,
+    });
+  await dayCell(memberAName, weekdayA).check();
+  await dayCell(memberBName, weekdayB).check();
 
   const [specificCreateResp] = await Promise.all([
     page.waitForResponse(
@@ -199,10 +198,7 @@ test("reminders admin author→read: apply_to_all + specific-with-matrix (US1/US
   // --- 10) Edit the apply_to_all rule into a specific one for member A only (targetingMode edit) ---
   await page.getByTestId(`reminder-edit-${applyToAllReminder.id}`).click();
   await dialog.getByLabel(m["reminders.management.targetingSpecific"]).check();
-  await rowOf(memberAName)
-    .locator('input[type="checkbox"]')
-    .nth(WEEKDAY_ORDER.indexOf(weekdayAll))
-    .check();
+  await dayCell(memberAName, weekdayAll).check();
   const [editResp] = await Promise.all([
     page.waitForResponse(
       (r) =>
