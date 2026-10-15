@@ -327,7 +327,7 @@ export const messages = {
     "admin.printer.autoPrint.title": "Auto-print after morning chores",
     "admin.printer.autoPrint.on": "On",
     "admin.printer.autoPrint.off": "Off",
-    "admin.printer.autoPrint.manage": "Change in Daily Briefing",
+    "admin.printer.autoPrint.manage": "Change in Briefing",
     "admin.printer.autoPrint.loadError": "The auto-print setting could not be read.",
     "admin.printer.paperWidth": "Paper width (dots)",
     "admin.printer.paperWidth.hint": "Printouts are currently rendered at 576 dots (80 mm paper).",
@@ -390,7 +390,7 @@ export const messages = {
     "dailyBriefing.admin.printQueued": "Sent to the printer queue.",
     "dailyBriefing.admin.printAlreadyQueued": "Already waiting in the printer queue.",
     "dailyBriefing.admin.pausedNotice":
-      "{name} is paused on {date} — switch the day back on in {blocks} to generate or regenerate it.",
+      "{name}'s briefing is paused on {date} — switch the day back on in {blocks} to generate or regenerate it.",
     "dailyBriefing.admin.noBriefingForDate": "No briefing for {date}.",
     "dailyBriefing.admin.briefingLoadError": "Failed to load the briefing.",
     "dailyBriefing.admin.payloadTitle": "Technical details",
@@ -418,7 +418,7 @@ export const messages = {
     "dailyBriefing.admin.generateTitle": "Generate briefings",
     "dailyBriefing.admin.generateAllButton": "Generate for all members",
     "dailyBriefing.admin.generateAllHint":
-      "Generates the briefing for this date for every member who has it on. Paused members are skipped.",
+      "Generates the briefing for this date for every member who has it on. Members whose briefing is paused that day are skipped.",
     "dailyBriefing.admin.membersTitle": "Members",
     "dailyBriefing.admin.columnBriefing": "Daily briefing",
     "dailyBriefing.admin.columnDays": "Briefing days",
@@ -1823,7 +1823,7 @@ export const messages = {
     "admin.printer.autoPrint.title": "Imprimir al terminar las tareas de la mañana",
     "admin.printer.autoPrint.on": "Activada",
     "admin.printer.autoPrint.off": "Desactivada",
-    "admin.printer.autoPrint.manage": "Cambiar en el resumen diario",
+    "admin.printer.autoPrint.manage": "Cambiar en Resumen",
     "admin.printer.autoPrint.loadError": "No se pudo leer la impresión automática.",
     "admin.printer.paperWidth": "Ancho del papel (puntos)",
     "admin.printer.paperWidth.hint":
@@ -1888,7 +1888,7 @@ export const messages = {
     "dailyBriefing.admin.printQueued": "Enviado a la cola de impresión.",
     "dailyBriefing.admin.printAlreadyQueued": "Ya está esperando en la cola de impresión.",
     "dailyBriefing.admin.pausedNotice":
-      "{name} está en pausa el {date}: vuelve a activar el día en {blocks} para generarlo o regenerarlo.",
+      "El resumen de {name} está en pausa el {date}: vuelve a activar el día en {blocks} para generarlo o regenerarlo.",
     "dailyBriefing.admin.noBriefingForDate": "No hay resumen para el {date}.",
     "dailyBriefing.admin.briefingLoadError": "No se pudo cargar el resumen.",
     "dailyBriefing.admin.payloadTitle": "Detalles técnicos",
@@ -1917,7 +1917,7 @@ export const messages = {
     "dailyBriefing.admin.generateTitle": "Generar resúmenes",
     "dailyBriefing.admin.generateAllButton": "Generar para todos los miembros",
     "dailyBriefing.admin.generateAllHint":
-      "Genera el resumen de esta fecha para cada miembro que lo tiene activado. Se omiten los miembros en pausa.",
+      "Genera el resumen de esta fecha para cada miembro que lo tiene activado. Se omiten los miembros con el resumen en pausa ese día.",
     "dailyBriefing.admin.membersTitle": "Miembros",
     "dailyBriefing.admin.columnBriefing": "Resumen diario",
     "dailyBriefing.admin.columnDays": "Días con resumen",

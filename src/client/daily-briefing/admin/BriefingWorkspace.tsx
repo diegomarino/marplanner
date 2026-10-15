@@ -428,7 +428,7 @@ export function BriefingWorkspace({
               </pre>
             </details>
           </div>
-        ) : shownRead && activeDate ? (
+        ) : shownRead && activeDate && !(history && history.entries.length === 0) ? (
           <p className="text-sm text-muted-foreground" data-testid="daily-briefing-no-briefing">
             {t("dailyBriefing.admin.noBriefingForDate").replace("{date}", activeDate)}
           </p>
