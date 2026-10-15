@@ -556,9 +556,7 @@ export const messages = {
     "dayPeriods.management.loading": "Loading…",
     "dayPeriods.management.error": "Failed to load day periods.",
     "dayPeriods.management.noPeriods": "No day periods found.",
-    "dayPeriods.action.edit": "Edit",
     "dayPeriods.action.save": "Save",
-    "dayPeriods.action.cancel": "Cancel",
     "dayPeriods.action.saveError": "Couldn't save the change. Please try again.",
     "dayPeriods.action.editStartLabel": "Start time",
     "dayPeriods.management.saving": "Saving…",
@@ -1472,6 +1470,8 @@ export const messages = {
     "timeAnnouncements.weekdayInitial.fri": "F",
     "timeAnnouncements.weekdayInitial.sat": "S",
     "timeAnnouncements.weekdayInitial.sun": "S",
+    // admin-settings-polish
+    "dayPeriods.management.retry": "Retry",
   },
   es: {
     "backups.error.validation_error": "La solicitud de copia de seguridad no es válida.",
@@ -2043,9 +2043,7 @@ export const messages = {
     "dayPeriods.management.loading": "Cargando…",
     "dayPeriods.management.error": "Error al cargar períodos diarios.",
     "dayPeriods.management.noPeriods": "No se encontraron períodos diarios.",
-    "dayPeriods.action.edit": "Editar",
     "dayPeriods.action.save": "Guardar",
-    "dayPeriods.action.cancel": "Cancelar",
     "dayPeriods.action.saveError": "No se pudo guardar el cambio. Inténtalo de nuevo.",
     "dayPeriods.action.editStartLabel": "Hora de inicio",
     "dayPeriods.management.saving": "Guardando…",
@@ -2933,6 +2931,8 @@ export const messages = {
     "timeAnnouncements.weekdayInitial.fri": "V",
     "timeAnnouncements.weekdayInitial.sat": "S",
     "timeAnnouncements.weekdayInitial.sun": "D",
+    // admin-settings-polish
+    "dayPeriods.management.retry": "Reintentar",
   },
 } as const;
 
