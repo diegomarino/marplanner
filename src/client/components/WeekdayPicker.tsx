@@ -1,7 +1,7 @@
 import { NATIVE_SELECT_CLASSES } from "@/lib/recipes";
-import { useId } from "react";
-import { CheckboxField } from "./CheckboxField";
-import { RadioField } from "./RadioField";
+import { useHouseholdSettings } from "@/lib/householdSettings";
+import { ChoicePills } from "./ChoicePills";
+import { PillToggle } from "./PillToggle";
 import { cn } from "@/lib/utils";
 
 /** L2 composed component (FR-005, SC-009 — wiring and accessibility).
@@ -45,8 +45,11 @@ import { cn } from "@/lib/utils";
  * independently-toggled set, `"radiogroup"` for a mutually exclusive choice) and, in single
  * radio mode, the native `name` grouping that makes arrow-key/exclusive-selection semantics
  * work — none of the six existing implementations sets a group role today.
- * Internally built on `CheckboxField`/`RadioField` (this file is not a thin style wrapper around
- * either — it owns the mode branch, the canonical day order, and the group-level a11y role).
+ * Rendering: multi mode is a row of compact `PillToggle`s sized to fit one line in a dialog; single
+ * mode is a native `<select>` or, with `renderAs="radio"`, `ChoicePills`. Days are SHOWN in the
+ * household week-start order (`weekdayDisplayOrder`, from `useHouseholdSettings().weekStartDay`,
+ * overridable with the `weekStartDay` prop); values are always EMITTED in
+ * `CANONICAL_WEEKDAY_ORDER`, so storage never depends on the display order.
  */
 
 export type WeekdayCode = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
@@ -61,6 +64,25 @@ export const CANONICAL_WEEKDAY_ORDER: readonly WeekdayCode[] = [
   "sat",
   "sun",
 ];
+
+const SUNDAY_FIRST_ORDER: readonly WeekdayCode[] = [
+  "sun",
+  "mon",
+  "tue",
+  "wed",
+  "thu",
+  "fri",
+  "sat",
+];
+
+/** The order weekdays are SHOWN in for a household week start (`locale.weekStartDay`: 0 = Sunday,
+ * 1 = Monday). Anything but 0 — including null while settings load — is Monday-first. Use it for
+ * display-only weekday loops (grids, table headers); store and sort with `CANONICAL_WEEKDAY_ORDER`. */
+export function weekdayDisplayOrder(
+  weekStartDay: number | null | undefined
+): readonly WeekdayCode[] {
+  return weekStartDay === 0 ? SUNDAY_FIRST_ORDER : CANONICAL_WEEKDAY_ORDER;
+}
 
 export type WeekdayLabels = Readonly<Record<WeekdayCode, string>>;
 
@@ -81,6 +103,9 @@ interface WeekdayPickerCommonProps {
    * in single `renderAs="select"` mode), matching the existing per-surface `data-testid`
    * convention (e.g. `time-announcements-weekday-mon` today). */
   testIdPrefix?: string;
+  /** Overrides the household week start (tests, previews). Normally omitted: the picker reads
+   * `useHouseholdSettings().weekStartDay`. */
+  weekStartDay?: 0 | 1;
 }
 
 export interface WeekdayPickerMultiProps extends WeekdayPickerCommonProps {
@@ -108,7 +133,8 @@ export type WeekdayPickerProps = WeekdayPickerMultiProps | WeekdayPickerSinglePr
 export function WeekdayPicker(props: WeekdayPickerProps) {
   const { labels, disabled, className, groupLabel, testIdPrefix } = props;
   // Called unconditionally, before the mode branch — hooks cannot sit inside a conditional.
-  const instanceId = useId();
+  const household = useHouseholdSettings();
+  const order = weekdayDisplayOrder(props.weekStartDay ?? household.weekStartDay);
 
   if (props.mode === "single") {
     const { value, onChange, renderAs = "select" } = props;
@@ -123,7 +149,7 @@ export function WeekdayPicker(props: WeekdayPickerProps) {
           className={cn(NATIVE_SELECT_CLASSES, className)}
           data-testid={testIdPrefix ? `${testIdPrefix}-select` : undefined}
         >
-          {CANONICAL_WEEKDAY_ORDER.map((day) => (
+          {order.map((day) => (
             <option key={day} value={day}>
               {labels[day]}
             </option>
@@ -132,39 +158,27 @@ export function WeekdayPicker(props: WeekdayPickerProps) {
       );
     }
 
-    // The group name MUST be instance-unique. A shared fallback made two radio-mode pickers on the
-    // same page one NATIVE radio group, so selecting in one cleared the other and arrow keys moved
-    // focus across them — and the props permit rendering without a testIdPrefix.
-    // `useId` is per-instance, so the collision cannot occur even when a caller omits the prefix.
-    // ALWAYS instance-scoped, not just as a fallback. Deriving it from testIdPrefix left two
-    // pickers that share a prefix in one native radio group — a narrower guard than the defect
-    // class, and the safe form costs nothing since the name is never asserted on by callers.
-    const groupName = `${testIdPrefix ?? "weekday-picker"}-${instanceId}`;
+    // ChoicePills scopes the native radio group name per instance (useId), so two radio-mode
+    // pickers on one page never share a group, with or without a testIdPrefix.
     return (
-      <div
-        role="radiogroup"
-        aria-label={groupLabel}
-        className={cn("flex flex-wrap gap-x-4 gap-y-1", className)}
-      >
-        {CANONICAL_WEEKDAY_ORDER.map((day) => (
-          <RadioField
-            key={day}
-            name={groupName}
-            value={day}
-            checked={value === day}
-            onChange={() => onChange(day)}
-            label={labels[day]}
-            disabled={disabled}
-            data-testid={testIdPrefix ? `${testIdPrefix}-${day}` : undefined}
-          />
-        ))}
-      </div>
+      <ChoicePills
+        value={value}
+        onChange={onChange}
+        groupLabel={groupLabel}
+        disabled={disabled}
+        className={className}
+        options={order.map((day) => ({
+          value: day,
+          label: labels[day],
+          "data-testid": testIdPrefix ? `${testIdPrefix}-${day}` : undefined,
+        }))}
+      />
     );
   }
 
   const { value, onChange, disabledDays } = props;
-  /** Always emits in `CANONICAL_WEEKDAY_ORDER`, regardless of click order, so callers can
-   * save weekdays without sorting them again. */
+  /** Always emits in `CANONICAL_WEEKDAY_ORDER`, regardless of click or display order, so callers
+   * can save weekdays without sorting them again. */
   const toggle = (day: WeekdayCode) => {
     const next = new Set(value);
     if (next.has(day)) {
@@ -176,18 +190,16 @@ export function WeekdayPicker(props: WeekdayPickerProps) {
   };
 
   return (
-    <div
-      role="group"
-      aria-label={groupLabel}
-      className={cn("flex flex-wrap gap-x-4 gap-y-1", className)}
-    >
-      {CANONICAL_WEEKDAY_ORDER.map((day) => (
-        <CheckboxField
+    <div role="group" aria-label={groupLabel} className={cn("flex flex-wrap gap-1.5", className)}>
+      {order.map((day) => (
+        <PillToggle
           key={day}
           checked={value.includes(day)}
           onChange={() => toggle(day)}
           label={labels[day]}
           disabled={disabled || disabledDays?.includes(day)}
+          // Compact padding so seven pills fit one line in a dialog at kiosk density.
+          className="px-3"
           data-testid={testIdPrefix ? `${testIdPrefix}-${day}` : undefined}
         />
       ))}
