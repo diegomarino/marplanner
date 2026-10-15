@@ -74,7 +74,13 @@ export function PillControl({
         </span>
       ) : null}
       {label}
-      {note ? <span className="text-muted-foreground font-normal">{` (${note})`}</span> : null}
+      {note ? (
+        <>
+          {" "}
+          {/* The space sits outside the span: accessible-name computation trims a span's leading space. */}
+          <span className="text-muted-foreground ml-1 font-normal">({note})</span>
+        </>
+      ) : null}
     </label>
   );
 }
