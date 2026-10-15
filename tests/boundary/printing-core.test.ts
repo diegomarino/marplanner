@@ -15,6 +15,8 @@ import {
   ackJob,
   failJob,
   listJobs,
+  resetTodaysPrints,
+  hasTerminalFailedJob,
   supersedePrintRecord,
   registerPrintableProvider,
   registerPrinterCapability,
@@ -802,6 +804,88 @@ describe("printing core", () => {
   });
 
   // ── — producer seam: fetch-at-execute provider resolution ─────────
+
+  describe("resetTodaysPrints — admin reset of today's print (FR-016)", () => {
+    it("makes a printed record printable again; the next enqueue creates a new job", () => {
+      const params = { recordKey: "reset-printed", targetDate: TARGET_DATE, outputRef: "x" };
+      const first = enqueuePrintJob(params, ANCHOR_MS);
+      const claimed = claimJob(ANCHOR_MS)!;
+      ackJob(claimed.job.id, claimed.leaseToken, ANCHOR_MS + 1);
+      expect(enqueuePrintJob(params, ANCHOR_MS + 2).alreadyPrinted).toBe(true);
+
+      expect(resetTodaysPrints(ANCHOR_MS + 3)).toEqual({
+        targetDate: TARGET_DATE,
+        resetRecords: 1,
+        cancelledJobs: 0,
+      });
+
+      const again = enqueuePrintJob(params, ANCHOR_MS + 4);
+      expect(again.enqueued).toBe(true);
+      expect(again.jobId).not.toBe(first.jobId);
+      const printed = listJobs(ANCHOR_MS).jobs.find((j) => j.id === first.jobId)!;
+      expect(printed.state).toBe("printed"); // history kept
+    });
+
+    it("cancels today's pending jobs and leaves other dates alone", () => {
+      enqueuePrintJob(
+        { recordKey: "reset-pending", targetDate: TARGET_DATE, outputRef: "x" },
+        ANCHOR_MS
+      );
+      enqueuePrintJob(
+        { recordKey: "reset-other-day", targetDate: "2026-06-20", outputRef: "y" },
+        ANCHOR_MS
+      );
+
+      const result = resetTodaysPrints(ANCHOR_MS + 1);
+
+      expect(result).toEqual({ targetDate: TARGET_DATE, resetRecords: 1, cancelledJobs: 1 });
+      const jobs = listJobs(ANCHOR_MS + 1).jobs;
+      expect(jobs.find((j) => j.recordKey === "reset-pending")!.state).toBe("cancelled");
+      expect(jobs.find((j) => j.recordKey === "reset-other-day")!.state).toBe("pending");
+    });
+
+    it("leaves a fetched-in-flight job running and does not count it (H2)", () => {
+      enqueuePrintJob(
+        { recordKey: "test-print:reset-inflight", targetDate: TARGET_DATE, outputRef: "x" },
+        ANCHOR_MS
+      );
+      const claimed = claimJob(ANCHOR_MS)!;
+      getPayload(claimed.job.id, claimed.leaseToken, ANCHOR_MS + 1);
+
+      const result = resetTodaysPrints(ANCHOR_MS + 2);
+
+      expect(result.cancelledJobs).toBe(0);
+      const job = listJobs(ANCHOR_MS + 2).jobs.find((j) => j.id === claimed.job.id)!;
+      expect(job.state).toBe("claimed");
+    });
+
+    it("clears a dead-letter gate so a level-triggered producer can enqueue again", () => {
+      enqueuePrintJob(
+        { recordKey: "reset-dead", targetDate: TARGET_DATE, outputRef: "x" },
+        ANCHOR_MS
+      );
+      const claimed = claimJob(ANCHOR_MS)!;
+      failJob(claimed.job.id, claimed.leaseToken, ANCHOR_MS + 1, "boom", "render_failure");
+      expect(hasTerminalFailedJob("reset-dead", TARGET_DATE)).toBe(true);
+
+      resetTodaysPrints(ANCHOR_MS + 2);
+
+      expect(hasTerminalFailedJob("reset-dead", TARGET_DATE)).toBe(false);
+    });
+
+    it("returns zeros when nothing exists for today", () => {
+      expect(resetTodaysPrints(ANCHOR_MS)).toEqual({
+        targetDate: TARGET_DATE,
+        resetRecords: 0,
+        cancelledJobs: 0,
+      });
+    });
+
+    it("throws PrintingPluginInactiveError while the plugin is inactive", () => {
+      __setPrintingPluginActiveForTests(false);
+      expect(() => resetTodaysPrints(ANCHOR_MS)).toThrow(PrintingPluginInactiveError);
+    });
+  });
 
   describe("registerPrintableProvider — fetch-at-execute resolution (research D4)", () => {
     it("a fetch AFTER regeneration serves the CURRENT provider output, not a stale enqueue-time snapshot", () => {
