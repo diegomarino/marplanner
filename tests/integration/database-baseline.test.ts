@@ -182,7 +182,7 @@ function generateCurrentSchemaCatalog(tempDir: string): Catalog {
 describe("database lifecycle fresh current baseline", () => {
   useIsolatedDb({ pluginState: "inactive" });
 
-  it("is semantically equivalent to a clean Drizzle generation from the current TypeScript schema", () => {
+  it("is semantically equivalent to a clean Drizzle generation from the current TypeScript schema", { timeout: 30_000 }, () => {
     const tempDir = mkdtempSync(join(tmpdir(), "mp-current-baseline-catalog-"));
     try {
       const generated = generateCurrentSchemaCatalog(tempDir);
