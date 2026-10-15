@@ -82,9 +82,10 @@ The ordered capability table is:
 12. `/admin/printing` — Printer: Settings tab (plugin and auto-print state, paper width, Bluetooth
     printer with pair/re-pair, name, device id and UUIDs, saved to `printer`/`printerTransport`) and
     Diagnostics tab (test print, reset today's print, recent prints)
-13. `/admin/settings` — language, week start and time zone, plus the day periods and, while the
-    weather plugin is active, the weather location, with one Save for language, week start, time
-    zone and weather (the day periods keep their own save)
+13. `/admin/settings` — language, week start and time zone in the left column and, while the
+    weather plugin is active, the weather location in the right column (stacked on narrow
+    content), with one Save below both columns that is enabled only while a value differs from the
+    stored one; below, the four day periods in a row, each always editable with its own Save
 
 Every destination is reached from the admin sidebar, grouped as Household, Daily briefing and
 System.
