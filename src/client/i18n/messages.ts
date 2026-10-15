@@ -1476,6 +1476,16 @@ export const messages = {
     // admin-reminders-polish
     "reminders.specific.membersLabel": "Members and weekdays",
     "reminders.specific.membersHint": "Pick at least one weekday.",
+    // admin-meals-polish
+    "meals.week.editHint":
+      "Click a cell to add a meal, or a meal to edit it. Changes to a recurring meal apply every week.",
+    "meals.entries.repeatLabel": "Repeat",
+    "meals.entries.repeatOnce": "Only this date",
+    "meals.entries.repeatWeeklyPrefix": "Every",
+    "meals.entries.repeatNoActivePlan": "Activate a meal plan to repeat this meal every week.",
+    "meals.plan.entriesTitle": "Every week",
+    "meals.plan.inactiveHint": "Inactive: these meals don't appear in the week menu.",
+    "meals.plan.addRecurring": "Add recurring entry",
   },
   es: {
     "backups.error.validation_error": "La solicitud de copia de seguridad no es válida.",
@@ -2941,6 +2951,17 @@ export const messages = {
     // admin-reminders-polish
     "reminders.specific.membersLabel": "Miembros y días de la semana",
     "reminders.specific.membersHint": "Elige al menos un día de la semana.",
+    // admin-meals-polish
+    "meals.week.editHint":
+      "Pulsa una celda para añadir una comida, o una comida para editarla. Los cambios en una comida recurrente se aplican todas las semanas.",
+    "meals.entries.repeatLabel": "Repetir",
+    "meals.entries.repeatOnce": "Solo esta fecha",
+    "meals.entries.repeatWeeklyPrefix": "Cada",
+    "meals.entries.repeatNoActivePlan":
+      "Activa un plan de comidas para repetir esta comida cada semana.",
+    "meals.plan.entriesTitle": "Cada semana",
+    "meals.plan.inactiveHint": "Inactivo: estas comidas no aparecen en el menú semanal.",
+    "meals.plan.addRecurring": "Añadir entrada recurrente",
   },
 } as const;
 

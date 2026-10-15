@@ -77,7 +77,7 @@ The ordered capability table is:
 2. `/admin/members` — members
 3. `/admin/routines` — routines and chores
 4. `/admin/reminders` — reminders
-5. `/admin/meals` — meals and recipes
+5. `/admin/meals` — Meals: editable week menu (the family meal grid; a cell adds a one-off or, via "Every <weekday>", a recurring entry in an active plan; a meal opens for content edit or delete, and recurring changes apply every week), meal plans each listing their recurring entries by weekday with an in-card add form and activate/deactivate, then recipes
 6. `/admin/daily-messages` — daily messages
 7. `/admin/daily-briefing` — Briefing: Blocks tab (member pills, per-weekday pause switches over the block matrix, block order, generation time and auto-print binding, "settings changed" notice) and Preview / Generate tab (opt-in, Generate all, member pills, 30-day history, regenerate, view PNG, print to the queue, payload, image states); tabs are local state, no sub-paths
 8. `/admin/telemetry` — client telemetry
