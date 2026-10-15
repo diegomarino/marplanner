@@ -2,6 +2,7 @@ import {
   assertActiveMember,
   DailyMessageNotFoundError,
   emit,
+  enqueuePrintJob,
   getDb,
   getMessage,
   getPrintRecordStatus,
@@ -16,7 +17,9 @@ import {
   registerPrintableProvider,
   resolveMemberLabel,
   subscribe,
+  supersedePrintRecord,
   supersedePrintRecordTxn,
+  todayInHouseholdTz,
   weekdayOf,
 } from "../../host-api";
 import type { CalendarReadContext, PrintableRaster } from "../../host-api";
@@ -25,7 +28,9 @@ import type { RenderBlockInput, RenderEnvelope } from "./render/index";
 import type {
   BlockInstance,
   Briefing,
+  BriefingHistoryResponse,
   BriefingPayload,
+  BriefingPrintResponse,
   BriefingReadResult,
   BriefingStatus,
   OptInState,
@@ -73,7 +78,13 @@ export {
   DailyBriefingRasterMissingError,
 } from "./errors";
 export { listMemberSchedules, setMemberSchedule } from "./schedule";
-import { DailyBriefingPausedError, DailyBriefingValidationError } from "./errors";
+import {
+  DailyBriefingNotFoundError,
+  DailyBriefingPausedError,
+  DailyBriefingPrintUnavailableError,
+  DailyBriefingRasterMissingError,
+  DailyBriefingValidationError,
+} from "./errors";
 import { isBriefingScheduledOn } from "./schedule";
 
 const CONTENT_SOURCE_OWNERS = {
@@ -1168,6 +1179,71 @@ export function readBriefingPng(memberId: string, date: string): BriefingPngResu
 
   if (!row) return { found: false, png: null };
   return { found: true, png: row.png };
+}
+
+/** How many history rows the admin list shows (reference parity). */
+export const BRIEFING_HISTORY_LIMIT = 30;
+
+/** Admin history: the member's latest briefings, newest date first, plus the household business
+ * date the client uses as its default selection. A pure read (FR-010). */
+export function listBriefingHistory(memberId: string): BriefingHistoryResponse {
+  const rows = getDb()
+    .prepare(
+      `SELECT id, date, status, updated_at FROM daily_briefing
+       WHERE member_id = ? ORDER BY date DESC LIMIT ?`
+    )
+    .all(memberId, BRIEFING_HISTORY_LIMIT) as Array<{
+    id: string;
+    date: string;
+    status: BriefingStatus;
+    updated_at: number;
+  }>;
+  return {
+    today: resolveBusinessDate(undefined),
+    entries: rows.map((row) => ({
+      id: row.id,
+      date: row.date,
+      status: row.status,
+      updatedAt: row.updated_at,
+    })),
+  };
+}
+
+/** Manual print (spec D6) through Printing's producer seam — never Printing internals. The job
+ * targets the household TODAY (claims are day-scoped) under a per-briefing manual record key, so
+ * it never touches the automatic print's dedup or this briefing's derived printed-status. A job
+ * still waiting is reused; a printed record is superseded so the click prints again. */
+export function printBriefing(memberId: string, date: string, now: number): BriefingPrintResponse {
+  assertStrictCalendarDate(date);
+  if (!isPrintingPluginActive()) throw new DailyBriefingPrintUnavailableError();
+  const row = getDb()
+    .prepare("SELECT raster_bits FROM daily_briefing WHERE member_id = ? AND date = ?")
+    .get(memberId, date) as { raster_bits: Buffer | null } | undefined;
+  if (!row) {
+    throw new DailyBriefingNotFoundError(`No briefing for member "${memberId}" on ${date}`);
+  }
+  if (row.raster_bits === null) {
+    throw new DailyBriefingRasterMissingError(
+      `The briefing for member "${memberId}" on ${date} has no printable raster`
+    );
+  }
+  try {
+    assertActiveMember(memberId);
+  } catch {
+    throw new DailyBriefingValidationError(`Member "${memberId}" is not active`);
+  }
+  const params = {
+    recordKey: `${PRINTABLE_RECORD_KEY_PREFIX}:${memberId}:manual:${date}`,
+    targetDate: todayInHouseholdTz(now),
+    outputRef: `${PRINTABLE_RECORD_KEY_PREFIX}:${memberId}:${date}`,
+    memberId,
+  };
+  let result = enqueuePrintJob(params, now);
+  if (result.alreadyPrinted) {
+    supersedePrintRecord(params.recordKey, params.targetDate, now);
+    result = enqueuePrintJob(params, now);
+  }
+  return { jobId: result.jobId, enqueued: result.enqueued };
 }
 
 /** Set Daily Briefing's own per-member opt-in state after strict active-member validation. */
