@@ -28,6 +28,7 @@ function renderMatrix(overrides: Partial<BlockMatrixProps> = {}, rows: MemberBlo
     orderSaving: false,
     weekStartDay: 1,
     onToggleCell: vi.fn(),
+    onToggleRow: vi.fn(),
     onParamChange: vi.fn(),
     onToggleDay: vi.fn(),
     onReorder: vi.fn(),
@@ -57,6 +58,25 @@ describe("BlockMatrix", () => {
     expect(cell).toBeChecked();
     fireEvent.click(cell);
     expect(props.onToggleCell).toHaveBeenCalledWith("weather", "tue");
+  });
+
+  it("offers one control per row that turns the block off or on for every day", () => {
+    const props = renderMatrix();
+    expect(screen.getByRole("columnheader", { name: "Every day" })).toBeInTheDocument();
+    const off = screen.getByTestId("daily-briefing-block-row-toggle-weather");
+    expect(off).toHaveTextContent("Turn off");
+    expect(off).toHaveAccessibleName("Turn Weather off every day");
+    fireEvent.click(off);
+    expect(props.onToggleRow).toHaveBeenCalledWith("weather");
+
+    const on = screen.getByTestId("daily-briefing-block-row-toggle-onThisDay");
+    expect(on).toHaveTextContent("Turn on");
+    expect(on).toHaveAccessibleName("Turn On this day on every day");
+  });
+
+  it("disables the row control while that row is saving", () => {
+    renderMatrix({ savingTypes: new Set<BlockRegistryType>(["weather"]) });
+    expect(screen.getByTestId("daily-briefing-block-row-toggle-weather")).toBeDisabled();
   });
 
   it("shows a disabled block as all off, with onThisDay's default-off note", () => {

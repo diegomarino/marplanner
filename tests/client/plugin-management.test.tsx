@@ -143,12 +143,12 @@ describe("Plugin Management", () => {
     expect(briefing).toHaveTextContent("Active");
     expect(briefing).toHaveTextContent("Stopping safely…");
     expect(
-      within(briefing).getByRole("button", { name: "Deactivate Daily Briefing" })
+      within(briefing).getByRole("button", { name: "Daily Briefing", pressed: true })
     ).toBeDisabled();
     expect(within(briefing).getByText("Stopping safely…")).toHaveAttribute("aria-live", "polite");
 
     const printing = screen.getByTestId("plugin-row-printing");
-    expect(within(printing).getByRole("button", { name: "Deactivate Printing" })).toBeEnabled();
+    expect(within(printing).getByRole("button", { name: "Printing", pressed: true })).toBeEnabled();
   });
 
   it("applies the 409 plugin snapshot, announces a safe failure, and preserves control focus", async () => {
@@ -174,7 +174,7 @@ describe("Plugin Management", () => {
       );
 
     renderCatalog();
-    const button = await screen.findByRole("button", { name: "Activate Weather" });
+    const button = await screen.findByRole("button", { name: "Weather", pressed: false });
     button.focus();
     fireEvent.click(button);
 
@@ -189,7 +189,7 @@ describe("Plugin Management", () => {
     expect(document.body).not.toHaveTextContent("/Users/operator/private.db");
   });
 
-  it("restores focus to the renamed action after a successful lifecycle transition", async () => {
+  it("restores focus to the toggle after a successful lifecycle transition", async () => {
     let resolveTransition!: (value: Response) => void;
     vi.mocked(fetch)
       .mockResolvedValueOnce(response({ plugins: IDS.map((id) => entry(id)) }))
@@ -198,7 +198,7 @@ describe("Plugin Management", () => {
       );
 
     renderCatalog();
-    const activate = await screen.findByRole("button", { name: "Activate Weather" });
+    const activate = await screen.findByRole("button", { name: "Weather", pressed: false });
     activate.focus();
     fireEvent.click(activate);
     await waitFor(() => expect(activate).toBeDisabled());
@@ -208,7 +208,7 @@ describe("Plugin Management", () => {
     expect(document.body).toHaveFocus();
     resolveTransition(response(entry("weather", "active")));
 
-    const deactivate = await screen.findByRole("button", { name: "Deactivate Weather" });
+    const deactivate = await screen.findByRole("button", { name: "Weather", pressed: true });
     await waitFor(() => expect(deactivate).toHaveFocus());
     document.body.removeAttribute("tabindex");
   });
@@ -254,6 +254,62 @@ describe("Plugin Management", () => {
     expect(catalog).toHaveClass("grid");
     expect(catalog.querySelector("table")).toBeNull();
     expect(catalog.className).toContain("min-w-0");
-    expect(screen.getAllByRole("button", { name: /^Activate / })).toHaveLength(9);
+    expect(screen.getAllByRole("button", { pressed: false })).toHaveLength(9);
+  });
+
+  it("draws each plugin's state as a toggle and greys out an inactive card", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      response({
+        plugins: IDS.map((id) =>
+          entry(id, id === "weather" ? "active" : id === "printing" ? "errored" : "inactive")
+        ),
+      })
+    );
+    renderCatalog();
+
+    const weather = await screen.findByTestId("plugin-row-weather");
+    const on = within(weather).getByRole("button", { name: "Weather", pressed: true });
+    expect(on).toHaveTextContent("Active");
+    expect(weather).not.toHaveClass("bg-muted");
+
+    const backups = screen.getByTestId("plugin-row-backups");
+    const off = within(backups).getByRole("button", { name: "Backups", pressed: false });
+    expect(off).toHaveTextContent("Inactive");
+    expect(backups).toHaveClass("bg-muted");
+
+    // Needs attention is not merely off: it keeps the normal ground and its error notice.
+    const printing = screen.getByTestId("plugin-row-printing");
+    expect(
+      within(printing).getByRole("button", { name: "Printing", pressed: false })
+    ).toHaveTextContent("Needs attention");
+    expect(printing).not.toHaveClass("bg-muted");
+
+    // The old separate action buttons are gone.
+    expect(screen.queryByRole("button", { name: /^(Activate|Deactivate) / })).toBeNull();
+  });
+
+  it("the toggle activates an inactive plugin and deactivates an active one", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        response({ plugins: IDS.map((id) => entry(id, id === "printing" ? "active" : "inactive")) })
+      )
+      .mockResolvedValueOnce(response(entry("weather", "active")))
+      .mockResolvedValueOnce(response(entry("printing", "inactive")));
+    renderCatalog();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Weather", pressed: false }));
+    await screen.findByRole("button", { name: "Weather", pressed: true });
+    fireEvent.click(screen.getByRole("button", { name: "Printing", pressed: true }));
+    await screen.findByRole("button", { name: "Printing", pressed: false });
+
+    const posts = vi
+      .mocked(fetch)
+      .mock.calls.slice(1)
+      .map(([url, init]) => [String(url), init?.method]);
+    expect(posts).toEqual([
+      ["/api/plugins/weather/activate", "POST"],
+      ["/api/plugins/printing/deactivate", "POST"],
+    ]);
+    expect(screen.getByTestId("plugin-row-printing")).toHaveClass("bg-muted");
   });
 });
