@@ -580,8 +580,8 @@ describe("MealsBoard weekly planner", () => {
     expect(within(grid).queryAllByTestId("meal-entry-card")).toHaveLength(0);
     expect(within(grid).getAllByRole("button", { name: /^Add / })).toHaveLength(28);
     fireEvent.click(screen.getByTestId("meal-cell-2026-09-21-breakfast"));
-    fireEvent.click(screen.getByRole("radio", { name: "Note" }));
-    fireEvent.change(screen.getByRole("textbox", { name: "Note" }), {
+    fireEvent.click(screen.getByRole("radio", { name: "Free text" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Free text" }), {
       target: { value: "Porridge" },
     });
     expect(screen.getByRole("button", { name: "Add Entry" })).toBeEnabled();

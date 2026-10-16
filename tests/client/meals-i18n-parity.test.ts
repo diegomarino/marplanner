@@ -99,9 +99,13 @@ describe("meals-i18n-parity", () => {
     expect(messages.en["meals.entries.dateLabel"]).toBe("Date");
     expect(messages.en["meals.entries.slotLabel"]).toBe("Slot");
     expect(messages.en["meals.entries.contentModeRecipe"]).toBe("Recipe");
-    expect(messages.en["meals.entries.contentModeNote"]).toBe("Note");
+    expect(messages.en["meals.entries.contentModeNote"]).toBe("Free text");
     expect(messages.en["meals.entries.recipeSelectPlaceholder"]).toBe("Select a recipe…");
-    expect(messages.en["meals.entries.notePlaceholder"]).toBe("Entry note");
+    expect(messages.en["meals.entries.notePlaceholder"]).toBe("Free text");
+    expect(messages.en["meals.entries.noteInputLabel"]).toBe("Free text");
+    expect(messages.en["meals.entries.contentRequired"]).toBe(
+      "Select a recipe or enter free text."
+    );
     expect(messages.en["meals.entries.noRecipesForSlot"]).toBe(
       "No recipes available for this slot."
     );
@@ -195,9 +199,13 @@ describe("meals-i18n-parity", () => {
     expect(messages.es["meals.entries.dateLabel"]).toBe("Fecha");
     expect(messages.es["meals.entries.slotLabel"]).toBe("Franja");
     expect(messages.es["meals.entries.contentModeRecipe"]).toBe("Receta");
-    expect(messages.es["meals.entries.contentModeNote"]).toBe("Nota");
+    expect(messages.es["meals.entries.contentModeNote"]).toBe("Texto libre");
     expect(messages.es["meals.entries.recipeSelectPlaceholder"]).toBe("Seleccionar una receta…");
-    expect(messages.es["meals.entries.notePlaceholder"]).toBe("Nota de la entrada");
+    expect(messages.es["meals.entries.notePlaceholder"]).toBe("Texto libre");
+    expect(messages.es["meals.entries.noteInputLabel"]).toBe("Texto libre");
+    expect(messages.es["meals.entries.contentRequired"]).toBe(
+      "Selecciona una receta o escribe un texto libre."
+    );
     expect(messages.es["meals.entries.noRecipesForSlot"]).toBe(
       "No hay recetas disponibles para esta franja."
     );

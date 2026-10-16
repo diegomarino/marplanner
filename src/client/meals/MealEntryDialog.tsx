@@ -40,6 +40,10 @@ interface MealEntryDialogProps {
   /** Admin only: when set, creating offers "Repeat every <weekday>" in one of the active plans.
    * The family board omits it and only ever creates one-offs. */
   plans?: MealPlan[];
+  /** Admin only, with `plans`: a create opens on "Every <weekday>" in this plan when it is active
+   * (one plan pill selected in the grid). Ignored when editing, without `plans`, or when the plan
+   * is not an active one. */
+  initialPlanId?: string;
   onClose(): void;
   onCreate(input: MealEntryInput): Promise<boolean>;
   onEdit(id: string, input: MealEntryEditInput): Promise<boolean>;
@@ -55,6 +59,7 @@ export function MealEntryDialog({
   target,
   recipes,
   plans,
+  initialPlanId,
   onClose,
   onCreate,
   onEdit,
@@ -87,9 +92,13 @@ export function MealEntryDialog({
     setRecipeId(item?.recipeId ?? "");
     setNote(item?.note ?? "");
     setError(null);
-    setRepeat("once");
-    setPlanId(activePlans.length === 1 ? activePlans[0].id : "");
-  }, [item, target.date, target.slot, activePlans]);
+    const preselected =
+      !item && initialPlanId !== undefined && activePlans.some((plan) => plan.id === initialPlanId)
+        ? initialPlanId
+        : undefined;
+    setRepeat(preselected ? "weekly" : "once");
+    setPlanId(preselected ?? (activePlans.length === 1 ? activePlans[0].id : ""));
+  }, [item, target.date, target.slot, activePlans, initialPlanId]);
 
   const availableRecipes = useMemo(
     () => recipes.filter((recipe) => recipeAllowed(recipe, target.slot)),

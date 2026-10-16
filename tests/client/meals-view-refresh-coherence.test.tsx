@@ -241,8 +241,8 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
 
     fireEvent.click(await screen.findByTestId(`meal-cell-${today}-dinner`));
     const dialog = await screen.findByRole("dialog");
-    fireEvent.click(within(dialog).getByRole("radio", { name: "Note" }));
-    fireEvent.change(within(dialog).getByRole("textbox", { name: "Note" }), {
+    fireEvent.click(within(dialog).getByRole("radio", { name: "Free text" }));
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Free text" }), {
       target: { value: "Weeknight note" },
     });
     fireEvent.click(within(dialog).getByRole("button", { name: "Add Entry" }));
@@ -300,7 +300,7 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
     fireEvent.change(within(card).getByTestId("meals-recurring-slot-select"), {
       target: { value: "breakfast" },
     });
-    fireEvent.click(within(card).getByRole("radio", { name: "Note" }));
+    fireEvent.click(within(card).getByRole("radio", { name: "Free text" }));
     fireEvent.change(within(card).getByTestId("meals-recurring-note-input"), {
       target: { value: "Oatmeal" },
     });
@@ -363,8 +363,8 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
     fireEvent.click(within(dialog).getByRole("radio", { name: `Every ${weekdayName}` }));
     // The single active plan is preselected.
     expect(within(dialog).getByRole("combobox", { name: "Meal Plan" })).toHaveValue("p1");
-    fireEvent.click(within(dialog).getByRole("radio", { name: "Note" }));
-    fireEvent.change(within(dialog).getByRole("textbox", { name: "Note" }), {
+    fireEvent.click(within(dialog).getByRole("radio", { name: "Free text" }));
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Free text" }), {
       target: { value: "Soup" },
     });
     fireEvent.click(within(dialog).getByRole("button", { name: "Add Entry" }));
@@ -405,7 +405,7 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
     fireEvent.click(await within(grid).findByRole("button", { name: "Stew" }));
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByRole("note")).toHaveTextContent("This changes every matching week.");
-    fireEvent.change(within(dialog).getByRole("textbox", { name: "Note" }), {
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Free text" }), {
       target: { value: "Bean stew" },
     });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));

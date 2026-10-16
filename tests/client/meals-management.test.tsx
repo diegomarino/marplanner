@@ -247,10 +247,10 @@ describe("MealsManagement — kiosk density (SC-001, SC-002, SC-003, FR-011)", (
       // in-card recurring form and the opened PlanEntryRow) are ALSO measured. The recipe-mode
       // selects were measured in phase 1, so switching away from them here is a state
       // transition, not a loss.
-      for (const radio of screen.getAllByRole("radio", { name: "Note" })) {
+      for (const radio of screen.getAllByRole("radio", { name: "Free text" })) {
         fireEvent.click(radio);
       }
-      await screen.findAllByPlaceholderText("Entry note");
+      await screen.findAllByPlaceholderText("Free text");
 
       expect(countInteractiveControls(document.body)).toBe(PHASE_2_COUNT);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
@@ -814,8 +814,8 @@ describe("MealsManagement — writes keep the week grid and plan cards coherent"
     await screen.findByTestId("meal-day-heading-2026-01-12");
     fireEvent.click(screen.getAllByRole("button", { name: /^Add dinner on/ })[0]);
     const dialog = await screen.findByRole("dialog");
-    fireEvent.click(within(dialog).getByRole("radio", { name: "Note" }));
-    fireEvent.change(within(dialog).getByRole("textbox", { name: "Note" }), {
+    fireEvent.click(within(dialog).getByRole("radio", { name: "Free text" }));
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Free text" }), {
       target: { value: "Soup" },
     });
     fireEvent.click(within(dialog).getByRole("button", { name: "Add Entry" }));
@@ -845,7 +845,7 @@ describe("MealsManagement — writes keep the week grid and plan cards coherent"
 
     // The second card's own form adds a recurring note, which refreshes every card.
     fireEvent.click(within(cards[1]).getByTestId("meals-plan-add-recurring"));
-    fireEvent.click(within(cards[1]).getByRole("radio", { name: "Note" }));
+    fireEvent.click(within(cards[1]).getByRole("radio", { name: "Free text" }));
     fireEvent.change(within(cards[1]).getByTestId("meals-recurring-note-input"), {
       target: { value: "Pancakes" },
     });
@@ -865,7 +865,7 @@ describe("MealsManagement — writes keep the week grid and plan cards coherent"
     renderSurface();
 
     fireEvent.click(await screen.findByTestId("meals-plan-add-recurring"));
-    fireEvent.click(within(planCard()).getByRole("radio", { name: "Note" }));
+    fireEvent.click(within(planCard()).getByRole("radio", { name: "Free text" }));
     fireEvent.change(within(planCard()).getByTestId("meals-recurring-note-input"), {
       target: { value: "Pancakes" },
     });
