@@ -1725,7 +1725,8 @@
             "meals-menu boundary tests unions TWO active plans' matching-weekday entries + a one-off in the FULL D2 total order, incl. duplicate-plan-name tiebreak by meal_plan_id",
             "meals-menu boundary tests deactivating one of two active plans drops only its contribution; reactivating restores it (AC-05)",
             "meals-menu boundary tests editing a recurring entry's content changes EVERY matching weekday — no per-date skip (AC-04)",
-            "meals-menu boundary tests GET /api/menu/week?date= returns 7 local dates starting at weekStartDay, each grouped by slot"
+            "meals-menu boundary tests GET /api/menu/week?date= returns 7 local dates starting at weekStartDay, each grouped by slot",
+            "meals-menu boundary tests tags every menu item with its origin plan: the plan id for recurring, null for one-off (FR-025)"
           ],
           "tests/boundary/meals-plans.test.ts": [
             "meals-plans boundary tests POST /api/meal-plans creates an active plan",
@@ -3046,13 +3047,13 @@
           ],
           "tests/client/admin-pin-keypad.test.tsx": [
             "AdminGate touch PIN keypad enters, masks, deletes, and caps the PIN at six digits without a conventional input",
+            "AdminGate touch PIN keypad draws Backspace on the same circular key surface as the digits",
             "AdminGate touch PIN keypad accepts hardware keyboard digits, Backspace, and Enter to submit",
             "AdminGate touch PIN keypad keeps modified keys, editing fields, and focused control activation out of global PIN entry",
             "AdminGate touch PIN keypad caps keyboard entry and freezes it while a PIN verification is pending",
             "AdminGate touch PIN keypad submits only 4-6 digits and retains wrong-PIN and request-error feedback",
             "AdminGate touch PIN keypad clears state and returns to the recorded family route on Cancel",
-            "AdminGate touch PIN keypad falls back to Home when direct Admin navigation has no family history marker",
-            "AdminGate touch PIN keypad draws Backspace on the same circular key surface as the digits"
+            "AdminGate touch PIN keypad falls back to Home when direct Admin navigation has no family history marker"
           ],
           "tests/client/admin-routes.test.tsx": [
             "AdminRoutes renders the directly requested printing destination instead of the member-create default",
@@ -3198,6 +3199,7 @@
           ],
           "tests/client/calendar-view.test.tsx": [
             "CalendarView — provisioned Calendar authoring shows ephemeral filters for active members only with the approved defaults",
+            "CalendarView — provisioned Calendar authoring draws member filters as member pills while All-day keeps the accent pill",
             "CalendarView — provisioned Calendar authoring restores ephemeral filter defaults after the component remounts",
             "CalendarView — provisioned Calendar authoring applies member and all-day filters to the shared visible collection",
             "CalendarView — provisioned Calendar authoring switches between month and week presentations",
@@ -3234,8 +3236,7 @@
             "CalendarView — the assignment row is a real, keyboard-operable control (FR-013, SC-012) meets kiosk density on the per-member checkbox row (the row that used to be a non-focusable <li>)",
             "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) submits the toggled member id in the PUT payload",
             "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) makes the whole member pill the tap target ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)",
-            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) excludes archived members from assignment choices",
-            "CalendarView — provisioned Calendar authoring draws member filters as member pills while All-day keeps the accent pill"
+            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) excludes archived members from assignment choices"
           ],
           "tests/client/calendar-week-integration.test.tsx": [
             "CalendarView — Week integration keeps recurrence occurrences distinct and activates local/external and all-day events",
@@ -3362,6 +3363,8 @@
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) renders an already_running Generate-all response as a non-error informational message",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) keeps Generate-all disabled while an earlier opt-in PUT is still pending",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) pauses a weekday for the selected member and disables that column without a regenerate notice",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) an opted-out member is an off pill that cannot be picked; opt-in stays on Schedule",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) opting the selected member out selects the first opted-in member",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) toggling a cell writes the effective day set for that block",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) offers Retry when members fail to load, and when settings fail to load",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) fills the Result column from the briefings already stored for the shown date",
@@ -3370,12 +3373,10 @@
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) keeps a row locked until its own save returns, even while another row saves",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) shows the stored results of a date picked while Generate for all members runs",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) does not guess Paused or Not generated while the briefing days are unknown",
-            "DailyBriefingManagement — Generate-all opt-in interlock (#555) titles the page with its sidebar label",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) with nobody opted in, Blocks and Briefings point to Schedule",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) drops a stored result that lands after the last opted-in member is turned off",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) keeps Generate blocked for another member while a generation is still running",
-            "DailyBriefingManagement — Generate-all opt-in interlock (#555) an opted-out member is an off pill that cannot be picked; opt-in stays on Schedule",
-            "DailyBriefingManagement — Generate-all opt-in interlock (#555) opting the selected member out selects the first opted-in member",
-            "DailyBriefingManagement — Generate-all opt-in interlock (#555) with nobody opted in, Blocks and Briefings point to Schedule"
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) titles the page with its sidebar label"
           ],
           "tests/client/daily-briefing-schedule-tab.test.tsx": [
             "scheduleSummary says every day, paused every day, or the days in display order",
@@ -3452,7 +3453,9 @@
             "DailyMessagesManagement week zebra bands the 14 days by week from a Monday week start: plain, shaded, plain",
             "DailyMessagesManagement week zebra bands from a Sunday week start",
             "DailyMessagesManagement load failures can be retried offers Retry when the members request fails and recovers on click",
-            "DailyMessagesManagement load failures can be retried hides the day editor and offers Retry when the messages request fails"
+            "DailyMessagesManagement load failures can be retried hides the day editor and offers Retry when the messages request fails",
+            "DailyMessagesManagement members response landing after unmount drops a members list that arrives after unmount without loading any messages",
+            "DailyMessagesManagement members response landing after unmount swallows a members failure that arrives after unmount"
           ],
           "tests/client/daily-messages-weeks.test.ts": [
             "weekBands Monday start, list starts mid-week (Thu 2026-01-15): plain lead-in, then shaded week, then plain",
@@ -3633,7 +3636,20 @@
             "MealEntryDialog creates a recurring entry in the chosen active plan for the date's weekday",
             "MealEntryDialog derives the weekday from the date itself, Sunday included",
             "MealEntryDialog disables weekly repeat with a hint when no plan is active",
-            "MealEntryDialog does not offer Repeat when editing an entry"
+            "MealEntryDialog does not offer Repeat when editing an entry",
+            "MealEntryDialog opens a create on 'Every <weekday>' in the preselected plan",
+            "MealEntryDialog ignores an inactive or unknown preselected plan and stays one-off",
+            "MealEntryDialog never preselects without plans (the family dialog)"
+          ],
+          "tests/client/meal-origins.test.tsx": [
+            "meal origins colours plans by creation order then id, including inactive plans, and cycles after six",
+            "meal origins keeps a plan's colour when another plan is renamed or deactivated",
+            "meal origins maps items to origins and unknown plans to the unknown tone",
+            "meal origins highlights selected origins and dims the rest only while something is selected",
+            "meal origins offers One-off first, then active plans by name, never inactive ones",
+            "meal origins preselects a plan only when exactly one active plan pill is selected",
+            "meal origins drops a selected plan whose pill disappears",
+            "meal origins works with no plans loaded yet"
           ],
           "tests/client/meals-all-slot-picker.test.tsx": [
             "MealsManagement — recurring-entry all-slot picker (FR-002) offers a recipe with absent slots in every slot's picker"
@@ -3646,12 +3662,15 @@
             "MealsBoard weekly planner fills the available height with the rounded meal-plan shell",
             "MealsBoard weekly planner makes the empty cell the add control and reveals its plus only on hover or focus",
             "MealsBoard weekly planner keeps multiple meals as separate warm cards in stable order",
+            "MealsBoard weekly planner tints chips by origin, italicises free text and highlights selected origins without hiding others",
             "MealsBoard weekly planner shows a visible retry after an initial week failure and recovers the interactive grid",
             "MealsBoard weekly planner keeps a recipe failure local to the catalogue and retries it",
             "MealsBoard weekly planner localizes workspace chrome and date labels while retaining authored content",
             "MealsBoard weekly planner uses the household date rather than the device date for the initial week request",
             "MealsBoard weekly planner renders a tombstone as non-editable instead of exposing its deleted recipe",
-            "MealsBoard weekly planner keeps every slot interactive when a valid week contains no entries"
+            "MealsBoard weekly planner keeps every slot interactive when a valid week contains no entries",
+            "MealsBoard weekly planner highlights the selected origin on the family board, keeps it across weeks and still opens dimmed meals",
+            "MealsBoard weekly planner shows a retry when the meal plans fail to load and recovers"
           ],
           "tests/client/meals-household-timezone-error-retry.test.tsx": [
             "MealsManagement — household timezone setup error shows a retry action when settings fail, then loads the household week after retry succeeds"
@@ -3692,7 +3711,11 @@
             "MealsManagement — writes keep the week grid and plan cards coherent keeps a plan's entries visible with an error when saving one fails",
             "MealsManagement — writes keep the week grid and plan cards coherent shows a failed week-grid write inside the dialog, not as a page error",
             "MealsManagement — writes keep the week grid and plan cards coherent keeps an entry edit open in one plan card while another card adds a recurring entry",
-            "MealsManagement — writes keep the week grid and plan cards coherent shows a failed recurring add inside its plan card, next to the form"
+            "MealsManagement — writes keep the week grid and plan cards coherent shows a failed recurring add inside its plan card, next to the form",
+            "MealsManagement — tabs and origins opens on Preview and switches tabs without losing an open edit",
+            "MealsManagement — tabs and origins preselects the only selected plan pill when adding from a cell",
+            "MealsManagement — tabs and origins adds a one-off by default when the One-off pill is selected",
+            "MealsManagement — tabs and origins drops a plan's highlight when the plan is deactivated"
           ],
           "tests/client/meals-recipe-edit-clear-fields.test.tsx": [
             "MealsManagement — recipe edit clears fields correctly (verify-pr #446) PATCHes instructions: '' (never omitted) and ingredients: [] when both are cleared"
@@ -3709,7 +3732,8 @@
           ],
           "tests/client/meals-workspace.test.tsx": [
             "useMealsWorkspace anchors the initial week to the household timezone and configured week start",
-            "useMealsWorkspace moves seven days and retains the last valid menu when the next read fails"
+            "useMealsWorkspace moves seven days and retains the last valid menu when the next read fails",
+            "useMealsWorkspace loads the meal plans and retries them after a failure"
           ],
           "tests/client/member-event-style.test.ts": [
             "memberEventStyle keeps unassigned events neutral",
@@ -3874,6 +3898,8 @@
           "tests/client/pill-toggle.test.tsx": [
             "PillToggle is a native checkbox named by its label and reports the new state",
             "PillToggle does not report a change while disabled",
+            "PillToggle draws a coloured pill from the caller's colour class and reserves its bold width",
+            "PillToggle keeps the plain accent pill when no colour class is given",
             "PillToggle meets kiosk density: the hidden checkbox spans the full control height"
           ],
           "tests/client/plugin-contributions.test.tsx": [
@@ -4288,6 +4314,7 @@
             "Shell — unprovisioned gate shows no invented retry duration for unusable Retry-After 1.5",
             "Shell — unprovisioned gate shows no invented retry duration for unusable Retry-After 9007199254740993",
             "Shell — unprovisioned gate renders the household shell when the provisioned marker is present (FR-031)",
+            "Shell — unprovisioned gate marks the current family destination and makes Options the Admin affordance while Admin is its only entry",
             "Shell — unprovisioned gate organizes the household chrome into compact navigation, contextual center, and secondary actions",
             "Shell — unprovisioned gate keeps the unlocked admin subtree mounted when Printing is deactivated",
             "Shell — unprovisioned gate requires a three-second physical hold, shows progress, and resets after an early release",
@@ -4300,8 +4327,7 @@
             "Shell — stale mp_provisioned marker recovery (FR-013) stays provisioned when the authenticated call succeeds",
             "ProvisioningScreen — action exists calls onProvision with the key when the button is clicked",
             "ProvisioningScreen — action exists disables the button when no key is entered",
-            "ProvisioningScreen — action exists shows the one localized, friendly error copy when the error flag is set (FR-019 — no raw fetch/Error detail is ever rendered)",
-            "Shell — unprovisioned gate marks the current family destination and makes Options the Admin affordance while Admin is its only entry"
+            "ProvisioningScreen — action exists shows the one localized, friendly error copy when the error flag is set (FR-019 — no raw fetch/Error detail is ever rendered)"
           ],
           "tests/client/status-toggle.test.tsx": [
             "StatusToggle wires aria-pressed to the pressed prop",
@@ -5547,7 +5573,7 @@
           "branches": 95
         },
         "minimumRates": {
-          "lines": 100.0,
+          "lines": 100,
           "statements": 95.62,
           "functions": 97.67,
           "branches": 77.89
@@ -5742,10 +5768,10 @@
           "branches": 8
         },
         "minimumRates": {
-          "lines": 100.0,
-          "statements": 100.0,
-          "functions": 100.0,
-          "branches": 100.0
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/client/admin/network-devices/DeviceStatus.tsx": {
@@ -6888,6 +6914,21 @@
           "branches": 89.18
         }
       },
+      "src/client/meals/MealOriginPills.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 10,
+          "statements": 13,
+          "functions": 6,
+          "branches": 2
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/client/meals/MealPlanGrid.tsx": {
         "layer": "client",
         "minimumTotals": {
@@ -6946,6 +6987,21 @@
           "statements": 94.28,
           "functions": 92.3,
           "branches": 72.72
+        }
+      },
+      "src/client/meals/meal-origins.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 29,
+          "statements": 38,
+          "functions": 19,
+          "branches": 26
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 92.3
         }
       },
       "src/client/meals/useMealsWorkspace.ts": {
