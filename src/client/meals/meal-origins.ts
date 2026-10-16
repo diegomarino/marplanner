@@ -116,6 +116,8 @@ export function useMealOrigins(plans: readonly MealPlan[] | null): MealOriginsSt
     () => rawSelected.filter((id) => pills.some((pill) => pill.id === id)),
     [rawSelected, pills]
   );
+  // Forget the dropped ids too, so a plan that comes back (reactivated) does not return selected.
+  if (selected.length !== rawSelected.length) setSelected(selected);
   return {
     pills,
     tones,
