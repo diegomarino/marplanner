@@ -41,19 +41,21 @@ the local edit form's member state and calls the existing `PUT /assignments`.
 ### Task 1: Server — keep `ext:` rows on assignment replace
 
 **Files:**
+
 - Modify: `src/server/modules/calendar/index.ts` (`replaceAssignments` transaction)
 - Modify: `docs/api/calendar/openapi.yaml` (PUT summary/description)
 - Modify: `docs/features/calendar.md` (manual-assignment edge case)
 - Test: `tests/boundary/calendar-sync.test.ts`
 
 **Interfaces:**
+
 - Consumes: `reconcileExternalCalendar`, `calendarRoutes` (already imported by the test file).
 - Produces: unchanged `replaceAssignments(eventId: string, memberIds: string[]): FeedItem`.
 
 - [ ] **Step 1: Write failing boundary tests** in a new `describe("manual participants on an
-  external event")` in `calendar-sync.test.ts`, driving PUT through a Fastify app with
-  `calendarRoutes` (auth as the file's existing route test does), members Bart + Lisa, event from
-  `occurrence("one", "Bart school")`:
+external event")` in `calendar-sync.test.ts`, driving PUT through a Fastify app with
+      `calendarRoutes` (auth as the file's existing route test does), members Bart + Lisa, event from
+      `occurrence("one", "Bart school")`:
   - "keeps title-derived rows title-derived": PUT `{memberIds: [bart, lisa]}` → 200; rows =
     `[{member: bart, derived: 1}, {member: lisa, derived: 0}]`, exactly 2 rows.
   - "keeps the manual member and follows the title on later syncs": after that PUT, reconcile with
@@ -61,32 +63,34 @@ the local edit form's member state and calls the existing `PUT /assignments`.
   - "clearing removes everyone until the title is read again": PUT `[]` → 0 rows; reconcile same
     title → only bart (`ext:`).
 - [ ] **Step 2: Run** `npx vitest run tests/boundary/calendar-sync.test.ts` — the first two fail
-  (bart row is not `ext:` / bart survives the rename).
+      (bart row is not `ext:` / bart survives the rename).
 - [ ] **Step 3: Implement** inside the existing transaction: delete rows for the event where
-  `id NOT LIKE 'ext:%' OR member_id NOT IN (requested)`; then insert a `randomUUID()` row only for
-  requested members with no remaining row. Use `json_each(?)` with `JSON.stringify(ids)` for the
-  `NOT IN` so an empty set works.
+      `id NOT LIKE 'ext:%' OR member_id NOT IN (requested)`; then insert a `randomUUID()` row only for
+      requested members with no remaining row. Use `json_each(?)` with `JSON.stringify(ids)` for the
+      `NOT IN` so an empty set works.
 - [ ] **Step 4: Run** the sync and `tests/boundary/calendar-assign.test.ts` — all pass.
 - [ ] **Step 5: Docs** — OpenAPI: add a `description` to the PUT saying title-derived (`ext:`) rows
-  for members still in the set are kept so feed syncs keep owning them. Feature spec: rewrite the
-  edge case's last sentence to say the Calendar screen offers participant editing on external events
-  and saving keeps title-derived members title-derived.
+      for members still in the set are kept so feed syncs keep owning them. Feature spec: rewrite the
+      edge case's last sentence to say the Calendar screen offers participant editing on external events
+      and saving keeps title-derived members title-derived.
 - [ ] **Step 6: Commit** `fix(calendar): keep title-derived assignments when replacing an external event's people`.
 
 ### Task 2: Client — Edit participants panel on external events
 
 **Files:**
+
 - Modify: `src/client/calendar/CalendarView.tsx`
 - Modify: `src/client/i18n/messages.ts`
 - Modify: `docs/ui/household-contract.md` (Calendar paragraph)
 - Test: `tests/client/calendar-view.test.tsx`
 
 **Interfaces:**
+
 - Consumes: Task 1 server semantics (no client-visible change).
 - Produces: `submitParticipants(event: FeedItem): Promise<void>` inside `CalendarView`.
 
 - [ ] **Step 1: Write failing tests** (replace the existing "keeps external events readable…" test,
-  extend the imported-event test):
+      extend the imported-event test):
   - "offers only participant editing on an external event": note text
     "From an external calendar — its title, time, location and description are read only.";
     `calendar-edit-btn` and `calendar-delete-btn` absent; click `calendar-edit-participants-btn` →
@@ -100,31 +104,32 @@ the local edit form's member state and calls the existing `PUT /assignments`.
     → alert "Failed to update assignment.", save button still present.
 - [ ] **Step 2: Run** `npx vitest run tests/client/calendar-view.test.tsx` — new tests fail.
 - [ ] **Step 3: Implement** — i18n keys (en+es together); `openParticipants(event)` sets the
-  `showEdit` key, `editingEvent`, `editMemberIds`; `submitParticipants` compares sets, PUTs when
-  changed, then `closeEdit(); setSelectedEvent(null); setReloadKey(k+1)`, else on `!ok` sets
-  `calendar.assignmentError`. In the external branch render the note, then either the panel
-  (muted rounded container, `<form>` with the participants `fieldset` reusing the loading / error /
-  `MemberPills` branches, hint `<p className="text-muted-foreground text-sm">`, `ErrorNotice`,
-  Save/Cancel) or the outline `sm` button with the `Users` icon. Extract the participants
-  `fieldset` into a local render helper shared with the local edit form.
+      `showEdit` key, `editingEvent`, `editMemberIds`; `submitParticipants` compares sets, PUTs when
+      changed, then `closeEdit(); setSelectedEvent(null); setReloadKey(k+1)`, else on `!ok` sets
+      `calendar.assignmentError`. In the external branch render the note, then either the panel
+      (muted rounded container, `<form>` with the participants `fieldset` reusing the loading / error /
+      `MemberPills` branches, hint `<p className="text-muted-foreground text-sm">`, `ErrorNotice`,
+      Save/Cancel) or the outline `sm` button with the `Users` icon. Extract the participants
+      `fieldset` into a local render helper shared with the local edit form.
 - [ ] **Step 4: Run** the client calendar tests (`npx vitest run tests/client/calendar`) — pass;
-  update any density census count that shifted.
+      update any density census count that shifted.
 - [ ] **Step 5: Docs** — household contract Calendar paragraph: inline create, assign, edit and
-  delete on local events, and participant editing on external events whose feed fields stay read
-  only.
+      delete on local events, and participant editing on external events whose feed fields stay read
+      only.
 - [ ] **Step 6: Commit** `feat(calendar): edit participants on external events`.
 
 ### Task 3: E2E and gates
 
 **Files:**
+
 - Test: `tests/e2e/calendar-feed-sync.spec.ts` (one case if its tracer fixture yields a visible
   external event on `/calendar`; otherwise skip and say so in the report)
 - Modify: `tests/fixtures/assembly-cohort.json`
 
 - [ ] **Step 1:** If cheap, add "assigns a participant to a synced event": open the tracer event,
-  Edit participants, pick a member, Save, reopen → member chip shown.
+      Edit participants, pick a member, Save, reopen → member chip shown.
 - [ ] **Step 2:** `npm run check:standard` in a clean detached checkout; then
-  `npm run check:aggregate-only` with the given ports.
+      `npm run check:aggregate-only` with the given ports.
 - [ ] **Step 3:** Resync `assembly-cohort.json` (vitest cases, Playwright ids, coverage; lower
-  `minimumTotals` only where code shrank, never `minimumRates`); commit
-  `test: resync assembly cohort`.
+      `minimumTotals` only where code shrank, never `minimumRates`); commit
+      `test: resync assembly cohort`.
