@@ -217,7 +217,7 @@ describe("Shell — unprovisioned gate", () => {
     expect(screen.queryByRole("button", { name: "Provision Device" })).not.toBeInTheDocument();
   });
 
-  it("marks the current family destination and exposes Options as an Escape-dismissible disclosure", async () => {
+  it("marks the current family destination and makes Options the Admin affordance while Admin is its only entry", async () => {
     document.cookie = "mp_provisioned=1; path=/";
     mockFetch.mockImplementation((url) => {
       if (String(url) === "/api/plugins") return Promise.resolve(pluginCatalogResponse());
@@ -233,25 +233,18 @@ describe("Shell — unprovisioned gate", () => {
       "aria-current",
       "page"
     );
+    // With Admin as its only entry, Options is the Admin hold affordance itself, not a
+    // one-item menu.
     const options = screen.getByRole("button", { name: "Options" });
-    expect(options).toHaveAttribute("aria-expanded", "false");
-    expect(options).toHaveAttribute("aria-controls");
-    expect(options).not.toHaveAttribute("aria-haspopup", "menu");
-    fireEvent.click(options);
-    const panel = screen.getByRole("group", { name: "Options" });
-    expect(options).toHaveAttribute("aria-expanded", "true");
-    expect(panel).toHaveAttribute("id", options.getAttribute("aria-controls"));
-    const admin = within(panel).getByRole("button", { name: "Admin" });
-    expect(admin).toHaveAttribute("data-hold-state", "idle");
-    expect(within(panel).queryByText(/printer/i)).not.toBeInTheDocument();
-    expect(within(panel).queryByRole("button", { name: "Kiosk mode" })).not.toBeInTheDocument();
-    // Options currently exposes Admin only (density toggle temporarily unmounted).
-    expect(Array.from(panel.querySelectorAll("button, a"))).toEqual([admin]);
-    expect(admin).not.toHaveAttribute("tabindex", "-1");
-
-    fireEvent.keyDown(panel, { key: "Escape" });
+    expect(options).toHaveAttribute("data-testid", "admin-affordance");
+    expect(options).toHaveAttribute("data-hold-state", "idle");
+    expect(options).not.toHaveAttribute("aria-expanded");
+    expect(options).not.toHaveAttribute("aria-controls");
+    expect(options).not.toHaveAttribute("tabindex", "-1");
+    expect(screen.queryByRole("button", { name: "Admin" })).not.toBeInTheDocument();
+    fireEvent.click(options, { detail: 1 });
     expect(screen.queryByRole("group", { name: "Options" })).not.toBeInTheDocument();
-    expect(options).toHaveFocus();
+    expect(window.location.pathname).toBe("/calendar");
   });
 
   it("organizes the household chrome into compact navigation, contextual center, and secondary actions", async () => {
@@ -331,8 +324,7 @@ describe("Shell — unprovisioned gate", () => {
     render(<Shell />);
 
     await screen.findByTestId("plugin-health-indicator");
-    fireEvent.click(await screen.findByRole("button", { name: "Options" }));
-    const admin = screen.getByRole("button", { name: "Admin" });
+    const admin = await screen.findByTestId("admin-affordance");
     const progress = screen.getByTestId("admin-hold-progress");
 
     vi.useFakeTimers();
@@ -375,8 +367,7 @@ describe("Shell — unprovisioned gate", () => {
     render(<Shell />);
 
     await screen.findByTestId("plugin-health-indicator");
-    fireEvent.click(await screen.findByRole("button", { name: "Options" }));
-    const admin = screen.getByTestId("admin-affordance");
+    const admin = await screen.findByTestId("admin-affordance");
 
     fireEvent.pointerDown(admin, { pointerId: 1 });
 
@@ -396,8 +387,7 @@ describe("Shell — unprovisioned gate", () => {
     });
     render(<Shell />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Options" }));
-    let admin = screen.getByRole("button", { name: "Admin" });
+    let admin = await screen.findByTestId("admin-affordance");
     for (const [index, pointerType] of ["mouse", "touch", "pen"].entries()) {
       fireEvent.pointerDown(admin, { pointerId: index + 1, pointerType });
       fireEvent.pointerUp(admin, { pointerId: index + 1, pointerType });
@@ -419,8 +409,7 @@ describe("Shell — unprovisioned gate", () => {
 
     window.history.replaceState({}, "", "/");
     window.dispatchEvent(new PopStateEvent("popstate"));
-    fireEvent.click(await screen.findByRole("button", { name: "Options" }));
-    admin = screen.getByRole("button", { name: "Admin" });
+    admin = await screen.findByTestId("admin-affordance");
     vi.useFakeTimers();
     try {
       fireEvent.keyDown(admin, { key: " " });
@@ -434,8 +423,7 @@ describe("Shell — unprovisioned gate", () => {
 
     window.history.replaceState({}, "", "/");
     window.dispatchEvent(new PopStateEvent("popstate"));
-    fireEvent.click(await screen.findByRole("button", { name: "Options" }));
-    admin = screen.getByRole("button", { name: "Admin" });
+    admin = await screen.findByTestId("admin-affordance");
     fireEvent.click(admin, { detail: 0 });
     expect(window.location.pathname).toBe("/admin");
   });
@@ -450,8 +438,7 @@ describe("Shell — unprovisioned gate", () => {
     });
     render(<Shell />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Options" }));
-    const admin = screen.getByRole("button", { name: "Admin" });
+    const admin = await screen.findByTestId("admin-affordance");
     const capture = vi.fn();
     Object.defineProperty(admin, "setPointerCapture", { configurable: true, value: capture });
 
@@ -470,8 +457,7 @@ describe("Shell — unprovisioned gate", () => {
 
     window.history.replaceState({}, "", "/");
     window.dispatchEvent(new PopStateEvent("popstate"));
-    fireEvent.click(await screen.findByRole("button", { name: "Options" }));
-    const cancelledAdmin = screen.getByRole("button", { name: "Admin" });
+    const cancelledAdmin = await screen.findByTestId("admin-affordance");
     vi.useFakeTimers();
     try {
       fireEvent.pointerDown(cancelledAdmin, { pointerId: 43 });

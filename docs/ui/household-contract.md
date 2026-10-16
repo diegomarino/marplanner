@@ -3,12 +3,15 @@
 ## Family shell
 
 Every provisioned family route renders persistent chrome with visible Home, Calendar, Tasks, and
-Meals controls. The active destination is semantic. Options contains exactly Large controls and
-Admin; printer pairing is not a menu item. `/daily-briefing` and unknown family paths render a
-localized not-found outcome, never Home by substitution.
+Meals controls. The active destination is semantic. Options holds Admin only; printer pairing is
+not a menu item. While Admin is its only entry, the Options button is the Admin affordance itself
+(same long-press hold, same `admin-affordance` testid) rather than a one-item menu; a second entry
+turns it back into a disclosure menu with Admin first. `/daily-briefing` and unknown family paths
+render a localized not-found outcome, never Home by substitution.
 
-Activating Admin from Options uses the same-document navigation seam and closes the Options menu as
-the route changes, preserving page-lifetime services without leaving an overlay above admin content.
+Activating Admin from Options uses the same-document navigation seam and closes the Options menu (when
+there is one) as the route changes, preserving page-lifetime services without leaving an overlay
+above admin content.
 
 Weather retains its absence policy and forecast dialog. The adjacent device clock exists only when
 weather exists and the browser reports fullscreen-like presentation. Its accessible name identifies

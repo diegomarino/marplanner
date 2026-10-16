@@ -1,4 +1,4 @@
-import { fireEvent, render, cleanup, screen } from "@testing-library/react";
+import { render, cleanup, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Shell } from "@/shell/Shell";
@@ -59,7 +59,7 @@ describe("density control — real Shell mount intentionally hidden", () => {
 
     render(<Shell />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Options" }));
+    await screen.findByRole("button", { name: "Options" });
 
     expect(screen.getByTestId("admin-affordance")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Kiosk mode" })).not.toBeInTheDocument();
@@ -94,7 +94,7 @@ describe("density control — real Shell mount intentionally hidden", () => {
 
     render(<Shell />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Options" }));
+    await screen.findByRole("button", { name: "Options" });
     expect(screen.getByTestId("admin-affordance")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Kiosk mode" })).not.toBeInTheDocument();
     expect(screen.queryByTestId("density-control-toggle")).not.toBeInTheDocument();

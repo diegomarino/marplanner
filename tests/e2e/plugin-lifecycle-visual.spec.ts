@@ -196,10 +196,8 @@ async function navigateFromHomeToPluginManagementWithKeyboard(
   page: Page,
   copy: Copy
 ): Promise<void> {
-  const options = page.getByRole("button", { name: copy["shell.options.label"], exact: true });
-  await tabTo(page, options);
-  await page.keyboard.press("Enter");
-  const admin = page.getByRole("button", { name: copy["shell.options.admin"], exact: true });
+  // With Admin as its only entry, Options is the long-press Admin affordance itself.
+  const admin = page.getByRole("button", { name: copy["shell.options.label"], exact: true });
   await tabTo(page, admin);
   await page.keyboard.down("Enter");
   await expect(page).toHaveURL(/\/admin$/, { timeout: 5_500 });
