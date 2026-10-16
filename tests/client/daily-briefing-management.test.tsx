@@ -400,7 +400,7 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     );
   });
 
-  it("an opted-out member is gated on Blocks and Briefings until turned on", async () => {
+  it("an opted-out member is an off pill that cannot be picked; opt-in stays on Schedule", async () => {
     let benOn = false;
     mockBackend({
       optIns: ["member-ada"],
@@ -416,55 +416,47 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     fireEvent.click(await screen.findByTestId("daily-briefing-tab-blocks"));
     await screen.findByTestId("daily-briefing-block-matrix");
 
-    fireEvent.click(screen.getByTestId("daily-briefing-member-pill-member-ben"));
-    expect(screen.getByTestId("daily-briefing-opted-out")).toHaveTextContent(
-      "The daily briefing is off for Ben."
-    );
-    expect(screen.queryByTestId("daily-briefing-block-matrix")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByTestId("daily-briefing-tab-preview"));
-    expect(screen.getByTestId("daily-briefing-opted-out")).toBeVisible();
-    expect(screen.queryByTestId("daily-briefing-generate")).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId("daily-briefing-tab-blocks"));
-    fireEvent.click(screen.getByTestId("daily-briefing-turn-on"));
-    expect(await screen.findByTestId("daily-briefing-block-matrix")).toBeVisible();
-    expect(benOn).toBe(true);
+    const ben = screen.getByRole("radio", { name: "Ben (off)" });
+    expect(ben).toBeDisabled();
+    fireEvent.click(ben);
+    expect(screen.getByTestId("daily-briefing-member-pill-member-ada")).toBeChecked();
+    expect(screen.getByTestId("daily-briefing-block-matrix")).toBeVisible();
     expect(screen.queryByTestId("daily-briefing-opted-out")).not.toBeInTheDocument();
-    expect(callsTo("/api/daily-briefing/settings")).toHaveLength(1);
+    expect(screen.queryByTestId("daily-briefing-turn-on")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("daily-briefing-tab-schedule"));
     fireEvent.click(screen.getByTestId("daily-briefing-opt-in-member-ben"));
-    await waitFor(() => expect(benOn).toBe(false));
+    await waitFor(() => expect(benOn).toBe(true));
     fireEvent.click(screen.getByTestId("daily-briefing-tab-blocks"));
-    expect(await screen.findByTestId("daily-briefing-opted-out")).toBeVisible();
-    expect(screen.queryByTestId("daily-briefing-block-matrix")).not.toBeInTheDocument();
+    const benOnPill = screen.getByRole("radio", { name: "Ben" });
+    expect(benOnPill).toBeEnabled();
+    fireEvent.click(benOnPill);
+    expect(benOnPill).toBeChecked();
+    expect(screen.getByTestId("daily-briefing-block-matrix")).toBeVisible();
   });
 
-  it("locks Turn on daily briefing while Generate for all members runs, like the table opt-in", async () => {
-    let finish: ((response: Response) => void) | undefined;
+  it("opting the selected member out selects the first opted-in member", async () => {
     mockBackend({
-      optIns: ["member-ada"],
-      handle: (url) =>
-        url === "/api/daily-briefing/generate-all"
-          ? new Promise<Response>((resolve) => {
-              finish = resolve;
-            })
+      optIns: ["member-ada", "member-ben"],
+      handle: (url, init) =>
+        url === "/api/daily-briefing/opt-in/member-ada" && init?.method === "PUT"
+          ? jsonResponse({ memberId: "member-ada", enabled: false })
           : undefined,
     });
     renderManagement();
-    const generateAll = await screen.findByTestId("daily-briefing-generate-all");
-    await waitFor(() => expect(generateAll).toBeEnabled());
-    fireEvent.click(generateAll);
+    fireEvent.click(await screen.findByTestId("daily-briefing-tab-blocks"));
+    await screen.findByTestId("daily-briefing-block-matrix");
+    expect(screen.getByTestId("daily-briefing-member-pill-member-ada")).toBeChecked();
+
+    fireEvent.click(screen.getByTestId("daily-briefing-tab-schedule"));
+    fireEvent.click(screen.getByTestId("daily-briefing-opt-in-member-ada"));
     await waitFor(() =>
-      expect(screen.getByTestId("daily-briefing-opt-in-member-ben")).toBeDisabled()
+      expect(screen.getByTestId("daily-briefing-opt-in-member-ada")).not.toBeChecked()
     );
-
     fireEvent.click(screen.getByTestId("daily-briefing-tab-blocks"));
-    fireEvent.click(screen.getByTestId("daily-briefing-member-pill-member-ben"));
-    expect(screen.getByTestId("daily-briefing-turn-on")).toBeDisabled();
-
-    finish?.(jsonResponse({ status: "completed", count: 0, generated: [] }));
-    await waitFor(() => expect(screen.getByTestId("daily-briefing-turn-on")).toBeEnabled());
+    expect(screen.getByTestId("daily-briefing-member-pill-member-ben")).toBeChecked();
+    expect(screen.getByTestId("daily-briefing-member-pill-member-ada")).toBeDisabled();
+    expect(screen.getByTestId("daily-briefing-block-matrix")).toBeVisible();
   });
 
   it("toggling a cell writes the effective day set for that block", async () => {
@@ -720,7 +712,7 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     expect(screen.getByTestId("daily-briefing-member-status-member-ada")).toHaveTextContent("—");
   });
 
-  it("opting the selected member out gates Blocks, and turning back on restores it without a refetch", async () => {
+  it("with nobody opted in, Blocks and Briefings point to Schedule", async () => {
     mockBackend({
       optIns: ["member-ada"],
       handle: (url, init) =>
@@ -739,10 +731,25 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     await waitFor(() =>
       expect(screen.getByTestId("daily-briefing-opt-in-member-ada")).not.toBeChecked()
     );
+    fireEvent.click(screen.getByTestId("daily-briefing-tab-preview"));
+    expect(screen.getByTestId("daily-briefing-none-opted-in")).toBeVisible();
+    expect(screen.getByRole("radio", { name: "Ada (off)" })).not.toBeChecked();
+    expect(screen.queryByTestId("daily-briefing-generate")).not.toBeInTheDocument();
     fireEvent.click(screen.getByTestId("daily-briefing-tab-blocks"));
-    expect(screen.getByTestId("daily-briefing-opted-out")).toBeVisible();
+    expect(screen.getByTestId("daily-briefing-none-opted-in")).toBeVisible();
     expect(screen.queryByTestId("daily-briefing-block-matrix")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByTestId("daily-briefing-turn-on"));
+
+    fireEvent.click(screen.getByTestId("daily-briefing-open-schedule"));
+    expect(screen.getByTestId("daily-briefing-tab-schedule")).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    fireEvent.click(screen.getByTestId("daily-briefing-opt-in-member-ada"));
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-opt-in-member-ada")).toBeChecked()
+    );
+    fireEvent.click(screen.getByTestId("daily-briefing-tab-blocks"));
+    expect(screen.getByTestId("daily-briefing-member-pill-member-ada")).toBeChecked();
     expect(await screen.findByTestId("daily-briefing-block-matrix")).toBeVisible();
     expect(callsTo("/api/daily-briefing/settings")).toHaveLength(1);
   });

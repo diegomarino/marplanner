@@ -242,7 +242,6 @@ export function CalendarView() {
   const [fDescription, setFDescription] = useState("");
   const [createMemberIds, setCreateMemberIds] = useState<Set<string>>(() => new Set());
 
-
   const resetForm = (): void => {
     setFTitle("");
     setFAllDay(true);
@@ -296,7 +295,6 @@ export function CalendarView() {
       setFEditEnd(`${fEditDate}T10:00`);
     }
   };
-
 
   const openDeleteConfirm = (event: FeedItem): void => {
     setShowDeleteConfirm(`${event.id}@${event.occurrenceStart}`);
@@ -544,7 +542,6 @@ export function CalendarView() {
   };
   const previousDate = periodDate(-1);
   const nextDate = periodDate(1);
-
 
   const goToToday = (): void => {
     setCurrentDate(getHouseholdCalendarDate(Date.now(), timezone));
