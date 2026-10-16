@@ -307,6 +307,7 @@ describe("daily-briefing opt-in + failure-isolation boundary", () => {
         label: "Soup",
         isTombstone: false,
         source: "oneoff",
+        planId: null,
         recipeId: null,
         note: "Soup",
       },
