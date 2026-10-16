@@ -81,7 +81,7 @@
     "@schedule-x/react": "^4.1.0",
     "@schedule-x/theme-default": "^4.9.1",
     "argon2": "0.45.1",
-    "better-sqlite3": "12.11.1",
+    "better-sqlite3": "13.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.4",
