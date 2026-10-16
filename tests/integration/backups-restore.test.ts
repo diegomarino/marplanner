@@ -25,6 +25,7 @@ import {
 import { getDb } from "../../src/server/db/client";
 import { startExternalSourceSynchronization } from "../../src/server/modules/calendar/sync-coordinator";
 import { useIsolatedDb } from "../helpers/db";
+import { BASELINE_FILE, execBaseline } from "../helpers/baseline";
 
 /** — the restore engine (ADR-017 sequence, FR-006..010). Fixture
  * backup DBs are built by APPLYING SUBSETS of the real `drizzle/*.sql` files (mirroring
@@ -83,24 +84,10 @@ function buildFixtureDb(
       "CREATE TABLE IF NOT EXISTS `drizzle_universe_migrations` (`fileName` TEXT PRIMARY KEY NOT NULL, `appliedAt` INTEGER NOT NULL)"
     );
     for (const fileName of appliedFiles) {
-      if (fileName === "0002_plugin_lifecycle.sql") {
-        db.exec(
-          `CREATE TEMP TABLE plugin_lifecycle_migration_context (
-             kind TEXT NOT NULL,
-             pre_run_migration_files TEXT NOT NULL,
-             captured_at TEXT NOT NULL
-           )`
-        );
-        db.prepare(
-          `INSERT INTO temp.plugin_lifecycle_migration_context
-             (kind, pre_run_migration_files, captured_at)
-           VALUES ('prior_baseline', ?, ?)`
-        ).run(JSON.stringify(["0000_current_baseline.sql"]), new Date().toISOString());
-      }
-      const sql = fs.readFileSync(path.join(REAL_DRIZZLE_DIR, fileName), "utf-8");
-      db.exec(sql);
-      if (fileName === "0002_plugin_lifecycle.sql") {
-        db.exec("DROP TABLE temp.plugin_lifecycle_migration_context");
+      if (fileName === BASELINE_FILE) {
+        execBaseline(db, new Date().toISOString());
+      } else {
+        db.exec(fs.readFileSync(path.join(REAL_DRIZZLE_DIR, fileName), "utf-8"));
       }
       db.prepare(
         "INSERT INTO `drizzle_universe_migrations` (`fileName`, `appliedAt`) VALUES (?, ?)"
@@ -458,12 +445,12 @@ describe("restore engine — rollback net (BACKUPS-AC-02, research D6, FR-008)",
         .prepare("SELECT state FROM plugin_activation_registry WHERE plugin_id = 'backups'")
         .get()
     ).toEqual({ state: "inactive" });
-    // A disposable migrations dir: the first two REAL migrations (a valid, applyable baseline)
+    // A disposable migrations dir: the real baseline (the only real migration)
     // plus one deliberately malformed extra file that throws when executed — isolates this test
     // from ever touching the real repo drizzle/ tree.
     const tmpMigrationsDir = mkdtempSync(path.join(tmpdir(), "mp-broken-migrations-"));
     try {
-      const baseline = REAL_MIGRATION_FILES.slice(0, 2);
+      const baseline = REAL_MIGRATION_FILES;
       for (const fileName of baseline) {
         fs.copyFileSync(
           path.join(REAL_DRIZZLE_DIR, fileName),
@@ -796,7 +783,7 @@ describe("restore engine — rollback double-fault (review P1-2)", () => {
     await getScheduler().start();
     const tmpMigrationsDir = mkdtempSync(path.join(tmpdir(), "mp-broken-migrations-p1-2-"));
     try {
-      const baseline = REAL_MIGRATION_FILES.slice(0, 2);
+      const baseline = REAL_MIGRATION_FILES;
       for (const fileName of baseline) {
         fs.copyFileSync(
           path.join(REAL_DRIZZLE_DIR, fileName),
@@ -1112,7 +1099,7 @@ describe("restore engine — stale WAL/SHM handling (review P1-5)", () => {
     await getScheduler().start();
     const tmpMigrationsDir = mkdtempSync(path.join(tmpdir(), "mp-broken-migrations-p1-5-"));
     try {
-      const baseline = REAL_MIGRATION_FILES.slice(0, 2);
+      const baseline = REAL_MIGRATION_FILES;
       for (const fileName of baseline) {
         fs.copyFileSync(
           path.join(REAL_DRIZZLE_DIR, fileName),

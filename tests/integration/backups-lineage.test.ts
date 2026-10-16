@@ -7,15 +7,13 @@ import { afterEach, describe, expect, it } from "vitest";
 import { getDb } from "../../src/server/db/client";
 import { formatBackupFilename, resolveBackupsRoot } from "../../src/server/backups/storage";
 import { __resetRestoreStateForTests, restoreDatabase } from "../../src/server/backups/restore";
+import { BASELINE_FILE, BASELINE_PATH, execBaseline } from "../helpers/baseline";
 import { useIsolatedDb } from "../helpers/db";
-
-const BASELINE_FILE = "0000_current_baseline.sql";
-const BASELINE_PATH = path.join(process.cwd(), "drizzle", BASELINE_FILE);
 
 function writeBaselineBackup(filename: string): void {
   const db = new Database(path.join(resolveBackupsRoot(), filename));
   try {
-    db.exec(fs.readFileSync(BASELINE_PATH, "utf-8"));
+    execBaseline(db);
     db.exec(
       "CREATE TABLE drizzle_universe_migrations (fileName TEXT PRIMARY KEY NOT NULL, appliedAt INTEGER NOT NULL)"
     );

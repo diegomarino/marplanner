@@ -1,4 +1,4 @@
--- Deterministic post-migration state for a store whose immutable lineage is prior_baseline.
+-- Deterministic restored-backup state: every plugin active, weather since deactivated.
 UPDATE `plugin_activation_registry`
 SET
   `state` = 'inactive',

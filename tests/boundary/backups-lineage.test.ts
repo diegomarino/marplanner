@@ -12,7 +12,7 @@ import {
 import { __resetRestoreStateForTests, restoreDatabase } from "../../src/server/backups/restore";
 import { useIsolatedDb } from "../helpers/db";
 
-const BASELINE_FILE = "0000_current_baseline.sql";
+const BASELINE_FILE = "0000_baseline.sql";
 
 function writeMetadataBackup(fileName: string, migrationFiles: string[]): void {
   const db = new Database(path.join(resolveBackupsRoot(), fileName));
@@ -66,6 +66,25 @@ describe("backup restore lineage classification", () => {
   it("rejects a readable pre-baseline migration ledger as unsupported_lineage without exposing internals", async () => {
     const filename = nextSnapshotFilename();
     writeMetadataBackup(filename, ["0019_development_history.sql"]);
+
+    const result = await restoreDatabase({ filename, confirmFilename: filename });
+
+    expect(result).toEqual({
+      status: "unsupported_lineage",
+      message: "The selected backup is not from the supported baseline lineage",
+    });
+  });
+
+  it("rejects a backup from before the 2026-10-16 migration squash as unsupported_lineage", async () => {
+    const filename = nextSnapshotFilename();
+    writeMetadataBackup(filename, [
+      "0000_current_baseline.sql",
+      "0001_calendar_feed_sync.sql",
+      "0002_plugin_lifecycle.sql",
+      "0003_calendar_event_details.sql",
+      "0004_member_palette.sql",
+      "0005_daily_briefing_schedule.sql",
+    ]);
 
     const result = await restoreDatabase({ filename, confirmFilename: filename });
 
