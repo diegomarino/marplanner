@@ -6187,7 +6187,7 @@
           "lines": 2,
           "statements": 2,
           "functions": 2,
-          "branches": 8
+          "branches": 6
         },
         "minimumRates": {
           "lines": 100,
