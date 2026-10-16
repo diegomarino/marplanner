@@ -60,12 +60,12 @@ calendar-gated reminder ("bring shin pads") at several children, not one.
 
 Replace the single muted string with a wrapping flex line (`data-testid="reminder-who-<id>"`):
 
-| Rule | Rendering |
-| --- | --- |
-| scheduled · apply_to_all | neutral label "All members" · weekday list (muted text) |
-| scheduled · specific | per member: `[Ari pill]` "Mon, Wed" — groups separated by gap |
-| calendar_gated · apply_to_all | "Match text: vet" · neutral "All members" |
-| calendar_gated · specific | "Match text: vet" · `[Ari pill]` `[Bea pill]` |
+| Rule                          | Rendering                                                     |
+| ----------------------------- | ------------------------------------------------------------- |
+| scheduled · apply_to_all      | neutral label "All members" · weekday list (muted text)       |
+| scheduled · specific          | per member: `[Ari pill]` "Mon, Wed" — groups separated by gap |
+| calendar_gated · apply_to_all | "Match text: vet" · neutral "All members"                     |
+| calendar_gated · specific     | "Match text: vet" · `[Ari pill]` `[Bea pill]`                 |
 
 - The pill is the existing `MemberChip` (`src/client/routines/admin/MemberChip.tsx`), which already
   renders exactly variant D's selected look (`bg-[var(--member-color)]`,

@@ -32,6 +32,7 @@
 ### Task 1: Boundary proof — calendar-gated rule with several members
 
 **Files:**
+
 - Test: `tests/boundary/reminders-calendar-gated.test.ts` (append one `it`)
 
 **Interfaces:** Consumes the existing helpers in that file (`insertDevice`, `insertMember`, `insertEvent`, `assign`).
@@ -49,11 +50,13 @@
 ### Task 2: Row who-line with member pills
 
 **Files:**
+
 - Modify: `src/client/admin/RemindersManagement.tsx` (`summarize`, `ReminderRow`)
 - Test: `tests/client/reminders.test.tsx` (rewrite "summarises all-members, specific and calendar-gated rules"; add archived/unknown test)
 - Docs: `docs/ui/household-contract.md` reminders paragraph
 
 **Interfaces:**
+
 - Produces: `function ReminderWho({ reminder, t, members }: { reminder: Reminder; t: Translate; members: Map<string, Member> }): JSX.Element` rendering `<p data-testid={`reminder-who-${reminder.id}`} className="text-muted-foreground text-control flex flex-wrap items-center gap-x-3 gap-y-1">`. `RemindersManagement` passes `memberById = new Map(allMembers.map(m => [m.id, m]))` instead of `memberNames`.
 - Pill helper: `targetedMembers(reminder, members): Member[]` — assignments in order, mapped to known members with `lifecycle === "active"`; reused by Task 3.
 
@@ -72,6 +75,7 @@
 ### Task 3: Multi-member calendar-gated dialog + dry-run targeting
 
 **Files:**
+
 - Modify: `src/client/admin/RemindersManagement.tsx` (`DryRunPanel` props: `members: Member[]` replaces `activeMembers`)
 - Test: `tests/client/reminders.test.tsx`; `tests/e2e/reminders-calendar-gated.spec.ts` (extend existing test, title unchanged)
 - Docs: `docs/features/reminders.md` User Story 2 ("…emits only on days one of its members — all active members, or one or several chosen ones — has…")
