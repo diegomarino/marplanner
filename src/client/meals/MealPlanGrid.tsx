@@ -1,8 +1,12 @@
+import { useMemo } from "react";
+
 import { useTranslation } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { MenuItem, Slot } from "../../shared";
-import { MealCell } from "./MealCell";
+import { MealCell, type MealCellOrigin } from "./MealCell";
+import { MealOriginPills } from "./MealOriginPills";
+import type { MealOriginPill, MealOriginTone } from "./meal-origins";
 
 const SLOTS: Slot[] = ["breakfast", "lunch", "snack", "dinner"];
 
@@ -42,6 +46,14 @@ export interface MealPlanGridProps {
   onSelect(date: string, item: MenuItem): void;
   /** Heading level of the week range: "h1" on the family board, "h3" under an admin panel heading. */
   titleAs?: "h1" | "h3";
+  /** Origin pills and chip tints (spec O4). Without it no pill row renders and recurring chips use
+   * the unknown tone. */
+  origin?: {
+    pills: MealOriginPill[];
+    tones: ReadonlyMap<string, MealOriginTone>;
+    selected: readonly string[];
+    onSelectedChange(next: string[]): void;
+  };
 }
 
 export function MealPlanGrid({
@@ -55,8 +67,18 @@ export function MealPlanGrid({
   onAdd,
   onSelect,
   titleAs = "h1",
+  origin,
 }: MealPlanGridProps) {
   const { t, language } = useTranslation();
+  const cellOrigin = useMemo<MealCellOrigin | undefined>(
+    () =>
+      origin && {
+        tones: origin.tones,
+        selected: origin.selected,
+        labels: new Map(origin.pills.map((pill) => [pill.id, pill.label])),
+      },
+    [origin]
+  );
   const range = weekDates.length
     ? `${formatRangeDate(weekDates[0], language)} – ${formatRangeDate(weekDates[weekDates.length - 1], language)}`
     : null;
@@ -100,6 +122,13 @@ export function MealPlanGrid({
           )}
         </div>
       </div>
+      {origin && (
+        <MealOriginPills
+          pills={origin.pills}
+          selected={origin.selected}
+          onChange={origin.onSelectedChange}
+        />
+      )}
       <div
         data-testid="meal-plan-grid"
         className="flex-1 overflow-x-auto rounded-3xl border bg-card shadow-xs"
@@ -138,6 +167,7 @@ export function MealPlanGrid({
                   isToday={todayDate === date}
                   onAdd={onAdd}
                   onSelect={onSelect}
+                  origin={cellOrigin}
                 />
               ))}
             </div>

@@ -129,6 +129,54 @@
     background: var(--member-event-background, var(--color-muted));
     border-left-color: var(--member-event-border, transparent);
   }
+  .meal-origin-oneoff {
+    --meal-origin: var(--meal-origin-oneoff);
+  }
+  .meal-origin-plan-1 {
+    --meal-origin: var(--meal-origin-plan-1);
+  }
+  .meal-origin-plan-2 {
+    --meal-origin: var(--meal-origin-plan-2);
+  }
+  .meal-origin-plan-3 {
+    --meal-origin: var(--meal-origin-plan-3);
+  }
+  .meal-origin-plan-4 {
+    --meal-origin: var(--meal-origin-plan-4);
+  }
+  .meal-origin-plan-5 {
+    --meal-origin: var(--meal-origin-plan-5);
+  }
+  .meal-origin-plan-6 {
+    --meal-origin: var(--meal-origin-plan-6);
+  }
+  .meal-origin-unknown {
+    --meal-origin: var(--muted-foreground);
+  }
+
+  /* Chip: light tint + border in the origin colour (variant D). */
+  .meal-origin-chip {
+    background: color-mix(in oklch, var(--meal-origin) 16%, var(--card));
+    border-color: color-mix(in oklch, var(--meal-origin) 55%, var(--card));
+    color: var(--foreground);
+  }
+  /* A selected origin: stronger tint, solid border, semibold. */
+  .meal-origin-chip[data-emphasis="hit"] {
+    background: color-mix(in oklch, var(--meal-origin) 38%, var(--card));
+    border-color: var(--meal-origin);
+    font-weight: 600;
+  }
+  /* Another origin is selected: greyed in place, still clickable. */
+  .meal-origin-chip[data-emphasis="dim"] {
+    background: var(--muted);
+    border-color: var(--border);
+    color: var(--muted-foreground);
+  }
+  /* Origin pill: feeds PillControl's coloured tone. */
+  .meal-origin-pill {
+    --pill-color: var(--meal-origin);
+    --pill-color-selected: color-mix(in oklch, var(--meal-origin) 38%, var(--card));
+  }
 }
 
 /* Control typography follows the document density, including portals. */

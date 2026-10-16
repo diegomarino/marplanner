@@ -56,9 +56,11 @@ describe("MealEntryDialog", () => {
     );
 
     expect(screen.getByRole("button", { name: "Add Entry" })).toBeDisabled();
-    expect(screen.getByText("Select a recipe or enter a note.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("radio", { name: "Note" }));
-    fireEvent.change(screen.getByRole("textbox", { name: "Note" }), { target: { value: "Soup" } });
+    expect(screen.getByText("Select a recipe or enter free text.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: "Free text" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Free text" }), {
+      target: { value: "Soup" },
+    });
     expect(screen.getByRole("button", { name: "Add Entry" })).toBeEnabled();
   });
 
@@ -103,6 +105,7 @@ describe("MealEntryDialog", () => {
             label: "Takeout",
             isTombstone: false,
             source: "oneoff",
+            planId: null,
             recipeId: null,
             note: "Takeout",
           },
@@ -121,7 +124,7 @@ describe("MealEntryDialog", () => {
     expect(screen.getByRole("option", { name: "Pizza" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Fruit" })).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "Toast" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("radio", { name: "Note" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Free text" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(onEdit).toHaveBeenCalledWith("entry-1", { note: "Takeout" });
   });
@@ -151,6 +154,7 @@ describe("MealEntryDialog", () => {
                 label: "Takeout",
                 isTombstone: false,
                 source: "oneoff",
+                planId: null,
                 recipeId: "recipe-1",
                 note: null,
               },
@@ -168,8 +172,8 @@ describe("MealEntryDialog", () => {
     await waitFor(() =>
       expect(screen.getByRole("combobox", { name: "Receta" })).toBeInTheDocument()
     );
-    fireEvent.click(screen.getByRole("radio", { name: "Nota" }));
-    expect(screen.getByRole("textbox", { name: "Nota" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: "Texto libre" }));
+    expect(screen.getByRole("textbox", { name: "Texto libre" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Eliminar" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cerrar" })).toBeInTheDocument();
   });
@@ -223,8 +227,8 @@ describe("MealEntryDialog", () => {
     const planSelect = screen.getByRole("combobox", { name: "Meal Plan" });
     expect(planSelect).toHaveValue("p1");
     expect(within(planSelect).queryByText("Summer")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("radio", { name: "Note" }));
-    fireEvent.change(screen.getByRole("textbox", { name: "Note" }), {
+    fireEvent.click(screen.getByRole("radio", { name: "Free text" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Free text" }), {
       target: { value: "Pizza night" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Add Entry" }));
@@ -274,6 +278,7 @@ describe("MealEntryDialog", () => {
             label: "Soup",
             isTombstone: false,
             source: "recurring",
+            planId: "plan-1",
             recipeId: null,
             note: "Soup",
           },
@@ -288,5 +293,80 @@ describe("MealEntryDialog", () => {
     );
     expect(screen.queryByRole("radiogroup", { name: "Repeat" })).not.toBeInTheDocument();
     expect(screen.getByRole("note")).toHaveTextContent("This changes every matching week.");
+  });
+
+  const twoPlans: MealPlan[] = [
+    { id: "plan-a", name: "School", active: true, createdAt: 1, updatedAt: 1 },
+    { id: "plan-b", name: "Simpson", active: true, createdAt: 2, updatedAt: 2 },
+    { id: "plan-off", name: "Old", active: false, createdAt: 3, updatedAt: 3 },
+  ];
+
+  it("opens a create on 'Every <weekday>' in the preselected plan", async () => {
+    const onCreate = vi.fn().mockResolvedValue(true);
+    render(
+      <MealEntryDialog
+        open
+        target={{ date: "2026-09-25", slot: "dinner" }}
+        recipes={recipes}
+        plans={twoPlans}
+        initialPlanId="plan-b"
+        onClose={vi.fn()}
+        onCreate={onCreate}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("radio", { name: /^Every / })).toBeChecked();
+    expect(screen.getByRole("combobox", { name: "Meal Plan" })).toHaveValue("plan-b");
+    fireEvent.click(screen.getByRole("radio", { name: "Free text" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Free text" }), {
+      target: { value: "Soup" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add Entry" }));
+    await waitFor(() =>
+      expect(onCreate).toHaveBeenCalledWith({
+        kind: "recurring",
+        mealPlanId: "plan-b",
+        weekday: "fri",
+        slot: "dinner",
+        note: "Soup",
+      })
+    );
+  });
+
+  it("ignores an inactive or unknown preselected plan and stays one-off", () => {
+    for (const initialPlanId of ["plan-off", "missing"]) {
+      const { unmount } = render(
+        <MealEntryDialog
+          open
+          target={{ date: "2026-09-25", slot: "dinner" }}
+          recipes={recipes}
+          plans={twoPlans}
+          initialPlanId={initialPlanId}
+          onClose={vi.fn()}
+          onCreate={vi.fn()}
+          onEdit={vi.fn()}
+          onDelete={vi.fn()}
+        />
+      );
+      expect(screen.getByRole("radio", { name: "Only this date" })).toBeChecked();
+      unmount();
+    }
+  });
+
+  it("never preselects without plans (the family dialog)", () => {
+    render(
+      <MealEntryDialog
+        open
+        target={{ date: "2026-09-25", slot: "dinner" }}
+        recipes={recipes}
+        initialPlanId="plan-a"
+        onClose={vi.fn()}
+        onCreate={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+    expect(screen.queryByRole("radio", { name: /^Every / })).toBeNull();
   });
 });
