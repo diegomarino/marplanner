@@ -98,7 +98,9 @@ export function MemberPills(props: MemberPillsProps) {
       label={member.displayName}
       note={member.offLabel}
       reserveBoldLabel
-      tokenStyle={{ "--member-color": `var(--color-member-${member.colorKey}-500)` } as CSSProperties}
+      tokenStyle={
+        { "--member-color": `var(--color-member-${member.colorKey}-500)` } as CSSProperties
+      }
       disabled={disabled || member.disabled || member.offLabel !== undefined}
       className={cn(MEMBER_PILL_CLASS, member.offLabel !== undefined && MEMBER_PILL_OFF_CLASS)}
       data-testid={testIdPrefix ? `${testIdPrefix}-${member.id}` : undefined}

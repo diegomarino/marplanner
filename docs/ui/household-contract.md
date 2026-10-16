@@ -81,7 +81,7 @@ The ordered capability table is:
 6. `/admin/daily-messages` — daily messages
 7. `/admin/daily-briefing` — Briefing: three tabs (local state, no sub-paths).
    - Schedule (default): automatic generation time and auto-print after morning chores (Save enabled when changed); Generate briefings for a chosen date (Generate for all members); a Members table with the per-member opt-in (its only home), the briefing days summary, the result for the chosen date and Blocks/Briefings shortcuts.
-   - Blocks and Briefings share one member pill bar (opted-out members marked "off", gated with a Turn on notice).
+   - Blocks and Briefings share one member pill bar: opted-out members are "off" pills that cannot be picked (opt-in lives only in the Schedule members table); opting the selected member out selects the first opted-in member, and with nobody opted in one line points to Schedule with a button that opens it.
    - Blocks: per-member blocks × weekdays matrix in household week-start order, with a "Briefing runs" pause row, inline block parameters and drag/keyboard reorder of the household block order; "settings changed" notice links to Briefings.
    - Briefings: 30-day history, date, Generate/Regenerate, View PNG, Print to the queue, payload and image states; the paused notice links to Blocks.
 8. `/admin/telemetry` — client telemetry
