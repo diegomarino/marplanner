@@ -21,6 +21,11 @@ export interface PillControlProps {
   adornment?: ReactNode;
   /** Replaces the accent fill while selected. Pass only semantic colour tokens. */
   selectedStyle?: CSSProperties;
+  /** Always applied, e.g. a custom property the caller's classes read. Semantic tokens only. */
+  style?: CSSProperties;
+  /** Reserve the semibold label's width so a caller that bolds the checked state never shifts
+   * the pills beside it: an invisible, zero-height bold copy of the label sizes the same grid. */
+  reserveBoldLabel?: boolean;
   /** Native radio group name. */
   name?: string;
   value?: string;
@@ -38,6 +43,8 @@ export function PillControl({
   note,
   adornment,
   selectedStyle,
+  style,
+  reserveBoldLabel,
   name,
   value,
   disabled,
@@ -47,7 +54,7 @@ export function PillControl({
   return (
     <label
       // eslint-disable-next-line ui-policy/debt -- Forwards the caller's semantic colour tokens for the selected state.
-      style={checked ? selectedStyle : undefined}
+      style={checked && selectedStyle ? { ...style, ...selectedStyle } : style}
       className={cn(
         "border-input bg-background text-muted-foreground text-control relative inline-flex h-[var(--control-height)] cursor-pointer items-center rounded-lg border px-4 font-medium",
         "not-has-[:checked]:hover:bg-primary/10 not-has-[:checked]:hover:text-foreground",
@@ -73,7 +80,16 @@ export function PillControl({
           {adornment}
         </span>
       ) : null}
-      {label}
+      {reserveBoldLabel ? (
+        <span
+          data-text={label}
+          className="inline-grid after:invisible after:h-0 after:overflow-hidden after:font-semibold after:content-[attr(data-text)]"
+        >
+          {label}
+        </span>
+      ) : (
+        label
+      )}
       {note ? (
         <>
           {" "}
