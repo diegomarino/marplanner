@@ -88,6 +88,7 @@ describe("MealsManagement — recipe edit clears fields correctly (verify-pr #44
       </LanguageProvider>
     );
 
+    fireEvent.click(await screen.findByRole("tab", { name: "Recipes" }));
     const editButton = await screen.findByRole("button", { name: "Edit" });
     fireEvent.click(editButton);
 
