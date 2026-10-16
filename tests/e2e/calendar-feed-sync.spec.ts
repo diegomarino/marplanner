@@ -490,3 +490,99 @@ test("Admin journey keeps source controls distinct and highlight order observabl
     rmSync(dataDir, { recursive: true, force: true });
   }
 });
+
+test("a participant chosen on a synced event survives the next sync", async ({ page }) => {
+  test.setTimeout(60_000);
+  const port = await getFreePort();
+  const dataDir = mkdtempSync(join(tmpdir(), "mp-calendar-participants-"));
+  const baseUrl = `http://127.0.0.1:${port}`;
+  let harness: Awaited<ReturnType<typeof startHarness>> | undefined;
+
+  try {
+    harness = await startHarness(port, dataDir);
+    const provision = await fetch(`${baseUrl}/api/auth/provision`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${BOOTSTRAP_KEY}` },
+    });
+    expect(provision.status).toBe(200);
+    const cookie = authCookie(provision);
+    const member = await fetch(`${baseUrl}/api/members`, {
+      method: "POST",
+      headers: { cookie, "content-type": "application/json" },
+      body: JSON.stringify({ displayName: "Ada Lovelace", role: "parent" }),
+    });
+    expect(member.status).toBe(201);
+    const memberId = ((await member.json()) as { id: string }).id;
+    const created = await fetch(`${baseUrl}/api/calendar/external-sources/tracer`, {
+      method: "PUT",
+      headers: { cookie, "content-type": "application/json" },
+      body: JSON.stringify({
+        name: "Synthetic calendar",
+        provider: "ics_generic",
+        feedUrl: CONTROLLED_FEED_URL,
+      }),
+    });
+    expect(created.status).toBe(202);
+    const firstSync = await waitForPhase(baseUrl, cookie, "tracer", "succeeded");
+
+    const [name, value] = cookie.split("=", 2);
+    await page.context().addCookies([
+      { name, value, url: baseUrl, httpOnly: true },
+      { name: "mp_provisioned", value: "1", url: baseUrl },
+    ]);
+    await page.goto(baseUrl);
+    await page.locator('input[name="token"]').fill(ACCESS_TOKEN);
+    await page.getByRole("button", { name: "Enter" }).click();
+    const row = page
+      .getByTestId("calendar-event-row")
+      .filter({ hasText: "Synthetic tracer event" });
+    // The event is tomorrow, which can fall in the next month: decide once the events are loaded.
+    const openTracer = async (load: () => Promise<unknown>): Promise<void> => {
+      const loaded = page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/calendar/events?") && response.request().method() === "GET"
+      );
+      await load();
+      await loaded;
+      // The month grid renders with the loaded events in one commit, unlike the week view.
+      await expect(page.getByTestId("calendar-month-grid")).toBeVisible();
+      if ((await row.count()) === 0) {
+        await page.getByRole("button", { name: "Next period" }).click();
+      }
+      await row.click();
+    };
+    await openTracer(() => page.goto(`${baseUrl}/calendar`));
+
+    const detail = page.getByTestId("calendar-event-detail");
+    await expect(detail.getByTestId("calendar-edit-btn")).toHaveCount(0);
+    await detail.getByTestId("calendar-edit-participants-btn").click();
+    await detail.getByTestId(`calendar-assign-member-${memberId}`).check();
+    const assigned = page.waitForResponse(
+      (response) => response.url().includes("/assignments") && response.request().method() === "PUT"
+    );
+    await detail.getByTestId("calendar-participants-save-btn").click();
+    expect((await assigned).status()).toBe(200);
+    await expect(detail).toBeHidden();
+
+    const sync = await fetch(`${baseUrl}/api/calendar/external-sources/tracer/sync`, {
+      method: "POST",
+      headers: { cookie },
+    });
+    expect(sync.status).toBe(202);
+    await expect
+      .poll(async () => (await listSources(baseUrl, cookie))[0].lastSuccessAt)
+      .toBeGreaterThan(firstSync.lastSuccessAt ?? 0);
+    const tracer = (await mergedEvents(baseUrl, cookie)).filter(
+      (event) => event.title === "Synthetic tracer event"
+    );
+    expect(tracer).toEqual([expect.objectContaining({ assignedTo: [memberId] })]);
+
+    await openTracer(() => page.reload());
+    await expect(
+      detail.getByRole("list", { name: "Who is it for" }).getByText("Ada Lovelace")
+    ).toBeVisible();
+  } finally {
+    if (harness) await stopHarness(harness.child);
+    rmSync(dataDir, { recursive: true, force: true });
+  }
+});
