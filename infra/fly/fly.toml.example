@@ -1,6 +1,10 @@
 # Fly.io recipe for Marplanner v2 (ADR-055 phase 2): a thin platform layer over the same
 # platform-agnostic image in infra/docker/Dockerfile. Nothing here changes the image.
 #
+# Copy this file to infra/fly/fly.toml (git-ignored), then set your app name, region and volume
+# name. Create them once with `fly apps create <app>` and
+# `fly volumes create <volume> --app <app> --region <region> --size 1`.
+#
 # One machine only: SQLite lives on the volume and the boot single-writer guard refuses a second
 # instance. Deploy from the repo root with:
 #   fly deploy . --config infra/fly/fly.toml --ha=false \
@@ -9,7 +13,7 @@
 # Secrets (set with `fly secrets`, never in this file): MP_ACCESS_TOKEN, MP_BOOTSTRAP_KEY,
 # MP_MANAGEMENT_KEY, ADMIN_PIN.
 
-app = "marplanner2"
+app = "your-marplanner-app"
 primary_region = "ams"
 # Longer than the server's own 5 s drain limit (src/server/index.ts), like the 15 s
 # stop_grace_period in infra/docker/compose.yaml, so Fly never kills it mid-write.
@@ -24,7 +28,7 @@ kill_timeout = 15
   DATA_DIR = "/data"
 
 [[mounts]]
-  source = "marplanner2_data"
+  source = "marplanner_data"
   destination = "/data"
 
 [http_service]
