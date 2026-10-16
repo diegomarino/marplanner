@@ -80,12 +80,15 @@ function getAppliedMigrations(db: ReturnType<typeof import("better-sqlite3")>): 
   return new Set(rows.map((r) => r.fileName));
 }
 
-function getPendingMigrations(migrationsDir: string, applied: ReadonlySet<string>): string[] {
-  const files = fs
+function listMigrationFiles(migrationsDir: string): string[] {
+  return fs
     .readdirSync(migrationsDir)
     .filter((f) => f.endsWith(".sql"))
     .sort();
-  return files.filter((f) => !applied.has(f));
+}
+
+function getPendingMigrations(migrationsDir: string, applied: ReadonlySet<string>): string[] {
+  return listMigrationFiles(migrationsDir).filter((f) => !applied.has(f));
 }
 
 /** Only an empty ledger may receive the baseline. A ledger from before the 2026-10-16 squash
@@ -163,6 +166,12 @@ export function runMigrations(
     .prepare("SELECT name FROM sqlite_schema WHERE type = 'table' AND name = ?")
     .get(MIGRATIONS_TABLE);
   const applied = hasLedger ? getAppliedMigrations(db) : new Set<string>();
+  // A ledger entry this build does not ship (e.g. written by a newer build) means a schema this
+  // code does not know; refuse it even when nothing is pending.
+  const known = new Set(listMigrationFiles(migrationsDir));
+  if ([...applied].some((fileName) => !known.has(fileName))) {
+    throw new Error("Unsupported migration history.");
+  }
   if (applied.has(BASELINE_MIGRATION)) {
     assertCompleteLifecycleMetadata(db);
   }
