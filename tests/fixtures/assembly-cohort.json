@@ -3371,7 +3371,9 @@
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) shows the stored results of a date picked while Generate for all members runs",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) does not guess Paused or Not generated while the briefing days are unknown",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) opting the selected member out gates Blocks, and turning back on restores it without a refetch",
-            "DailyBriefingManagement — Generate-all opt-in interlock (#555) titles the page with its sidebar label"
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) titles the page with its sidebar label",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) drops a stored result that lands after the last opted-in member is turned off",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) keeps Generate blocked for another member while a generation is still running"
           ],
           "tests/client/daily-briefing-schedule-tab.test.tsx": [
             "scheduleSummary says every day, paused every day, or the days in display order",

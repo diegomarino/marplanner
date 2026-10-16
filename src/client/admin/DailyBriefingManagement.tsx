@@ -208,8 +208,13 @@ export function DailyBriefingManagement() {
   // earlier (or by the scheduler) is not reported as missing. Reloaded whenever Schedule is
   // shown; a generate that lands meanwhile wins (resultsVersion).
   useEffect(() => {
-    if (tab !== "schedule" || !shownDate || optedIn.length === 0) return;
+    if (tab !== "schedule" || !shownDate) return;
+    // Bump first so a read still in flight from before can never land afterwards.
     const version = ++resultsVersion.current;
+    if (optedIn.length === 0) {
+      setResults({ date: shownDate, statuses: {} });
+      return;
+    }
     // Without the briefing days (settings not loaded) "Paused" vs "Not generated" is unknown.
     const schedules = settings?.schedules ?? null;
     const weekday = weekdayOfDate(shownDate);
@@ -604,7 +609,7 @@ export function DailyBriefingManagement() {
                 today={today}
                 onDateChange={setDate}
                 active={tab === "preview"}
-                blocked={generatingAll || hasPendingOptIns}
+                blocked={generatingAll || hasPendingOptIns || workspaceBusy}
                 refreshKey={refreshKey}
                 onBusyChange={setWorkspaceBusy}
                 onOpenBlocks={() => setTab("blocks")}
