@@ -3649,6 +3649,7 @@
             "meal origins offers One-off first, then active plans by name, never inactive ones",
             "meal origins preselects a plan only when exactly one active plan pill is selected",
             "meal origins drops a selected plan whose pill disappears",
+            "meal origins keeps a dropped plan unselected when the plan comes back",
             "meal origins works with no plans loaded yet"
           ],
           "tests/client/meals-all-slot-picker.test.tsx": [
