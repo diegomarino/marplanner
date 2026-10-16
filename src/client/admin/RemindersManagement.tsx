@@ -503,7 +503,10 @@ interface DryRunPanelProps {
  * the server explains the gate for any member, so asking about one the rule does not reach would
  * report a misleading "would emit". */
 function DryRunPanel({ t, members, householdToday, onDryRun }: DryRunPanelProps) {
-  const [dryRunMemberId, setDryRunMemberId] = useState("");
+  const [pickedMemberId, setPickedMemberId] = useState("");
+  // Derived, not stored: a member the rule stops targeting (edited, archived) while the panel stays
+  // open after a silent refresh is dropped, so Run never explains the gate for someone it skips.
+  const dryRunMemberId = members.some((m) => m.id === pickedMemberId) ? pickedMemberId : "";
   const [dryRunDate, setDryRunDate] = useState(householdToday);
   const [dryRunResult, setDryRunResult] = useState<DryRunResult | null>(null);
   const [dryRunLoading, setDryRunLoading] = useState(false);
@@ -548,7 +551,7 @@ function DryRunPanel({ t, members, householdToday, onDryRun }: DryRunPanelProps)
           {t("reminders.dryRun.memberLabel")}
           <select
             value={dryRunMemberId}
-            onChange={(e) => setDryRunMemberId(e.target.value)}
+            onChange={(e) => setPickedMemberId(e.target.value)}
             className={NATIVE_SELECT_CLASSES}
           >
             <option value="">{t("reminders.dryRun.selectMember")}</option>

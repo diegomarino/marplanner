@@ -868,6 +868,27 @@ describe("RemindersManagement — the dialog's pill controls", () => {
     expect(await options("r4")).toEqual(["Ari", "Bea", "Cy"]);
   });
 
+  it("the dry-run panel drops a chosen member the rule no longer targets after a refresh", async () => {
+    let rule: object = TWO_MEMBER_GATED;
+    mockBackend({
+      reminders: () => json([rule]),
+      members: () => json([MEMBER, MEMBER_B]),
+    });
+    renderSurface();
+    const row = await screen.findByTestId("reminder-r2");
+    fireEvent.click(within(row).getByRole("button", { name: "Dry-run" }));
+    const select = (await within(row).findByRole("combobox")) as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: "m2" } });
+    expect(within(row).getByRole("button", { name: "Run" })).toBeEnabled();
+
+    // The rule now targets Ari only; a silent refresh (here, after a toggle) keeps the panel open.
+    rule = { ...TWO_MEMBER_GATED, assignments: [TWO_MEMBER_GATED.assignments[0]] };
+    fireEvent.click(within(row).getByTestId("reminder-toggle-r2"));
+    await waitFor(() => expect(Array.from(select.options).map((o) => o.value)).toEqual(["", "m1"]));
+    expect(select.value).toBe("");
+    expect(within(row).getByRole("button", { name: "Run" })).toBeDisabled();
+  });
+
   it("shows the empty message instead of an empty group when there are no active members", async () => {
     const { dialog } = await openCreate({ members: () => json([]) });
     fireEvent.click(within(dialog).getByLabelText("Specific members"));
