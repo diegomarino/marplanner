@@ -13,7 +13,7 @@ const metrics = (covered, total) =>
   );
 const expected = {
   candidate: "candidate-1",
-  toolchain: { node: "24.21.0", vitest: "5.0.3" },
+  toolchain: { node: "24.21.0", vitest: "5.0.4" },
   files: {
     "src/client/a.ts": {
       layer: "client",
@@ -34,7 +34,7 @@ const expected = {
 };
 const observed = {
   candidate: "candidate-1",
-  toolchain: { node: "24.21.0", vitest: "5.0.3" },
+  toolchain: { node: "24.21.0", vitest: "5.0.4" },
   files: {
     "src/client/a.ts": { metrics: metrics(10, 10) },
     "src/server/b.ts": { metrics: metrics(10, 10) },
@@ -165,7 +165,7 @@ test("preflight accepts source edits and rejects toolchain drift before runners"
       toolchain: expected.toolchain,
       files: { "a.ts": { layer: "shared" } },
     };
-    const pkg = { packageManager: "npm@11.19.0", devDependencies: { vitest: "5.0.3" } };
+    const pkg = { packageManager: "npm@11.19.0", devDependencies: { vitest: "5.0.4" } };
     const runtime = { node: "24.21.0", npm: "11.19.0" };
     assert.equal(preflightCoverage(policy, pkg, runtime, root).files, 1);
     fs.writeFileSync(join(root, "a.ts"), "export const a = 1; // comment-only\n");
