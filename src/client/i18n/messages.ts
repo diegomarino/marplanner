@@ -1507,6 +1507,14 @@ export const messages = {
     "meals.plan.addRecurring": "Add recurring entry",
     // admin-settings-polish
     "dayPeriods.management.retry": "Retry",
+    // meals-origin
+    "meals.tabs.label": "Meals sections",
+    "meals.tabs.preview": "Preview",
+    "meals.tabs.plans": "Meal plans",
+    "meals.tabs.recipes": "Recipes",
+    "meals.origin.groupLabel": "Show where meals come from",
+    "meals.origin.oneOff": "One-off",
+    "meals.origin.recurring": "Recurring",
   },
   es: {
     "backups.error.validation_error": "La solicitud de copia de seguridad no es válida.",
@@ -3002,6 +3010,14 @@ export const messages = {
     "meals.plan.addRecurring": "Añadir entrada recurrente",
     // admin-settings-polish
     "dayPeriods.management.retry": "Reintentar",
+    // meals-origin
+    "meals.tabs.label": "Secciones de comidas",
+    "meals.tabs.preview": "Vista previa",
+    "meals.tabs.plans": "Planes de comidas",
+    "meals.tabs.recipes": "Recetas",
+    "meals.origin.groupLabel": "Mostrar de dónde vienen las comidas",
+    "meals.origin.oneOff": "Puntual",
+    "meals.origin.recurring": "Recurrente",
   },
 } as const;
 
