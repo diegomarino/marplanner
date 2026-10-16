@@ -519,6 +519,8 @@ function DryRunPanel({ t, members, householdToday, onDryRun }: DryRunPanelProps)
     dryRunRequestIdRef.current++;
     setDryRunResult(null);
     setDryRunError(null);
+    // The invalidated request will not clear this itself, since its id is now stale.
+    setDryRunLoading(false);
   }, [dryRunMemberId, dryRunDate]);
 
   const runDryRun = () => {
