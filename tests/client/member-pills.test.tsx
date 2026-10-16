@@ -75,29 +75,64 @@ describe("MemberPills — multi (default)", () => {
     expect(screen.getByRole("checkbox", { name: "Ada" })).toBeDisabled();
   });
 
-  it("names an inactive member with its marker and draws it dashed", () => {
+  it("draws an off member as a bordered, unselectable pill named with its marker", () => {
+    const onChange = vi.fn();
     render(
       <MemberPills
-        members={[{ ...MEMBERS[0], inactiveLabel: "inactive" }]}
+        members={[MEMBERS[0], { ...MEMBERS[1], offLabel: "off" }]}
         value={[]}
-        onChange={() => {}}
+        onChange={onChange}
         groupLabel="Who"
       />
     );
-    const box = screen.getByRole("checkbox", { name: "Ada (inactive)" });
-    expect(box.closest("label")).toHaveClass("border-dashed");
+    const box = screen.getByRole("checkbox", { name: "Ben (off)" });
+    expect(box).toBeDisabled();
+    const pill = box.closest("label");
+    expect(pill).not.toHaveClass("border-dashed");
+    expect(pill).toHaveClass("bg-transparent", "border-border", "font-normal");
+    expect(pill).not.toHaveClass("opacity-50");
+    fireEvent.click(box);
+    expect(onChange).not.toHaveBeenCalled();
   });
 
-  it("wears the member's colour only while selected", () => {
+  it("never returns an off member in onChange, even when it was selected", () => {
+    const onChange = vi.fn();
+    render(
+      <MemberPills
+        members={[MEMBERS[0], { ...MEMBERS[1], offLabel: "off" }]}
+        value={["ben"]}
+        onChange={onChange}
+        groupLabel="Who"
+      />
+    );
+    fireEvent.click(screen.getByRole("checkbox", { name: "Ada" }));
+    expect(onChange).toHaveBeenCalledWith(["ada"]);
+  });
+
+  it("fills a selected member with their solid colour and white text, without a dot", () => {
     const { rerender } = render(
       <MemberPills members={MEMBERS} value={[]} onChange={() => {}} groupLabel="Who" />
     );
     const pill = () => screen.getByRole("checkbox", { name: "Ada" }).closest("label");
-    expect(pill()).not.toHaveAttribute("style");
+    expect(pill()?.getAttribute("style")).toContain("--color-member-blue-500");
+    expect(pill()).toHaveClass("bg-muted", "text-muted-foreground", "border-transparent");
+    expect(pill()?.querySelector("[aria-hidden='true'] .rounded-full")).toBeNull();
     rerender(
       <MemberPills members={MEMBERS} value={["ada"]} onChange={() => {}} groupLabel="Who" />
     );
-    expect(pill()?.getAttribute("style")).toContain("--color-member-blue-500");
+    expect(pill()).toHaveClass(
+      "has-[:checked]:bg-[var(--member-color)]",
+      "has-[:checked]:text-member-avatar-foreground",
+      "has-[:checked]:font-semibold"
+    );
+  });
+
+  it("reserves the bold label width so selecting never shifts its neighbours", () => {
+    render(<MemberPills members={MEMBERS} value={[]} onChange={() => {}} groupLabel="Who" />);
+    const pill = screen.getByRole("checkbox", { name: "Ada" }).closest("label");
+    const reserve = pill?.querySelector("[data-text='Ada']");
+    expect(reserve).not.toBeNull();
+    expect(reserve).toHaveClass("inline-grid", "after:font-semibold");
   });
 });
 
@@ -119,6 +154,49 @@ describe("MemberPills — single", () => {
     expect(screen.getByTestId("preview-ada")).toBeChecked();
     fireEvent.click(screen.getByTestId("preview-cleo"));
     expect(onChange).toHaveBeenCalledWith("cleo");
+  });
+
+  it("cannot pick an off member", () => {
+    const onChange = vi.fn();
+    render(
+      <MemberPills
+        mode="single"
+        members={[MEMBERS[0], { ...MEMBERS[1], offLabel: "off" }]}
+        value="ada"
+        onChange={onChange}
+        groupLabel="Preview"
+      />
+    );
+    const off = screen.getByRole("radio", { name: "Ben (off)" });
+    expect(off).toBeDisabled();
+    fireEvent.click(off);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("never shows an off member as checked, even when the value still names it", () => {
+    render(
+      <MemberPills
+        mode="single"
+        members={[MEMBERS[0], { ...MEMBERS[1], offLabel: "off" }]}
+        value="ben"
+        onChange={() => {}}
+        groupLabel="Preview"
+      />
+    );
+    expect(screen.getByRole("radio", { name: "Ben (off)" })).not.toBeChecked();
+  });
+
+  it("never shows an off member as checked in multi mode either", () => {
+    render(
+      <MemberPills
+        members={[MEMBERS[0], { ...MEMBERS[1], offLabel: "off" }]}
+        value={["ada", "ben"]}
+        onChange={() => {}}
+        groupLabel="Who"
+      />
+    );
+    expect(screen.getByRole("checkbox", { name: "Ada" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Ben (off)" })).not.toBeChecked();
   });
 
   it("checks nothing when value is null", () => {

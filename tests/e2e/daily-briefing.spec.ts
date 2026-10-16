@@ -626,18 +626,20 @@ test("admin briefing tabs: opt-in gate, matrix cell, keyboard reorder and Genera
       );
     }
 
-    // 2) Blocks: an opted-out member is gated until turned on.
+    // 2) Blocks: an opted-out member is an off pill that cannot be picked; opt-in lives on
+    // Schedule.
     await management.getByTestId("daily-briefing-tab-blocks").click();
-    await management.getByTestId(`daily-briefing-member-pill-${childA.id}`).click();
-    await expect(management.getByTestId("daily-briefing-opted-out")).toBeVisible();
-    await expect(management.getByTestId("daily-briefing-block-matrix")).toHaveCount(0);
+    await expect(management.getByTestId(`daily-briefing-member-pill-${childA.id}`)).toBeDisabled();
+    await management.getByTestId("daily-briefing-tab-schedule").click();
     const turnOnResponse = page.waitForResponse(
       (response) =>
         response.url().includes(`/api/daily-briefing/opt-in/${childA.id}`) &&
         response.request().method() === "PUT"
     );
-    await management.getByTestId("daily-briefing-turn-on").click();
+    await management.getByTestId(`daily-briefing-opt-in-${childA.id}`).click();
     expect((await turnOnResponse).status()).toBe(200);
+    await management.getByTestId("daily-briefing-tab-blocks").click();
+    await management.getByTestId(`daily-briefing-member-pill-${childA.id}`).click();
     await expect(management.getByTestId("daily-briefing-block-matrix")).toBeVisible();
 
     // 3) One cell is the only on/off for a block on a day.

@@ -54,7 +54,7 @@ what a call site is allowed to stop implementing:
 | Confirmation dialog    | focus trapping, portalling, and the escape/confirm keyboard contract                    |
 | Weekday picker         | five separate implementations of the same selection, and the household week-start order |
 | Choice pills           | the radiogroup, shared native name and pill look of a one-of-few choice                 |
-| Member pills           | member colours, the inactive marker and single/multi member selection                   |
+| Member pills           | member colours, the off state (unpickable) and single/multi member selection            |
 | Checkbox / radio field | label association and grouping semantics                                                |
 | Status toggle          | the pressed-state contract                                                              |
 

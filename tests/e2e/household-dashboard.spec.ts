@@ -313,8 +313,8 @@ test("household dashboard: integrated family flow remains independently usable",
   await expect(page.getByTestId("home-surface")).toHaveCount(0);
 
   await page.goto("/");
-  await page.getByRole("button", { name: m["shell.options.label"], exact: true }).click();
-  const adminButton = page.getByRole("button", { name: m["shell.options.admin"], exact: true });
+  // With Admin as its only entry, Options is the long-press Admin affordance itself.
+  const adminButton = page.getByRole("button", { name: m["shell.options.label"], exact: true });
   await adminButton.hover();
   await page.mouse.down();
   await expect(page.getByTestId("admin-pin-keypad")).toBeVisible({ timeout: 6_000 });
