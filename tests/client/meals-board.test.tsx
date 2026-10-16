@@ -283,7 +283,69 @@ describe("MealsBoard weekly planner", () => {
       "recurring-1",
       "oneoff-1",
     ]);
-    expect(cards[0]).toHaveClass("border-accent", "bg-accent/20", "text-accent-foreground");
+    // Without origin data a recurring chip falls back to the unknown tone, a one-off to grey.
+    expect(cards[0]).toHaveClass("meal-origin-chip", "meal-origin-unknown");
+    expect(cards[0]).toHaveAttribute("data-emphasis", "normal");
+    expect(cards[1]).toHaveClass("meal-origin-chip", "meal-origin-oneoff");
+    expect(cards[0]).not.toHaveClass("bg-accent/20");
+  });
+
+  it("tints chips by origin, italicises free text and highlights selected origins without hiding others", () => {
+    const onSelectedChange = vi.fn();
+    const onSelect = vi.fn();
+    const tones = new Map([["plan-1", "plan-1" as const]]);
+    const grid = (selected: string[]) => (
+      <LanguageProvider>
+        <MealPlanGrid
+          weekDates={Object.keys(week())}
+          weekMenu={week()}
+          todayDate={null}
+          pending={false}
+          onPrevious={vi.fn()}
+          onCurrent={vi.fn()}
+          onNext={vi.fn()}
+          onAdd={vi.fn()}
+          onSelect={onSelect}
+          origin={{
+            pills: [
+              { id: "oneoff", label: "One-off", tone: "oneoff" },
+              { id: "plan-1", label: "Weeknights", tone: "plan-1" },
+            ],
+            tones,
+            selected,
+            onSelectedChange,
+          }}
+        />
+      </LanguageProvider>
+    );
+    const { rerender } = render(grid([]));
+    const group = screen.getByRole("group", { name: "Show where meals come from" });
+    expect(
+      within(group)
+        .getAllByRole("checkbox")
+        .map((box) => box.getAttribute("data-testid"))
+    ).toEqual(["meal-origin-pill-oneoff", "meal-origin-pill-plan-1"]);
+    const [recurring, oneOff] = within(
+      screen.getByTestId("meal-cell-2026-09-25-dinner")
+    ).getAllByTestId("meal-entry-card");
+    expect(recurring).toHaveClass("meal-origin-chip", "meal-origin-plan-1");
+    expect(recurring).toHaveAttribute("data-origin", "plan-1");
+    expect(recurring).toHaveAttribute("title", "Weeknights");
+    expect(oneOff).toHaveAttribute("title", "One-off");
+    expect(oneOff).toHaveAttribute("data-origin", "oneoff");
+    // Free text (the one-off note) is italic; a recipe chip is not.
+    expect(oneOff.querySelector("span.italic")).toHaveTextContent("Pizza");
+    expect(recurring.querySelector("span.italic")).toBeNull();
+
+    fireEvent.click(within(group).getByRole("checkbox", { name: "Weeknights" }));
+    expect(onSelectedChange).toHaveBeenCalledWith(["plan-1"]);
+
+    rerender(grid(["plan-1"]));
+    expect(recurring).toHaveAttribute("data-emphasis", "hit");
+    expect(oneOff).toHaveAttribute("data-emphasis", "dim");
+    expect(within(group).getByRole("checkbox", { name: "Weeknights" })).toBeChecked();
+    fireEvent.click(oneOff);
+    expect(onSelect).toHaveBeenCalled();
   });
 
   it("shows a visible retry after an initial week failure and recovers the interactive grid", async () => {
