@@ -5,32 +5,13 @@ import { join } from "node:path";
 import Database from "better-sqlite3";
 import { describe, expect, it } from "vitest";
 import { getDb } from "../../src/server/db/client";
+import { execBaseline } from "../helpers/baseline";
 import { ALL_SCHEMA_TABLES } from "../helpers/schema-tables";
 import { useIsolatedDb } from "../helpers/db";
 
 const PROJECT_ROOT = process.cwd();
-const BASELINE_FILE = join(PROJECT_ROOT, "drizzle", "0000_current_baseline.sql");
-const CALENDAR_FEED_SYNC_MIGRATION = join(PROJECT_ROOT, "drizzle", "0001_calendar_feed_sync.sql");
-const CALENDAR_EVENT_DETAILS_MIGRATION = join(
-  PROJECT_ROOT,
-  "drizzle",
-  "0003_calendar_event_details.sql"
-);
-const MEMBER_PALETTE_MIGRATION = join(PROJECT_ROOT, "drizzle", "0004_member_palette.sql");
-const DAILY_BRIEFING_SCHEDULE_MIGRATION = join(
-  PROJECT_ROOT,
-  "drizzle",
-  "0005_daily_briefing_schedule.sql"
-);
 const DRIZZLE_KIT = join(PROJECT_ROOT, "node_modules", "drizzle-kit", "bin.cjs");
 const SCHEMA_FILE = join(PROJECT_ROOT, "src", "server", "db", "schema.ts");
-const LIFECYCLE_TABLES = new Set([
-  "installation_lineage",
-  "plugin_activation_registry",
-  "plugin_lifecycle_operations",
-  "plugin_migration_journal",
-]);
-
 type Catalog = {
   tables: Array<{
     columns: Array<{
@@ -154,12 +135,10 @@ function readCatalog(db: Database.Database): Catalog {
   };
 }
 
-function instantiateCatalog(sqlFiles: string | string[], databaseFile: string): Catalog {
+function instantiateCatalog(databaseFile: string, apply: (db: Database.Database) => void): Catalog {
   const db = new Database(databaseFile);
   try {
-    for (const sqlFile of Array.isArray(sqlFiles) ? sqlFiles : [sqlFiles]) {
-      db.exec(readFileSync(sqlFile, "utf8").replaceAll("--> statement-breakpoint", ""));
-    }
+    apply(db);
     return readCatalog(db);
   } finally {
     db.close();
@@ -181,7 +160,9 @@ function generateCurrentSchemaCatalog(tempDir: string): Catalog {
   );
   const generatedSql = readdirSync(outputDir).find((file) => file.endsWith(".sql"));
   if (!generatedSql) throw new Error("Drizzle did not generate a current-schema SQL file");
-  return instantiateCatalog(join(outputDir, generatedSql), join(tempDir, "generated.sqlite"));
+  return instantiateCatalog(join(tempDir, "generated.sqlite"), (db) =>
+    db.exec(readFileSync(join(outputDir, generatedSql), "utf8"))
+  );
 }
 
 describe("database lifecycle fresh current baseline", () => {
@@ -194,27 +175,18 @@ describe("database lifecycle fresh current baseline", () => {
       const tempDir = mkdtempSync(join(tmpdir(), "mp-current-baseline-catalog-"));
       try {
         const generated = generateCurrentSchemaCatalog(tempDir);
-        const committed = instantiateCatalog(
-          [
-            BASELINE_FILE,
-            CALENDAR_FEED_SYNC_MIGRATION,
-            CALENDAR_EVENT_DETAILS_MIGRATION,
-            MEMBER_PALETTE_MIGRATION,
-            DAILY_BRIEFING_SCHEDULE_MIGRATION,
-          ],
-          join(tempDir, "baseline.sqlite")
+        const committed = instantiateCatalog(join(tempDir, "baseline.sqlite"), (db) =>
+          execBaseline(db)
         );
 
-        expect(committed).toEqual({
-          tables: generated.tables.filter(({ name }) => !LIFECYCLE_TABLES.has(name)),
-        });
+        expect(committed).toEqual(generated);
       } finally {
         rmSync(tempDir, { recursive: true, force: true });
       }
     }
   );
 
-  it("installs the re-derived schema, applies the reviewed migrations, and preserves foreign keys", () => {
+  it("installs the re-derived schema from the single baseline and preserves foreign keys", () => {
     const db = getDb();
     const tables = db
       .prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
@@ -226,14 +198,7 @@ describe("database lifecycle fresh current baseline", () => {
     expect(tables.map((table) => table.name)).toEqual(ALL_SCHEMA_TABLES);
     expect(
       db.prepare("SELECT fileName FROM drizzle_universe_migrations ORDER BY fileName").all()
-    ).toEqual([
-      { fileName: "0000_current_baseline.sql" },
-      { fileName: "0001_calendar_feed_sync.sql" },
-      { fileName: "0002_plugin_lifecycle.sql" },
-      { fileName: "0003_calendar_event_details.sql" },
-      { fileName: "0004_member_palette.sql" },
-      { fileName: "0005_daily_briefing_schedule.sql" },
-    ]);
+    ).toEqual([{ fileName: "0000_baseline.sql" }]);
 
     const foreignKeys = ALL_SCHEMA_TABLES.flatMap((table) =>
       (
@@ -305,5 +270,41 @@ describe("database lifecycle fresh current baseline", () => {
         continue;
       expect(db.prepare(`SELECT COUNT(*) AS count FROM \`${table}\``).get()).toEqual({ count: 0 });
     }
+  });
+
+  it("creates the ten-colour member palette and the briefing weekday schedule directly", () => {
+    const db = getDb();
+    const insertMember = db.prepare(
+      "INSERT INTO members (id, display_name, color_key, role, created_at, updated_at) VALUES (?, ?, ?, 'parent', 1, 1)"
+    );
+    for (const colour of [
+      "blue",
+      "sky",
+      "teal",
+      "green",
+      "lime",
+      "amber",
+      "orange",
+      "red",
+      "pink",
+      "violet",
+    ]) {
+      insertMember.run(`member-${colour}`, colour, colour);
+    }
+    for (const retired of ["cyan", "yellow", "rose", "fuchsia", "purple", "indigo"]) {
+      expect(() => insertMember.run(`member-${retired}`, retired, retired)).toThrow(
+        /CHECK constraint failed: members_color_key_check/
+      );
+    }
+
+    const optinColumns = db.prepare("PRAGMA table_info(daily_briefing_optin)").all() as {
+      name: string;
+      notnull: number;
+      type: string;
+    }[];
+    expect(optinColumns.find((column) => column.name === "weekdays")).toMatchObject({
+      notnull: 0,
+      type: "TEXT",
+    });
   });
 });

@@ -72,7 +72,7 @@ The existing printing status polling path is retired once printing visibility de
 The UI/e2e test harness must provide deterministic fixtures for:
 
 1. fresh installation: all nine inactive;
-2. supported prior baseline: all nine active;
+2. all nine active (seeded directly; since the 2026-10-16 migration squash every install starts as a fresh lineage with all nine inactive);
 3. one active plugin draining while another remains interactive;
 4. one errored plugin with each class of safe message represented across automated tests;
 5. inactive direct-route navigation;
@@ -86,4 +86,4 @@ Fixtures use frozen timestamps and synthetic safe codes. They contain no copied 
 **Owner**: maintainer, assisted by the implementing coordinator.  
 **Timing**: after automated checks pass and before slice closure. **Evidence:** record desktop and narrow screenshots with the exact tested revision, state and outcome. Keep transient browser output out of the product tree.
 
-The human review must inspect a running build at narrow and wide viewports for fresh, prior-baseline, busy drain, errored, and inactive direct-route states. It must exercise keyboard order, focus retention, live announcements, safe error text, contribution disappearance, and unrelated-plugin continuity. The evidence records viewport, fixture, build SHA, reviewer, decision, and any follow-up. Screenshot generation alone is not acceptance.
+The human review must inspect a running build at narrow and wide viewports for fresh, all-active, busy drain, errored, and inactive direct-route states. It must exercise keyboard order, focus retention, live announcements, safe error text, contribution disappearance, and unrelated-plugin continuity. The evidence records viewport, fixture, build SHA, reviewer, decision, and any follow-up. Screenshot generation alone is not acceptance.

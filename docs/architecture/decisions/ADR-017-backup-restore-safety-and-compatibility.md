@@ -35,7 +35,7 @@ it is treated as destructive and rare — safety beats convenience. Restore is a
 
 **Compatibility (migration-lineage checked, not schema-diffed):**
 
-Restore supports the installed baseline lineage and its migration-file subsets. Arbitrary historical upgrades are outside the first-release scope (`ADR-056`). The shared migration runner upgrades supported candidates; uploading a legacy SQLite file does not make it restorable (`ADR-026`).
+Restore supports the installed baseline lineage and its migration-file subsets. (2026-10-16: the migrations were squashed into the single `drizzle/0000_baseline.sql`, which is the sentinel; backups from before the squash lack it and are rejected as unsupported lineage. See `docs/architecture/database-lifecycle.md`.) Arbitrary historical upgrades are outside the first-release scope (`ADR-056`). The shared migration runner upgrades supported candidates; uploading a legacy SQLite file does not make it restorable (`ADR-026`).
 
 4. Restore reads the **baseline sentinel and migration-file set** from inside the backup file (its own
    migrations table), **re-read at restore-execution time, not from the list cache**

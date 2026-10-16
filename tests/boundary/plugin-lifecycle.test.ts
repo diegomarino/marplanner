@@ -1,6 +1,3 @@
-import fs from "node:fs";
-import path from "node:path";
-
 import Database from "better-sqlite3";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -20,6 +17,7 @@ import {
   type PluginLifecyclePhase,
 } from "../../src/server/plugins/store.js";
 import type { PluginId, PluginPublicErrorCode, PluginState } from "../../src/shared/plugins.js";
+import { execBaseline } from "../helpers/baseline";
 
 const NOW = "2026-09-27T10:15:30.000Z";
 const DEADLINE: PluginDrainDeadline = { expiresAt: "2026-09-27T10:20:30.000Z" };
@@ -84,21 +82,7 @@ function fakeAdapter(pluginId: PluginId, controls: FakeControls): PluginRuntimeA
 function createDatabase(): Database.Database {
   const db = new Database(":memory:");
   db.pragma("foreign_keys = ON");
-  db.exec(`
-    CREATE TEMP TABLE plugin_lifecycle_migration_context (
-      kind TEXT NOT NULL,
-      pre_run_migration_files TEXT NOT NULL,
-      captured_at TEXT NOT NULL
-    );
-    INSERT INTO temp.plugin_lifecycle_migration_context
-      (kind, pre_run_migration_files, captured_at)
-    VALUES ('fresh', '[]', '${NOW}');
-  `);
-  const migration = fs
-    .readFileSync(path.resolve(process.cwd(), "drizzle/0002_plugin_lifecycle.sql"), "utf8")
-    .replaceAll("--> statement-breakpoint", "");
-  db.exec(migration);
-  db.exec("DROP TABLE temp.plugin_lifecycle_migration_context");
+  execBaseline(db, NOW);
   return db;
 }
 

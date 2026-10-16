@@ -641,10 +641,8 @@ export const dailyMessages = sqliteTable(
  * Printing's canonical record; never authoritative, never load-bearing on its own). All four
  * raster/png columns are NULL together (no printable raster yet, Printing inactive at generation,
  * or a catastrophic render — `render-failed`); the status CHECK widens to admit `render-failed`
- * Catastrophic renders must never read back as `ready` with a missing raster. See
- * `drizzle/0017_daily_briefing_render.sql` for the table-rebuild migration (SQLite cannot
- * ALTER a CHECK constraint, precedent drizzle/0009_reminders_calendar_gated.sql /
- * 0010_drop_member_fks.sql).
+ * Catastrophic renders must never read back as `ready` with a missing raster. The table is
+ * created whole by `drizzle/0000_baseline.sql`.
  */
 export const dailyBriefings = sqliteTable(
   "daily_briefing",
@@ -683,7 +681,7 @@ export const dailyBriefings = sqliteTable(
 );
 
 /** Daily briefing opt-in — per-member opt-in flag (absent row = off, ADR-027).
- * `weekdays` is the per-member pause schedule (drizzle/0005).
+ * `weekdays` is the per-member pause schedule.
  * PLUGIN table (ADR-029) — `member_id` is a plain PK column, NO `.references` (ADR-039 §3 / INV-02).
  */
 export const dailyBriefingOptins = sqliteTable(
@@ -968,8 +966,9 @@ export const printerCapabilities = sqliteTable("printer_capabilities", {
   registeredAt: integer("registered_at").notNull(),
 });
 
-/** Immutable singleton classifying the store from the migration journal snapshot captured before
- * the lifecycle migration ran. This provenance is never reconstructed from business data.
+/** Immutable singleton recording how the store was created: written once by the baseline
+ * migration from the empty pre-run journal the runner captured. Since the 2026-10-16 squash every
+ * supported store is `fresh`; the provenance is never reconstructed from business data.
  */
 export const installationLineage = sqliteTable(
   "installation_lineage",
@@ -981,10 +980,7 @@ export const installationLineage = sqliteTable(
   },
   (table) => ({
     singletonCheck: check("installation_lineage_singleton_check", sql`${table.singletonId} = 1`),
-    kindCheck: check(
-      "installation_lineage_kind_check",
-      sql`${table.kind} IN ('fresh', 'prior_baseline')`
-    ),
+    kindCheck: check("installation_lineage_kind_check", sql`${table.kind} IN ('fresh')`),
     historyCheck: check(
       "installation_lineage_history_check",
       sql`json_valid(${table.preRunMigrationFiles}) AND json_type(${table.preRunMigrationFiles}) = 'array'`
