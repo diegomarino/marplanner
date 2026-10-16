@@ -173,6 +173,32 @@ describe("MemberPills — single", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it("never shows an off member as checked, even when the value still names it", () => {
+    render(
+      <MemberPills
+        mode="single"
+        members={[MEMBERS[0], { ...MEMBERS[1], offLabel: "off" }]}
+        value="ben"
+        onChange={() => {}}
+        groupLabel="Preview"
+      />
+    );
+    expect(screen.getByRole("radio", { name: "Ben (off)" })).not.toBeChecked();
+  });
+
+  it("never shows an off member as checked in multi mode either", () => {
+    render(
+      <MemberPills
+        members={[MEMBERS[0], { ...MEMBERS[1], offLabel: "off" }]}
+        value={["ada", "ben"]}
+        onChange={() => {}}
+        groupLabel="Who"
+      />
+    );
+    expect(screen.getByRole("checkbox", { name: "Ada" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Ben (off)" })).not.toBeChecked();
+  });
+
   it("checks nothing when value is null", () => {
     render(
       <MemberPills
