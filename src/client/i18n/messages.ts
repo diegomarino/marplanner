@@ -604,9 +604,7 @@ export const messages = {
     "dayPeriods.management.loading": "Loading…",
     "dayPeriods.management.error": "Failed to load day periods.",
     "dayPeriods.management.noPeriods": "No day periods found.",
-    "dayPeriods.action.edit": "Edit",
     "dayPeriods.action.save": "Save",
-    "dayPeriods.action.cancel": "Cancel",
     "dayPeriods.action.saveError": "Couldn't save the change. Please try again.",
     "dayPeriods.action.editStartLabel": "Start time",
     "dayPeriods.management.saving": "Saving…",
@@ -1506,6 +1504,8 @@ export const messages = {
     "meals.plan.entriesTitle": "Every week",
     "meals.plan.inactiveHint": "Inactive: these meals don't appear in the week menu.",
     "meals.plan.addRecurring": "Add recurring entry",
+    // admin-settings-polish
+    "dayPeriods.management.retry": "Retry",
   },
   es: {
     "backups.error.validation_error": "La solicitud de copia de seguridad no es válida.",
@@ -2125,9 +2125,7 @@ export const messages = {
     "dayPeriods.management.loading": "Cargando…",
     "dayPeriods.management.error": "Error al cargar períodos diarios.",
     "dayPeriods.management.noPeriods": "No se encontraron períodos diarios.",
-    "dayPeriods.action.edit": "Editar",
     "dayPeriods.action.save": "Guardar",
-    "dayPeriods.action.cancel": "Cancelar",
     "dayPeriods.action.saveError": "No se pudo guardar el cambio. Inténtalo de nuevo.",
     "dayPeriods.action.editStartLabel": "Hora de inicio",
     "dayPeriods.management.saving": "Guardando…",
@@ -3000,6 +2998,8 @@ export const messages = {
     "meals.plan.entriesTitle": "Cada semana",
     "meals.plan.inactiveHint": "Inactivo: estas comidas no aparecen en el menú semanal.",
     "meals.plan.addRecurring": "Añadir entrada recurrente",
+    // admin-settings-polish
+    "dayPeriods.management.retry": "Reintentar",
   },
 } as const;
 
