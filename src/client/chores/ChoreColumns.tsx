@@ -40,7 +40,7 @@ type MemberScale = {
 const MEMBER_SCALES: Record<MemberColorKey, MemberScale> = {
   blue: {
     column: "bg-member-blue-100 border-member-blue-200",
-    badge: "bg-member-blue-500 text-member-blue-foreground",
+    badge: "bg-member-blue-500 text-member-avatar-foreground",
     period: "bg-member-blue-200 border-member-blue-300",
     card: "border-member-blue-200 bg-member-blue-100",
     completeCard: "border-member-blue-500 bg-member-blue-300 text-member-blue-foreground",
@@ -48,7 +48,7 @@ const MEMBER_SCALES: Record<MemberColorKey, MemberScale> = {
   },
   sky: {
     column: "bg-member-sky-100 border-member-sky-200",
-    badge: "bg-member-sky-500 text-member-sky-foreground",
+    badge: "bg-member-sky-500 text-member-avatar-foreground",
     period: "bg-member-sky-200 border-member-sky-300",
     card: "border-member-sky-200 bg-member-sky-100",
     completeCard: "border-member-sky-500 bg-member-sky-300 text-member-sky-foreground",
@@ -56,7 +56,7 @@ const MEMBER_SCALES: Record<MemberColorKey, MemberScale> = {
   },
   teal: {
     column: "bg-member-teal-100 border-member-teal-200",
-    badge: "bg-member-teal-500 text-member-teal-foreground",
+    badge: "bg-member-teal-500 text-member-avatar-foreground",
     period: "bg-member-teal-200 border-member-teal-300",
     card: "border-member-teal-200 bg-member-teal-100",
     completeCard: "border-member-teal-500 bg-member-teal-300 text-member-teal-foreground",
@@ -64,7 +64,7 @@ const MEMBER_SCALES: Record<MemberColorKey, MemberScale> = {
   },
   green: {
     column: "bg-member-green-100 border-member-green-200",
-    badge: "bg-member-green-500 text-member-green-foreground",
+    badge: "bg-member-green-500 text-member-avatar-foreground",
     period: "bg-member-green-200 border-member-green-300",
     card: "border-member-green-200 bg-member-green-100",
     completeCard: "border-member-green-500 bg-member-green-300 text-member-green-foreground",
@@ -72,7 +72,7 @@ const MEMBER_SCALES: Record<MemberColorKey, MemberScale> = {
   },
   lime: {
     column: "bg-member-lime-100 border-member-lime-200",
-    badge: "bg-member-lime-500 text-member-lime-foreground",
+    badge: "bg-member-lime-500 text-member-avatar-foreground",
     period: "bg-member-lime-200 border-member-lime-300",
     card: "border-member-lime-200 bg-member-lime-100",
     completeCard: "border-member-lime-500 bg-member-lime-300 text-member-lime-foreground",
@@ -80,7 +80,7 @@ const MEMBER_SCALES: Record<MemberColorKey, MemberScale> = {
   },
   amber: {
     column: "bg-member-amber-100 border-member-amber-200",
-    badge: "bg-member-amber-500 text-member-amber-foreground",
+    badge: "bg-member-amber-500 text-member-avatar-foreground",
     period: "bg-member-amber-200 border-member-amber-300",
     card: "border-member-amber-200 bg-member-amber-100",
     completeCard: "border-member-amber-500 bg-member-amber-300 text-member-amber-foreground",
@@ -88,7 +88,7 @@ const MEMBER_SCALES: Record<MemberColorKey, MemberScale> = {
   },
   orange: {
     column: "bg-member-orange-100 border-member-orange-200",
-    badge: "bg-member-orange-500 text-member-orange-foreground",
+    badge: "bg-member-orange-500 text-member-avatar-foreground",
     period: "bg-member-orange-200 border-member-orange-300",
     card: "border-member-orange-200 bg-member-orange-100",
     completeCard: "border-member-orange-500 bg-member-orange-300 text-member-orange-foreground",
@@ -96,7 +96,7 @@ const MEMBER_SCALES: Record<MemberColorKey, MemberScale> = {
   },
   red: {
     column: "bg-member-red-100 border-member-red-200",
-    badge: "bg-member-red-500 text-member-red-foreground",
+    badge: "bg-member-red-500 text-member-avatar-foreground",
     period: "bg-member-red-200 border-member-red-300",
     card: "border-member-red-200 bg-member-red-100",
     completeCard: "border-member-red-500 bg-member-red-300 text-member-red-foreground",
@@ -104,7 +104,7 @@ const MEMBER_SCALES: Record<MemberColorKey, MemberScale> = {
   },
   pink: {
     column: "bg-member-pink-100 border-member-pink-200",
-    badge: "bg-member-pink-500 text-member-pink-foreground",
+    badge: "bg-member-pink-500 text-member-avatar-foreground",
     period: "bg-member-pink-200 border-member-pink-300",
     card: "border-member-pink-200 bg-member-pink-100",
     completeCard: "border-member-pink-500 bg-member-pink-300 text-member-pink-foreground",
@@ -112,7 +112,7 @@ const MEMBER_SCALES: Record<MemberColorKey, MemberScale> = {
   },
   violet: {
     column: "bg-member-violet-100 border-member-violet-200",
-    badge: "bg-member-violet-500 text-member-violet-foreground",
+    badge: "bg-member-violet-500 text-member-avatar-foreground",
     period: "bg-member-violet-200 border-member-violet-300",
     card: "border-member-violet-200 bg-member-violet-100",
     completeCard: "border-member-violet-500 bg-member-violet-300 text-member-violet-foreground",
