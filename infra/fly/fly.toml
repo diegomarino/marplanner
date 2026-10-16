@@ -2,7 +2,10 @@
 # platform-agnostic image in infra/docker/Dockerfile. Nothing here changes the image.
 #
 # One machine only: SQLite lives on the volume and the boot single-writer guard refuses a second
-# instance. Deploy with `fly deploy --config infra/fly/fly.toml --ha=false`.
+# instance. Deploy from the repo root with:
+#   fly deploy . --config infra/fly/fly.toml --ha=false \
+#     --build-arg MP_BUILD_SHA=$(git rev-parse --short HEAD) \
+#     --build-arg "MP_BUILD_SUBJECT=$(git log -1 --format=%s)"
 # Secrets (set with `fly secrets`, never in this file): MP_ACCESS_TOKEN, MP_BOOTSTRAP_KEY,
 # MP_MANAGEMENT_KEY, ADMIN_PIN.
 
