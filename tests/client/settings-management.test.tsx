@@ -152,6 +152,51 @@ describe("SettingsManagement", () => {
     expect(optionValues()).toContain("Etc/GMT+3");
   });
 
+  it("puts the Settings and Weather panels in one two-column grid above a single Save", async () => {
+    mockApi(SETTINGS);
+    renderSettings();
+    const save = await screen.findByTestId("settings-save");
+    const columns = screen.getByTestId("settings-columns");
+    expect(columns).toContainElement(screen.getByTestId("settings-timezone"));
+    expect(columns).toContainElement(screen.getByTestId("weather-management"));
+    expect(columns).not.toContainElement(save);
+    expect(screen.getAllByTestId("settings-save")).toHaveLength(1);
+  });
+
+  it("enables Save on any edit and disables it again when the edit is reverted", async () => {
+    mockApi(SETTINGS);
+    renderSettings();
+    const save = await screen.findByTestId("settings-save");
+    expect(save).toBeDisabled();
+    fireEvent.click(screen.getByRole("radio", { name: "Español" }));
+    expect(save).toBeEnabled();
+    fireEvent.click(screen.getByRole("radio", { name: "English" }));
+    expect(save).toBeDisabled();
+    const lat = screen.getByTestId("weather-lat-input");
+    const lon = screen.getByTestId("weather-lon-input");
+    const originalLat = (lat as HTMLInputElement).value;
+    const originalLon = (lon as HTMLInputElement).value;
+    fireEvent.change(lat, { target: { value: "1.5" } });
+    fireEvent.change(lon, { target: { value: "2.5" } });
+    expect(save).toBeEnabled();
+    fireEvent.change(lat, { target: { value: originalLat } });
+    fireEvent.change(lon, { target: { value: originalLon } });
+    expect(save).toBeDisabled();
+  });
+
+  it.each(["0x10", "1e3", "abc"])(
+    "keeps Save blocked for the non-decimal latitude %s",
+    async (bad) => {
+      mockApi(SETTINGS);
+      renderSettings();
+      const save = await screen.findByTestId("settings-save");
+      fireEvent.change(screen.getByTestId("weather-lat-input"), { target: { value: bad } });
+      fireEvent.change(screen.getByTestId("weather-lon-input"), { target: { value: "2" } });
+      expect(save).toBeDisabled();
+      expect(screen.getByTestId("weather-hint")).toBeInTheDocument();
+    }
+  );
+
   it("saves a pill change as one locale object and asks the app to reload", async () => {
     mockApi(SETTINGS);
     renderSettings();

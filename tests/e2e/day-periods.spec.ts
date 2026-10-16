@@ -78,16 +78,33 @@ test("day periods critical-flow: view → edit → active now (US1, US2, US3)", 
     page.getByTestId("day-period-night").getByText(m["dayPeriod.night"], { exact: true })
   ).toBeVisible();
 
-  // --- US2 (edit): change afternoon's start; SAVE; assert it persists + morning's derived end follows ---
-  await afternoonCard.getByRole("button", { name: m["dayPeriods.action.edit"] }).click();
+  // --- US2 (edit): the inputs are always editable; no Edit mode and no layout jump ---
+  const cardIds = ["morning", "afternoon", "evening", "night"];
+  const boxesBefore = await Promise.all(
+    cardIds.map(async (id) => (await page.getByTestId(`day-period-${id}`).boundingBox())!)
+  );
+  for (const box of boxesBefore) {
+    expect(Math.abs(box.y - boxesBefore[0].y)).toBeLessThan(1); // one row at 1280px
+    expect(Math.abs(box.height - boxesBefore[0].height)).toBeLessThan(1);
+  }
 
-  const timeInput = page.locator('input[type="time"]');
+  const timeInput = page.getByTestId("day-periods-start-input-afternoon");
   await expect(timeInput).toBeVisible({ timeout: 5000 });
-  const originalAfternoonStart = await timeInput.getAttribute("value");
+  const originalAfternoonStart = await timeInput.inputValue();
   expect(originalAfternoonStart).toMatch(/^\d{2}:\d{2}$/);
 
   const newAfternoonStart = "11:30";
   await timeInput.fill(newAfternoonStart);
+  const boxesAfter = await Promise.all(
+    cardIds.map(async (id) => (await page.getByTestId(`day-period-${id}`).boundingBox())!)
+  );
+  // Boxes are viewport-relative and the page may scroll the input into view, so compare each
+  // card against the first one: offsets and sizes must not change.
+  boxesAfter.forEach((box, i) => {
+    expect(box.x - boxesAfter[0].x).toBeCloseTo(boxesBefore[i].x - boxesBefore[0].x, 0);
+    expect(box.y - boxesAfter[0].y).toBeCloseTo(boxesBefore[i].y - boxesBefore[0].y, 0);
+    expect(box.height).toBeCloseTo(boxesBefore[i].height, 0);
+  });
   await afternoonCard.getByRole("button", { name: m["dayPeriods.action.save"] }).click();
   await expect(
     afternoonCard.getByRole("button", { name: m["dayPeriods.management.saving"] })
@@ -115,7 +132,6 @@ test("day periods critical-flow: view → edit → active now (US1, US2, US3)", 
   ).toBeVisible();
 
   // --- US2 (negative): an out-of-order edit is rejected and does not persist ---
-  await afternoonCard.getByRole("button", { name: m["dayPeriods.action.edit"] }).click();
   await timeInput.fill("04:00"); // before morning's 05:00 → strict-order violation
   await afternoonCard.getByRole("button", { name: m["dayPeriods.action.save"] }).click();
 
@@ -124,7 +140,10 @@ test("day periods critical-flow: view → edit → active now (US1, US2, US3)", 
   // migration removes entirely — the stable testid is the decoupled replacement).
   await expect(page.getByTestId("day-periods-error")).toBeVisible({ timeout: 5000 });
 
-  await afternoonCard.getByRole("button", { name: m["dayPeriods.action.cancel"] }).click();
+  await timeInput.fill(newAfternoonStart);
+  await expect(
+    afternoonCard.getByRole("button", { name: m["dayPeriods.action.save"] })
+  ).toBeDisabled();
   // The rejected edit persisted nothing (client): afternoon still shows the last accepted value.
   await expect(afternoonCard).toContainText(newAfternoonStart, { timeout: 5000 });
 

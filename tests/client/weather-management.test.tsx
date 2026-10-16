@@ -90,6 +90,19 @@ describe("WeatherManagement", () => {
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
+  it("lays the fields out as label/input pairs in one grid, inputs full width", () => {
+    render(<Harness />);
+    const grid = screen.getByTestId("weather-fields");
+    for (const id of ["weather-lat-input", "weather-lon-input", "weather-label-input"]) {
+      const input = screen.getByTestId(id);
+      expect(grid).toContainElement(input);
+      expect(input).toHaveClass("w-full");
+      // The label is a sibling grid item bound by htmlFor, not a wrapper.
+      expect(input.closest("label")).toBeNull();
+    }
+    expect(screen.getByLabelText("Latitude")).toBe(screen.getByTestId("weather-lat-input"));
+  });
+
   it("disables Locate when geolocation is absent", () => {
     render(<Harness />);
     expect(screen.getByTestId("weather-locate")).toBeDisabled();
