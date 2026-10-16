@@ -3465,16 +3465,20 @@
             "shared day period labels resolve without importing a feature view"
           ],
           "tests/client/day-periods-management.test.tsx": [
-            "DayPeriodsManagement — household timezone drives the active-period badge (#648) highlights the period active in the HOUSEHOLD timezone, not the one active in UTC"
+            "DayPeriodsManagement — household timezone drives the active-period badge (#648) highlights the period active in the HOUSEHOLD timezone, not the one active in UTC",
+            "DayPeriodsManagement — always-editable cards renders four cards with editable inputs and no Edit button",
+            "DayPeriodsManagement — always-editable cards enables only the edited card's Save and disables it again when reverted",
+            "DayPeriodsManagement — always-editable cards saves one card with PATCH, keeps other drafts, and never shows Loading again",
+            "DayPeriodsManagement — always-editable cards rejects an out-of-order time before any request and keeps the draft",
+            "DayPeriodsManagement — always-editable cards offers Retry when the list cannot be loaded"
           ],
           "tests/client/day-periods-messages-admin.test.tsx": [
             "DayPeriodsManagement / DailyMessagesManagement — the shared AdminPanel L2 frame was ADOPTED (FR-009) DayPeriodsManagement wraps the surface in a landmark region labelled by its own title",
             "DayPeriodsManagement / DailyMessagesManagement — the shared AdminPanel L2 frame was ADOPTED (FR-009) DailyMessagesManagement wraps the surface in a landmark region labelled by its own title",
             "DayPeriodsManagement — kiosk density across every reachable state (SC-001, SC-002) renders the DELIBERATE zero-control census while the initial /api/day-periods fetch is unresolved",
-            "DayPeriodsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with all four periods rendered, none in edit mode (4 Edit buttons)",
-            "DayPeriodsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with one period in edit mode (3 base + the start-time field, Save, Cancel — 6 total)",
-            "DayPeriodsManagement — kiosk density across every reachable state (SC-001, SC-002) CENSUS FIRES ON REMOVAL — cancelling an edit drops its row's 3 edit controls back to 1 (6 -> 4), not a synthetic shrink",
-            "DayPeriodsManagement — kiosk density across every reachable state (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own Edit button below the kiosk minimum makes the assertion fail, and reverting restores compliance",
+            "DayPeriodsManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with all four periods editable (4 inputs + 4 Save buttons = 8 controls)",
+            "DayPeriodsManagement — kiosk density across every reachable state (SC-001, SC-002) census fires on change: editing a time does not add or remove controls",
+            "DayPeriodsManagement — kiosk density across every reachable state (SC-001, SC-002) DELIBERATE NEGATIVE — forcing this surface's own Save button below the kiosk minimum makes the assertion fail, and reverting restores compliance",
             "DailyMessagesManagement — kiosk density across every reachable state (SC-001, SC-002) renders the DELIBERATE zero-control census while the initial /api/members fetch is unresolved",
             "DailyMessagesManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with NO active members (still 0 — just the empty-state message)",
             "DailyMessagesManagement — kiosk density across every reachable state (SC-001, SC-002) meets kiosk density with an active member and an empty 14-day editor (2 navigation buttons + 1 member pill + 14 textareas)",
@@ -4169,6 +4173,11 @@
           "tests/client/settings-management.test.tsx": [
             "SettingsManagement shows the stored values as pills and a time zone, with nothing to save yet",
             "SettingsManagement offers UTC, the curated groups and a stored zone outside the list, each once",
+            "SettingsManagement puts the Settings and Weather panels in one two-column grid above a single Save",
+            "SettingsManagement enables Save on any edit and disables it again when the edit is reverted",
+            "SettingsManagement keeps Save blocked for the non-decimal latitude 0x10",
+            "SettingsManagement keeps Save blocked for the non-decimal latitude 1e3",
+            "SettingsManagement keeps Save blocked for the non-decimal latitude abc",
             "SettingsManagement saves a pill change as one locale object and asks the app to reload",
             "SettingsManagement saves only the weather when only the weather changed",
             "SettingsManagement saves locale then weather on one click",
@@ -4583,6 +4592,7 @@
             "weather form helpers compares forms field by field",
             "WeatherManagement shows the values it is given and blank inputs when unset",
             "WeatherManagement reports edits through onChange and never touches the network",
+            "WeatherManagement lays the fields out as label/input pairs in one grid, inputs full width",
             "WeatherManagement disables Locate when geolocation is absent",
             "WeatherManagement geolocation prefills rounded lat/lon and writes nothing (FR-010)",
             "WeatherManagement announces a refused geolocation without changing the fields",
@@ -5341,7 +5351,7 @@
           "tests/e2e/accessible-names-audit.spec.ts": [
             "822b69f77eae100765c0-0510a0fb0f2cd75ce622",
             "822b69f77eae100765c0-3beb781016be59e28386",
-            "822b69f77eae100765c0-e7f72126feaa734dab31"
+            "822b69f77eae100765c0-567d14651c8db84649e0"
           ],
           "tests/e2e/admin-household-timezone-defaults.spec.ts": [
             "d2c923e8dbd7b5ee6d04-0031c1d54f8f4e93fae5"
@@ -5535,10 +5545,10 @@
       "src/client/admin/DayPeriodsManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 99,
-          "statements": 105,
+          "lines": 93,
+          "statements": 102,
           "functions": 28,
-          "branches": 46
+          "branches": 56
         },
         "minimumRates": {
           "lines": 87.87,
