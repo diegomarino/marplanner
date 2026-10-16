@@ -54,7 +54,7 @@ function hasPrintableRaster(memberId: string, date: string): boolean {
   return row !== undefined && row.raster_bits !== null;
 }
 
-/** FR-017's predicate: the 'morning' day-period (SCHEMA-ENFORCED stable id, drizzle/0003's
+/** FR-017's predicate: the 'morning' day-period (SCHEMA-ENFORCED stable id, the baseline's
  * `day_periods.id CHECK IN (...)` — never `labelKey`, which is locale-dependent), keyed off the
  * member's board column, has at least one chore and every chore complete for `date`.
  * Two DISTINCT absence cases (batch-C) — conflating them would misreport a

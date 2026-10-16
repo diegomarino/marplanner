@@ -95,7 +95,7 @@ function createDatabase(): Database.Database {
     VALUES ('fresh', '[]', '${NOW}');
   `);
   const migration = fs
-    .readFileSync(path.resolve(process.cwd(), "drizzle/0002_plugin_lifecycle.sql"), "utf8")
+    .readFileSync(path.resolve(process.cwd(), "drizzle/0000_baseline.sql"), "utf8")
     .replaceAll("--> statement-breakpoint", "");
   db.exec(migration);
   db.exec("DROP TABLE temp.plugin_lifecycle_migration_context");

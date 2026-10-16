@@ -3,30 +3,15 @@ import { describe, expect, it } from "vitest";
 import { ALL_SCHEMA_TABLES } from "../helpers/schema-tables";
 
 const DRIZZLE_DIR = "drizzle";
-const BASELINE_FILE = "0000_current_baseline.sql";
-const CALENDAR_FEED_SYNC_MIGRATION = "0001_calendar_feed_sync.sql";
-const PLUGIN_LIFECYCLE_MIGRATION = "0002_plugin_lifecycle.sql";
-const CALENDAR_EVENT_DETAILS_MIGRATION = "0003_calendar_event_details.sql";
-const MEMBER_PALETTE_MIGRATION = "0004_member_palette.sql";
-const DAILY_BRIEFING_SCHEDULE_MIGRATION = "0005_daily_briefing_schedule.sql";
+const BASELINE_FILE = "0000_baseline.sql";
 
 describe("database lifecycle current baseline", () => {
-  it("keeps the current baseline plus the reviewed forward migrations", () => {
+  it("keeps exactly one migration: the squashed baseline", () => {
     const migrationFiles = readdirSync(DRIZZLE_DIR)
       .filter((file) => file.endsWith(".sql"))
       .sort();
 
-    expect(migrationFiles).toEqual([
-      BASELINE_FILE,
-      CALENDAR_FEED_SYNC_MIGRATION,
-      PLUGIN_LIFECYCLE_MIGRATION,
-      CALENDAR_EVENT_DETAILS_MIGRATION,
-      MEMBER_PALETTE_MIGRATION,
-      DAILY_BRIEFING_SCHEDULE_MIGRATION,
-    ]);
-    expect(migrationFiles.filter((file) => file.startsWith("0001"))).toEqual([
-      CALENDAR_FEED_SYNC_MIGRATION,
-    ]);
+    expect(migrationFiles).toEqual([BASELINE_FILE]);
   });
 
   it("keeps the reviewed sentinel, both tables, and canonical day-period rows in SQL", () => {
@@ -34,6 +19,7 @@ describe("database lifecycle current baseline", () => {
 
     expect(sql).toContain("CREATE TABLE `seed_profile_state`");
     expect(sql).toContain("CREATE TABLE `calendar_external_sources`");
+    expect(sql).toContain("FROM temp.`plugin_lifecycle_migration_context`");
     expect(sql).toContain(
       "INSERT INTO `day_periods` (`id`, `label_key`, `start_minutes`, `sort_order`) VALUES ('morning', 'dayPeriod.morning', 300, 0)"
     );

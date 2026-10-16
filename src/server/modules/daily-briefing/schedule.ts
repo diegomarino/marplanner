@@ -1,5 +1,5 @@
 /** Per-member weekday pause schedule (admin parity, spec D1–D4). Stored as the nullable
- * `daily_briefing_optin.weekdays` JSON column (drizzle/0005): NULL means every day. Imports only
+ * `daily_briefing_optin.weekdays` JSON column (drizzle/0000_baseline.sql): NULL means every day. Imports only
  * the host-api barrel, this plugin's own errors, and shared weekday helpers (lint zone).
  * Writes never touch `daily_briefing` — a schedule change never regenerates anything.
  */
