@@ -791,6 +791,83 @@ describe("RemindersManagement — the dialog's pill controls", () => {
     expect(within(dialog).getByTestId("reminders-cg-member-m2")).not.toBeChecked();
   });
 
+  const TWO_MEMBER_GATED = {
+    ...REMINDER_CALENDAR_GATED,
+    assignments: [
+      { id: "a1", memberId: "m1", weekdays: [], active: true },
+      { id: "a4", memberId: "m2", weekdays: [], active: true },
+    ],
+  };
+
+  it("creates a calendar-gated rule for two members", async () => {
+    const { mockFetch, dialog } = await openCreate();
+    fireEvent.change(within(dialog).getByPlaceholderText("Reminder text"), {
+      target: { value: "Shin pads" },
+    });
+    fireEvent.click(within(dialog).getByRole("radio", { name: "Calendar-gated" }));
+    fireEvent.click(within(dialog).getByLabelText("Specific members"));
+    fireEvent.change(within(dialog).getByLabelText("Match text"), {
+      target: { value: "football" },
+    });
+    fireEvent.click(within(dialog).getByTestId("reminders-cg-member-m1"));
+    fireEvent.click(within(dialog).getByTestId("reminders-cg-member-m2"));
+    fireEvent.click(within(dialog).getByTestId("reminder-save"));
+
+    await waitFor(() => expect(postBody(mockFetch)).toBeTruthy());
+    expect(postBody(mockFetch).assignments).toEqual([
+      { memberId: "m1", weekdays: [] },
+      { memberId: "m2", weekdays: [] },
+    ]);
+  });
+
+  it("editing a two-member calendar-gated rule preselects both and saves both", async () => {
+    const mockFetch = mockBackend({
+      reminders: () => json([TWO_MEMBER_GATED]),
+      members: () => json([MEMBER, MEMBER_B]),
+    });
+    renderSurface();
+    await screen.findByText("Vet appointment prep");
+    fireEvent.click(screen.getByTestId("reminder-edit-r2"));
+    const dialog = await screen.findByTestId("reminder-form-dialog");
+    expect(within(dialog).getByTestId("reminders-cg-member-m1")).toBeChecked();
+    expect(within(dialog).getByTestId("reminders-cg-member-m2")).toBeChecked();
+    fireEvent.click(within(dialog).getByTestId("reminder-save"));
+
+    await waitFor(() => {
+      const patch = (mockFetch.mock.calls as FetchCall[]).find(
+        ([u, init]) => String(u) === "/api/reminders/r2" && init?.method === "PATCH"
+      );
+      expect(patch).toBeTruthy();
+      expect(JSON.parse(String(patch![1]!.body)).assignments).toEqual([
+        { memberId: "m1", weekdays: [] },
+        { memberId: "m2", weekdays: [] },
+      ]);
+    });
+  });
+
+  it("the dry-run member picker offers only the rule's own members (all active ones for all members)", async () => {
+    const MEMBER_C = { ...MEMBER, id: "m3", displayName: "Cy", colorKey: "red" };
+    mockBackend({
+      reminders: () =>
+        json([
+          TWO_MEMBER_GATED,
+          { ...TWO_MEMBER_GATED, id: "r4", targetingMode: "apply_to_all", assignments: [] },
+        ]),
+      members: () => json([MEMBER, MEMBER_B, MEMBER_C]),
+    });
+    renderSurface();
+    const options = async (rowId: string) => {
+      const row = await screen.findByTestId(`reminder-${rowId}`);
+      fireEvent.click(within(row).getByRole("button", { name: "Dry-run" }));
+      const select = await within(row).findByRole("combobox");
+      return Array.from((select as HTMLSelectElement).options)
+        .filter((o) => o.value !== "")
+        .map((o) => o.textContent);
+    };
+    expect(await options("r2")).toEqual(["Ari", "Bea"]);
+    expect(await options("r4")).toEqual(["Ari", "Bea", "Cy"]);
+  });
+
   it("shows the empty message instead of an empty group when there are no active members", async () => {
     const { dialog } = await openCreate({ members: () => json([]) });
     fireEvent.click(within(dialog).getByLabelText("Specific members"));

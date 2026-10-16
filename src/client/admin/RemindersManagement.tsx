@@ -478,7 +478,11 @@ function ReminderRow({
       {isCalendarGated && showDryRun && (
         <DryRunPanel
           t={t}
-          activeMembers={activeMembers}
+          members={
+            reminder.targetingMode === "specific"
+              ? targetedMembers(reminder, memberById)
+              : activeMembers
+          }
           householdToday={householdToday}
           onDryRun={onDryRun}
         />
@@ -489,13 +493,16 @@ function ReminderRow({
 
 interface DryRunPanelProps {
   t: Translate;
-  activeMembers: Member[];
+  /** Who the rule can reach: its own active members (`specific`) or every active member. */
+  members: Member[];
   householdToday: string;
   onDryRun: (memberId: string, date: string) => Promise<DryRunResult>;
 }
 
-/** The dry-run / explain panel of a calendar_gated row (behaviour unchanged). */
-function DryRunPanel({ t, activeMembers, householdToday, onDryRun }: DryRunPanelProps) {
+/** The dry-run / explain panel of a calendar_gated row. It only offers members the rule targets:
+ * the server explains the gate for any member, so asking about one the rule does not reach would
+ * report a misleading "would emit". */
+function DryRunPanel({ t, members, householdToday, onDryRun }: DryRunPanelProps) {
   const [dryRunMemberId, setDryRunMemberId] = useState("");
   const [dryRunDate, setDryRunDate] = useState(householdToday);
   const [dryRunResult, setDryRunResult] = useState<DryRunResult | null>(null);
@@ -545,7 +552,7 @@ function DryRunPanel({ t, activeMembers, householdToday, onDryRun }: DryRunPanel
             className={NATIVE_SELECT_CLASSES}
           >
             <option value="">{t("reminders.dryRun.selectMember")}</option>
-            {activeMembers.map((member) => (
+            {members.map((member) => (
               <option key={member.id} value={member.id}>
                 {member.displayName}
               </option>
