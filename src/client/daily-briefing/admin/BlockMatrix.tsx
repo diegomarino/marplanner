@@ -57,6 +57,8 @@ export interface BlockMatrixProps {
   /** Overrides the household week start (tests). */
   weekStartDay?: 0 | 1;
   onToggleCell: (blockType: BlockRegistryType, day: WeekdayCode) => void;
+  /** The row's "every day" control: off on every day, or on every day when none is on. */
+  onToggleRow: (blockType: BlockRegistryType) => void;
   onParamChange: (blockType: BlockRegistryType, patch: Partial<BlockParams>) => void;
   onToggleDay: (day: WeekdayCode) => void;
   onReorder: (activeType: BlockRegistryType, overType: BlockRegistryType) => void;
@@ -133,6 +135,9 @@ export function BlockMatrix(props: BlockMatrixProps) {
                   {dayName(day)}
                 </th>
               ))}
+              <th scope="col" className="border-b px-2 py-2 text-center font-medium">
+                {t("dailyBriefing.admin.everyDayColumn")}
+              </th>
             </tr>
             <tr className="bg-muted/60">
               <th scope="row" className="border-b px-3 py-1 text-left font-medium">
@@ -151,6 +156,7 @@ export function BlockMatrix(props: BlockMatrixProps) {
                   />
                 </td>
               ))}
+              <td className="border-b" />
             </tr>
           </thead>
           <SortableContext items={types} strategy={verticalListSortingStrategy}>
@@ -167,6 +173,7 @@ export function BlockMatrix(props: BlockMatrixProps) {
                   orderSaving={props.orderSaving}
                   dayName={dayName}
                   onToggleCell={props.onToggleCell}
+                  onToggleRow={props.onToggleRow}
                   onParamChange={props.onParamChange}
                 />
               ))}
@@ -188,6 +195,7 @@ interface BlockRowProps {
   orderSaving: boolean;
   dayName: (day: WeekdayCode) => string;
   onToggleCell: BlockMatrixProps["onToggleCell"];
+  onToggleRow: BlockMatrixProps["onToggleRow"];
   onParamChange: BlockMatrixProps["onParamChange"];
 }
 
@@ -201,6 +209,7 @@ function BlockRow({
   orderSaving,
   dayName,
   onToggleCell,
+  onToggleRow,
   onParamChange,
 }: BlockRowProps) {
   const t = useT();
@@ -318,6 +327,22 @@ function BlockRow({
           </td>
         );
       })}
+      <td className="border-b px-2 py-1 text-center">
+        <Button
+          type="button"
+          variant="outline"
+          data-testid={`daily-briefing-block-row-toggle-${type}`}
+          disabled={saving}
+          aria-label={t(
+            on.size > 0
+              ? "dailyBriefing.admin.rowOffEveryDay"
+              : "dailyBriefing.admin.rowOnEveryDay"
+          ).replace("{block}", label)}
+          onClick={() => onToggleRow(type)}
+        >
+          {t(on.size > 0 ? "dailyBriefing.admin.rowOff" : "dailyBriefing.admin.rowOn")}
+        </Button>
+      </td>
     </tr>
   );
 }

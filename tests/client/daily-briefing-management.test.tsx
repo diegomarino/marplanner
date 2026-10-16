@@ -400,6 +400,50 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     );
   });
 
+  it("turns a block off every day, then on every day, from its row control, paused days untouched", async () => {
+    const bodies: unknown[] = [];
+    mockBackend({
+      optIns: ["member-ada"],
+      settings: () =>
+        settingsResponse({
+          memberSchedules: [
+            { memberId: "member-ada", weekdays: ["mon", "tue", "wed", "thu", "fri"] },
+          ],
+        }),
+      handle: (url, init) => {
+        if (url !== "/api/daily-briefing/block-settings/member-ada/weather") return undefined;
+        const body = JSON.parse(String(init?.body)) as object;
+        bodies.push(body);
+        return jsonResponse({
+          memberId: "member-ada",
+          blockType: "weather",
+          params: null,
+          updatedAt: bodies.length,
+          ...body,
+        });
+      },
+    });
+    renderManagement();
+    fireEvent.click(await screen.findByTestId("daily-briefing-tab-blocks"));
+
+    const toggle = await screen.findByTestId("daily-briefing-block-row-toggle-weather");
+    fireEvent.click(toggle);
+    await waitFor(() => expect(bodies).toEqual([{ enabled: false, weekdays: [] }]));
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-block-cell-weather-mon")).not.toBeChecked()
+    );
+    expect(screen.getByTestId("daily-briefing-block-cell-weather-sun")).toBeDisabled();
+
+    fireEvent.click(screen.getByTestId("daily-briefing-block-row-toggle-weather"));
+    await waitFor(() => expect(bodies[1]).toEqual({ enabled: true, weekdays: null }));
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-block-cell-weather-mon")).toBeChecked()
+    );
+    // The pause schedule is its own row: the block row control never changes it.
+    expect(screen.getByTestId("daily-briefing-schedule-day-sun")).not.toBeChecked();
+    expect(screen.getByTestId("daily-briefing-block-cell-weather-sun")).toBeDisabled();
+  });
+
   it("an opted-out member is an off pill that cannot be picked; opt-in stays on Schedule", async () => {
     let benOn = false;
     mockBackend({
