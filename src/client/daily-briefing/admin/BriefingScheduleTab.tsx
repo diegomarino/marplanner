@@ -206,7 +206,7 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
                           scope="row"
                           className="border-b px-2 py-2 text-left font-medium max-sm:block max-sm:border-0"
                         >
-                          <MemberChip member={member} />
+                          <MemberChip member={member} className="inline-block align-middle" />
                         </th>
                         <td className={STACKED_CELL} data-label={columnBriefing}>
                           <CheckboxField

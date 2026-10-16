@@ -161,6 +161,9 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     expect(header).toHaveAccessibleName("Ada");
     const chip = within(header).getByText("Ada");
     expect(chip).toHaveClass("bg-[var(--member-color)]", "text-member-avatar-foreground");
+    // In a table cell the chip must be a box of its own, or a long name cannot truncate and
+    // widens the stacked narrow layout.
+    expect(chip).toHaveClass("inline-block", "truncate", "max-w-full");
     expect(chip.style.getPropertyValue("--member-color")).toBe("var(--color-member-blue-500)");
     const ben = within(screen.getByTestId("daily-briefing-member-row-member-ben")).getByText("Ben");
     expect(ben.style.getPropertyValue("--member-color")).toBe("var(--color-member-teal-500)");
