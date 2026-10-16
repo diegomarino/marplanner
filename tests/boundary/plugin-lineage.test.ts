@@ -108,18 +108,24 @@ describe("plugin lifecycle migration lineage", () => {
   let dataDir: string;
   let migrationsDir: string;
   let previousDataDir: string | undefined;
+  let previousBackupsRoot: string | undefined;
 
   beforeEach(() => {
     dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "plugin-lineage-data-"));
     migrationsDir = fs.mkdtempSync(path.join(os.tmpdir(), "plugin-lineage-sql-"));
     previousDataDir = process.env.DATA_DIR;
+    previousBackupsRoot = process.env.BACKUPS_ROOT;
     process.env.DATA_DIR = dataDir;
+    // Snapshots must land under dataDir so the no-snapshot assertions can see them.
+    delete process.env.BACKUPS_ROOT;
     resetDb();
   });
 
   afterEach(() => {
     resetDb();
     process.env.DATA_DIR = previousDataDir;
+    if (previousBackupsRoot === undefined) delete process.env.BACKUPS_ROOT;
+    else process.env.BACKUPS_ROOT = previousBackupsRoot;
     fs.rmSync(dataDir, { recursive: true, force: true });
     fs.rmSync(migrationsDir, { recursive: true, force: true });
   });
