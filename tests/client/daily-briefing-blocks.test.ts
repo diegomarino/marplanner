@@ -3,6 +3,7 @@ import {
   ALL_BLOCK_TYPES,
   WEEKDAY_LABEL_KEYS,
   cellToggleInput,
+  rowToggleInput,
   defaultMemberBlockSettings,
   effectiveBlockDays,
   effectiveMatrixBlockTypes,
@@ -52,6 +53,28 @@ describe("briefingBlocks — effective days and cell writes", () => {
     expect(cellToggleInput(row({ enabled: true, weekdays: null }), "mon")).toEqual({
       enabled: true,
       weekdays: ["tue", "wed", "thu", "fri", "sat", "sun"],
+    });
+  });
+
+  it("the row toggle turns a block off every day while any day is on", () => {
+    expect(rowToggleInput(row({ enabled: true, weekdays: null }))).toEqual({
+      enabled: false,
+      weekdays: [],
+    });
+    expect(rowToggleInput(row({ enabled: true, weekdays: ["wed"] }))).toEqual({
+      enabled: false,
+      weekdays: [],
+    });
+  });
+
+  it("the row toggle turns a block on every day when no day is on", () => {
+    expect(rowToggleInput(row({ enabled: false, weekdays: ["mon"] }))).toEqual({
+      enabled: true,
+      weekdays: null,
+    });
+    expect(rowToggleInput(row({ enabled: true, weekdays: [] }))).toEqual({
+      enabled: true,
+      weekdays: null,
     });
   });
 
