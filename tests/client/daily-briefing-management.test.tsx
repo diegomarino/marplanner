@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DailyBriefingManagement } from "@/admin/DailyBriefingManagement";
@@ -150,6 +150,20 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     expect(screen.getByTestId("daily-briefing-member-pill-member-ada")).toBeChecked();
     expect(screen.getByTestId("daily-briefing-generate")).toBeVisible();
     expect(screen.queryByTestId("daily-briefing-admin-preview-show")).not.toBeInTheDocument();
+  });
+
+  it("names each member in the Schedule table on their own colour", async () => {
+    mockBackend({ optIns: ["member-ada"] });
+    renderManagement();
+
+    const row = await screen.findByTestId("daily-briefing-member-row-member-ada");
+    const header = within(row).getByRole("rowheader");
+    expect(header).toHaveAccessibleName("Ada");
+    const chip = within(header).getByText("Ada");
+    expect(chip).toHaveClass("bg-[var(--member-color)]", "text-member-avatar-foreground");
+    expect(chip.style.getPropertyValue("--member-color")).toBe("var(--color-member-blue-500)");
+    const ben = within(screen.getByTestId("daily-briefing-member-row-member-ben")).getByText("Ben");
+    expect(ben.style.getPropertyValue("--member-color")).toBe("var(--color-member-teal-500)");
   });
 
   it("keyboard reorder persists the complete effective order and reverts on failure", async () => {
