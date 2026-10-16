@@ -36,14 +36,3 @@ export function memberEventStyle(colorKeys: readonly MemberColorKey[]): MemberEv
     "--member-event-border": first,
   };
 }
-
-/** Selected member pill styling derived from the same semantic member token as event surfaces. */
-export function memberFilterStyle(key: MemberColorKey): CSSProperties {
-  const colour = memberColour(key);
-  return {
-    backgroundColor: `color-mix(in oklch, ${colour} 24%, var(--member-mix-ground))`,
-    borderColor: colour,
-    // The tint is light, so it takes the page's text colour, not the solid swatch's.
-    color: "var(--color-foreground)",
-  };
-}

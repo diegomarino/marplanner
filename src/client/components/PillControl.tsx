@@ -19,10 +19,8 @@ export interface PillControlProps {
   note?: string;
   /** Decorative node before the label (hidden from assistive tech), e.g. a colour dot. */
   adornment?: ReactNode;
-  /** Replaces the accent fill while selected. Pass only semantic colour tokens. */
-  selectedStyle?: CSSProperties;
-  /** Always applied, e.g. a custom property the caller's classes read. Semantic tokens only. */
-  style?: CSSProperties;
+  /** Custom properties the caller's classes read (e.g. `--member-color`). Semantic tokens only. */
+  tokenStyle?: CSSProperties;
   /** Reserve the semibold label's width so a caller that bolds the checked state never shifts
    * the pills beside it: an invisible, zero-height bold copy of the label sizes the same grid. */
   reserveBoldLabel?: boolean;
@@ -42,8 +40,7 @@ export function PillControl({
   label,
   note,
   adornment,
-  selectedStyle,
-  style,
+  tokenStyle,
   reserveBoldLabel,
   name,
   value,
@@ -53,8 +50,8 @@ export function PillControl({
 }: PillControlProps) {
   return (
     <label
-      // eslint-disable-next-line ui-policy/debt -- Forwards the caller's semantic colour tokens for the selected state.
-      style={checked && selectedStyle ? { ...style, ...selectedStyle } : style}
+      // eslint-disable-next-line ui-policy/debt -- Forwards the caller's semantic colour token custom properties.
+      style={tokenStyle}
       className={cn(
         "border-input bg-background text-muted-foreground text-control relative inline-flex h-[var(--control-height)] cursor-pointer items-center rounded-lg border px-4 font-medium",
         "not-has-[:checked]:hover:bg-primary/10 not-has-[:checked]:hover:text-foreground",
