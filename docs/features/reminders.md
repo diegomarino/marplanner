@@ -21,8 +21,9 @@ it appears in those members' briefings on their assigned weekdays.
 
 ### User Story 2 — Author a calendar-gated reminder
 
-A parent creates a "whenever" prompt ("bring shin pads") that emits only on days a
-member has a matching, explicitly-assigned calendar event — fixing the v1 local-only
+A parent creates a "whenever" prompt ("bring shin pads") for all members or for one or
+several chosen members; it emits for each of them only on days that member has a matching,
+explicitly-assigned calendar event — fixing the v1 local-only
 bug by reading through `Calendar.getEvents`.
 
 ### User Story 3 — Diagnose a silent reminder
