@@ -348,6 +348,9 @@ describe("MealsBoard weekly planner", () => {
     expect(within(group).getByRole("checkbox", { name: "Weeknights" })).toBeChecked();
     fireEvent.click(oneOff);
     expect(onSelect).toHaveBeenCalled();
+    // Unchecking the selected pill clears the highlight.
+    fireEvent.click(within(group).getByRole("checkbox", { name: "Weeknights" }));
+    expect(onSelectedChange).toHaveBeenLastCalledWith([]);
   });
 
   it("shows a visible retry after an initial week failure and recovers the interactive grid", async () => {
