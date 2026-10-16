@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { HouseholdSettingsProvider } from "@/lib/householdSettings";
@@ -40,6 +40,7 @@ describe("useMealsWorkspace", () => {
             ].map((date) => [date, { breakfast: [], lunch: [], snack: [], dinner: [] }])
           )
         );
+      if (url.includes("/api/meal-plans")) return response([]);
       throw new Error(`unexpected fetch: ${url}`);
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -67,6 +68,7 @@ describe("useMealsWorkspace", () => {
       if (url.includes("/api/recipes")) return response([]);
       if (url.includes("/api/menu/week"))
         return ++weekReads === 1 ? response(validWeek) : response({}, 500);
+      if (url.includes("/api/meal-plans")) return response([]);
       throw new Error(`unexpected fetch: ${url}`);
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -79,5 +81,29 @@ describe("useMealsWorkspace", () => {
     await waitFor(() => expect(result.current.weekError).not.toBeNull());
     expect(result.current.anchorDate).toBe("2026-10-02");
     expect(result.current.weekMenu).toEqual(validWeek);
+  });
+
+  it("loads the meal plans and retries them after a failure", async () => {
+    let planReads = 0;
+    const plans = [{ id: "p1", name: "School", active: true, createdAt: 1, updatedAt: 1 }];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: string | URL) => {
+        const url = String(input);
+        if (url.endsWith("/api/settings"))
+          return response({ locale: { timezone: "UTC", weekStartDay: 1 } });
+        if (url.includes("/api/recipes")) return response([]);
+        if (url.includes("/api/menu/week")) return response({});
+        if (url.includes("/api/meal-plans"))
+          return ++planReads === 1 ? response({}, 500) : response(plans);
+        throw new Error(`unexpected fetch: ${url}`);
+      })
+    );
+    const { result } = renderHook(() => useMealsWorkspace(), { wrapper });
+    await waitFor(() => expect(result.current.plansError).toBe("Failed to load meal plans."));
+    expect(result.current.plans).toBeNull();
+    await act(() => result.current.retryPlans());
+    expect(result.current.plans).toEqual(plans);
+    expect(result.current.plansError).toBeNull();
   });
 });

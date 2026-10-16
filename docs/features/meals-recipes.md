@@ -99,6 +99,8 @@ not-found, and any racing read renders a tombstone rather than erroring.
 - **FR-023**: Given a date input, when it is outside strict `YYYY-MM-DD` it MUST be rejected, and when week or "today" are computed they MUST use household tz plus `weekStartDay`. Contract: MEALS-RECIPES-AC-09.
 
 - **FR-024**: Given a consumer (Daily Briefing or dashboard), when it requests a slot's resolved labels, then it MUST receive a per-slot resolved-label list and the briefing MUST freeze that list verbatim at generation time. Contract: MEALS-RECIPES-AC-10.
+- **FR-025**: Given a derived menu item (day, slot-filtered or week read), then it MUST carry `planId`: the id of the meal plan whose recurring entry produced it, or `null` for a one-off, derived on read with no stored column and no backfill. Contract: none (admin parity).
+- **FR-026**: Given the week grid on `/meals` or the admin Preview, then each meal MUST be tinted with its origin colour (one-off warm grey; each plan an automatic colour by plan creation order), free-text meals MUST render in italics, and origin pills ("One-off" plus every active plan) MUST highlight the selected origins' meals and grey the rest in place without hiding, reordering or disabling any meal. Contract: none (admin parity).
 
 ### Key Entities
 
@@ -112,7 +114,7 @@ not-found, and any racing read renders a tombstone rather than erroring.
 - **One-off entry**: a concrete dated meal — `date (YYYY-MM-DD local) + slot + content`.
 - **Content**: per entry, a recipe reference OR a non-empty note (markdown-capable free
   text). Exclusive per entry; never per slot.
-- **Menu**: the derived-on-read set of entries for a `(date, slot)` — never materialized.
+- **Menu**: the derived-on-read set of entries for a `(date, slot)` — never materialized. Each item carries its origin (`planId`, null for a one-off).
 
 ## Success Criteria
 

@@ -3,10 +3,12 @@ import { openAdminSection } from "./admin-nav";
 import { unlockAdmin } from "./admin-unlock";
 import { messages, resolveLang } from "../../src/client/i18n/messages";
 
-/** Meals admin: the week menu is editable here. Add a one-off from a cell, add a weekly meal to a
- * plan from a cell (it shows in the grid and inside the plan card), edit it from the grid (the
- * card follows), and delete the one-off. Unique names per run: the e2e server keeps a shared
- * DATA_DIR across specs, so other active plans may exist. */
+/** Meals admin: three tabs (Preview, Meal plans, Recipes) and the week menu is editable in
+ * Preview. Add a one-off from a cell, add a weekly meal to a plan from a cell (it shows in the
+ * grid and inside the plan card on the Meal plans tab), edit it from the grid (the card follows),
+ * highlight this run's plan with its origin pill (its meal stands out, the one-off greys out, and
+ * adding from a cell preselects the plan), and delete the one-off. Unique names per run: the e2e
+ * server keeps a shared DATA_DIR across specs, so other active plans may exist. */
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
@@ -61,6 +63,8 @@ test("meals admin: edit the week menu and see recurring entries inside their pla
       locale: { language?: string; timezone: string };
     };
     const m = messages[resolveLang(settings.locale.language)];
+    const openTab = (key: keyof typeof m) =>
+      page.getByRole("tab", { name: m[key], exact: true }).click();
     const today = todayInTimezone(settings.locale.timezone);
 
     const planName = `E2E plan ${rid}`;
@@ -74,10 +78,16 @@ test("meals admin: edit the week menu and see recurring entries inside their pla
     await expect(
       page.getByRole("heading", { level: 2, name: m["admin.sidebar.meals"], exact: true })
     ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("tab", { name: m["meals.tabs.preview"] })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
 
     const grid = page.getByTestId("meal-plan-grid");
     const planEntries = page.getByTestId(`meals-plan-entries-${planId}`);
+    await openTab("meals.tabs.plans");
     await expect(planEntries).toBeVisible();
+    await openTab("meals.tabs.preview");
 
     // 1. A one-off note in today's dinner cell.
     const oneOff = `One-off ${rid}`;
@@ -112,7 +122,9 @@ test("meals admin: edit the week menu and see recurring entries inside their pla
     );
     await expect(dialog).toBeHidden();
     await expect(grid.getByRole("button", { name: weekly })).toBeVisible();
+    await openTab("meals.tabs.plans");
     await expect(planEntries.getByText(weekly)).toBeVisible();
+    await openTab("meals.tabs.preview");
 
     // 3. Edit the weekly meal from the grid; the plan card follows.
     const weeklyEdited = `Weekly edited ${rid}`;
@@ -123,8 +135,32 @@ test("meals admin: edit the week menu and see recurring entries inside their pla
       .fill(weeklyEdited);
     await dialog.getByRole("button", { name: m["meals.action.save"] }).click();
     await expect(dialog).toBeHidden();
+    await openTab("meals.tabs.plans");
     await expect(planEntries.getByText(weeklyEdited)).toBeVisible();
+    await openTab("meals.tabs.preview");
     await expect(grid.getByRole("button", { name: weeklyEdited })).toBeVisible();
+
+    // 3b. Highlight this run's plan: its meal stands out, the one-off greys out in place; adding
+    // from a cell opens on "Every <weekday>" in this plan.
+    const planPill = page.getByTestId(`meal-origin-pill-${planId}`);
+    await planPill.check();
+    const weeklyChip = grid.getByRole("button", { name: weeklyEdited });
+    const oneOffChip = grid.getByRole("button", { name: oneOff });
+    await expect(weeklyChip).toHaveAttribute("data-origin", planId!);
+    await expect(weeklyChip).toHaveAttribute("data-emphasis", "hit");
+    await expect(oneOffChip).toHaveAttribute("data-emphasis", "dim");
+    await openAddDialog(page, today, "breakfast");
+    dialog = page.getByRole("dialog");
+    await expect(
+      dialog.getByRole("radio", { name: new RegExp(`^${m["meals.entries.repeatWeeklyPrefix"]} `) })
+    ).toBeChecked();
+    await expect(dialog.getByRole("combobox", { name: m["meals.plan.selectLabel"] })).toHaveValue(
+      planId!
+    );
+    await dialog.getByRole("button", { name: m["meals.action.cancel"] }).click();
+    await expect(dialog).toBeHidden();
+    await planPill.uncheck();
+    await expect(oneOffChip).toHaveAttribute("data-emphasis", "normal");
 
     // 4. Delete the one-off from the grid through the confirmation.
     await grid.getByRole("button", { name: oneOff }).click();
