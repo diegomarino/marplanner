@@ -3335,7 +3335,9 @@
             "BlockMatrix offers params inline and reports changes",
             "BlockMatrix names the drag handles and disables them while the order saves",
             "BlockMatrix contains the hidden cell labels inside its own scroll box (no page-wide sideways scroll)",
-            "BlockMatrix meets kiosk density"
+            "BlockMatrix meets kiosk density",
+            "BlockMatrix offers one control per row that turns the block off or on for every day",
+            "BlockMatrix disables the row control while that row is saving"
           ],
           "tests/client/daily-briefing-blocks.test.ts": [
             "briefingBlocks — effective days and cell writes treats enabled + null weekdays as every day and disabled as no day",
@@ -3347,7 +3349,9 @@
             "briefingBlocks — order moves a type and keeps repeated instances with their params",
             "briefingBlocks — order returns the same array when nothing moves",
             "briefingBlocks — dates and labels reads a calendar date's weekday without a timezone",
-            "briefingBlocks — dates and labels maps every weekday to its own key"
+            "briefingBlocks — dates and labels maps every weekday to its own key",
+            "briefingBlocks — effective days and cell writes the row toggle turns a block off every day while any day is on",
+            "briefingBlocks — effective days and cell writes the row toggle turns a block on every day when no day is on"
           ],
           "tests/client/daily-briefing-i18n-parity.test.ts": [
             "daily-briefing-i18n-parity every daily briefing key in en exists in es",
@@ -3375,7 +3379,9 @@
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) keeps Generate blocked for another member while a generation is still running",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) an opted-out member is an off pill that cannot be picked; opt-in stays on Schedule",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) opting the selected member out selects the first opted-in member",
-            "DailyBriefingManagement — Generate-all opt-in interlock (#555) with nobody opted in, Blocks and Briefings point to Schedule"
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) with nobody opted in, Blocks and Briefings point to Schedule",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) names each member in the Schedule table on their own colour",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) turns a block off every day, then on every day, from its row control, paused days untouched"
           ],
           "tests/client/daily-briefing-schedule-tab.test.tsx": [
             "scheduleSummary says every day, paused every day, or the days in display order",
@@ -3603,7 +3609,11 @@
             "B0 device presentation state boots the B1 provisioning gate, enters the real shell, and captures global failures"
           ],
           "tests/client/household-options-menu.test.tsx": [
-            "HouseholdChrome — Options menu opens a menu holding Admin and every extra entry once there is more than one"
+            "HouseholdChrome — Options menu opens a menu holding Admin and every extra entry once there is more than one",
+            "HouseholdChrome — Options menu a tap on the Admin affordance explains that Admin needs a hold, then hides the hint",
+            "HouseholdChrome — Options menu a tap on the Admin affordance shows the hint for an early keyboard release too",
+            "HouseholdChrome — Options menu a tap on the Admin affordance shows no hint after a completed hold",
+            "HouseholdChrome — Options menu a tap on the Admin affordance hides the hint as soon as a new hold starts"
           ],
           "tests/client/logger.test.ts": [
             "client logger CLIENT-LOGGING-TELEMETRY-INV-03: an entry carries the canonical envelope shape",
@@ -3893,10 +3903,12 @@
             "Plugin Management uses only the authenticated session and never sends client PIN state",
             "Plugin Management keeps canonical state visible while busy and disables only that plugin",
             "Plugin Management applies the 409 plugin snapshot, announces a safe failure, and preserves control focus",
-            "Plugin Management restores focus to the renamed action after a successful lifecycle transition",
             "Plugin Management reveals aggregate health only after load and focuses the errored row on activation",
             "Plugin Management keeps every supported locale complete for the plugin surface",
-            "Plugin Management uses a narrow-safe stacked structure with visible actions and no table overflow"
+            "Plugin Management uses a narrow-safe stacked structure with visible actions and no table overflow",
+            "Plugin Management restores focus to the toggle after a successful lifecycle transition",
+            "Plugin Management draws each plugin's state as a toggle and greys out an inactive card",
+            "Plugin Management the toggle activates an inactive plugin and deactivates an active one"
           ],
           "tests/client/presentation-mode.test.tsx": [
             "usePresentationMode tracks fullscreen and the two probed display-mode changes, then removes every listener",
@@ -5547,7 +5559,7 @@
           "branches": 95
         },
         "minimumRates": {
-          "lines": 100.0,
+          "lines": 100,
           "statements": 95.62,
           "functions": 97.67,
           "branches": 77.89
@@ -5742,10 +5754,10 @@
           "branches": 8
         },
         "minimumRates": {
-          "lines": 100.0,
-          "statements": 100.0,
-          "functions": 100.0,
-          "branches": 100.0
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/client/admin/network-devices/DeviceStatus.tsx": {
