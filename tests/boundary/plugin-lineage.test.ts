@@ -354,6 +354,19 @@ describe("plugin lifecycle migration lineage", () => {
     }
   );
 
+  it("refuses a ledger with a migration this build does not know, even with nothing pending", () => {
+    writeLifecycleFixture(migrationsDir);
+    runMigrations(migrationsDir, { now: () => FROZEN_NOW_MS });
+    // A newer build opened this database and recorded a migration this one has never seen.
+    getDb()
+      .prepare("INSERT INTO drizzle_universe_migrations (fileName, appliedAt) VALUES (?, ?)")
+      .run("0001_from_a_newer_build.sql", FROZEN_NOW_MS);
+
+    expect(() => runMigrations(migrationsDir, { now: () => FROZEN_NOW_MS })).toThrow(
+      "Unsupported migration history."
+    );
+  });
+
   it("fails closed when the journal claims the baseline without its durable lifecycle metadata", () => {
     writeLifecycleFixture(migrationsDir);
     seedMigrationJournal([BASELINE_FILE]);
