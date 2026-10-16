@@ -350,7 +350,7 @@ describe("daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018)", 
     enableAutoPrint();
     seedBriefingRowWithRaster(memberId, DATE);
     // No routine references 'morning' for this member, so deleting the day_periods row itself is
-    // FK-safe (drizzle/0005: routines.day_period_id REFERENCES day_periods(id)).
+    // FK-safe (drizzle/0000_baseline.sql: routines.day_period_id REFERENCES day_periods(id)).
     getDb().prepare("DELETE FROM day_periods WHERE id = 'morning'").run();
 
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});

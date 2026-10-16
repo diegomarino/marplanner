@@ -8,8 +8,15 @@ import { runMigrations } from "../../src/server/db/migrate";
 const FROZEN_NOW_MS = Date.parse("2026-09-27T10:15:30.000Z");
 const FROZEN_NOW_ISO = "2026-09-27T10:15:30.000Z";
 const LATER_NOW_MS = Date.parse("2026-09-28T11:16:31.000Z");
-const BASELINE_FILE = "0000_current_baseline.sql";
-const LIFECYCLE_FILE = "0002_plugin_lifecycle.sql";
+const BASELINE_FILE = "0000_baseline.sql";
+const PRE_SQUASH_LEDGER = [
+  "0000_current_baseline.sql",
+  "0001_calendar_feed_sync.sql",
+  "0002_plugin_lifecycle.sql",
+  "0003_calendar_event_details.sql",
+  "0004_member_palette.sql",
+  "0005_daily_briefing_schedule.sql",
+];
 
 const PLUGIN_IDS = [
   "daily-briefing",
@@ -39,11 +46,10 @@ function writeMigration(directory: string, fileName: string, sql: string): void 
 }
 
 function writeLifecycleFixture(directory: string): void {
-  writeMigration(directory, BASELINE_FILE, "-- supported baseline fixture\n");
   writeMigration(
     directory,
-    LIFECYCLE_FILE,
-    fs.readFileSync(path.resolve(process.cwd(), "drizzle", LIFECYCLE_FILE), "utf8")
+    BASELINE_FILE,
+    fs.readFileSync(path.resolve(process.cwd(), "drizzle", BASELINE_FILE), "utf8")
   );
 }
 
@@ -102,25 +108,31 @@ describe("plugin lifecycle migration lineage", () => {
   let dataDir: string;
   let migrationsDir: string;
   let previousDataDir: string | undefined;
+  let previousBackupsRoot: string | undefined;
 
   beforeEach(() => {
     dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "plugin-lineage-data-"));
     migrationsDir = fs.mkdtempSync(path.join(os.tmpdir(), "plugin-lineage-sql-"));
     previousDataDir = process.env.DATA_DIR;
+    previousBackupsRoot = process.env.BACKUPS_ROOT;
     process.env.DATA_DIR = dataDir;
+    // Snapshots must land under dataDir so the no-snapshot assertions can see them.
+    delete process.env.BACKUPS_ROOT;
     resetDb();
   });
 
   afterEach(() => {
     resetDb();
     process.env.DATA_DIR = previousDataDir;
+    if (previousBackupsRoot === undefined) delete process.env.BACKUPS_ROOT;
+    else process.env.BACKUPS_ROOT = previousBackupsRoot;
     fs.rmSync(dataDir, { recursive: true, force: true });
     fs.rmSync(migrationsDir, { recursive: true, force: true });
   });
 
   describe("temporary migration context handoff", () => {
     it("is visible to migration SQL on the same connection and is removed after commit", () => {
-      writeMigration(migrationsDir, LIFECYCLE_FILE, TEMP_CONTEXT_PROBE_SQL);
+      writeMigration(migrationsDir, BASELINE_FILE, TEMP_CONTEXT_PROBE_SQL);
 
       runMigrations(migrationsDir, { now: () => FROZEN_NOW_MS });
 
@@ -137,7 +149,7 @@ describe("plugin lifecycle migration lineage", () => {
     it("keeps context-derived writes and migration bookkeeping inside the atomic rollback", () => {
       writeMigration(
         migrationsDir,
-        LIFECYCLE_FILE,
+        BASELINE_FILE,
         `${TEMP_CONTEXT_PROBE_SQL}
          CREATE TABLE probe_parent (id INTEGER PRIMARY KEY);
          CREATE TABLE probe_child (
@@ -157,7 +169,7 @@ describe("plugin lifecycle migration lineage", () => {
       expect(
         getDb()
           .prepare("SELECT fileName FROM drizzle_universe_migrations WHERE fileName = ?")
-          .all(LIFECYCLE_FILE)
+          .all(BASELINE_FILE)
       ).toEqual([]);
       expectNoTemporaryContext();
     });
@@ -189,30 +201,6 @@ describe("plugin lifecycle migration lineage", () => {
       "plugin_lifecycle_operations",
       "plugin_migration_journal",
     ]);
-    expectNoTemporaryContext();
-  });
-
-  it("classifies the recognized baseline journal as prior_baseline and seeds nine active plugins", () => {
-    writeLifecycleFixture(migrationsDir);
-    seedMigrationJournal([BASELINE_FILE]);
-
-    runMigrations(migrationsDir, { now: () => FROZEN_NOW_MS });
-
-    expect(getDb().prepare("SELECT * FROM installation_lineage").all()).toEqual([
-      {
-        singleton_id: 1,
-        kind: "prior_baseline",
-        pre_run_migration_files: `["${BASELINE_FILE}"]`,
-        captured_at: FROZEN_NOW_ISO,
-      },
-    ]);
-    expect(registryRows()).toEqual(
-      PLUGIN_IDS.map((pluginId) => ({
-        pluginId,
-        state: "active",
-        updatedAt: FROZEN_NOW_ISO,
-      }))
-    );
     expectNoTemporaryContext();
   });
 
@@ -342,29 +330,58 @@ describe("plugin lifecycle migration lineage", () => {
 
   it.each([
     ["unknown-only", ["0099_unknown.sql"]],
-    ["baseline-plus-unknown", [BASELINE_FILE, "0099_unknown.sql"]],
-  ])("fails closed before mutation for unsupported %s history", (_name, history) => {
+    ["pre-squash", PRE_SQUASH_LEDGER],
+  ])(
+    "fails closed before any snapshot or mutation for unsupported %s history",
+    (_name, history) => {
+      writeLifecycleFixture(migrationsDir);
+      seedMigrationJournal(history);
+
+      expect(() => runMigrations(migrationsDir, { now: () => FROZEN_NOW_MS })).toThrow(
+        "Unsupported migration history."
+      );
+
+      expect(lifecycleTableNames()).toEqual([]);
+      expect(
+        (
+          getDb()
+            .prepare("SELECT fileName FROM drizzle_universe_migrations ORDER BY fileName")
+            .all() as { fileName: string }[]
+        ).map(({ fileName }) => fileName)
+      ).toEqual([...history].sort());
+      expect(fs.existsSync(path.join(dataDir, "backups", "pre-migration"))).toBe(false);
+      expectNoTemporaryContext();
+    }
+  );
+
+  it("refuses a ledger with a migration this build does not know, even with nothing pending", () => {
     writeLifecycleFixture(migrationsDir);
-    seedMigrationJournal(history);
+    runMigrations(migrationsDir, { now: () => FROZEN_NOW_MS });
+    // A newer build opened this database and recorded a migration this one has never seen.
+    getDb()
+      .prepare("INSERT INTO drizzle_universe_migrations (fileName, appliedAt) VALUES (?, ?)")
+      .run("0001_from_a_newer_build.sql", FROZEN_NOW_MS);
 
     expect(() => runMigrations(migrationsDir, { now: () => FROZEN_NOW_MS })).toThrow(
-      "Unsupported pre-lifecycle migration history."
+      "Unsupported migration history."
     );
-
-    expect(lifecycleTableNames()).toEqual([]);
-    expect(
-      (
-        getDb()
-          .prepare("SELECT fileName FROM drizzle_universe_migrations ORDER BY fileName")
-          .all() as { fileName: string }[]
-      ).map(({ fileName }) => fileName)
-    ).toEqual([...history].sort());
-    expectNoTemporaryContext();
   });
 
-  it("fails closed when the journal claims the lifecycle migration without its durable metadata", () => {
+  it("refuses to lay the baseline under a ledger that already records a later migration", () => {
     writeLifecycleFixture(migrationsDir);
-    seedMigrationJournal([LIFECYCLE_FILE]);
+    // A later migration this build does ship, recorded without the baseline beneath it.
+    fs.writeFileSync(path.join(migrationsDir, "0001_later.sql"), "SELECT 1;", "utf8");
+    seedMigrationJournal(["0001_later.sql"]);
+
+    expect(() => runMigrations(migrationsDir, { now: () => FROZEN_NOW_MS })).toThrow(
+      "Unsupported migration history."
+    );
+    expect(lifecycleTableNames()).toEqual([]);
+  });
+
+  it("fails closed when the journal claims the baseline without its durable lifecycle metadata", () => {
+    writeLifecycleFixture(migrationsDir);
+    seedMigrationJournal([BASELINE_FILE]);
 
     expect(() => runMigrations(migrationsDir, { now: () => FROZEN_NOW_MS })).toThrow(
       "Incomplete plugin lifecycle migration history."
@@ -373,58 +390,49 @@ describe("plugin lifecycle migration lineage", () => {
     expect(lifecycleTableNames()).toEqual([]);
     expect(
       getDb().prepare("SELECT fileName FROM drizzle_universe_migrations ORDER BY fileName").all()
-    ).toEqual([{ fileName: LIFECYCLE_FILE }]);
+    ).toEqual([{ fileName: BASELINE_FILE }]);
     expectNoTemporaryContext();
   });
 
-  it.each([
-    ["fresh", "inactive", "active"],
-    ["prior_baseline", "active", "inactive"],
-  ] as const)(
-    "does not reclassify or reseed an already-migrated %s database after repeat and restart",
-    (lineage, initialState, changedState) => {
-      writeLifecycleFixture(migrationsDir);
-      if (lineage === "prior_baseline") {
-        seedMigrationJournal([BASELINE_FILE]);
-      }
-      runMigrations(migrationsDir, { now: () => FROZEN_NOW_MS });
+  it("does not reclassify or reseed an already-migrated database after repeat and restart", () => {
+    writeLifecycleFixture(migrationsDir);
+    runMigrations(migrationsDir, { now: () => FROZEN_NOW_MS });
 
-      const changedAt = "2026-09-27T12:00:00.000Z";
+    const changedAt = "2026-09-27T12:00:00.000Z";
+    getDb()
+      .prepare(
+        `UPDATE plugin_activation_registry
+         SET state = ?, activated_at = ?, updated_at = ?
+         WHERE plugin_id = 'daily-briefing'`
+      )
+      .run("active", changedAt, changedAt);
+
+    runMigrations(migrationsDir, { now: () => LATER_NOW_MS });
+    resetDb();
+    runMigrations(migrationsDir, { now: () => LATER_NOW_MS });
+
+    expect(getDb().prepare("SELECT * FROM installation_lineage").get()).toMatchObject({
+      kind: "fresh",
+      captured_at: FROZEN_NOW_ISO,
+    });
+    expect(
       getDb()
         .prepare(
-          `UPDATE plugin_activation_registry
-           SET state = ?, activated_at = ?, updated_at = ?
+          `SELECT state, activated_at AS activatedAt, updated_at AS updatedAt
+           FROM plugin_activation_registry
            WHERE plugin_id = 'daily-briefing'`
         )
-        .run(changedState, changedState === "active" ? changedAt : null, changedAt);
-
-      runMigrations(migrationsDir, { now: () => LATER_NOW_MS });
-      resetDb();
-      runMigrations(migrationsDir, { now: () => LATER_NOW_MS });
-
-      expect(getDb().prepare("SELECT * FROM installation_lineage").get()).toMatchObject({
-        kind: lineage,
-        captured_at: FROZEN_NOW_ISO,
-      });
-      expect(
-        getDb()
-          .prepare(
-            `SELECT state, activated_at AS activatedAt, updated_at AS updatedAt
-             FROM plugin_activation_registry
-             WHERE plugin_id = 'daily-briefing'`
-          )
-          .get()
-      ).toEqual({
-        state: changedState,
-        activatedAt: changedState === "active" ? changedAt : null,
-        updatedAt: changedAt,
-      });
-      expect(
-        getDb()
-          .prepare("SELECT COUNT(*) AS count FROM plugin_activation_registry WHERE state = ?")
-          .get(initialState)
-      ).toEqual({ count: 8 });
-      expectNoTemporaryContext();
-    }
-  );
+        .get()
+    ).toEqual({
+      state: "active",
+      activatedAt: changedAt,
+      updatedAt: changedAt,
+    });
+    expect(
+      getDb()
+        .prepare("SELECT COUNT(*) AS count FROM plugin_activation_registry WHERE state = ?")
+        .get("inactive")
+    ).toEqual({ count: 8 });
+    expectNoTemporaryContext();
+  });
 });

@@ -1,3 +1,15 @@
+-- MarPlanner v2 database baseline: the one and only migration (squashed 2026-10-16).
+--
+-- Everything above the "Hand additions" marker is verbatim `drizzle-kit generate` output for
+-- src/server/db/schema.ts, except `STRICT` appended to calendar_external_sources,
+-- calendar_external_event_meta and calendar_highlight_rules (drizzle-kit cannot express STRICT).
+-- tests/integration/database-baseline.test.ts proves the file is equivalent to a clean
+-- generation. To regenerate after a schema change, run drizzle-kit generate with
+-- `out` pointing at a scratch directory, replace the generated part, and re-apply STRICT.
+--
+-- Databases and backups created before the squash (ledger holding 0000_current_baseline.sql
+-- and 0001..0005) are unsupported: the runner refuses them and restore reports unsupported
+-- lineage.
 CREATE TABLE `admin_config` (
 	`id` integer PRIMARY KEY NOT NULL,
 	`pin_hash` text NOT NULL,
@@ -42,6 +54,8 @@ CREATE TABLE `calendar_events` (
 	`exdates` text DEFAULT '[]' NOT NULL,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
+	`description` text,
+	`location` text,
 	CONSTRAINT "calendar_events_source_check" CHECK("calendar_events"."source" IN ('local', 'external')),
 	CONSTRAINT "calendar_events_all_day_check" CHECK("calendar_events"."all_day" IN (0, 1)),
 	CONSTRAINT "calendar_events_dates_check" CHECK((
@@ -64,22 +78,73 @@ CREATE TABLE `calendar_events` (
       ))
 );
 --> statement-breakpoint
+CREATE TABLE `calendar_external_event_meta` (
+	`event_id` text PRIMARY KEY NOT NULL,
+	`source_id` text NOT NULL,
+	`external_uid` text NOT NULL,
+	`recurrence_id` text DEFAULT '' NOT NULL,
+	`description` text,
+	`location` text,
+	`status` text DEFAULT 'active' NOT NULL,
+	`raw_hash` text NOT NULL,
+	`source_updated_at` integer,
+	`created_at` integer NOT NULL,
+	`updated_at` integer NOT NULL,
+	FOREIGN KEY (`event_id`) REFERENCES `calendar_events`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`source_id`) REFERENCES `calendar_external_sources`(`id`) ON UPDATE no action ON DELETE restrict,
+	CONSTRAINT "calendar_external_event_meta_external_uid_check" CHECK(length(trim("calendar_external_event_meta"."external_uid")) > 0),
+	CONSTRAINT "calendar_external_event_meta_status_check" CHECK("calendar_external_event_meta"."status" IN ('active', 'cancelled')),
+	CONSTRAINT "calendar_external_event_meta_raw_hash_check" CHECK(length("calendar_external_event_meta"."raw_hash") = 64 AND "calendar_external_event_meta"."raw_hash" NOT GLOB '*[^0-9a-f]*')
+) STRICT;
+--> statement-breakpoint
+CREATE UNIQUE INDEX `calendar_external_event_meta_identity_unique` ON `calendar_external_event_meta` (`source_id`,`external_uid`,`recurrence_id`);--> statement-breakpoint
 CREATE TABLE `calendar_external_sources` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
 	`provider` text NOT NULL,
 	`feed_url` text NOT NULL,
 	`enabled` integer DEFAULT 1 NOT NULL,
-	`poll_interval_min` integer NOT NULL,
+	`poll_interval_min` integer DEFAULT 15 NOT NULL,
+	`etag` text,
+	`last_modified` text,
+	`content_hash` text,
+	`last_attempt_at` integer,
+	`last_success_at` integer,
+	`last_error_code` text,
+	`consecutive_failures` integer DEFAULT 0 NOT NULL,
+	`last_imported_count` integer DEFAULT 0 NOT NULL,
+	`last_skipped_count` integer DEFAULT 0 NOT NULL,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
+	CONSTRAINT "calendar_external_sources_id_check" CHECK(length(trim("calendar_external_sources"."id")) > 0),
 	CONSTRAINT "calendar_external_sources_name_check" CHECK(length(trim("calendar_external_sources"."name")) > 0),
 	CONSTRAINT "calendar_external_sources_provider_check" CHECK("calendar_external_sources"."provider" IN ('google', 'microsoft', 'apple', 'ics_generic')),
 	CONSTRAINT "calendar_external_sources_enabled_check" CHECK("calendar_external_sources"."enabled" IN (0, 1)),
-	CONSTRAINT "calendar_external_sources_poll_interval_check" CHECK("calendar_external_sources"."poll_interval_min" BETWEEN 1 AND 1440)
-);
+	CONSTRAINT "calendar_external_sources_poll_interval_check" CHECK("calendar_external_sources"."poll_interval_min" BETWEEN 1 AND 1440),
+	CONSTRAINT "calendar_external_sources_content_hash_check" CHECK("calendar_external_sources"."content_hash" IS NULL OR (length("calendar_external_sources"."content_hash") = 64 AND "calendar_external_sources"."content_hash" NOT GLOB '*[^0-9a-f]*')),
+	CONSTRAINT "calendar_external_sources_last_error_code_check" CHECK("calendar_external_sources"."last_error_code" IS NULL OR "calendar_external_sources"."last_error_code" IN ('unsafe_url', 'unavailable', 'timeout', 'too_large', 'invalid_calendar', 'parse_failed', 'reconcile_failed')),
+	CONSTRAINT "calendar_external_sources_consecutive_failures_check" CHECK("calendar_external_sources"."consecutive_failures" >= 0),
+	CONSTRAINT "calendar_external_sources_last_imported_count_check" CHECK("calendar_external_sources"."last_imported_count" >= 0),
+	CONSTRAINT "calendar_external_sources_last_skipped_count_check" CHECK("calendar_external_sources"."last_skipped_count" >= 0)
+) STRICT;
 --> statement-breakpoint
 CREATE UNIQUE INDEX `calendar_external_sources_feed_url_unique` ON `calendar_external_sources` (`feed_url`);--> statement-breakpoint
+CREATE TABLE `calendar_highlight_rules` (
+	`id` text PRIMARY KEY NOT NULL,
+	`emoji` text NOT NULL,
+	`keywords_json` text NOT NULL,
+	`enabled` integer DEFAULT 1 NOT NULL,
+	`priority` integer NOT NULL,
+	`created_at` integer NOT NULL,
+	`updated_at` integer NOT NULL,
+	CONSTRAINT "calendar_highlight_rules_id_check" CHECK(length(trim("calendar_highlight_rules"."id")) > 0),
+	CONSTRAINT "calendar_highlight_rules_emoji_check" CHECK(length(trim("calendar_highlight_rules"."emoji")) BETWEEN 1 AND 32),
+	CONSTRAINT "calendar_highlight_rules_keywords_json_check" CHECK(json_valid("calendar_highlight_rules"."keywords_json") AND json_type("calendar_highlight_rules"."keywords_json") = 'array'),
+	CONSTRAINT "calendar_highlight_rules_enabled_check" CHECK("calendar_highlight_rules"."enabled" IN (0, 1)),
+	CONSTRAINT "calendar_highlight_rules_priority_check" CHECK("calendar_highlight_rules"."priority" >= 0)
+) STRICT;
+--> statement-breakpoint
+CREATE UNIQUE INDEX `calendar_highlight_rules_priority_unique` ON `calendar_highlight_rules` (`priority`);--> statement-breakpoint
 CREATE TABLE `chore_completions` (
 	`id` text PRIMARY KEY NOT NULL,
 	`chore_id` text NOT NULL,
@@ -151,6 +216,7 @@ CREATE TABLE `daily_briefing_optin` (
 	`enabled` integer DEFAULT 0 NOT NULL,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
+	`weekdays` text,
 	CONSTRAINT "daily_briefing_optin_enabled_check" CHECK("daily_briefing_optin"."enabled" IN (0, 1))
 );
 --> statement-breakpoint
@@ -205,6 +271,19 @@ CREATE TABLE `day_periods` (
 	CONSTRAINT "day_periods_sort_order_check" CHECK("day_periods"."sort_order" BETWEEN 0 AND 3)
 );
 --> statement-breakpoint
+CREATE TABLE `installation_lineage` (
+	`singleton_id` integer PRIMARY KEY NOT NULL,
+	`kind` text NOT NULL,
+	`pre_run_migration_files` text NOT NULL,
+	`captured_at` text NOT NULL,
+	CONSTRAINT "installation_lineage_singleton_check" CHECK("installation_lineage"."singleton_id" = 1),
+	CONSTRAINT "installation_lineage_kind_check" CHECK("installation_lineage"."kind" IN ('fresh')),
+	CONSTRAINT "installation_lineage_history_check" CHECK(json_valid("installation_lineage"."pre_run_migration_files") AND json_type("installation_lineage"."pre_run_migration_files") = 'array'),
+	CONSTRAINT "installation_lineage_captured_at_check" CHECK(length("installation_lineage"."captured_at") = 24
+        AND "installation_lineage"."captured_at" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]Z'
+        AND strftime('%Y-%m-%dT%H:%M:%fZ', "installation_lineage"."captured_at") = "installation_lineage"."captured_at")
+);
+--> statement-breakpoint
 CREATE TABLE `meal_entries` (
 	`id` text PRIMARY KEY NOT NULL,
 	`meal_plan_id` text,
@@ -248,7 +327,7 @@ CREATE TABLE `members` (
 	`birth_year` integer,
 	CONSTRAINT "members_display_name_check" CHECK(length(trim("members"."display_name")) > 0),
 	CONSTRAINT "members_role_check" CHECK("members"."role" IN ('parent', 'child')),
-	CONSTRAINT "members_color_key_check" CHECK("members"."color_key" IN ('blue', 'sky', 'cyan', 'teal', 'green', 'lime', 'yellow', 'amber', 'orange', 'red', 'rose', 'pink', 'fuchsia', 'purple', 'violet', 'indigo')),
+	CONSTRAINT "members_color_key_check" CHECK("members"."color_key" IN ('blue', 'sky', 'teal', 'green', 'lime', 'amber', 'orange', 'red', 'pink', 'violet')),
 	CONSTRAINT "members_lifecycle_check" CHECK("members"."lifecycle" IN ('active', 'archived'))
 );
 --> statement-breakpoint
@@ -266,6 +345,77 @@ CREATE TABLE `network_devices` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `network_devices_mac_unique` ON `network_devices` (`mac`);--> statement-breakpoint
+CREATE TABLE `plugin_activation_registry` (
+	`plugin_id` text PRIMARY KEY NOT NULL,
+	`state` text NOT NULL,
+	`activated_at` text,
+	`updated_at` text NOT NULL,
+	`error_code` text,
+	`error_message` text,
+	CONSTRAINT "plugin_activation_registry_plugin_id_check" CHECK("plugin_activation_registry"."plugin_id" IN ('daily-briefing', 'printing', 'weather', 'time-announcements', 'backups', 'network-devices', 'meals-recipes', 'reminders', 'daily-messages')),
+	CONSTRAINT "plugin_activation_registry_state_check" CHECK("plugin_activation_registry"."state" IN ('active', 'inactive', 'errored')),
+	CONSTRAINT "plugin_activation_registry_activated_at_check" CHECK("plugin_activation_registry"."activated_at" IS NULL OR (
+        length("plugin_activation_registry"."activated_at") = 24
+        AND "plugin_activation_registry"."activated_at" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]Z'
+        AND strftime('%Y-%m-%dT%H:%M:%fZ', "plugin_activation_registry"."activated_at") = "plugin_activation_registry"."activated_at"
+      )),
+	CONSTRAINT "plugin_activation_registry_updated_at_check" CHECK(length("plugin_activation_registry"."updated_at") = 24
+        AND "plugin_activation_registry"."updated_at" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]Z'
+        AND strftime('%Y-%m-%dT%H:%M:%fZ', "plugin_activation_registry"."updated_at") = "plugin_activation_registry"."updated_at"),
+	CONSTRAINT "plugin_activation_registry_error_check" CHECK((
+        ("plugin_activation_registry"."error_code" IS NULL AND "plugin_activation_registry"."error_message" IS NULL)
+        OR (
+          "plugin_activation_registry"."state" = 'errored'
+          AND "plugin_activation_registry"."error_code" IS NOT NULL
+          AND "plugin_activation_registry"."error_message" IS NOT NULL
+          AND (
+            ("plugin_activation_registry"."error_code" = 'settings_initialization_failed' AND "plugin_activation_registry"."error_message" = 'Plugin settings could not be prepared.')
+            OR ("plugin_activation_registry"."error_code" = 'migration_failed' AND "plugin_activation_registry"."error_message" = 'Plugin data could not be prepared.')
+            OR ("plugin_activation_registry"."error_code" = 'runtime_mount_failed' AND "plugin_activation_registry"."error_message" = 'Plugin services could not be started.')
+            OR ("plugin_activation_registry"."error_code" = 'drain_failed' AND "plugin_activation_registry"."error_message" = 'Plugin work could not stop safely.')
+            OR ("plugin_activation_registry"."error_code" = 'runtime_unmount_failed' AND "plugin_activation_registry"."error_message" = 'Plugin services could not be stopped.')
+            OR ("plugin_activation_registry"."error_code" = 'contribution_failed' AND "plugin_activation_registry"."error_message" = 'A plugin contribution failed.')
+            OR ("plugin_activation_registry"."error_code" = 'reconciliation_failed' AND "plugin_activation_registry"."error_message" = 'Plugin recovery requires attention.')
+          )
+        )
+      ))
+);
+--> statement-breakpoint
+CREATE TABLE `plugin_lifecycle_operations` (
+	`operation_id` text PRIMARY KEY NOT NULL,
+	`plugin_id` text NOT NULL,
+	`target_state` text NOT NULL,
+	`phase` text NOT NULL,
+	`started_at` text NOT NULL,
+	`updated_at` text NOT NULL,
+	FOREIGN KEY (`plugin_id`) REFERENCES `plugin_activation_registry`(`plugin_id`) ON UPDATE no action ON DELETE restrict,
+	CONSTRAINT "plugin_lifecycle_operations_operation_id_check" CHECK(length(trim("plugin_lifecycle_operations"."operation_id")) > 0),
+	CONSTRAINT "plugin_lifecycle_operations_target_phase_check" CHECK((
+        ("plugin_lifecycle_operations"."target_state" = 'active' AND "plugin_lifecycle_operations"."phase" IN ('preparing-settings', 'running-migrations', 'mounting', 'committing-active'))
+        OR
+        ("plugin_lifecycle_operations"."target_state" = 'inactive' AND "plugin_lifecycle_operations"."phase" IN ('blocking-claims', 'draining', 'unmounting', 'committing-inactive'))
+      )),
+	CONSTRAINT "plugin_lifecycle_operations_started_at_check" CHECK(length("plugin_lifecycle_operations"."started_at") = 24
+        AND "plugin_lifecycle_operations"."started_at" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]Z'
+        AND strftime('%Y-%m-%dT%H:%M:%fZ', "plugin_lifecycle_operations"."started_at") = "plugin_lifecycle_operations"."started_at"),
+	CONSTRAINT "plugin_lifecycle_operations_updated_at_check" CHECK(length("plugin_lifecycle_operations"."updated_at") = 24
+        AND "plugin_lifecycle_operations"."updated_at" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]Z'
+        AND strftime('%Y-%m-%dT%H:%M:%fZ', "plugin_lifecycle_operations"."updated_at") = "plugin_lifecycle_operations"."updated_at")
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `plugin_lifecycle_operations_plugin_id_unique` ON `plugin_lifecycle_operations` (`plugin_id`);--> statement-breakpoint
+CREATE TABLE `plugin_migration_journal` (
+	`plugin_id` text NOT NULL,
+	`migration_id` text NOT NULL,
+	`applied_at` text NOT NULL,
+	PRIMARY KEY(`plugin_id`, `migration_id`),
+	FOREIGN KEY (`plugin_id`) REFERENCES `plugin_activation_registry`(`plugin_id`) ON UPDATE no action ON DELETE restrict,
+	CONSTRAINT "plugin_migration_journal_migration_id_check" CHECK(length(trim("plugin_migration_journal"."migration_id")) > 0),
+	CONSTRAINT "plugin_migration_journal_applied_at_check" CHECK(length("plugin_migration_journal"."applied_at") = 24
+        AND "plugin_migration_journal"."applied_at" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]Z'
+        AND strftime('%Y-%m-%dT%H:%M:%fZ', "plugin_migration_journal"."applied_at") = "plugin_migration_journal"."applied_at")
+);
+--> statement-breakpoint
 CREATE TABLE `print_jobs` (
 	`id` text PRIMARY KEY NOT NULL,
 	`record_id` text NOT NULL,
@@ -407,7 +557,31 @@ CREATE TABLE `time_announcements` (
 --> statement-breakpoint
 CREATE INDEX `time_announcements_time_idx` ON `time_announcements` (`time`);
 --> statement-breakpoint
+-- Hand additions: fixed rows every database starts with.
 INSERT INTO `day_periods` (`id`, `label_key`, `start_minutes`, `sort_order`) VALUES ('morning', 'dayPeriod.morning', 300, 0);--> statement-breakpoint
 INSERT INTO `day_periods` (`id`, `label_key`, `start_minutes`, `sort_order`) VALUES ('afternoon', 'dayPeriod.afternoon', 720, 1);--> statement-breakpoint
 INSERT INTO `day_periods` (`id`, `label_key`, `start_minutes`, `sort_order`) VALUES ('evening', 'dayPeriod.evening', 1080, 2);--> statement-breakpoint
-INSERT INTO `day_periods` (`id`, `label_key`, `start_minutes`, `sort_order`) VALUES ('night', 'dayPeriod.night', 1260, 3);
+INSERT INTO `day_periods` (`id`, `label_key`, `start_minutes`, `sort_order`) VALUES ('night', 'dayPeriod.night', 1260, 3);--> statement-breakpoint
+-- The runner hands over the installation lineage (always `fresh`, empty pre-run journal, and the
+-- capture time from its injectable clock) through a connection-scoped temp table.
+INSERT INTO `installation_lineage` (`singleton_id`, `kind`, `pre_run_migration_files`, `captured_at`)
+SELECT 1, `kind`, `pre_run_migration_files`, `captured_at`
+FROM temp.`plugin_lifecycle_migration_context`;
+--> statement-breakpoint
+-- Every plugin starts inactive; the owner activates them from Admin.
+WITH `plugin_ids` (`plugin_id`) AS (
+	VALUES
+		('daily-briefing'),
+		('printing'),
+		('weather'),
+		('time-announcements'),
+		('backups'),
+		('network-devices'),
+		('meals-recipes'),
+		('reminders'),
+		('daily-messages')
+)
+INSERT INTO `plugin_activation_registry` (`plugin_id`, `state`, `activated_at`, `updated_at`, `error_code`, `error_message`)
+SELECT `plugin_ids`.`plugin_id`, 'inactive', NULL, `installation_lineage`.`captured_at`, NULL, NULL
+FROM `plugin_ids`
+CROSS JOIN `installation_lineage`;

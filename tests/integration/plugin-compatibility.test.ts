@@ -27,15 +27,10 @@ import {
   createScheduler,
 } from "../../src/server/scheduler/index.js";
 import { PLUGIN_IDS, type PluginId, type PluginState } from "../../src/shared/plugins.js";
+import { BASELINE_FILE, execBaseline } from "../helpers/baseline";
 
 const FIXTURES_DIR = path.resolve(process.cwd(), "tests/fixtures/plugin-lifecycle");
 const MIGRATIONS_DIR = path.resolve(process.cwd(), "drizzle");
-const BASELINE_FILE = "0000_current_baseline.sql";
-const CALENDAR_FEED_SYNC_FILE = "0001_calendar_feed_sync.sql";
-const LIFECYCLE_FILE = "0002_plugin_lifecycle.sql";
-const CALENDAR_EVENT_DETAILS_FILE = "0003_calendar_event_details.sql";
-const MEMBER_PALETTE_FILE = "0004_member_palette.sql";
-const DAILY_BRIEFING_SCHEDULE_FILE = "0005_daily_briefing_schedule.sql";
 const FROZEN_NOW = "2026-09-27T10:15:30.000Z";
 const FROZEN_NOW_MS = Date.parse(FROZEN_NOW);
 const DEVICE_KEY = "plugin-compatibility-device";
@@ -64,7 +59,7 @@ interface RegistryRow {
 
 interface LineageRow {
   readonly singletonId: number;
-  readonly kind: "fresh" | "prior_baseline";
+  readonly kind: "fresh";
   readonly preRunMigrationFiles: string;
   readonly capturedAt: string;
 }
@@ -183,62 +178,30 @@ function recordMigration(db: InstanceType<typeof Database>, fileName: string): v
   );
 }
 
-function applyRealMigration(db: InstanceType<typeof Database>, fileName: string): void {
-  db.exec(fs.readFileSync(path.join(MIGRATIONS_DIR, fileName), "utf8"));
-}
-
-function preparePriorBaseline(): void {
-  applyRealMigration(getDb(), BASELINE_FILE);
-  applyFixture("prior-baseline");
-}
-
+/** A backup file made by the real baseline, with every plugin active and the restored-state
+ * fixture applied on top. */
 function buildBackupFixture(
   dbPath: string,
-  state: "prior-baseline" | "migrated-prior",
   options: { readonly interruptedDeactivation?: boolean } = {}
 ): void {
   const db = new Database(dbPath);
   try {
     db.pragma("foreign_keys = ON");
-    applyRealMigration(db, BASELINE_FILE);
+    execBaseline(db, FROZEN_NOW);
     createJournal(db);
     recordMigration(db, BASELINE_FILE);
-    if (state === "migrated-prior") {
-      applyRealMigration(db, CALENDAR_FEED_SYNC_FILE);
-      recordMigration(db, CALENDAR_FEED_SYNC_FILE);
-      db.exec(
-        `CREATE TEMP TABLE plugin_lifecycle_migration_context (
-           kind TEXT NOT NULL,
-           pre_run_migration_files TEXT NOT NULL,
-           captured_at TEXT NOT NULL
-         )`
-      );
+    db.exec("UPDATE plugin_activation_registry SET state = 'active'");
+    applyFixture("migrated-active", db);
+    if (options.interruptedDeactivation) {
       db.prepare(
-        `INSERT INTO temp.plugin_lifecycle_migration_context
-           (kind, pre_run_migration_files, captured_at)
-         VALUES ('prior_baseline', ?, ?)`
-      ).run(JSON.stringify([BASELINE_FILE]), FROZEN_NOW);
-      applyRealMigration(db, LIFECYCLE_FILE);
-      db.exec("DROP TABLE temp.plugin_lifecycle_migration_context");
-      recordMigration(db, LIFECYCLE_FILE);
-      applyRealMigration(db, CALENDAR_EVENT_DETAILS_FILE);
-      recordMigration(db, CALENDAR_EVENT_DETAILS_FILE);
-      applyRealMigration(db, MEMBER_PALETTE_FILE);
-      recordMigration(db, MEMBER_PALETTE_FILE);
-      applyRealMigration(db, DAILY_BRIEFING_SCHEDULE_FILE);
-      recordMigration(db, DAILY_BRIEFING_SCHEDULE_FILE);
-      applyFixture("migrated-prior", db);
-      if (options.interruptedDeactivation) {
-        db.prepare(
-          `INSERT INTO plugin_lifecycle_operations
-             (operation_id, plugin_id, target_state, phase, started_at, updated_at)
-           VALUES ('restored-printing-deactivation', 'printing', 'inactive', 'unmounting', ?, ?)`
-        ).run(FROZEN_NOW, FROZEN_NOW);
-        db.prepare(
-          `INSERT INTO api_keys (id, key_hash, scope, kind, created_at)
-           VALUES ('plugin-compatibility-key', ?, '*', 'device', ?)`
-        ).run(hashKey(DEVICE_KEY), FROZEN_NOW_MS);
-      }
+        `INSERT INTO plugin_lifecycle_operations
+           (operation_id, plugin_id, target_state, phase, started_at, updated_at)
+         VALUES ('restored-printing-deactivation', 'printing', 'inactive', 'unmounting', ?, ?)`
+      ).run(FROZEN_NOW, FROZEN_NOW);
+      db.prepare(
+        `INSERT INTO api_keys (id, key_hash, scope, kind, created_at)
+         VALUES ('plugin-compatibility-key', ?, '*', 'device', ?)`
+      ).run(hashKey(DEVICE_KEY), FROZEN_NOW_MS);
     }
   } finally {
     db.close();
@@ -295,25 +258,11 @@ describe("plugin lifecycle compatibility matrix", () => {
     }
   });
 
-  it("prior-baseline: uses only the recognized pre-run journal to seed nine active rows", () => {
-    preparePriorBaseline();
-    runMigrations(MIGRATIONS_DIR, { now: () => FROZEN_NOW_MS });
-
-    expect(lineage()).toEqual({
-      singletonId: 1,
-      kind: "prior_baseline",
-      preRunMigrationFiles: `["${BASELINE_FILE}"]`,
-      capturedAt: FROZEN_NOW,
-    });
-    expect(registryRows()).toEqual(exactSeedRows("active"));
-    expectClosedRegistry(registryRows());
-  });
-
   it("unsupported-history: fails closed before writing any lifecycle metadata", () => {
     applyFixture("unsupported-history");
 
     expect(() => runMigrations(MIGRATIONS_DIR, { now: () => FROZEN_NOW_MS })).toThrow(
-      "Unsupported pre-lifecycle migration history."
+      "Unsupported migration history."
     );
     expect(lifecycleTableNames()).toEqual([]);
     expect(getDb().prepare("SELECT fileName FROM drizzle_universe_migrations").all()).toEqual([
@@ -321,13 +270,9 @@ describe("plugin lifecycle compatibility matrix", () => {
     ]);
   });
 
-  it.each([
-    ["migrated-fresh", "fresh", "inactive"],
-    ["migrated-prior", "prior_baseline", "active"],
-  ] as const)(
+  it.each([["migrated-fresh", "inactive"]] as const)(
     "%s: restart preserves immutable lineage, explicit registry state, journals, settings, and owned data",
-    (fixture, expectedLineage, defaultState) => {
-      if (expectedLineage === "prior_baseline") preparePriorBaseline();
+    (fixture, defaultState) => {
       runMigrations(MIGRATIONS_DIR, { now: () => FROZEN_NOW_MS });
       applyFixture(fixture);
 
@@ -339,18 +284,11 @@ describe("plugin lifecycle compatibility matrix", () => {
       const beforeJournal = getDb().prepare("SELECT * FROM plugin_migration_journal").all();
       const beforeOwnedData = getDb().prepare("SELECT * FROM daily_messages").all();
       const expectedRows = exactRowsWith(defaultState, {
-        weather:
-          fixture === "migrated-fresh"
-            ? {
-                state: "active",
-                activatedAt: "2026-09-27T12:00:00.000Z",
-                updatedAt: "2026-09-27T12:00:00.000Z",
-              }
-            : {
-                state: "inactive",
-                activatedAt: "2026-09-27T11:30:00.000Z",
-                updatedAt: "2026-09-27T12:00:00.000Z",
-              },
+        weather: {
+          state: "active",
+          activatedAt: "2026-09-27T12:00:00.000Z",
+          updatedAt: "2026-09-27T12:00:00.000Z",
+        },
       });
 
       expect(beforeRows).toEqual(expectedRows);
@@ -375,37 +313,13 @@ describe("plugin lifecycle compatibility matrix", () => {
     }
   );
 
-  it("restored-prior-baseline: real restore migrates the restored journal and seeds nine active rows", async () => {
-    runMigrations(MIGRATIONS_DIR, { now: () => FROZEN_NOW_MS });
-    const filename = "snapshot-20260927-101530-000.db";
-    buildBackupFixture(createBackupPath(filename), "prior-baseline");
-
-    const result = await restoreDatabase(
-      { filename, confirmFilename: filename },
-      { migrationsDir: MIGRATIONS_DIR }
-    );
-
-    expect(result).toMatchObject({ status: "restored", migrated: true });
-    expect(lineage()).toMatchObject({
-      singletonId: 1,
-      kind: "prior_baseline",
-      preRunMigrationFiles: `["${BASELINE_FILE}"]`,
-    });
-    expect(registryRows().map(({ pluginId, state }) => ({ pluginId, state }))).toEqual(
-      PLUGIN_IDS.map((pluginId) => ({ pluginId, state: "active" }))
-    );
-    expectClosedRegistry(registryRows());
-  });
-
   it("restored-migrated: a live app reconciles restored canonical state and durable work before first traffic", async () => {
     runMigrations(MIGRATIONS_DIR, { now: () => FROZEN_NOW_MS });
     seedDeviceKey();
     const liveRuntime = runtime();
     const app = await buildApp({ pluginLifecycle: liveRuntime.lifecycle });
     const filename = "snapshot-20260927-101531-000.db";
-    buildBackupFixture(createBackupPath(filename), "migrated-prior", {
-      interruptedDeactivation: true,
-    });
+    buildBackupFixture(createBackupPath(filename), { interruptedDeactivation: true });
 
     try {
       const result = await restoreDatabase(
@@ -417,8 +331,8 @@ describe("plugin lifecycle compatibility matrix", () => {
       expect(result).toMatchObject({ status: "restored", migrated: false });
       expect(lineage()).toEqual({
         singletonId: 1,
-        kind: "prior_baseline",
-        preRunMigrationFiles: `["${BASELINE_FILE}"]`,
+        kind: "fresh",
+        preRunMigrationFiles: "[]",
         capturedAt: FROZEN_NOW,
       });
 
@@ -532,8 +446,8 @@ describe("plugin lifecycle compatibility matrix", () => {
   });
 
   it("interrupted-deactivation: startup drains to inactive before API traffic and keeps an active sibling", async () => {
-    preparePriorBaseline();
     runMigrations(MIGRATIONS_DIR, { now: () => FROZEN_NOW_MS });
+    getDb().exec("UPDATE plugin_activation_registry SET state = 'active'");
     seedDeviceKey();
     new SqlitePluginLifecycleStore(getDb()).begin(
       "printing",

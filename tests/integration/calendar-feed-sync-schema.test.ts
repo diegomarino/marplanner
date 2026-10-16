@@ -6,83 +6,26 @@ import { getDb, resetDb } from "../../src/server/db/client";
 import { runMigrations } from "../../src/server/db/migrate";
 import { ALL_SCHEMA_TABLES } from "../helpers/schema-tables";
 
-const BASELINE_MIGRATION = path.resolve(process.cwd(), "drizzle/0000_current_baseline.sql");
-const CALENDAR_MIGRATION = path.resolve(process.cwd(), "drizzle/0001_calendar_feed_sync.sql");
-
-describe("calendar feed synchronization migration", () => {
+describe("calendar feed synchronization schema", () => {
   let dataDir: string;
-  let migrationsDir: string;
   let previousDataDir: string | undefined;
 
   beforeEach(() => {
     dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "calendar-feed-sync-data-"));
-    migrationsDir = fs.mkdtempSync(path.join(os.tmpdir(), "calendar-feed-sync-sql-"));
     previousDataDir = process.env.DATA_DIR;
     process.env.DATA_DIR = dataDir;
     resetDb();
 
-    fs.copyFileSync(BASELINE_MIGRATION, path.join(migrationsDir, "0000_current_baseline.sql"));
-    runMigrations(migrationsDir);
+    runMigrations();
   });
 
   afterEach(() => {
     resetDb();
     process.env.DATA_DIR = previousDataDir;
     fs.rmSync(dataDir, { recursive: true, force: true });
-    fs.rmSync(migrationsDir, { recursive: true, force: true });
-  });
-
-  function migrateCalendarFeedSync(): void {
-    expect(fs.existsSync(CALENDAR_MIGRATION), "migration must exist").toBe(true);
-    fs.copyFileSync(CALENDAR_MIGRATION, path.join(migrationsDir, "0001_calendar_feed_sync.sql"));
-    runMigrations(migrationsDir);
-  }
-
-  it("migrates a current-baseline source forward and preserves its configured interval", () => {
-    const db = getDb();
-    db.prepare(
-      `INSERT INTO calendar_external_sources
-         (id, name, provider, feed_url, enabled, poll_interval_min, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-    ).run(
-      "source-legacy",
-      "Legacy source",
-      "ics_generic",
-      "https://example.test/feed",
-      1,
-      30,
-      1,
-      2
-    );
-
-    migrateCalendarFeedSync();
-
-    expect(
-      db.prepare("SELECT * FROM calendar_external_sources WHERE id = ?").get("source-legacy")
-    ).toEqual({
-      id: "source-legacy",
-      name: "Legacy source",
-      provider: "ics_generic",
-      feed_url: "https://example.test/feed",
-      enabled: 1,
-      poll_interval_min: 30,
-      etag: null,
-      last_modified: null,
-      content_hash: null,
-      last_attempt_at: null,
-      last_success_at: null,
-      last_error_code: null,
-      consecutive_failures: 0,
-      last_imported_count: 0,
-      last_skipped_count: 0,
-      created_at: 1,
-      updated_at: 2,
-    });
-    expect(db.pragma("foreign_key_check")).toEqual([]);
   });
 
   it("creates the complete STRICT table set with a bounded configurable interval", () => {
-    migrateCalendarFeedSync();
     const db = getDb();
 
     const tableList = db.pragma("table_list") as { name: string; strict: number }[];
@@ -154,7 +97,6 @@ describe("calendar feed synchronization migration", () => {
   });
 
   it("enforces external identity, status, foreign keys, and delete behavior", () => {
-    migrateCalendarFeedSync();
     const db = getDb();
 
     db.prepare(
@@ -204,7 +146,6 @@ describe("calendar feed synchronization migration", () => {
   });
 
   it("enforces valid highlight JSON, enabled state, and unique nonnegative priority", () => {
-    migrateCalendarFeedSync();
     const db = getDb();
     const insert = db.prepare(
       `INSERT INTO calendar_highlight_rules

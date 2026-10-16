@@ -14,27 +14,9 @@ import { useIsolatedDb } from "../helpers/db";
 
 const AS_OF_DATE = "2026-09-23";
 const NOW_MS = Date.parse("2026-09-23T12:00:00.000Z");
-const BASELINE_FILE = "0000_current_baseline.sql";
-const LIFECYCLE_FILE = "0002_plugin_lifecycle.sql";
+const BASELINE_FILE = "0000_baseline.sql";
 const BASELINE_PATH = path.resolve(process.cwd(), "drizzle", BASELINE_FILE);
-const LIFECYCLE_PATH = path.resolve(process.cwd(), "drizzle", LIFECYCLE_FILE);
-const CALENDAR_FEED_SYNC_MIGRATION_FILE = "0001_calendar_feed_sync.sql";
-const CALENDAR_FEED_SYNC_MIGRATION_PATH = path.resolve(
-  process.cwd(),
-  "drizzle",
-  CALENDAR_FEED_SYNC_MIGRATION_FILE
-);
-const CALENDAR_EVENT_DETAILS_FILE = "0003_calendar_event_details.sql";
-const MEMBER_PALETTE_FILE = "0004_member_palette.sql";
-const DAILY_BRIEFING_SCHEDULE_FILE = "0005_daily_briefing_schedule.sql";
-const CURRENT_MIGRATION_FILES = [
-  BASELINE_FILE,
-  CALENDAR_FEED_SYNC_MIGRATION_FILE,
-  LIFECYCLE_FILE,
-  CALENDAR_EVENT_DETAILS_FILE,
-  MEMBER_PALETTE_FILE,
-  DAILY_BRIEFING_SCHEDULE_FILE,
-];
+const CURRENT_MIGRATION_FILES = [BASELINE_FILE];
 
 type Member = { id: string; displayName: string; lifecycle: string };
 type BackupSnapshot = { ok: true; filename: string } | { ok: false; error: string };
@@ -169,24 +151,7 @@ function appliedMigrationFiles(): string[] {
 function makeMigrationsDirectory(laterMigrationSql: string): string {
   const directory = mkdtempSync(path.join(tmpdir(), "mp-recovery-journey-"));
   fs.copyFileSync(BASELINE_PATH, path.join(directory, BASELINE_FILE));
-  fs.copyFileSync(LIFECYCLE_PATH, path.join(directory, LIFECYCLE_FILE));
-  fs.copyFileSync(
-    CALENDAR_FEED_SYNC_MIGRATION_PATH,
-    path.join(directory, CALENDAR_FEED_SYNC_MIGRATION_FILE)
-  );
-  fs.copyFileSync(
-    path.resolve(process.cwd(), "drizzle", CALENDAR_EVENT_DETAILS_FILE),
-    path.join(directory, CALENDAR_EVENT_DETAILS_FILE)
-  );
-  fs.copyFileSync(
-    path.resolve(process.cwd(), "drizzle", MEMBER_PALETTE_FILE),
-    path.join(directory, MEMBER_PALETTE_FILE)
-  );
-  fs.copyFileSync(
-    path.resolve(process.cwd(), "drizzle", DAILY_BRIEFING_SCHEDULE_FILE),
-    path.join(directory, DAILY_BRIEFING_SCHEDULE_FILE)
-  );
-  fs.writeFileSync(path.join(directory, "0006_recovery_journey_probe.sql"), laterMigrationSql);
+  fs.writeFileSync(path.join(directory, "0001_recovery_journey_probe.sql"), laterMigrationSql);
   return directory;
 }
 
