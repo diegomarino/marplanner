@@ -747,6 +747,66 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     expect(callsTo("/api/daily-briefing/settings")).toHaveLength(1);
   });
 
+  it("drops a stored result that lands after the last opted-in member is turned off", async () => {
+    let releaseRead: (() => void) | undefined;
+    mockBackend({
+      optIns: ["member-ada"],
+      handle: (url, init) => {
+        if (url === "/api/daily-briefing/opt-in/member-ada" && init?.method === "PUT") {
+          return jsonResponse({ memberId: "member-ada", enabled: false });
+        }
+        const read = /^\/api\/daily-briefing\/member-ada\/(\d{4}-\d{2}-\d{2})$/.exec(url);
+        if (!read) return undefined;
+        return new Promise<Response>((resolve) => {
+          releaseRead = () =>
+            resolve(
+              jsonResponse({
+                generated: true,
+                briefing: { memberId: "member-ada", date: read[1], status: "partial" },
+                printedStatus: "none",
+              })
+            );
+        });
+      },
+    });
+    render(
+      <LanguageProvider>
+        <HouseholdSettingsProvider>
+          <DailyBriefingManagement />
+        </HouseholdSettingsProvider>
+      </LanguageProvider>
+    );
+    await waitFor(() => expect(releaseRead).toBeDefined());
+    fireEvent.click(screen.getByTestId("daily-briefing-opt-in-member-ada"));
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-opt-in-member-ada")).not.toBeChecked()
+    );
+    releaseRead?.();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.getByTestId("daily-briefing-member-status-member-ada")).toHaveTextContent("—");
+  });
+
+  it("keeps Generate blocked for another member while a generation is still running", async () => {
+    mockBackend({
+      optIns: ["member-ada", "member-ben"],
+      handle: (url, init) =>
+        url === "/api/daily-briefing/generate" && init?.method === "POST"
+          ? new Promise<Response>(() => {})
+          : undefined,
+    });
+    renderManagement();
+    fireEvent.click(await screen.findByTestId("daily-briefing-tab-preview"));
+    const generate = await screen.findByTestId("daily-briefing-generate");
+    await waitFor(() => expect(generate).toBeEnabled());
+    fireEvent.click(generate);
+    await waitFor(() => expect(screen.getByTestId("daily-briefing-generate")).toBeDisabled());
+    fireEvent.click(screen.getByTestId("daily-briefing-member-pill-member-ben"));
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-member-pill-member-ben")).toBeChecked()
+    );
+    expect(screen.getByTestId("daily-briefing-generate")).toBeDisabled();
+  });
+
   it("titles the page with its sidebar label", async () => {
     mockBackend();
     renderManagement();
