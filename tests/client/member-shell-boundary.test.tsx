@@ -113,9 +113,9 @@ describe("B1 shell boundary", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<Shell />);
     expect(await screen.findByTestId("home-surface")).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Options" }));
     expect(screen.queryByTestId("density-control-toggle")).not.toBeInTheDocument();
-    const affordance = screen.getByTestId("admin-affordance");
+    const affordance = screen.getByRole("button", { name: "Options" });
+    expect(affordance).toHaveAttribute("data-testid", "admin-affordance");
     fireEvent.pointerDown(affordance, { button: 1, pointerId: 1 });
     expect(affordance).toHaveAttribute("data-hold-state", "idle");
     fireEvent.pointerDown(affordance, { button: 0, pointerId: 1 });

@@ -409,9 +409,9 @@ export const messages = {
     "dailyBriefing.admin.tabBriefings": "Briefings",
     "dailyBriefing.admin.memberLabel": "Member",
     "dailyBriefing.admin.offMarker": "off",
-    "dailyBriefing.admin.optedOutNotice":
-      "The daily briefing is off for {name}. Turn it on to choose blocks, generate briefings or see past ones.",
-    "dailyBriefing.admin.turnOn": "Turn on daily briefing",
+    "dailyBriefing.admin.noneOptedIn":
+      "The daily briefing is off for everyone. Turn it on for a member in Schedule.",
+    "dailyBriefing.admin.openSchedule": "Open Schedule",
     "dailyBriefing.admin.automationTitle": "Automatic generation and printing",
     "dailyBriefing.admin.automationHint":
       "Every day at this time a briefing is generated for each member who has it on, except on their paused days.",
@@ -657,6 +657,7 @@ export const messages = {
     "calendar.previousPeriod": "Previous period",
     "calendar.nextPeriod": "Next period",
     "calendar.filters": "Calendar filters",
+    "calendar.memberFilter": "Members",
     "calendar.allDayFilter": "All-day events",
     "calendar.close": "Close",
     "calendar.participants": "Who is it for",
@@ -1922,9 +1923,9 @@ export const messages = {
     "dailyBriefing.admin.tabBriefings": "Resúmenes",
     "dailyBriefing.admin.memberLabel": "Miembro",
     "dailyBriefing.admin.offMarker": "desactivado",
-    "dailyBriefing.admin.optedOutNotice":
-      "El resumen diario está desactivado para {name}. Actívalo para elegir bloques, generar resúmenes o ver los anteriores.",
-    "dailyBriefing.admin.turnOn": "Activar el resumen diario",
+    "dailyBriefing.admin.noneOptedIn":
+      "El resumen diario está desactivado para todos. Actívalo para un miembro en Programación.",
+    "dailyBriefing.admin.openSchedule": "Abrir Programación",
     "dailyBriefing.admin.automationTitle": "Generación e impresión automáticas",
     "dailyBriefing.admin.automationHint":
       "Cada día a esta hora se genera el resumen de cada miembro que lo tiene activado, salvo en sus días en pausa.",
@@ -2178,6 +2179,7 @@ export const messages = {
     "calendar.previousPeriod": "Período anterior",
     "calendar.nextPeriod": "Período siguiente",
     "calendar.filters": "Filtros del calendario",
+    "calendar.memberFilter": "Miembros",
     "calendar.allDayFilter": "Eventos de día completo",
     "calendar.close": "Cerrar",
     "calendar.participants": "Para quién es",

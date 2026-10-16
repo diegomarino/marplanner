@@ -37,6 +37,18 @@ describe("AdminGate touch PIN keypad", () => {
     expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●●●●");
   });
 
+  it("draws Backspace on the same circular key surface as the digits", () => {
+    vi.stubGlobal("fetch", vi.fn());
+    renderGate();
+
+    const digit = screen.getByTestId("admin-pin-digit-1");
+    const backspace = screen.getByRole("button", { name: "Backspace" });
+    expect(backspace).toHaveAttribute("data-testid", "admin-pin-backspace");
+    // Same variant, size, border and shape: every class of a digit key except the digit's weight.
+    const surface = [...digit.classList].filter((name) => name !== "font-semibold");
+    expect(backspace).toHaveClass(...surface);
+  });
+
   it("accepts hardware keyboard digits, Backspace, and Enter to submit", async () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ match: false }));
     vi.stubGlobal("fetch", fetchMock);

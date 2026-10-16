@@ -21,18 +21,6 @@ describe("PillToggle", () => {
     expect(onChange).toHaveBeenCalledWith(true);
   });
 
-  it("wears the caller's selected style only while selected", () => {
-    const selectedStyle = { backgroundColor: "var(--color-member-blue-500)" };
-    const { rerender } = render(
-      <PillToggle checked={false} onChange={vi.fn()} label="Alice" selectedStyle={selectedStyle} />
-    );
-    const pill = () => screen.getByRole("checkbox", { name: "Alice" }).closest("label");
-    expect(pill()).not.toHaveAttribute("style");
-
-    rerender(<PillToggle checked onChange={vi.fn()} label="Alice" selectedStyle={selectedStyle} />);
-    expect(pill()?.getAttribute("style")).toContain("--color-member-blue-500");
-  });
-
   it("does not report a change while disabled", () => {
     const onChange = vi.fn();
     render(<PillToggle checked={false} onChange={onChange} label="Dinner" disabled />);

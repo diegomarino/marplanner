@@ -1,6 +1,7 @@
 import { appUrl } from "@/lib/base-path";
 import { isAdminPinBypassEnabled, useAdminUnlock } from "@/lib/adminUnlock";
 import {
+  Fragment,
   useCallback,
   useEffect,
   useId,
@@ -8,6 +9,7 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 
@@ -35,18 +37,34 @@ function isUnmodifiedPrimaryClick(event: ReactMouseEvent<HTMLAnchorElement>): bo
   );
 }
 
+/** An Options entry after Admin, e.g. a future "Print today's briefing". */
+export interface OptionsEntry {
+  id: string;
+  render: () => ReactNode;
+}
+
+const NO_EXTRA_OPTIONS: readonly OptionsEntry[] = [];
+
 /** Persistent presentation only; domain state and global services belong to their owners. */
 export function HouseholdChrome({
   children,
   currentPath,
   showWeather,
+  extraOptions = NO_EXTRA_OPTIONS,
 }: {
   children: ReactNode;
   currentPath: string;
   showWeather: boolean;
+  /** Entries shown after Admin. With none, the Options button is the Admin affordance itself
+   * instead of a one-item menu. */
+  extraOptions?: readonly OptionsEntry[];
 }) {
   return (
-    <HouseholdChromeContent currentPath={currentPath} showWeather={showWeather}>
+    <HouseholdChromeContent
+      currentPath={currentPath}
+      showWeather={showWeather}
+      extraOptions={extraOptions}
+    >
       {children}
     </HouseholdChromeContent>
   );
@@ -56,10 +74,12 @@ function HouseholdChromeContent({
   children,
   currentPath,
   showWeather,
+  extraOptions,
 }: {
   children: ReactNode;
   currentPath: string;
   showWeather: boolean;
+  extraOptions: readonly OptionsEntry[];
 }) {
   const t = useT();
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -125,6 +145,61 @@ function HouseholdChromeContent({
     },
     [cancelAdminHold]
   );
+
+  // The long-press Admin entry: the Options button itself while Admin is the only entry,
+  // otherwise the first item of the Options menu. Same hold, same testid either way.
+  const adminAffordanceProps = {
+    "data-testid": "admin-affordance",
+    "data-hold-state": adminHolding ? "holding" : "idle",
+    onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (event.button !== 0) return;
+      keyboardHoldingRef.current = false;
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch {
+        // Pointer capture is unavailable in jsdom and can be rejected by a
+        // browser for an already-cancelled pointer. The timer remains usable.
+      }
+      startAdminHold();
+    },
+    onPointerUp: cancelAdminHold,
+    onPointerCancel: cancelAdminHold,
+    onLostPointerCapture: cancelAdminHold,
+    onKeyDown: (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+      if (event.repeat || (event.key !== "Enter" && event.key !== " ")) return;
+      event.preventDefault();
+      keyboardHoldingRef.current = true;
+      startAdminHold();
+    },
+    onKeyUp: (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      cancelAdminHold();
+      keyboardReleaseTimerRef.current = setTimeout(() => {
+        keyboardHoldingRef.current = false;
+        keyboardReleaseTimerRef.current = null;
+      }, 0);
+    },
+    onBlur: () => {
+      keyboardHoldingRef.current = false;
+      cancelAdminHold();
+    },
+    onClick: (event: ReactMouseEvent<HTMLButtonElement>) => {
+      if (event.detail !== 0 || keyboardHoldingRef.current) return;
+      openAdmin();
+    },
+  };
+  const adminHoldProgress = (
+    <span
+      aria-hidden="true"
+      data-testid="admin-hold-progress"
+      data-progress-state={adminHolding ? "filling" : "idle"}
+      className={`bg-primary/25 absolute inset-x-0 bottom-0 h-1 origin-left transition-transform duration-[3000ms] ease-linear ${
+        adminHolding ? "scale-x-100" : "scale-x-0"
+      }`}
+    />
+  );
+  const adminIsOnlyOption = extraOptions.length === 0;
 
   useEffect(() => {
     if (!optionsOpen) return;
@@ -217,19 +292,32 @@ function HouseholdChromeContent({
             <PluginHealthIndicator />
             {!adminMode && (
               <div className="relative">
-                <Button
-                  ref={optionsTriggerRef}
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground"
-                  aria-expanded={optionsOpen}
-                  aria-controls={optionsId}
-                  onClick={() => setOptionsOpen((open) => !open)}
-                >
-                  {t("shell.options.label")}
-                </Button>
-                {optionsOpen && (
+                {adminIsOnlyOption ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground relative isolate overflow-hidden"
+                    {...adminAffordanceProps}
+                  >
+                    <span className="relative z-10">{t("shell.options.label")}</span>
+                    {adminHoldProgress}
+                  </Button>
+                ) : (
+                  <Button
+                    ref={optionsTriggerRef}
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground"
+                    aria-expanded={optionsOpen}
+                    aria-controls={optionsId}
+                    onClick={() => setOptionsOpen((open) => !open)}
+                  >
+                    {t("shell.options.label")}
+                  </Button>
+                )}
+                {!adminIsOnlyOption && optionsOpen && (
                   <div
                     id={optionsId}
                     role="group"
@@ -248,56 +336,14 @@ function HouseholdChromeContent({
                       type="button"
                       variant="outline"
                       className="relative isolate overflow-hidden"
-                      data-testid="admin-affordance"
-                      data-hold-state={adminHolding ? "holding" : "idle"}
-                      onPointerDown={(event) => {
-                        if (event.button !== 0) return;
-                        keyboardHoldingRef.current = false;
-                        try {
-                          event.currentTarget.setPointerCapture(event.pointerId);
-                        } catch {
-                          // Pointer capture is unavailable in jsdom and can be rejected by a
-                          // browser for an already-cancelled pointer. The timer remains usable.
-                        }
-                        startAdminHold();
-                      }}
-                      onPointerUp={cancelAdminHold}
-                      onPointerCancel={cancelAdminHold}
-                      onLostPointerCapture={cancelAdminHold}
-                      onKeyDown={(event: ReactKeyboardEvent<HTMLButtonElement>) => {
-                        if (event.repeat || (event.key !== "Enter" && event.key !== " ")) return;
-                        event.preventDefault();
-                        keyboardHoldingRef.current = true;
-                        startAdminHold();
-                      }}
-                      onKeyUp={(event) => {
-                        if (event.key !== "Enter" && event.key !== " ") return;
-                        event.preventDefault();
-                        cancelAdminHold();
-                        keyboardReleaseTimerRef.current = setTimeout(() => {
-                          keyboardHoldingRef.current = false;
-                          keyboardReleaseTimerRef.current = null;
-                        }, 0);
-                      }}
-                      onBlur={() => {
-                        keyboardHoldingRef.current = false;
-                        cancelAdminHold();
-                      }}
-                      onClick={(event) => {
-                        if (event.detail !== 0 || keyboardHoldingRef.current) return;
-                        openAdmin();
-                      }}
+                      {...adminAffordanceProps}
                     >
                       <span className="relative z-10">{t("shell.options.admin")}</span>
-                      <span
-                        aria-hidden="true"
-                        data-testid="admin-hold-progress"
-                        data-progress-state={adminHolding ? "filling" : "idle"}
-                        className={`bg-primary/25 absolute inset-x-0 bottom-0 h-1 origin-left transition-transform duration-[3000ms] ease-linear ${
-                          adminHolding ? "scale-x-100" : "scale-x-0"
-                        }`}
-                      />
+                      {adminHoldProgress}
                     </Button>
+                    {extraOptions.map((entry) => (
+                      <Fragment key={entry.id}>{entry.render()}</Fragment>
+                    ))}
                   </div>
                 )}
               </div>

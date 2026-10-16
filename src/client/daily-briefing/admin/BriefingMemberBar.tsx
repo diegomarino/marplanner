@@ -3,52 +3,51 @@ import { Button } from "@/components/ui/button";
 import { MemberPills } from "@/components/MemberPills";
 import type { MemberDTO } from "../../../shared";
 
-/** One member choice for Blocks and Briefings (spec D5) plus the opted-out gate notice (D9). */
+/** One member choice for Blocks and Briefings (spec D5). An opted-out member is an off pill that
+ * cannot be picked (opt-in lives in the Schedule tab's members table); with nobody opted in, one
+ * line points to Schedule instead. */
 export function BriefingMemberBar({
   members,
   optIns,
   selectedId,
   onSelect,
-  turnOnPending,
-  onTurnOn,
+  onOpenSchedule,
 }: {
   members: MemberDTO[];
   optIns: Record<string, boolean>;
   selectedId: string;
   onSelect: (memberId: string) => void;
-  /** That member's opt-in write is pending, or opt-ins are locked (a generate is running). */
-  turnOnPending: boolean;
-  onTurnOn: (memberId: string) => void;
+  onOpenSchedule: () => void;
 }) {
   const t = useT();
-  const selected = members.find((member) => member.id === selectedId);
   const off = t("dailyBriefing.admin.offMarker");
+  const anyOn = members.some((member) => optIns[member.id]);
   return (
     <div className="flex flex-col gap-4">
       <MemberPills
         mode="single"
         members={members.map((member) => ({
           ...member,
-          inactiveLabel: optIns[member.id] ? undefined : off,
+          offLabel: optIns[member.id] ? undefined : off,
         }))}
         value={selectedId || null}
         onChange={onSelect}
         groupLabel={t("dailyBriefing.admin.memberLabel")}
         testIdPrefix="daily-briefing-member-pill"
       />
-      {selected && !optIns[selected.id] && (
+      {!anyOn && (
         <div
           className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted px-4 py-3 text-control"
-          data-testid="daily-briefing-opted-out"
+          data-testid="daily-briefing-none-opted-in"
         >
-          <p>{t("dailyBriefing.admin.optedOutNotice").replace("{name}", selected.displayName)}</p>
+          <p>{t("dailyBriefing.admin.noneOptedIn")}</p>
           <Button
             type="button"
-            data-testid="daily-briefing-turn-on"
-            disabled={turnOnPending}
-            onClick={() => onTurnOn(selected.id)}
+            variant="outline"
+            data-testid="daily-briefing-open-schedule"
+            onClick={onOpenSchedule}
           >
-            {t("dailyBriefing.admin.turnOn")}
+            {t("dailyBriefing.admin.openSchedule")}
           </Button>
         </div>
       )}

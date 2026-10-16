@@ -177,6 +177,22 @@ describe("CalendarView — provisioned Calendar authoring", () => {
     expect(screen.queryByRole("checkbox", { name: "Bob" })).not.toBeInTheDocument();
   });
 
+  it("draws member filters as member pills while All-day keeps the accent pill", async () => {
+    mockBackend();
+    renderSurface();
+
+    const allDay = await screen.findByRole("checkbox", { name: "All-day events" });
+    const group = screen.getByRole("group", { name: "Members" });
+    const alice = within(group).getByRole("checkbox", { name: "Alice" });
+    fireEvent.click(alice);
+    expect(alice).toBeChecked();
+    const pill = alice.closest("label");
+    expect(pill?.getAttribute("style")).toContain("--color-member-");
+    expect(pill).toHaveClass("has-[:checked]:bg-[var(--member-color)]");
+    expect(pill).not.toHaveClass("has-[:checked]:bg-accent");
+    expect(allDay.closest("label")).toHaveClass("has-[:checked]:bg-accent");
+  });
+
   it("restores ephemeral filter defaults after the component remounts", async () => {
     mockBackend();
     const first = renderSurface();
@@ -317,7 +333,9 @@ describe("CalendarView — provisioned Calendar authoring", () => {
     expect(screen.getByTestId("calendar-delete-btn")).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("calendar-edit-btn"));
-    await screen.findByTestId(`calendar-assign-member-${MEMBERS[0].id}`);
+    const assign = await screen.findByTestId(`calendar-assign-member-${MEMBERS[0].id}`);
+    // Participant pickers are member pills: the member's solid colour, not the old light tint.
+    expect(assign.closest("label")).toHaveClass("has-[:checked]:bg-[var(--member-color)]");
   });
 });
 
@@ -857,10 +875,10 @@ describe("CalendarView — the assignment row is a real, keyboard-operable contr
     // Reachable by Tab: a native `<input type="checkbox">` is focusable by default (no
     // `tabIndex={-1}`, not `disabled`) and is NOT wrapped in a non-semantic `<li onClick>` — the
     // census's OTHER offender (row 23, `CalendarView.tsx:628`). Proven directly: the parent `<li>`
-    // carries no `onclick` property at all.
-    const listItem = checkbox.closest("li");
+    // carries no `onclick` property at all. The row is now the `MemberPills` group.
+    const listItem = checkbox.closest("[role='group']");
     expect(listItem).not.toBeNull();
-    expect((listItem as HTMLLIElement).onclick).toBeNull();
+    expect((listItem as HTMLElement).onclick).toBeNull();
 
     checkbox.focus();
     expect(document.activeElement).toBe(checkbox);
@@ -882,7 +900,7 @@ describe("CalendarView — the assignment row is a real, keyboard-operable contr
     // (this comment previously described an assertion that did
     // not exist — the next line clicked the checkbox again, not the container. Real,
     // browser-verified claim, now actually asserted below.)
-    fireEvent.click(listItem as HTMLLIElement);
+    fireEvent.click(listItem as HTMLElement);
     expect(checkbox).toBeChecked(); // unchanged by the inert container click
 
     // Toggling once more via the real control proves the checkbox itself still owns activation.
@@ -906,7 +924,7 @@ describe("CalendarView — the assignment row is a real, keyboard-operable contr
 
       const checkbox = screen.getByTestId(`calendar-assign-member-${MEMBERS[0].id}`);
       expect(() =>
-        assertKioskDensityCompliant(checkbox.closest("li") as HTMLElement)
+        assertKioskDensityCompliant(checkbox.closest("[role='group']") as HTMLElement)
       ).not.toThrow();
     } finally {
       uninject();

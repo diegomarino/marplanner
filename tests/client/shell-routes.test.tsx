@@ -255,7 +255,6 @@ describe("household shell routes", () => {
       render(<Shell />);
       await waitForPluginCatalog();
       expect(await screen.findByTestId("admin-pin-keypad")).toBeInTheDocument();
-      expect(screen.queryByTestId("admin-affordance")).not.toBeInTheDocument();
       expect(window.location.pathname).toBe(path);
       expect(screen.queryByTestId("admin-panel-scope")).not.toBeInTheDocument();
       expect(screen.queryByTestId("printing-management")).not.toBeInTheDocument();
@@ -270,7 +269,7 @@ describe("household shell routes", () => {
       render(<Shell />);
 
       await waitForPluginCatalog();
-      expect(screen.queryByTestId("admin-affordance")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("admin-pin-keypad")).not.toBeInTheDocument();
       expect(screen.queryByTestId("admin-panel-scope")).not.toBeInTheDocument();
     }
   );

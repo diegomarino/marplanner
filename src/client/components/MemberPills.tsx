@@ -1,17 +1,29 @@
-import { useId } from "react";
+import { useId, type CSSProperties } from "react";
 
-import { memberFilterStyle } from "@/calendar/member-event-style";
 import { cn } from "@/lib/utils";
 import type { MemberColorKey } from "../../shared";
 import { PillControl } from "./PillControl";
 
 /** L2 composed component (wiring and accessibility).
  * Pick one member (`mode="single"`, a native radio group) or several (multi, the default, native
- * checkboxes). Each pill carries the member's colour dot and, once selected, the member's tint —
- * the same `memberFilterStyle` the calendar member filters use. A disabled member stays visible;
- * an inactive one is drawn dashed with its caller-supplied marker after the name, so colour is
- * never the only signal and screen readers hear the marker.
+ * checkboxes). An unselected pill is muted grey; a selected one is filled with the member's own
+ * colour and white semibold text, and every label reserves its bold width so selecting never
+ * shifts its neighbours. A disabled member stays visible. An off member (one that cannot be picked
+ * here) keeps the pill shape with a plain border on the page ground, its caller-supplied marker
+ * after the name (part of the accessible name, so colour is never the only signal), a disabled
+ * input, and is never returned by `onChange`.
  */
+
+/** Unselected: muted ground. Selected: the member's solid colour (`--member-color`, set per pill)
+ * with the avatar foreground. The border is always present and transparent so both states match
+ * the off pill's box. */
+const MEMBER_PILL_CLASS =
+  "border-transparent bg-muted text-muted-foreground has-[:checked]:bg-[var(--member-color)] has-[:checked]:text-member-avatar-foreground has-[:checked]:font-semibold";
+
+/** Off: the page shows through a plain border; no hover, no dimming (it is not "disabled" chrome,
+ * it is a member who is simply not available here). */
+const MEMBER_PILL_OFF_CLASS =
+  "border-border bg-transparent font-normal opacity-100 not-has-[:checked]:hover:bg-transparent not-has-[:checked]:hover:text-muted-foreground";
 
 /** Static class map so Tailwind sees every class (the `TodayAgenda.tsx` precedent). */
 export const MEMBER_DOT_CLASS: Record<MemberColorKey, string> = {
@@ -32,9 +44,9 @@ export interface MemberPillsMember {
   displayName: string;
   colorKey: MemberColorKey;
   disabled?: boolean;
-  /** Localized marker such as "inactive"; when set the pill is drawn inactive and the marker
-   * follows the name (and is part of its accessible name). */
-  inactiveLabel?: string;
+  /** Localized marker such as "off"; when set the member cannot be picked here: the pill is drawn
+   * off, its input is disabled, and the marker follows the name (part of its accessible name). */
+  offLabel?: string;
 }
 
 interface MemberPillsCommonProps {
@@ -79,21 +91,19 @@ export function MemberPills(props: MemberPillsProps) {
       type={type}
       name={type === "radio" ? name : undefined}
       value={member.id}
-      checked={checked}
-      onChange={onPillChange}
+      // An off member is never shown as chosen, even if the caller's value still names it.
+      checked={checked && member.offLabel === undefined}
+      onChange={() => {
+        if (member.offLabel === undefined) onPillChange();
+      }}
       label={member.displayName}
-      note={member.inactiveLabel}
-      adornment={
-        <span
-          className={cn(
-            "block size-3 rounded-full border border-background",
-            MEMBER_DOT_CLASS[member.colorKey]
-          )}
-        />
+      note={member.offLabel}
+      reserveBoldLabel
+      tokenStyle={
+        { "--member-color": `var(--color-member-${member.colorKey}-500)` } as CSSProperties
       }
-      selectedStyle={memberFilterStyle(member.colorKey)}
-      disabled={disabled || member.disabled}
-      className={member.inactiveLabel ? "border-dashed" : undefined}
+      disabled={disabled || member.disabled || member.offLabel !== undefined}
+      className={cn(MEMBER_PILL_CLASS, member.offLabel !== undefined && MEMBER_PILL_OFF_CLASS)}
       data-testid={testIdPrefix ? `${testIdPrefix}-${member.id}` : undefined}
     />
   );
@@ -123,7 +133,10 @@ export function MemberPills(props: MemberPillsProps) {
     }
     const shown = new Set(members.map((member) => member.id));
     onChange([
-      ...members.filter((member) => next.has(member.id)).map((member) => member.id),
+      // An off member is never returned, even if the caller passed it in `value`.
+      ...members
+        .filter((member) => next.has(member.id) && member.offLabel === undefined)
+        .map((member) => member.id),
       // Never drop a selected member the caller chose not to show (e.g. an archived one).
       ...[...next].filter((id) => !shown.has(id)),
     ]);

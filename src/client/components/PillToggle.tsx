@@ -1,5 +1,3 @@
-import type { CSSProperties } from "react";
-
 import { PillControl } from "./PillControl";
 
 /** L2 composed component (wiring and accessibility).
@@ -14,10 +12,6 @@ export interface PillToggleProps {
   onChange: (checked: boolean) => void;
   /** Localized label text (call-site-owned). */
   label: string;
-  /** Replaces the accent fill while selected — a member's own colour, for instance. Pass only
-   * semantic colour tokens.
-   */
-  selectedStyle?: CSSProperties;
   disabled?: boolean;
   className?: string;
   "data-testid"?: string;
@@ -27,7 +21,6 @@ export function PillToggle({
   checked,
   onChange,
   label,
-  selectedStyle,
   disabled,
   className,
   "data-testid": testId,
@@ -38,7 +31,6 @@ export function PillToggle({
       checked={checked}
       onChange={onChange}
       label={label}
-      selectedStyle={selectedStyle}
       disabled={disabled}
       className={className}
       data-testid={testId}

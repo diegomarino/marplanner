@@ -115,9 +115,7 @@ export function DailyBriefingManagement() {
       const nextOptIns = Object.fromEntries(states.map((s) => [s.memberId, s.enabled]));
       setMembers(active);
       setOptIns(nextOptIns);
-      setSelectedId(
-        (current) => current || (active.find((m) => nextOptIns[m.id]) ?? active[0])?.id || ""
-      );
+      setSelectedId((current) => current || active.find((m) => nextOptIns[m.id])?.id || "");
     } catch {
       setError(t("dailyBriefing.management.loadError"));
       setMembersLoadFailed(true);
@@ -412,12 +410,14 @@ export function DailyBriefingManagement() {
     setBlocksError(null);
   }
 
-  // Keep the selection valid if the selected member disappears (archived elsewhere + Retry).
+  // Only an opted-in member can be selected: if the selected one disappears (archived elsewhere +
+  // Retry) or is opted out, fall back to the first opted-in member, or to none.
   useEffect(() => {
-    if (!loading && selectedId && !members.some((m) => m.id === selectedId)) {
-      setSelectedId(members[0]?.id ?? "");
-    }
-  }, [loading, members, selectedId]);
+    if (loading) return;
+    if (selectedId && optIns[selectedId] && members.some((m) => m.id === selectedId)) return;
+    const next = members.find((m) => optIns[m.id])?.id ?? "";
+    if (next !== selectedId) selectMember(next);
+  }, [loading, members, optIns, selectedId]);
 
   if (loading && members.length === 0 && !membersLoadFailed) {
     return (
@@ -523,10 +523,7 @@ export function DailyBriefingManagement() {
             optIns={optIns}
             selectedId={selectedId}
             onSelect={selectMember}
-            turnOnPending={
-              generatingAll || workspaceBusy || (selected ? pendingOptIns.has(selected.id) : false)
-            }
-            onTurnOn={(id) => void setOptIn(id, true)}
+            onOpenSchedule={() => setTab("schedule")}
           />
         )}
 

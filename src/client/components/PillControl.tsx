@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -17,10 +17,11 @@ export interface PillControlProps {
   label: string;
   /** Visible muted text after the label, e.g. "inactive". Part of the accessible name. */
   note?: string;
-  /** Decorative node before the label (hidden from assistive tech), e.g. a colour dot. */
-  adornment?: ReactNode;
-  /** Replaces the accent fill while selected. Pass only semantic colour tokens. */
-  selectedStyle?: CSSProperties;
+  /** Custom properties the caller's classes read (e.g. `--member-color`). Semantic tokens only. */
+  tokenStyle?: CSSProperties;
+  /** Reserve the semibold label's width so a caller that bolds the checked state never shifts
+   * the pills beside it: an invisible, zero-height bold copy of the label sizes the same grid. */
+  reserveBoldLabel?: boolean;
   /** Native radio group name. */
   name?: string;
   value?: string;
@@ -36,8 +37,8 @@ export function PillControl({
   onChange,
   label,
   note,
-  adornment,
-  selectedStyle,
+  tokenStyle,
+  reserveBoldLabel,
   name,
   value,
   disabled,
@@ -46,8 +47,8 @@ export function PillControl({
 }: PillControlProps) {
   return (
     <label
-      // eslint-disable-next-line ui-policy/debt -- Forwards the caller's semantic colour tokens for the selected state.
-      style={checked ? selectedStyle : undefined}
+      // eslint-disable-next-line ui-policy/debt -- Forwards the caller's semantic colour token custom properties.
+      style={tokenStyle}
       className={cn(
         "border-input bg-background text-muted-foreground text-control relative inline-flex h-[var(--control-height)] cursor-pointer items-center rounded-lg border px-4 font-medium",
         "not-has-[:checked]:hover:bg-primary/10 not-has-[:checked]:hover:text-foreground",
@@ -68,12 +69,16 @@ export function PillControl({
         onChange={(event) => onChange(event.target.checked)}
         className="absolute inset-0 h-[var(--control-height)] w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
       />
-      {adornment ? (
-        <span aria-hidden="true" className="mr-2 inline-flex shrink-0">
-          {adornment}
+      {reserveBoldLabel ? (
+        <span
+          data-text={label}
+          className="inline-grid after:invisible after:h-0 after:overflow-hidden after:font-semibold after:content-[attr(data-text)]"
+        >
+          {label}
         </span>
-      ) : null}
-      {label}
+      ) : (
+        label
+      )}
       {note ? (
         <>
           {" "}

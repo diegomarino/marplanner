@@ -3,12 +3,15 @@
 ## Family shell
 
 Every provisioned family route renders persistent chrome with visible Home, Calendar, Tasks, and
-Meals controls. The active destination is semantic. Options contains exactly Large controls and
-Admin; printer pairing is not a menu item. `/daily-briefing` and unknown family paths render a
-localized not-found outcome, never Home by substitution.
+Meals controls. The active destination is semantic. Options holds Admin only; printer pairing is
+not a menu item. While Admin is its only entry, the Options button is the Admin affordance itself
+(same long-press hold, same `admin-affordance` testid) rather than a one-item menu; a second entry
+turns it back into a disclosure menu with Admin first. `/daily-briefing` and unknown family paths
+render a localized not-found outcome, never Home by substitution.
 
-Activating Admin from Options uses the same-document navigation seam and closes the Options menu as
-the route changes, preserving page-lifetime services without leaving an overlay above admin content.
+Activating Admin from Options uses the same-document navigation seam and closes the Options menu (when
+there is one) as the route changes, preserving page-lifetime services without leaving an overlay
+above admin content.
 
 Weather retains its absence policy and forecast dialog. The adjacent device clock exists only when
 weather exists and the browser reports fullscreen-like presentation. Its accessible name identifies
@@ -81,7 +84,7 @@ The ordered capability table is:
 6. `/admin/daily-messages` — daily messages
 7. `/admin/daily-briefing` — Briefing: three tabs (local state, no sub-paths).
    - Schedule (default): automatic generation time and auto-print after morning chores (Save enabled when changed); Generate briefings for a chosen date (Generate for all members); a Members table with the per-member opt-in (its only home), the briefing days summary, the result for the chosen date and Blocks/Briefings shortcuts.
-   - Blocks and Briefings share one member pill bar (opted-out members marked "off", gated with a Turn on notice).
+   - Blocks and Briefings share one member pill bar: opted-out members are "off" pills that cannot be picked (opt-in lives only in the Schedule members table); opting the selected member out selects the first opted-in member, and with nobody opted in one line points to Schedule with a button that opens it.
    - Blocks: per-member blocks × weekdays matrix in household week-start order, with a "Briefing runs" pause row, inline block parameters and drag/keyboard reorder of the household block order; "settings changed" notice links to Briefings.
    - Briefings: 30-day history, date, Generate/Regenerate, View PNG, Print to the queue, payload and image states; the paused notice links to Blocks.
 8. `/admin/telemetry` — client telemetry
