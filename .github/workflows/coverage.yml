@@ -70,7 +70,7 @@ jobs:
           tar --format=pax -czf "$RUNNER_TEMP/standard-evidence.tar.gz" "${paths[@]}"
       - name: Retain raw discovery, results and V8 coverage
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: standard-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/standard-evidence.tar.gz
@@ -125,7 +125,7 @@ jobs:
           echo "MP_CANDIDATE_ID=$MP_CANDIDATE_ID" >> "$GITHUB_ENV"
       - run: npx playwright install --with-deps --only-shell chromium
       - name: Download standard evidence from this workflow run
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: standard-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/standard-evidence
@@ -134,7 +134,7 @@ jobs:
       - run: npm run check:aggregate-only
       - name: Retain raw discovery, results, V8 coverage and browser report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: native-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           include-hidden-files: true
@@ -200,7 +200,7 @@ jobs:
         run: npm run check:container -- --image marplanner:review
       - name: Retain container acceptance evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: container-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           include-hidden-files: true
