@@ -51,13 +51,13 @@ change is strictly required (worker's call). It stays minimal:
 
 Resulting semantics on an external event:
 
-| Member state before save | In saved set | After save | After a later sync |
-| --- | --- | --- | --- |
-| title-derived (`ext:`) | yes | stays `ext:` | follows the title |
-| title-derived (`ext:`) | no | removed | re-derived if the title still names them (documented limit) |
-| manual | yes | manual | kept |
-| manual | no | removed | stays removed |
-| unassigned | yes | new manual row | kept |
+| Member state before save | In saved set | After save     | After a later sync                                          |
+| ------------------------ | ------------ | -------------- | ----------------------------------------------------------- |
+| title-derived (`ext:`)   | yes          | stays `ext:`   | follows the title                                           |
+| title-derived (`ext:`)   | no           | removed        | re-derived if the title still names them (documented limit) |
+| manual                   | yes          | manual         | kept                                                        |
+| manual                   | no           | removed        | stays removed                                               |
+| unassigned               | yes          | new manual row | kept                                                        |
 
 ## UI (worker's calls)
 
