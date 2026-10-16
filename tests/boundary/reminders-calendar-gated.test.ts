@@ -254,4 +254,84 @@ describe("reminders-calendar-gated (research.md D3, issue #496 single-day window
       await app.close();
     }
   });
+
+  it("a specific rule with two members emits for each member on their own assigned events, survives a two-member PATCH, and dry-runs per member", async () => {
+    const deviceKey = insertDevice();
+    const alice = insertMember("Alice");
+    const bruno = insertMember("Bruno");
+    const carla = insertMember("Carla");
+    insertEvent("shin-a", "Football training", "2026-08-17", "2026-08-18");
+    assign("shin-a", alice);
+
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    const cookies = { mp_device_key: deviceKey };
+    const emissions = async (memberId: string) => {
+      const res = await app.inject({
+        method: "GET",
+        url: `/api/reminders/emissions?memberId=${memberId}&date=2026-08-17`,
+        cookies,
+      });
+      expect(res.statusCode).toBe(200);
+      return JSON.parse(res.body) as { id: string; text: string }[];
+    };
+    const dryRun = async (id: string, memberId: string) => {
+      const res = await app.inject({
+        method: "POST",
+        url: `/api/reminders/${id}/dry-run`,
+        cookies,
+        payload: { memberId, date: "2026-08-17" },
+      });
+      expect(res.statusCode).toBe(200);
+      return JSON.parse(res.body) as unknown;
+    };
+    try {
+      const createRes = await app.inject({
+        method: "POST",
+        url: "/api/reminders",
+        cookies,
+        payload: {
+          kind: "calendar_gated",
+          targetingMode: "specific",
+          text: "shin pads",
+          query: "football",
+          assignments: [{ memberId: alice }, { memberId: bruno }],
+        },
+      });
+      expect(createRes.statusCode).toBe(201);
+      const created = JSON.parse(createRes.body) as {
+        id: string;
+        assignments: { memberId: string }[];
+      };
+      expect(created.assignments.map((a) => a.memberId).sort()).toEqual([alice, bruno].sort());
+
+      // Each member is gated on their OWN assigned events.
+      expect(await emissions(alice)).toEqual([{ id: created.id, text: "shin pads" }]);
+      expect(await emissions(bruno)).toEqual([]);
+      assign("shin-a", bruno);
+      expect(await emissions(bruno)).toEqual([{ id: created.id, text: "shin pads" }]);
+
+      // A full-set replace to two different members drops Alice.
+      const patchRes = await app.inject({
+        method: "PATCH",
+        url: `/api/reminders/${created.id}`,
+        cookies,
+        payload: { assignments: [{ memberId: bruno }, { memberId: carla }] },
+      });
+      expect(patchRes.statusCode).toBe(200);
+      const patched = JSON.parse(patchRes.body) as { assignments: { memberId: string }[] };
+      expect(patched.assignments.map((a) => a.memberId).sort()).toEqual([bruno, carla].sort());
+      expect(await emissions(alice)).toEqual([]);
+      expect(await emissions(bruno)).toEqual([{ id: created.id, text: "shin pads" }]);
+
+      // Dry-run explains each member independently.
+      expect(await dryRun(created.id, bruno)).toEqual({ wouldEmit: true });
+      expect(await dryRun(created.id, carla)).toEqual({
+        wouldEmit: false,
+        reason: "no_assigned_events",
+      });
+    } finally {
+      await app.close();
+    }
+  });
 });
