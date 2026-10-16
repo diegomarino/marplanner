@@ -2407,7 +2407,8 @@
             "reminders-calendar-gated (research.md D3, issue #496 single-day window) a matching event NOT assigned to the member -> no emission (AC-05, membership-only identification)",
             "reminders-calendar-gated (research.md D3, issue #496 single-day window) a non-matching query -> no emission, even though an assigned event exists that day",
             "reminders-calendar-gated (research.md D3, issue #496 single-day window) a rule scoped to queryFields:['location'] does NOT emit even though the assigned event's TITLE matches the query (unmodeled field)",
-            "reminders-calendar-gated (research.md D3, issue #496 single-day window) single-day window (#496): a matching event that only occurs the NEXT day does not emit for today, but does emit on its own day (AC-02, evaluated every day)"
+            "reminders-calendar-gated (research.md D3, issue #496 single-day window) single-day window (#496): a matching event that only occurs the NEXT day does not emit for today, but does emit on its own day (AC-02, evaluated every day)",
+            "reminders-calendar-gated (research.md D3, issue #496 single-day window) a specific rule with two members emits for each member on their own assigned events, survives a two-member PATCH, and dry-runs per member"
           ],
           "tests/boundary/reminders-crud.test.ts": [
             "reminders-crud boundary tests POST /api/reminders creates an apply_to_all rule → 201",
@@ -4098,7 +4099,9 @@
             "RemindersManagement — error states are announced (SC-011) and recoverable announces a dry-run failure through ErrorNotice's live region",
             "RemindersManagement — error states are announced (SC-011) and recoverable announces a toggle failure at page level",
             "RemindersManagement — deleting a reminder opens a themed ConfirmDialog instead of window.confirm (research D3/FR-005) does not delete until the ConfirmDialog is confirmed, and deletes on confirm",
-            "RemindersManagement — rows name their members and days summarises all-members, specific and calendar-gated rules",
+            "RemindersManagement — rows name their members and days summarises all-members, specific and calendar-gated rules with member pills",
+            "RemindersManagement — rows name their members and days a calendar-gated rule for all members shows the neutral label, no member pill",
+            "RemindersManagement — rows name their members and days skips archived and unknown members in a row's pills",
             "RemindersManagement — rows name their members and days shows Off for an inactive rule",
             "RemindersManagement — the add/edit dialog creates a specific scheduled rule from the member pills",
             "RemindersManagement — the add/edit dialog orders each member's weekday pills by the household week start",
@@ -4113,6 +4116,10 @@
             "RemindersManagement — the dialog's pill controls keeps Save disabled and explains why while a selected member has no days",
             "RemindersManagement — the dialog's pill controls creates a specific calendar-gated rule with member pills and a query-field pill",
             "RemindersManagement — the dialog's pill controls prefills the member pills when editing a calendar-gated rule",
+            "RemindersManagement — the dialog's pill controls creates a calendar-gated rule for two members",
+            "RemindersManagement — the dialog's pill controls editing a two-member calendar-gated rule preselects both and saves both",
+            "RemindersManagement — the dialog's pill controls the dry-run member picker offers only the rule's own members (all active ones for all members)",
+            "RemindersManagement — the dialog's pill controls the dry-run panel drops a chosen member the rule no longer targets after a refresh",
             "RemindersManagement — the dialog's pill controls shows the empty message instead of an empty group when there are no active members",
             "RemindersManagement — WEEKDAY_LABEL_KEYS maps each weekday to its OWN translation key, through the shared WeekdayPicker labels the create form's WeekdayPicker with the household's own Spanish weekday abbreviations, in canonical mon..sun order",
             "WeekdayPicker adoption — the CANONICAL emission order is what separates the shared component from a replica (per-batch DoD, SC-009) toggling Wed then Mon emits mon..wed in canonical order, not click order",
@@ -5646,7 +5653,7 @@
       "src/client/admin/RemindersManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 170,
+          "lines": 169,
           "statements": 190,
           "functions": 62,
           "branches": 168
