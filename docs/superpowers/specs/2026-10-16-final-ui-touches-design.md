@@ -6,7 +6,7 @@ the worker's call unless it quotes the brief.
 
 ## 1. Options tap gives feedback
 
-**Why.** Since PR #42 the Options button on the household bar *is* the Admin long-press
+**Why.** Since PR #42 the Options button on the household bar _is_ the Admin long-press
 affordance while Admin is its only entry. A plain tap does nothing and nothing says why.
 
 **Reproduced** on the dev server (2026-10-16, `VITE_DEV_BYPASS_ADMIN_PIN=0` as in the owner's
@@ -15,6 +15,7 @@ affordance while Admin is its only entry. A plain tap does nothing and nothing s
 (`isAdminPinBypassEnabled()`), where `pointerdown` already opens admin at once; that path stays.
 
 **Behaviour.**
+
 - A press that ends before the 3 s hold completes (pointer released, or Enter/Space released)
   shows a short hint under the button: "Hold to open Admin" / "Mantén pulsado para abrir
   Admin". It is a `role="status"` live region and disappears after ~2.5 s, or as soon as a new
@@ -38,10 +39,11 @@ check that a tap shows the hint is added to an existing spec, not a new density 
 
 **Behaviour.** A trailing "Every day" column in the block × weekday matrix with one small
 outline button per block row:
-- If the block is on for at least one day → button "Off" (aria: "Turn {block} off every day");
+
+- If the block is on for at least one day → button "Turn off" (es "Apagar") (aria: "Turn {block} off every day");
   writes `{ enabled: false, weekdays: [] }` — the same shape a cell toggle writes when the last
   day goes off.
-- If the block is off on every day → button "On" (aria: "Turn {block} on every day"); writes
+- If the block is off on every day → button "Turn on" (es "Encender") (aria: "Turn {block} on every day"); writes
   `{ enabled: true, weekdays: null }` (null = every day, as the cells write when all seven are on).
 - Disabled while the row is saving. Paused-day semantics unchanged: the "Briefing runs" row is
   the member's pause schedule; paused-day cells stay greyed/disabled and keep their stored value,
@@ -61,6 +63,7 @@ chip is left as a follow-up). The row header text (accessible name) stays the di
 ## 5. Plugins: Active/Deactivated toggle and muted inactive card
 
 **Behaviour.**
+
 - The card's bottom "Activate X"/"Deactivate X" button becomes a `StatusToggle` (from `@/ui`)
   in the card header, where the state text was: `pressed` = active, visible label = the state
   text (`plugins.state.*`: Active / Inactive / Needs attention; the `plugin-state-{id}` test id
@@ -76,10 +79,12 @@ chip is left as a follow-up). The row header text (accessible name) stays the di
   look merely "off").
 
 ## Non-goals
+
 - No server/API change. No new shared component. No new density tests (existing ones may get
   updated counts/selectors).
 
 ## Constraints
+
 - i18n in one block per locale in `src/client/i18n/messages.ts`; `docs/ui/household-contract.md`
   and `docs/ui/plugin-management.md` kept in sync.
 - Gates: `npm run check:standard` in a clean detached checkout, then `npm run check:aggregate-only`
