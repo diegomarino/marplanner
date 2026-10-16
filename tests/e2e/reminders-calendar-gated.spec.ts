@@ -183,6 +183,13 @@ test("calendar_gated admin author → dry-run → emit: query + membership assig
   });
   expect(memberResp.status()).toBe(201);
   const memberId = ((await memberResp.json()) as { id: string }).id;
+  // A second member the rule also targets, with no assigned event today (several members, one rule).
+  const secondName = `CalGated2-${rid}`;
+  const secondResp = await page.request.post("/api/members", {
+    data: { displayName: secondName, role: "child" },
+  });
+  expect(secondResp.status()).toBe(201);
+  const secondId = ((await secondResp.json()) as { id: string }).id;
 
   // --- 4) API-seed an all-day event on `today`, titled to match the reminder's
   // query text (case-insensitive, D2), and assign it to the member ---
@@ -224,6 +231,7 @@ test("calendar_gated admin author → dry-run → emit: query + membership assig
   await createForm.getByPlaceholder(m["reminders.calendarGated.queryPlaceholder"]).fill(queryText);
   // queryFields defaults to [title, description] — the event title match is sufficient, no toggle needed.
   await createForm.getByTestId(`reminders-cg-member-${memberId}`).check();
+  await createForm.getByTestId(`reminders-cg-member-${secondId}`).check();
 
   const [createResp] = await Promise.all([
     page.waitForResponse(
@@ -236,12 +244,17 @@ test("calendar_gated admin author → dry-run → emit: query + membership assig
   expect(reminder.kind).toBe("calendar_gated");
   expect(reminder.targetingMode).toBe("specific");
   expect(reminder.weekdays).toBeNull();
+  expect(reminder.assignments.map((a) => a.memberId).sort()).toEqual([memberId, secondId].sort());
   await expect(createForm).toBeHidden();
   await expect(page.getByText(reminderText)).toBeVisible({ timeout: 10_000 });
 
   // --- 8) Run the dry-run/explain view on this rule's row for (member, today) ---
   const card = page.getByTestId(`reminder-${reminder.id}`);
   await expect(card).toBeVisible();
+  // The row names both members as member-colour pills.
+  const who = card.getByTestId(`reminder-who-${reminder.id}`);
+  await expect(who.getByText(memberName, { exact: true })).toBeVisible();
+  await expect(who.getByText(secondName, { exact: true })).toBeVisible();
   await card.getByRole("button", { name: m["reminders.dryRun.toggleShow"] }).click();
   await expect(card.getByText(m["reminders.dryRun.title"])).toBeVisible({ timeout: 10_000 });
 
@@ -259,6 +272,23 @@ test("calendar_gated admin author → dry-run → emit: query + membership assig
   const dryRunResult = (await dryRunResp.json()) as DryRunResult;
   expect(dryRunResult.wouldEmit).toBe(true);
   await expect(card.getByText(m["reminders.dryRun.wouldEmit"])).toBeVisible({ timeout: 10_000 });
+
+  // The second member has no assigned event today: explained, not emitted.
+  await card.locator("select").selectOption(secondId);
+  const [secondDryRunResp] = await Promise.all([
+    page.waitForResponse(
+      (r) =>
+        r.url().includes(`/api/reminders/${reminder.id}/dry-run`) && r.request().method() === "POST"
+    ),
+    card.getByRole("button", { name: m["reminders.dryRun.run"] }).click(),
+  ]);
+  expect((await secondDryRunResp.json()) as DryRunResult).toEqual({
+    wouldEmit: false,
+    reason: "no_assigned_events",
+  });
+  await expect(card.getByText(m["reminders.dryRun.reason.no_assigned_events"])).toBeVisible({
+    timeout: 10_000,
+  });
 
   // --- 9) Assert the rule actually EMITS via GET /api/reminders/emissions (REMINDERS-AC-02) ---
   const emissionsResp = await page.request.get(
