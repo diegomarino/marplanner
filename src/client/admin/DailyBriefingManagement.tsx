@@ -19,6 +19,7 @@ import {
 import type { AutomationSettings } from "@/daily-briefing/admin/BriefingAutomationCard";
 import {
   cellToggleInput,
+  rowToggleInput,
   reorderBlockOrderByType,
   resolveMemberBlockSettings,
   weekdayOfDate,
@@ -581,6 +582,14 @@ export function DailyBriefingManagement() {
                       cellToggleInput(
                         resolveMemberBlockSettings(settings.blockSettings, selected.id, type),
                         day
+                      )
+                    )
+                  }
+                  onToggleRow={(type) =>
+                    void saveBlock(
+                      type,
+                      rowToggleInput(
+                        resolveMemberBlockSettings(settings.blockSettings, selected.id, type)
                       )
                     )
                   }

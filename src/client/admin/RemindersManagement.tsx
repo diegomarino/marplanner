@@ -26,6 +26,7 @@ import { ChoicePills } from "@/components/ChoicePills";
 import { MemberPills } from "@/components/MemberPills";
 import { PillToggle } from "@/components/PillToggle";
 import { ReminderMemberDays } from "./ReminderMemberDays";
+import { MemberChip } from "@/routines/admin/MemberChip";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,7 +43,8 @@ import { NATIVE_SELECT_CLASSES } from "@/lib/recipes";
  * (scheduled all/specific with per-member weekday pills, calendar_gated with query and
  * members), a per-row dry-run panel for calendar_gated rules, and a themed delete ConfirmDialog.
  * Only the first load and an explicit Retry show the loading state; later refreshes are silent so
- * open dialogs and panels survive. The dialog's choices are shared pills (`ChoicePills`,
+ * open dialogs and panels survive. Each row names who it reaches as member-colour pills
+ * (`MemberChip`), or a neutral "All members" label. The dialog's choices are shared pills (`ChoicePills`,
  * `WeekdayPicker`, `ReminderMemberDays`, `MemberPills`, `PillToggle`). */
 
 export const WEEKDAY_LABEL_KEYS: Record<Weekday, MessageKey> = {
@@ -117,7 +119,7 @@ export function RemindersManagement() {
   const [deleteTarget, setDeleteTarget] = useState<Reminder | null>(null);
 
   const activeMembers = allMembers.filter((m) => m.lifecycle === "active");
-  const memberNames = new Map(allMembers.map((m) => [m.id, m.displayName]));
+  const memberById = new Map(allMembers.map((m) => [m.id, m]));
 
   useEffect(() => {
     if (householdTimezone === null) return;
@@ -277,7 +279,7 @@ export function RemindersManagement() {
                 key={reminder.id}
                 reminder={reminder}
                 t={t}
-                memberNames={memberNames}
+                memberById={memberById}
                 activeMembers={activeMembers}
                 householdToday={householdToday}
                 onEdit={() => setForm({ kind: "edit", reminder })}
@@ -328,32 +330,73 @@ function weekdayList(t: Translate, days: Weekday[]): string {
   return days.map((day) => t(WEEKDAY_LABEL_KEYS[day])).join(", ");
 }
 
-/** The muted "who and when" line of a row. */
-function summarize(reminder: Reminder, t: Translate, memberNames: Map<string, string>): string {
-  const everyone = t("reminders.management.targetingApplyToAll");
-  const names = reminder.assignments.flatMap((a) => {
-    const name = memberNames.get(a.memberId);
-    return name ? [name] : [];
+/** The rule's targeted members that can still be shown: its assignments in order, keeping only
+ * known, active members (an archived member drops from emission, FR-002). */
+function targetedMembers(reminder: Reminder, memberById: Map<string, Member>): Member[] {
+  return reminder.assignments.flatMap((a) => {
+    const member = memberById.get(a.memberId);
+    return member && member.lifecycle === "active" ? [member] : [];
   });
-  if (reminder.kind === "calendar_gated") {
-    const who = reminder.targetingMode === "apply_to_all" ? everyone : names.join(", ");
-    return `${t("reminders.calendarGated.queryLabel")}: ${reminder.query ?? ""} · ${who}`;
-  }
-  if (reminder.targetingMode === "apply_to_all") {
-    return `${everyone} · ${weekdayList(t, reminder.weekdays ?? [])}`;
-  }
-  return reminder.assignments
-    .flatMap((a) => {
-      const name = memberNames.get(a.memberId);
-      return name ? [`${name}: ${weekdayList(t, a.weekdays)}`] : [];
-    })
-    .join(" · ");
+}
+
+/** The neutral "All members" label: a muted pill, never a member colour. */
+function EveryoneLabel({ t }: { t: Translate }) {
+  return (
+    <span className="bg-muted text-foreground rounded-full px-2 py-0.5 text-sm font-medium">
+      {t("reminders.management.targetingApplyToAll")}
+    </span>
+  );
+}
+
+/** The muted "who and when" line of a row: member-colour pills for specific rules, the neutral
+ * label for all-members rules, plus the weekdays (scheduled) or the match text (calendar-gated). */
+function ReminderWho({
+  reminder,
+  t,
+  memberById,
+}: {
+  reminder: Reminder;
+  t: Translate;
+  memberById: Map<string, Member>;
+}) {
+  const everyone = reminder.targetingMode === "apply_to_all";
+  const members = targetedMembers(reminder, memberById);
+  const weekdaysOf = new Map(reminder.assignments.map((a) => [a.memberId, a.weekdays]));
+  return (
+    <p
+      data-testid={`reminder-who-${reminder.id}`}
+      className="text-muted-foreground text-control flex flex-wrap items-center gap-x-3 gap-y-1"
+    >
+      {reminder.kind === "calendar_gated" ? (
+        <>
+          <span>{`${t("reminders.calendarGated.queryLabel")}: ${reminder.query ?? ""}`}</span>
+          {everyone ? (
+            <EveryoneLabel t={t} />
+          ) : (
+            members.map((member) => <MemberChip key={member.id} member={member} />)
+          )}
+        </>
+      ) : everyone ? (
+        <>
+          <EveryoneLabel t={t} />
+          <span>{weekdayList(t, reminder.weekdays ?? [])}</span>
+        </>
+      ) : (
+        members.map((member) => (
+          <span key={member.id} className="inline-flex items-center gap-1.5">
+            <MemberChip member={member} />
+            <span>{weekdayList(t, weekdaysOf.get(member.id) ?? [])}</span>
+          </span>
+        ))
+      )}
+    </p>
+  );
 }
 
 interface ReminderRowProps {
   reminder: Reminder;
   t: Translate;
-  memberNames: Map<string, string>;
+  memberById: Map<string, Member>;
   activeMembers: Member[];
   householdToday: string;
   onEdit: () => void;
@@ -365,7 +408,7 @@ interface ReminderRowProps {
 function ReminderRow({
   reminder,
   t,
-  memberNames,
+  memberById,
   activeMembers,
   householdToday,
   onEdit,
@@ -386,9 +429,7 @@ function ReminderRow({
               {isCalendarGated ? t("reminders.kind.calendarGated") : t("reminders.kind.scheduled")}
             </span>
           </p>
-          <p className="text-muted-foreground text-control">
-            {summarize(reminder, t, memberNames)}
-          </p>
+          <ReminderWho reminder={reminder} t={t} memberById={memberById} />
         </div>
         <span
           className={cn(
@@ -437,7 +478,11 @@ function ReminderRow({
       {isCalendarGated && showDryRun && (
         <DryRunPanel
           t={t}
-          activeMembers={activeMembers}
+          members={
+            reminder.targetingMode === "specific"
+              ? targetedMembers(reminder, memberById)
+              : activeMembers
+          }
           householdToday={householdToday}
           onDryRun={onDryRun}
         />
@@ -448,14 +493,20 @@ function ReminderRow({
 
 interface DryRunPanelProps {
   t: Translate;
-  activeMembers: Member[];
+  /** Who the rule can reach: its own active members (`specific`) or every active member. */
+  members: Member[];
   householdToday: string;
   onDryRun: (memberId: string, date: string) => Promise<DryRunResult>;
 }
 
-/** The dry-run / explain panel of a calendar_gated row (behaviour unchanged). */
-function DryRunPanel({ t, activeMembers, householdToday, onDryRun }: DryRunPanelProps) {
-  const [dryRunMemberId, setDryRunMemberId] = useState("");
+/** The dry-run / explain panel of a calendar_gated row. It only offers members the rule targets:
+ * the server explains the gate for any member, so asking about one the rule does not reach would
+ * report a misleading "would emit". */
+function DryRunPanel({ t, members, householdToday, onDryRun }: DryRunPanelProps) {
+  const [pickedMemberId, setPickedMemberId] = useState("");
+  // Derived, not stored: a member the rule stops targeting (edited, archived) while the panel stays
+  // open after a silent refresh is dropped, so Run never explains the gate for someone it skips.
+  const dryRunMemberId = members.some((m) => m.id === pickedMemberId) ? pickedMemberId : "";
   const [dryRunDate, setDryRunDate] = useState(householdToday);
   const [dryRunResult, setDryRunResult] = useState<DryRunResult | null>(null);
   const [dryRunLoading, setDryRunLoading] = useState(false);
@@ -468,6 +519,8 @@ function DryRunPanel({ t, activeMembers, householdToday, onDryRun }: DryRunPanel
     dryRunRequestIdRef.current++;
     setDryRunResult(null);
     setDryRunError(null);
+    // The invalidated request will not clear this itself, since its id is now stale.
+    setDryRunLoading(false);
   }, [dryRunMemberId, dryRunDate]);
 
   const runDryRun = () => {
@@ -500,11 +553,11 @@ function DryRunPanel({ t, activeMembers, householdToday, onDryRun }: DryRunPanel
           {t("reminders.dryRun.memberLabel")}
           <select
             value={dryRunMemberId}
-            onChange={(e) => setDryRunMemberId(e.target.value)}
+            onChange={(e) => setPickedMemberId(e.target.value)}
             className={NATIVE_SELECT_CLASSES}
           >
             <option value="">{t("reminders.dryRun.selectMember")}</option>
-            {activeMembers.map((member) => (
+            {members.map((member) => (
               <option key={member.id} value={member.id}>
                 {member.displayName}
               </option>

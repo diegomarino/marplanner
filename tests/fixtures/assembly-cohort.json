@@ -2408,7 +2408,8 @@
             "reminders-calendar-gated (research.md D3, issue #496 single-day window) a matching event NOT assigned to the member -> no emission (AC-05, membership-only identification)",
             "reminders-calendar-gated (research.md D3, issue #496 single-day window) a non-matching query -> no emission, even though an assigned event exists that day",
             "reminders-calendar-gated (research.md D3, issue #496 single-day window) a rule scoped to queryFields:['location'] does NOT emit even though the assigned event's TITLE matches the query (unmodeled field)",
-            "reminders-calendar-gated (research.md D3, issue #496 single-day window) single-day window (#496): a matching event that only occurs the NEXT day does not emit for today, but does emit on its own day (AC-02, evaluated every day)"
+            "reminders-calendar-gated (research.md D3, issue #496 single-day window) single-day window (#496): a matching event that only occurs the NEXT day does not emit for today, but does emit on its own day (AC-02, evaluated every day)",
+            "reminders-calendar-gated (research.md D3, issue #496 single-day window) a specific rule with two members emits for each member on their own assigned events, survives a two-member PATCH, and dry-runs per member"
           ],
           "tests/boundary/reminders-crud.test.ts": [
             "reminders-crud boundary tests POST /api/reminders creates an apply_to_all rule → 201",
@@ -3329,6 +3330,8 @@
           "tests/client/daily-briefing-block-matrix.test.tsx": [
             "BlockMatrix puts the weekday columns in household week-start order, headers and cells aligned",
             "BlockMatrix names each cell by block and day and reports toggles",
+            "BlockMatrix offers one control per row that turns the block off or on for every day",
+            "BlockMatrix disables the row control while that row is saving",
             "BlockMatrix shows a disabled block as all off, with onThisDay's default-off note",
             "BlockMatrix drops onThisDay's default-off note once the member has configured the block",
             "BlockMatrix disables a paused column's cells but keeps their value, and toggles the pause",
@@ -3343,6 +3346,8 @@
             "briefingBlocks — effective days and cell writes switching one cell on in a legacy disabled row writes only that day",
             "briefingBlocks — effective days and cell writes switching the last cell off disables the block with an empty list",
             "briefingBlocks — effective days and cell writes completing all seven days writes null (every day) in canonical order otherwise",
+            "briefingBlocks — effective days and cell writes the row toggle turns a block off every day while any day is on",
+            "briefingBlocks — effective days and cell writes the row toggle turns a block on every day when no day is on",
             "briefingBlocks — effective days and cell writes resolves a missing row to the FR-013 default (onThisDay off)",
             "briefingBlocks — order lists configured types first, then the rest of the registry once",
             "briefingBlocks — order moves a type and keeps repeated instances with their params",
@@ -3357,12 +3362,14 @@
           ],
           "tests/client/daily-briefing-management.test.tsx": [
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) opens on Schedule and offers Blocks and Briefings tabs for the selected member",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) names each member in the Schedule table on their own colour",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) keyboard reorder persists the complete effective order and reverts on failure",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) posts the empty Generate-all body and renders every returned member status",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) Generate for all members on another date sends that date and marks paused members",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) renders an already_running Generate-all response as a non-error informational message",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) keeps Generate-all disabled while an earlier opt-in PUT is still pending",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) pauses a weekday for the selected member and disables that column without a regenerate notice",
+            "DailyBriefingManagement — Generate-all opt-in interlock (#555) turns a block off every day, then on every day, from its row control, paused days untouched",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) an opted-out member is an off pill that cannot be picked; opt-in stays on Schedule",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) opting the selected member out selects the first opted-in member",
             "DailyBriefingManagement — Generate-all opt-in interlock (#555) toggling a cell writes the effective day set for that block",
@@ -3606,7 +3613,11 @@
             "B0 device presentation state boots the B1 provisioning gate, enters the real shell, and captures global failures"
           ],
           "tests/client/household-options-menu.test.tsx": [
-            "HouseholdChrome — Options menu opens a menu holding Admin and every extra entry once there is more than one"
+            "HouseholdChrome — Options menu opens a menu holding Admin and every extra entry once there is more than one",
+            "HouseholdChrome — Options menu a tap on the Admin affordance explains that Admin needs a hold, then hides the hint",
+            "HouseholdChrome — Options menu a tap on the Admin affordance shows the hint for an early keyboard release too",
+            "HouseholdChrome — Options menu a tap on the Admin affordance shows no hint after a completed hold",
+            "HouseholdChrome — Options menu a tap on the Admin affordance hides the hint as soon as a new hold starts"
           ],
           "tests/client/logger.test.ts": [
             "client logger CLIENT-LOGGING-TELEMETRY-INV-03: an entry carries the canonical envelope shape",
@@ -3920,10 +3931,12 @@
             "Plugin Management uses only the authenticated session and never sends client PIN state",
             "Plugin Management keeps canonical state visible while busy and disables only that plugin",
             "Plugin Management applies the 409 plugin snapshot, announces a safe failure, and preserves control focus",
-            "Plugin Management restores focus to the renamed action after a successful lifecycle transition",
+            "Plugin Management restores focus to the toggle after a successful lifecycle transition",
             "Plugin Management reveals aggregate health only after load and focuses the errored row on activation",
             "Plugin Management keeps every supported locale complete for the plugin surface",
-            "Plugin Management uses a narrow-safe stacked structure with visible actions and no table overflow"
+            "Plugin Management uses a narrow-safe stacked structure with visible actions and no table overflow",
+            "Plugin Management draws each plugin's state as a toggle and greys out an inactive card",
+            "Plugin Management the toggle activates an inactive plugin and deactivates an active one"
           ],
           "tests/client/presentation-mode.test.tsx": [
             "usePresentationMode tracks fullscreen and the two probed display-mode changes, then removes every listener",
@@ -4125,7 +4138,9 @@
             "RemindersManagement — error states are announced (SC-011) and recoverable announces a dry-run failure through ErrorNotice's live region",
             "RemindersManagement — error states are announced (SC-011) and recoverable announces a toggle failure at page level",
             "RemindersManagement — deleting a reminder opens a themed ConfirmDialog instead of window.confirm (research D3/FR-005) does not delete until the ConfirmDialog is confirmed, and deletes on confirm",
-            "RemindersManagement — rows name their members and days summarises all-members, specific and calendar-gated rules",
+            "RemindersManagement — rows name their members and days summarises all-members, specific and calendar-gated rules with member pills",
+            "RemindersManagement — rows name their members and days a calendar-gated rule for all members shows the neutral label, no member pill",
+            "RemindersManagement — rows name their members and days skips archived and unknown members in a row's pills",
             "RemindersManagement — rows name their members and days shows Off for an inactive rule",
             "RemindersManagement — the add/edit dialog creates a specific scheduled rule from the member pills",
             "RemindersManagement — the add/edit dialog orders each member's weekday pills by the household week start",
@@ -4140,6 +4155,11 @@
             "RemindersManagement — the dialog's pill controls keeps Save disabled and explains why while a selected member has no days",
             "RemindersManagement — the dialog's pill controls creates a specific calendar-gated rule with member pills and a query-field pill",
             "RemindersManagement — the dialog's pill controls prefills the member pills when editing a calendar-gated rule",
+            "RemindersManagement — the dialog's pill controls creates a calendar-gated rule for two members",
+            "RemindersManagement — the dialog's pill controls editing a two-member calendar-gated rule preselects both and saves both",
+            "RemindersManagement — the dialog's pill controls the dry-run member picker offers only the rule's own members (all active ones for all members)",
+            "RemindersManagement — the dialog's pill controls the dry-run panel drops a chosen member the rule no longer targets after a refresh",
+            "RemindersManagement — the dialog's pill controls a member change while a dry-run is running frees the panel instead of leaving it on Running",
             "RemindersManagement — the dialog's pill controls shows the empty message instead of an empty group when there are no active members",
             "RemindersManagement — WEEKDAY_LABEL_KEYS maps each weekday to its OWN translation key, through the shared WeekdayPicker labels the create form's WeekdayPicker with the household's own Spanish weekday abbreviations, in canonical mon..sun order",
             "WeekdayPicker adoption — the CANONICAL emission order is what separates the shared component from a replica (per-batch DoD, SC-009) toggling Wed then Mon emits mon..wed in canonical order, not click order",
