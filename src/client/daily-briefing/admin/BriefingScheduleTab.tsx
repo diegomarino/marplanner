@@ -1,6 +1,5 @@
 import { useT } from "@/i18n";
 import type { MessageKey } from "@/i18n/messages";
-import { cn } from "@/lib/utils";
 import { useHouseholdSettings } from "@/lib/householdSettings";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { CheckboxField } from "@/components/CheckboxField";
 import { weekdayDisplayOrder, type WeekdayCode } from "@/components/WeekdayPicker";
 import { BriefingAutomationCard, type AutomationSettings } from "./BriefingAutomationCard";
-import { MEMBER_DOT_CLASS } from "@/components/MemberPills";
+import { MemberChip } from "@/routines/admin/MemberChip";
 import { WEEKDAY_LABEL_KEYS, type MemberResult } from "./briefingBlocks";
 import type { MemberDTO } from "../../../shared";
 
@@ -207,16 +206,7 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
                           scope="row"
                           className="border-b px-2 py-2 text-left font-medium max-sm:block max-sm:border-0"
                         >
-                          <span className="inline-flex items-center gap-2">
-                            <span
-                              aria-hidden="true"
-                              className={cn(
-                                "size-3 rounded-full border border-background",
-                                MEMBER_DOT_CLASS[member.colorKey]
-                              )}
-                            />
-                            {member.displayName}
-                          </span>
+                          <MemberChip member={member} className="inline-block align-middle" />
                         </th>
                         <td className={STACKED_CELL} data-label={columnBriefing}>
                           <CheckboxField

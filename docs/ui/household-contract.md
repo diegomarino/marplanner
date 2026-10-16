@@ -6,7 +6,9 @@ Every provisioned family route renders persistent chrome with visible Home, Cale
 Meals controls. The active destination is semantic. Options holds Admin only; printer pairing is
 not a menu item. While Admin is its only entry, the Options button is the Admin affordance itself
 (same long-press hold, same `admin-affordance` testid) rather than a one-item menu; a second entry
-turns it back into a disclosure menu with Admin first. `/daily-briefing` and unknown family paths
+turns it back into a disclosure menu with Admin first. A press released before the hold completes
+(a tap, or Enter/Space let go early) shows a short "Hold to open Admin" status under the affordance
+for a few seconds; a completed hold or a cancelled pointer shows nothing. `/daily-briefing` and unknown family paths
 render a localized not-found outcome, never Home by substitution.
 
 Activating Admin from Options uses the same-document navigation seam and closes the Options menu (when
@@ -39,6 +41,15 @@ dialog. Meals are read-only and link to `/meals`.
 Agenda all-day items precede timed items. Text/icon/weight identify temporal states without colour.
 Multi-member items render every active assigned identity plus text.
 
+## Meals
+
+`/meals` and the admin Preview share one week grid. Each meal is tinted with its origin: a warm grey
+for a one-off, and one automatic colour per meal plan by plan creation order (never stored, never
+user-chosen). Free-text meals are italic. Origin pills ("One-off" and every active plan) highlight
+and never filter: selected origins' meals take a stronger tint, solid border and semibold text, the
+rest grey out in place and stay editable. The family add dialog creates one-offs only. Today's
+meals on Home are unchanged.
+
 ## Administration
 
 Once unlocked, the top bar becomes the admin bar: a home icon back to the household screens and a
@@ -56,8 +67,9 @@ colour held by another active member cannot be picked while a free one remains. 
 the same rule, and a restored member whose colour was taken meanwhile comes back with the first
 free one.
 
-Reminders are listed at `/admin/reminders`, one row per rule naming who it applies to and on which
-days with an Active/Off badge. "Add rule" and the row's edit icon open one dialog; editing can switch
+Reminders are listed at `/admin/reminders`, one row per rule naming who it applies to (a pill in
+each member's colour, or a neutral "All members" label) and on which days or match text, with an
+Active/Off badge. "Add rule" and the row's edit icon open one dialog; editing can switch
 a rule between all members and specific members. The dialog's choices are pills: kind and
 applies-to as segmented choices, weekdays in the household's week-start order, and for specific
 members a pill in each member's colour with a weekday-pill row beneath it while selected. Deleting
@@ -80,12 +92,12 @@ The ordered capability table is:
 2. `/admin/members` — members
 3. `/admin/routines` — routines and chores
 4. `/admin/reminders` — reminders
-5. `/admin/meals` — Meals: editable week menu (the family meal grid; a cell adds a one-off or, via "Every <weekday>", a recurring entry in an active plan; a meal opens for content edit or delete, and recurring changes apply every week), meal plans each listing their recurring entries by weekday with an in-card add form and activate/deactivate, then recipes
+5. `/admin/meals` — Meals: three tabs (local state, no sub-paths). Preview (default): the editable family week grid with origin pills; a cell adds a one-off or, via "Every <weekday>", a recurring entry in an active plan (preselected when exactly one plan pill is selected); a meal opens for content edit or delete, and recurring changes apply every week. Meal plans: each plan lists its recurring entries by weekday with an in-card add form and activate/deactivate. Recipes: search, create, edit, delete with dependent counts.
 6. `/admin/daily-messages` — daily messages
 7. `/admin/daily-briefing` — Briefing: three tabs (local state, no sub-paths).
-   - Schedule (default): automatic generation time and auto-print after morning chores (Save enabled when changed); Generate briefings for a chosen date (Generate for all members); a Members table with the per-member opt-in (its only home), the briefing days summary, the result for the chosen date and Blocks/Briefings shortcuts.
+   - Schedule (default): automatic generation time and auto-print after morning chores (Save enabled when changed); Generate briefings for a chosen date (Generate for all members); a Members table naming each member as their member-colour chip, with the per-member opt-in (its only home), the briefing days summary, the result for the chosen date and Blocks/Briefings shortcuts.
    - Blocks and Briefings share one member pill bar: opted-out members are "off" pills that cannot be picked (opt-in lives only in the Schedule members table); opting the selected member out selects the first opted-in member, and with nobody opted in one line points to Schedule with a button that opens it.
-   - Blocks: per-member blocks × weekdays matrix in household week-start order, with a "Briefing runs" pause row, inline block parameters and drag/keyboard reorder of the household block order; "settings changed" notice links to Briefings.
+   - Blocks: per-member blocks × weekdays matrix in household week-start order, with a "Briefing runs" pause row, an "Every day" column whose per-row button turns the block off on every day (or on every day when it is off on all of them) without touching the pause row, inline block parameters and drag/keyboard reorder of the household block order; "settings changed" notice links to Briefings.
    - Briefings: 30-day history, date, Generate/Regenerate, View PNG, Print to the queue, payload and image states; the paused notice links to Blocks.
 8. `/admin/telemetry` — client telemetry
 9. `/admin/backups` — backups: snapshot with success feedback, drag-and-drop .db upload, colour-coded types, relative dates, typed-filename restore, download with progress

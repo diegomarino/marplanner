@@ -22,6 +22,10 @@ export interface PillControlProps {
   /** Reserve the semibold label's width so a caller that bolds the checked state never shifts
    * the pills beside it: an invisible, zero-height bold copy of the label sizes the same grid. */
   reserveBoldLabel?: boolean;
+  /** "colour": a caller class sets `--pill-color` (checked border) and `--pill-color-selected`
+   * (checked ground). Unchecked it is muted like a member pill; checked it has foreground text in
+   * semibold. "default" (the default) is the plain accent pill. */
+  tone?: "default" | "colour";
   /** Native radio group name. */
   name?: string;
   value?: string;
@@ -31,6 +35,10 @@ export interface PillControlProps {
   "data-testid"?: string;
 }
 
+/** The coloured tone. A transparent border keeps the box identical in both states. */
+const COLOUR_TONE_CLASS =
+  "border-transparent bg-muted text-muted-foreground has-[:checked]:border-[var(--pill-color)] has-[:checked]:bg-[var(--pill-color-selected)] has-[:checked]:text-foreground has-[:checked]:font-semibold";
+
 export function PillControl({
   type,
   checked,
@@ -39,6 +47,7 @@ export function PillControl({
   note,
   tokenStyle,
   reserveBoldLabel,
+  tone = "default",
   name,
   value,
   disabled,
@@ -54,6 +63,7 @@ export function PillControl({
         "not-has-[:checked]:hover:bg-primary/10 not-has-[:checked]:hover:text-foreground",
         "has-[:checked]:bg-accent has-[:checked]:text-accent-foreground",
         "has-[:focus-visible]:ring-ring/50 has-[:focus-visible]:ring-[3px]",
+        tone === "colour" && COLOUR_TONE_CLASS,
         disabled && "cursor-not-allowed opacity-50",
         className
       )}

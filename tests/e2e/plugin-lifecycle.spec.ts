@@ -73,7 +73,8 @@ test("fresh lifecycle catalog keeps API and UI aligned across a repeat activatio
     );
     await weather
       .getByRole("button", {
-        name: `${copy["plugins.action.activate"]} ${copy["plugins.weather.label"]}`,
+        name: copy["plugins.weather.label"],
+        pressed: false,
       })
       .click();
     expect((await activateResponse).status()).toBe(200);
@@ -83,7 +84,8 @@ test("fresh lifecycle catalog keeps API and UI aligned across a repeat activatio
     await expect(page.getByTestId("plugin-row-weather")).toHaveCount(1);
     await expect(
       weather.getByRole("button", {
-        name: `${copy["plugins.action.deactivate"]} ${copy["plugins.weather.label"]}`,
+        name: copy["plugins.weather.label"],
+        pressed: true,
       })
     ).toHaveCount(1);
     expect((await readCatalog(page, server.origin)).find(({ id }) => id === "weather")?.state).toBe(
@@ -97,7 +99,8 @@ test("fresh lifecycle catalog keeps API and UI aligned across a repeat activatio
     );
     await weather
       .getByRole("button", {
-        name: `${copy["plugins.action.deactivate"]} ${copy["plugins.weather.label"]}`,
+        name: copy["plugins.weather.label"],
+        pressed: true,
       })
       .click();
     expect((await deactivateResponse).status()).toBe(200);
@@ -109,7 +112,8 @@ test("fresh lifecycle catalog keeps API and UI aligned across a repeat activatio
     await expect(page.getByTestId("plugin-row-weather")).toHaveCount(1);
     await expect(
       weather.getByRole("button", {
-        name: `${copy["plugins.action.activate"]} ${copy["plugins.weather.label"]}`,
+        name: copy["plugins.weather.label"],
+        pressed: false,
       })
     ).toHaveCount(1);
     expect((await readCatalog(page, server.origin)).find(({ id }) => id === "weather")?.state).toBe(

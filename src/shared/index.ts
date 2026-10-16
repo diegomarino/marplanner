@@ -601,6 +601,8 @@ export interface MenuItem {
   label: string;
   isTombstone: boolean;
   source: "recurring" | "oneoff";
+  /** The meal plan a recurring item comes from; null for a one-off. Derived, never stored. */
+  planId: string | null;
   recipeId: string | null;
   note: string | null;
 }

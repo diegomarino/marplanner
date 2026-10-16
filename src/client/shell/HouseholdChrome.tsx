@@ -25,6 +25,8 @@ import { PluginContribution, usePluginActive } from "@/plugins/contributions";
 import { familyRoutes, navigateHousehold } from "./routes";
 
 const ADMIN_HOLD_MS = 3_000;
+/** How long the "hold to open" hint stays after a press released too early. */
+const ADMIN_HOLD_HINT_MS = 2_500;
 
 function isUnmodifiedPrimaryClick(event: ReactMouseEvent<HTMLAnchorElement>): boolean {
   return (
@@ -90,6 +92,8 @@ function HouseholdChromeContent({
   const keyboardReleaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const keyboardHoldingRef = useRef(false);
   const [adminHolding, setAdminHolding] = useState(false);
+  const holdHintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [holdHintVisible, setHoldHintVisible] = useState(false);
   const { unlocked } = useAdminUnlock();
   // Once admin is unlocked the bar turns into the admin bar: a way home and where you are.
   // The locked PIN screen keeps the household bar, so the kiosk is never a dead end.
@@ -126,8 +130,29 @@ function HouseholdChromeContent({
     setAdminHolding(false);
   }, []);
 
+  const hideHoldHint = useCallback(() => {
+    if (holdHintTimerRef.current) clearTimeout(holdHintTimerRef.current);
+    holdHintTimerRef.current = null;
+    setHoldHintVisible(false);
+  }, []);
+
+  // A press let go before the hold completed is a tap: say why nothing opened. A cancelled
+  // pointer or a lost focus is not a tap, so those go straight to `cancelAdminHold`.
+  const releaseAdminHold = useCallback(() => {
+    if (adminHoldTimerRef.current) {
+      if (holdHintTimerRef.current) clearTimeout(holdHintTimerRef.current);
+      setHoldHintVisible(true);
+      holdHintTimerRef.current = setTimeout(() => {
+        holdHintTimerRef.current = null;
+        setHoldHintVisible(false);
+      }, ADMIN_HOLD_HINT_MS);
+    }
+    cancelAdminHold();
+  }, [cancelAdminHold]);
+
   const startAdminHold = useCallback(() => {
     if (adminHoldTimerRef.current) return;
+    hideHoldHint();
     // Dev-only local bypass already unlocks the PIN gate; keep the affordance path
     // frictionless so local work does not wait the deliberate kiosk hold.
     if (isAdminPinBypassEnabled()) {
@@ -136,12 +161,13 @@ function HouseholdChromeContent({
     }
     setAdminHolding(true);
     adminHoldTimerRef.current = setTimeout(openAdmin, ADMIN_HOLD_MS);
-  }, [openAdmin]);
+  }, [hideHoldHint, openAdmin]);
 
   useEffect(
     () => () => {
       cancelAdminHold();
       if (keyboardReleaseTimerRef.current) clearTimeout(keyboardReleaseTimerRef.current);
+      if (holdHintTimerRef.current) clearTimeout(holdHintTimerRef.current);
     },
     [cancelAdminHold]
   );
@@ -162,7 +188,7 @@ function HouseholdChromeContent({
       }
       startAdminHold();
     },
-    onPointerUp: cancelAdminHold,
+    onPointerUp: releaseAdminHold,
     onPointerCancel: cancelAdminHold,
     onLostPointerCapture: cancelAdminHold,
     onKeyDown: (event: ReactKeyboardEvent<HTMLButtonElement>) => {
@@ -174,7 +200,7 @@ function HouseholdChromeContent({
     onKeyUp: (event: ReactKeyboardEvent<HTMLButtonElement>) => {
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
-      cancelAdminHold();
+      releaseAdminHold();
       keyboardReleaseTimerRef.current = setTimeout(() => {
         keyboardHoldingRef.current = false;
         keyboardReleaseTimerRef.current = null;
@@ -199,6 +225,21 @@ function HouseholdChromeContent({
       }`}
     />
   );
+  // Under the Options button it floats over the page; inside the menu it is a line of its own.
+  const adminHoldHint = (floating: boolean) =>
+    holdHintVisible && (
+      <span
+        role="status"
+        data-testid="admin-hold-hint"
+        className={
+          floating
+            ? "bg-popover text-popover-foreground absolute right-0 top-full z-20 mt-1 whitespace-nowrap rounded-md border px-2 py-1 text-sm shadow-md"
+            : "text-muted-foreground text-sm"
+        }
+      >
+        {t("shell.options.holdHint")}
+      </span>
+    );
   const adminIsOnlyOption = extraOptions.length === 0;
 
   useEffect(() => {
@@ -341,11 +382,13 @@ function HouseholdChromeContent({
                       <span className="relative z-10">{t("shell.options.admin")}</span>
                       {adminHoldProgress}
                     </Button>
+                    {adminHoldHint(false)}
                     {extraOptions.map((entry) => (
                       <Fragment key={entry.id}>{entry.render()}</Fragment>
                     ))}
                   </div>
                 )}
+                {adminIsOnlyOption && adminHoldHint(true)}
               </div>
             )}
           </div>
