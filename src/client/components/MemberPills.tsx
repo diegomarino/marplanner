@@ -91,7 +91,8 @@ export function MemberPills(props: MemberPillsProps) {
       type={type}
       name={type === "radio" ? name : undefined}
       value={member.id}
-      checked={checked}
+      // An off member is never shown as chosen, even if the caller's value still names it.
+      checked={checked && member.offLabel === undefined}
       onChange={() => {
         if (member.offLabel === undefined) onPillChange();
       }}
