@@ -20,7 +20,8 @@ const UNLOCK_TIMEOUT_MS = HOLD_MS + 2_500;
 
 export const DEFAULT_ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
 
-/** Long-press the Options-menu Admin button when entering from a family route,
+/** Long-press the Admin affordance (the Options button itself while Admin is its only entry,
+ * otherwise the Admin item inside the Options menu) when entering from a family route,
  * then use the touch keypad shown directly on the protected route.
  * Waits for the affordance itself first, so callers do not each repeat that expectation.
  * With pointer capture in place, a cancelled press is a real regression and must fail loudly,

@@ -70,8 +70,10 @@ test("the hold SURVIVES a layout shift under a stationary pointer (#793 fixed vi
   const settings = (await settingsResponse.json()) as { locale: { language?: string } };
   const m = messages[resolveLang(settings.locale.language)];
 
-  await page.getByRole("button", { name: m["shell.options.label"], exact: true }).click();
-  await expect(page.getByTestId("admin-affordance")).toBeVisible();
+  // With Admin as its only entry, Options is the Admin affordance itself.
+  await expect(
+    page.getByRole("button", { name: m["shell.options.label"], exact: true })
+  ).toHaveAttribute("data-testid", "admin-affordance");
   await armOneShotShift(page);
 
   // A SINGLE press — the helper has no retry. If pointer capture regresses, this throws.
