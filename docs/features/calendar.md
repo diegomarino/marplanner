@@ -50,8 +50,10 @@ assignments — leaving no orphaned rows.
   the removal holds until the next re-derivation (the feed changed, or a
   household member was edited), which reads the title again and restores them.
   There is no per-event opt-out from title-derived assignment. The Calendar
-  screen offers people editing on local events only; this applies to callers of
-  the assignment endpoint.
+  screen offers participant editing on external events (their feed fields stay
+  read only). Saving keeps a member the title names title-derived rather than
+  turning them into a manual assignment, so a later title change can still drop
+  them, and never stores the same member twice.
 
 ## Requirements
 

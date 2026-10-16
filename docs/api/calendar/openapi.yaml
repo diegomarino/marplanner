@@ -583,6 +583,12 @@ paths:
   /api/calendar/events/{id}/assignments:
     put:
       summary: Replace an event's assignment set atomically (FR-009; strict active-member, FR-006).
+      description: >-
+        The response holds exactly the requested members. On an external event, a title-derived
+        (`ext:`) assignment whose member is still requested is kept as title-derived, so later feed
+        syncs keep owning it; every other requested member is stored as a manual assignment that
+        survives syncs. A title-derived member left out of the set is removed until the next sync
+        reads the title again.
       security:
         - deviceKeyCookie: []
       parameters:
