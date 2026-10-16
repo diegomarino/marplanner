@@ -94,6 +94,7 @@ describe("meals-assembly (real-process smoke, Scenario A)", () => {
         note: null,
         isTombstone: false,
         source: "oneoff",
+        planId: null,
       },
     ]);
 
@@ -139,6 +140,7 @@ describe("meals-assembly (real-process smoke, Scenario A)", () => {
         note: verbatimNote,
         isTombstone: false,
         source: "oneoff",
+        planId: null,
       },
     ]);
   });

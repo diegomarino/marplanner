@@ -246,6 +246,17 @@ export function cellToggleInput(
   };
 }
 
+/** The block-settings PUT body for a row's "every day" control: off on every day while any day
+ * is on, otherwise on every day. Same shapes a cell writes for no day / all seven days. */
+export function rowToggleInput(settings: MemberBlockSettings): {
+  enabled: boolean;
+  weekdays: WeekdayCode[] | null;
+} {
+  return effectiveBlockDays(settings).length > 0
+    ? { enabled: false, weekdays: [] }
+    : { enabled: true, weekdays: null };
+}
+
 const JS_DAY_TO_CODE: readonly WeekdayCode[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
 /** The weekday of a plain `YYYY-MM-DD` date — a calendar date has no timezone (spec A3). */

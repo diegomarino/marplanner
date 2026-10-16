@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DailyBriefingManagement } from "@/admin/DailyBriefingManagement";
@@ -150,6 +150,23 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
     expect(screen.getByTestId("daily-briefing-member-pill-member-ada")).toBeChecked();
     expect(screen.getByTestId("daily-briefing-generate")).toBeVisible();
     expect(screen.queryByTestId("daily-briefing-admin-preview-show")).not.toBeInTheDocument();
+  });
+
+  it("names each member in the Schedule table on their own colour", async () => {
+    mockBackend({ optIns: ["member-ada"] });
+    renderManagement();
+
+    const row = await screen.findByTestId("daily-briefing-member-row-member-ada");
+    const header = within(row).getByRole("rowheader");
+    expect(header).toHaveAccessibleName("Ada");
+    const chip = within(header).getByText("Ada");
+    expect(chip).toHaveClass("bg-[var(--member-color)]", "text-member-avatar-foreground");
+    // In a table cell the chip must be a box of its own, or a long name cannot truncate and
+    // widens the stacked narrow layout.
+    expect(chip).toHaveClass("inline-block", "truncate", "max-w-full");
+    expect(chip.style.getPropertyValue("--member-color")).toBe("var(--color-member-blue-500)");
+    const ben = within(screen.getByTestId("daily-briefing-member-row-member-ben")).getByText("Ben");
+    expect(ben.style.getPropertyValue("--member-color")).toBe("var(--color-member-teal-500)");
   });
 
   it("keyboard reorder persists the complete effective order and reverts on failure", async () => {
@@ -398,6 +415,50 @@ describe("DailyBriefingManagement — Generate-all opt-in interlock (#555)", () 
       "aria-selected",
       "true"
     );
+  });
+
+  it("turns a block off every day, then on every day, from its row control, paused days untouched", async () => {
+    const bodies: unknown[] = [];
+    mockBackend({
+      optIns: ["member-ada"],
+      settings: () =>
+        settingsResponse({
+          memberSchedules: [
+            { memberId: "member-ada", weekdays: ["mon", "tue", "wed", "thu", "fri"] },
+          ],
+        }),
+      handle: (url, init) => {
+        if (url !== "/api/daily-briefing/block-settings/member-ada/weather") return undefined;
+        const body = JSON.parse(String(init?.body)) as object;
+        bodies.push(body);
+        return jsonResponse({
+          memberId: "member-ada",
+          blockType: "weather",
+          params: null,
+          updatedAt: bodies.length,
+          ...body,
+        });
+      },
+    });
+    renderManagement();
+    fireEvent.click(await screen.findByTestId("daily-briefing-tab-blocks"));
+
+    const toggle = await screen.findByTestId("daily-briefing-block-row-toggle-weather");
+    fireEvent.click(toggle);
+    await waitFor(() => expect(bodies).toEqual([{ enabled: false, weekdays: [] }]));
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-block-cell-weather-mon")).not.toBeChecked()
+    );
+    expect(screen.getByTestId("daily-briefing-block-cell-weather-sun")).toBeDisabled();
+
+    fireEvent.click(screen.getByTestId("daily-briefing-block-row-toggle-weather"));
+    await waitFor(() => expect(bodies[1]).toEqual({ enabled: true, weekdays: null }));
+    await waitFor(() =>
+      expect(screen.getByTestId("daily-briefing-block-cell-weather-mon")).toBeChecked()
+    );
+    // The pause schedule is its own row: the block row control never changes it.
+    expect(screen.getByTestId("daily-briefing-schedule-day-sun")).not.toBeChecked();
+    expect(screen.getByTestId("daily-briefing-block-cell-weather-sun")).toBeDisabled();
   });
 
   it("an opted-out member is an off pill that cannot be picked; opt-in stays on Schedule", async () => {

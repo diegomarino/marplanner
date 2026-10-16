@@ -1066,6 +1066,7 @@ function rowToMenuItem(row: MenuRow): MenuItem {
     label,
     isTombstone,
     source: row.meal_plan_id !== null ? "recurring" : "oneoff",
+    planId: row.meal_plan_id,
     recipeId: row.recipe_id,
     note: row.note,
   };

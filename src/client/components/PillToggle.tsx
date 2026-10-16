@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 import { PillControl } from "./PillControl";
 
 /** L2 composed component (wiring and accessibility).
@@ -13,6 +15,9 @@ export interface PillToggleProps {
   /** Localized label text (call-site-owned). */
   label: string;
   disabled?: boolean;
+  /** Draws the coloured pill: a class (or classes) that set `--pill-color` and
+   * `--pill-color-selected`, e.g. the meal-origin classes. The label reserves its bold width. */
+  colorClassName?: string;
   className?: string;
   "data-testid"?: string;
 }
@@ -22,6 +27,7 @@ export function PillToggle({
   onChange,
   label,
   disabled,
+  colorClassName,
   className,
   "data-testid": testId,
 }: PillToggleProps) {
@@ -32,7 +38,9 @@ export function PillToggle({
       onChange={onChange}
       label={label}
       disabled={disabled}
-      className={className}
+      tone={colorClassName ? "colour" : "default"}
+      reserveBoldLabel={colorClassName !== undefined}
+      className={cn(colorClassName, className)}
       data-testid={testId}
     />
   );
