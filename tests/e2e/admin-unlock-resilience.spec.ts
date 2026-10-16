@@ -74,6 +74,10 @@ test("the hold SURVIVES a layout shift under a stationary pointer (#793 fixed vi
   await expect(
     page.getByRole("button", { name: m["shell.options.label"], exact: true })
   ).toHaveAttribute("data-testid", "admin-affordance");
+  // A plain tap does not open Admin, but it says why.
+  await page.getByTestId("admin-affordance").click();
+  await expect(page.getByTestId("admin-hold-hint")).toHaveText(m["shell.options.holdHint"]);
+  await expect(page).toHaveURL((url) => url.pathname === "/");
   await armOneShotShift(page);
 
   // A SINGLE press — the helper has no retry. If pointer capture regresses, this throws.
