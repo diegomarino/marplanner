@@ -8,6 +8,7 @@ import { addCalendarDays, buildWeekDays } from "@/calendar/calendar-presentation
 import type {
   MealEntryEditInput,
   MealEntryInput,
+  MealPlan,
   MenuItem,
   Recipe,
   RecipeEditInput,
@@ -24,11 +25,15 @@ export interface MealsWorkspaceState {
   recipes: Recipe[] | null;
   weekError: string | null;
   recipeError: string | null;
+  /** Meal plans for origin colours and pills; null until the first successful read. */
+  plans: MealPlan[] | null;
+  plansError: string | null;
   pending: boolean;
   goPreviousWeek(): void;
   goCurrentWeek(): void;
   goNextWeek(): void;
   retryWeek(): Promise<void>;
+  retryPlans(): Promise<void>;
   searchRecipes(query: string): Promise<void>;
   createEntry(input: MealEntryInput): Promise<boolean>;
   editEntry(id: string, input: MealEntryEditInput): Promise<boolean>;
@@ -63,6 +68,8 @@ export function useMealsWorkspace(): MealsWorkspaceState {
   const [recipes, setRecipes] = useState<Recipe[] | null>(null);
   const [weekError, setWeekError] = useState<string | null>(null);
   const [recipeError, setRecipeError] = useState<string | null>(null);
+  const [plans, setPlans] = useState<MealPlan[] | null>(null);
+  const [plansError, setPlansError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const anchorRef = useRef<string | null>(null);
   const weekGeneration = useRef(0);
@@ -105,9 +112,22 @@ export function useMealsWorkspace(): MealsWorkspaceState {
     [t]
   );
 
+  const loadPlans = useCallback(async () => {
+    try {
+      setPlans(await readJson<MealPlan[]>("/api/meal-plans"));
+      setPlansError(null);
+    } catch {
+      setPlansError(t("meals.plan.error"));
+    }
+  }, [t]);
+
   useEffect(() => {
     void loadRecipes("");
   }, [loadRecipes]);
+
+  useEffect(() => {
+    void loadPlans();
+  }, [loadPlans]);
 
   useEffect(() => {
     if (timezone === null || anchorDate !== null) return;
@@ -234,11 +254,14 @@ export function useMealsWorkspace(): MealsWorkspaceState {
     recipes,
     weekError,
     recipeError,
+    plans,
+    plansError,
     pending,
     goPreviousWeek,
     goCurrentWeek,
     goNextWeek,
     retryWeek,
+    retryPlans: loadPlans,
     searchRecipes,
     createEntry,
     editEntry,
