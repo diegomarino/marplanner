@@ -917,7 +917,8 @@
             "backup restore lineage classification rejects a readable pre-baseline migration ledger as unsupported_lineage without exposing internals",
             "backup restore lineage classification keeps an unknown future migration as downgrade_rejected",
             "backup restore lineage classification keeps unreadable files as incompatible_backup",
-            "backup restore lineage classification returns unsupported_lineage as a typed 422 route result"
+            "backup restore lineage classification returns unsupported_lineage as a typed 422 route result",
+            "backup restore lineage classification rejects a backup from before the 2026-10-16 migration squash as unsupported_lineage"
           ],
           "tests/boundary/backups-routes.test.ts": [
             "backups routes — scheduler-unavailable fail-safe (review F6) POST /api/backups/snapshot with no scheduler initialized returns 503 scheduler_unavailable (contract envelope, no leaked internals)",
@@ -1414,9 +1415,9 @@
             "data-ownership — 0 forbidden imports per plugin module root (INV-07/FR-002) printing: every relative import resolves into its own subtree, the host-API barrel, or src/shared"
           ],
           "tests/boundary/database-baseline.test.ts": [
-            "database lifecycle current baseline keeps the current baseline plus the reviewed forward migrations",
             "database lifecycle current baseline keeps the reviewed sentinel, both tables, and canonical day-period rows in SQL",
-            "database lifecycle current baseline uses a table oracle re-derived from the current TypeScript schema"
+            "database lifecycle current baseline uses a table oracle re-derived from the current TypeScript schema",
+            "database lifecycle current baseline keeps exactly one migration: the squashed baseline"
           ],
           "tests/boundary/day-periods-active.test.ts": [
             "day-periods-active (RED boundary test) FIXED clock at 13:00 → GET /api/day-periods/active returns activeId='afternoon' (FR-007)",
@@ -1884,15 +1885,6 @@
           "tests/boundary/member-no-side-effects.test.ts": [
             "member-no-side-effects (red-by-design, + turn green) successful create writes exactly one member row and zero Daily Briefing rows/config (FR-022/023)"
           ],
-          "tests/boundary/member-palette-migration.test.ts": [
-            "member palette migration moves every retired colour to its survivor and leaves current colours alone",
-            "member palette migration gives the first free colour when another active member already has the survivor",
-            "member palette migration does not hand out a colour that a retired colour is about to become",
-            "member palette migration moves an archived member straight to the survivor, since archived members hold no colour",
-            "member palette migration leaves only current colours behind",
-            "member palette migration leaves an upgraded database refusing the retired names, like a fresh one",
-            "member palette migration keeps the rows that reference a member through the rebuild"
-          ],
           "tests/boundary/member-referential.test.ts": [
             "member-referential (RED by design, turns green) isActiveMember(activeId) returns true for an active member",
             "member-referential (RED by design, turns green) isActiveMember(archivedId) returns false for an archived member",
@@ -2169,14 +2161,12 @@
             "plugin lifecycle migration lineage temporary migration context handoff is visible to migration SQL on the same connection and is removed after commit",
             "plugin lifecycle migration lineage temporary migration context handoff keeps context-derived writes and migration bookkeeping inside the atomic rollback",
             "plugin lifecycle migration lineage classifies an empty pre-run journal as fresh and seeds exactly nine inactive plugins",
-            "plugin lifecycle migration lineage classifies the recognized baseline journal as prior_baseline and seeds nine active plugins",
             "plugin lifecycle migration lineage enforces the closed registry, durable operation, and plugin journal invariants",
             "plugin lifecycle migration lineage rejects non-canonical timestamps in every lifecycle timestamp column",
-            "plugin lifecycle migration lineage fails closed before mutation for unsupported unknown-only history",
-            "plugin lifecycle migration lineage fails closed before mutation for unsupported baseline-plus-unknown history",
-            "plugin lifecycle migration lineage fails closed when the journal claims the lifecycle migration without its durable metadata",
-            "plugin lifecycle migration lineage does not reclassify or reseed an already-migrated fresh database after repeat and restart",
-            "plugin lifecycle migration lineage does not reclassify or reseed an already-migrated prior_baseline database after repeat and restart"
+            "plugin lifecycle migration lineage fails closed before any snapshot or mutation for unsupported unknown-only history",
+            "plugin lifecycle migration lineage fails closed before any snapshot or mutation for unsupported pre-squash history",
+            "plugin lifecycle migration lineage fails closed when the journal claims the baseline without its durable lifecycle metadata",
+            "plugin lifecycle migration lineage does not reclassify or reseed an already-migrated database after repeat and restart"
           ],
           "tests/boundary/plugin-manifest.test.ts": [
             "first-party plugin manifest inventory maps every ADR-029 candidate to the closed delivered cohort",
@@ -4764,11 +4754,10 @@
             "calendar feed polling job registers under SCHEDULER_DISABLED posture without arming timers",
             "calendar feed polling job drains an active feed before scheduler shutdown completes"
           ],
-          "tests/integration/calendar-feed-sync-migration.test.ts": [
-            "calendar feed synchronization migration migrates a current-baseline source forward and preserves its configured interval",
-            "calendar feed synchronization migration creates the complete STRICT table set with a bounded configurable interval",
-            "calendar feed synchronization migration enforces external identity, status, foreign keys, and delete behavior",
-            "calendar feed synchronization migration enforces valid highlight JSON, enabled state, and unique nonnegative priority"
+          "tests/integration/calendar-feed-sync-schema.test.ts": [
+            "calendar feed synchronization schema creates the complete STRICT table set with a bounded configurable interval",
+            "calendar feed synchronization schema enforces external identity, status, foreign keys, and delete behavior",
+            "calendar feed synchronization schema enforces valid highlight JSON, enabled state, and unique nonnegative priority"
           ],
           "tests/integration/calendar-feed-sync.test.ts": [
             "calendar feed synchronization shares one active retrieval, then publishes and exposes a terminal phase",
@@ -5133,8 +5122,9 @@
           ],
           "tests/integration/database-baseline.test.ts": [
             "database lifecycle fresh current baseline is semantically equivalent to a clean Drizzle generation from the current TypeScript schema",
-            "database lifecycle fresh current baseline installs the re-derived schema, applies the reviewed migrations, and preserves foreign keys",
-            "database lifecycle fresh current baseline contains only canonical fixed rows and no legacy development data"
+            "database lifecycle fresh current baseline contains only canonical fixed rows and no legacy development data",
+            "database lifecycle fresh current baseline installs the re-derived schema from the single baseline and preserves foreign keys",
+            "database lifecycle fresh current baseline creates the ten-colour member palette and the briefing weekday schedule directly"
           ],
           "tests/integration/database-lifecycle-aggregate.test.ts": [
             "database lifecycle aggregate recovery journey recovers the ordered public profile through a later migration while preserving ordinary and failed-restore targets"
@@ -5198,11 +5188,8 @@
           ],
           "tests/integration/plugin-compatibility.test.ts": [
             "plugin lifecycle compatibility matrix fresh-empty: records immutable fresh lineage and exactly nine inactive rows without inference",
-            "plugin lifecycle compatibility matrix prior-baseline: uses only the recognized pre-run journal to seed nine active rows",
             "plugin lifecycle compatibility matrix unsupported-history: fails closed before writing any lifecycle metadata",
             "plugin lifecycle compatibility matrix migrated-fresh: restart preserves immutable lineage, explicit registry state, journals, settings, and owned data",
-            "plugin lifecycle compatibility matrix migrated-prior: restart preserves immutable lineage, explicit registry state, journals, settings, and owned data",
-            "plugin lifecycle compatibility matrix restored-prior-baseline: real restore migrates the restored journal and seeds nine active rows",
             "plugin lifecycle compatibility matrix restored-migrated: a live app reconciles restored canonical state and durable work before first traffic",
             "plugin lifecycle compatibility matrix interrupted-activation: startup settles safe error before API traffic and preserves siblings",
             "plugin lifecycle compatibility matrix interrupted-deactivation: startup drains to inactive before API traffic and keeps an active sibling",
@@ -5226,14 +5213,14 @@
           ],
           "tests/integration/plugin-lifecycle-skeleton.test.ts": [
             "plugin lifecycle runnable server skeleton boots a fresh fixture inactive while keeping liveness minimal and unauthenticated",
-            "plugin lifecycle runnable server skeleton boots a prior-baseline fixture active and preserves its established handler",
             "plugin lifecycle runnable server skeleton never executes an inactive plugin handler and returns the stable safe unavailable response",
             "plugin lifecycle runnable server skeleton never executes an errored plugin handler and returns the stable safe unavailable response",
             "plugin lifecycle runnable server skeleton executes an active plugin handler through the same stable dispatch gate",
             "plugin lifecycle runnable server skeleton does not finish application startup before lifecycle reconciliation settles",
             "plugin lifecycle runnable server skeleton fails an interrupted activation closed before plugin traffic is accepted",
             "plugin lifecycle runnable server skeleton completes an interrupted deactivation before plugin traffic is accepted",
-            "plugin lifecycle runnable server skeleton contains one errored plugin without blocking the host or sibling catalog reads"
+            "plugin lifecycle runnable server skeleton contains one errored plugin without blocking the host or sibling catalog reads",
+            "plugin lifecycle runnable server skeleton boots an active plugin and preserves its established handler"
           ],
           "tests/integration/plugin-reconciliation.test.ts": [
             "plugin lifecycle reconciliation contains a migrations fault to one plugin while its active sibling remains usable",
@@ -5547,7 +5534,7 @@
           "branches": 95
         },
         "minimumRates": {
-          "lines": 100.0,
+          "lines": 100,
           "statements": 95.62,
           "functions": 97.67,
           "branches": 77.89
@@ -5742,10 +5729,10 @@
           "branches": 8
         },
         "minimumRates": {
-          "lines": 100.0,
-          "statements": 100.0,
-          "functions": 100.0,
-          "branches": 100.0
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/client/admin/network-devices/DeviceStatus.tsx": {
@@ -7821,10 +7808,10 @@
       "src/server/db/weekday-integrity.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 14,
-          "statements": 19,
-          "functions": 2,
-          "branches": 16
+          "lines": 12,
+          "statements": 15,
+          "functions": 1,
+          "branches": 14
         },
         "minimumRates": {
           "lines": 100,
