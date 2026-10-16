@@ -5,8 +5,9 @@ import { DailyBriefingManagement } from "@/admin/DailyBriefingManagement";
 import { LanguageProvider } from "@/i18n";
 
 /** — the daily-briefing ADMIN panel settings-layer extensions (FR-022): schedule +
- * trigger BINDING, block order, and per-member per-block settings. The existing generate/opt-in
- * flow is covered by daily-briefing-management.test.tsx; this file covers only the new surfaces.
+ * trigger BINDING (Schedule tab), the blocks × weekdays matrix (Blocks tab, opted-in member
+ * only) and the stored-image preview (Briefings tab). The existing generate/opt-in flow is
+ * covered by daily-briefing-management.test.tsx; this file covers only the settings surfaces.
  */
 
 type FetchCall = Parameters<typeof globalThis.fetch>;
@@ -26,6 +27,41 @@ const activeMembers = [
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status });
+}
+
+/** Ada opted in: the Blocks matrix and the Briefings workspace render only for an opted-in
+ * selected member, and the default selection is the first opted-in one. */
+const ADA_OPTED_IN = [{ memberId: "member-ada", enabled: true }];
+
+/** Applies one automation edit; Save turning enabled proves the draft is dirty. */
+async function editAutomation(edit: () => void, applied: () => void) {
+  edit();
+  applied();
+  await waitFor(() =>
+    expect(screen.getByTestId("daily-briefing-admin-settings-save")).toBeEnabled()
+  );
+}
+
+function changeGenerationTime(value: string) {
+  return editAutomation(
+    () =>
+      fireEvent.change(screen.getByTestId("daily-briefing-admin-generation-time"), {
+        target: { value },
+      }),
+    () => expect(screen.getByTestId("daily-briefing-admin-generation-time")).toHaveValue(value)
+  );
+}
+
+function setTriggerBinding(bound: boolean) {
+  const checkbox = () => screen.getByTestId("daily-briefing-admin-trigger-binding");
+  return editAutomation(
+    () => fireEvent.click(checkbox()),
+    () => expect((checkbox() as HTMLInputElement).checked).toBe(bound)
+  );
+}
+
+function putCalls(mockFetch: ReturnType<typeof vi.fn>) {
+  return (mockFetch.mock.calls as FetchCall[]).filter(([, init]) => init?.method === "PUT");
 }
 
 function defaultSettings(overrides: Partial<Record<string, unknown>> = {}) {
@@ -92,20 +128,23 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
 
     renderManagement();
 
-    const timeInput = await screen.findByTestId("daily-briefing-admin-generation-time");
-    fireEvent.change(timeInput, { target: { value: "07:30" } });
-    fireEvent.click(screen.getByTestId("daily-briefing-admin-trigger-binding"));
+    await screen.findByTestId("daily-briefing-admin-generation-time");
+    await changeGenerationTime("07:30");
+    await setTriggerBinding(true);
     fireEvent.click(screen.getByTestId("daily-briefing-admin-settings-save"));
 
     await waitFor(() => {
       expect(putBody).toEqual({ generationTime: "07:30", autoPrintTrigger: "morning_complete" });
     });
-    expect(
-      await screen.findByTestId("daily-briefing-admin-trigger-binding-state")
-    ).toHaveTextContent("Bound");
+    // Saved: the draft equals the stored values again, so Save is disabled until the next change.
+    await waitFor(() => {
+      expect(screen.getByTestId("daily-briefing-admin-trigger-binding")).toBeEnabled();
+      expect(screen.getByTestId("daily-briefing-admin-settings-save")).toBeDisabled();
+    });
+    expect(screen.getByTestId("daily-briefing-admin-trigger-binding")).toBeChecked();
 
     // Unbind: must send null, never false.
-    fireEvent.click(screen.getByTestId("daily-briefing-admin-trigger-binding"));
+    await setTriggerBinding(false);
     fireEvent.click(screen.getByTestId("daily-briefing-admin-settings-save"));
     await waitFor(() => {
       expect(putBody).toEqual({ generationTime: "07:30", autoPrintTrigger: null });
@@ -137,51 +176,13 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
 
     renderManagement();
 
-    fireEvent.change(await screen.findByTestId("daily-briefing-admin-generation-time"), {
-      target: { value: "07:30" },
-    });
+    await screen.findByTestId("daily-briefing-admin-generation-time");
+    await changeGenerationTime("07:30");
     fireEvent.click(screen.getByTestId("daily-briefing-admin-settings-save"));
 
     expect(await screen.findByTestId("daily-briefing-admin-settings-error")).toHaveTextContent(
-      "Failed to save Daily Briefing settings."
+      "Failed to save the daily briefing settings."
     );
-    assertNoImplicitRegenerate(mockFetch);
-  });
-
-  it("block order editor sends the ordered array including a repeated type", async () => {
-    let putBody: unknown;
-    const mockFetch = vi.fn(async (...args: FetchCall) => {
-      const [input, init] = args;
-      const url = String(input);
-      if (url === "/api/settings") {
-        return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
-      }
-      if (url === "/api/members") return jsonResponse(activeMembers);
-      if (url === "/api/daily-briefing/opt-in") return jsonResponse([]);
-      if (url === "/api/daily-briefing/block-order" && init?.method === "PUT") {
-        putBody = JSON.parse(String(init.body));
-        return jsonResponse({ blockOrder: putBody });
-      }
-      if (url === "/api/daily-briefing/settings") return jsonResponse(defaultSettings());
-      throw new Error(`unexpected fetch: ${url}`);
-    });
-    vi.stubGlobal("fetch", mockFetch);
-
-    renderManagement();
-
-    const addSelect = await screen.findByTestId("daily-briefing-admin-block-order-add-select");
-    fireEvent.change(addSelect, { target: { value: "dadJoke" } });
-    fireEvent.click(screen.getByTestId("daily-briefing-admin-block-order-add-button"));
-    fireEvent.change(addSelect, { target: { value: "dadJoke" } });
-    fireEvent.click(screen.getByTestId("daily-briefing-admin-block-order-add-button"));
-    fireEvent.change(addSelect, { target: { value: "wordOfDay" } });
-    fireEvent.click(screen.getByTestId("daily-briefing-admin-block-order-add-button"));
-
-    fireEvent.click(screen.getByTestId("daily-briefing-admin-block-order-save"));
-
-    await waitFor(() => {
-      expect(putBody).toEqual([{ type: "dadJoke" }, { type: "dadJoke" }, { type: "wordOfDay" }]);
-    });
     assertNoImplicitRegenerate(mockFetch);
   });
 
@@ -193,7 +194,7 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
         return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
       }
       if (url === "/api/members") return jsonResponse(activeMembers);
-      if (url === "/api/daily-briefing/opt-in") return jsonResponse([]);
+      if (url === "/api/daily-briefing/opt-in") return jsonResponse(ADA_OPTED_IN);
       if (url === "/api/daily-briefing/settings") return jsonResponse(defaultSettings());
       throw new Error(`unexpected fetch: ${url}`);
     });
@@ -201,10 +202,8 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
 
     renderManagement();
 
-    fireEvent.change(
-      await screen.findByTestId("daily-briefing-admin-block-settings-member-select"),
-      { target: { value: "member-ada" } }
-    );
+    fireEvent.click(await screen.findByTestId("daily-briefing-tab-blocks"));
+    await screen.findByTestId("daily-briefing-block-matrix");
 
     // "message" is not corpus-backed — no language override control at all (FR-008).
     expect(
@@ -229,7 +228,7 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
   });
 
   it("weekday toggles always send the canonical mon..sun order regardless of click order", async () => {
-    let putBody: unknown;
+    const putBodies: unknown[] = [];
     const mockFetch = vi.fn(async (...args: FetchCall) => {
       const [input, init] = args;
       const url = String(input);
@@ -237,20 +236,21 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
         return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
       }
       if (url === "/api/members") return jsonResponse(activeMembers);
-      if (url === "/api/daily-briefing/opt-in") return jsonResponse([]);
+      if (url === "/api/daily-briefing/opt-in") return jsonResponse(ADA_OPTED_IN);
       if (url === "/api/daily-briefing/settings") return jsonResponse(defaultSettings());
       if (
         url === "/api/daily-briefing/block-settings/member-ada/wordOfDay" &&
         init?.method === "PUT"
       ) {
-        putBody = JSON.parse(String(init.body));
+        const body = JSON.parse(String(init.body)) as object;
+        putBodies.push(body);
+        // Echo the body into the stored row, so the next click starts from it.
         return jsonResponse({
           memberId: "member-ada",
           blockType: "wordOfDay",
-          enabled: true,
-          weekdays: (putBody as { weekdays: unknown }).weekdays,
           params: null,
           updatedAt: 1,
+          ...body,
         });
       }
       throw new Error(`unexpected fetch: ${url}${init?.method ? ` (${init.method})` : ""}`);
@@ -259,29 +259,42 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
 
     renderManagement();
 
-    fireEvent.change(
-      await screen.findByTestId("daily-briefing-admin-block-settings-member-select"),
-      { target: { value: "member-ada" } }
-    );
+    fireEvent.click(await screen.findByTestId("daily-briefing-tab-blocks"));
+    const cell = (day: string) => screen.getByTestId(`daily-briefing-block-cell-wordOfDay-${day}`);
+    await screen.findByTestId("daily-briefing-block-matrix");
 
     // All 7 start checked (weekdays: null = all days). Uncheck in a non-canonical click order:
     // fri, then mon — the resulting persisted array must still read mon..sun canonically.
-    fireEvent.click(screen.getByTestId("daily-briefing-admin-block-weekday-wordOfDay-fri"));
+    fireEvent.click(cell("fri"));
     await waitFor(() => {
-      expect(putBody).toEqual({ weekdays: ["mon", "tue", "wed", "thu", "sat", "sun"] });
+      expect(putBodies.at(-1)).toEqual({
+        enabled: true,
+        weekdays: ["mon", "tue", "wed", "thu", "sat", "sun"],
+      });
     });
+    await waitFor(() => expect(cell("fri")).not.toBeChecked());
+    await waitFor(() => expect(cell("mon")).toBeEnabled());
 
-    fireEvent.click(screen.getByTestId("daily-briefing-admin-block-weekday-wordOfDay-mon"));
+    fireEvent.click(cell("mon"));
     await waitFor(() => {
-      expect(putBody).toEqual({ weekdays: ["tue", "wed", "thu", "sat", "sun"] });
+      expect(putBodies.at(-1)).toEqual({
+        enabled: true,
+        weekdays: ["tue", "wed", "thu", "sat", "sun"],
+      });
     });
+    await waitFor(() => expect(cell("mon")).not.toBeChecked());
+    await waitFor(() => expect(cell("fri")).toBeEnabled());
 
-    //: re-check fri (mon still unchecked) — the re-added day must land back
+    // Re-check fri (mon still unchecked) — the re-added day must land back
     // in its canonical mon..sun slot (between thu and sat), never appended at the end.
-    fireEvent.click(screen.getByTestId("daily-briefing-admin-block-weekday-wordOfDay-fri"));
+    fireEvent.click(cell("fri"));
     await waitFor(() => {
-      expect(putBody).toEqual({ weekdays: ["tue", "wed", "thu", "fri", "sat", "sun"] });
+      expect(putBodies.at(-1)).toEqual({
+        enabled: true,
+        weekdays: ["tue", "wed", "thu", "fri", "sat", "sun"],
+      });
     });
+    expect(putBodies).toHaveLength(3);
 
     assertNoImplicitRegenerate(mockFetch);
   });
@@ -294,7 +307,7 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
         return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
       }
       if (url === "/api/members") return jsonResponse(activeMembers);
-      if (url === "/api/daily-briefing/opt-in") return jsonResponse([]);
+      if (url === "/api/daily-briefing/opt-in") return jsonResponse(ADA_OPTED_IN);
       if (url === "/api/daily-briefing/settings") return jsonResponse(defaultSettings());
       throw new Error(`unexpected fetch: ${url}`);
     });
@@ -302,24 +315,16 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
 
     renderManagement();
 
-    fireEvent.change(
-      await screen.findByTestId("daily-briefing-admin-block-settings-member-select"),
-      { target: { value: "member-ada" } }
-    );
+    fireEvent.click(await screen.findByTestId("daily-briefing-tab-blocks"));
 
     expect(
       await screen.findByTestId("daily-briefing-admin-block-default-disabled-onThisDay")
-    ).toBeInTheDocument();
-    const onThisDayEnabled = screen.getByTestId(
-      "daily-briefing-admin-block-enabled-onThisDay"
-    ) as HTMLInputElement;
-    expect(onThisDayEnabled.checked).toBe(false);
-
-    // Every other type defaults enabled — spot-check one.
-    const dadJokeEnabled = screen.getByTestId(
-      "daily-briefing-admin-block-enabled-dadJoke"
-    ) as HTMLInputElement;
-    expect(dadJokeEnabled.checked).toBe(true);
+    ).toBeVisible();
+    // Every other type defaults enabled on every day — dadJoke stands in for them.
+    for (const day of ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]) {
+      expect(screen.getByTestId(`daily-briefing-block-cell-onThisDay-${day}`)).not.toBeChecked();
+      expect(screen.getByTestId(`daily-briefing-block-cell-dadJoke-${day}`)).toBeChecked();
+    }
 
     assertNoImplicitRegenerate(mockFetch);
   });
@@ -336,7 +341,7 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
         return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
       }
       if (url === "/api/members") return jsonResponse(activeMembers);
-      if (url === "/api/daily-briefing/opt-in") return jsonResponse([]);
+      if (url === "/api/daily-briefing/opt-in") return jsonResponse(ADA_OPTED_IN);
       if (url === "/api/daily-briefing/settings") return jsonResponse(defaultSettings());
       if (url === "/api/printing/status") return jsonResponse({ active: true });
       if (url.startsWith("/api/daily-briefing/history/")) {
@@ -345,8 +350,22 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
       if (/^\/api\/daily-briefing\/[^/]+\/[^/]+\/preview\.png/.test(url)) {
         return new Response("{}", { status: 404 });
       }
-      if (/^\/api\/daily-briefing\/[^/]+\/\d{4}-\d{2}-\d{2}$/.test(url)) {
-        return jsonResponse({ generated: false });
+      // A stored briefing for every date: the image frame shows only for a stored briefing.
+      const read = /^\/api\/daily-briefing\/([^/]+)\/(\d{4}-\d{2}-\d{2})$/.exec(url);
+      if (read) {
+        return jsonResponse({
+          generated: true,
+          briefing: {
+            id: `b-${read[2]}`,
+            memberId: read[1],
+            date: read[2],
+            status: "ready",
+            payload: { schemaVersion: 2, blocks: [] },
+            createdAt: 1,
+            updatedAt: 1,
+          },
+          printedStatus: "none",
+        });
       }
       throw new Error(`unexpected fetch: ${url}`);
     });
@@ -358,7 +377,6 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
     fireEvent.change(await screen.findByTestId("daily-briefing-admin-preview-date"), {
       target: { value: "2026-09-07" },
     });
-    fireEvent.click(screen.getByTestId("daily-briefing-admin-preview-show"));
 
     const previewCalls = (pattern: RegExp) =>
       (mockFetch.mock.calls as FetchCall[]).filter(([input]) => pattern.test(String(input)));
@@ -373,7 +391,10 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
     mount.content = "/family/planner";
     document.head.append(mount);
     try {
-      fireEvent.click(screen.getByTestId("daily-briefing-admin-preview-show"));
+      // The date input loads on change (no Show button): step away and back to refetch.
+      const dateInput = screen.getByTestId("daily-briefing-admin-preview-date");
+      fireEvent.change(dateInput, { target: { value: "2026-09-08" } });
+      fireEvent.change(dateInput, { target: { value: "2026-09-07" } });
       await waitFor(() =>
         expect(
           previewCalls(
@@ -390,7 +411,7 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
 
   // ── FOLD-B — data-loss gate: no write derives from an unloaded snapshot ──────
 
-  it("block order Save is disabled while the settings GET is pending, then enabled once it resolves", async () => {
+  it("automation and matrix stay absent while the settings GET is pending, then appear", async () => {
     let resolveSettingsGet: ((response: Response) => void) | undefined;
     const settingsGetPending = new Promise<Response>((resolve) => {
       resolveSettingsGet = resolve;
@@ -404,7 +425,7 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
         );
       }
       if (url === "/api/members") return Promise.resolve(jsonResponse(activeMembers));
-      if (url === "/api/daily-briefing/opt-in") return Promise.resolve(jsonResponse([]));
+      if (url === "/api/daily-briefing/opt-in") return Promise.resolve(jsonResponse(ADA_OPTED_IN));
       if (url === "/api/daily-briefing/settings") return settingsGetPending;
       throw new Error(`unexpected fetch: ${url}`);
     });
@@ -412,24 +433,27 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
 
     renderManagement();
 
-    // The block-order Add/Save controls render unconditionally (this is the exact bug: they are
-    // NOT gated behind the same "still loading" placeholder the Settings card itself uses).
-    const saveButton = await screen.findByTestId("daily-briefing-admin-block-order-save");
-    expect(saveButton).toBeDisabled();
-    // The Settings card's own Save button is behind a loading placeholder until the GET
-    // resolves, so it isn't in the DOM yet — that placeholder-vs-gate distinction is exactly why
-    // the block-order card needed its OWN independent gate on `settingsLoaded`.
+    // No write may derive from an unloaded snapshot: neither the automation card's Save nor the
+    // matrix exists until the settings GET resolves.
+    await screen.findByTestId("daily-briefing-opt-in-member-ada");
     expect(screen.queryByTestId("daily-briefing-admin-settings-save")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("daily-briefing-tab-blocks"));
+    expect(screen.getByTestId("daily-briefing-blocks-workspace")).toBeVisible();
+    expect(screen.queryByTestId("daily-briefing-block-matrix")).not.toBeInTheDocument();
+    expect(putCalls(mockFetch)).toHaveLength(0);
 
     resolveSettingsGet?.(jsonResponse(defaultSettings()));
 
-    await waitFor(() => {
-      expect(saveButton).not.toBeDisabled();
-    });
-    expect(await screen.findByTestId("daily-briefing-admin-settings-save")).not.toBeDisabled();
+    expect(await screen.findByTestId("daily-briefing-block-matrix")).toBeVisible();
+    fireEvent.click(screen.getByTestId("daily-briefing-tab-schedule"));
+    // Present, and disabled until the draft differs from the loaded values.
+    expect(await screen.findByTestId("daily-briefing-admin-settings-save")).toBeDisabled();
+    expect(putCalls(mockFetch)).toHaveLength(0);
+    assertNoImplicitRegenerate(mockFetch);
   });
 
-  it("block order Save stays disabled after the settings GET fails", async () => {
+  it("after the settings GET fails nothing can be written and Retry recovers", async () => {
+    let settingsFail = true;
     const mockFetch = vi.fn(async (...args: FetchCall) => {
       const [input] = args;
       const url = String(input);
@@ -437,30 +461,35 @@ describe("DailyBriefingManagement — admin settings-layer extensions", () => {
         return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
       }
       if (url === "/api/members") return jsonResponse(activeMembers);
-      if (url === "/api/daily-briefing/opt-in") return jsonResponse([]);
-      if (url === "/api/daily-briefing/settings")
-        return jsonResponse({ error: "internal_error" }, 500);
+      if (url === "/api/daily-briefing/opt-in") return jsonResponse(ADA_OPTED_IN);
+      if (url === "/api/daily-briefing/settings") {
+        return settingsFail
+          ? jsonResponse({ error: "internal_error" }, 500)
+          : jsonResponse(defaultSettings());
+      }
       throw new Error(`unexpected fetch: ${url}`);
     });
     vi.stubGlobal("fetch", mockFetch);
 
     renderManagement();
 
-    const saveButton = await screen.findByTestId("daily-briefing-admin-block-order-save");
-    await waitFor(() => {
-      expect(screen.getByTestId("daily-briefing-admin-settings-error")).toBeInTheDocument();
-    });
-    expect(saveButton).toBeDisabled();
-    expect(screen.getByTestId("daily-briefing-admin-settings-save")).toBeDisabled();
+    const loadError = await screen.findByTestId("daily-briefing-settings-load-error");
+    expect(loadError).toHaveAttribute("role", "alert");
+    expect(screen.queryByTestId("daily-briefing-admin-settings-save")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("daily-briefing-tab-blocks"));
+    expect(screen.queryByTestId("daily-briefing-block-matrix")).not.toBeInTheDocument();
+    // The concrete data-loss scenario (a PUT built from empty local state after a failed GET)
+    // has no control to start it from.
+    expect(putCalls(mockFetch)).toHaveLength(0);
 
-    // A click while disabled must never reach the network — the concrete data-loss scenario
-    // (a PUT built from empty local state after a failed GET) never fires.
-    fireEvent.click(saveButton);
-    expect(
-      (mockFetch.mock.calls as FetchCall[]).filter(([input, init]) => {
-        return String(input) === "/api/daily-briefing/block-order" && init?.method === "PUT";
-      })
-    ).toHaveLength(0);
+    settingsFail = false;
+    fireEvent.click(screen.getByTestId("daily-briefing-settings-retry"));
+    expect(await screen.findByTestId("daily-briefing-block-matrix")).toBeVisible();
+    expect(screen.queryByTestId("daily-briefing-settings-load-error")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("daily-briefing-tab-schedule"));
+    expect(await screen.findByTestId("daily-briefing-admin-settings-save")).toBeDisabled();
+    expect(putCalls(mockFetch)).toHaveLength(0);
+    assertNoImplicitRegenerate(mockFetch);
   });
 });
 
@@ -475,7 +504,7 @@ it.each(["en", "es"] as const)(
         if (url === "/api/settings")
           return jsonResponse({ locale: { language, timezone: "UTC", weekStartDay: 1 } });
         if (url === "/api/members") return jsonResponse(activeMembers);
-        if (url === "/api/daily-briefing/opt-in") return jsonResponse([]);
+        if (url === "/api/daily-briefing/opt-in") return jsonResponse(ADA_OPTED_IN);
         if (url === "/api/daily-briefing/settings")
           return jsonResponse(
             defaultSettings({ blockOrder: [{ type: "animalFact" }, { type: "trivia" }] })
@@ -496,15 +525,18 @@ it.each(["en", "es"] as const)(
     );
     try {
       renderManagement();
-      const select = await screen.findByTestId("daily-briefing-admin-block-order-add-select");
+      fireEvent.click(await screen.findByTestId("daily-briefing-tab-blocks"));
+      const animalFactRow = await screen.findByTestId(
+        "daily-briefing-admin-block-settings-row-animalFact"
+      );
       await waitFor(() =>
-        expect(select.querySelector('option[value="animalFact"]')).toHaveTextContent(
+        expect(animalFactRow).toHaveTextContent(
           language === "es" ? "Curiosidad animal" : "Animal fact"
         )
       );
-      expect(select.querySelector('option[value="shotgun"]')).toHaveTextContent(
-        language === "es" ? "Copiloto" : "Shotgun"
-      );
+      expect(
+        screen.getByTestId("daily-briefing-admin-block-settings-row-shotgun")
+      ).toHaveTextContent(language === "es" ? "Copiloto" : "Shotgun");
       const difficulty = screen.getByTestId("daily-briefing-admin-block-difficulty-trivia");
       expect(difficulty.querySelector('option[value="hard"]')).toHaveTextContent(
         language === "es" ? "Difícil" : "Hard"

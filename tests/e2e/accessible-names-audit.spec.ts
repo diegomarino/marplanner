@@ -1,7 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { openAdminSection } from "./admin-nav";
 import { unlockAdmin } from "./admin-unlock";
-import { messages, resolveLang } from "../../src/client/i18n/messages";
 
 /** accessible-names-audit.spec.ts — runtime companion to `tools/dev/audit-accessible-names.mjs`
  * (follow-up).
@@ -158,21 +157,18 @@ test("runtime accessible-name audit: Day Periods list (default view) has no unna
 // computes a non-empty name for it, so the previously-known single violation is gone. Converted
 // from the exact-known-violation-set shape to the same `toEqual([])` shape the member-create test
 // above already uses, now that there is nothing left to pin.
-test("runtime accessible-name audit: Day Periods edit mode has no unnamed control", async ({
+test("runtime accessible-name audit: Day Periods (always editable) has no unnamed control", async ({
   page,
 }) => {
   await reachAdmin(page);
   await openAdminSection(page, "admin-nav-settings");
   await expect(page.getByTestId(/^day-period-/)).toHaveCount(4, { timeout: 10_000 });
 
-  const settingsResp = await page.request.get("/api/settings");
-  expect(settingsResp.ok()).toBeTruthy();
-  const settings = (await settingsResp.json()) as { locale: { language: string } };
-  const m = messages[resolveLang(settings.locale.language)];
-
-  const afternoonCard = page.getByTestId("day-period-afternoon");
-  await afternoonCard.getByRole("button", { name: m["dayPeriods.action.edit"] }).click();
-  await expect(page.locator('input[type="time"]')).toBeVisible({ timeout: 5000 });
+  // An unsaved draft, so the enabled Save state is audited too.
+  const afternoonInput = page.getByTestId("day-periods-start-input-afternoon");
+  await expect(afternoonInput).toBeVisible({ timeout: 5000 });
+  await afternoonInput.fill("11:31");
+  await expect(page.getByTestId("day-periods-save-afternoon")).toBeEnabled();
 
   const tree = (await page.locator("body").ariaSnapshotJSON()) as AriaNode[];
   const violations: Violation[] = [];

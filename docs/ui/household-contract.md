@@ -55,14 +55,19 @@ free one.
 
 Reminders are listed at `/admin/reminders`, one row per rule naming who it applies to and on which
 days with an Active/Off badge. "Add rule" and the row's edit icon open one dialog; editing can switch
-a rule between all members and specific members. Deleting asks for confirmation. A failed load can
+a rule between all members and specific members. The dialog's choices are pills: kind and
+applies-to as segmented choices, weekdays in the household's week-start order, and for specific
+members a pill in each member's colour with a weekday-pill row beneath it while selected. Deleting
+asks for confirmation. A failed load can
 be retried; a calendar-gated rule's row opens its dry-run panel. Messages (`/admin/daily-messages`)
-keeps its 14-day editor and offers Retry when a load fails.
+chooses the member with member pills, keeps its 14-day editor, alternates the rows' background per
+week from the household week start (the first chunk is plain, then shaded, then plain) and offers
+Retry when a load fails.
 
 Routines and chores are managed from `/admin/routines`: a list of routines grouped by day period,
 in start-time order, beside the selected routine's detail — a weekday grid of the children it is
 assigned to, its chores (drag to reorder, also with the keyboard) and actions to edit, assign, add a
-chore or delete. Routines, chores and assignments are edited in dialogs. Deleting a routine or a
+chore or delete. Routines, chores and assignments are edited in dialogs. The assignment dialog lists each child with their colour chip and a one-line weekday pill row in the household week-start order; an assignment that was deactivated is marked as such. Deleting a routine or a
 chore, changing, reactivating or deactivating an existing assignment, and moving a routine to
 another day period ask for confirmation, because each changes the live streak.
 
@@ -72,9 +77,13 @@ The ordered capability table is:
 2. `/admin/members` — members
 3. `/admin/routines` — routines and chores
 4. `/admin/reminders` — reminders
-5. `/admin/meals` — meals and recipes
+5. `/admin/meals` — Meals: editable week menu (the family meal grid; a cell adds a one-off or, via "Every <weekday>", a recurring entry in an active plan; a meal opens for content edit or delete, and recurring changes apply every week), meal plans each listing their recurring entries by weekday with an in-card add form and activate/deactivate, then recipes
 6. `/admin/daily-messages` — daily messages
-7. `/admin/daily-briefing` — Briefing: Blocks tab (member pills, per-weekday pause switches over the block matrix, block order, generation time and auto-print binding, "settings changed" notice) and Preview / Generate tab (opt-in, Generate all, member pills, 30-day history, regenerate, view PNG, print to the queue, payload, image states); tabs are local state, no sub-paths
+7. `/admin/daily-briefing` — Briefing: three tabs (local state, no sub-paths).
+   - Schedule (default): automatic generation time and auto-print after morning chores (Save enabled when changed); Generate briefings for a chosen date (Generate for all members); a Members table with the per-member opt-in (its only home), the briefing days summary, the result for the chosen date and Blocks/Briefings shortcuts.
+   - Blocks and Briefings share one member pill bar (opted-out members marked "off", gated with a Turn on notice).
+   - Blocks: per-member blocks × weekdays matrix in household week-start order, with a "Briefing runs" pause row, inline block parameters and drag/keyboard reorder of the household block order; "settings changed" notice links to Briefings.
+   - Briefings: 30-day history, date, Generate/Regenerate, View PNG, Print to the queue, payload and image states; the paused notice links to Blocks.
 8. `/admin/telemetry` — client telemetry
 9. `/admin/backups` — backups: snapshot with success feedback, drag-and-drop .db upload, colour-coded types, relative dates, typed-filename restore, download with progress
 10. `/admin/time-announcements` — time announcements (card list; create/edit dialog; delete confirmation)
@@ -82,9 +91,10 @@ The ordered capability table is:
 12. `/admin/printing` — Printer: Settings tab (plugin and auto-print state, paper width, Bluetooth
     printer with pair/re-pair, name, device id and UUIDs, saved to `printer`/`printerTransport`) and
     Diagnostics tab (test print, reset today's print, recent prints)
-13. `/admin/settings` — language, week start and time zone, plus the day periods and, while the
-    weather plugin is active, the weather location, with one Save for language, week start, time
-    zone and weather (the day periods keep their own save)
+13. `/admin/settings` — language, week start and time zone in the left column and, while the
+    weather plugin is active, the weather location in the right column (stacked on narrow
+    content), with one Save below both columns that is enabled only while a value differs from the
+    stored one; below, the four day periods in a row, each always editable with its own Save
 
 Every destination is reached from the admin sidebar, grouped as Household, Daily briefing and
 System.

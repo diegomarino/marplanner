@@ -16,7 +16,7 @@ describe("MealsManagement — household timezone setup error", () => {
     cleanup();
   });
 
-  it("shows a retry action when settings fail, then loads dates after retry succeeds", async () => {
+  it("shows a retry action when settings fail, then loads the household week after retry succeeds", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-01-15T22:00:00.000Z"));
 
@@ -42,12 +42,18 @@ describe("MealsManagement — household timezone setup error", () => {
 
     expect(await screen.findByText("Failed to load meals data.")).toBeInTheDocument();
     const retryButton = screen.getByRole("button", { name: "Retry" });
-    expect(screen.queryByTestId("meals-menu-date-input")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("meal-plan-grid")).not.toBeInTheDocument();
 
     fireEvent.click(retryButton);
 
+    // The week is requested for the household date (Kiritimati is already on the 16th while
+    // UTC is still on the 15th), and the grid marks that date's column.
     await waitFor(() => {
-      expect(screen.getByTestId("meals-menu-date-input")).toHaveValue(HOUSEHOLD_TODAY);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining(`/api/menu/week?date=${HOUSEHOLD_TODAY}`),
+        expect.anything()
+      );
+      expect(screen.getByTestId(`meal-day-heading-${HOUSEHOLD_TODAY}`)).toBeInTheDocument();
     });
     expect(settingsAttempts).toBe(2);
   });

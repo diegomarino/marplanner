@@ -40,6 +40,8 @@ export interface MealPlanGridProps {
   onNext(): void;
   onAdd(date: string, slot: Slot): void;
   onSelect(date: string, item: MenuItem): void;
+  /** Heading level of the week range: "h1" on the family board, "h3" under an admin panel heading. */
+  titleAs?: "h1" | "h3";
 }
 
 export function MealPlanGrid({
@@ -52,6 +54,7 @@ export function MealPlanGrid({
   onNext,
   onAdd,
   onSelect,
+  titleAs = "h1",
 }: MealPlanGridProps) {
   const { t, language } = useTranslation();
   const range = weekDates.length
@@ -60,7 +63,12 @@ export function MealPlanGrid({
   return (
     <section className="flex h-full min-w-0 flex-col" aria-label={t("meals.week.title")}>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4 px-1">
-        {range && <h1 className="text-3xl font-bold tracking-tight">{range}</h1>}
+        {range &&
+          (titleAs === "h3" ? (
+            <h3 className="text-2xl font-bold tracking-tight">{range}</h3>
+          ) : (
+            <h1 className="text-3xl font-bold tracking-tight">{range}</h1>
+          ))}
         <div className="flex items-center gap-2">
           <Button
             type="button"

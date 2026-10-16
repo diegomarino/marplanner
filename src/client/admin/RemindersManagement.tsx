@@ -21,14 +21,11 @@ import { useTranslation } from "@/i18n";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import {
-  WeekdayPicker,
-  CANONICAL_WEEKDAY_ORDER,
-  weekdayDisplayOrder,
-  type WeekdayLabels,
-} from "@/components/WeekdayPicker";
-import { CheckboxField } from "@/components/CheckboxField";
-import { RadioField } from "@/components/RadioField";
+import { WeekdayPicker, type WeekdayLabels } from "@/components/WeekdayPicker";
+import { ChoicePills } from "@/components/ChoicePills";
+import { MemberPills } from "@/components/MemberPills";
+import { PillToggle } from "@/components/PillToggle";
+import { ReminderMemberDays } from "./ReminderMemberDays";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,15 +36,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { NATIVE_SELECT_CLASSES, BARE_CHECKBOX_INPUT_CLASSES } from "@/lib/recipes";
+import { NATIVE_SELECT_CLASSES } from "@/lib/recipes";
 
 /* RemindersManagement — the reminders admin page: a list of rules, one add/edit Dialog
- * (scheduled all/specific with the member x weekday matrix, calendar_gated with query and
+ * (scheduled all/specific with per-member weekday pills, calendar_gated with query and
  * members), a per-row dry-run panel for calendar_gated rules, and a themed delete ConfirmDialog.
  * Only the first load and an explicit Retry show the loading state; later refreshes are silent so
- * open dialogs and panels survive. `AssignmentMatrixGrid` is `WeekdayPicker`'s documented
- * deliberate exception (a member x weekday table), so it orders its own columns with
- * `weekdayDisplayOrder`. */
+ * open dialogs and panels survive. The dialog's choices are shared pills (`ChoicePills`,
+ * `WeekdayPicker`, `ReminderMemberDays`, `MemberPills`, `PillToggle`). */
 
 export const WEEKDAY_LABEL_KEYS: Record<Weekday, MessageKey> = {
   mon: "reminders.weekday.mon",
@@ -592,30 +588,9 @@ function ReminderFormDialog({
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const toggleAssignmentDay = (memberId: string, day: Weekday) => {
-    setAssignmentDraft((prev) => {
-      const current = prev[memberId] ?? [];
-      const selected = new Set(current);
-      if (selected.has(day)) {
-        selected.delete(day);
-      } else {
-        selected.add(day);
-      }
-      // Stored in canonical mon..sun order whatever the click or display order.
-      const next = CANONICAL_WEEKDAY_ORDER.filter((d) => selected.has(d));
-      return { ...prev, [memberId]: next };
-    });
-  };
-
   const toggleQueryField = (field: ReminderQueryField) => {
     setQueryFields((prev) =>
       prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
-    );
-  };
-
-  const toggleCgMember = (memberId: string) => {
-    setCgMemberIds((prev) =>
-      prev.includes(memberId) ? prev.filter((id) => id !== memberId) : [...prev, memberId]
     );
   };
 
@@ -732,22 +707,23 @@ function ReminderFormDialog({
                   : t("reminders.kind.scheduled")}
               </span>
             ) : (
-              <>
-                <RadioField
-                  name="reminder-kind"
-                  value="scheduled"
-                  checked={kind === "scheduled"}
-                  onChange={() => setKind("scheduled")}
-                  label={t("reminders.kind.scheduled")}
-                />
-                <RadioField
-                  name="reminder-kind"
-                  value="calendar_gated"
-                  checked={kind === "calendar_gated"}
-                  onChange={() => setKind("calendar_gated")}
-                  label={t("reminders.kind.calendarGated")}
-                />
-              </>
+              <ChoicePills<ReminderKind>
+                value={kind}
+                onChange={setKind}
+                groupLabel={t("reminders.management.kindLabel")}
+                options={[
+                  {
+                    value: "scheduled",
+                    label: t("reminders.kind.scheduled"),
+                    "data-testid": "reminder-kind-scheduled",
+                  },
+                  {
+                    value: "calendar_gated",
+                    label: t("reminders.kind.calendarGated"),
+                    "data-testid": "reminder-kind-calendar_gated",
+                  },
+                ]}
+              />
             )}
           </div>
 
@@ -763,19 +739,22 @@ function ReminderFormDialog({
             <span className="text-muted-foreground text-control">
               {t("reminders.management.targetingLabel")}
             </span>
-            <RadioField
-              name="reminder-targeting-mode"
-              value="apply_to_all"
-              checked={targetingMode === "apply_to_all"}
-              onChange={() => setTargetingMode("apply_to_all")}
-              label={t("reminders.management.targetingApplyToAll")}
-            />
-            <RadioField
-              name="reminder-targeting-mode"
-              value="specific"
-              checked={targetingMode === "specific"}
-              onChange={() => setTargetingMode("specific")}
-              label={t("reminders.management.targetingSpecific")}
+            <ChoicePills<TargetingMode>
+              value={targetingMode}
+              onChange={setTargetingMode}
+              groupLabel={t("reminders.management.targetingLabel")}
+              options={[
+                {
+                  value: "apply_to_all",
+                  label: t("reminders.management.targetingApplyToAll"),
+                  "data-testid": "reminder-targeting-apply_to_all",
+                },
+                {
+                  value: "specific",
+                  label: t("reminders.management.targetingSpecific"),
+                  "data-testid": "reminder-targeting-specific",
+                },
+              ]}
             />
           </div>
 
@@ -790,44 +769,70 @@ function ReminderFormDialog({
                 testIdPrefix="reminders-weekday-form"
               />
             ) : (
-              <div className="overflow-x-auto">
-                <AssignmentMatrixGrid
-                  t={t}
+              <div className="flex flex-col gap-2">
+                <span className="text-muted-foreground text-control">
+                  {t("reminders.specific.membersLabel")}
+                </span>
+                <ReminderMemberDays
                   members={activeMembers}
-                  weekdaysByMember={assignmentDraft}
-                  onToggle={toggleAssignmentDay}
+                  value={assignmentDraft}
+                  onChange={setAssignmentDraft}
+                  labels={weekdayLabels(t)}
+                  weekdaysLabel={t("reminders.management.weekdaysLabel")}
+                  emptyMessage={t("reminders.matrix.noActiveMembers")}
+                  hint={t("reminders.specific.membersHint")}
                 />
               </div>
             )
           ) : (
             <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-1 text-sm">
+              <label className="flex flex-col gap-1 text-sm">
                 {t("reminders.calendarGated.queryLabel")}
                 <Input
                   type="text"
                   placeholder={t("reminders.calendarGated.queryPlaceholder")}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="w-auto"
                 />
               </label>
               <div className="flex gap-2 items-center flex-wrap">
                 <span className="text-muted-foreground text-control">
                   {t("reminders.calendarGated.queryFieldsLabel")}
                 </span>
-                <QueryFieldsPicker t={t} selected={queryFields} onToggle={toggleQueryField} />
+                <div
+                  role="group"
+                  aria-label={t("reminders.calendarGated.queryFieldsLabel")}
+                  className="flex flex-wrap gap-2"
+                >
+                  {QUERY_FIELDS.map((field) => (
+                    <PillToggle
+                      key={field}
+                      checked={queryFields.includes(field)}
+                      onChange={() => toggleQueryField(field)}
+                      label={t(QUERY_FIELD_LABEL_KEYS[field])}
+                      data-testid={`reminders-query-field-${field}`}
+                    />
+                  ))}
+                </div>
               </div>
               {targetingMode === "specific" && (
-                <div>
+                <div className="flex flex-col gap-2">
                   <span className="text-muted-foreground text-control">
                     {t("reminders.calendarGated.membershipTitle")}
                   </span>
-                  <MembershipChecklist
-                    members={activeMembers}
-                    emptyMessage={t("reminders.calendarGated.noActiveMembers")}
-                    selectedMemberIds={cgMemberIds}
-                    onToggle={toggleCgMember}
-                  />
+                  {activeMembers.length === 0 ? (
+                    <p className="text-muted-foreground text-control">
+                      {t("reminders.calendarGated.noActiveMembers")}
+                    </p>
+                  ) : (
+                    <MemberPills
+                      members={activeMembers}
+                      value={cgMemberIds}
+                      onChange={setCgMemberIds}
+                      groupLabel={t("reminders.calendarGated.membershipTitle")}
+                      testIdPrefix="reminders-cg-member"
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -846,123 +851,5 @@ function ReminderFormDialog({
         </form>
       </DialogContent>
     </Dialog>
-  );
-}
-
-interface QueryFieldsPickerProps {
-  t: (key: MessageKey) => string;
-  selected: ReminderQueryField[];
-  onToggle: (field: ReminderQueryField) => void;
-}
-
-function QueryFieldsPicker({ t, selected, onToggle }: QueryFieldsPickerProps) {
-  return (
-    <div className="flex gap-2 items-center flex-wrap">
-      {QUERY_FIELDS.map((field) => (
-        <CheckboxField
-          key={field}
-          checked={selected.includes(field)}
-          onChange={() => onToggle(field)}
-          label={t(QUERY_FIELD_LABEL_KEYS[field])}
-        />
-      ))}
-    </div>
-  );
-}
-
-interface MembershipChecklistProps {
-  members: Member[];
-  emptyMessage: string;
-  selectedMemberIds: string[];
-  onToggle: (memberId: string) => void;
-}
-
-function MembershipChecklist({
-  members,
-  emptyMessage,
-  selectedMemberIds,
-  onToggle,
-}: MembershipChecklistProps) {
-  if (members.length === 0) {
-    return <p className="text-muted-foreground text-control">{emptyMessage}</p>;
-  }
-
-  return (
-    <div className="flex flex-col gap-1">
-      {members.map((member) => (
-        <CheckboxField
-          key={member.id}
-          checked={selectedMemberIds.includes(member.id)}
-          onChange={() => onToggle(member.id)}
-          label={member.displayName}
-        />
-      ))}
-    </div>
-  );
-}
-
-interface AssignmentMatrixGridProps {
-  t: (key: MessageKey) => string;
-  members: Member[];
-  weekdaysByMember: Record<string, Weekday[]>;
-  onToggle: (memberId: string, day: Weekday) => void;
-}
-
-/** The ONE render site `WeekdayPicker`'s own file header names as its deliberate exception: a
- * member × weekday table, not an independently-toggled set — day labels appear once in
- * `<thead>`, and each `<td>` holds a bare checkbox whose `onChange` carries a `memberId`
- * dimension `WeekdayPicker`'s signature has no room for. Its columns follow the household week
- * start through `weekdayDisplayOrder` (storage order stays canonical; the matrix only displays),
- * and styles each cell's checkbox via the `BARE_CHECKBOX_INPUT_CLASSES` recipe (—
- * see the style guide) rather than `CheckboxField`, which would render a visible day label in
- * every cell instead of the one already in the column header.
- */
-function AssignmentMatrixGrid({
-  t,
-  members,
-  weekdaysByMember,
-  onToggle,
-}: AssignmentMatrixGridProps) {
-  const order = weekdayDisplayOrder(useHouseholdSettings().weekStartDay);
-  if (members.length === 0) {
-    return (
-      <p className="text-muted-foreground text-control">{t("reminders.matrix.noActiveMembers")}</p>
-    );
-  }
-
-  return (
-    <table className="text-sm">
-      <thead>
-        <tr>
-          <th className="text-left pr-2">{t("reminders.matrix.member")}</th>
-          {order.map((day) => (
-            <th key={day} className="px-1 text-xs font-normal">
-              {t(WEEKDAY_LABEL_KEYS[day])}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {members.map((member) => {
-          const days = weekdaysByMember[member.id] ?? [];
-          return (
-            <tr key={member.id}>
-              <td className="pr-2">{member.displayName}</td>
-              {order.map((day) => (
-                <td key={day} className="text-center">
-                  <input
-                    type="checkbox"
-                    checked={days.includes(day)}
-                    onChange={() => onToggle(member.id, day)}
-                    aria-label={`${member.displayName} — ${t(WEEKDAY_LABEL_KEYS[day])}`}
-                    className={BARE_CHECKBOX_INPUT_CLASSES}
-                  />
-                </td>
-              ))}
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
   );
 }
