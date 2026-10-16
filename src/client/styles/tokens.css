@@ -46,6 +46,15 @@
   --meal-lunch: oklch(0.5 0.11 150);
   --meal-snack: oklch(0.55 0.17 25);
   --meal-dinner: oklch(0.48 0.12 275);
+  /* Meal origins: one muted hue per meal plan (assigned by creation order) and a warm grey for
+     one-off meals, kept apart from the high-chroma member colours and the amber "today" accent. */
+  --meal-origin-oneoff: oklch(0.62 0.01 60);
+  --meal-origin-plan-1: oklch(0.52 0.09 150); /* sage */
+  --meal-origin-plan-2: oklch(0.52 0.11 30); /* clay */
+  --meal-origin-plan-3: oklch(0.5 0.08 250); /* slate */
+  --meal-origin-plan-4: oklch(0.5 0.09 330); /* plum */
+  --meal-origin-plan-5: oklch(0.52 0.08 200); /* lagoon */
+  --meal-origin-plan-6: oklch(0.5 0.07 60); /* umber */
   /* Comfortable density — kiosk overrides live in globals.css. */
   --control-height: 36px;
   --control-font-size: 14px;
