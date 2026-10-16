@@ -441,24 +441,77 @@ describe("RemindersManagement — deleting a reminder opens a themed ConfirmDial
 });
 
 describe("RemindersManagement — rows name their members and days", () => {
-  it("summarises all-members, specific and calendar-gated rules", async () => {
+  /** A member pill is MemberChip: the member's own colour, filled. */
+  const PILL_CLASS = "bg-[var(--member-color)]";
+
+  it("summarises all-members, specific and calendar-gated rules with member pills", async () => {
     mockBackend({
-      reminders: () => json([REMINDER_SCHEDULED, REMINDER_SPECIFIC, REMINDER_CALENDAR_GATED]),
+      reminders: () =>
+        json([
+          REMINDER_SCHEDULED,
+          REMINDER_SPECIFIC,
+          {
+            ...REMINDER_CALENDAR_GATED,
+            assignments: [
+              { id: "a1", memberId: "m1", weekdays: [], active: true },
+              { id: "a4", memberId: "m2", weekdays: [], active: true },
+            ],
+          },
+        ]),
       members: () => json([MEMBER, MEMBER_B]),
     });
     renderSurface();
     await screen.findByText("Pack the gym bag");
 
-    expect(
-      within(screen.getByTestId("reminder-r1")).getByText("All members · Mon")
-    ).toBeInTheDocument();
-    expect(
-      within(screen.getByTestId("reminder-r3")).getByText("Ari: Mon, Wed · Bea: Fri")
-    ).toBeInTheDocument();
-    expect(
-      within(screen.getByTestId("reminder-r2")).getByText("Match text: vet · Ari")
-    ).toBeInTheDocument();
+    const all = screen.getByTestId("reminder-who-r1");
+    expect(within(all).getByText("All members")).toHaveClass("bg-muted");
+    expect(within(all).getByText("Mon")).toBeInTheDocument();
+    expect(all.querySelector(`.${CSS.escape(PILL_CLASS)}`)).toBeNull();
+
+    const specific = screen.getByTestId("reminder-who-r3");
+    expect(within(specific).getByText("Ari")).toHaveClass(PILL_CLASS);
+    expect(within(specific).getByText("Bea")).toHaveClass(PILL_CLASS);
+    expect(within(specific).getByText("Mon, Wed")).toBeInTheDocument();
+    expect(within(specific).getByText("Fri")).toBeInTheDocument();
+
+    const gated = screen.getByTestId("reminder-who-r2");
+    expect(within(gated).getByText("Match text: vet")).toBeInTheDocument();
+    expect(within(gated).getByText("Ari")).toHaveClass(PILL_CLASS);
+    expect(within(gated).getByText("Bea")).toHaveClass(PILL_CLASS);
     expect(within(screen.getByTestId("reminder-r1")).getByText("Active")).toBeInTheDocument();
+  });
+
+  it("a calendar-gated rule for all members shows the neutral label, no member pill", async () => {
+    mockBackend({
+      reminders: () =>
+        json([{ ...REMINDER_CALENDAR_GATED, targetingMode: "apply_to_all", assignments: [] }]),
+    });
+    renderSurface();
+    const gated = await screen.findByTestId("reminder-who-r2");
+    expect(within(gated).getByText("All members")).toHaveClass("bg-muted");
+    expect(gated.querySelector(`.${CSS.escape(PILL_CLASS)}`)).toBeNull();
+  });
+
+  it("skips archived and unknown members in a row's pills", async () => {
+    mockBackend({
+      reminders: () =>
+        json([
+          {
+            ...REMINDER_CALENDAR_GATED,
+            assignments: [
+              { id: "a1", memberId: "m1", weekdays: [], active: true },
+              { id: "a4", memberId: "m2", weekdays: [], active: true },
+              { id: "a5", memberId: "zz", weekdays: [], active: true },
+            ],
+          },
+        ]),
+      members: () => json([MEMBER, { ...MEMBER_B, lifecycle: "archived" }]),
+    });
+    renderSurface();
+    const gated = await screen.findByTestId("reminder-who-r2");
+    expect(within(gated).getByText("Ari")).toHaveClass(PILL_CLASS);
+    expect(within(gated).queryByText("Bea")).not.toBeInTheDocument();
+    expect(gated.querySelectorAll(`.${CSS.escape(PILL_CLASS)}`)).toHaveLength(1);
   });
 
   it("shows Off for an inactive rule", async () => {
@@ -736,6 +789,104 @@ describe("RemindersManagement — the dialog's pill controls", () => {
     const dialog = await screen.findByTestId("reminder-form-dialog");
     expect(within(dialog).getByTestId("reminders-cg-member-m1")).toBeChecked();
     expect(within(dialog).getByTestId("reminders-cg-member-m2")).not.toBeChecked();
+  });
+
+  const TWO_MEMBER_GATED = {
+    ...REMINDER_CALENDAR_GATED,
+    assignments: [
+      { id: "a1", memberId: "m1", weekdays: [], active: true },
+      { id: "a4", memberId: "m2", weekdays: [], active: true },
+    ],
+  };
+
+  it("creates a calendar-gated rule for two members", async () => {
+    const { mockFetch, dialog } = await openCreate();
+    fireEvent.change(within(dialog).getByPlaceholderText("Reminder text"), {
+      target: { value: "Shin pads" },
+    });
+    fireEvent.click(within(dialog).getByRole("radio", { name: "Calendar-gated" }));
+    fireEvent.click(within(dialog).getByLabelText("Specific members"));
+    fireEvent.change(within(dialog).getByLabelText("Match text"), {
+      target: { value: "football" },
+    });
+    fireEvent.click(within(dialog).getByTestId("reminders-cg-member-m1"));
+    fireEvent.click(within(dialog).getByTestId("reminders-cg-member-m2"));
+    fireEvent.click(within(dialog).getByTestId("reminder-save"));
+
+    await waitFor(() => expect(postBody(mockFetch)).toBeTruthy());
+    expect(postBody(mockFetch).assignments).toEqual([
+      { memberId: "m1", weekdays: [] },
+      { memberId: "m2", weekdays: [] },
+    ]);
+  });
+
+  it("editing a two-member calendar-gated rule preselects both and saves both", async () => {
+    const mockFetch = mockBackend({
+      reminders: () => json([TWO_MEMBER_GATED]),
+      members: () => json([MEMBER, MEMBER_B]),
+    });
+    renderSurface();
+    await screen.findByText("Vet appointment prep");
+    fireEvent.click(screen.getByTestId("reminder-edit-r2"));
+    const dialog = await screen.findByTestId("reminder-form-dialog");
+    expect(within(dialog).getByTestId("reminders-cg-member-m1")).toBeChecked();
+    expect(within(dialog).getByTestId("reminders-cg-member-m2")).toBeChecked();
+    fireEvent.click(within(dialog).getByTestId("reminder-save"));
+
+    await waitFor(() => {
+      const patch = (mockFetch.mock.calls as FetchCall[]).find(
+        ([u, init]) => String(u) === "/api/reminders/r2" && init?.method === "PATCH"
+      );
+      expect(patch).toBeTruthy();
+      expect(JSON.parse(String(patch![1]!.body)).assignments).toEqual([
+        { memberId: "m1", weekdays: [] },
+        { memberId: "m2", weekdays: [] },
+      ]);
+    });
+  });
+
+  it("the dry-run member picker offers only the rule's own members (all active ones for all members)", async () => {
+    const MEMBER_C = { ...MEMBER, id: "m3", displayName: "Cy", colorKey: "red" };
+    mockBackend({
+      reminders: () =>
+        json([
+          TWO_MEMBER_GATED,
+          { ...TWO_MEMBER_GATED, id: "r4", targetingMode: "apply_to_all", assignments: [] },
+        ]),
+      members: () => json([MEMBER, MEMBER_B, MEMBER_C]),
+    });
+    renderSurface();
+    const options = async (rowId: string) => {
+      const row = await screen.findByTestId(`reminder-${rowId}`);
+      fireEvent.click(within(row).getByRole("button", { name: "Dry-run" }));
+      const select = await within(row).findByRole("combobox");
+      return Array.from((select as HTMLSelectElement).options)
+        .filter((o) => o.value !== "")
+        .map((o) => o.textContent);
+    };
+    expect(await options("r2")).toEqual(["Ari", "Bea"]);
+    expect(await options("r4")).toEqual(["Ari", "Bea", "Cy"]);
+  });
+
+  it("the dry-run panel drops a chosen member the rule no longer targets after a refresh", async () => {
+    let rule: object = TWO_MEMBER_GATED;
+    mockBackend({
+      reminders: () => json([rule]),
+      members: () => json([MEMBER, MEMBER_B]),
+    });
+    renderSurface();
+    const row = await screen.findByTestId("reminder-r2");
+    fireEvent.click(within(row).getByRole("button", { name: "Dry-run" }));
+    const select = (await within(row).findByRole("combobox")) as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: "m2" } });
+    expect(within(row).getByRole("button", { name: "Run" })).toBeEnabled();
+
+    // The rule now targets Ari only; a silent refresh (here, after a toggle) keeps the panel open.
+    rule = { ...TWO_MEMBER_GATED, assignments: [TWO_MEMBER_GATED.assignments[0]] };
+    fireEvent.click(within(row).getByTestId("reminder-toggle-r2"));
+    await waitFor(() => expect(Array.from(select.options).map((o) => o.value)).toEqual(["", "m1"]));
+    expect(select.value).toBe("");
+    expect(within(row).getByRole("button", { name: "Run" })).toBeDisabled();
   });
 
   it("shows the empty message instead of an empty group when there are no active members", async () => {
