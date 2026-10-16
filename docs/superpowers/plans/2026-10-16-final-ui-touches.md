@@ -42,13 +42,13 @@ Test `tests/client/household-options-menu.test.tsx`; e2e check in
 `tests/e2e/admin-unlock-resilience.spec.ts`.
 
 - [ ] Failing tests: (a) pointerDown+pointerUp on `admin-affordance` → `getByTestId("admin-hold-hint")`
-  has text "Hold to open Admin", URL unchanged; (b) pointerDown, advance 3000 ms, pointerUp,
-  click → no hint; (c) keyDown Enter + keyUp Enter → hint; (d) hint gone after 2500 ms.
+      has text "Hold to open Admin", URL unchanged; (b) pointerDown, advance 3000 ms, pointerUp,
+      click → no hint; (c) keyDown Enter + keyUp Enter → hint; (d) hint gone after 2500 ms.
 - [ ] Implement: `holdHintVisible` state + timer ref; `releaseAdminHold()` used by `onPointerUp`
-  and `onKeyUp`: if `adminHoldTimerRef.current` is pending → show hint (auto-hide 2500 ms);
-  then `cancelAdminHold()`. `startAdminHold` hides the hint. Render
-  `<span role="status" data-testid="admin-hold-hint">` absolutely under the button. Key
-  `shell.options.holdHint`.
+      and `onKeyUp`: if `adminHoldTimerRef.current` is pending → show hint (auto-hide 2500 ms);
+      then `cancelAdminHold()`. `startAdminHold` hides the hint. Render
+      `<span role="status" data-testid="admin-hold-hint">` absolutely under the button. Key
+      `shell.options.holdHint`.
 - [ ] Run tests, e2e tap check (tap → hint visible, still on `/`), commit.
 
 ### Task 2: Block row "every day" toggle
@@ -61,10 +61,10 @@ Test `tests/client/household-options-menu.test.tsx`; e2e check in
 `BlockMatrixProps.onToggleRow: (blockType: BlockRegistryType) => void`.
 
 - [ ] Failing tests: helper — any day on → `{enabled:false, weekdays:[]}`; none on (incl.
-  `enabled:false`) → `{enabled:true, weekdays:null}`. Matrix — column header "Every day";
-  button `daily-briefing-block-row-toggle-{type}` text "Off" when on, "On" when off, aria
-  "Turn {block} off every day"/"Turn {block} on every day", disabled when saving, calls
-  `onToggleRow(type)`.
+      `enabled:false`) → `{enabled:true, weekdays:null}`. Matrix — column header "Every day";
+      button `daily-briefing-block-row-toggle-{type}` text "Off" when on, "On" when off, aria
+      "Turn {block} off every day"/"Turn {block} on every day", disabled when saving, calls
+      `onToggleRow(type)`.
 - [ ] Implement helper, column + button, wire `onToggleRow` → `saveBlock(type, rowToggleInput(...))`.
 - [ ] Run tests, commit.
 
@@ -74,9 +74,9 @@ Test `tests/client/household-options-menu.test.tsx`; e2e check in
 `tests/client/daily-briefing-management.test.tsx`.
 
 - [ ] Failing test: the member row header contains an element with the member name whose class
-  includes `bg-[var(--member-color)]` (MemberChip), and no dot.
+      includes `bg-[var(--member-color)]` (MemberChip), and no dot.
 - [ ] Replace the dot + name span with `<MemberChip member={member} />`; drop the
-  `MEMBER_DOT_CLASS` import if unused. Run, commit.
+      `MEMBER_DOT_CLASS` import if unused. Run, commit.
 
 ### Task 4: Plugin toggle and muted inactive card
 
@@ -85,17 +85,17 @@ Test `tests/client/household-options-menu.test.tsx`; e2e check in
 `docs/ui/plugin-management.md`.
 
 - [ ] Failing tests: card shows `getByRole("button", { name: "Weather", pressed: false })` with
-  text "Inactive"; clicking it calls activate; active card's toggle `pressed: true`; inactive card
-  has `bg-muted`, active/errored do not; busy → toggle disabled with `aria-busy`.
+      text "Inactive"; clicking it calls activate; active card's toggle `pressed: true`; inactive card
+      has `bg-muted`, active/errored do not; busy → toggle disabled with `aria-busy`.
 - [ ] Implement: `StatusToggle` in the header (`pressed={state==="active"}`, label
-  `<span data-testid="plugin-state-{id}">{state text}</span>`, `accessibleName={label}`,
-  `busy`, `aria-describedby` operation text, ref for focus return — forward via a wrapper span
-  ref if StatusToggle lacks ref); remove the bottom action button; `bg-muted` when inactive.
+      `<span data-testid="plugin-state-{id}">{state text}</span>`, `accessibleName={label}`,
+      `busy`, `aria-describedby` operation text, ref for focus return — forward via a wrapper span
+      ref if StatusToggle lacks ref); remove the bottom action button; `bg-muted` when inactive.
 - [ ] Update existing unit/e2e selectors that used "Activate X"/"Deactivate X". Run, commit.
 
 ### Task 5: Docs, inventory, gates
 
 - [ ] Update `docs/ui/household-contract.md` (Options hint, blocks row, schedule chips) and
-  `docs/ui/plugin-management.md`.
+      `docs/ui/plugin-management.md`.
 - [ ] Resync `tests/fixtures/assembly-cohort.json`; run `check:standard` in a clean detached
-  checkout, then `check:aggregate-only` with the ports; commit.
+      checkout, then `check:aggregate-only` with the ports; commit.

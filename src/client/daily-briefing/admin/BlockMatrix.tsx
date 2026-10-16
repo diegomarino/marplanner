@@ -334,9 +334,7 @@ function BlockRow({
           data-testid={`daily-briefing-block-row-toggle-${type}`}
           disabled={saving}
           aria-label={t(
-            on.size > 0
-              ? "dailyBriefing.admin.rowOffEveryDay"
-              : "dailyBriefing.admin.rowOnEveryDay"
+            on.size > 0 ? "dailyBriefing.admin.rowOffEveryDay" : "dailyBriefing.admin.rowOnEveryDay"
           ).replace("{block}", label)}
           onClick={() => onToggleRow(type)}
         >
