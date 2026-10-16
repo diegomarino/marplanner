@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -17,8 +17,6 @@ export interface PillControlProps {
   label: string;
   /** Visible muted text after the label, e.g. "inactive". Part of the accessible name. */
   note?: string;
-  /** Decorative node before the label (hidden from assistive tech), e.g. a colour dot. */
-  adornment?: ReactNode;
   /** Custom properties the caller's classes read (e.g. `--member-color`). Semantic tokens only. */
   tokenStyle?: CSSProperties;
   /** Reserve the semibold label's width so a caller that bolds the checked state never shifts
@@ -39,7 +37,6 @@ export function PillControl({
   onChange,
   label,
   note,
-  adornment,
   tokenStyle,
   reserveBoldLabel,
   name,
@@ -72,11 +69,6 @@ export function PillControl({
         onChange={(event) => onChange(event.target.checked)}
         className="absolute inset-0 h-[var(--control-height)] w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
       />
-      {adornment ? (
-        <span aria-hidden="true" className="mr-2 inline-flex shrink-0">
-          {adornment}
-        </span>
-      ) : null}
       {reserveBoldLabel ? (
         <span
           data-text={label}
