@@ -39,6 +39,15 @@ dialog. Meals are read-only and link to `/meals`.
 Agenda all-day items precede timed items. Text/icon/weight identify temporal states without colour.
 Multi-member items render every active assigned identity plus text.
 
+## Meals
+
+`/meals` and the admin Preview share one week grid. Each meal is tinted with its origin: a warm grey
+for a one-off, and one automatic colour per meal plan by plan creation order (never stored, never
+user-chosen). Free-text meals are italic. Origin pills ("One-off" and every active plan) highlight
+and never filter: selected origins' meals take a stronger tint, solid border and semibold text, the
+rest grey out in place and stay editable. The family add dialog creates one-offs only. Today's
+meals on Home are unchanged.
+
 ## Administration
 
 Once unlocked, the top bar becomes the admin bar: a home icon back to the household screens and a
@@ -80,7 +89,7 @@ The ordered capability table is:
 2. `/admin/members` — members
 3. `/admin/routines` — routines and chores
 4. `/admin/reminders` — reminders
-5. `/admin/meals` — Meals: editable week menu (the family meal grid; a cell adds a one-off or, via "Every <weekday>", a recurring entry in an active plan; a meal opens for content edit or delete, and recurring changes apply every week), meal plans each listing their recurring entries by weekday with an in-card add form and activate/deactivate, then recipes
+5. `/admin/meals` — Meals: three tabs (local state, no sub-paths). Preview (default): the editable family week grid with origin pills; a cell adds a one-off or, via "Every <weekday>", a recurring entry in an active plan (preselected when exactly one plan pill is selected); a meal opens for content edit or delete, and recurring changes apply every week. Meal plans: each plan lists its recurring entries by weekday with an in-card add form and activate/deactivate. Recipes: search, create, edit, delete with dependent counts.
 6. `/admin/daily-messages` — daily messages
 7. `/admin/daily-briefing` — Briefing: three tabs (local state, no sub-paths).
    - Schedule (default): automatic generation time and auto-print after morning chores (Save enabled when changed); Generate briefings for a chosen date (Generate for all members); a Members table with the per-member opt-in (its only home), the briefing days summary, the result for the chosen date and Blocks/Briefings shortcuts.
