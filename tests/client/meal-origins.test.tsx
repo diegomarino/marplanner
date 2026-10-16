@@ -103,6 +103,21 @@ describe("meal origins", () => {
     expect(result.current.pills.map((pill) => pill.id)).toEqual(["oneoff"]);
   });
 
+  it("keeps a dropped plan unselected when the plan comes back", () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <LanguageProvider>{children}</LanguageProvider>
+    );
+    let plans: MealPlan[] = [plan("a", "A", 1)];
+    const { result, rerender } = renderHook(() => useMealOrigins(plans), { wrapper });
+    act(() => result.current.setSelected(["a"]));
+    plans = [plan("a", "A", 1, false)];
+    rerender();
+    plans = [plan("a", "A", 1)];
+    rerender();
+    expect(result.current.selected).toEqual([]);
+    expect(result.current.preselectPlanId).toBeUndefined();
+  });
+
   it("works with no plans loaded yet", () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <LanguageProvider>{children}</LanguageProvider>
