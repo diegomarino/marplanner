@@ -453,7 +453,8 @@ describe("TodayChores", () => {
     expect(child.style.getPropertyValue("--member-color")).toBe("var(--color-member-pink-500)");
     expect(within(child).getByTestId("today-chores-member-badge")).toHaveClass(
       "bg-member-pink-500",
-      "text-member-pink-foreground"
+      // White on every member colour, like the member pills (owner decision 2026-10-16).
+      "text-member-avatar-foreground"
     );
     // The labels are visually hidden behind the flame and check icons, but still read out.
     expect(child).toHaveTextContent("Streak: 4");
