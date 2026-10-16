@@ -889,6 +889,31 @@ describe("RemindersManagement — the dialog's pill controls", () => {
     expect(within(row).getByRole("button", { name: "Run" })).toBeDisabled();
   });
 
+  it("a member change while a dry-run is running frees the panel instead of leaving it on Running", async () => {
+    const mockFetch = mockBackend({
+      reminders: () => json([TWO_MEMBER_GATED]),
+      members: () => json([MEMBER, MEMBER_B]),
+    });
+    renderSurface();
+    const row = await screen.findByTestId("reminder-r2");
+    fireEvent.click(within(row).getByRole("button", { name: "Dry-run" }));
+    const select = (await within(row).findByRole("combobox")) as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: "m2" } });
+
+    mockFetch.mockImplementation((input: string | URL, init?: Parameters<typeof fetch>[1]) => {
+      const url = String(input);
+      if (/\/api\/reminders\/[^/]+\/dry-run$/.test(url) && init?.method === "POST") {
+        return new Promise<Response>(() => {});
+      }
+      throw new Error(`unexpected fetch after override: ${url}`);
+    });
+    fireEvent.click(within(row).getByRole("button", { name: "Run" }));
+    expect(await within(row).findByRole("button", { name: "Running…" })).toBeDisabled();
+
+    fireEvent.change(select, { target: { value: "m1" } });
+    expect(await within(row).findByRole("button", { name: "Run" })).toBeEnabled();
+  });
+
   it("shows the empty message instead of an empty group when there are no active members", async () => {
     const { dialog } = await openCreate({ members: () => json([]) });
     fireEvent.click(within(dialog).getByLabelText("Specific members"));
