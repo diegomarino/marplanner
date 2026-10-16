@@ -2167,6 +2167,7 @@
             "plugin lifecycle migration lineage fails closed before any snapshot or mutation for unsupported unknown-only history",
             "plugin lifecycle migration lineage fails closed before any snapshot or mutation for unsupported pre-squash history",
             "plugin lifecycle migration lineage refuses a ledger with a migration this build does not know, even with nothing pending",
+            "plugin lifecycle migration lineage refuses to lay the baseline under a ledger that already records a later migration",
             "plugin lifecycle migration lineage fails closed when the journal claims the baseline without its durable lifecycle metadata",
             "plugin lifecycle migration lineage does not reclassify or reseed an already-migrated database after repeat and restart"
           ],

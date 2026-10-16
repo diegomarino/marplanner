@@ -367,6 +367,18 @@ describe("plugin lifecycle migration lineage", () => {
     );
   });
 
+  it("refuses to lay the baseline under a ledger that already records a later migration", () => {
+    writeLifecycleFixture(migrationsDir);
+    // A later migration this build does ship, recorded without the baseline beneath it.
+    fs.writeFileSync(path.join(migrationsDir, "0001_later.sql"), "SELECT 1;", "utf8");
+    seedMigrationJournal(["0001_later.sql"]);
+
+    expect(() => runMigrations(migrationsDir, { now: () => FROZEN_NOW_MS })).toThrow(
+      "Unsupported migration history."
+    );
+    expect(lifecycleTableNames()).toEqual([]);
+  });
+
   it("fails closed when the journal claims the baseline without its durable lifecycle metadata", () => {
     writeLifecycleFixture(migrationsDir);
     seedMigrationJournal([BASELINE_FILE]);
