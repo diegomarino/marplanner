@@ -361,7 +361,7 @@ export interface BoardChore {
 /** BoardDayPeriod — one of the four fixed periods on a board column.
  * * `id` is typed `PeriodId`, not the wire-level `string` this interface
  * originally declared — `day_periods.id` is schema-enforced at the DB layer
- * (`day_periods_id_check`, drizzle/0003) and `getBoard` (server/modules/routines/index.ts)
+ * (`day_periods_id_check`, drizzle/0000_baseline.sql) and `getBoard` (server/modules/routines/index.ts)
  * always sources it from `listDayPeriods`, which already returns `DayPeriodDTO["id"]` (=
  * `PeriodId`). Narrowing here lets a client index a `Record<PeriodId, MessageKey>` label map
  * directly off `id` instead of trusting the server-supplied `labelKey` string with an

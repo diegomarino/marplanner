@@ -5,8 +5,9 @@ import { getDb } from "./client";
 const DRIZZLE_DIR = path.resolve(process.cwd(), "drizzle");
 
 const MIGRATIONS_TABLE = "drizzle_universe_migrations";
-const LIFECYCLE_MIGRATION = "0002_plugin_lifecycle.sql";
-const SUPPORTED_BASELINE_MIGRATION = "0000_current_baseline.sql";
+/** The single baseline (squashed 2026-10-16). It also seeds the installation lineage and the
+ * plugin registry from the context handed over below. */
+const BASELINE_MIGRATION = "0000_baseline.sql";
 const LIFECYCLE_CONTEXT_TABLE = "plugin_lifecycle_migration_context";
 
 export interface MigrationOptions {
@@ -14,7 +15,7 @@ export interface MigrationOptions {
 }
 
 interface LifecycleMigrationContext {
-  kind: "fresh" | "prior_baseline";
+  kind: "fresh";
   preRunMigrationFiles: string;
   capturedAt: string;
 }
@@ -87,26 +88,14 @@ function getPendingMigrations(migrationsDir: string, applied: ReadonlySet<string
   return files.filter((f) => !applied.has(f));
 }
 
+/** Only an empty ledger may receive the baseline. A ledger from before the 2026-10-16 squash
+ * (or any other history) is refused before anything is written. */
 function classifyLifecycleHistory(
   applied: ReadonlySet<string>,
   capturedAt: string
 ): LifecycleMigrationContext {
-  const preRunFiles = [...applied].sort();
-  if (preRunFiles.length === 0) {
-    return {
-      kind: "fresh",
-      preRunMigrationFiles: "[]",
-      capturedAt,
-    };
-  }
-  if (preRunFiles.length === 1 && preRunFiles[0] === SUPPORTED_BASELINE_MIGRATION) {
-    return {
-      kind: "prior_baseline",
-      preRunMigrationFiles: JSON.stringify(preRunFiles),
-      capturedAt,
-    };
-  }
-  throw new Error("Unsupported pre-lifecycle migration history.");
+  if (applied.size > 0) throw new Error("Unsupported migration history.");
+  return { kind: "fresh", preRunMigrationFiles: "[]", capturedAt };
 }
 
 function createLifecycleContext(
@@ -174,7 +163,7 @@ export function runMigrations(
     .prepare("SELECT name FROM sqlite_schema WHERE type = 'table' AND name = ?")
     .get(MIGRATIONS_TABLE);
   const applied = hasLedger ? getAppliedMigrations(db) : new Set<string>();
-  if (applied.has(LIFECYCLE_MIGRATION)) {
+  if (applied.has(BASELINE_MIGRATION)) {
     assertCompleteLifecycleMetadata(db);
   }
 
@@ -186,7 +175,7 @@ export function runMigrations(
 
   if (db.inTransaction) throw new Error("Cannot migrate within an active transaction");
 
-  const lifecycleContext = pending.includes(LIFECYCLE_MIGRATION)
+  const lifecycleContext = pending.includes(BASELINE_MIGRATION)
     ? classifyLifecycleHistory(applied, new Date(now()).toISOString())
     : undefined;
 

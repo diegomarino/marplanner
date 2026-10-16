@@ -57,7 +57,7 @@ describe("migrate runner: FK-safe table rebuild (#438)", () => {
   });
 
   it("preserves child rows across a parent-table rebuild (DROP TABLE with ON DELETE CASCADE children)", () => {
-    fs.writeFileSync(path.join(migrationsDir, "0000_baseline.sql"), BASELINE_SQL, "utf-8");
+    fs.writeFileSync(path.join(migrationsDir, "0000_fixture_baseline.sql"), BASELINE_SQL, "utf-8");
     runMigrations(migrationsDir);
 
     const db = getDb();
@@ -87,7 +87,7 @@ describe("migrate runner: FK-safe table rebuild (#438)", () => {
   });
 
   it("rolls back the whole batch (data + bookkeeping) when a migration leaves a dangling foreign key reference", () => {
-    fs.writeFileSync(path.join(migrationsDir, "0000_baseline.sql"), BASELINE_SQL, "utf-8");
+    fs.writeFileSync(path.join(migrationsDir, "0000_fixture_baseline.sql"), BASELINE_SQL, "utf-8");
     runMigrations(migrationsDir);
 
     // With FK enforcement off for the batch, this insert against a non-existent parent
