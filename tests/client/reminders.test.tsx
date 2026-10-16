@@ -27,6 +27,7 @@ type FetchCall = Parameters<typeof globalThis.fetch>;
 const MEMBER = {
   id: "m1",
   displayName: "Ari",
+  colorKey: "blue",
   role: "child",
   lifecycle: "active",
   createdAt: 0,
@@ -57,7 +58,7 @@ const REMINDER_CALENDAR_GATED = {
   assignments: [{ id: "a1", memberId: "m1", weekdays: [], active: true }],
 };
 
-const MEMBER_B = { ...MEMBER, id: "m2", displayName: "Bea" };
+const MEMBER_B = { ...MEMBER, id: "m2", displayName: "Bea", colorKey: "teal" };
 
 const REMINDER_SPECIFIC = {
   id: "r3",
@@ -218,8 +219,8 @@ describe("RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009)
       expect(countInteractiveControls(document.body)).toBe(11);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
-      // Phase 3 — add dialog (scheduled, all members): close X (1), kind radios (2), text (1),
-      // targeting radios (2), seven weekday checkboxes (7), Cancel (1), Create (1) = +15 = 26.
+      // Phase 3 — add dialog (scheduled, all members): close X (1), kind pills (2), text (1),
+      // targeting pills (2), seven weekday pills (7), Cancel (1), Create (1) = +15 = 26.
       fireEvent.click(screen.getByTestId("reminders-add-rule"));
       await screen.findByTestId("reminder-form-dialog");
       expect(countInteractiveControls(document.body)).toBe(26);
@@ -229,7 +230,7 @@ describe("RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009)
     }
   });
 
-  it("meets kiosk density with the edit dialog open on a specific rule (member matrix)", async () => {
+  it("meets kiosk density with the edit dialog open on a specific rule (member pills)", async () => {
     mockBackend({
       reminders: () => json([REMINDER_SPECIFIC]),
       members: () => json([MEMBER, MEMBER_B]),
@@ -244,9 +245,10 @@ describe("RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009)
       await screen.findByText("Pack the gym bag");
       fireEvent.click(screen.getByTestId("reminder-edit-r3"));
       await screen.findByTestId("reminder-form-dialog");
-      // Dialog: close X (1), text (1), targeting radios (2), matrix 2 members x 7 days (14),
-      // Cancel (1), Save (1) = 20; page behind it: Add rule, Deactivate, Edit, Delete = 4. Total 24.
-      expect(countInteractiveControls(document.body)).toBe(24);
+      // Dialog: close X (1), text (1), targeting pills (2), 2 member pills (2) + their 2 x 7
+      // weekday pills (14), Cancel (1), Save (1) = 22; page behind it: Add rule, Deactivate, Edit,
+      // Delete = 4. Total 26.
+      expect(countInteractiveControls(document.body)).toBe(26);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
@@ -467,7 +469,7 @@ describe("RemindersManagement — rows name their members and days", () => {
 });
 
 describe("RemindersManagement — the add/edit dialog", () => {
-  it("creates a specific scheduled rule from the matrix", async () => {
+  it("creates a specific scheduled rule from the member pills", async () => {
     const mockFetch = mockBackend();
     renderSurface();
     await screen.findByText("Take out the trash");
@@ -479,7 +481,8 @@ describe("RemindersManagement — the add/edit dialog", () => {
     });
     fireEvent.click(within(dialog).getByLabelText("Specific members"));
     expect(within(dialog).getByTestId("reminder-save")).toBeDisabled();
-    fireEvent.click(within(dialog).getByRole("checkbox", { name: "Ari — Mon" }));
+    fireEvent.click(within(dialog).getByTestId("reminders-member-m1"));
+    fireEvent.click(within(dialog).getByTestId("reminders-weekday-m1-mon"));
     fireEvent.click(within(dialog).getByTestId("reminder-save"));
 
     await waitFor(() => {
@@ -499,7 +502,7 @@ describe("RemindersManagement — the add/edit dialog", () => {
     );
   });
 
-  it("orders the member x weekday matrix by the household week start", async () => {
+  it("orders each member's weekday pills by the household week start", async () => {
     const mockFetch = mockBackend({ weekStartDay: 0 });
     renderSurface();
     await screen.findByText("Take out the trash");
@@ -510,23 +513,17 @@ describe("RemindersManagement — the add/edit dialog", () => {
       target: { value: "Bus day" },
     });
     fireEvent.click(within(dialog).getByLabelText("Specific members"));
-    await waitFor(() =>
-      expect(
-        within(dialog)
-          .getAllByRole("columnheader")
-          .slice(1)
-          .map((th) => th.textContent)
-      ).toEqual(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"])
-    );
+    fireEvent.click(within(dialog).getByTestId("reminders-member-m1"));
+    const group = await within(dialog).findByRole("group", { name: "Ari — Weekdays" });
     expect(
-      within(within(dialog).getByRole("table"))
+      within(group)
         .getAllByRole("checkbox")
-        .map((box) => box.getAttribute("aria-label"))[0]
-    ).toBe("Ari — Sun");
+        .map((box) => box.closest("label")?.textContent?.trim())
+    ).toEqual(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]);
 
     // Storage order is unchanged: picking Sunday then Monday still saves mon..sun order.
-    fireEvent.click(within(dialog).getByRole("checkbox", { name: "Ari — Sun" }));
-    fireEvent.click(within(dialog).getByRole("checkbox", { name: "Ari — Mon" }));
+    fireEvent.click(within(dialog).getByTestId("reminders-weekday-m1-sun"));
+    fireEvent.click(within(dialog).getByTestId("reminders-weekday-m1-mon"));
     fireEvent.click(within(dialog).getByTestId("reminder-save"));
     await waitFor(() => {
       const post = (mockFetch.mock.calls as FetchCall[]).find(
@@ -568,7 +565,8 @@ describe("RemindersManagement — the add/edit dialog", () => {
     expect(within(dialog).getByPlaceholderText("Reminder text")).toHaveValue("Take out the trash");
 
     fireEvent.click(within(dialog).getByLabelText("Specific members"));
-    fireEvent.click(within(dialog).getByRole("checkbox", { name: "Ari — Tue" }));
+    fireEvent.click(within(dialog).getByTestId("reminders-member-m1"));
+    fireEvent.click(within(dialog).getByTestId("reminders-weekday-m1-tue"));
     fireEvent.click(within(dialog).getByTestId("reminder-save"));
 
     await waitFor(() => {
@@ -618,6 +616,139 @@ describe("RemindersManagement — the add/edit dialog", () => {
     // the page never swapped to its loading panel, so the panel is still there
     expect(screen.getByText("Dry-run / explain")).toBeInTheDocument();
     expect(screen.queryByText("Loading…")).not.toBeInTheDocument();
+  });
+});
+
+describe("RemindersManagement — the dialog's pill controls", () => {
+  async function openCreate(overrides: Parameters<typeof mockBackend>[0] = {}) {
+    const mockFetch = mockBackend({ members: () => json([MEMBER, MEMBER_B]), ...overrides });
+    renderSurface();
+    await screen.findByText("Take out the trash");
+    fireEvent.click(screen.getByTestId("reminders-add-rule"));
+    const dialog = await screen.findByTestId("reminder-form-dialog");
+    return { mockFetch, dialog };
+  }
+  const postBody = (mockFetch: ReturnType<typeof mockBackend>) => {
+    const post = (mockFetch.mock.calls as FetchCall[]).find(
+      ([u, init]) => String(u) === "/api/reminders" && init?.method === "POST"
+    );
+    return post ? JSON.parse(String(post[1]!.body)) : undefined;
+  };
+
+  it("offers the kind as a segmented choice in create mode and switches the form", async () => {
+    const { dialog } = await openCreate();
+    const kind = within(dialog).getByRole("radiogroup", { name: "Kind" });
+    expect(within(kind).getByRole("radio", { name: "Scheduled" })).toBeChecked();
+    expect(within(kind).getByRole("radio", { name: "Calendar-gated" })).not.toBeChecked();
+
+    fireEvent.click(within(kind).getByRole("radio", { name: "Calendar-gated" }));
+    expect(
+      within(dialog).getByPlaceholderText("Text to match in calendar events")
+    ).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByLabelText("Specific members"));
+    expect(within(dialog).getByRole("group", { name: "Assigned members" })).toBeInTheDocument();
+  });
+
+  it("shows no kind choice when editing", async () => {
+    mockBackend();
+    renderSurface();
+    await screen.findByText("Take out the trash");
+    fireEvent.click(screen.getByTestId("reminder-edit-r1"));
+    const dialog = await screen.findByTestId("reminder-form-dialog");
+    expect(within(dialog).queryByRole("radiogroup", { name: "Kind" })).not.toBeInTheDocument();
+  });
+
+  it("deselecting a member drops their days from the body", async () => {
+    const { mockFetch, dialog } = await openCreate();
+    fireEvent.change(within(dialog).getByPlaceholderText("Reminder text"), {
+      target: { value: "Drop test" },
+    });
+    fireEvent.click(within(dialog).getByLabelText("Specific members"));
+    fireEvent.click(within(dialog).getByTestId("reminders-member-m1"));
+    fireEvent.click(within(dialog).getByTestId("reminders-weekday-m1-mon"));
+    fireEvent.click(within(dialog).getByTestId("reminders-member-m2"));
+    fireEvent.click(within(dialog).getByTestId("reminders-weekday-m2-fri"));
+    fireEvent.click(within(dialog).getByTestId("reminders-member-m1"));
+    fireEvent.click(within(dialog).getByTestId("reminder-save"));
+
+    await waitFor(() => expect(postBody(mockFetch)).toBeTruthy());
+    expect(postBody(mockFetch).assignments).toEqual([{ memberId: "m2", weekdays: ["fri"] }]);
+  });
+
+  it("prefills the selected members and their days when editing a specific rule", async () => {
+    mockBackend({
+      reminders: () => json([REMINDER_SPECIFIC]),
+      members: () => json([MEMBER, MEMBER_B]),
+    });
+    renderSurface();
+    await screen.findByText("Pack the gym bag");
+    fireEvent.click(screen.getByTestId("reminder-edit-r3"));
+    const dialog = await screen.findByTestId("reminder-form-dialog");
+    expect(within(dialog).getByTestId("reminders-member-m1")).toBeChecked();
+    expect(within(dialog).getByTestId("reminders-member-m2")).toBeChecked();
+    expect(within(dialog).getByTestId("reminders-weekday-m1-mon")).toBeChecked();
+    expect(within(dialog).getByTestId("reminders-weekday-m1-wed")).toBeChecked();
+    expect(within(dialog).getByTestId("reminders-weekday-m2-fri")).toBeChecked();
+    expect(within(dialog).getByTestId("reminders-weekday-m1-tue")).not.toBeChecked();
+  });
+
+  it("keeps Save disabled and explains why while a selected member has no days", async () => {
+    const { dialog } = await openCreate();
+    fireEvent.change(within(dialog).getByPlaceholderText("Reminder text"), {
+      target: { value: "Hint test" },
+    });
+    fireEvent.click(within(dialog).getByLabelText("Specific members"));
+    fireEvent.click(within(dialog).getByTestId("reminders-member-m1"));
+    expect(within(dialog).getByTestId("reminders-member-hint-m1")).toBeInTheDocument();
+    expect(within(dialog).getByTestId("reminder-save")).toBeDisabled();
+    fireEvent.click(within(dialog).getByTestId("reminders-weekday-m1-mon"));
+    expect(within(dialog).queryByTestId("reminders-member-hint-m1")).not.toBeInTheDocument();
+    expect(within(dialog).getByTestId("reminder-save")).toBeEnabled();
+  });
+
+  it("creates a specific calendar-gated rule with member pills and a query-field pill", async () => {
+    const { mockFetch, dialog } = await openCreate();
+    fireEvent.change(within(dialog).getByPlaceholderText("Reminder text"), {
+      target: { value: "Gated" },
+    });
+    fireEvent.click(within(dialog).getByRole("radio", { name: "Calendar-gated" }));
+    fireEvent.click(within(dialog).getByLabelText("Specific members"));
+    fireEvent.change(within(dialog).getByLabelText("Match text"), { target: { value: "vet" } });
+    fireEvent.click(within(dialog).getByTestId("reminders-query-field-location"));
+    fireEvent.click(within(dialog).getByTestId("reminders-cg-member-m1"));
+    fireEvent.click(within(dialog).getByTestId("reminder-save"));
+
+    await waitFor(() => expect(postBody(mockFetch)).toBeTruthy());
+    expect(postBody(mockFetch)).toMatchObject({
+      kind: "calendar_gated",
+      targetingMode: "specific",
+      query: "vet",
+      queryFields: ["title", "description", "location"],
+      assignments: [{ memberId: "m1", weekdays: [] }],
+    });
+  });
+
+  it("prefills the member pills when editing a calendar-gated rule", async () => {
+    mockBackend({ members: () => json([MEMBER, MEMBER_B]) });
+    renderSurface();
+    await screen.findByText("Vet appointment prep");
+    fireEvent.click(screen.getByTestId("reminder-edit-r2"));
+    const dialog = await screen.findByTestId("reminder-form-dialog");
+    expect(within(dialog).getByTestId("reminders-cg-member-m1")).toBeChecked();
+    expect(within(dialog).getByTestId("reminders-cg-member-m2")).not.toBeChecked();
+  });
+
+  it("shows the empty message instead of an empty group when there are no active members", async () => {
+    const { dialog } = await openCreate({ members: () => json([]) });
+    fireEvent.click(within(dialog).getByLabelText("Specific members"));
+    expect(within(dialog).getByText("No active members.")).toBeInTheDocument();
+    expect(within(dialog).queryByTestId(/^reminders-member-/)).not.toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole("radio", { name: "Calendar-gated" }));
+    expect(within(dialog).getByText("No active members.")).toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole("group", { name: "Assigned members" })
+    ).not.toBeInTheDocument();
   });
 });
 

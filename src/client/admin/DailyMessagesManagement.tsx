@@ -5,15 +5,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ErrorNotice } from "@/components/ErrorNotice";
-import { Field } from "@/components/Field";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n";
 import type { Language } from "@/i18n/messages";
 import { authFetch } from "@/lib/credential";
 import { todayInHouseholdTimezone } from "@/lib/household-date";
 import { useHouseholdSettings } from "@/lib/householdSettings";
-import { NATIVE_SELECT_CLASSES } from "@/lib/recipes";
+import { cn } from "@/lib/utils";
+import { MemberPills } from "@/ui";
 import type { DailyMessage, DailyMessageUpsert, Member } from "../../shared";
+import { weekBands } from "./daily-messages-weeks";
 
 const WINDOW_DAYS = 14;
 const MAX_TEXT_LEN = 500;
@@ -41,7 +42,7 @@ function formatDateLabel(date: string, language: Language): string {
 
 export function DailyMessagesManagement() {
   const { language, t } = useTranslation();
-  const { timezone: householdTimezone } = useHouseholdSettings();
+  const { timezone: householdTimezone, weekStartDay } = useHouseholdSettings();
   const loadErrorMessage = t("dailyMessages.management.error");
   const saveErrorMessage = t("dailyMessages.management.saveError");
   const [activeMembers, setActiveMembers] = useState<Member[]>([]);
@@ -63,6 +64,7 @@ export function DailyMessagesManagement() {
   selectedMemberIdRef.current = selectedMemberId;
 
   const dates = useMemo(() => buildDateWindow(windowFrom), [windowFrom]);
+  const bands = useMemo(() => weekBands(dates, weekStartDay), [dates, weekStartDay]);
   const messagesByDate = useMemo(
     () => new Map(messagesList.map((message) => [message.date, message])),
     [messagesList]
@@ -254,26 +256,23 @@ export function DailyMessagesManagement() {
           </p>
         ) : (
           <div className="max-w-2xl space-y-4">
-            <Field label={t("dailyMessages.management.selectMember")}>
-              <select
-                value={selectedMemberId}
-                data-testid="daily-messages-select-member"
-                onChange={(event) => {
-                  if (event.target.value === selectedMemberId) return;
+            <div className="space-y-2" data-testid="daily-messages-select-member">
+              <p className="text-sm font-medium">{t("dailyMessages.management.selectMember")}</p>
+              <MemberPills
+                mode="single"
+                groupLabel={t("dailyMessages.management.selectMember")}
+                members={activeMembers}
+                value={selectedMemberId || null}
+                testIdPrefix="daily-messages-member"
+                onChange={(memberId) => {
+                  if (memberId === selectedMemberId) return;
                   setLoadingMessages(true);
                   setMessagesList([]);
                   setDrafts({});
-                  setSelectedMemberId(event.target.value);
+                  setSelectedMemberId(memberId);
                 }}
-                className={NATIVE_SELECT_CLASSES}
-              >
-                {activeMembers.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.displayName}
-                  </option>
-                ))}
-              </select>
-            </Field>
+              />
+            </div>
 
             <div className="flex flex-wrap items-center justify-between gap-2">
               <Button
@@ -309,7 +308,8 @@ export function DailyMessagesManagement() {
               <p className="text-muted-foreground">{t("dailyMessages.management.loading")}</p>
             ) : loadFailed === "messages" ? null : (
               <ul className="space-y-2">
-                {dates.map((date) => {
+                {dates.map((date, index) => {
+                  const band = bands[index] ?? "plain";
                   const existing = messagesByDate.get(date);
                   const saving = savingDates.has(date);
                   const inputId = `daily-messages-text-${date}`;
@@ -317,7 +317,11 @@ export function DailyMessagesManagement() {
                   return (
                     <li
                       key={`${selectedMemberId}-${date}`}
-                      className="flex items-start gap-3 rounded-lg border border-transparent px-2 py-1 transition-colors focus-within:border-border focus-within:bg-card"
+                      className={cn(
+                        "flex items-start gap-3 rounded-lg border border-transparent px-2 py-1 transition-colors focus-within:border-border focus-within:bg-card",
+                        band === "shaded" && "bg-muted/50"
+                      )}
+                      data-week-band={band}
                       data-testid={`daily-messages-day-${date}`}
                     >
                       <label

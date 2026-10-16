@@ -28,6 +28,11 @@ function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status });
 }
 
+async function openBlocksTab() {
+  fireEvent.click(await screen.findByTestId("daily-briefing-tab-blocks"));
+  await screen.findByTestId("daily-briefing-block-matrix");
+}
+
 describe("daily-briefing admin panel — server-constant mirror fence", () => {
   beforeEach(() => {
     vi.stubGlobal(
@@ -38,7 +43,10 @@ describe("daily-briefing admin panel — server-constant mirror fence", () => {
           return jsonResponse({ locale: { timezone: "UTC", language: "en", weekStartDay: 1 } });
         }
         if (url === "/api/members") return jsonResponse(activeMembers);
-        if (url === "/api/daily-briefing/opt-in") return jsonResponse([]);
+        if (url === "/api/daily-briefing/opt-in") {
+          // Ada opted in: the matrix renders only for an opted-in selected member.
+          return jsonResponse([{ memberId: "member-ada", enabled: true }]);
+        }
         if (url === "/api/daily-briefing/settings") {
           return jsonResponse({
             generationTime: "06:00",
@@ -57,17 +65,18 @@ describe("daily-briefing admin panel — server-constant mirror fence", () => {
     cleanup();
   });
 
-  it("offers exactly the server's ALL_BLOCK_TYPES, in registry order", async () => {
+  it("lists exactly the server's ALL_BLOCK_TYPES as matrix rows, in registry order", async () => {
     render(
       <LanguageProvider>
         <DailyBriefingManagement />
       </LanguageProvider>
     );
-    const select = await screen.findByTestId("daily-briefing-admin-block-order-add-select");
-    const values = Array.from(select.querySelectorAll("option"))
-      .map((option) => option.value)
-      .filter((value) => value !== "");
-    expect(values).toEqual([...ALL_BLOCK_TYPES]);
+    await openBlocksTab();
+    // blockOrder is [] in the fixture, so the rows fall back to registry order.
+    const rows = screen
+      .getAllByTestId(/^daily-briefing-admin-block-settings-row-/)
+      .map((row) => row.dataset.testid?.replace("daily-briefing-admin-block-settings-row-", ""));
+    expect(rows).toEqual([...ALL_BLOCK_TYPES]);
   });
 
   it("offers exactly the server's CORPUS_LANGUAGE_AVAILABILITY per block type", async () => {
@@ -76,10 +85,7 @@ describe("daily-briefing admin panel — server-constant mirror fence", () => {
         <DailyBriefingManagement />
       </LanguageProvider>
     );
-    fireEvent.change(
-      await screen.findByTestId("daily-briefing-admin-block-settings-member-select"),
-      { target: { value: "member-ada" } }
-    );
+    await openBlocksTab();
     for (const type of ALL_BLOCK_TYPES) {
       const expected = (CORPUS_LANGUAGE_AVAILABILITY as Record<string, readonly string[]>)[type];
       const control = screen.queryByTestId(`daily-briefing-admin-block-language-${type}`);
@@ -101,10 +107,7 @@ describe("daily-briefing admin panel — server-constant mirror fence", () => {
         <DailyBriefingManagement />
       </LanguageProvider>
     );
-    fireEvent.change(
-      await screen.findByTestId("daily-briefing-admin-block-settings-member-select"),
-      { target: { value: "member-ada" } }
-    );
+    await openBlocksTab();
     for (const type of ALL_BLOCK_TYPES) {
       expect(
         screen.queryByTestId(`daily-briefing-admin-block-settings-row-${type}`),

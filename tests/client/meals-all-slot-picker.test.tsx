@@ -5,17 +5,19 @@ import { MealsManagement } from "@/admin/MealsManagement";
 import { LanguageProvider } from "@/i18n";
 
 /** FR-002 regression (client-observable only — the server test cannot see the
- * picker): a recipe with absent/empty `slots` MUST be offered in the entry-authoring
- * recipe picker for EVERY slot, not silently vanish once a slot other than its
- * (nonexistent) tag is selected.
+ * picker): a recipe with absent/empty `slots` MUST be offered in the plan card's
+ * recurring-entry recipe picker for EVERY slot, not silently vanish once a slot other
+ * than its (nonexistent) tag is selected.
  */
-describe("MealsManagement — entry-authoring all-slot picker (FR-002)", () => {
+describe("MealsManagement — recurring-entry all-slot picker (FR-002)", () => {
   beforeEach(() => {
     const mockFetch = vi.fn((input: string | URL) => {
       const url = String(input);
       if (url.includes("/api/settings")) {
         return Promise.resolve(
-          new Response(JSON.stringify({ locale: { language: "en" } }), { status: 200 })
+          new Response(JSON.stringify({ locale: { timezone: "UTC", language: "en" } }), {
+            status: 200,
+          })
         );
       }
       if (url.startsWith("/api/recipes")) {
@@ -31,6 +33,19 @@ describe("MealsManagement — entry-authoring all-slot picker (FR-002)", () => {
                 createdAt: 0,
                 updatedAt: 0,
               },
+            ]),
+            { status: 200 }
+          )
+        );
+      }
+      if (/\/api\/meal-plans\/[^/]+\/entries$/.test(url)) {
+        return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
+      }
+      if (url.startsWith("/api/meal-plans")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify([
+              { id: "p1", name: "Weeknights", active: true, createdAt: 0, updatedAt: 0 },
             ]),
             { status: 200 }
           )
@@ -57,13 +72,14 @@ describe("MealsManagement — entry-authoring all-slot picker (FR-002)", () => {
       </LanguageProvider>
     );
 
-    const slotSelect = await screen.findByTestId("meals-entry-slot-select");
+    fireEvent.click(await screen.findByTestId("meals-plan-add-recurring"));
+    const slotSelect = screen.getByTestId("meals-recurring-slot-select");
 
     for (const slot of ["breakfast", "lunch", "snack", "dinner"]) {
       fireEvent.change(slotSelect, { target: { value: slot } });
 
       await waitFor(() => {
-        const recipeSelect = screen.getByTestId("meals-entry-recipe-select");
+        const recipeSelect = screen.getByTestId("meals-recurring-recipe-select");
         expect(within(recipeSelect).getByText("Untagged Recipe")).toBeInTheDocument();
       });
     }

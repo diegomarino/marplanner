@@ -729,6 +729,7 @@ describe("RoutinesManagement — assignments", () => {
     renderPage();
     const row = within(await openAssignments()).getByTestId("routine-assignment-m1");
 
+    expect(within(row).queryByTestId("routine-assignment-m1-inactive")).not.toBeInTheDocument();
     expect(within(row).getByRole("button", { name: "Save Assignment" })).toBeDisabled();
     fireEvent.click(within(row).getByRole("checkbox", { name: "Tue" }));
     fireEvent.click(within(row).getByRole("button", { name: "Save Assignment" }));
@@ -770,6 +771,9 @@ describe("RoutinesManagement — assignments", () => {
     renderPage();
     const row = within(await openAssignments()).getByTestId("routine-assignment-m1");
 
+    expect(within(row).getByTestId("routine-assignment-m1-inactive")).toHaveTextContent(
+      "Deactivated"
+    );
     expect(within(row).getByRole("checkbox", { name: "Mon" })).not.toBeChecked();
     expect(within(row).queryByRole("button", { name: "Deactivate" })).not.toBeInTheDocument();
     fireEvent.click(within(row).getByRole("checkbox", { name: "Wed" }));

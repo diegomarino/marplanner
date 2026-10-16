@@ -13,8 +13,7 @@
  * browser dialog. The falsifying assertion (verification policy): the delete fetch does not fire until
  * the dialog is confirmed, and cancelling leaves the message undone/still present.
  * * `ConfirmDialog` is deliberately NOT adopted by `DayPeriodsManagement`* — it has no
- * destructive action at all (only an in-place start-time edit, itself cancellable via its own
- * Cancel button).
+ * destructive action at all (only an in-place start-time edit, saved per card).
  * * `WeekdayPicker`/`StatusToggle`/`CheckboxField`/`RadioField` do not apply to either surface* —
  * neither renders a weekday list, a pressed-state toggle, a checkbox or a radio control.
  * Functional CRUD coverage already exists (`tests/client/day-periods-management.test.tsx`,
@@ -286,7 +285,7 @@ describe("DayPeriodsManagement — kiosk density across every reachable state (S
     }
   });
 
-  it("meets kiosk density with all four periods rendered, none in edit mode (4 Edit buttons)", async () => {
+  it("meets kiosk density with all four periods editable (4 inputs + 4 Save buttons = 8 controls)", async () => {
     mockDayPeriodsBackend();
     const uninject = await injectDensityStyles();
     document.documentElement.setAttribute("data-density", "kiosk");
@@ -295,14 +294,14 @@ describe("DayPeriodsManagement — kiosk density across every reachable state (S
       renderDayPeriods();
       await screen.findByTestId("day-period-morning");
 
-      expect(countInteractiveControls(document.body)).toBe(4);
+      expect(countInteractiveControls(document.body)).toBe(8);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
     }
   });
 
-  it("meets kiosk density with one period in edit mode (3 base + the start-time field, Save, Cancel — 6 total)", async () => {
+  it("census fires on change: editing a time does not add or remove controls", async () => {
     mockDayPeriodsBackend();
     const uninject = await injectDensityStyles();
     document.documentElement.setAttribute("data-density", "kiosk");
@@ -311,54 +310,29 @@ describe("DayPeriodsManagement — kiosk density across every reachable state (S
       renderDayPeriods();
       await screen.findByTestId("day-period-morning");
 
-      fireEvent.click(screen.getByTestId("day-periods-edit-afternoon"));
-      await screen.findByTestId("day-periods-start-input-afternoon");
+      fireEvent.change(screen.getByTestId("day-periods-start-input-afternoon"), {
+        target: { value: "11:30" },
+      });
 
-      expect(countInteractiveControls(document.body)).toBe(6);
+      expect(countInteractiveControls(document.body)).toBe(8);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
     }
   });
 
-  it("CENSUS FIRES ON REMOVAL — cancelling an edit drops its row's 3 edit controls back to 1 (6 -> 4), not a synthetic shrink", async () => {
-    mockDayPeriodsBackend();
-    const uninject = await injectDensityStyles();
-    document.documentElement.setAttribute("data-density", "kiosk");
-
-    try {
-      renderDayPeriods();
-      await screen.findByTestId("day-period-morning");
-
-      fireEvent.click(screen.getByTestId("day-periods-edit-afternoon"));
-      await screen.findByTestId("day-periods-start-input-afternoon");
-      expect(countInteractiveControls(document.body)).toBe(6);
-
-      fireEvent.click(screen.getByTestId("day-periods-cancel-afternoon"));
-      await waitFor(() =>
-        expect(screen.queryByTestId("day-periods-start-input-afternoon")).not.toBeInTheDocument()
-      );
-
-      // A census that failed to actually recompute (a stale/memoized count) would still read 6.
-      expect(countInteractiveControls(document.body)).toBe(4);
-      expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
-    } finally {
-      uninject();
-    }
-  });
-
-  it("DELIBERATE NEGATIVE — forcing this surface's own Edit button below the kiosk minimum makes the assertion fail, and reverting restores compliance", async () => {
+  it("DELIBERATE NEGATIVE — forcing this surface's own Save button below the kiosk minimum makes the assertion fail, and reverting restores compliance", async () => {
     mockDayPeriodsBackend();
     const uninject = await injectDensityStyles();
     document.documentElement.setAttribute("data-density", "kiosk");
 
     try {
       const { container } = renderDayPeriods();
-      const editButton = await screen.findByTestId("day-periods-edit-morning");
+      const saveButton = await screen.findByTestId("day-periods-save-morning");
 
       // A real control from this surface, not a synthetic fixture.
-      editButton.style.height = "16px";
-      editButton.style.fontSize = "10px";
+      saveButton.style.height = "16px";
+      saveButton.style.fontSize = "10px";
 
       let thrown: unknown;
       try {
@@ -373,8 +347,8 @@ describe("DayPeriodsManagement — kiosk density across every reachable state (S
       expect(message).toMatch(/font-size 10px is below the kiosk minimum 18px/);
 
       // Revert — compliance returns.
-      editButton.style.height = "";
-      editButton.style.fontSize = "";
+      saveButton.style.height = "";
+      saveButton.style.fontSize = "";
       expect(() => assertKioskDensityCompliant(container)).not.toThrow();
     } finally {
       uninject();
@@ -436,7 +410,7 @@ describe("DailyMessagesManagement — kiosk density across every reachable state
     }
   });
 
-  it("meets kiosk density with an active member and an empty 14-day editor (2 navigation buttons + 1 selector + 14 textareas)", async () => {
+  it("meets kiosk density with an active member and an empty 14-day editor (2 navigation buttons + 1 member pill + 14 textareas)", async () => {
     mockDailyMessagesBackend();
     const uninject = await injectDensityStyles();
     document.documentElement.setAttribute("data-density", "kiosk");
@@ -446,6 +420,7 @@ describe("DailyMessagesManagement — kiosk density across every reachable state
       expect(await screen.findAllByTestId(/^daily-messages-day-/)).toHaveLength(14);
 
       expect(countInteractiveControls(document.body)).toBe(17);
+      expect(document.body.querySelector("select")).toBeNull();
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
@@ -624,7 +599,6 @@ describe("DayPeriodsManagement — every error state is announced through ErrorN
     renderDayPeriods();
     await screen.findByTestId("day-period-morning");
 
-    fireEvent.click(screen.getByTestId("day-periods-edit-afternoon"));
     const timeInput = await screen.findByTestId("day-periods-start-input-afternoon");
     fireEvent.change(timeInput, { target: { value: "04:00" } }); // before morning's 05:00
     fireEvent.click(screen.getByTestId("day-periods-save-afternoon"));
@@ -639,7 +613,6 @@ describe("DayPeriodsManagement — every error state is announced through ErrorN
     renderDayPeriods();
     await screen.findByTestId("day-period-morning");
 
-    fireEvent.click(screen.getByTestId("day-periods-edit-morning"));
     const timeInput = await screen.findByTestId("day-periods-start-input-morning");
     fireEvent.change(timeInput, { target: { value: "06:00" } });
     fireEvent.click(screen.getByTestId("day-periods-save-morning"));

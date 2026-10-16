@@ -85,6 +85,15 @@ test("routines admin: create, add a chore, assign a child and move to another pe
     .evaluateAll((inputs) => inputs.map((input) => Math.round(input.getBoundingClientRect().top)));
   expect(dayTops).toHaveLength(7);
   expect(new Set(dayTops).size).toBe(1);
+  // The dialog is wide enough that every pill sits inside it with room to spare.
+  const dialogBox = await assign.boundingBox();
+  if (dialogBox === null) throw new Error("assignment dialog has no box");
+  const pillRights = await row
+    .locator(`input[data-testid^="routines-weekday-${memberId}-"]`)
+    .evaluateAll((inputs) => inputs.map((input) => input.getBoundingClientRect().right));
+  for (const right of pillRights) {
+    expect(right).toBeLessThanOrEqual(dialogBox.x + dialogBox.width - 16);
+  }
   await row.getByTestId(`routines-weekday-${memberId}-mon`).check();
   await row.getByTestId(`routines-assignment-${memberId}-save`).click();
   await expect(row.getByTestId(`routines-assignment-${memberId}-deactivate`)).toBeVisible();
