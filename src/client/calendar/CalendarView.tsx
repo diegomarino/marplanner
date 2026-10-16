@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, type FormEvent, useEffect, useMemo, useState } from "react";
 import {
   CalendarCheck,
   ChevronLeft,
@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { AdminPanel } from "@/components/AdminPanel";
 import { CheckboxField } from "@/components/CheckboxField";
 import { ErrorNotice } from "@/components/ErrorNotice";
+import { MemberPills } from "@/components/MemberPills";
 import { PillToggle } from "@/components/PillToggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,7 +31,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CalendarMonthView } from "@/calendar/CalendarMonthView";
 import { EventDescription } from "@/calendar/EventDescription";
-import { memberFilterStyle } from "@/calendar/member-event-style";
 import { ScheduleXWeekView } from "@/calendar/ScheduleXWeekView";
 import {
   addCalendarDays,
@@ -242,14 +242,6 @@ export function CalendarView() {
   const [fDescription, setFDescription] = useState("");
   const [createMemberIds, setCreateMemberIds] = useState<Set<string>>(() => new Set());
 
-  const toggleCreateMember = (memberId: string): void => {
-    setCreateMemberIds((current) => {
-      const next = new Set(current);
-      if (next.has(memberId)) next.delete(memberId);
-      else next.add(memberId);
-      return next;
-    });
-  };
 
   const resetForm = (): void => {
     setFTitle("");
@@ -305,14 +297,6 @@ export function CalendarView() {
     }
   };
 
-  const toggleEditMember = (memberId: string): void => {
-    setEditMemberIds((current) => {
-      const next = new Set(current);
-      if (next.has(memberId)) next.delete(memberId);
-      else next.add(memberId);
-      return next;
-    });
-  };
 
   const openDeleteConfirm = (event: FeedItem): void => {
     setShowDeleteConfirm(`${event.id}@${event.occurrenceStart}`);
@@ -561,14 +545,6 @@ export function CalendarView() {
   const previousDate = periodDate(-1);
   const nextDate = periodDate(1);
 
-  const toggleFilterMember = (memberId: string): void => {
-    setSelectedFilterMemberIds((current) => {
-      const next = new Set(current);
-      if (next.has(memberId)) next.delete(memberId);
-      else next.add(memberId);
-      return next;
-    });
-  };
 
   const goToToday = (): void => {
     setCurrentDate(getHouseholdCalendarDate(Date.now(), timezone));
@@ -609,14 +585,14 @@ export function CalendarView() {
               onChange={setShowAllDay}
               label={t("calendar.allDayFilter")}
             />
-            {activeMembers.map((member) => (
-              <PillToggle
-                key={member.id}
-                checked={selectedFilterMemberIds.has(member.id)}
-                onChange={() => toggleFilterMember(member.id)}
-                label={member.displayName}
+            {activeMembers.length > 0 && (
+              <MemberPills
+                members={activeMembers}
+                value={[...selectedFilterMemberIds]}
+                onChange={(next) => setSelectedFilterMemberIds(new Set(next))}
+                groupLabel={t("calendar.memberFilter")}
               />
-            ))}
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="border-input flex overflow-hidden rounded-lg border">
@@ -785,17 +761,12 @@ export function CalendarView() {
                 <legend className="text-control mb-1.5 font-medium">
                   {t("calendar.participants")}
                 </legend>
-                <div className="flex flex-wrap gap-2">
-                  {activeMembers.map((member) => (
-                    <PillToggle
-                      key={member.id}
-                      checked={createMemberIds.has(member.id)}
-                      onChange={() => toggleCreateMember(member.id)}
-                      label={member.displayName}
-                      selectedStyle={memberFilterStyle(member.colorKey)}
-                    />
-                  ))}
-                </div>
+                <MemberPills
+                  members={activeMembers}
+                  value={[...createMemberIds]}
+                  onChange={(next) => setCreateMemberIds(new Set(next))}
+                  groupLabel={t("calendar.participants")}
+                />
               </fieldset>
             )}
             <ErrorNotice message={createError} />
@@ -896,9 +867,13 @@ export function CalendarView() {
                         .map((member) => (
                           <li
                             key={member.id}
-                            className="text-control rounded-full border px-3 py-1 font-medium"
-                            // eslint-disable-next-line ui-policy/debt -- Member identity is rendered through the generated semantic colour token.
-                            style={memberFilterStyle(member.colorKey)}
+                            className="text-control text-member-avatar-foreground rounded-full bg-[var(--member-color)] px-3 py-1 font-semibold"
+                            // eslint-disable-next-line ui-policy/debt -- Closed member keys select generated semantic token custom properties only.
+                            style={
+                              {
+                                "--member-color": `var(--color-member-${member.colorKey}-500)`,
+                              } as CSSProperties
+                            }
                           >
                             {member.displayName}
                           </li>
@@ -1011,19 +986,13 @@ export function CalendarView() {
                               ) : membersError ? (
                                 <ErrorNotice message={membersError} />
                               ) : (
-                                <ul className="flex list-none flex-wrap gap-2 p-0">
-                                  {activeMembers.map((member) => (
-                                    <li key={member.id}>
-                                      <PillToggle
-                                        checked={editMemberIds.has(member.id)}
-                                        onChange={() => toggleEditMember(member.id)}
-                                        label={member.displayName}
-                                        selectedStyle={memberFilterStyle(member.colorKey)}
-                                        data-testid={`calendar-assign-member-${member.id}`}
-                                      />
-                                    </li>
-                                  ))}
-                                </ul>
+                                <MemberPills
+                                  members={activeMembers}
+                                  value={[...editMemberIds]}
+                                  onChange={(next) => setEditMemberIds(new Set(next))}
+                                  groupLabel={t("calendar.participants")}
+                                  testIdPrefix="calendar-assign-member"
+                                />
                               )}
                             </fieldset>
                             <ErrorNotice message={eventError} />
