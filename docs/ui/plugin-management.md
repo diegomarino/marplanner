@@ -17,12 +17,12 @@ Each of the exact nine manifest entries presents:
 
 - localized name and concise contribution description;
 - the first-party trust label, declared contribution groups, runtime/compatibility requirements, and settings-schema metadata without configured or default values;
-- one canonical status label: Active, Inactive, or Needs attention;
-- Activate or Deactivate action appropriate to the current state;
+- one toggle button whose visible text is the canonical status label (Active, Inactive, or Needs attention), pressed only when Active, named by the plugin's own label; pressing it activates an inactive or errored plugin and deactivates an active one;
+- a muted (grey) card ground while Inactive; Needs attention keeps the normal ground;
 - an allow-listed safe error message only for `errored`;
 - a transient operation label when `operation` is non-null.
 
-An operation never changes the canonical label. In particular, a target-`inactive` operation continues to show canonical Active plus a visible “Stopping safely…” busy treatment until the terminal response. Both lifecycle actions for that plugin are disabled while busy; unrelated plugin controls remain usable.
+An operation never changes the canonical label. In particular, a target-`inactive` operation continues to show canonical Active plus a visible “Stopping safely…” busy treatment until the terminal response. The plugin's toggle is disabled and `aria-busy` while busy; unrelated plugin controls remain usable.
 
 Repeated submission is prevented in the client but correctness does not depend on it. On HTTP 409, the response's current plugin representation replaces stale local state.
 

@@ -1,9 +1,11 @@
 import { useEffect, useRef } from "react";
 
 import { ErrorNotice } from "@/components/ErrorNotice";
+import { StatusToggle } from "@/components/StatusToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useT } from "@/i18n";
+import { cn } from "@/lib/utils";
 import type { MessageKey } from "@/i18n/messages";
 import type {
   PluginCatalogEntry,
@@ -82,7 +84,8 @@ function CatalogRow({ plugin }: { plugin: PluginCatalogEntry }) {
   const t = useT();
   const { clearPendingActionFocus, feedback, pendingActionFocus, transition } = usePluginCatalog();
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const actionRef = useRef<HTMLButtonElement>(null);
+  // StatusToggle takes no ref, so focus goes through the box that holds it.
+  const actionBoxRef = useRef<HTMLDivElement>(null);
   const copy = PLUGIN_COPY[plugin.id];
   const label = t(copy.label);
   const busy = plugin.operation !== null;
@@ -96,7 +99,7 @@ function CatalogRow({ plugin }: { plugin: PluginCatalogEntry }) {
 
   useEffect(() => {
     if (busy || pendingActionFocus !== plugin.id) return;
-    actionRef.current?.focus();
+    actionBoxRef.current?.querySelector("button")?.focus();
     clearPendingActionFocus(plugin.id);
   }, [busy, clearPendingActionFocus, pendingActionFocus, plugin.id]);
 
@@ -105,7 +108,12 @@ function CatalogRow({ plugin }: { plugin: PluginCatalogEntry }) {
       id={`plugin-${plugin.id}`}
       data-testid={`plugin-row-${plugin.id}`}
       data-plugin-id={plugin.id}
-      className="min-w-0 gap-4 overflow-hidden py-4"
+      // An inactive plugin is greyed out so it stands apart; "needs attention" keeps the normal
+      // ground and its error notice.
+      className={cn(
+        "min-w-0 gap-4 overflow-hidden py-4",
+        plugin.state === "inactive" && "bg-muted"
+      )}
     >
       <CardHeader className="min-w-0 grid-cols-1 px-4 sm:grid-cols-[minmax(0,1fr)_auto]">
         <div className="min-w-0">
@@ -116,10 +124,19 @@ function CatalogRow({ plugin }: { plugin: PluginCatalogEntry }) {
           </CardTitle>
           <CardDescription className="wrap-anywhere">{t(copy.description)}</CardDescription>
         </div>
-        <div className="flex flex-col items-start gap-2 sm:items-end">
-          <span className="font-medium" data-testid={`plugin-state-${plugin.id}`}>
-            {t(`plugins.state.${plugin.state}`)}
-          </span>
+        <div ref={actionBoxRef} className="flex flex-col items-start gap-2 sm:items-end">
+          <StatusToggle
+            pressed={plugin.state === "active"}
+            label={
+              <span data-testid={`plugin-state-${plugin.id}`}>
+                {t(`plugins.state.${plugin.state}`)}
+              </span>
+            }
+            accessibleName={label}
+            busy={busy}
+            aria-describedby={busy ? operationMessageId : undefined}
+            onPress={() => void transition(plugin.id, action)}
+          />
           {busy && (
             <span
               id={operationMessageId}
@@ -189,20 +206,6 @@ function CatalogRow({ plugin }: { plugin: PluginCatalogEntry }) {
           message={currentFeedback ? t(FEEDBACK_COPY[currentFeedback]) : null}
           politeness="polite"
         />
-
-        <div>
-          <Button
-            ref={actionRef}
-            type="button"
-            disabled={busy}
-            aria-describedby={busy ? operationMessageId : undefined}
-            onClick={() => void transition(plugin.id, action)}
-          >
-            {action === "activate"
-              ? `${t("plugins.action.activate")} ${label}`
-              : `${t("plugins.action.deactivate")} ${label}`}
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );
