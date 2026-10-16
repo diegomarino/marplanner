@@ -1,5 +1,5 @@
 /** The FULL, current `sqlite_master` table set produced by the reviewed
- * `drizzle/0000_current_baseline.sql` and the default `runMigrations` path,
+ * `drizzle/0000_baseline.sql` and the default `runMigrations` path,
  * plus `drizzle_universe_migrations` (the runner's own bookkeeping table,
  * created by `ensureMigrationsTable` in `src/server/db/migrate.ts`, not by a
  * `.sql` file). Single source of truth shared by every test that needs the

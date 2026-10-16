@@ -5,11 +5,11 @@ import { join } from "node:path";
 import Database from "better-sqlite3";
 import { describe, expect, it } from "vitest";
 import { getDb } from "../../src/server/db/client";
+import { execBaseline } from "../helpers/baseline";
 import { ALL_SCHEMA_TABLES } from "../helpers/schema-tables";
 import { useIsolatedDb } from "../helpers/db";
 
 const PROJECT_ROOT = process.cwd();
-const BASELINE_FILE = join(PROJECT_ROOT, "drizzle", "0000_baseline.sql");
 const DRIZZLE_KIT = join(PROJECT_ROOT, "node_modules", "drizzle-kit", "bin.cjs");
 const SCHEMA_FILE = join(PROJECT_ROOT, "src", "server", "db", "schema.ts");
 type Catalog = {
@@ -135,15 +135,10 @@ function readCatalog(db: Database.Database): Catalog {
   };
 }
 
-function instantiateCatalog(sqlFile: string, databaseFile: string): Catalog {
+function instantiateCatalog(databaseFile: string, apply: (db: Database.Database) => void): Catalog {
   const db = new Database(databaseFile);
   try {
-    // The committed baseline reads the runner's lineage handoff; a generated file ignores it.
-    db.exec(
-      "CREATE TEMP TABLE plugin_lifecycle_migration_context (kind TEXT, pre_run_migration_files TEXT, captured_at TEXT);" +
-        "INSERT INTO temp.plugin_lifecycle_migration_context VALUES ('fresh', '[]', '2026-10-16T00:00:00.000Z')"
-    );
-    db.exec(readFileSync(sqlFile, "utf8").replaceAll("--> statement-breakpoint", ""));
+    apply(db);
     return readCatalog(db);
   } finally {
     db.close();
@@ -165,7 +160,9 @@ function generateCurrentSchemaCatalog(tempDir: string): Catalog {
   );
   const generatedSql = readdirSync(outputDir).find((file) => file.endsWith(".sql"));
   if (!generatedSql) throw new Error("Drizzle did not generate a current-schema SQL file");
-  return instantiateCatalog(join(outputDir, generatedSql), join(tempDir, "generated.sqlite"));
+  return instantiateCatalog(join(tempDir, "generated.sqlite"), (db) =>
+    db.exec(readFileSync(join(outputDir, generatedSql), "utf8"))
+  );
 }
 
 describe("database lifecycle fresh current baseline", () => {
@@ -178,7 +175,9 @@ describe("database lifecycle fresh current baseline", () => {
       const tempDir = mkdtempSync(join(tmpdir(), "mp-current-baseline-catalog-"));
       try {
         const generated = generateCurrentSchemaCatalog(tempDir);
-        const committed = instantiateCatalog(BASELINE_FILE, join(tempDir, "baseline.sqlite"));
+        const committed = instantiateCatalog(join(tempDir, "baseline.sqlite"), (db) =>
+          execBaseline(db)
+        );
 
         expect(committed).toEqual(generated);
       } finally {

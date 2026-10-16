@@ -33,7 +33,7 @@ type RestorePluginLifecycle = Pick<PluginLifecycle, "reconcileAll">;
  * that module) since the version gate needs its own readonly-connection query against a
  * NOT-YET-ACTIVE backup file, independent of `migrate.ts`'s own `getDb`-bound helpers. */
 const MIGRATIONS_TABLE = "drizzle_universe_migrations";
-const BASELINE_MIGRATION_FILE = "0000_current_baseline.sql";
+const BASELINE_MIGRATION_FILE = "0000_baseline.sql";
 const DEFAULT_MIGRATIONS_DIR = path.resolve(process.cwd(), "drizzle");
 
 /** The one route excluded from both the quiesce 503 short-circuit AND the in-flight counter

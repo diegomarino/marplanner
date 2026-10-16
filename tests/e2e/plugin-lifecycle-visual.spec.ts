@@ -59,7 +59,6 @@ function openFixtureDatabase(dataDir: string): InstanceType<typeof Database> {
 
 function seedFixture(
   dataDir: string,
-  lineage: "fresh" | "prior_baseline",
   defaultState: "active" | "inactive",
   overrides: Partial<
     Record<
@@ -77,11 +76,9 @@ function seedFixture(
     db.pragma("busy_timeout = 5000");
     db.transaction(() => {
       db.prepare("DELETE FROM plugin_lifecycle_operations").run();
-      db.prepare(
-        `UPDATE installation_lineage
-         SET kind = ?, pre_run_migration_files = ?, captured_at = ?
-         WHERE singleton_id = 1`
-      ).run(lineage, lineage === "fresh" ? "[]" : '["0000_current_baseline.sql"]', FIXED_AT);
+      db.prepare("UPDATE installation_lineage SET captured_at = ? WHERE singleton_id = 1").run(
+        FIXED_AT
+      );
       db.prepare(
         `UPDATE plugin_activation_registry
          SET state = ?,
@@ -277,7 +274,7 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
       await page.context().clearCookies();
 
       await test.step("fresh installation and keyboard-only entry", async () => {
-        seedFixture(server.dataDir, "fresh", "inactive");
+        seedFixture(server.dataDir, "inactive");
         const copy = await provisionWithKeyboard(page, server.origin);
         await navigateFromHomeToPluginManagementWithKeyboard(page, copy);
         await expectCatalogOrderAndActions(page, copy, "inactive");
@@ -311,8 +308,8 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
         await expectAdminSectionListed(page, "admin-nav-weather", true, "admin-nav-plugins");
       });
 
-      await test.step("supported prior baseline", async () => {
-        seedFixture(server.dataDir, "prior_baseline", "active");
+      await test.step("all nine active", async () => {
+        seedFixture(server.dataDir, "active");
         await openAdminRoute(page, server.origin, "/admin/plugins");
         const settings = (await (
           await page.request.get(`${server.origin}/api/settings`)
@@ -328,7 +325,7 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
       });
 
       await test.step("busy drain keeps canonical Active and unrelated actions usable", async () => {
-        seedFixture(server.dataDir, "prior_baseline", "active", {
+        seedFixture(server.dataDir, "active", {
           "daily-briefing": {
             state: "active",
             operation: { targetState: "inactive", phase: "draining" },
@@ -396,7 +393,7 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
       });
 
       await test.step("errored state exposes only safe text and focuses the affected row", async () => {
-        seedFixture(server.dataDir, "prior_baseline", "active", {
+        seedFixture(server.dataDir, "active", {
           weather: { state: "errored", errorCode: "reconciliation_failed" },
         });
         await page.goto(server.origin);
@@ -445,7 +442,7 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
       });
 
       await test.step("inactive direct route returns to catalog without mounting the contribution", async () => {
-        seedFixture(server.dataDir, "prior_baseline", "active", {
+        seedFixture(server.dataDir, "active", {
           backups: { state: "inactive" },
         });
         await openAdminRoute(page, server.origin, "/admin/backups");

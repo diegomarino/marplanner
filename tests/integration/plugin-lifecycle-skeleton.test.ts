@@ -112,8 +112,7 @@ describe("plugin lifecycle runnable server skeleton", () => {
     }
   });
 
-  it("boots a prior-baseline fixture active and preserves its established handler", async () => {
-    getDb().prepare("UPDATE installation_lineage SET kind = 'prior_baseline'").run();
+  it("boots an active plugin and preserves its established handler", async () => {
     setPluginState("weather", "active");
     const app = await buildApp();
     try {
