@@ -524,6 +524,15 @@ test("a participant chosen on a synced event survives the next sync", async ({ p
     });
     expect(created.status).toBe(202);
     const firstSync = await waitForPhase(baseUrl, cookie, "tracer", "succeeded");
+    const locale = await fetch(`${baseUrl}/api/settings`, {
+      method: "PUT",
+      headers: { cookie, "content-type": "application/json" },
+      body: JSON.stringify({
+        object: "locale",
+        settings: { timezone: "UTC", language: "en", weekStartDay: 1 },
+      }),
+    });
+    expect(locale.status).toBe(200);
 
     const [name, value] = cookie.split("=", 2);
     await page.context().addCookies([
@@ -536,19 +545,13 @@ test("a participant chosen on a synced event survives the next sync", async ({ p
     const row = page
       .getByTestId("calendar-event-row")
       .filter({ hasText: "Synthetic tracer event" });
-    // The event is tomorrow, which can fall in the next month: decide once the events are loaded.
+    // The event is tomorrow (UTC) and the household runs on UTC, so the month to show is known up
+    // front rather than read off a grid that may still be loading.
+    const tomorrowInNextMonth = utcDate(1).slice(0, 7) !== utcDate(0).slice(0, 7);
     const openTracer = async (load: () => Promise<unknown>): Promise<void> => {
-      const loaded = page.waitForResponse(
-        (response) =>
-          response.url().includes("/api/calendar/events?") && response.request().method() === "GET"
-      );
       await load();
-      await loaded;
-      // The month grid renders with the loaded events in one commit, unlike the week view.
       await expect(page.getByTestId("calendar-month-grid")).toBeVisible();
-      if ((await row.count()) === 0) {
-        await page.getByRole("button", { name: "Next period" }).click();
-      }
+      if (tomorrowInNextMonth) await page.getByRole("button", { name: "Next period" }).click();
       await row.click();
     };
     await openTracer(() => page.goto(`${baseUrl}/calendar`));
