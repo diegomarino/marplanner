@@ -36,10 +36,22 @@ import { addCalendarDays, buildWeekDays } from "@/calendar/calendar-presentation
 import { MealEntryDialog, type MealEntryTarget } from "@/meals/MealEntryDialog";
 import { MealPlanGrid } from "@/meals/MealPlanGrid";
 import { MEALS_CHANGED_EVENT } from "@/meals/useMealsWorkspace";
+import { useMealOrigins } from "@/meals/meal-origins";
 
 /** Manage the week menu (the family meal grid, editable here), meal plans with their recurring
- * entries, and recipes. Recipe deletion confirms dependent counts; inactive plans remain editable
- * but leave the derived menu. */
+ * entries, and recipes, as three local-state tabs: Preview (default), Meal plans and Recipes.
+ * All three panels stay mounted and the inactive ones are `hidden`, so an open edit survives a
+ * tab switch (spec D8); the tabs are never URL sub-routes (admin sub-paths relock the admin).
+ * Recipe deletion confirms dependent counts; inactive plans remain editable but leave the derived
+ * menu. */
+
+type MealsTab = "preview" | "plans" | "recipes";
+const MEALS_TABS: readonly MealsTab[] = ["preview", "plans", "recipes"];
+const TAB_LABEL_KEYS: Record<MealsTab, MessageKey> = {
+  preview: "meals.tabs.preview",
+  plans: "meals.tabs.plans",
+  recipes: "meals.tabs.recipes",
+};
 
 const SLOTS: Slot[] = ["breakfast", "lunch", "snack", "dinner"];
 
@@ -133,6 +145,10 @@ export function MealsManagement() {
   // navigated: they must re-read the current week, not the one their render closed over.
   const weekAnchorRef = useRef("");
   const [entryTarget, setEntryTarget] = useState<MealEntryTarget | null>(null);
+  const [tab, setTab] = useState<MealsTab>("preview");
+  const origins = useMealOrigins(plans);
+  // Captured when the add starts, so the dialog keeps its plan even if the pills change meanwhile.
+  const [entryInitialPlanId, setEntryInitialPlanId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     void loadRecipes("");
@@ -436,8 +452,35 @@ export function MealsManagement() {
         </Button>
       )}
 
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">{t("meals.week.title")}</h3>
+      <div
+        role="tablist"
+        aria-label={t("meals.tabs.label")}
+        className="bg-muted mt-4 flex w-fit max-w-full flex-wrap gap-1 rounded-lg border p-1"
+      >
+        {MEALS_TABS.map((id) => (
+          <Button
+            key={id}
+            id={`meals-tab-${id}`}
+            type="button"
+            role="tab"
+            variant={tab === id ? "default" : "ghost"}
+            aria-selected={tab === id}
+            aria-controls={`meals-tabpanel-${id}`}
+            data-testid={`meals-tab-${id}`}
+            onClick={() => setTab(id)}
+          >
+            {t(TAB_LABEL_KEYS[id])}
+          </Button>
+        ))}
+      </div>
+
+      <div
+        role="tabpanel"
+        id="meals-tabpanel-preview"
+        aria-labelledby="meals-tab-preview"
+        hidden={tab !== "preview"}
+        className="mt-6"
+      >
         <p className="text-muted-foreground text-sm mb-4">{t("meals.week.editHint")}</p>
         {weekError && (
           <div className="mb-4">
@@ -462,8 +505,20 @@ export function MealsManagement() {
           onPrevious={() => setWeekAnchorDate((date) => addCalendarDays(date, -7))}
           onCurrent={() => setWeekAnchorDate(todayDate)}
           onNext={() => setWeekAnchorDate((date) => addCalendarDays(date, 7))}
-          onAdd={(date, slot) => setEntryTarget({ date, slot })}
-          onSelect={(date, item) => setEntryTarget({ date, slot: item.slot, item })}
+          origin={{
+            pills: origins.pills,
+            tones: origins.tones,
+            selected: origins.selected,
+            onSelectedChange: origins.setSelected,
+          }}
+          onAdd={(date, slot) => {
+            setEntryInitialPlanId(origins.preselectPlanId);
+            setEntryTarget({ date, slot });
+          }}
+          onSelect={(date, item) => {
+            setEntryInitialPlanId(undefined);
+            setEntryTarget({ date, slot: item.slot, item });
+          }}
         />
         {entryTarget && (
           <MealEntryDialog
@@ -471,6 +526,7 @@ export function MealsManagement() {
             target={entryTarget}
             recipes={recipes}
             plans={plans}
+            initialPlanId={entryInitialPlanId}
             onClose={() => setEntryTarget(null)}
             onCreate={(input) => mutateEntry("/api/meal-entries", "POST", input)}
             onEdit={(id, input) =>
@@ -481,8 +537,13 @@ export function MealsManagement() {
         )}
       </div>
 
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">{t("meals.plan.title")}</h3>
+      <div
+        role="tabpanel"
+        id="meals-tabpanel-plans"
+        aria-labelledby="meals-tab-plans"
+        hidden={tab !== "plans"}
+        className="mt-6"
+      >
         <MealPlanManagement
           t={t}
           plans={plans}
@@ -500,8 +561,13 @@ export function MealsManagement() {
         />
       </div>
 
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">{t("meals.recipes.title")}</h3>
+      <div
+        role="tabpanel"
+        id="meals-tabpanel-recipes"
+        aria-labelledby="meals-tab-recipes"
+        hidden={tab !== "recipes"}
+        className="mt-6"
+      >
         <form
           className="flex gap-2 items-center mb-4"
           onSubmit={(e) => {

@@ -111,11 +111,8 @@ const adminDestinations: ReadonlyArray<{
   },
   {
     path: "/admin/meals",
-    primary: (page, m) =>
-      page
-        .getByRole("heading", { name: m["meals.recipes.createTitle"], exact: true })
-        .locator("..")
-        .getByRole("button", { name: m["meals.action.create"], exact: true }),
+    // The page opens on its Preview tab; the recipe create form sits behind the Recipes tab.
+    primary: (page) => page.getByTestId("meals-tab-recipes"),
   },
   {
     path: "/admin/daily-messages",
