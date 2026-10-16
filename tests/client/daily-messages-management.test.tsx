@@ -288,3 +288,60 @@ describe("DailyMessagesManagement load failures can be retried", () => {
     expect(screen.getByTestId("daily-messages-text-2026-01-15")).toHaveValue("Have a great day!");
   });
 });
+
+describe("DailyMessagesManagement members response landing after unmount", () => {
+  /** The members request stays pending until the test settles it, after unmounting the page. */
+  function renderWithPendingMembers() {
+    let resolveMembers!: (response: Response) => void;
+    let rejectMembers!: (error: Error) => void;
+    const members = new Promise<Response>((resolve, reject) => {
+      resolveMembers = resolve;
+      rejectMembers = reject;
+    });
+    const mockFetch = vi.fn((input: string | URL) => {
+      const url = String(input);
+      if (url === "/api/settings")
+        return Promise.resolve(jsonResponse({ locale: { timezone: "UTC", language: "en" } }));
+      if (url === "/api/members") return members;
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    vi.stubGlobal("fetch", mockFetch);
+    const view = render(
+      <HouseholdSettingsProvider>
+        <LanguageProvider>
+          <DailyMessagesManagement />
+        </LanguageProvider>
+      </HouseholdSettingsProvider>
+    );
+    const requestedUrls = () => mockFetch.mock.calls.map(([input]) => String(input));
+    return { members, resolveMembers, rejectMembers, requestedUrls, unmount: view.unmount };
+  }
+
+  /** Every continuation of the settled request is a microtask; one macrotask drains them all. */
+  const drainMicrotasks = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  it("drops a members list that arrives after unmount without loading any messages", async () => {
+    const page = renderWithPendingMembers();
+    await waitFor(() => expect(page.requestedUrls()).toContain("/api/members"));
+    page.unmount();
+
+    const json = vi.fn(() => Promise.resolve([member()]));
+    page.resolveMembers({ ok: true, status: 200, json } as unknown as Response);
+    await waitFor(() => expect(json).toHaveBeenCalled());
+    await drainMicrotasks();
+
+    expect(page.requestedUrls().some((url) => url.startsWith("/api/daily-messages"))).toBe(false);
+  });
+
+  it("swallows a members failure that arrives after unmount", async () => {
+    const page = renderWithPendingMembers();
+    await waitFor(() => expect(page.requestedUrls()).toContain("/api/members"));
+    page.unmount();
+
+    page.rejectMembers(new Error("network down"));
+    await page.members.catch(() => undefined);
+    await drainMicrotasks();
+
+    expect(page.requestedUrls().some((url) => url.startsWith("/api/daily-messages"))).toBe(false);
+  });
+});
