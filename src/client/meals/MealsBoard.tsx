@@ -7,6 +7,7 @@ import { useMealsWorkspace } from "./useMealsWorkspace";
 import { MealPlanGrid } from "./MealPlanGrid";
 import { MealEntryDialog, type MealEntryTarget } from "./MealEntryDialog";
 import { RecipeCatalogue } from "./RecipeCatalogue";
+import { useMealOrigins } from "./meal-origins";
 import { useTranslation } from "@/i18n";
 
 export const SLOT_LABEL_KEYS = {
@@ -20,6 +21,7 @@ export function MealsBoard(): React.JSX.Element {
   const { timezone } = useHouseholdSettings();
   const { t } = useTranslation();
   const workspace = useMealsWorkspace();
+  const origins = useMealOrigins(workspace.plans);
   const [target, setTarget] = useState<MealEntryTarget | null>(null);
   return (
     <div className="p-6">
@@ -30,6 +32,18 @@ export function MealsBoard(): React.JSX.Element {
           variant="outline"
           className="mb-4"
           onClick={() => void workspace.retryWeek()}
+        >
+          {t("meals.week.retry")}
+        </Button>
+      )}
+      <ErrorNotice message={workspace.plansError} />
+      {workspace.plansError && (
+        <Button
+          type="button"
+          variant="outline"
+          className="mb-4"
+          data-testid="meals-board-plans-retry"
+          onClick={() => void workspace.retryPlans()}
         >
           {t("meals.week.retry")}
         </Button>
@@ -51,6 +65,12 @@ export function MealsBoard(): React.JSX.Element {
             onNext={workspace.goNextWeek}
             onAdd={(date, slot) => setTarget({ date, slot })}
             onSelect={(date, item) => setTarget({ date, slot: item.slot, item })}
+            origin={{
+              pills: origins.pills,
+              tones: origins.tones,
+              selected: origins.selected,
+              onSelectedChange: origins.setSelected,
+            }}
           />
         )}
         {

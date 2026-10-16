@@ -132,6 +132,14 @@ test("family Meals workspace authors and refreshes entries without Admin", async
   const reloadedCell = page.getByTestId(`meal-cell-${today}-dinner`);
   await expect(reloadedCell.getByText(firstNote, { exact: true })).toBeVisible();
   await expect(reloadedCell.getByText(secondNote, { exact: true })).toBeVisible();
+  const firstChip = reloadedCell.getByRole("button", { name: firstNote, exact: true });
+  await expect(firstChip).toHaveAttribute("data-origin", "oneoff");
+  await expect(firstChip.locator("span.italic")).toHaveText(firstNote);
+  const oneOffPill = page.getByRole("checkbox", { name: m["meals.origin.oneOff"], exact: true });
+  await oneOffPill.check();
+  await expect(firstChip).toHaveAttribute("data-emphasis", "hit");
+  await oneOffPill.uncheck();
+  await expect(firstChip).toHaveAttribute("data-emphasis", "normal");
   await reloadedCell.getByText(firstNote).click();
   await page
     .getByRole("textbox", { name: m["meals.entries.contentModeNote"] })

@@ -228,7 +228,12 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
     );
   }
 
-  /** The recipe card (Recipes renders after the week grid and the plan cards). */
+  /** The admin meals panels are tabs (Preview, Meal plans, Recipes): open the one a query targets. */
+  async function openTab(name: "Preview" | "Meal plans" | "Recipes") {
+    fireEvent.click(await screen.findByRole("tab", { name }));
+  }
+
+  /** The recipe card, in the Recipes tab. */
   function recipeCard(name: string): HTMLElement {
     return screen.getByRole("heading", { name }).closest("div.border") as HTMLElement;
   }
@@ -241,8 +246,8 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
 
     fireEvent.click(await screen.findByTestId(`meal-cell-${today}-dinner`));
     const dialog = await screen.findByRole("dialog");
-    fireEvent.click(within(dialog).getByRole("radio", { name: "Note" }));
-    fireEvent.change(within(dialog).getByRole("textbox", { name: "Note" }), {
+    fireEvent.click(within(dialog).getByRole("radio", { name: "Free text" }));
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Free text" }), {
       target: { value: "Weeknight note" },
     });
     fireEvent.click(within(dialog).getByRole("button", { name: "Add Entry" }));
@@ -277,11 +282,14 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
     const weekGrid = await screen.findByTestId("meal-plan-grid");
     expect(await within(weekGrid).findByRole("button", { name: "Old Recipe" })).toBeInTheDocument();
 
+    await openTab("Recipes");
     fireEvent.click(within(recipeCard("Old Recipe")).getByRole("button", { name: "Delete" }));
     // Recipe delete confirms through the shared ConfirmDialog — click its confirm button.
     const deleteDialog = await screen.findByRole("dialog");
     fireEvent.click(within(deleteDialog).getByRole("button", { name: "Delete" }));
 
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await openTab("Preview");
     await waitFor(() => {
       expect(
         within(screen.getByTestId("meal-plan-grid")).queryByRole("button", { name: "Old Recipe" })
@@ -292,6 +300,7 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
   it("shows a newly-added recurring entry in its plan card", async () => {
     renderSurface();
 
+    await openTab("Meal plans");
     const card = await screen.findByTestId("meals-plan-card");
     await within(card).findByText("No entries in this plan.");
 
@@ -300,7 +309,7 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
     fireEvent.change(within(card).getByTestId("meals-recurring-slot-select"), {
       target: { value: "breakfast" },
     });
-    fireEvent.click(within(card).getByRole("radio", { name: "Note" }));
+    fireEvent.click(within(card).getByRole("radio", { name: "Free text" }));
     fireEvent.change(within(card).getByTestId("meals-recurring-note-input"), {
       target: { value: "Oatmeal" },
     });
@@ -340,6 +349,7 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
     // (Asserting on the row itself, not a recipe-name label: once the recipe list refetches
     // post-delete, the row's fallback label swaps to the raw recipeId — a phantom row can
     // otherwise "look" different without disappearing, masking the real defect.)
+    await openTab("Recipes");
     fireEvent.click(within(recipeCard("Old Recipe")).getByRole("button", { name: "Delete" }));
     const deleteDialog = await screen.findByRole("dialog");
     fireEvent.click(within(deleteDialog).getByRole("button", { name: "Delete" }));
@@ -363,12 +373,14 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
     fireEvent.click(within(dialog).getByRole("radio", { name: `Every ${weekdayName}` }));
     // The single active plan is preselected.
     expect(within(dialog).getByRole("combobox", { name: "Meal Plan" })).toHaveValue("p1");
-    fireEvent.click(within(dialog).getByRole("radio", { name: "Note" }));
-    fireEvent.change(within(dialog).getByRole("textbox", { name: "Note" }), {
+    fireEvent.click(within(dialog).getByRole("radio", { name: "Free text" }));
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Free text" }), {
       target: { value: "Soup" },
     });
     fireEvent.click(within(dialog).getByRole("button", { name: "Add Entry" }));
 
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await openTab("Meal plans");
     await waitFor(() => {
       expect(within(screen.getByTestId("meal-plan-grid")).getByText("Soup")).toBeInTheDocument();
       expect(within(screen.getByTestId("meals-plan-entries-p1")).getByText("Soup")).toBeVisible();
@@ -405,11 +417,13 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
     fireEvent.click(await within(grid).findByRole("button", { name: "Stew" }));
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByRole("note")).toHaveTextContent("This changes every matching week.");
-    fireEvent.change(within(dialog).getByRole("textbox", { name: "Note" }), {
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Free text" }), {
       target: { value: "Bean stew" },
     });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
 
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await openTab("Meal plans");
     await waitFor(() => {
       expect(
         within(screen.getByTestId("meals-plan-entries-p1")).getByText("Bean stew")
@@ -458,7 +472,9 @@ describe("MealsManagement — view refresh coherence (rework #448)", () => {
 
     await screen.findByTestId(`meal-day-heading-${today}`);
     // Deactivate the plan (slow), then move to next week before the write returns.
+    await openTab("Meal plans");
     fireEvent.click(await screen.findByRole("button", { name: "Weeknights" }));
+    await openTab("Preview");
     fireEvent.click(screen.getByRole("button", { name: "Next week" }));
     await screen.findByTestId(`meal-day-heading-${nextWeekDate}`);
     const weekReads = () =>

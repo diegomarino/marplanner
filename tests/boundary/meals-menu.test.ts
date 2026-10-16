@@ -593,4 +593,43 @@ describe("meals-menu boundary tests", () => {
       await app.close();
     }
   });
+
+  it("tags every menu item with its origin plan: the plan id for recurring, null for one-off (FR-025)", async () => {
+    const { deviceKey } = seedKeys();
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    try {
+      await app.ready();
+      const plan = await createMealPlan(app, deviceKey, "Origin plan");
+      const date = "2026-08-17";
+      const weekday = weekdayOf(date, "Europe/Madrid");
+      const recurring = JSON.parse(
+        (
+          await createEntry(app, deviceKey, {
+            kind: "recurring",
+            mealPlanId: plan.id,
+            weekday,
+            slot: "lunch",
+            note: "weekly",
+          })
+        ).body
+      );
+      const oneOff = JSON.parse(
+        (await createEntry(app, deviceKey, { kind: "oneoff", date, slot: "lunch", note: "once" }))
+          .body
+      );
+
+      const expected = [
+        expect.objectContaining({ entryId: recurring.id, source: "recurring", planId: plan.id }),
+        expect.objectContaining({ entryId: oneOff.id, source: "oneoff", planId: null }),
+      ];
+      expect(JSON.parse((await getMenu(app, deviceKey, date)).body)).toEqual(expected);
+      expect(JSON.parse((await getMenu(app, deviceKey, date, "lunch")).body)).toEqual(expected);
+      expect(JSON.parse((await getWeekMenu(app, deviceKey, date)).body)[date].lunch).toEqual(
+        expected
+      );
+    } finally {
+      await app.close();
+    }
+  });
 });

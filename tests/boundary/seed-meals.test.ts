@@ -56,6 +56,25 @@ describe("canonical demo meals seed boundary", () => {
       "demo:meal-entry:rolling:2026-09-21:dinner:current-dinner",
       "demo:meal-entry:rolling:2026-09-21:dinner:current-dinner-note",
     ]);
+    for (const anchor of ["2026-09-25", "2026-10-02"]) {
+      const origins = new Set(
+        Object.values(getWeekMenu(anchor)).flatMap((slots) =>
+          Object.values(slots).flatMap((items) => items.map((item) => item.planId ?? "oneoff"))
+        )
+      );
+      expect([...origins].sort()).toEqual([
+        "demo:meal-plan:school-lunches",
+        "demo:meal-plan:simpson-family-week",
+        "oneoff",
+      ]);
+    }
+    expect(
+      Object.values(getWeekMenu("2026-10-02")).some((slots) =>
+        Object.values(slots).some((items) =>
+          items.some((item) => item.source === "oneoff" && item.note !== null)
+        )
+      )
+    ).toBe(true);
   });
 
   it("keeps authoritative Meals reads and persisted IDs identical across two same-date clocks", async () => {
@@ -173,6 +192,7 @@ describe("canonical demo meals seed boundary", () => {
       },
     ]);
     expect(publicRead.plans.map(withoutPlanTimestamps)).toEqual([
+      { id: "demo:meal-plan:school-lunches", name: "School lunches", active: true },
       { id: "demo:meal-plan:simpson-family-week", name: "Simpson Family Week", active: true },
     ]);
     expect(publicRead.recurringEntries.map(withoutEntryTimestamp)).toEqual([
@@ -197,6 +217,16 @@ describe("canonical demo meals seed boundary", () => {
         note: null,
       },
       {
+        id: "demo:meal-entry:recurring:sat:breakfast",
+        kind: "recurring",
+        mealPlanId: "demo:meal-plan:simpson-family-week",
+        weekday: "sat",
+        date: null,
+        slot: "breakfast",
+        recipeId: null,
+        note: "Waffles with Grampa",
+      },
+      {
         id: "demo:meal-entry:recurring:sun:snack",
         kind: "recurring",
         mealPlanId: "demo:meal-plan:simpson-family-week",
@@ -205,6 +235,16 @@ describe("canonical demo meals seed boundary", () => {
         slot: "snack",
         recipeId: "demo:recipe:pink-donut",
         note: null,
+      },
+      {
+        id: "demo:meal-entry:recurring:tue:dinner",
+        kind: "recurring",
+        mealPlanId: "demo:meal-plan:simpson-family-week",
+        weekday: "tue",
+        date: null,
+        slot: "dinner",
+        recipeId: null,
+        note: "Leftovers night",
       },
       {
         id: "demo:meal-entry:recurring:wed:dinner",
@@ -217,13 +257,76 @@ describe("canonical demo meals seed boundary", () => {
         note: null,
       },
     ]);
+    expect(
+      publicRead.schoolEntries.map(({ id, weekday, slot, recipeId, note }: any) => ({
+        id,
+        weekday,
+        slot,
+        recipeId,
+        note,
+      }))
+    ).toEqual([
+      {
+        id: "demo:meal-entry:recurring:school-lunches:fri:lunch",
+        weekday: "fri",
+        slot: "lunch",
+        recipeId: null,
+        note: "Sandwich and fruit",
+      },
+      {
+        id: "demo:meal-entry:recurring:school-lunches:mon:lunch",
+        weekday: "mon",
+        slot: "lunch",
+        recipeId: "demo:recipe:marges-spaghetti",
+        note: null,
+      },
+      {
+        id: "demo:meal-entry:recurring:school-lunches:thu:lunch",
+        weekday: "thu",
+        slot: "lunch",
+        recipeId: "demo:recipe:steamed-hams",
+        note: null,
+      },
+      {
+        id: "demo:meal-entry:recurring:school-lunches:thu:snack",
+        weekday: "thu",
+        slot: "snack",
+        recipeId: "demo:recipe:apu-samosas",
+        note: null,
+      },
+      {
+        id: "demo:meal-entry:recurring:school-lunches:tue:lunch",
+        weekday: "tue",
+        slot: "lunch",
+        recipeId: null,
+        note: "Sandwich and fruit",
+      },
+      {
+        id: "demo:meal-entry:recurring:school-lunches:wed:lunch",
+        weekday: "wed",
+        slot: "lunch",
+        recipeId: "demo:recipe:lisa-lentil-stew",
+        note: null,
+      },
+    ]);
     expect(publicRead.menu).toEqual([
+      {
+        entryId: "demo:meal-entry:recurring:school-lunches:wed:lunch",
+        slot: "lunch",
+        label: "Lisa's Lentil Stew",
+        isTombstone: false,
+        source: "recurring",
+        planId: "demo:meal-plan:school-lunches",
+        recipeId: "demo:recipe:lisa-lentil-stew",
+        note: null,
+      },
       {
         entryId: "demo:meal-entry:recurring:wed:dinner",
         slot: "dinner",
         label: "Krusty Burger",
         isTombstone: false,
         source: "recurring",
+        planId: "demo:meal-plan:simpson-family-week",
         recipeId: "demo:recipe:krusty-burger",
         note: null,
       },
@@ -233,6 +336,7 @@ describe("canonical demo meals seed boundary", () => {
         label: "Pink Donut",
         isTombstone: false,
         source: "oneoff",
+        planId: null,
         recipeId: "demo:recipe:pink-donut",
         note: null,
       },
@@ -283,8 +387,13 @@ async function readMealsThroughPublicApi() {
       "/api/meal-plans/demo:meal-plan:simpson-family-week/entries",
       deviceKey
     );
+    const schoolEntries = await readJson(
+      app,
+      "/api/meal-plans/demo:meal-plan:school-lunches/entries",
+      deviceKey
+    );
     const menu = await readJson(app, `/api/menu?date=${AS_OF_DATE}`, deviceKey);
-    return { recipes, plans, recurringEntries, menu };
+    return { recipes, plans, recurringEntries, schoolEntries, menu };
   } finally {
     await app.close();
   }

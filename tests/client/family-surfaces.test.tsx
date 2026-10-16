@@ -175,6 +175,9 @@ function mockMealsBackend(
     if (url.startsWith("/api/recipes")) {
       return Promise.resolve(json([]));
     }
+    if (url.startsWith("/api/meal-plans")) {
+      return Promise.resolve(json([]));
+    }
     throw new Error(`unexpected fetch: ${url}`);
   });
   vi.stubGlobal("fetch", mockFetch);

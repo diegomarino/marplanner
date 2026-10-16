@@ -1,4 +1,4 @@
-import type { Slot } from "../src/shared";
+import type { Slot, Weekday } from "../src/shared";
 import type { SeedModule } from "../src/server/db/seeds/types";
 import { readWeekStartDay } from "../src/server/lib/household-date";
 import {
@@ -9,6 +9,33 @@ import {
 } from "../src/server/modules/meals";
 
 const PLAN_ID = "demo:meal-plan:simpson-family-week";
+const SCHOOL_PLAN_ID = "demo:meal-plan:school-lunches";
+
+type RecurringSeed = readonly [
+  weekday: Weekday,
+  slot: Slot,
+  content: { recipeId?: string; note?: string },
+];
+
+/** Simpson Family Week keeps its original ids: `demo:meal-entry:recurring:<weekday>:<slot>`. */
+const SIMPSON_ENTRIES: readonly RecurringSeed[] = [
+  ["mon", "dinner", { recipeId: "demo:recipe:marge-tomato-soup" }],
+  ["tue", "dinner", { note: "Leftovers night" }],
+  ["wed", "dinner", { recipeId: "demo:recipe:krusty-burger" }],
+  ["fri", "dinner", { recipeId: "demo:recipe:lisa-lentil-stew" }],
+  ["sat", "breakfast", { note: "Waffles with Grampa" }],
+  ["sun", "snack", { recipeId: "demo:recipe:pink-donut" }],
+];
+
+/** School lunches ids: `demo:meal-entry:recurring:school-lunches:<weekday>:<slot>`. */
+const SCHOOL_ENTRIES: readonly RecurringSeed[] = [
+  ["mon", "lunch", { recipeId: "demo:recipe:marges-spaghetti" }],
+  ["tue", "lunch", { note: "Sandwich and fruit" }],
+  ["wed", "lunch", { recipeId: "demo:recipe:lisa-lentil-stew" }],
+  ["thu", "lunch", { recipeId: "demo:recipe:steamed-hams" }],
+  ["thu", "snack", { recipeId: "demo:recipe:apu-samosas" }],
+  ["fri", "lunch", { note: "Sandwich and fruit" }],
+];
 
 const RECIPES = [
   {
@@ -114,6 +141,7 @@ export function buildRollingMealEntries(asOfDate: string, weekStartDay: number):
     at(6, "dinner", "current-friday", { recipeId: "demo:recipe:lisa-lentil-stew" }),
     at(7, "breakfast", "next-breakfast", { recipeId: "demo:recipe:pink-donut" }),
     at(9, "snack", "next-snack", { recipeId: "demo:recipe:apu-samosas" }),
+    at(11, "dinner", "next-dinner-note", { note: "Takeout from Luigi's" }),
     at(13, "dinner", "next-dinner", { recipeId: "demo:recipe:domingo-tacos" }),
   ];
 }
@@ -123,12 +151,9 @@ const mealsSeed: SeedModule = {
   run({ asOfDate, nowMs }) {
     for (const recipe of RECIPES) upsertSeedRecipe({ ...recipe, nowMs });
     upsertSeedMealPlan({ id: PLAN_ID, nowMs, name: "Simpson Family Week" });
-    for (const [weekday, slot, recipeId] of [
-      ["mon", "dinner", "demo:recipe:marge-tomato-soup"],
-      ["wed", "dinner", "demo:recipe:krusty-burger"],
-      ["fri", "dinner", "demo:recipe:lisa-lentil-stew"],
-      ["sun", "snack", "demo:recipe:pink-donut"],
-    ] as const) {
+    // One millisecond later, so Simpson Family Week keeps the first plan colour (creation order).
+    upsertSeedMealPlan({ id: SCHOOL_PLAN_ID, nowMs: nowMs + 1, name: "School lunches" });
+    for (const [weekday, slot, content] of SIMPSON_ENTRIES) {
       upsertSeedMealEntry({
         id: `demo:meal-entry:recurring:${weekday}:${slot}`,
         nowMs,
@@ -136,7 +161,18 @@ const mealsSeed: SeedModule = {
         mealPlanId: PLAN_ID,
         weekday,
         slot,
-        recipeId,
+        ...content,
+      });
+    }
+    for (const [weekday, slot, content] of SCHOOL_ENTRIES) {
+      upsertSeedMealEntry({
+        id: `demo:meal-entry:recurring:school-lunches:${weekday}:${slot}`,
+        nowMs,
+        kind: "recurring",
+        mealPlanId: SCHOOL_PLAN_ID,
+        weekday,
+        slot,
+        ...content,
       });
     }
     const rollingEntries = buildRollingMealEntries(asOfDate, readWeekStartDay());

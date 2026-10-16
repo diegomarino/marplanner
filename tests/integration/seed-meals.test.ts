@@ -64,6 +64,10 @@ describe("demo meals seed integration", () => {
         entry_date: "2026-10-05",
       },
       { id: "demo:meal-entry:rolling:2026-10-07:snack:next-snack", entry_date: "2026-10-07" },
+      {
+        id: "demo:meal-entry:rolling:2026-10-09:dinner:next-dinner-note",
+        entry_date: "2026-10-09",
+      },
       { id: "demo:meal-entry:rolling:2026-10-11:dinner:next-dinner", entry_date: "2026-10-11" },
     ]);
     expect(
@@ -71,7 +75,7 @@ describe("demo meals seed integration", () => {
         .map((row) => row.id)
         .filter((id) => firstRollingRows.some((old) => old.id === id))
     ).toEqual([]);
-    expect(firstRollingRows).toHaveLength(11);
+    expect(firstRollingRows).toHaveLength(12);
     expect(
       getDb()
         .prepare("SELECT id, entry_date, slot, note FROM meal_entries WHERE id = ?")
@@ -84,7 +88,14 @@ describe("demo meals seed integration", () => {
     });
     expect(getMenu(SECOND_DATE, undefined)).toEqual([
       expect.objectContaining({
+        entryId: "demo:meal-entry:recurring:school-lunches:fri:lunch",
+        planId: "demo:meal-plan:school-lunches",
+        recipeId: null,
+        note: "Sandwich and fruit",
+      }),
+      expect.objectContaining({
         entryId: "demo:meal-entry:recurring:fri:dinner",
+        planId: "demo:meal-plan:simpson-family-week",
         recipeId: "demo:recipe:lisa-lentil-stew",
         note: null,
       }),
