@@ -584,9 +584,9 @@ describe("DailyBriefingManagement — kiosk density across reachable states (SC-
         await screen.findByTestId("daily-briefing-block-matrix");
         // The Schedule tab is hidden now. 3 tabs + 2 member pills + the matrix: 7 "Briefing days"
         // pause checkboxes, 21 drag handles, 21 x 7 = 147 cells and 12 param selects (level on
-        // wordOfDay, difficulty on trivia/wordSearch, language on the 9 corpus-backed types)
-        // = 3 + 2 + 7 + 21 + 147 + 12.
-        expect(countInteractiveControls(document.body)).toBe(192);
+        // wordOfDay, difficulty on trivia/wordSearch, language on the 9 corpus-backed types) and 21
+        // "every day" row buttons = 3 + 2 + 7 + 21 + 147 + 12 + 21.
+        expect(countInteractiveControls(document.body)).toBe(213);
         expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
         // Phase 3 — the Briefings tab, counted once its history and read have settled.

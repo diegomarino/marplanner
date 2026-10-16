@@ -242,7 +242,8 @@ async function expectCatalogOrderAndActions(
     );
     await expect(
       page.getByRole("button", {
-        name: `${copy[`plugins.action.${expectedState === "active" ? "deactivate" : "activate"}`]} ${label}`,
+        name: label,
+        pressed: expectedState === "active",
         exact: true,
       })
     ).toBeVisible();
@@ -285,7 +286,8 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
         await maybePauseForHumanReview(page);
 
         const weatherAction = page.getByRole("button", {
-          name: `${copy["plugins.action.activate"]} ${copy[LABEL_KEYS.weather]}`,
+          name: copy[LABEL_KEYS.weather],
+          pressed: false,
           exact: true,
         });
         await tabTo(page, weatherAction);
@@ -302,7 +304,8 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
         await expect
           .soft(
             page.getByRole("button", {
-              name: `${copy["plugins.action.deactivate"]} ${copy[LABEL_KEYS.weather]}`,
+              name: copy[LABEL_KEYS.weather],
+              pressed: true,
               exact: true,
             })
           )
@@ -350,7 +353,8 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
         const stopping = busyRow.getByText(copy["plugins.operation.deactivating"], { exact: true });
         await expect(stopping).toHaveAttribute("aria-live", "polite");
         const busyAction = busyRow.getByRole("button", {
-          name: `${copy["plugins.action.deactivate"]} ${copy[LABEL_KEYS["daily-briefing"]]}`,
+          name: copy[LABEL_KEYS["daily-briefing"]],
+          pressed: true,
           exact: true,
         });
         await expect(busyAction).toBeDisabled();
@@ -363,7 +367,8 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
         );
 
         const printingAction = page.getByRole("button", {
-          name: `${copy["plugins.action.deactivate"]} ${copy[LABEL_KEYS.printing]}`,
+          name: copy[LABEL_KEYS.printing],
+          pressed: true,
           exact: true,
         });
         await expect(printingAction).toBeEnabled();
@@ -386,7 +391,8 @@ test("prepares every visual-review fixture at narrow and wide viewports", async 
         await expect
           .soft(
             page.getByRole("button", {
-              name: `${copy["plugins.action.activate"]} ${copy[LABEL_KEYS.printing]}`,
+              name: copy[LABEL_KEYS.printing],
+              pressed: false,
               exact: true,
             })
           )

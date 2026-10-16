@@ -303,11 +303,11 @@ describe("Shell — unprovisioned gate", () => {
     });
 
     render(<Shell />);
-    const deactivate = await screen.findByRole("button", { name: "Deactivate Printing" });
+    const deactivate = await screen.findByRole("button", { name: "Printing", pressed: true });
     vi.stubEnv("VITE_DEV_BYPASS_ADMIN_PIN", "0");
     fireEvent.click(deactivate);
 
-    await screen.findByRole("button", { name: "Activate Printing" });
+    await screen.findByRole("button", { name: "Printing", pressed: false });
     expect(screen.queryByTestId("admin-affordance")).not.toBeInTheDocument();
     expect(screen.getByTestId("plugin-catalog")).toBeInTheDocument();
   });
