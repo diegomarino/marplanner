@@ -8,6 +8,9 @@
 
 app = "marplanner2"
 primary_region = "ams"
+# Longer than the server's own 5 s drain limit (src/server/index.ts), like the 15 s
+# stop_grace_period in infra/docker/compose.yaml, so Fly never kills it mid-write.
+kill_timeout = 15
 
 [build]
   dockerfile = "../docker/Dockerfile"
