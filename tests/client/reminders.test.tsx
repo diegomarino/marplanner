@@ -441,24 +441,77 @@ describe("RemindersManagement — deleting a reminder opens a themed ConfirmDial
 });
 
 describe("RemindersManagement — rows name their members and days", () => {
-  it("summarises all-members, specific and calendar-gated rules", async () => {
+  /** A member pill is MemberChip: the member's own colour, filled. */
+  const PILL_CLASS = "bg-[var(--member-color)]";
+
+  it("summarises all-members, specific and calendar-gated rules with member pills", async () => {
     mockBackend({
-      reminders: () => json([REMINDER_SCHEDULED, REMINDER_SPECIFIC, REMINDER_CALENDAR_GATED]),
+      reminders: () =>
+        json([
+          REMINDER_SCHEDULED,
+          REMINDER_SPECIFIC,
+          {
+            ...REMINDER_CALENDAR_GATED,
+            assignments: [
+              { id: "a1", memberId: "m1", weekdays: [], active: true },
+              { id: "a4", memberId: "m2", weekdays: [], active: true },
+            ],
+          },
+        ]),
       members: () => json([MEMBER, MEMBER_B]),
     });
     renderSurface();
     await screen.findByText("Pack the gym bag");
 
-    expect(
-      within(screen.getByTestId("reminder-r1")).getByText("All members · Mon")
-    ).toBeInTheDocument();
-    expect(
-      within(screen.getByTestId("reminder-r3")).getByText("Ari: Mon, Wed · Bea: Fri")
-    ).toBeInTheDocument();
-    expect(
-      within(screen.getByTestId("reminder-r2")).getByText("Match text: vet · Ari")
-    ).toBeInTheDocument();
+    const all = screen.getByTestId("reminder-who-r1");
+    expect(within(all).getByText("All members")).toHaveClass("bg-muted");
+    expect(within(all).getByText("Mon")).toBeInTheDocument();
+    expect(all.querySelector(`.${CSS.escape(PILL_CLASS)}`)).toBeNull();
+
+    const specific = screen.getByTestId("reminder-who-r3");
+    expect(within(specific).getByText("Ari")).toHaveClass(PILL_CLASS);
+    expect(within(specific).getByText("Bea")).toHaveClass(PILL_CLASS);
+    expect(within(specific).getByText("Mon, Wed")).toBeInTheDocument();
+    expect(within(specific).getByText("Fri")).toBeInTheDocument();
+
+    const gated = screen.getByTestId("reminder-who-r2");
+    expect(within(gated).getByText("Match text: vet")).toBeInTheDocument();
+    expect(within(gated).getByText("Ari")).toHaveClass(PILL_CLASS);
+    expect(within(gated).getByText("Bea")).toHaveClass(PILL_CLASS);
     expect(within(screen.getByTestId("reminder-r1")).getByText("Active")).toBeInTheDocument();
+  });
+
+  it("a calendar-gated rule for all members shows the neutral label, no member pill", async () => {
+    mockBackend({
+      reminders: () =>
+        json([{ ...REMINDER_CALENDAR_GATED, targetingMode: "apply_to_all", assignments: [] }]),
+    });
+    renderSurface();
+    const gated = await screen.findByTestId("reminder-who-r2");
+    expect(within(gated).getByText("All members")).toHaveClass("bg-muted");
+    expect(gated.querySelector(`.${CSS.escape(PILL_CLASS)}`)).toBeNull();
+  });
+
+  it("skips archived and unknown members in a row's pills", async () => {
+    mockBackend({
+      reminders: () =>
+        json([
+          {
+            ...REMINDER_CALENDAR_GATED,
+            assignments: [
+              { id: "a1", memberId: "m1", weekdays: [], active: true },
+              { id: "a4", memberId: "m2", weekdays: [], active: true },
+              { id: "a5", memberId: "zz", weekdays: [], active: true },
+            ],
+          },
+        ]),
+      members: () => json([MEMBER, { ...MEMBER_B, lifecycle: "archived" }]),
+    });
+    renderSurface();
+    const gated = await screen.findByTestId("reminder-who-r2");
+    expect(within(gated).getByText("Ari")).toHaveClass(PILL_CLASS);
+    expect(within(gated).queryByText("Bea")).not.toBeInTheDocument();
+    expect(gated.querySelectorAll(`.${CSS.escape(PILL_CLASS)}`)).toHaveLength(1);
   });
 
   it("shows Off for an inactive rule", async () => {

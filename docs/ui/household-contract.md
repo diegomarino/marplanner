@@ -56,8 +56,9 @@ colour held by another active member cannot be picked while a free one remains. 
 the same rule, and a restored member whose colour was taken meanwhile comes back with the first
 free one.
 
-Reminders are listed at `/admin/reminders`, one row per rule naming who it applies to and on which
-days with an Active/Off badge. "Add rule" and the row's edit icon open one dialog; editing can switch
+Reminders are listed at `/admin/reminders`, one row per rule naming who it applies to (a pill in
+each member's colour, or a neutral "All members" label) and on which days or match text, with an
+Active/Off badge. "Add rule" and the row's edit icon open one dialog; editing can switch
 a rule between all members and specific members. The dialog's choices are pills: kind and
 applies-to as segmented choices, weekdays in the household's week-start order, and for specific
 members a pill in each member's colour with a weekday-pill row beneath it while selected. Deleting
