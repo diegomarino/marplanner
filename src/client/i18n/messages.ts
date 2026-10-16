@@ -665,7 +665,11 @@ export const messages = {
     "calendar.allDayFilter": "All-day events",
     "calendar.close": "Close",
     "calendar.participants": "Who is it for",
-    "calendar.externalReadOnly": "External event — read only",
+    "calendar.externalReadOnly":
+      "From an external calendar — its title, time, location and description are read only.",
+    "calendar.editParticipants": "Edit participants",
+    "calendar.externalParticipantsHint":
+      "People named in the title are added again at the next sync.",
     "calendar.admin.title": "Calendar Management",
     "calendar.admin.externalCalendars": "External Calendars",
     "calendar.admin.emojiHighlights": "Emoji Highlights",
@@ -2199,7 +2203,11 @@ export const messages = {
     "calendar.allDayFilter": "Eventos de día completo",
     "calendar.close": "Cerrar",
     "calendar.participants": "Para quién es",
-    "calendar.externalReadOnly": "Evento externo — solo lectura",
+    "calendar.externalReadOnly":
+      "De un calendario externo: su título, hora, lugar y descripción son de solo lectura.",
+    "calendar.editParticipants": "Editar participantes",
+    "calendar.externalParticipantsHint":
+      "Las personas nombradas en el título se vuelven a añadir en la próxima sincronización.",
     "calendar.admin.title": "Gestión del Calendario",
     "calendar.admin.externalCalendars": "Calendarios externos",
     "calendar.admin.emojiHighlights": "Destacados con emoji",

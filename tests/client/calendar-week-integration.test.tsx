@@ -114,7 +114,11 @@ describe("CalendarView — Week integration", () => {
     expect(screen.getByText("All-day week")).toHaveAttribute("data-all-day", "true");
 
     fireEvent.click(screen.getByText("External week"));
-    expect(await screen.findByText("External event — read only")).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "From an external calendar — its title, time, location and description are read only."
+      )
+    ).toBeInTheDocument();
     expect(screen.queryByTestId("calendar-edit-btn")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
