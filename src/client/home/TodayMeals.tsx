@@ -1,5 +1,4 @@
 import { appUrl } from "@/lib/base-path";
-import { useId } from "react";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { useTranslation } from "@/i18n";
 import type { MessageKey } from "@/i18n/messages";
@@ -25,7 +24,6 @@ const SLOT_ICONS: Record<Slot, string> = {
 /** Read-only household-day menu strip for the Home dashboard. */
 export function TodayMeals(): React.JSX.Element {
   const { t } = useTranslation();
-  const headingId = useId();
   const { items, error } = useTodayMeals();
   const returnedItems = items ?? [];
   const itemsBySlot = new Map<Slot, typeof returnedItems>();
@@ -36,15 +34,11 @@ export function TodayMeals(): React.JSX.Element {
   }
 
   return (
-    <section aria-labelledby={headingId} className="bg-card rounded-lg border p-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 id={headingId} className="text-xl font-semibold">
-          {t("todayMeals.title")}
-        </h2>
-        <a href={appUrl("/meals")} className="text-sm font-medium underline underline-offset-4">
-          {t("todayMeals.viewAll")}
-        </a>
-      </div>
+    <a
+      href={appUrl("/meals")}
+      aria-label={t("todayMeals.open")}
+      className="bg-card block rounded-lg border p-4 text-inherit no-underline focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring focus-visible:outline-none"
+    >
       {error && <ErrorNotice message={t("todayMeals.error")} />}
       <div
         data-testid="today-meals-strip"
@@ -104,6 +98,6 @@ export function TodayMeals(): React.JSX.Element {
           })}
         </ul>
       </div>
-    </section>
+    </a>
   );
 }

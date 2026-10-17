@@ -395,11 +395,14 @@ describe("TodayAgenda", () => {
     await screen.findByText("First tie");
     const agenda = screen.getByRole("region", { name: "Today's agenda" });
     expect(agenda).toHaveClass("h-full", "rounded-3xl");
-    expect(within(agenda).getByRole("link", { name: "Calendar" })).toHaveAttribute(
+    expect(within(agenda).getByRole("link", { name: "View all" })).toHaveAttribute(
       "href",
       "/calendar"
     );
-    expect(within(agenda).getByText("Tuesday, September 22")).toBeVisible();
+    expect(within(agenda).queryByRole("link", { name: "Calendar" })).toBeNull();
+    expect(
+      within(agenda).getByRole("heading", { level: 2, name: "Tuesday, Sep 22" })
+    ).toBeVisible();
     expect(within(agenda).getByTestId("agenda-groups")).toHaveClass("overflow-y-auto");
     expect(
       screen.getAllByRole("listitem").map((item) => item.querySelector("h4")?.textContent)
