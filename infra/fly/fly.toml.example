@@ -1,0 +1,55 @@
+# Fly.io recipe for Marplanner v2 (ADR-055 phase 2): a thin platform layer over the same
+# platform-agnostic image in infra/docker/Dockerfile. Nothing here changes the image.
+#
+# Copy this file to infra/fly/fly.toml (git-ignored), then set your app name, region and volume
+# name. Create them once with `fly apps create <app>` and
+# `fly volumes create <volume> --app <app> --region <region> --size 1`.
+#
+# One machine only: SQLite lives on the volume and the boot single-writer guard refuses a second
+# instance. Deploy from the repo root with:
+#   fly deploy . --config infra/fly/fly.toml --ha=false \
+#     --build-arg MP_BUILD_SHA=$(git rev-parse --short HEAD) \
+#     --build-arg "MP_BUILD_SUBJECT=$(git log -1 --format=%s)"
+# Secrets (set with `fly secrets`, never in this file): MP_ACCESS_TOKEN, MP_BOOTSTRAP_KEY,
+# MP_MANAGEMENT_KEY, ADMIN_PIN.
+
+app = "your-marplanner-app"
+primary_region = "ams"
+# Longer than the server's own 5 s drain limit (src/server/index.ts), like the 15 s
+# stop_grace_period in infra/docker/compose.yaml, so Fly never kills it mid-write.
+kill_timeout = 15
+
+[build]
+  dockerfile = "../docker/Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3000"
+  DATA_DIR = "/data"
+
+[[mounts]]
+  source = "marplanner_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

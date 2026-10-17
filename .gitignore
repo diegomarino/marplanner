@@ -65,3 +65,6 @@ PR_BODY.md
 # holds ~7GB — a single `git add -A` in the main checkout reaches for all of it. The worktrees are
 # throwaway by design (`git worktree add`/`rm`), so nothing in here is ever meant to be committed.
 .worktrees/
+
+# Per-deployment Fly config (copy of infra/fly/fly.toml.example with the real app name)
+infra/fly/fly.toml
