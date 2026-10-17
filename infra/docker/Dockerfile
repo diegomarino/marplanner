@@ -13,6 +13,11 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 FROM dependencies AS build
+# The build context has no .git, so the commit shown in Admin → Overview is passed in by the
+# deploy (e.g. --build-arg MP_BUILD_SHA=$(git rev-parse --short HEAD)). Unset, it reads "unknown".
+ARG MP_BUILD_SHA=""
+ARG MP_BUILD_SUBJECT=""
+ENV MP_BUILD_SHA=$MP_BUILD_SHA MP_BUILD_SUBJECT=$MP_BUILD_SUBJECT
 COPY index.html vite.config.ts tsconfig*.json ./
 COPY src/ src/
 COPY scripts/ scripts/
