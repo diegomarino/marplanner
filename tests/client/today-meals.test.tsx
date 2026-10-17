@@ -138,10 +138,11 @@ it("keeps the strip read-only while providing the full meals destination", async
   mockTodayMealsBackend(() => new Response(JSON.stringify([menuItem("e1", "Pasta")])));
   const { container } = renderTodayMeals();
 
-  expect((await screen.findByRole("link", { name: "View all meals" })).getAttribute("href")).toBe(
-    "/meals"
-  );
-  expect(container.querySelectorAll("button, input, select, textarea")).toHaveLength(0);
+  const link = await screen.findByRole("link", { name: "Today's meals — open Meals" });
+  expect(link.getAttribute("href")).toBe("/meals");
+  expect(screen.queryByRole("heading")).toBeNull();
+  expect(container.querySelectorAll("a")).toHaveLength(1);
+  expect(link.querySelectorAll("a, button, input, select, textarea")).toHaveLength(0);
 });
 
 it("renders a clear empty state without removing the meals destination", async () => {
@@ -149,7 +150,10 @@ it("renders a clear empty state without removing the meals destination", async (
   renderTodayMeals();
 
   expect(await screen.findByText("No meals planned for today.")).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "View all meals" })).toHaveAttribute("href", "/meals");
+  expect(screen.getByRole("link", { name: "Today's meals — open Meals" })).toHaveAttribute(
+    "href",
+    "/meals"
+  );
 });
 
 it("announces a failed household-current-day request", async () => {

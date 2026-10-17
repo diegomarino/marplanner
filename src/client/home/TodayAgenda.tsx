@@ -1,4 +1,5 @@
 import { appUrl } from "@/lib/base-path";
+import { ChevronRight } from "lucide-react";
 import { Fragment, useEffect, useId, useState, type ReactNode } from "react";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { Button } from "@/components/ui/button";
@@ -73,7 +74,6 @@ export function TodayAgenda(): React.JSX.Element {
     status: settingsStatus,
     retry: retrySettings,
   } = useHouseholdSettings();
-  const headingId = useId();
   const [state, setState] = useState<AgendaState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [now, setNow] = useState(Date.now);
@@ -153,7 +153,7 @@ export function TodayAgenda(): React.JSX.Element {
       ? new Intl.DateTimeFormat(language === "es" ? "es-ES" : "en-US", {
           timeZone: "UTC",
           weekday: "long",
-          month: "long",
+          month: "short",
           day: "numeric",
         }).format(new Date(`${state.date}T12:00:00Z`))
       : null;
@@ -223,21 +223,21 @@ export function TodayAgenda(): React.JSX.Element {
 
   return (
     <section
-      aria-labelledby={headingId}
+      aria-label={t("agenda.title")}
       className="bg-card flex h-full min-h-0 flex-col rounded-3xl border p-5 text-control shadow-sm"
     >
-      <header className="flex shrink-0 items-start justify-between gap-4 border-b pb-4">
-        <div className="min-w-0">
-          <h2 id={headingId} className="text-sm font-semibold uppercase tracking-wide">
-            {t("agenda.title")}
+      <header className="flex shrink-0 items-center justify-between gap-4 border-b pb-4">
+        {date && (
+          <h2 className="font-display min-w-0 text-xl leading-tight font-bold capitalize">
+            {date}
           </h2>
-          {date && <p className="mt-1 text-2xl font-bold capitalize leading-tight">{date}</p>}
-        </div>
+        )}
         <a
-          className="shrink-0 text-sm font-semibold underline-offset-4 hover:underline"
+          className="ml-auto inline-flex shrink-0 items-center text-sm font-semibold underline-offset-4 hover:underline"
           href={appUrl("/calendar")}
         >
-          {t("calendar.title")}
+          {t("agenda.viewAll")}
+          <ChevronRight aria-hidden="true" className="size-4" />
         </a>
       </header>
       {state.status === "loading" && (

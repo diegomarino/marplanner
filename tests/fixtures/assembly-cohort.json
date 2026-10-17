@@ -6589,8 +6589,8 @@
       "src/client/home/TodayMeals.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 17,
-          "statements": 17,
+          "lines": 16,
+          "statements": 16,
           "functions": 3,
           "branches": 23
         },

@@ -144,6 +144,7 @@ export const messages = {
     "routines.emojiPicker.icon.trophy": "Trophy",
     "routines.emojiPicker.icon.star": "Star",
     "agenda.title": "Today's agenda",
+    "agenda.viewAll": "View all",
     "agenda.loading": "Loading today's agenda…",
     "agenda.error": "Today's agenda could not be loaded.",
     "agenda.retry": "Retry agenda",
@@ -991,7 +992,7 @@ export const messages = {
     "todayMeals.loading": "Loading today's meals…",
     "todayMeals.error": "Today's meals could not be loaded.",
     "todayMeals.empty": "No meals planned for today.",
-    "todayMeals.viewAll": "View all meals",
+    "todayMeals.open": "Today's meals — open Meals",
     "home.widgetError": "This section could not be displayed.",
     "dailyMessages.management.title": "Messages",
     "dailyMessages.management.description":
@@ -1675,6 +1676,7 @@ export const messages = {
     "routines.emojiPicker.icon.trophy": "Trofeo",
     "routines.emojiPicker.icon.star": "Estrella",
     "agenda.title": "Agenda de hoy",
+    "agenda.viewAll": "Ver todo",
     "agenda.loading": "Cargando la agenda de hoy…",
     "agenda.error": "No se ha podido cargar la agenda de hoy.",
     "agenda.retry": "Reintentar agenda",
@@ -2534,7 +2536,7 @@ export const messages = {
     "todayMeals.loading": "Cargando las comidas de hoy…",
     "todayMeals.error": "No se pudieron cargar las comidas de hoy.",
     "todayMeals.empty": "No hay comidas planeadas para hoy.",
-    "todayMeals.viewAll": "Ver todas las comidas",
+    "todayMeals.open": "Comidas de hoy — abrir Comidas",
     "home.widgetError": "No se pudo mostrar esta sección.",
     "dailyMessages.management.title": "Mensajes",
     "dailyMessages.management.description":
