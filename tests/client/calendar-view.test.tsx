@@ -273,14 +273,88 @@ describe("CalendarView — provisioned Calendar authoring", () => {
     expect(screen.getByTestId("calendar-delete-btn")).toBeInTheDocument();
   });
 
-  it("keeps external events readable but exposes no local mutation controls", async () => {
+  it("offers only participant editing on an external event", async () => {
     mockBackend({ events: () => json([{ ...EVENT, source: "external" as const }]) });
     renderSurface();
 
     fireEvent.click(await screen.findByTestId("calendar-event-row"));
-    expect(await screen.findByText("External event — read only")).toBeInTheDocument();
-    expect(screen.queryByTestId("calendar-edit-btn")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("calendar-delete-btn")).not.toBeInTheDocument();
+    const dialog = within(await screen.findByTestId("calendar-event-detail"));
+    expect(
+      dialog.getByText(
+        "From an external calendar — its title, time, location and description are read only."
+      )
+    ).toBeInTheDocument();
+    expect(dialog.queryByTestId("calendar-edit-btn")).not.toBeInTheDocument();
+    expect(dialog.queryByTestId("calendar-delete-btn")).not.toBeInTheDocument();
+
+    fireEvent.click(dialog.getByTestId("calendar-edit-participants-btn"));
+    expect(
+      await dialog.findByTestId(`calendar-assign-member-${MEMBERS[0].id}`)
+    ).toBeInTheDocument();
+    expect(
+      dialog.getByText(
+        "If you remove someone the title names, they can come back when the calendar changes."
+      )
+    ).toBeInTheDocument();
+    expect(dialog.queryByTestId("calendar-edit-title-input")).not.toBeInTheDocument();
+    expect(dialog.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(dialog.queryByTestId("calendar-edit-participants-btn")).not.toBeInTheDocument();
+  });
+
+  it("saves an external event's participants with one PUT and no field edit", async () => {
+    const mockFetch = mockBackend({
+      events: () => json([{ ...EVENT, id: "external-1", source: "external" as const }]),
+    });
+    renderSurface();
+
+    fireEvent.click(await screen.findByTestId("calendar-event-row"));
+    fireEvent.click(await screen.findByTestId("calendar-edit-participants-btn"));
+    fireEvent.click(await screen.findByTestId(`calendar-assign-member-${MEMBERS[0].id}`));
+    fireEvent.click(screen.getByTestId("calendar-participants-save-btn"));
+
+    await waitFor(() =>
+      expect(screen.queryByTestId("calendar-event-detail")).not.toBeInTheDocument()
+    );
+    const writes = (mockFetch.mock.calls as FetchCall[]).filter(
+      ([, init]) => (init?.method ?? "GET") !== "GET"
+    );
+    expect(writes).toHaveLength(1);
+    expect(String(writes[0][0])).toContain("/api/calendar/events/external-1/assignments");
+    expect(writes[0][1]?.method).toBe("PUT");
+    expect(JSON.parse(String(writes[0][1]?.body))).toEqual({ memberIds: [MEMBERS[0].id] });
+  });
+
+  it("closes the participants panel without a request when nothing changed", async () => {
+    const mockFetch = mockBackend({
+      events: () => json([{ ...EVENT, source: "external" as const, assignedTo: [MEMBERS[0].id] }]),
+    });
+    renderSurface();
+
+    fireEvent.click(await screen.findByTestId("calendar-event-row"));
+    fireEvent.click(await screen.findByTestId("calendar-edit-participants-btn"));
+    fireEvent.click(await screen.findByTestId("calendar-participants-save-btn"));
+
+    expect(await screen.findByTestId("calendar-edit-participants-btn")).toBeInTheDocument();
+    const writes = (mockFetch.mock.calls as FetchCall[]).filter(
+      ([, init]) => (init?.method ?? "GET") !== "GET"
+    );
+    expect(writes).toEqual([]);
+  });
+
+  it("keeps the participants panel open when saving them fails", async () => {
+    mockBackend({
+      events: () => json([{ ...EVENT, source: "external" as const }]),
+      assignments: () => json(null, 500),
+    });
+    renderSurface();
+
+    fireEvent.click(await screen.findByTestId("calendar-event-row"));
+    fireEvent.click(await screen.findByTestId("calendar-edit-participants-btn"));
+    fireEvent.click(await screen.findByTestId(`calendar-assign-member-${MEMBERS[0].id}`));
+    fireEvent.click(screen.getByTestId("calendar-participants-save-btn"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Failed to update assignment.");
+    expect(screen.getByTestId("calendar-participants-save-btn")).toBeInTheDocument();
   });
 
   it("bounds period navigation without issuing another Calendar request", async () => {

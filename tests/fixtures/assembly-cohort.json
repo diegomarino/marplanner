@@ -1206,7 +1206,10 @@
             "calendar sync publication assigns initials only as an uppercase title prefix or dash suffix",
             "calendar sync publication leaves a shared initial unassigned unless it is repeated once per member",
             "calendar sync publication re-derives title assignments on an unchanged feed and keeps manual ones",
-            "calendar sync publication leaves title assignments untouched on an unchanged feed while the household is unchanged"
+            "calendar sync publication leaves title assignments untouched on an unchanged feed while the household is unchanged",
+            "calendar sync publication manual participants on an external event keeps title-derived rows title-derived and adds the manual member once",
+            "calendar sync publication manual participants on an external event keeps the manual member and follows the title on later syncs",
+            "calendar sync publication manual participants on an external event clears everyone until the title is read again"
           ],
           "tests/boundary/credentials.test.ts": [
             "credentials — mpk- diceware generateKey keys start with 'mpk-'",
@@ -3197,7 +3200,6 @@
             "CalendarView — provisioned Calendar authoring applies member and all-day filters to the shared visible collection",
             "CalendarView — provisioned Calendar authoring switches between month and week presentations",
             "CalendarView — provisioned Calendar authoring opens the existing mutation controls from event activation",
-            "CalendarView — provisioned Calendar authoring keeps external events readable but exposes no local mutation controls",
             "CalendarView — provisioned Calendar authoring bounds period navigation without issuing another Calendar request",
             "CalendarView — provisioned Calendar authoring renders assigned member colours as diagonal event bands",
             "CalendarView — provisioned Calendar authoring keeps create, assign, edit, and delete plus their member load available when the obsolete admin-unlock branch is false",
@@ -3229,7 +3231,11 @@
             "CalendarView — the assignment row is a real, keyboard-operable control (FR-013, SC-012) meets kiosk density on the per-member checkbox row (the row that used to be a non-focusable <li>)",
             "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) submits the toggled member id in the PUT payload",
             "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) makes the whole member pill the tap target ( review, PR #777, finding F5 — restoring the tap target the removed <li onClick> used to provide)",
-            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) excludes archived members from assignment choices"
+            "CalendarView — assignment save round-trips the selected members (regression guard for the CheckboxField migration) excludes archived members from assignment choices",
+            "CalendarView — provisioned Calendar authoring offers only participant editing on an external event",
+            "CalendarView — provisioned Calendar authoring saves an external event's participants with one PUT and no field edit",
+            "CalendarView — provisioned Calendar authoring closes the participants panel without a request when nothing changed",
+            "CalendarView — provisioned Calendar authoring keeps the participants panel open when saving them fails"
           ],
           "tests/client/calendar-week-integration.test.tsx": [
             "CalendarView — Week integration keeps recurrence occurrences distinct and activates local/external and all-day events",
@@ -5416,7 +5422,8 @@
           ],
           "tests/e2e/calendar-feed-sync.spec.ts": [
             "ad4a985f07a45a65109d-b11f1438f608d122b32f",
-            "ad4a985f07a45a65109d-8f30ced9f983d3df1491"
+            "ad4a985f07a45a65109d-8f30ced9f983d3df1491",
+            "ad4a985f07a45a65109d-c25dd2dc473bbb9aae24"
           ],
           "tests/e2e/calendar.spec.ts": ["fd11a3d0e6100edc747e-74db3b02bb030c6999ab"],
           "tests/e2e/chores-board.spec.ts": [

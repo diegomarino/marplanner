@@ -666,11 +666,24 @@ export function replaceAssignments(eventId: string, memberIds: string[]): FeedIt
 
   const now = Date.now();
 
-  // Atomic: delete old assignments, insert new ones in one transaction.
+  // Atomic: delete old assignments, insert new ones in one transaction. A title-derived (`ext:`)
+  // row whose member is still wanted is kept, so feed syncs go on owning it instead of it turning
+  // into a manual assignment that no later title change could drop.
   db.transaction(() => {
-    db.prepare("DELETE FROM calendar_assignments WHERE event_id = ?").run(eventId);
+    db.prepare(
+      `DELETE FROM calendar_assignments WHERE event_id = ?
+         AND (id NOT LIKE 'ext:%' OR member_id NOT IN (SELECT value FROM json_each(?)))`
+    ).run(eventId, JSON.stringify(uniqueMemberIds));
+    const kept = new Set(
+      (
+        db
+          .prepare("SELECT member_id FROM calendar_assignments WHERE event_id = ?")
+          .all(eventId) as Array<{ member_id: string }>
+      ).map(({ member_id }) => member_id)
+    );
 
     for (const memberId of uniqueMemberIds) {
+      if (kept.has(memberId)) continue;
       const assignId = randomUUID();
       db.prepare(
         "INSERT INTO calendar_assignments (id, event_id, member_id, created_at) VALUES (?, ?, ?, ?)"
