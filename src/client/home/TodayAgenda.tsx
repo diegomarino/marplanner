@@ -228,7 +228,9 @@ export function TodayAgenda(): React.JSX.Element {
     >
       <header className="flex shrink-0 items-center justify-between gap-4 border-b pb-4">
         {date && (
-          <h2 className="font-display min-w-0 text-xl leading-tight font-bold capitalize">{date}</h2>
+          <h2 className="font-display min-w-0 text-xl leading-tight font-bold capitalize">
+            {date}
+          </h2>
         )}
         <a
           className="ml-auto inline-flex shrink-0 items-center text-sm font-semibold underline-offset-4 hover:underline"
