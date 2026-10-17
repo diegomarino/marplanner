@@ -400,7 +400,9 @@ describe("TodayAgenda", () => {
       "/calendar"
     );
     expect(within(agenda).queryByRole("link", { name: "Calendar" })).toBeNull();
-    expect(within(agenda).getByRole("heading", { level: 2, name: "Tuesday, Sep 22" })).toBeVisible();
+    expect(
+      within(agenda).getByRole("heading", { level: 2, name: "Tuesday, Sep 22" })
+    ).toBeVisible();
     expect(within(agenda).getByTestId("agenda-groups")).toHaveClass("overflow-y-auto");
     expect(
       screen.getAllByRole("listitem").map((item) => item.querySelector("h4")?.textContent)

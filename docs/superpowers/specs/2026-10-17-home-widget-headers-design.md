@@ -3,6 +3,7 @@
 Date: 2026-10-17. Owner request: copy the original Marplanner v1 home headers.
 
 ## Decisions (autonomous brainstorming)
+
 - Size: small change; written spec + plan kept for the record.
 - Agenda (`TodayAgenda.tsx`): drop the uppercase "Agenda" heading and the separate "Calendar" link.
   The household date becomes the `h2` (`font-display text-xl font-bold`, month `short`, e.g.
@@ -18,4 +19,5 @@ Date: 2026-10-17. Owner request: copy the original Marplanner v1 home headers.
 - Docs: `docs/ui/household-contract.md` updated. Tests: unit + e2e updated; density tests not blocking.
 
 ## Non-goals
+
 No change to agenda rows, groups, data loading, or chores widget.
