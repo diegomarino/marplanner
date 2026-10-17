@@ -669,7 +669,7 @@ export const messages = {
       "From an external calendar — its title, time, location and description are read only.",
     "calendar.editParticipants": "Edit participants",
     "calendar.externalParticipantsHint":
-      "People named in the title are added again at the next sync.",
+      "If you remove someone the title names, they can come back when the calendar changes.",
     "calendar.admin.title": "Calendar Management",
     "calendar.admin.externalCalendars": "External Calendars",
     "calendar.admin.emojiHighlights": "Emoji Highlights",
@@ -2207,7 +2207,7 @@ export const messages = {
       "De un calendario externo: su título, hora, lugar y descripción son de solo lectura.",
     "calendar.editParticipants": "Editar participantes",
     "calendar.externalParticipantsHint":
-      "Las personas nombradas en el título se vuelven a añadir en la próxima sincronización.",
+      "Si quitas a alguien que aparece en el título, puede volver cuando cambie el calendario.",
     "calendar.admin.title": "Gestión del Calendario",
     "calendar.admin.externalCalendars": "Calendarios externos",
     "calendar.admin.emojiHighlights": "Destacados con emoji",

@@ -292,7 +292,9 @@ describe("CalendarView — provisioned Calendar authoring", () => {
       await dialog.findByTestId(`calendar-assign-member-${MEMBERS[0].id}`)
     ).toBeInTheDocument();
     expect(
-      dialog.getByText("People named in the title are added again at the next sync.")
+      dialog.getByText(
+        "If you remove someone the title names, they can come back when the calendar changes."
+      )
     ).toBeInTheDocument();
     expect(dialog.queryByTestId("calendar-edit-title-input")).not.toBeInTheDocument();
     expect(dialog.queryByRole("textbox")).not.toBeInTheDocument();
