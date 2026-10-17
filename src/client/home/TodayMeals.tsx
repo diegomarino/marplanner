@@ -37,7 +37,7 @@ export function TodayMeals(): React.JSX.Element {
     <a
       href={appUrl("/meals")}
       aria-label={t("todayMeals.open")}
-      className="bg-card block rounded-lg border p-4 text-inherit no-underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+      className="bg-card block rounded-lg border p-4 text-inherit no-underline focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring focus-visible:outline-none"
     >
       {error && <ErrorNotice message={t("todayMeals.error")} />}
       <div
