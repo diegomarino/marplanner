@@ -7,6 +7,7 @@ import {
   Pencil,
   Plus,
   Trash2,
+  Users,
 } from "lucide-react";
 import { Temporal } from "temporal-polyfill";
 import { useTranslation } from "@/i18n";
@@ -319,6 +320,63 @@ export function CalendarView() {
     setShowDeleteConfirm(null);
     setDeleteError(null);
   };
+
+  /** An external event's feed fields are read only; only its people can be changed. */
+  const openParticipants = (event: FeedItem): void => {
+    setShowEdit(`${event.id}@${event.occurrenceStart}`);
+    setEditingEvent(event);
+    setEditMemberIds(new Set(event.assignedTo));
+    setEventError(null);
+  };
+
+  const submitParticipants = async (event: FeedItem): Promise<void> => {
+    const before = new Set(event.assignedTo);
+    const changed =
+      before.size !== editMemberIds.size || [...editMemberIds].some((id) => !before.has(id));
+    if (!changed) {
+      closeEdit();
+      return;
+    }
+    setUpdatingEvent(true);
+    setEventError(null);
+    try {
+      const assignment: AssignmentReplace = { memberIds: Array.from(editMemberIds) };
+      const res = await authFetch(`/api/calendar/events/${event.id}/assignments`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(assignment),
+      });
+      if (!res.ok) throw new Error(`assign: ${res.status}`);
+      // Like a local save, this ends the visit: the summary still holds the old people.
+      closeEdit();
+      setSelectedEvent(null);
+      setReloadKey((k) => k + 1);
+    } catch {
+      setEventError(t("calendar.assignmentError"));
+    } finally {
+      setUpdatingEvent(false);
+    }
+  };
+
+  const participantsPicker = (
+    <fieldset className="flex flex-col gap-1.5">
+      <legend className="text-control mb-1.5 font-medium">{t("calendar.participants")}</legend>
+      {loadingMembers ? (
+        <div className="text-muted-foreground text-sm">{t("calendar.loadingMembers")}</div>
+      ) : membersError ? (
+        <ErrorNotice message={membersError} />
+      ) : (
+        <MemberPills
+          members={activeMembers}
+          value={[...editMemberIds]}
+          onChange={(next) => setEditMemberIds(new Set(next))}
+          groupLabel={t("calendar.participants")}
+          testIdPrefix="calendar-assign-member"
+        />
+      )}
+    </fieldset>
+  );
 
   const submitEdit = async (eventId: string): Promise<void> => {
     setUpdatingEvent(true);
@@ -878,9 +936,58 @@ export function CalendarView() {
                     </ul>
                   )}
                   {event.source === "external" ? (
-                    <p className="text-muted-foreground text-sm">
-                      {t("calendar.externalReadOnly")}
-                    </p>
+                    <>
+                      <p className="text-muted-foreground text-sm">
+                        {t("calendar.externalReadOnly")}
+                      </p>
+                      {showEdit === `${event.id}@${event.occurrenceStart}` ? (
+                        <div className="bg-muted w-full rounded-2xl p-3">
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              void submitParticipants(event);
+                            }}
+                            className="flex flex-col gap-3"
+                          >
+                            {participantsPicker}
+                            <p className="text-muted-foreground text-sm">
+                              {t("calendar.externalParticipantsHint")}
+                            </p>
+                            <ErrorNotice message={eventError} />
+                            <div className="flex gap-2">
+                              <Button
+                                type="submit"
+                                data-testid="calendar-participants-save-btn"
+                                disabled={updatingEvent}
+                              >
+                                {updatingEvent ? t("calendar.updating") : t("calendar.save")}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={closeEdit}
+                                disabled={updatingEvent}
+                              >
+                                {t("calendar.cancel")}
+                              </Button>
+                            </div>
+                          </form>
+                        </div>
+                      ) : (
+                        <div className="flex justify-end">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            data-testid="calendar-edit-participants-btn"
+                            onClick={() => openParticipants(event)}
+                          >
+                            <Users />
+                            {t("calendar.editParticipants")}
+                          </Button>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <div className="flex flex-wrap items-start justify-end gap-2">
                       {showEdit === `${event.id}@${event.occurrenceStart}` ? (
@@ -972,26 +1079,7 @@ export function CalendarView() {
                                 placeholder={t("calendar.addDescription")}
                               />
                             </Label>
-                            <fieldset className="flex flex-col gap-1.5">
-                              <legend className="text-control mb-1.5 font-medium">
-                                {t("calendar.participants")}
-                              </legend>
-                              {loadingMembers ? (
-                                <div className="text-muted-foreground text-sm">
-                                  {t("calendar.loadingMembers")}
-                                </div>
-                              ) : membersError ? (
-                                <ErrorNotice message={membersError} />
-                              ) : (
-                                <MemberPills
-                                  members={activeMembers}
-                                  value={[...editMemberIds]}
-                                  onChange={(next) => setEditMemberIds(new Set(next))}
-                                  groupLabel={t("calendar.participants")}
-                                  testIdPrefix="calendar-assign-member"
-                                />
-                              )}
-                            </fieldset>
+                            {participantsPicker}
                             <ErrorNotice message={eventError} />
                             <div className="flex gap-2">
                               <Button

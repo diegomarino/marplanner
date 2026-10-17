@@ -386,4 +386,84 @@ describe("calendar sync publication", () => {
     recordUnchangedSynchronization(sourceId);
     expect(derivedRows()).toEqual([]);
   });
+
+  describe("manual participants on an external event", () => {
+    async function prepare(): Promise<{
+      eventId: string;
+      put: (ids: string[]) => Promise<number>;
+    }> {
+      insertSource();
+      for (const [id, name] of [
+        ["member-bart", "Bart"],
+        ["member-lisa", "Lisa"],
+      ]) {
+        getDb()
+          .prepare(
+            "INSERT INTO members (id, display_name, role, created_at, updated_at) VALUES (?, ?, 'child', 1, 1)"
+          )
+          .run(id, name);
+      }
+      reconcileExternalCalendar(sourceId, parsed(occurrence("one", "Bart school")));
+      const { id: eventId } = getDb()
+        .prepare(
+          "SELECT event_id AS id FROM calendar_external_event_meta WHERE external_uid = 'one'"
+        )
+        .get() as { id: string };
+      const put = async (memberIds: string[]): Promise<number> => {
+        const app = Fastify();
+        await calendarRoutes(app);
+        try {
+          const response = await app.inject({
+            method: "PUT",
+            url: `/api/calendar/events/${eventId}/assignments`,
+            payload: { memberIds },
+          });
+          return response.statusCode;
+        } finally {
+          await app.close();
+        }
+      };
+      return { eventId, put };
+    }
+
+    const rows = (eventId: string) =>
+      getDb()
+        .prepare(
+          `SELECT member_id, id LIKE 'ext:%' AS derived FROM calendar_assignments
+           WHERE event_id = ? ORDER BY member_id`
+        )
+        .all(eventId);
+
+    it("keeps title-derived rows title-derived and adds the manual member once", async () => {
+      const { eventId, put } = await prepare();
+      expect(await put(["member-bart", "member-lisa", "member-lisa"])).toBe(200);
+      expect(rows(eventId)).toEqual([
+        { member_id: "member-bart", derived: 1 },
+        { member_id: "member-lisa", derived: 0 },
+      ]);
+    });
+
+    it("keeps the manual member and follows the title on later syncs", async () => {
+      const { eventId, put } = await prepare();
+      expect(await put(["member-bart", "member-lisa"])).toBe(200);
+
+      reconcileExternalCalendar(sourceId, parsed(occurrence("one", "Bart school")));
+      expect(rows(eventId)).toEqual([
+        { member_id: "member-bart", derived: 1 },
+        { member_id: "member-lisa", derived: 0 },
+      ]);
+
+      reconcileExternalCalendar(sourceId, parsed(occurrence("one", "School trip")));
+      expect(rows(eventId)).toEqual([{ member_id: "member-lisa", derived: 0 }]);
+    });
+
+    it("clears everyone until the title is read again", async () => {
+      const { eventId, put } = await prepare();
+      expect(await put([])).toBe(200);
+      expect(rows(eventId)).toEqual([]);
+
+      reconcileExternalCalendar(sourceId, parsed(occurrence("one", "Bart school")));
+      expect(rows(eventId)).toEqual([{ member_id: "member-bart", derived: 1 }]);
+    });
+  });
 });

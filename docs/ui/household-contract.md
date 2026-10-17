@@ -20,7 +20,9 @@ weather exists and the browser reports fullscreen-like presentation. Its accessi
 device time.
 
 Calendar remains one family-facing surface at `/calendar`. On a provisioned device its inline
-create, assign, edit, and delete actions are available without the administration PIN. The PIN only
+create, assign, edit, and delete actions on local events, and the participants-only edit on events
+from an external calendar (whose feed fields stay read only), are available without the
+administration PIN. The PIN only
 guards `/admin/**` against accidental settings or destructive administration changes; it is not a
 security boundary.
 
