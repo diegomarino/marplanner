@@ -38,9 +38,9 @@ boundary.
 
 Chore columns contain all configured periods. Only one period per child is expanded; changing it
 does not mutate another column. Complete is one action. Uncomplete opens the established confirmation
-dialog. Meals are read-only and link to `/meals`.
+dialog. The meals widget has no title: the whole widget is one link to `/meals` (accessible name "Today's meals — open Meals", visible focus ring, no nested interactive elements).
 
-Agenda all-day items precede timed items. Text/icon/weight identify temporal states without colour.
+The agenda header is the household date (display font, bold) with a right-aligned "View all ›" link to `/calendar`; the section is a region named "Today's agenda". Agenda all-day items precede timed items. Text/icon/weight identify temporal states without colour.
 Multi-member items render every active assigned identity plus text.
 
 ## Meals
