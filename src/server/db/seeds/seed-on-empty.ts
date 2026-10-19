@@ -1,5 +1,9 @@
 import { getDb } from "../client";
-import { readSeedProfileMarker, SeedOwnershipError, type SeedProfileMarkerState } from "./ownership";
+import {
+  readSeedProfileMarker,
+  SeedOwnershipError,
+  type SeedProfileMarkerState,
+} from "./ownership";
 import { bundledPublicSeedModules } from "./public-modules";
 import { runSeedProfile } from "./runner";
 import type { SeedModule, SeedRunReport, SeedRunRequest } from "./types";
@@ -11,14 +15,15 @@ import type { SeedModule, SeedRunReport, SeedRunRequest } from "./types";
  * `reconcileBootstrap()`: the bootstrap key row would make the database look non-empty to the
  * ownership guard. Seeding is a convenience, so no outcome here ever stops the server booting.
  */
-export type SeedOnEmptyOutcome = "disabled" | "seeded" | "repaired" | "skipped" | "refused" | "failed";
+export type SeedOnEmptyOutcome =
+  "disabled" | "seeded" | "repaired" | "skipped" | "refused" | "failed";
 
 export interface SeedOnEmptyDependencies {
-  env: NodeJS.ProcessEnv;
+  env: typeof process.env;
   readMarker: () => SeedProfileMarkerState;
   runSeed: (request: SeedRunRequest) => Promise<SeedRunReport>;
   modules: () => readonly SeedModule[] | undefined;
-  log: Pick<Console, "log" | "warn" | "error">;
+  log: Pick<typeof console, "log" | "warn" | "error">;
 }
 
 const defaultDependencies: SeedOnEmptyDependencies = {
@@ -29,7 +34,7 @@ const defaultDependencies: SeedOnEmptyDependencies = {
   log: console,
 };
 
-export function seedOnEmptyEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+export function seedOnEmptyEnabled(env: typeof process.env = process.env): boolean {
   const value = env.MP_SEED_ON_EMPTY?.trim().toLowerCase();
   return value === "true" || value === "1";
 }

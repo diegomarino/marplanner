@@ -7,7 +7,7 @@ import {
 } from "../../shared/default-credentials";
 
 /** True when the configured access token is the repository's public default. */
-export function usesDefaultAccessToken(env: NodeJS.ProcessEnv = process.env): boolean {
+export function usesDefaultAccessToken(env: typeof process.env = process.env): boolean {
   return env.MP_ACCESS_TOKEN === PUBLIC_DEFAULT_ACCESS_TOKEN;
 }
 
@@ -15,7 +15,7 @@ export function usesDefaultAccessToken(env: NodeJS.ProcessEnv = process.env): bo
  * included, so this is safe to send to an unauthenticated browser.
  */
 export function publicDefaultCredentials(
-  env: NodeJS.ProcessEnv = process.env
+  env: typeof process.env = process.env
 ): PublicDefaultCredentials {
   const result: PublicDefaultCredentials = {};
   if (env.MP_BOOTSTRAP_KEY === PUBLIC_DEFAULT_BOOTSTRAP_KEY) {
@@ -28,7 +28,7 @@ export function publicDefaultCredentials(
 }
 
 /** `<meta>` tag for the SPA shell, or "" when every credential was changed. */
-export function defaultCredentialsMetaTag(env: NodeJS.ProcessEnv = process.env): string {
+export function defaultCredentialsMetaTag(env: typeof process.env = process.env): string {
   const credentials = publicDefaultCredentials(env);
   if (Object.keys(credentials).length === 0) return "";
   const content = JSON.stringify(credentials).replaceAll("&", "&amp;").replaceAll('"', "&quot;");

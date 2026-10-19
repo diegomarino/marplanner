@@ -7,7 +7,7 @@
  * fails if one would be.
  */
 import { readdirSync } from "node:fs";
-import { relative, resolve } from "node:path";
+import { basename, relative, resolve } from "node:path";
 
 /** Mirrors PUBLIC_SEED_FILE in src/server/db/seeds/runner.ts (a boundary test compares them). */
 export const PUBLIC_SEED_FILE = /^seed-\d{3}-[a-z0-9][a-z0-9-]*\.(?:[cm]?[jt]s?)$/;
@@ -54,10 +54,12 @@ export function seedBundlePlugin({ seedsDirectory = resolve("seeds") } = {}) {
   };
 }
 
-/** Throws when any bundled input is a private file. Needs `metafile: true` on the build. */
+/** Throws when any bundled repository file is named private. Only file names are checked, so a
+ * checkout under a directory such as macOS's `/private/var` is fine. Needs `metafile: true`.
+ */
 export function assertNoPrivateInputs(metafile) {
   const leaked = Object.keys(metafile.inputs).filter(
-    (input) => !input.includes("node_modules") && PRIVATE_MARKER.test(input)
+    (input) => !input.includes("node_modules") && PRIVATE_MARKER.test(basename(input))
   );
   if (leaked.length > 0) {
     throw new Error(`Private files reached the server bundle: ${leaked.join(", ")}`);

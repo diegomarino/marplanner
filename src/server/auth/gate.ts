@@ -232,7 +232,10 @@ export function sendGateForm(reply: FastifyReply, basePath = ""): FastifyReply {
   let html = FORM_HTML.replace('action="/gate"', `action="${basePath}/gate"`);
   if (usesDefaultAccessToken()) {
     html = html
-      .replace('placeholder="Access token"', `placeholder="Access token"\n            value="${PUBLIC_DEFAULT_ACCESS_TOKEN}"`)
+      .replace(
+        'placeholder="Access token"',
+        `placeholder="Access token"\n            value="${PUBLIC_DEFAULT_ACCESS_TOKEN}"`
+      )
       .replace("<form ", `${DEFAULT_TOKEN_NOTICE}<form `);
   }
   return reply.code(200).header("content-type", "text/html; charset=utf-8").send(html);
