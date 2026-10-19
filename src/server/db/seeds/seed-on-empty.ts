@@ -11,9 +11,11 @@ import type { SeedModule, SeedRunReport, SeedRunRequest } from "./types";
 /** `MP_SEED_ON_EMPTY=true` seeds the public demo profile on the first boot of an empty database,
  * which is what the one-click deploy templates rely on. The private profile is never involved.
  *
- * It runs in the server process, which already holds the storage lock, and before
- * `reconcileBootstrap()`: the bootstrap key row would make the database look non-empty to the
- * ownership guard. Seeding is a convenience, so no outcome here ever stops the server booting.
+ * It runs in the server process, which already holds the storage lock, before
+ * `reconcileBootstrap()`. As a server boot seed it passes over the rows the server writes on its
+ * own (credentials, provisioning, telemetry), so a later boot can still seed or repair, and a
+ * failed seed is discarded rather than left half-done under a running server. Seeding is a
+ * convenience, so no outcome here ever stops the server booting.
  */
 export type SeedOnEmptyOutcome =
   "disabled" | "seeded" | "repaired" | "skipped" | "refused" | "failed";
@@ -52,26 +54,30 @@ export async function seedOnEmpty(
     deps.log.error("Seed on empty: could not read the seed profile marker (continuing):", err);
     return "failed";
   }
-  if (marker === "complete") {
+  if (marker.state === "complete") {
     deps.log.log("Seed on empty: demo profile already seeded, skipping");
     return "skipped";
   }
-  if (marker === "unrecognized") {
+  if (marker.state === "unrecognized") {
     deps.log.warn("Seed on empty: database holds another seed profile, leaving it untouched");
     return "refused";
   }
 
+  const repairing = marker.state === "running";
   try {
-    // A "running" marker means a previous boot stopped mid-seed; rerunning repairs it.
+    // A "running" marker means a previous boot stopped mid-seed. The repair keeps the as-of date
+    // that boot chose, which the runner requires even when the household date has moved on.
     const report = await deps.runSeed({
       mode: "public",
       disposableTarget: true,
+      serverBoot: true,
       modules: deps.modules(),
+      ...(marker.state === "running" && { asOfDate: marker.asOfDate }),
     });
     deps.log.log(
-      `Seed on empty: demo profile ${marker === "running" ? "repaired" : "seeded"} as of ${report.asOfDate} (${report.moduleIds.length} modules)`
+      `Seed on empty: demo profile ${repairing ? "repaired" : "seeded"} as of ${report.asOfDate} (${report.moduleIds.length} modules)`
     );
-    return marker === "running" ? "repaired" : "seeded";
+    return repairing ? "repaired" : "seeded";
   } catch (err) {
     if (err instanceof SeedOwnershipError) {
       deps.log.warn(
@@ -79,7 +85,8 @@ export async function seedOnEmpty(
       );
       return "refused";
     }
-    deps.log.error("Seed on empty: demo seed failed (continuing without it):", err);
+    // The runner discarded any partial profile, so the next boot seeds from scratch.
+    deps.log.error("Seed on empty: demo seed failed, starting without it:", err);
     return "failed";
   }
 }

@@ -18,7 +18,7 @@ fictional Simpsons household (members, calendar, chores, reminders and meals for
 the current week). Nobody runs a shared demo: the instance is yours, in your account.
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/diegomarino/marplanner-project)
-[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com%2Fdiegomarino%2Fmarplanner-project&branch=main&name=marplanner&builder=dockerfile&dockerfile=infra%2Fdocker%2FDockerfile&instance_type=free&ports=3000%3Bhttp%3B%2F&env%5BMP_ACCESS_TOKEN%5D=mpg-local-change-me&env%5BMP_BOOTSTRAP_KEY%5D=mpk-local-bootstrap-change-me&env%5BADMIN_PIN%5D=0000&env%5BMP_SEED_ON_EMPTY%5D=true&env%5BPORT%5D=3000)
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com%2Fdiegomarino%2Fmarplanner-project&branch=main&name=marplanner&builder=dockerfile&dockerfile=infra%2Fdocker%2FDockerfile&instance_type=free&instances_max=1&ports=3000%3Bhttp%3B%2F&hc_protocol%5B3000%5D=http&hc_path%5B3000%5D=%2Fhealth&hc_method%5B3000%5D=get&hc_grace_period%5B3000%5D=30&env%5BMP_ACCESS_TOKEN%5D=mpg-local-change-me&env%5BMP_BOOTSTRAP_KEY%5D=mpk-local-bootstrap-change-me&env%5BADMIN_PIN%5D=0000&env%5BMP_SEED_ON_EMPTY%5D=true&env%5BPORT%5D=3000)
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/RAILWAY_TEMPLATE_CODE?utm_medium=integration&utm_source=button&utm_campaign=marplanner)
 [![Deploy to DigitalOcean](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/diegomarino/marplanner-project/tree/main)
 

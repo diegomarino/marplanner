@@ -20,6 +20,7 @@ import { build, type Metafile, type Plugin } from "esbuild";
 import { afterEach, describe, expect, it } from "vitest";
 import { getDb, resetDb } from "../../src/server/db/client";
 import { runMigrations } from "../../src/server/db/migrate";
+import { runSeedProfile } from "../../src/server/db/seeds/runner";
 
 const repoRoot = resolve(import.meta.dirname, "../..");
 const SERVER_ENTRY = join(repoRoot, "src/server/index.ts");
@@ -121,6 +122,55 @@ describe("MP_SEED_ON_EMPTY boot", () => {
     const second = await bootOnce(dataDir, { MP_SEED_ON_EMPTY: "true" });
     expect(second).toContain("Seed on empty: demo profile already seeded, skipping");
     expect(query(dataDir, "SELECT id FROM members ORDER BY id")).toEqual(members);
+  }, 90_000);
+
+  it("repairs, with the real seeds, a profile a boot crashed in the day before", async () => {
+    const dataDir = tempDir("mp-seed-crashed-");
+    const yesterday = "2026-10-18";
+    const previousDataDir = process.env.DATA_DIR;
+    try {
+      process.env.DATA_DIR = dataDir;
+      resetDb();
+      // The first real modules commit, then the run stops: the state a crash mid-seed leaves.
+      const [settings, members] = await Promise.all([
+        import("../../seeds/seed-010-settings"),
+        import("../../seeds/seed-020-members"),
+      ]);
+      const crash = {
+        id: "public:crash",
+        run: () => {
+          throw new Error("synthetic crash");
+        },
+      };
+      await expect(
+        runSeedProfile({
+          mode: "public",
+          asOfDate: yesterday,
+          disposableTarget: true,
+          modules: [settings.default, members.default, crash],
+        })
+      ).rejects.toThrow("public:crash");
+    } finally {
+      resetDb();
+      if (previousDataDir === undefined) delete process.env.DATA_DIR;
+      else process.env.DATA_DIR = previousDataDir;
+    }
+    expect(query(dataDir, "SELECT as_of_date, status FROM seed_profile_state")).toEqual([
+      { as_of_date: yesterday, status: "running" },
+    ]);
+    expect(query(dataDir, "SELECT id FROM meal_plans")).toEqual([]);
+
+    const output = await bootOnce(dataDir, { MP_SEED_ON_EMPTY: "true" });
+    expect(output).toContain(`Seed on empty: demo profile repaired as of ${yesterday}`);
+    expect(query(dataDir, "SELECT as_of_date, status FROM seed_profile_state")).toEqual([
+      { as_of_date: yesterday, status: "complete" },
+    ]);
+    expect(
+      query<{ n: number }>(dataDir, "SELECT COUNT(*) AS n FROM meal_plans")[0]?.n
+    ).toBeGreaterThan(0);
+
+    const next = await bootOnce(dataDir, { MP_SEED_ON_EMPTY: "true" });
+    expect(next).toContain("already seeded, skipping");
   }, 90_000);
 
   it("leaves a database with household data untouched and still boots", async () => {

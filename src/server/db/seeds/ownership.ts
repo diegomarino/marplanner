@@ -62,9 +62,17 @@ export const DEMO_OWNED_TABLES = [
 type DemoOwnedTable = (typeof DEMO_OWNED_TABLES)[number];
 type MarkerStatus = "running" | "complete";
 
+/** Tables the running server fills on its own: environment-reconciled credentials, provisioned
+ * devices with their advisory PIN, and browser telemetry. None of it is household data, so a seed
+ * started by the server itself (MP_SEED_ON_EMPTY) may proceed past these rows.
+ */
+export const SERVER_RUNTIME_TABLES: readonly string[] = ["api_keys", "admin_config", "client_log"];
+
 export interface SeedProfileRequest {
   asOfDate: string;
   nowMs: number;
+  /** Skip SERVER_RUNTIME_TABLES in the ownership scans (server-started seed only). */
+  tolerateServerRuntimeRows?: boolean;
 }
 
 export interface SeedProfileResult {
@@ -119,7 +127,7 @@ export function beginSeedProfile(
 
   const markers = markerRows(db);
   if (markers.length === 0) {
-    assertFreshBaseline(db);
+    assertFreshBaseline(db, request.tolerateServerRuntimeRows === true);
     db.prepare(
       `INSERT INTO ${quoted(MARKER_TABLE)}
         (profile, version, as_of_date, status, started_at, completed_at)
@@ -129,7 +137,7 @@ export function beginSeedProfile(
   }
 
   const marker = assertExpectedMarker(markers);
-  assertRerunInventory(db);
+  assertRerunInventory(db, request.tolerateServerRuntimeRows === true);
   if (marker.as_of_date !== request.asOfDate) {
     if (marker.status !== "complete") {
       throw new SeedOwnershipError("Seed profile marker as-of date does not match this rerun");
@@ -148,21 +156,50 @@ export function beginSeedProfile(
   };
 }
 
-export type SeedProfileMarkerState = "absent" | MarkerStatus | "unrecognized";
+export type SeedProfileMarkerState =
+  { state: "absent" | "unrecognized" } | { state: MarkerStatus; asOfDate: string };
 
 /** Where the demo profile marker stands, without validating the rest of the database: "absent"
  * when nothing was ever seeded (or the marker table does not exist yet), "unrecognized" for a
- * marker of another profile or status, which the runner would refuse anyway.
+ * marker of another profile or status, which the runner would refuse anyway. A demo marker
+ * carries its as-of date, which a repair must reuse: the runner refuses a running marker for
+ * another date.
  */
 export function readSeedProfileMarker(db: DatabaseConnection): SeedProfileMarkerState {
-  if (!tableNames(db).includes(MARKER_TABLE)) return "absent";
+  if (!tableNames(db).includes(MARKER_TABLE)) return { state: "absent" };
   const markers = markerRows(db);
-  if (markers.length === 0) return "absent";
+  if (markers.length === 0) return { state: "absent" };
   const [marker] = markers;
-  if (markers.length !== 1 || marker?.profile !== DEMO_PROFILE) return "unrecognized";
+  if (markers.length !== 1 || marker?.profile !== DEMO_PROFILE) return { state: "unrecognized" };
   return marker.status === "running" || marker.status === "complete"
-    ? marker.status
-    : "unrecognized";
+    ? { state: marker.status, asOfDate: marker.as_of_date }
+    : { state: "unrecognized" };
+}
+
+/** Returns a target whose seed failed to the fresh baseline: every row outside the migration
+ * ledger, lifecycle metadata, fixed day periods and (when tolerated) server runtime tables is
+ * deleted, marker included. Only call it after `beginSeedProfile` accepted the target, which
+ * proves those rows were all written by the seed profile.
+ */
+export function discardSeedProfile(
+  db: DatabaseConnection,
+  { tolerateServerRuntimeRows = false }: { tolerateServerRuntimeRows?: boolean } = {}
+): void {
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    // Rows are deleted table by table; references between them are checked once, at commit.
+    db.pragma("defer_foreign_keys = ON");
+    for (const table of tableNames(db)) {
+      if (table === MIGRATIONS_TABLE || table === "day_periods") continue;
+      if (LIFECYCLE_TABLES.has(table)) continue;
+      if (tolerateServerRuntimeRows && SERVER_RUNTIME_TABLES.includes(table)) continue;
+      db.prepare(`DELETE FROM ${quoted(table)}`).run();
+    }
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 }
 
 export function completeSeedProfile(
@@ -172,7 +209,7 @@ export function completeSeedProfile(
   assertRequest(request);
   assertMarkerTableExists(db);
   const marker = assertExpectedMarker(markerRows(db), request.asOfDate);
-  assertRerunInventory(db);
+  assertRerunInventory(db, request.tolerateServerRuntimeRows === true);
 
   if (marker.status === "complete") {
     return { action: "rerun", profile: DEMO_PROFILE, status: "complete" };
@@ -207,12 +244,13 @@ function assertMarkerTableExists(db: DatabaseConnection): void {
   }
 }
 
-function assertFreshBaseline(db: DatabaseConnection): void {
+function assertFreshBaseline(db: DatabaseConnection, tolerateServerRuntimeRows: boolean): void {
   assertLifecycleMetadata(db);
   for (const table of tableNames(db)) {
     if (table === MIGRATIONS_TABLE) continue;
     if (table === MARKER_TABLE) continue;
     if (LIFECYCLE_TABLES.has(table)) continue;
+    if (tolerateServerRuntimeRows && SERVER_RUNTIME_TABLES.includes(table)) continue;
     if (table === "day_periods") {
       assertCanonicalDayPeriods(db);
       continue;
@@ -221,11 +259,12 @@ function assertFreshBaseline(db: DatabaseConnection): void {
   }
 }
 
-function assertRerunInventory(db: DatabaseConnection): void {
+function assertRerunInventory(db: DatabaseConnection, tolerateServerRuntimeRows: boolean): void {
   assertLifecycleMetadata(db);
   for (const table of tableNames(db)) {
     if (table === MIGRATIONS_TABLE) continue;
     if (LIFECYCLE_TABLES.has(table)) continue;
+    if (tolerateServerRuntimeRows && SERVER_RUNTIME_TABLES.includes(table)) continue;
     if (table === MARKER_TABLE) {
       assertExpectedMarker(markerRows(db));
       continue;

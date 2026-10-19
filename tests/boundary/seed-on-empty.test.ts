@@ -1,11 +1,13 @@
 import Database from "better-sqlite3";
 import { describe, expect, it, vi } from "vitest";
+import { reconcileBootstrap } from "../../src/server/auth/reconcile";
 import { getDb } from "../../src/server/db/client";
 import {
   beginSeedProfile,
   completeSeedProfile,
   readSeedProfileMarker,
   SeedOwnershipError,
+  type SeedProfileMarkerState,
 } from "../../src/server/db/seeds/ownership";
 import { bundledPublicSeedModules } from "../../src/server/db/seeds/public-modules";
 import { runSeedProfile, SeedRunnerError } from "../../src/server/db/seeds/runner";
@@ -25,8 +27,17 @@ function memberModule(id: string, slug: string): SeedModule {
     id,
     run: ({ db, nowMs }) => {
       db.prepare(
-        "INSERT INTO members (id, display_name, role, created_at, updated_at) VALUES (?, ?, 'parent', ?, ?)"
+        "INSERT OR IGNORE INTO members (id, display_name, role, created_at, updated_at) VALUES (?, ?, 'parent', ?, ?)"
       ).run(`demo:member:${slug}`, slug, nowMs, nowMs);
+    },
+  };
+}
+
+function failingModule(id: string): SeedModule {
+  return {
+    id,
+    run: () => {
+      throw new Error("synthetic seed failure");
     },
   };
 }
@@ -47,7 +58,7 @@ function fakeDependencies(overrides: Partial<SeedOnEmptyDependencies> = {}) {
     runSeed,
     deps: {
       env: { MP_SEED_ON_EMPTY: "true" },
-      readMarker: () => "absent" as const,
+      readMarker: (): SeedProfileMarkerState => ({ state: "absent" }),
       runSeed,
       modules: () => undefined,
       log,
@@ -69,7 +80,7 @@ describe("MP_SEED_ON_EMPTY flag", () => {
 
 describe("seed on empty policy", () => {
   it("does nothing, not even reading the marker, when the flag is off", async () => {
-    const readMarker = vi.fn(() => "absent" as const);
+    const readMarker = vi.fn((): SeedProfileMarkerState => ({ state: "absent" }));
     const { deps, runSeed } = fakeDependencies({ env: {}, readMarker });
     await expect(seedOnEmpty(deps)).resolves.toBe("disabled");
     expect(readMarker).not.toHaveBeenCalled();
@@ -80,23 +91,35 @@ describe("seed on empty policy", () => {
     const modules = [memberModule("public:one", "one")];
     const { deps, runSeed } = fakeDependencies({ modules: () => modules });
     await expect(seedOnEmpty(deps)).resolves.toBe("seeded");
-    expect(runSeed).toHaveBeenCalledWith({ mode: "public", disposableTarget: true, modules });
+    expect(runSeed).toHaveBeenCalledWith({
+      mode: "public",
+      disposableTarget: true,
+      serverBoot: true,
+      modules,
+    });
   });
 
   it("reruns to repair a marker left running by a crashed boot", async () => {
-    const { deps, runSeed } = fakeDependencies({ readMarker: () => "running" });
+    const { deps, runSeed } = fakeDependencies({
+      readMarker: () => ({ state: "running", asOfDate: "2026-09-20" }),
+    });
     await expect(seedOnEmpty(deps)).resolves.toBe("repaired");
-    expect(runSeed).toHaveBeenCalledTimes(1);
+    // The crashed boot's as-of date, not today's: the runner refuses a running marker otherwise.
+    expect(runSeed).toHaveBeenCalledWith(expect.objectContaining({ asOfDate: "2026-09-20" }));
   });
 
   it("skips a completed profile", async () => {
-    const { deps, runSeed } = fakeDependencies({ readMarker: () => "complete" });
+    const { deps, runSeed } = fakeDependencies({
+      readMarker: () => ({ state: "complete", asOfDate: AS_OF_DATE }),
+    });
     await expect(seedOnEmpty(deps)).resolves.toBe("skipped");
     expect(runSeed).not.toHaveBeenCalled();
   });
 
   it("leaves a foreign marker alone with a warning", async () => {
-    const { deps, runSeed, log } = fakeDependencies({ readMarker: () => "unrecognized" });
+    const { deps, runSeed, log } = fakeDependencies({
+      readMarker: () => ({ state: "unrecognized" }),
+    });
     await expect(seedOnEmpty(deps)).resolves.toBe("refused");
     expect(runSeed).not.toHaveBeenCalled();
     expect(log.warn).toHaveBeenCalledTimes(1);
@@ -133,26 +156,26 @@ describe("seed on empty against a real database", () => {
 
   it("reads the marker through absent, running and complete", () => {
     const db = getDb();
-    expect(readSeedProfileMarker(db)).toBe("absent");
+    expect(readSeedProfileMarker(db)).toEqual({ state: "absent" });
     beginSeedProfile(db, { asOfDate: AS_OF_DATE, nowMs: NOW });
-    expect(readSeedProfileMarker(db)).toBe("running");
+    expect(readSeedProfileMarker(db)).toEqual({ state: "running", asOfDate: AS_OF_DATE });
     completeSeedProfile(db, { asOfDate: AS_OF_DATE, nowMs: NOW });
-    expect(readSeedProfileMarker(db)).toBe("complete");
+    expect(readSeedProfileMarker(db)).toEqual({ state: "complete", asOfDate: AS_OF_DATE });
     db.prepare("UPDATE seed_profile_state SET profile = 'other-profile'").run();
-    expect(readSeedProfileMarker(db)).toBe("unrecognized");
+    expect(readSeedProfileMarker(db)).toEqual({ state: "unrecognized" });
   });
 
   it("reads a missing marker table as absent and an unknown status as unrecognized", () => {
     const bare = new Database(":memory:");
     try {
-      expect(readSeedProfileMarker(bare)).toBe("absent");
+      expect(readSeedProfileMarker(bare)).toEqual({ state: "absent" });
       bare.exec(
         "CREATE TABLE seed_profile_state (profile TEXT, version INTEGER, as_of_date TEXT, status TEXT, started_at INTEGER, completed_at INTEGER)"
       );
       bare
         .prepare("INSERT INTO seed_profile_state VALUES ('simpsons-demo', 1, ?, 'paused', ?, NULL)")
         .run(AS_OF_DATE, NOW);
-      expect(readSeedProfileMarker(bare)).toBe("unrecognized");
+      expect(readSeedProfileMarker(bare)).toEqual({ state: "unrecognized" });
     } finally {
       bare.close();
     }
@@ -171,6 +194,112 @@ describe("seed on empty against a real database", () => {
     await expect(seedOnEmpty({ env, modules: () => modules, log })).resolves.toBe("skipped");
   });
 
+  it("repairs a seed a crashed boot left running, on that boot's as-of date", async () => {
+    // A crash leaves the first module committed and the marker running, dated the day it began.
+    const yesterday = "2026-09-22";
+    await expect(
+      runSeedProfile({
+        mode: "public",
+        asOfDate: yesterday,
+        nowMs: NOW,
+        disposableTarget: true,
+        modules: [memberModule("public:one", "one"), failingModule("public:two")],
+      })
+    ).rejects.toThrow("Seed module failed: public:two");
+    expect(readSeedProfileMarker(getDb())).toEqual({ state: "running", asOfDate: yesterday });
+
+    const log = { log: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    const outcome = await seedOnEmpty({
+      env: { MP_SEED_ON_EMPTY: "true" },
+      modules: () => [memberModule("public:one", "one"), memberModule("public:two", "two")],
+      log,
+    });
+
+    expect(outcome).toBe("repaired");
+    expect(log.warn).not.toHaveBeenCalled();
+    expect(getDb().prepare("SELECT id FROM members ORDER BY id").all()).toEqual([
+      { id: "demo:member:one" },
+      { id: "demo:member:two" },
+    ]);
+    expect(readSeedProfileMarker(getDb())).toEqual({ state: "complete", asOfDate: yesterday });
+  });
+
+  it("discards a failed seed so the boot after the server reconciled its keys seeds again", async () => {
+    const env = { MP_SEED_ON_EMPTY: "true" };
+    const log = { log: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+    const failed = await seedOnEmpty({
+      env,
+      modules: () => [memberModule("public:one", "one"), failingModule("public:two")],
+      log,
+    });
+    expect(failed).toBe("failed");
+    expect(log.error).toHaveBeenCalledWith(
+      expect.stringContaining("demo seed failed"),
+      expect.objectContaining({ message: expect.stringContaining("partial profile was discarded") })
+    );
+    // Nothing half-seeded is left under the running server.
+    expect(getDb().prepare("SELECT id FROM members").all()).toEqual([]);
+    expect(readSeedProfileMarker(getDb())).toEqual({ state: "absent" });
+
+    // The server carries on: main() reconciles the bootstrap key, and a device is provisioned.
+    const previousKey = process.env.MP_BOOTSTRAP_KEY;
+    process.env.MP_BOOTSTRAP_KEY = "mpk-local-bootstrap-change-me";
+    try {
+      reconcileBootstrap();
+    } finally {
+      if (previousKey === undefined) delete process.env.MP_BOOTSTRAP_KEY;
+      else process.env.MP_BOOTSTRAP_KEY = previousKey;
+    }
+    getDb()
+      .prepare("INSERT INTO admin_config (id, pin_hash, updated_at) VALUES (1, 'hash', 1)")
+      .run();
+
+    const next = await seedOnEmpty({
+      env,
+      modules: () => [memberModule("public:one", "one"), memberModule("public:two", "two")],
+      log,
+    });
+    expect(next).toBe("seeded");
+    expect(getDb().prepare("SELECT id FROM members ORDER BY id").all()).toEqual([
+      { id: "demo:member:one" },
+      { id: "demo:member:two" },
+    ]);
+    // The server's own rows survive both the discard and the seed.
+    expect(getDb().prepare("SELECT kind FROM api_keys").all()).toEqual([{ kind: "bootstrap" }]);
+    expect(getDb().prepare("SELECT id FROM admin_config").all()).toEqual([{ id: 1 }]);
+  });
+
+  it("tolerates only the server's own tables, never household rows, and only for boot seeds", async () => {
+    const db = getDb();
+    db.prepare(
+      "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES ('k', 'h', '*', 'bootstrap', 1)"
+    ).run();
+    const base = {
+      mode: "public",
+      asOfDate: AS_OF_DATE,
+      nowMs: NOW,
+      disposableTarget: true,
+    } as const;
+    // The seed CLI keeps its strict fresh-baseline rule.
+    await expect(
+      runSeedProfile({ ...base, modules: [memberModule("public:one", "one")] })
+    ).rejects.toThrow("unrelated row in api_keys");
+    await expect(
+      runSeedProfile({
+        ...base,
+        mode: "private",
+        serverBoot: true,
+        seedsDirectory: "/nonexistent/seeds",
+      })
+    ).rejects.toThrow("only supports public mode");
+    expect(readSeedProfileMarker(db)).toEqual({ state: "absent" });
+
+    await expect(
+      runSeedProfile({ ...base, serverBoot: true, modules: [memberModule("public:one", "one")] })
+    ).resolves.toMatchObject({ status: "complete" });
+  });
+
   it("refuses, without changing anything, when the household already has data", async () => {
     const db = getDb();
     db.prepare(
@@ -186,7 +315,7 @@ describe("seed on empty against a real database", () => {
 
     expect(outcome).toBe("refused");
     expect(db.prepare("SELECT id FROM members").all()).toEqual([{ id: "member-real" }]);
-    expect(readSeedProfileMarker(db)).toBe("absent");
+    expect(readSeedProfileMarker(db)).toEqual({ state: "absent" });
   });
 });
 
@@ -220,7 +349,7 @@ describe("runner with preloaded modules", () => {
     await expect(
       runSeedProfile({ ...base, mode: "private", modules: [memberModule("public:a", "a")] })
     ).rejects.toThrow("only supported in public mode");
-    expect(readSeedProfileMarker(getDb())).toBe("absent");
+    expect(readSeedProfileMarker(getDb())).toEqual({ state: "absent" });
   });
 
   it("has no bundled modules outside the production build", () => {

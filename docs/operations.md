@@ -149,10 +149,12 @@ These are the public defaults from `.env.example`. While a credential equals a p
 **First-boot seed.** With `MP_SEED_ON_EMPTY=true` (or `1`) the server seeds the public Simpsons profile in-process right after migrations, before the bootstrap key is reconciled. It never selects the private profile. The boot log says what happened:
 
 - no seed marker: the profile is seeded (`Seed on empty: demo profile seeded as of …`);
-- a marker left `running` by a boot that stopped mid-seed: the profile is rerun to repair it;
+- a marker left `running` by a boot that stopped mid-seed: the profile is rerun on that boot's as-of date to repair it;
 - a `complete` marker: skipped (`… already seeded, skipping`);
 - household data or another profile in the database: a warning, and nothing is changed;
-- any other seed failure: an error is logged.
+- any other seed failure: an error is logged and the partial profile is discarded, so the server starts empty and the next boot seeds from scratch.
+
+Rows the server writes on its own (`api_keys`, `admin_config`, `client_log`: reconciled keys, provisioned devices and their PIN, browser telemetry) do not count as household data for this seed, so a later boot can still seed or repair after the server has run. The `npm run seed:*` commands keep the strict rule.
 
 None of these outcomes stops the server from starting. The production bundle has no `seeds/` directory and no TypeScript loader, so `scripts/seed-bundle-plugin.mjs` compiles every public `seeds/seed-NNN-*.ts` into `dist/server/index.js` at build time; the build fails if a `*PRIVATE*` file would be included, and `.dockerignore` keeps those out of the image context.
 
@@ -160,7 +162,7 @@ None of these outcomes stops the server from starting. The production bundle has
 
 **Moving to real use.** Changing `MP_BOOTSTRAP_KEY` or `ADMIN_PIN` later does not revoke the default bootstrap key or devices already provisioned (see [credentials](#credentials-and-provisioning)), and the demo household stays in the database. On a host that keeps data, start real use on fresh storage: set your own `MP_ACCESS_TOKEN`, `MP_BOOTSTRAP_KEY` and `ADMIN_PIN`, remove `MP_SEED_ON_EMPTY`, and attach a new volume (or edit the values on the deploy form before the first boot).
 
-**Per-host files.** `render.yaml` is the Render Blueprint (free plan). Koyeb has no manifest: the README button URL carries the builder, Dockerfile path, free instance type, port and environment; Koyeb's default TCP check covers the port, and an HTTP check on `/health` can be added under the service's Health checks settings. `railway.json` sets the Dockerfile builder, health check and restart policy. `.do/deploy.template.yaml` is the App Platform template, on the smallest paid size because App Platform's free tier covers static sites only. All buttons need the GitHub repository to be public.
+**Per-host files.** `render.yaml` is the Render Blueprint (free plan). Koyeb has no manifest: the README button URL carries the builder, Dockerfile path, free instance type, a single instance (`instances_max=1`), the port, the HTTP health check and the environment. The health check uses `hc_protocol[3000]=http`, `hc_path[3000]=/health`, `hc_method[3000]=get` and `hc_grace_period[3000]=30`. Koyeb's button documentation does not list these parameters, but the control panel's deploy page parses them and its own "Deploy to Koyeb button" generator emits them. If a later Koyeb release drops them, the service falls back to Koyeb's default TCP check on port 3000; set the HTTP check on `/health` under the service's Health checks settings. `railway.json` sets the Dockerfile builder, health check and restart policy. `.do/deploy.template.yaml` is the App Platform template, on the smallest paid size because App Platform's free tier covers static sites only. All buttons need the GitHub repository to be public.
 
 **Publishing the Railway template (maintainer, once).** Railway's button opens a published template, which only the maintainer's account can create:
 
