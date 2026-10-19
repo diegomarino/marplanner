@@ -21,6 +21,12 @@ export interface SeedRunRequest {
   disposableTarget: boolean;
   /** Test-only or operator-provided module location; defaults to the repository's seeds directory. */
   seedsDirectory?: string;
+  /** Preloaded public modules (the production bundle has no seeds directory). When set, directory
+   * discovery is skipped; module ids are still validated and must be unique. Public mode only. */
+  modules?: readonly SeedModule[];
+  /** Seed started by the server itself (MP_SEED_ON_EMPTY): rows the server writes on its own are
+   * tolerated, and a failure after the ownership check discards the partial profile. Public only. */
+  serverBoot?: boolean;
   /** Test-only migration location; defaults to the repository's drizzle directory. */
   migrationsDirectory?: string;
 }

@@ -15,7 +15,7 @@ playwright-report
 **/*.db*
 **/*.sqlite*
 backups
-seeds
+# Public seeds/ is needed by the server build (MP_SEED_ON_EMPTY); private overlays never are.
 **/*PRIVATE*
 **/*private*
 **/*.local
