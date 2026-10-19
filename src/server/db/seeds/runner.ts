@@ -7,7 +7,7 @@ import { assertWeekdayIntegrity } from "../weekday-integrity";
 import { beginSeedProfile, completeSeedProfile, type SeedProfileResult } from "./ownership";
 import type { SeedContext, SeedMode, SeedModule, SeedRunReport, SeedRunRequest } from "./types";
 
-const PUBLIC_SEED_FILE = /^seed-\d{3}-[a-z0-9][a-z0-9-]*\.(?:[cm]?[jt]s?)$/;
+export const PUBLIC_SEED_FILE = /^seed-\d{3}-[a-z0-9][a-z0-9-]*\.(?:[cm]?[jt]s?)$/;
 const PRIVATE_SEED_FILE = /^seed[a-z0-9_-]*-PRIVATE\.(?:[cm]?[jt]s?)$/;
 const STABLE_MODULE_ID = /^[a-z][a-z0-9]*(?::[a-z0-9][a-z0-9-]*)+$/;
 
@@ -44,7 +44,9 @@ export async function runSeedProfile(request: SeedRunRequest): Promise<SeedRunRe
 
   const db = getDb();
   const asOfDate = resolveAsOfDate(db, request.asOfDate, nowMs);
-  const modules = await discoverModules(request.mode, request.seedsDirectory);
+  const modules = request.modules
+    ? preloadedModules(request.mode, request.modules)
+    : await discoverModules(request.mode, request.seedsDirectory);
   const marker = beginSeedProfile(db, { asOfDate, nowMs });
   const context: SeedContext = { db, asOfDate, nowMs };
 
@@ -65,6 +67,22 @@ export async function runSeedProfile(request: SeedRunRequest): Promise<SeedRunRe
     markerAction: reportMarkerAction(marker),
     status: "complete",
   };
+}
+
+function preloadedModules(mode: SeedMode, preloaded: readonly SeedModule[]): DiscoveredModule[] {
+  // Private overlays are never bundled, so a preloaded set can only stand for the public profile.
+  if (mode !== "public") {
+    throw new SeedRunnerError("Preloaded seed modules are only supported in public mode");
+  }
+  const modules: DiscoveredModule[] = [];
+  const ids = new Set<string>();
+  for (const module of preloaded) {
+    if (!isSeedModule(module)) throw new SeedRunnerError("Invalid seed module: preloaded module");
+    if (ids.has(module.id)) throw new SeedRunnerError(`Duplicate seed module ID: ${module.id}`);
+    ids.add(module.id);
+    modules.push({ filePath: module.id, visibility: "public", module });
+  }
+  return modules;
 }
 
 async function discoverModules(

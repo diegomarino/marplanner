@@ -5,6 +5,7 @@
 import { build } from "esbuild";
 import { cpSync, mkdirSync } from "node:fs";
 import { resolveBuildInfo } from "./build-info.mjs";
+import { assertNoPrivateInputs, seedBundlePlugin } from "./seed-bundle-plugin.mjs";
 
 const RESVG_EXTERNALS = ["@resvg/resvg-js", "@resvg/resvg-wasm"];
 const NATIVE_EXTERNALS = ["argon2", "better-sqlite3", ...RESVG_EXTERNALS];
@@ -13,7 +14,7 @@ const REQUIRE_SHIM_BANNER = {
   js: "import { createRequire as __cr } from 'node:module'; const require = __cr(import.meta.url);",
 };
 
-await build({
+const server = await build({
   entryPoints: ["src/server/index.ts"],
   // OUTSIDE the served client root (dist/client/) so the bundle can never be
   // downloaded via the static server (backend source must not be served).
@@ -26,7 +27,11 @@ await build({
   banner: REQUIRE_SHIM_BANNER,
   // The admin overview compares this with the commit stamped into the client bundle.
   define: { __MP_BUILD__: JSON.stringify(resolveBuildInfo()) },
+  // Public seeds for MP_SEED_ON_EMPTY; see the plugin for why they share this bundle.
+  plugins: [seedBundlePlugin()],
+  metafile: true,
 });
+assertNoPrivateInputs(server.metafile);
 
 mkdirSync("dist/server/fonts/jetbrains-mono", { recursive: true });
 cpSync(

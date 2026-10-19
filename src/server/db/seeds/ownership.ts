@@ -147,6 +147,23 @@ export function beginSeedProfile(
   };
 }
 
+export type SeedProfileMarkerState = "absent" | MarkerStatus | "unrecognized";
+
+/** Where the demo profile marker stands, without validating the rest of the database: "absent"
+ * when nothing was ever seeded (or the marker table does not exist yet), "unrecognized" for a
+ * marker of another profile or status, which the runner would refuse anyway.
+ */
+export function readSeedProfileMarker(db: DatabaseConnection): SeedProfileMarkerState {
+  if (!tableNames(db).includes(MARKER_TABLE)) return "absent";
+  const markers = markerRows(db);
+  if (markers.length === 0) return "absent";
+  const [marker] = markers;
+  if (markers.length !== 1 || marker?.profile !== DEMO_PROFILE) return "unrecognized";
+  return marker.status === "running" || marker.status === "complete"
+    ? marker.status
+    : "unrecognized";
+}
+
 export function completeSeedProfile(
   db: DatabaseConnection,
   request: SeedProfileRequest

@@ -21,6 +21,9 @@ export interface SeedRunRequest {
   disposableTarget: boolean;
   /** Test-only or operator-provided module location; defaults to the repository's seeds directory. */
   seedsDirectory?: string;
+  /** Preloaded public modules (the production bundle has no seeds directory). When set, directory
+   * discovery is skipped; module ids are still validated and must be unique. Public mode only. */
+  modules?: readonly SeedModule[];
   /** Test-only migration location; defaults to the repository's drizzle directory. */
   migrationsDirectory?: string;
 }
