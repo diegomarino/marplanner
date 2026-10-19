@@ -90,6 +90,34 @@ export function createHighlightRule(input: unknown): HighlightRule {
   })();
 }
 
+/** Seed identities are stable; existing priority and creation time survive canonicalization. */
+export function upsertSeedHighlightRule(
+  input: HighlightRuleCreate & { id: string; nowMs: number }
+): void {
+  if (!/^demo:calendar:highlight:[a-z0-9][a-z0-9-]*$/.test(input.id)) {
+    throw new HighlightValidationError("Seed-owned Calendar highlight ID is required");
+  }
+  if (!Number.isSafeInteger(input.nowMs) || input.nowMs < 0) {
+    throw new HighlightValidationError("Seed highlight timestamp must be a non-negative integer");
+  }
+  const { emoji, keywords } = validateCreate({ emoji: input.emoji, keywords: input.keywords });
+  getDb()
+    .prepare(
+      `INSERT INTO calendar_highlight_rules
+       (id, emoji, keywords_json, enabled, priority, created_at, updated_at)
+     VALUES (?, ?, ?, 1, (SELECT COALESCE(MAX(priority), -1) + 1 FROM calendar_highlight_rules), ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       emoji = excluded.emoji,
+       keywords_json = excluded.keywords_json,
+       enabled = excluded.enabled,
+       updated_at = excluded.updated_at
+     WHERE emoji IS NOT excluded.emoji
+        OR keywords_json IS NOT excluded.keywords_json
+        OR enabled IS NOT excluded.enabled`
+    )
+    .run(input.id, emoji, JSON.stringify(keywords), input.nowMs, input.nowMs);
+}
+
 export function setHighlightRuleEnabled(id: string, enabled: boolean): HighlightRule | null {
   if (typeof enabled !== "boolean") throw new HighlightValidationError();
   const db = getDb();

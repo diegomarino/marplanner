@@ -26,12 +26,12 @@ errata to obsolete instructions. Contract invariant and acceptance IDs stay stab
 These are open obligations or choices, not silently accepted exceptions. Updating
 documentation does not satisfy a missing check or establish runtime acceptance.
 
-| Decision | Remaining work                                                                                                                                                                                                                            |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ADR-040  | Subscriber failures are persisted and searchable in admin; counters and automatic health degradation remain follow-up work.                                                                                                               |
-| ADR-056  | Production onboarding examples and their DB protections are not implemented; their launch disposition needs an explicit decision. Disposable demo seeds activate all installed plugins; feature content enrichment remains separate work. |
-| ADR-061  | The shared client runtime has catalog-wide parity; canonical dynamic-key declarations and locale resolution remain incomplete.                                                                                                            |
-| ADR-003  | Plugin lifecycle/lineage ISO TEXT timestamps diverge from the integer convention; choose a bounded exception or a safe migration.                                                                                                         |
+| Decision | Remaining work                                                                                                                                                                                                                               |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ADR-040  | Subscriber failures are persisted and searchable in admin; counters and automatic health degradation remain follow-up work.                                                                                                                  |
+| ADR-056  | Production onboarding examples and their DB protections are not implemented; their launch disposition needs an explicit decision. Disposable demos activate all plugins, configure the full briefing catalogue and seed Calendar highlights. |
+| ADR-061  | The shared client runtime has catalog-wide parity; canonical dynamic-key declarations and locale resolution remain incomplete.                                                                                                               |
+| ADR-003  | Plugin lifecycle/lineage ISO TEXT timestamps diverge from the integer convention; choose a bounded exception or a safe migration.                                                                                                            |
 
 ADR-021 is absent from the maintained corpus. Printer configuration is governed by
 ADR-028 and the [Printing contract](../contracts/printing.md); no replacement

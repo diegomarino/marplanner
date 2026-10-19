@@ -146,7 +146,9 @@ describe("Calendar demo seed integration", () => {
 
       expect(response.statusCode).toBe(200);
       const events = JSON.parse(response.body);
-      expect(events).toHaveLength(6);
+      // Wed 23 – Sat 26: 6 asOfDate-relative events, 5 week-relative one-offs and 6 occurrences of
+      // weekly recurring events (3 plant shifts, saxophone, bowling league, baby gym).
+      expect(events).toHaveLength(17);
       expect(events).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
