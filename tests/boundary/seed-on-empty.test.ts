@@ -1,3 +1,4 @@
+import Database from "better-sqlite3";
 import { describe, expect, it, vi } from "vitest";
 import { getDb } from "../../src/server/db/client";
 import {
@@ -139,6 +140,22 @@ describe("seed on empty against a real database", () => {
     expect(readSeedProfileMarker(db)).toBe("complete");
     db.prepare("UPDATE seed_profile_state SET profile = 'other-profile'").run();
     expect(readSeedProfileMarker(db)).toBe("unrecognized");
+  });
+
+  it("reads a missing marker table as absent and an unknown status as unrecognized", () => {
+    const bare = new Database(":memory:");
+    try {
+      expect(readSeedProfileMarker(bare)).toBe("absent");
+      bare.exec(
+        "CREATE TABLE seed_profile_state (profile TEXT, version INTEGER, as_of_date TEXT, status TEXT, started_at INTEGER, completed_at INTEGER)"
+      );
+      bare
+        .prepare("INSERT INTO seed_profile_state VALUES ('simpsons-demo', 1, ?, 'paused', ?, NULL)")
+        .run(AS_OF_DATE, NOW);
+      expect(readSeedProfileMarker(bare)).toBe("unrecognized");
+    } finally {
+      bare.close();
+    }
   });
 
   it("seeds, then skips on the next boot", async () => {

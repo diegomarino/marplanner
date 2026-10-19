@@ -1519,6 +1519,16 @@
             "runtime storage safeguards rejects file aliases and preserves malformed sentinels",
             "runtime storage safeguards holds ownership independently of product connections and releases idempotently"
           ],
+          "tests/boundary/default-credentials.test.ts": [
+            "public default credential detection recognises only the repository's default access token",
+            "public default credential detection reports the default bootstrap key and either public PIN, including the unset fallback",
+            "public default credential detection never reports an operator-chosen value",
+            "public default credential detection emits an attribute-safe meta tag, or nothing once every credential changed",
+            "auth screens served with public defaults or chosen credentials prefills the default token on the gate and warns, on first view and after a wrong try",
+            "auth screens served with public defaults or chosen credentials passes the public defaults to the SPA shell next to the base path",
+            "auth screens served with public defaults or chosen credentials shows no notice, no prefill and no meta tag once every credential is chosen",
+            "auth screens served with public defaults or chosen credentials reports only the credentials still at their default when some were changed"
+          ],
           "tests/boundary/encoding-bypass.test.ts": [
             "percent-encoded /api bypass is blocked — multi-variant (#99) GET /%61pi/settings → 401 unauthorized at the auth-boundary middleware",
             "percent-encoded /api bypass is blocked — multi-variant (#99) GET /%61pi/members → 401 unauthorized at the auth-boundary middleware",
@@ -2597,6 +2607,12 @@
             "routines-streak unit tests (US3) completing today's last scheduled chore makes today qualify (streak includes it)",
             "routines-streak unit tests (US3) soft-deleting a routine behind an established streak drops the affected day on recompute"
           ],
+          "tests/boundary/seed-bundle-plugin.test.ts": [
+            "seed bundle plugin selects seed files with the runner's own public filename rule",
+            "seed bundle plugin bundles every public seed in order and leaves PRIVATE overlays out",
+            "seed bundle plugin refuses a lower-case private seed that would otherwise match the public rule",
+            "seed bundle plugin fails the build when any private file reaches the bundle graph"
+          ],
           "tests/boundary/seed-calendar.test.ts": [
             "Calendar demo seed boundary creates four enabled normalized source configurations without fetching or external events",
             "Calendar demo seed boundary upserts a validated seed-owned local event without altering an ordinary event",
@@ -2621,6 +2637,23 @@
           "tests/boundary/seed-members.test.ts": [
             "canonical demo member seed boundary creates the five canonical active members and preserves public readback on rerun",
             "canonical demo member seed boundary refuses a non-demo member without changing it"
+          ],
+          "tests/boundary/seed-on-empty.test.ts": [
+            "MP_SEED_ON_EMPTY flag is on only for true or 1",
+            "seed on empty policy does nothing, not even reading the marker, when the flag is off",
+            "seed on empty policy seeds the public profile in-process when no marker exists",
+            "seed on empty policy reruns to repair a marker left running by a crashed boot",
+            "seed on empty policy skips a completed profile",
+            "seed on empty policy leaves a foreign marker alone with a warning",
+            "seed on empty policy downgrades an ownership refusal to a warning",
+            "seed on empty policy logs any other failure as an error without throwing",
+            "seed on empty against a real database reads the marker through absent, running and complete",
+            "seed on empty against a real database reads a missing marker table as absent and an unknown status as unrecognized",
+            "seed on empty against a real database seeds, then skips on the next boot",
+            "seed on empty against a real database refuses, without changing anything, when the household already has data",
+            "runner with preloaded modules runs them in order instead of discovering a directory",
+            "runner with preloaded modules still validates ids, duplicates and the public-only mode",
+            "runner with preloaded modules has no bundled modules outside the production build"
           ],
           "tests/boundary/seed-ownership.test.ts": [
             "seed ownership boundary creates the running simpsons marker with canonical migration and lifecycle metadata",
@@ -3510,6 +3543,16 @@
             "DayPeriodsManagement — DAY_PERIOD_LABEL_KEYS maps each day period to its OWN translation key (SC-007) ITERATES all four mechanically-derivable keys against the `dayPeriod.${id}` template",
             "DayPeriodsManagement — DAY_PERIOD_LABEL_KEYS maps each day period to its OWN translation key (SC-007) every key resolves in BOTH locale catalogues",
             "DayPeriodsManagement — DAY_PERIOD_LABEL_KEYS maps each day period to its OWN translation key (SC-007) renders every one of the four periods' OWN localized label, under a non-English household locale — order-and-content, not a set comparison (a swap would preserve the SET while breaking which period gets which label)"
+          ],
+          "tests/client/default-credentials.test.tsx": [
+            "readPublicDefaultCredentials reads the public defaults the server reported",
+            "readPublicDefaultCredentials returns nothing without the tag or with malformed content",
+            "readPublicDefaultCredentials drops any value outside the known public set",
+            "ProvisioningScreen with a public default bootstrap key prefills the key and shows the English notice",
+            "ProvisioningScreen with a public default bootstrap key follows the browser language for the notice",
+            "ProvisioningScreen with a public default bootstrap key starts empty with no notice when the key was changed or the tag was tampered with",
+            "AdminGate with a public default PIN shows the default PIN in the English notice",
+            "AdminGate with a public default PIN shows no notice when the PIN was changed or the tag carries an unknown PIN"
           ],
           "tests/client/density-attribute.test.ts": [
             "densityAttribute applyStoredDensity a fresh device (nothing stored) applies comfortable — no attribute at all",
@@ -5361,6 +5404,12 @@
           "tests/integration/seed-meals.test.ts": [
             "demo meals seed integration advances only a complete owned profile, replaces rolling entries, and refuses unrelated rows before moving again"
           ],
+          "tests/integration/seed-on-empty-boot.test.ts": [
+            "MP_SEED_ON_EMPTY boot seeds the Simpsons into an empty DATA_DIR, then skips on the next boot",
+            "MP_SEED_ON_EMPTY boot leaves a database with household data untouched and still boots",
+            "MP_SEED_ON_EMPTY boot does not seed without the flag",
+            "production server bundle compiles every public seed in and never a private overlay"
+          ],
           "tests/integration/seed-ownership.test.ts": [
             "seed ownership integration declares the complete demo-owned table inventory and exact singleton Settings keys",
             "seed ownership integration refuses an unowned singleton Settings key on every rerun without deletion",
@@ -6811,6 +6860,21 @@
           "branches": 100
         }
       },
+      "src/client/lib/default-credentials.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 12,
+          "statements": 15,
+          "functions": 1,
+          "branches": 12
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/client/lib/household-date.ts": {
         "layer": "client",
         "minimumTotals": {
@@ -7636,6 +7700,21 @@
           "branches": 100
         }
       },
+      "src/server/auth/default-credentials.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 11,
+          "statements": 13,
+          "functions": 3,
+          "branches": 11
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/server/auth/eff-wordlist.ts": {
         "layer": "server",
         "minimumTotals": {
@@ -7861,6 +7940,21 @@
           "branches": 85.56
         }
       },
+      "src/server/db/seeds/public-modules.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 1,
+          "statements": 1,
+          "functions": 1,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/server/db/seeds/runner.ts": {
         "layer": "server",
         "minimumTotals": {
@@ -7874,6 +7968,21 @@
           "statements": 78.57,
           "functions": 81.25,
           "branches": 71.01
+        }
+      },
+      "src/server/db/seeds/seed-on-empty.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 25,
+          "statements": 26,
+          "functions": 3,
+          "branches": 16
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/server/db/seeds/types.ts": {
@@ -9954,6 +10063,21 @@
           "statements": 55,
           "functions": 13,
           "branches": 26
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/shared/default-credentials.ts": {
+        "layer": "shared",
+        "minimumTotals": {
+          "lines": 4,
+          "statements": 4,
+          "functions": 0,
+          "branches": 0
         },
         "minimumRates": {
           "lines": 100,
