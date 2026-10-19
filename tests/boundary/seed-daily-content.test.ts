@@ -3,7 +3,10 @@ import { resolve } from "node:path";
 import { getDb } from "../../src/server/db/client";
 import { runSeedProfile } from "../../src/server/db/seeds/runner";
 import { listOptIns } from "../../src/server/modules/daily-briefing";
-import { readAllSettings } from "../../src/server/modules/daily-briefing/settings";
+import {
+  readAllSettings,
+  resolveMemberBlockSettings,
+} from "../../src/server/modules/daily-briefing/settings";
 import { listMessages } from "../../src/server/modules/daily-messages";
 import { listTimeAnnouncementRules } from "../../src/server/modules/time-announcements";
 import { useIsolatedDb } from "../helpers/db";
@@ -17,6 +20,47 @@ const SEEDS_DIRECTORY = resolve(process.cwd(), "seeds");
 
 describe("daily content demo seed boundary", () => {
   useIsolatedDb();
+
+  it("configures the complete briefing catalogue and enables history for opted-in demo members", async () => {
+    await runSeedProfile({
+      mode: "public",
+      asOfDate: AS_OF_DATE,
+      nowMs: NOW_MS,
+      disposableTarget: true,
+    });
+    const types = [
+      "shotgun",
+      "message",
+      "streak",
+      "today",
+      "weather",
+      "meals",
+      "birthday",
+      "reminders",
+      "dadJoke",
+      "wordOfDay",
+      "animalFact",
+      "numberFact",
+      "onThisDay",
+      "quoteOfDay",
+      "trivia",
+      "riddle",
+      "wouldYouRather",
+      "wordSearch",
+      "drawingPrompt",
+      "streakText",
+      "weatherText",
+    ];
+    expect(readAllSettings().blockOrder.map(({ type }) => type)).toEqual(types);
+    for (const memberId of ["demo:member:homer", "demo:member:lisa", "demo:member:marge"]) {
+      for (const type of types) {
+        expect(resolveMemberBlockSettings(memberId, type)).toMatchObject({
+          enabled: true,
+          weekdays: null,
+        });
+      }
+    }
+  });
 
   it("seeds fictional messages and briefing preferences through authoritative reads", async () => {
     const report = await runSeedProfile({
@@ -82,11 +126,27 @@ describe("daily content demo seed boundary", () => {
       generationTime: "06:30",
       autoPrintTrigger: "morning_complete",
       blockOrder: [
-        { type: "today" },
+        { type: "shotgun" },
         { type: "message" },
+        { type: "streak" },
+        { type: "today" },
+        { type: "weather" },
         { type: "meals" },
+        { type: "birthday" },
         { type: "reminders" },
         { type: "dadJoke", params: { difficulty: "easy" } },
+        { type: "wordOfDay" },
+        { type: "animalFact" },
+        { type: "numberFact" },
+        { type: "onThisDay" },
+        { type: "quoteOfDay" },
+        { type: "trivia" },
+        { type: "riddle" },
+        { type: "wouldYouRather" },
+        { type: "wordSearch" },
+        { type: "drawingPrompt" },
+        { type: "streakText" },
+        { type: "weatherText" },
       ],
       memberBlockSettings: [
         {
@@ -104,8 +164,29 @@ describe("daily content demo seed boundary", () => {
           params: null,
         },
         {
+          memberId: "demo:member:homer",
+          blockType: "onThisDay",
+          enabled: true,
+          weekdays: null,
+          params: null,
+        },
+        {
           memberId: "demo:member:lisa",
           blockType: "message",
+          enabled: true,
+          weekdays: null,
+          params: null,
+        },
+        {
+          memberId: "demo:member:lisa",
+          blockType: "onThisDay",
+          enabled: true,
+          weekdays: null,
+          params: null,
+        },
+        {
+          memberId: "demo:member:marge",
+          blockType: "onThisDay",
           enabled: true,
           weekdays: null,
           params: null,
@@ -147,12 +228,14 @@ describe("daily content demo seed boundary", () => {
     expect(listTimeAnnouncementRules()).toEqual(firstAnnouncements);
     expect(
       getDb().prepare("SELECT COUNT(*) AS count FROM daily_messages WHERE date = ?").get(AS_OF_DATE)
-    ).toEqual({ count: 3 });
+    ).toEqual({ count: 5 }); // every member has a message today
+    // 56 = the week-relative messages for the previous/current/next weeks; the five
+    // asOfDate-relative messages replace week messages on the same member and date.
     expect(getDb().prepare("SELECT COUNT(*) AS count FROM daily_messages").get()).toEqual({
-      count: 5,
+      count: 56,
     });
     expect(getDb().prepare("SELECT COUNT(*) AS count FROM time_announcements").get()).toEqual({
-      count: 2,
+      count: 5,
     });
     expect(
       getDb()

@@ -40,6 +40,7 @@ export const DEMO_OWNED_TABLES = [
   "calendar_events",
   "calendar_assignments",
   "calendar_external_sources",
+  "calendar_highlight_rules",
   "routines",
   "chores",
   "routine_assignments",
