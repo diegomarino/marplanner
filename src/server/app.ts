@@ -34,6 +34,7 @@ import {
 } from "./plugins/http";
 import type { PluginId } from "../shared/plugins";
 import type { CalendarFeedDependencies } from "./modules/calendar/sync-coordinator";
+import { defaultCredentialsMetaTag } from "./auth/default-credentials";
 
 type QuiesceCountedRequest = FastifyRequest & {
   __quiesceCounted?: boolean;
@@ -202,7 +203,7 @@ export async function buildApp(opts?: BuildAppOptions): Promise<FastifyInstance>
           .replace(
             /<head(?:\s[^>]*)?>/i,
             (head) =>
-              `${head}<base href="${basePath}/"><meta name="mp-base-path" content="${basePath}">`
+              `${head}<base href="${basePath}/"><meta name="mp-base-path" content="${basePath}">${defaultCredentialsMetaTag()}`
           );
         const sendShell = (reply: FastifyReply) =>
           reply.type("text/html; charset=utf-8").send(html);

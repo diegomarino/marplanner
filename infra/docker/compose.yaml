@@ -22,6 +22,7 @@ services:
       - MP_BOOTSTRAP_KEY=${MP_BOOTSTRAP_KEY:?MP_BOOTSTRAP_KEY is required}
       - ADMIN_PIN=${ADMIN_PIN:?ADMIN_PIN is required}
       - MP_MANAGEMENT_KEY
+      - MP_SEED_ON_EMPTY
       - BACKUPS_ROOT
       - UNIFI_API_KEY
       - UNIFI_SITE_ID

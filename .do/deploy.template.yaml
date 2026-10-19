@@ -1,0 +1,30 @@
+# DigitalOcean App Platform template for the "Deploy to DigitalOcean" button in README.md: a
+# public Simpsons demo built from infra/docker/Dockerfile. The credentials are the repository's
+# public defaults, shown on every auth screen; change them in the app settings before real use.
+# App Platform has no persistent volumes, so the demo resets on every redeploy or restart.
+spec:
+  name: marplanner
+  services:
+    - name: marplanner
+      git:
+        repo_clone_url: https://github.com/diegomarino/marplanner-project.git
+        branch: main
+      dockerfile_path: infra/docker/Dockerfile
+      source_dir: /
+      http_port: 3000
+      # One writer only: the server refuses a second process on the same database.
+      instance_count: 1
+      instance_size_slug: apps-s-1vcpu-0.5gb
+      health_check:
+        http_path: /health
+      envs:
+        - key: MP_ACCESS_TOKEN
+          value: mpg-local-change-me
+        - key: MP_BOOTSTRAP_KEY
+          value: mpk-local-bootstrap-change-me
+        - key: ADMIN_PIN
+          value: "0000"
+        - key: MP_SEED_ON_EMPTY
+          value: "true"
+        - key: PORT
+          value: "3000"

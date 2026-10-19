@@ -5,6 +5,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { GATE_COOKIE, serializeAuthCookie } from "./cookies";
+import { usesDefaultAccessToken } from "./default-credentials";
+import { PUBLIC_DEFAULT_ACCESS_TOKEN } from "../../shared/default-credentials";
 
 const ACCESS_ENV = "MP_ACCESS_TOKEN";
 
@@ -75,6 +77,15 @@ const GATE_LAYOUT_CSS = `
     line-height: 1.4;
     color: var(--muted-foreground);
   }
+  .default-notice {
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--destructive);
+    border-radius: 0.375rem;
+    font-size: var(--control-font-size);
+    line-height: 1.4;
+  }
+  .default-notice code { font-family: ui-monospace, monospace; }
   form {
     display: flex;
     flex-direction: column;
@@ -209,11 +220,25 @@ export function hasValidGateCookie(cookieHeader: string | undefined): boolean {
   return safeEqual(got, expected);
 }
 
+// The default token is public (it is in the repository), so prefilling it leaks nothing; the
+// notice is what matters: this instance is open to anyone until the operator changes it.
+const DEFAULT_TOKEN_NOTICE = `<p class="default-notice" role="note" data-testid="access-gate-default-notice">
+        This instance uses the public default access token, prefilled below. Anyone can open it:
+        set your own <code>MP_ACCESS_TOKEN</code> before sharing its address.
+      </p>
+      `;
+
 export function sendGateForm(reply: FastifyReply, basePath = ""): FastifyReply {
-  return reply
-    .code(200)
-    .header("content-type", "text/html; charset=utf-8")
-    .send(FORM_HTML.replace('action="/gate"', `action="${basePath}/gate"`));
+  let html = FORM_HTML.replace('action="/gate"', `action="${basePath}/gate"`);
+  if (usesDefaultAccessToken()) {
+    html = html
+      .replace(
+        'placeholder="Access token"',
+        `placeholder="Access token"\n            value="${PUBLIC_DEFAULT_ACCESS_TOKEN}"`
+      )
+      .replace("<form ", `${DEFAULT_TOKEN_NOTICE}<form `);
+  }
+  return reply.code(200).header("content-type", "text/html; charset=utf-8").send(html);
 }
 
 export function isGateExempt(pathname: string): boolean {

@@ -131,6 +131,10 @@ export async function main(): Promise<void> {
     const { assertWeekdayIntegrity } = await import("./db/weekday-integrity");
     assertWeekdayIntegrity();
 
+    // Before reconcileBootstrap: its api_keys row would make an empty database look owned.
+    const { seedOnEmpty } = await import("./db/seeds/seed-on-empty");
+    await seedOnEmpty();
+
     const { reconcileBootstrap, reconcileManagement } = await import("./auth/reconcile");
     reconcileBootstrap();
     // (maintainer decision 2026-09-04): seed the env-configured management
