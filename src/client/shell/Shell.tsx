@@ -17,6 +17,7 @@ import { PluginContribution } from "@/plugins/contributions";
 import { HouseholdChrome, UnknownFamilyRoute } from "./HouseholdChrome";
 import { resolveHouseholdRoute } from "./routes";
 import { log } from "@/lib/logger";
+import { readPublicDefaultCredentials } from "@/lib/default-credentials";
 
 /** Kiosk shell: renders nothing until the device is provisioned.
  * Provisioned state is determined from the presence of the device credential —
@@ -336,7 +337,9 @@ function ProvisioningScreen({
   error,
   retryAfter,
 }: ProvisioningScreenProps) {
-  const [key, setKey] = useState("");
+  // A public default key (see shared/default-credentials) is prefilled; any other is typed.
+  const [defaultKey] = useState(() => readPublicDefaultCredentials().bootstrapKey);
+  const [key, setKey] = useState(defaultKey ?? "");
   const language = resolveProvisioningLanguage();
   const t = (messageKey: MessageKey): string =>
     messages[language][messageKey] ?? messages.en[messageKey];
@@ -357,6 +360,15 @@ function ProvisioningScreen({
         data-testid="provisioning-gate-panel"
       >
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          {defaultKey && (
+            <p
+              role="note"
+              className="rounded-md border border-destructive px-3 py-2 text-sm"
+              data-testid="provisioning-gate-default-notice"
+            >
+              {t("provisioning.gate.defaultKeyNotice")}
+            </p>
+          )}
           <Field
             label={t("provisioning.gate.bootstrapKeyLabel")}
             error={

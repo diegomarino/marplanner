@@ -1447,6 +1447,8 @@ export const messages = {
     "provisioning.gate.throttled": "Too many failed attempts. Wait before trying again.",
     "provisioning.gate.retryAfter":
       "Too many failed attempts. Wait at least {seconds} seconds before trying again.",
+    "provisioning.gate.defaultKeyNotice":
+      "This instance uses the public default bootstrap key, prefilled below. Set your own MP_BOOTSTRAP_KEY before sharing its address.",
 
     // admin-network-devices
     "networkDevices.tabs.label": "Network devices sections",
@@ -2962,6 +2964,8 @@ export const messages = {
       "Demasiados intentos fallidos. Espera antes de volver a intentarlo.",
     "provisioning.gate.retryAfter":
       "Demasiados intentos fallidos. Espera al menos {seconds} segundos antes de volver a intentarlo.",
+    "provisioning.gate.defaultKeyNotice":
+      "Esta instancia usa la clave de arranque pública por defecto, ya rellenada abajo. Configura tu propia MP_BOOTSTRAP_KEY antes de compartir su dirección.",
 
     // admin-network-devices
     "networkDevices.tabs.label": "Secciones de dispositivos de red",

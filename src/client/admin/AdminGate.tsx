@@ -2,6 +2,7 @@ import { appPathname } from "@/lib/base-path";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { isAdminPinBypassEnabled, useAdminUnlock } from "@/lib/adminUnlock";
 import { authFetch } from "@/lib/credential";
+import { readPublicDefaultCredentials } from "@/lib/default-credentials";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -60,6 +61,7 @@ export function AdminGate() {
   const adminUnlocked = unlocked || bypassPin;
 
   const [pin, setPin] = useState("");
+  const [defaultPin] = useState(() => readPublicDefaultCredentials().adminPin);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -233,6 +235,16 @@ export function AdminGate() {
               {"●".repeat(pin.length)}
             </output>
           </div>
+          {defaultPin && (
+            <p
+              role="note"
+              className="rounded-md border border-destructive px-3 py-2 text-sm"
+              data-testid="admin-pin-default-notice"
+            >
+              This instance uses the public default PIN <strong>{defaultPin}</strong>. Set your
+              own ADMIN_PIN before sharing its address.
+            </p>
+          )}
           <ErrorNotice id="admin-pin-error" message={error} />
           <div className="mx-auto grid max-w-70 grid-cols-3 gap-4" data-testid="admin-pin-keypad">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
