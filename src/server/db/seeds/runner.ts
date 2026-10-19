@@ -75,11 +75,7 @@ export async function runSeedProfile(request: SeedRunRequest): Promise<SeedRunRe
       error instanceof SeedRunnerError || error instanceof SeedOwnershipError
         ? error.message
         : "Seed profile failed";
-    try {
-      discardSeedProfile(db, { tolerateServerRuntimeRows: true });
-    } catch {
-      throw new SeedRunnerError(`${reason}; the partial profile could not be discarded`);
-    }
+    discardSeedProfile(db);
     throw new SeedRunnerError(`${reason}; the partial profile was discarded`);
   }
   let privateModuleIndex = 0;

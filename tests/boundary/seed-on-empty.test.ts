@@ -300,6 +300,29 @@ describe("seed on empty against a real database", () => {
     ).resolves.toMatchObject({ status: "complete" });
   });
 
+  it("discards a boot seed whose own module wrote outside the demo inventory", async () => {
+    const strayRow: SeedModule = {
+      id: "public:stray",
+      run: ({ db }) => {
+        db.prepare(
+          "INSERT INTO members (id, display_name, role, created_at, updated_at) VALUES ('member-stray', 'Stray', 'parent', 1, 1)"
+        ).run();
+      },
+    };
+    await expect(
+      runSeedProfile({
+        mode: "public",
+        asOfDate: AS_OF_DATE,
+        nowMs: NOW,
+        disposableTarget: true,
+        serverBoot: true,
+        modules: [memberModule("public:one", "one"), strayRow],
+      })
+    ).rejects.toThrow(/unrelated row in members: member-stray; the partial profile was discarded/);
+    expect(getDb().prepare("SELECT id FROM members").all()).toEqual([]);
+    expect(readSeedProfileMarker(getDb())).toEqual({ state: "absent" });
+  });
+
   it("refuses, without changing anything, when the household already has data", async () => {
     const db = getDb();
     db.prepare(

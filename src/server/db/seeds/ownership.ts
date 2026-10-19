@@ -176,30 +176,21 @@ export function readSeedProfileMarker(db: DatabaseConnection): SeedProfileMarker
     : { state: "unrecognized" };
 }
 
-/** Returns a target whose seed failed to the fresh baseline: every row outside the migration
- * ledger, lifecycle metadata, fixed day periods and (when tolerated) server runtime tables is
- * deleted, marker included. Only call it after `beginSeedProfile` accepted the target, which
- * proves those rows were all written by the seed profile.
+/** Returns a target whose server boot seed failed to the fresh baseline: every row outside the
+ * migration ledger, lifecycle metadata, fixed day periods and server runtime tables is deleted,
+ * marker included. Only call it after `beginSeedProfile` accepted the target, which proves those
+ * rows were all written by the seed profile.
  */
-export function discardSeedProfile(
-  db: DatabaseConnection,
-  { tolerateServerRuntimeRows = false }: { tolerateServerRuntimeRows?: boolean } = {}
-): void {
-  db.exec("BEGIN IMMEDIATE");
-  try {
+export function discardSeedProfile(db: DatabaseConnection): void {
+  db.transaction(() => {
     // Rows are deleted table by table; references between them are checked once, at commit.
     db.pragma("defer_foreign_keys = ON");
     for (const table of tableNames(db)) {
       if (table === MIGRATIONS_TABLE || table === "day_periods") continue;
-      if (LIFECYCLE_TABLES.has(table)) continue;
-      if (tolerateServerRuntimeRows && SERVER_RUNTIME_TABLES.includes(table)) continue;
+      if (LIFECYCLE_TABLES.has(table) || SERVER_RUNTIME_TABLES.includes(table)) continue;
       db.prepare(`DELETE FROM ${quoted(table)}`).run();
     }
-    db.exec("COMMIT");
-  } catch (error) {
-    db.exec("ROLLBACK");
-    throw error;
-  }
+  }).immediate();
 }
 
 export function completeSeedProfile(
