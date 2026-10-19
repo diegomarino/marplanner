@@ -2614,6 +2614,8 @@
             "seed bundle plugin fails the build when any private file reaches the bundle graph"
           ],
           "tests/boundary/seed-calendar.test.ts": [
+            "Calendar demo seed boundary validates seed highlight identity and content without altering ordinary rules",
+            "Calendar demo seed boundary seeds read-time music and pharmacy highlights idempotently and refuses ordinary rules",
             "Calendar demo seed boundary creates four enabled normalized source configurations without fetching or external events",
             "Calendar demo seed boundary upserts a validated seed-owned local event without altering an ordinary event",
             "Calendar demo seed boundary keeps the relative ordering-demo event matrix stable across a changed-clock rerun"
@@ -2626,6 +2628,7 @@
             "executes the real CLI entrypoint with storage ownership and releases it after seeding"
           ],
           "tests/boundary/seed-daily-content.test.ts": [
+            "daily content demo seed boundary configures the complete briefing catalogue and enables history for opted-in demo members",
             "daily content demo seed boundary seeds fictional messages and briefing preferences through authoritative reads",
             "daily content demo seed boundary seeds stable ordered announcements and is idempotent when nowMs changes",
             "daily content demo seed boundary omits generated briefing, cache, dispatch, execution, spoken, and external-observation state"
@@ -5400,6 +5403,13 @@
             "daily content demo seed integration rolls back failed demo activation and repairs the same-date profile",
             "daily content demo seed integration activates every demo plugin and restores deactivated plugins on a public profile rerun",
             "daily content demo seed integration exposes messages, briefing settings, opt-ins, and announcements through public HTTP reads"
+          ],
+          "tests/integration/seed-demo-weeks.test.ts": [
+            "demo seed week coverage populates every day of the current week in every module when as-of is a Monday",
+            "demo seed week coverage populates every day of the current week in every module when as-of is a Wednesday",
+            "demo seed week coverage populates every day of the current week in every module when as-of is a Sunday",
+            "demo seed week coverage spreads content over the previous and next weeks",
+            "demo seed week coverage rolls every week-relative row forward with the as-of date without leaving stale rows"
           ],
           "tests/integration/seed-meals.test.ts": [
             "demo meals seed integration advances only a complete owned profile, replaces rolling entries, and refuses unrelated rows before moving again"

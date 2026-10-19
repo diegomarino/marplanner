@@ -1,5 +1,7 @@
 import { validateWeekdays } from "../src/shared/weekdays";
 import type { SeedModule } from "../src/server/db/seeds/types";
+import { readWeekStartDay } from "../src/server/lib/household-date";
+import { ALL_BLOCK_TYPES } from "../src/server/modules/daily-briefing/corpora/block-types";
 
 const DAILY_MESSAGES = [
   {
@@ -29,10 +31,106 @@ const DAILY_MESSAGES = [
   },
 ] as const;
 
+/**
+ * Week-relative messages: keys are day offsets from the first day of the current household week
+ * (-7..-1 previous week, 0..6 current week, 7..13 next week). The asOfDate-relative messages
+ * above win when both target the same member and date.
+ */
+const WEEK_MESSAGES: Record<string, Record<number, string>> = {
+  "demo:member:bart": {
+    [-6]: "Hand in the overdue book report.",
+    [-4]: "No skateboarding in the school hallway.",
+    [-2]: "Isotopes road trip! Bring your foam finger.",
+    0: "Apologize to Principal Skinner for the whoopee cushion.",
+    1: "Detention after school. Bring chalk for your lines.",
+    2: "Feed Santa's Little Helper before school.",
+    3: "Krusty taping at 5. Don't be late!",
+    4: "Spelling quiz today: study 'embiggen' and 'cromulent'.",
+    5: "Chili cook-off today. Stay away from the extra-hot peppers!",
+    6: "Wear your Sunday shirt for church.",
+    7: "Picture day: comb your hair. Yes, really.",
+    9: "Lisa's recital tonight. Clap at the end, not during.",
+    11: "Field trip: bring the signed permission slip.",
+  },
+  "demo:member:lisa": {
+    [-7]: "Return the library books on jazz history.",
+    [-5]: "Science club: bring your notebook.",
+    [-3]: "Practice the new Bleeding Gums Murphy solo.",
+    0: "Junior Campers meeting at 6.",
+    1: "Saxophone practice at 6. Warm up first!",
+    2: "Your vegetarian lunch is in the blue box.",
+    3: "Krusty taping at 5 with Bart.",
+    4: "Reading club book: chapters 4 to 6.",
+    5: "Ask Mr. Flanders if Maggie can visit again.",
+    6: "Help Mom bake pretzels for the barbecue.",
+    8: "Final recital rehearsal after school.",
+    9: "Recital tonight at 7. You've got this!",
+    11: "Field trip: bring a notebook for the museum.",
+  },
+  "demo:member:homer": {
+    [-6]: "Parent-teacher night at 7. Wear a tie.",
+    [-3]: "Check your radiation badge before the shift.",
+    0: "Bowling shoes are in the trunk.",
+    1: "Don't forget to fix the garage door.",
+    2: "Bowling league tonight at Barney's Bowlarama.",
+    3: "Mr. Burns wants the safety report on his desk.",
+    4: "Trivia night at Moe's. Study the state capitals!",
+    5: "Chili cook-off: go easy on the hot peppers.",
+    6: "Barbecue at Ned's. Be neighborly!",
+    8: "Safety inspection at 10. Tidy up your console.",
+    10: "Buy flowers for Marge.",
+    12: "Anniversary dinner at 8. The reservation is under Simpson.",
+  },
+  "demo:member:marge": {
+    [-5]: "Pick up the dry cleaning.",
+    [-2]: "Pack snacks for the Isotopes trip.",
+    0: "Painting class at 10.",
+    1: "Kwik-E-Mart run: milk, bread and Krusty-O's.",
+    2: "Book club tonight at 7:30.",
+    3: "Call Patty and Selma about Sunday.",
+    4: "Maggie's baby gym at 10:30.",
+    5: "Playdate at the Flanders' at 10.",
+    6: "Bring the pretzels to the barbecue.",
+    7: "Iron the kids' picture day outfits.",
+    9: "Lisa's recital at 7. Bring the camera.",
+    13: "Grampa's birthday lunch at 1.",
+  },
+  "demo:member:maggie": {
+    [-4]: "Mr. Honey Bunny needs a bath.",
+    0: "Nap time after lunch.",
+    2: "Stacking blocks with Mom.",
+    4: "Baby gym at 10:30!",
+    6: "Church with the whole family.",
+    10: "New pacifier day!",
+  },
+};
+
 function addDays(date: string, days: number): string {
   const value = new Date(`${date}T00:00:00Z`);
   value.setUTCDate(value.getUTCDate() + days);
   return value.toISOString().slice(0, 10);
+}
+
+type SeedMessage = { id: string; memberId: string; date: string; text: string };
+
+/** Deterministic rolling messages for the previous, current and next household weeks. */
+export function buildDailyMessages(asOfDate: string, weekStartDay: number): SeedMessage[] {
+  const weekday = new Date(`${asOfDate}T00:00:00Z`).getUTCDay();
+  const weekStart = addDays(asOfDate, -((weekday - weekStartDay + 7) % 7));
+  const byKey = new Map<string, SeedMessage>();
+  const put = (memberId: string, date: string, text: string) => {
+    const id = `demo:daily-message:${memberId.slice("demo:member:".length)}:${date}`;
+    byKey.set(id, { id, memberId, date, text });
+  };
+  for (const [memberId, messages] of Object.entries(WEEK_MESSAGES)) {
+    for (const [offset, text] of Object.entries(messages)) {
+      put(memberId, addDays(weekStart, Number(offset)), text);
+    }
+  }
+  for (const message of DAILY_MESSAGES) {
+    put(message.memberId, addDays(asOfDate, message.dateOffset), message.text);
+  }
+  return [...byKey.values()].sort((left, right) => left.id.localeCompare(right.id));
 }
 
 const BRIEFING_OPT_INS = [
@@ -43,13 +141,9 @@ const BRIEFING_OPT_INS = [
   { memberId: "demo:member:marge", enabled: true },
 ] as const;
 
-const BRIEFING_BLOCK_ORDER = [
-  { type: "today" },
-  { type: "message" },
-  { type: "meals" },
-  { type: "reminders" },
-  { type: "dadJoke", params: { difficulty: "easy" } },
-] as const;
+const BRIEFING_BLOCK_ORDER = ALL_BLOCK_TYPES.map((type) =>
+  type === "dadJoke" ? { type, params: { difficulty: "easy" } } : { type }
+);
 
 const MEMBER_BLOCK_SETTINGS = [
   {
@@ -73,6 +167,13 @@ const MEMBER_BLOCK_SETTINGS = [
     weekdays: null,
     params: null,
   },
+  ...BRIEFING_OPT_INS.filter(({ enabled }) => enabled).map(({ memberId }) => ({
+    memberId,
+    blockType: "onThisDay",
+    enabled: true,
+    weekdays: null,
+    params: null,
+  })),
 ] as const;
 
 /**
@@ -95,16 +196,17 @@ const seedDailyContent: SeedModule = {
        WHERE id IS NOT excluded.id
           OR text IS NOT excluded.text`
     );
-    for (const message of DAILY_MESSAGES) {
-      const date = addDays(asOfDate, message.dateOffset);
-      upsertMessage.run(
-        `demo:daily-message:${message.memberId.slice("demo:member:".length)}:${date}`,
-        message.memberId,
-        date,
-        message.text,
-        nowMs,
-        nowMs
-      );
+    const messages = buildDailyMessages(asOfDate, readWeekStartDay());
+    const keep = new Set(messages.map((message) => message.id));
+    const removeStale = db.prepare("DELETE FROM daily_messages WHERE id = ?");
+    const seedOwned = db
+      .prepare("SELECT id FROM daily_messages WHERE id GLOB 'demo:daily-message:*'")
+      .all() as { id: string }[];
+    for (const { id } of seedOwned) {
+      if (!keep.has(id)) removeStale.run(id);
+    }
+    for (const message of messages) {
+      upsertMessage.run(message.id, message.memberId, message.date, message.text, nowMs, nowMs);
     }
 
     const upsertOptIn = db.prepare(

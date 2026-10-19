@@ -104,6 +104,13 @@ the normal lifecycle after seeding domain content and before private overlays.
 Rerunning the profile reactivates disabled demo plugins. Activation retains
 configured settings and does not execute scheduled jobs or external work.
 
+The demo configures the complete 21-type Daily Briefing catalogue and explicitly
+enables the normally disabled `onThisDay` block for opted-in demo members. It also
+seeds music and pharmacy Calendar highlight rules with stable owned identities.
+Highlight decoration remains derived on read, and unchanged reruns retain rule
+creation timestamps and priorities. No generated briefings, provider caches or
+hardware execution records are seeded.
+
 Production onboarding examples are not implemented and their release disposition
 remains undecided. A future design must decide whether examples are useful and
 define deterministic identity, idempotence, archival/deletion behavior and

@@ -40,8 +40,20 @@ describe("routines and reminders demo seed integration", () => {
       expect(routines.statusCode).toBe(200);
       expect(JSON.parse(routines.body)).toEqual([
         {
+          id: "demo:routine:maggie-morning",
+          name: "Maggie's morning",
+          dayPeriodId: "morning",
+          active: true,
+        },
+        {
           id: "demo:routine:morning-launch",
           name: "Morning launch",
+          dayPeriodId: "morning",
+          active: true,
+        },
+        {
+          id: "demo:routine:weekend-chores",
+          name: "Weekend chores",
           dayPeriodId: "morning",
           active: true,
         },
@@ -52,9 +64,21 @@ describe("routines and reminders demo seed integration", () => {
           active: true,
         },
         {
+          id: "demo:routine:music-practice",
+          name: "Music practice",
+          dayPeriodId: "afternoon",
+          active: true,
+        },
+        {
           id: "demo:routine:evening-reset",
           name: "Evening reset",
           dayPeriodId: "evening",
+          active: true,
+        },
+        {
+          id: "demo:routine:bedtime",
+          name: "Bedtime",
+          dayPeriodId: "night",
           active: true,
         },
       ]);
@@ -155,9 +179,15 @@ describe("routines and reminders demo seed integration", () => {
       })
     ).resolves.toMatchObject({ asOfDate: NEXT_DATE, markerAction: "repair", status: "complete" });
 
-    expect(seedCompletionRows()).toEqual([
+    const advancedRows = seedCompletionRows() as { id: string; date: string }[];
+    // Today stays partially done; everything before it is history from the previous week on.
+    expect(advancedRows.filter(({ date }) => date === NEXT_DATE)).toEqual([
       {
         id: "demo:chore-completion:evening-reset:feed-snowball-ii:lisa:2026-09-24",
+        date: NEXT_DATE,
+      },
+      {
+        id: "demo:chore-completion:maggie-morning:bottle:maggie:2026-09-24",
         date: NEXT_DATE,
       },
       {
@@ -169,6 +199,11 @@ describe("routines and reminders demo seed integration", () => {
         date: NEXT_DATE,
       },
     ]);
+    for (const { id, date } of advancedRows) {
+      expect(id.endsWith(`:${date}`)).toBe(true);
+      expect(date >= "2026-09-14" && date <= NEXT_DATE).toBe(true);
+    }
+    expect(new Set(advancedRows.map(({ date }) => date)).size).toBe(11);
 
     getDb()
       .prepare(
