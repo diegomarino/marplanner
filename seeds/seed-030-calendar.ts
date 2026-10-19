@@ -2,6 +2,7 @@ import { upsertExternalSource, upsertSeedEvent } from "../src/server/modules/cal
 import { upsertSeedHighlightRule } from "../src/server/modules/calendar/highlights";
 import { wallClockToInstant } from "../src/server/modules/calendar/recurrence";
 import type { SeedContext, SeedModule } from "../src/server/db/seeds/types";
+import { readWeekStartDay } from "../src/server/lib/household-date";
 
 const POLL_INTERVAL_MINUTES = 60;
 const HOUSEHOLD_TIMEZONE = "Europe/Madrid";
@@ -54,6 +55,7 @@ function localInstant(date: string, time: string): string {
   }).toISOString();
 }
 
+/** The original asOfDate-relative ordering-demo matrix (yesterday / today / tomorrow). */
 function localEvents(asOfDate: string) {
   const yesterday = shiftDate(asOfDate, -1);
   const tomorrow = shiftDate(asOfDate, 1);
@@ -110,6 +112,105 @@ function localEvents(asOfDate: string) {
   ];
 }
 
+const HOMER = "demo:member:homer";
+const MARGE = "demo:member:marge";
+const BART = "demo:member:bart";
+const LISA = "demo:member:lisa";
+const MAGGIE = "demo:member:maggie";
+const FAMILY = [HOMER, MARGE, BART, LISA, MAGGIE];
+const KIDS = [BART, LISA];
+
+/** First day of the household week containing `asOfDate` (weekStartDay: 0=Sunday, 1=Monday). */
+export function weekStartOf(asOfDate: string, weekStartDay: number): string {
+  const weekday = new Date(`${asOfDate}T00:00:00.000Z`).getUTCDay();
+  return shiftDate(asOfDate, -((weekday - weekStartDay + 7) % 7));
+}
+
+/**
+ * Week-relative demo events. Offsets count days from the first day of the current household
+ * week, so the previous (-7..-1), current (0..6) and next (7..13) weeks are always populated.
+ */
+function weekEvents(weekStart: string) {
+  const day = (offset: number) => shiftDate(weekStart, offset);
+  const allDay = (slug: string, title: string, offset: number, memberIds: string[]) => ({
+    id: `demo:calendar:event:${slug}`,
+    title,
+    allDay: true,
+    startDate: day(offset),
+    endDate: day(offset + 1),
+    memberIds,
+  });
+  const timed = (
+    slug: string,
+    title: string,
+    offset: number,
+    start: string,
+    end: string,
+    memberIds: string[]
+  ) => timedEvent(slug, title, day(offset), start, end, memberIds);
+  return [
+    // Previous week
+    timed(
+      "parent-teacher-night",
+      "Parent-teacher night at Springfield Elementary",
+      -6,
+      "19:00",
+      "20:30",
+      [HOMER, MARGE]
+    ),
+    timed("bart-chalkboard-lines", "Bart's chalkboard lines", -4, "15:30", "16:30", [BART]),
+    allDay("isotopes-road-trip", "Isotopes road trip", -2, [HOMER, BART]),
+    timed("lunch-with-grampa", "Lunch with Grampa", -1, "13:00", "15:00", FAMILY),
+    // Current week
+    timed("junior-campers", "Lisa's Junior Campers meeting", 0, "18:00", "19:00", [LISA]),
+    timed("bart-detention", "Bart's detention with Mrs. Krabappel", 1, "15:30", "16:30", [BART]),
+    timed("marge-book-club", "Marge's book club", 2, "19:30", "21:00", [MARGE]),
+    timed("krusty-show-taping", "Krusty the Clown Show taping", 3, "17:00", "18:30", KIDS),
+    timed("moes-trivia-night", "Trivia night at Moe's", 4, "20:00", "22:00", [HOMER]),
+    allDay("chili-cookoff", "Springfield chili cook-off", 5, FAMILY),
+    timed("flanders-playdate", "Playdate at the Flanders'", 5, "10:00", "11:30", [MARGE, MAGGIE]),
+    timed("flanders-barbecue", "Barbecue at Ned Flanders'", 6, "13:00", "16:00", FAMILY),
+    // Next week
+    allDay("school-picture-day", "Springfield Elementary picture day", 7, KIDS),
+    timed("plant-safety-inspection", "Power plant safety inspection", 8, "10:00", "11:30", [HOMER]),
+    timed("lisa-sax-recital", "Lisa's saxophone recital", 9, "19:00", "20:30", FAMILY),
+    allDay("museum-field-trip", "Field trip to the Springfield Museum", 11, KIDS),
+    timed("anniversary-dinner", "Homer and Marge's anniversary dinner", 12, "20:00", "22:30", [
+      HOMER,
+      MARGE,
+    ]),
+    timed("grampa-birthday-lunch", "Grampa's birthday lunch", 13, "13:00", "15:30", FAMILY),
+  ];
+}
+
+/** Weekly recurring events anchored in the previous week, so they repeat across every week. */
+function recurringEvents(weekStart: string) {
+  const weekly = (
+    slug: string,
+    title: string,
+    offset: number,
+    start: string,
+    end: string,
+    byDay: string,
+    memberIds: string[]
+  ) => ({
+    ...timedEvent(slug, title, shiftDate(weekStart, offset - 7), start, end, memberIds),
+    rrule: `FREQ=WEEKLY;BYDAY=${byDay}`,
+  });
+  return [
+    weekly("power-plant-shift", "Power plant shift", 0, "09:00", "17:00", "MO,TU,WE,TH,FR", [
+      HOMER,
+    ]),
+    weekly("marge-painting-class", "Marge's painting class", 0, "10:00", "11:30", "MO", [MARGE]),
+    weekly("saxophone-practice", "Saxophone practice", 1, "18:00", "18:30", "TU,TH", [LISA]),
+    weekly("bowling-league", "Bowling league at Barney's Bowlarama", 2, "20:00", "22:00", "WE", [
+      HOMER,
+    ]),
+    weekly("maggie-baby-gym", "Maggie's baby gym", 4, "10:30", "11:15", "FR", [MARGE, MAGGIE]),
+    weekly("church", "Church with Reverend Lovejoy", 6, "10:00", "11:00", "SU", FAMILY),
+  ];
+}
+
 function timedEvent(
   slug: string,
   title: string,
@@ -160,7 +261,13 @@ const seedCalendar: SeedModule = {
        VALUES (?, ?, ?, ?)
        ON CONFLICT(event_id, member_id) DO NOTHING`
     );
-    for (const { memberIds, ...event } of localEvents(context.asOfDate)) {
+    const weekStart = weekStartOf(context.asOfDate, readWeekStartDay());
+    const events = [
+      ...localEvents(context.asOfDate),
+      ...weekEvents(weekStart),
+      ...recurringEvents(weekStart),
+    ];
+    for (const { memberIds, ...event } of events) {
       upsertSeedEvent({ ...event, nowMs: context.nowMs });
       for (const memberId of memberIds) {
         upsertAssignment.run(

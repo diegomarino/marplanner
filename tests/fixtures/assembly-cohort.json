@@ -5361,6 +5361,13 @@
             "daily content demo seed integration activates every demo plugin and restores deactivated plugins on a public profile rerun",
             "daily content demo seed integration exposes messages, briefing settings, opt-ins, and announcements through public HTTP reads"
           ],
+          "tests/integration/seed-demo-weeks.test.ts": [
+            "demo seed week coverage populates every day of the current week in every module when as-of is a Monday",
+            "demo seed week coverage populates every day of the current week in every module when as-of is a Wednesday",
+            "demo seed week coverage populates every day of the current week in every module when as-of is a Sunday",
+            "demo seed week coverage spreads content over the previous and next weeks",
+            "demo seed week coverage rolls every week-relative row forward with the as-of date without leaving stale rows"
+          ],
           "tests/integration/seed-meals.test.ts": [
             "demo meals seed integration advances only a complete owned profile, replaces rolling entries, and refuses unrelated rows before moving again"
           ],

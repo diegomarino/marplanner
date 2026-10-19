@@ -44,38 +44,53 @@ describe("demo meals seed integration", () => {
 
     expect(listRecipes()).toEqual(canonicalRecipes);
     expect(listMealPlans()).toEqual(canonicalPlans);
-    expect(rollingRows()).toEqual([
-      { id: "demo:meal-entry:rolling:2026-09-25:dinner:previous-dinner", entry_date: "2026-09-25" },
-      { id: "demo:meal-entry:rolling:2026-09-27:lunch:previous-lunch", entry_date: "2026-09-27" },
-      {
-        id: "demo:meal-entry:rolling:2026-09-28:breakfast:current-breakfast",
-        entry_date: "2026-09-28",
-      },
-      { id: "demo:meal-entry:rolling:2026-09-28:dinner:current-dinner", entry_date: "2026-09-28" },
-      {
-        id: "demo:meal-entry:rolling:2026-09-28:dinner:current-dinner-note",
-        entry_date: "2026-09-28",
-      },
-      { id: "demo:meal-entry:rolling:2026-09-28:lunch:current-lunch", entry_date: "2026-09-28" },
-      { id: "demo:meal-entry:rolling:2026-09-30:snack:current-snack", entry_date: "2026-09-30" },
-      { id: "demo:meal-entry:rolling:2026-10-04:dinner:current-friday", entry_date: "2026-10-04" },
-      {
-        id: "demo:meal-entry:rolling:2026-10-05:breakfast:next-breakfast",
-        entry_date: "2026-10-05",
-      },
-      { id: "demo:meal-entry:rolling:2026-10-07:snack:next-snack", entry_date: "2026-10-07" },
-      {
-        id: "demo:meal-entry:rolling:2026-10-09:dinner:next-dinner-note",
-        entry_date: "2026-10-09",
-      },
-      { id: "demo:meal-entry:rolling:2026-10-11:dinner:next-dinner", entry_date: "2026-10-11" },
-    ]);
+    // Previous (Sep 21–27), current (Sep 28–Oct 4) and next (Oct 5–11) household weeks.
+    expect(rollingRows()).toEqual(
+      [
+        ["2026-09-21", "breakfast", "previous-mon-breakfast"],
+        ["2026-09-23", "dinner", "previous-wed-dinner"],
+        ["2026-09-24", "lunch", "previous-thu-lunch"],
+        ["2026-09-25", "dinner", "previous-dinner"],
+        ["2026-09-26", "breakfast", "previous-sat-breakfast"],
+        ["2026-09-26", "dinner", "previous-sat-dinner"],
+        ["2026-09-27", "lunch", "previous-lunch"],
+        ["2026-09-28", "breakfast", "current-breakfast"],
+        ["2026-09-28", "dinner", "current-dinner"],
+        ["2026-09-28", "dinner", "current-dinner-note"],
+        ["2026-09-28", "lunch", "current-lunch"],
+        ["2026-09-29", "breakfast", "current-tue-breakfast"],
+        ["2026-09-29", "snack", "current-tue-snack"],
+        ["2026-09-30", "breakfast", "current-wed-breakfast"],
+        ["2026-09-30", "snack", "current-snack"],
+        ["2026-10-01", "breakfast", "current-thu-breakfast"],
+        ["2026-10-01", "dinner", "current-thu-dinner"],
+        ["2026-10-02", "breakfast", "current-fri-breakfast"],
+        ["2026-10-02", "snack", "current-fri-snack"],
+        ["2026-10-03", "dinner", "current-sat-dinner"],
+        ["2026-10-03", "lunch", "current-sat-lunch"],
+        ["2026-10-03", "snack", "current-sat-snack"],
+        ["2026-10-04", "breakfast", "current-sun-breakfast"],
+        ["2026-10-04", "dinner", "current-friday"],
+        ["2026-10-04", "lunch", "current-sun-lunch"],
+        ["2026-10-05", "breakfast", "next-breakfast"],
+        ["2026-10-06", "dinner", "next-tue-dinner"],
+        ["2026-10-07", "snack", "next-snack"],
+        ["2026-10-08", "breakfast", "next-thu-breakfast"],
+        ["2026-10-09", "dinner", "next-dinner-note"],
+        ["2026-10-10", "dinner", "next-sat-dinner"],
+        ["2026-10-10", "lunch", "next-sat-lunch"],
+        ["2026-10-11", "dinner", "next-dinner"],
+      ].map(([date, slot, suffix]) => ({
+        id: `demo:meal-entry:rolling:${date}:${slot}:${suffix}`,
+        entry_date: date,
+      }))
+    );
     expect(
       rollingRows()
         .map((row) => row.id)
         .filter((id) => firstRollingRows.some((old) => old.id === id))
     ).toEqual([]);
-    expect(firstRollingRows).toHaveLength(12);
+    expect(firstRollingRows).toHaveLength(33);
     expect(
       getDb()
         .prepare("SELECT id, entry_date, slot, note FROM meal_entries WHERE id = ?")
@@ -97,6 +112,18 @@ describe("demo meals seed integration", () => {
         entryId: "demo:meal-entry:recurring:fri:dinner",
         planId: "demo:meal-plan:simpson-family-week",
         recipeId: "demo:recipe:lisa-lentil-stew",
+        note: null,
+      }),
+      expect.objectContaining({
+        entryId: "demo:meal-entry:rolling:2026-10-02:breakfast:current-fri-breakfast",
+        planId: null,
+        recipeId: "demo:recipe:bart-pancakes",
+        note: null,
+      }),
+      expect.objectContaining({
+        entryId: "demo:meal-entry:rolling:2026-10-02:snack:current-fri-snack",
+        planId: null,
+        recipeId: "demo:recipe:kwik-e-mart-squishee",
         note: null,
       }),
     ]);

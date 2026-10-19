@@ -82,7 +82,7 @@ describe("daily content demo seed integration", () => {
     expect(
       getDb().prepare("SELECT count(*) AS count FROM plugin_lifecycle_operations").get()
     ).toEqual({ count: 0 });
-    expect(getDb().prepare("SELECT count(*) AS count FROM recipes").get()).toEqual({ count: 10 });
+    expect(getDb().prepare("SELECT count(*) AS count FROM recipes").get()).toEqual({ count: 18 });
     expect(
       getDb().prepare("SELECT data FROM settings_objects WHERE object_name = 'weather'").get()
     ).toEqual({
@@ -219,9 +219,33 @@ describe("daily content demo seed integration", () => {
           updatedAt: NOW_MS,
         },
         {
+          id: "demo:time-announcement:school-bus",
+          time: "08:15",
+          weekDays: ["mon", "tue", "wed", "thu", "fri"],
+          isActive: true,
+          createdAt: NOW_MS,
+          updatedAt: NOW_MS,
+        },
+        {
+          id: "demo:time-announcement:weekend-breakfast",
+          time: "09:30",
+          weekDays: ["sat", "sun"],
+          isActive: true,
+          createdAt: NOW_MS,
+          updatedAt: NOW_MS,
+        },
+        {
           id: "demo:time-announcement:evening",
           time: "19:00",
           weekDays: ["mon", "tue", "wed", "thu", "fri"],
+          isActive: true,
+          createdAt: NOW_MS,
+          updatedAt: NOW_MS,
+        },
+        {
+          id: "demo:time-announcement:bedtime",
+          time: "20:30",
+          weekDays: ["mon", "tue", "wed", "thu", "sun"],
           isActive: true,
           createdAt: NOW_MS,
           updatedAt: NOW_MS,

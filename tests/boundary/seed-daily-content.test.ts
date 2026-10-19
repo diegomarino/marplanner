@@ -228,12 +228,14 @@ describe("daily content demo seed boundary", () => {
     expect(listTimeAnnouncementRules()).toEqual(firstAnnouncements);
     expect(
       getDb().prepare("SELECT COUNT(*) AS count FROM daily_messages WHERE date = ?").get(AS_OF_DATE)
-    ).toEqual({ count: 3 });
+    ).toEqual({ count: 5 }); // every member has a message today
+    // 56 = the week-relative messages for the previous/current/next weeks; the five
+    // asOfDate-relative messages replace week messages on the same member and date.
     expect(getDb().prepare("SELECT COUNT(*) AS count FROM daily_messages").get()).toEqual({
-      count: 5,
+      count: 56,
     });
     expect(getDb().prepare("SELECT COUNT(*) AS count FROM time_announcements").get()).toEqual({
-      count: 2,
+      count: 5,
     });
     expect(
       getDb()

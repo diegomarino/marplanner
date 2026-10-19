@@ -284,7 +284,9 @@ describe("Calendar demo seed boundary", () => {
     await runSeedProfile({ ...request, nowMs: NOW + 1 });
 
     expect(seededLocalEvents()).toEqual(first);
-    expect(first).toEqual([
+    // The week-relative and recurring demo events also land in this window; they are pinned by
+    // tests/integration/seed-demo-weeks.test.ts. This matrix stays the asOfDate-relative set.
+    expect(first.filter(({ id }) => ORDERING_DEMO_EVENT_IDS.has(id))).toEqual([
       {
         id: "demo:calendar:event:bart-dentist",
         title: "Bart dentist appointment",
@@ -393,6 +395,21 @@ type SeedEventUpsert = (input: {
   endDate?: string;
   nowMs: number;
 }) => { id: string };
+
+const ORDERING_DEMO_EVENT_IDS = new Set(
+  [
+    "bart-dentist",
+    "family-afternoon",
+    "family-bowling",
+    "grandparents-visiting",
+    "lisa-homework-club",
+    "lisa-music-lesson",
+    "lisas-science-fair",
+    "maggie-checkup",
+    "pharmacy-stop",
+    "school-pickup",
+  ].map((slug) => `demo:calendar:event:${slug}`)
+);
 
 function seededLocalEvents() {
   return getEvents({ source: "all", range: { from: "2026-09-22", to: "2026-09-25" } })
