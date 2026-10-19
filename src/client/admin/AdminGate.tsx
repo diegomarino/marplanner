@@ -241,8 +241,8 @@ export function AdminGate() {
               className="rounded-md border border-destructive px-3 py-2 text-sm"
               data-testid="admin-pin-default-notice"
             >
-              This instance uses the public default PIN <strong>{defaultPin}</strong>. Set your
-              own ADMIN_PIN before sharing its address.
+              This instance uses the public default PIN <strong>{defaultPin}</strong>. Set your own
+              ADMIN_PIN before sharing its address.
             </p>
           )}
           <ErrorNotice id="admin-pin-error" message={error} />

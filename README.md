@@ -11,6 +11,44 @@ owns household settings, member profiles, content, integrations and recovery.
 English and Spanish are supported. External providers and physical devices need
 operator configuration; synthetic test success does not establish their availability.
 
+## Try it in your own cloud
+
+Each button creates your own Marplanner instance on that host, filled with the
+fictional Simpsons household (members, calendar, chores, reminders and meals for
+the current week). Nobody runs a shared demo: the instance is yours, in your account.
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/diegomarino/marplanner-project)
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com%2Fdiegomarino%2Fmarplanner-project&branch=main&name=marplanner&builder=dockerfile&dockerfile=infra%2Fdocker%2FDockerfile&instance_type=free&ports=3000%3Bhttp%3B%2F&env%5BMP_ACCESS_TOKEN%5D=mpg-local-change-me&env%5BMP_BOOTSTRAP_KEY%5D=mpk-local-bootstrap-change-me&env%5BADMIN_PIN%5D=0000&env%5BMP_SEED_ON_EMPTY%5D=true&env%5BPORT%5D=3000)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/RAILWAY_TEMPLATE_CODE?utm_medium=integration&utm_source=button&utm_campaign=marplanner)
+[![Deploy to DigitalOcean](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/diegomarino/marplanner-project/tree/main)
+
+<!-- TODO: the Railway button needs a published template; replace RAILWAY_TEMPLATE_CODE with its
+code once it exists (steps in docs/operations.md#one-click-cloud-demo). -->
+
+The instance starts with the public default credentials from `.env.example`, and
+every sign-in screen shows them prefilled: access token `mpg-local-change-me`,
+bootstrap key `mpk-local-bootstrap-change-me`, admin PIN `0000`.
+
+> [!WARNING]
+> Anyone who has read this README can open a demo instance. It is a demo, not a
+> household install: for real use, set your own `MP_ACCESS_TOKEN` (`mpg-` prefix),
+> `MP_BOOTSTRAP_KEY` (`mpk-` prefix) and `ADMIN_PIN`, and drop `MP_SEED_ON_EMPTY`,
+> on fresh storage. Changing them later does not revoke the default bootstrap key or
+> devices already provisioned on a host that keeps its data (see
+> [operations](docs/operations.md#one-click-cloud-demo)). The on-screen notices
+> disappear once the defaults are gone.
+
+| Host         | Cost of the demo              | Data on restart or redeploy                       |
+| ------------ | ----------------------------- | ------------------------------------------------- |
+| Render       | Free web service              | Lost (no disk on the free plan; sleeps when idle) |
+| Koyeb        | Free instance                 | Lost (no volumes on the free instance)            |
+| Railway      | Free or trial credit          | Kept only if you attach a volume at `/data`       |
+| DigitalOcean | Smallest paid service ($5/mo) | Lost (App Platform has no persistent volumes)     |
+
+When data is lost, the next boot seeds the Simpsons again. Run one instance only:
+the server refuses a second process on the same database. More detail, including
+how to keep data, is in [operations](docs/operations.md#one-click-cloud-demo).
+
 ## Requirements
 
 - Node.js `>=24.21.0 <25` (development and CI use `24.21.0`)
@@ -35,6 +73,7 @@ The app fails closed until the operator configures credentials. Put unique secre
 | `MP_BOOTSTRAP_KEY`  | Deployment bootstrap device credential. Without it, first-device provisioning remains locked.                                   |
 | `MP_MANAGEMENT_KEY` | Optional operator credential for management capabilities. Rotating the environment value does not revoke an already issued key. |
 | `ADMIN_PIN`         | Initial advisory UI PIN. It does not authorize backend requests. Set a unique value; the code's fallback is `0000`.             |
+| `MP_SEED_ON_EMPTY`  | Optional. `true` seeds the public Simpsons demo on the first boot of an empty database; data already present is never touched.  |
 
 See [operations](docs/operations.md) for provisioning, storage, shutdown, and synthetic public seed guidance. See [security](SECURITY.md) before exposing the service beyond a trusted network.
 

@@ -1,0 +1,25 @@
+# Render Blueprint for the "Deploy to Render" button in README.md: a public Simpsons demo built
+# from infra/docker/Dockerfile. The credentials are the repository's public defaults, shown on
+# every auth screen; change them in the service's Environment before real use.
+# Free web services have no persistent disk, so the demo resets on every restart or spin-down.
+services:
+  - type: web
+    name: marplanner
+    runtime: docker
+    plan: free
+    dockerfilePath: ./infra/docker/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    # One writer only: the server refuses a second process on the same database.
+    numInstances: 1
+    envVars:
+      - key: MP_ACCESS_TOKEN
+        value: mpg-local-change-me
+      - key: MP_BOOTSTRAP_KEY
+        value: mpk-local-bootstrap-change-me
+      - key: ADMIN_PIN
+        value: "0000"
+      - key: MP_SEED_ON_EMPTY
+        value: "true"
+      - key: PORT
+        value: "3000"
