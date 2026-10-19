@@ -1529,6 +1529,13 @@
             "auth screens served with public defaults or chosen credentials shows no notice, no prefill and no meta tag once every credential is chosen",
             "auth screens served with public defaults or chosen credentials reports only the credentials still at their default when some were changed"
           ],
+          "tests/boundary/deploy-manifests.test.ts": [
+            "one-click deploy templates Render blueprint",
+            "one-click deploy templates Koyeb button URL",
+            "one-click deploy templates Railway config as code",
+            "one-click deploy templates DigitalOcean App Platform template",
+            "one-click deploy templates README buttons point at this repository"
+          ],
           "tests/boundary/encoding-bypass.test.ts": [
             "percent-encoded /api bypass is blocked — multi-variant (#99) GET /%61pi/settings → 401 unauthorized at the auth-boundary middleware",
             "percent-encoded /api bypass is blocked — multi-variant (#99) GET /%61pi/members → 401 unauthorized at the auth-boundary middleware",
@@ -2653,6 +2660,10 @@
             "seed on empty against a real database reads the marker through absent, running and complete",
             "seed on empty against a real database reads a missing marker table as absent and an unknown status as unrecognized",
             "seed on empty against a real database seeds, then skips on the next boot",
+            "seed on empty against a real database repairs a seed a crashed boot left running, on that boot's as-of date",
+            "seed on empty against a real database discards a failed seed so the boot after the server reconciled its keys seeds again",
+            "seed on empty against a real database tolerates only the server's own tables, never household rows, and only for boot seeds",
+            "seed on empty against a real database discards a boot seed whose own module wrote outside the demo inventory",
             "seed on empty against a real database refuses, without changing anything, when the household already has data",
             "runner with preloaded modules runs them in order instead of discovering a directory",
             "runner with preloaded modules still validates ids, duplicates and the public-only mode",
@@ -5416,6 +5427,7 @@
           ],
           "tests/integration/seed-on-empty-boot.test.ts": [
             "MP_SEED_ON_EMPTY boot seeds the Simpsons into an empty DATA_DIR, then skips on the next boot",
+            "MP_SEED_ON_EMPTY boot repairs, with the real seeds, a profile a boot crashed in the day before",
             "MP_SEED_ON_EMPTY boot leaves a database with household data untouched and still boots",
             "MP_SEED_ON_EMPTY boot does not seed without the flag",
             "production server bundle compiles every public seed in and never a private overlay"
