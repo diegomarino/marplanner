@@ -106,6 +106,27 @@ describe("household-day range and projection", () => {
     }
   );
 
+  it("shows ongoing multi-day and overnight events on every day they cover", () => {
+    const input = [
+      event("Holiday", "2026-09-20", "2026-09-24", { allDay: true }),
+      event("Ended holiday", "2026-09-18", "2026-09-22", { allDay: true }),
+      event("Night shift", "2026-09-21T22:00:00Z", "2026-09-22T06:00:00Z"),
+      event("Until midnight", "2026-09-21T21:00:00Z", "2026-09-22T00:00:00Z"),
+      event("Instant at midnight", "2026-09-22T00:00:00Z"),
+      event("Tomorrow", "2026-09-23T00:00:00Z", "2026-09-23T01:00:00Z"),
+    ];
+    expect(
+      presentAgenda(input, members, "UTC", NOW).map(({ event, temporalState }) => [
+        event.title,
+        temporalState,
+      ])
+    ).toEqual([
+      ["Holiday", "future"],
+      ["Night shift", "past"],
+      ["Instant at midnight", "past"],
+    ]);
+  });
+
   it("keeps read order for ties, all-day first, and emphasizes every current interval", () => {
     const input = structuredClone(events);
     const result = presentAgenda(input, members, "UTC", NOW);
