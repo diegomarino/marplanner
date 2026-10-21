@@ -4745,7 +4745,12 @@
             "WeatherPillView — stale in-flight response discard (PR review P2-1, mutation M3b) a delayed response for OLD coordinates never overwrites a cache-hit render after an A -> B -> A sequence",
             "WeatherPillView — cache-miss clears stale data first (Codex review on #656, P1) switching from a loaded A to an uncached B with a NEVER-RESOLVING fetch shows the empty slot, never A's stale data (WEATHER-AC-06)",
             "WeatherPillView — TTL-expiry recheck (Codex review on #656, P2) a mounted pill refetches once the cached entry passes its 30-minute TTL, and renders the new data",
-            "WeatherPillView — TTL-expiry recheck (Codex review on #656, P2) stays a cheap no-op (no fetch) while the recheck interval fires but the cache is still fresh"
+            "WeatherPillView — TTL-expiry recheck (Codex review on #656, P2) stays a cheap no-op (no fetch) while the recheck interval fires but the cache is still fresh",
+            "sliceUpcomingHours in the household timezone starts at the current household hour in Europe/Madrid, whatever the browser zone",
+            "sliceUpcomingHours in the household timezone starts at the current household hour in America/Los_Angeles, whatever the browser zone",
+            "sliceUpcomingHours in the household timezone starts at the current household hour in Asia/Tokyo, whatever the browser zone",
+            "sliceUpcomingHours in the household timezone starts at the current household hour in UTC, whatever the browser zone",
+            "sliceUpcomingHours in the household timezone returns nothing once every forecast hour has passed in the household zone"
           ],
           "tests/client/weather-wmo-map.test.ts": [
             "WMO_CONDITION_MAP every mapped WMO code resolves to a WeatherConditionKey union member",

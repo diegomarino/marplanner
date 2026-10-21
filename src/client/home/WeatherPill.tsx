@@ -158,6 +158,7 @@ export function WeatherPillView({
   lon: number | null;
 }): React.JSX.Element | null {
   const { t, language } = useTranslation();
+  const { timezone } = useHouseholdSettings();
   const [forecast, setForecast] = useState<ForecastResult | null>(null);
   const guardRef = useRef(createWeatherFetchGuard());
   const presentationMode = usePresentationMode();
@@ -221,7 +222,10 @@ export function WeatherPillView({
 
   const { current } = forecast;
   const conditionLabel = t(WEATHER_CONDITION_LABEL_KEYS[current.conditionKey]);
-  const upcomingHours = sliceUpcomingHours(forecast.hourly, Date.now()).slice(0, MODAL_HOURS);
+  const upcomingHours = sliceUpcomingHours(forecast.hourly, Date.now(), timezone).slice(
+    0,
+    MODAL_HOURS
+  );
   // Open-Meteo's daily block starts on the household's current date.
   const today = forecast.daily.at(0);
   const todayRange = today ? `${Math.round(today.tempMinC)}–${Math.round(today.tempMaxC)}°` : null;
