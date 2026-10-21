@@ -123,12 +123,14 @@ try {
 }
 console.log("Contract audit self-check: PASS");
 
-// Maintained contract regressions: positive variants and rejected trust-boundary shapes.
+// Maintained contract regressions: positive variants and rejected trust-boundary shapes,
+// checked against the generated code-first contract (docs/api/openapi.json).
 const yaml = require("js-yaml");
-const contract = (name) =>
-  yaml.load(readFileSync(resolve(process.argv[2], `docs/api/${name}/openapi.yaml`), "utf8"));
-const accepts = (name, schema, value) => {
-  const document = contract(name);
+const generated = yaml.load(
+  readFileSync(resolve(process.argv[2], "docs/api/openapi.json"), "utf8")
+);
+const accepts = (schema, value) => {
+  const document = generated;
   const ajv = new Ajv({
     strict: true,
     strictTypes: false,
@@ -148,13 +150,12 @@ const blocks = readFileSync(
   .match(/ALL_BLOCK_TYPES = \[([\s\S]*?)\]/)[1]
   .match(/"([^"]+)"/g)
   .map((s) => JSON.parse(s));
-for (const name of ["daily-briefing", "briefing-render"]) {
-  for (const type of ["calendar", "chores", ...blocks])
-    assert.ok(accepts(name, "BlockType", type), `${name}: ${type}`);
-  assert.equal(accepts(name, "BlockType", "invented"), false);
-  assert.ok(accepts(name, "BriefingStatus", "render-failed"));
+{
+  for (const type of ["calendar", "chores", ...blocks]) assert.ok(accepts("BlockType", type), type);
+  assert.equal(accepts("BlockType", "invented"), false);
+  assert.ok(accepts("BriefingStatus", "render-failed"));
   assert.equal(
-    accepts(name, "BriefingPayload", {
+    accepts("BriefingPayload", {
       schemaVersion: 3,
       member: { id: "m", displayName: "M" },
       date: "2026-10-01",
@@ -164,8 +165,8 @@ for (const name of ["daily-briefing", "briefing-render"]) {
   );
 }
 for (const schema of ["ChoreInput", "ChoreEditInput"]) {
-  for (const icon of [null, "🌅"]) assert.ok(accepts("chores", schema, { name: "Task", icon }));
-  assert.equal(accepts("chores", schema, { name: "Task", icon: 42 }), false);
+  for (const icon of [null, "🌅"]) assert.ok(accepts(schema, { name: "Task", icon }));
+  assert.equal(accepts(schema, { name: "Task", icon: 42 }), false);
 }
 const scheduled = {
   kind: "scheduled",
@@ -181,7 +182,7 @@ const gated = {
   assignments: [{ memberId: "m" }],
 };
 for (const body of [scheduled, gated, { ...gated, assignments: [{ memberId: "m", weekdays: [] }] }])
-  assert.ok(accepts("reminders", "ReminderInput", body));
+  assert.ok(accepts("ReminderInput", body));
 for (const body of [
   { ...scheduled, query: "school" },
   { ...scheduled, weekdays: [] },
@@ -191,16 +192,16 @@ for (const body of [
   { ...gated, assignments: [{ memberId: "m", weekdays: ["mon"] }] },
   { ...gated, queryFields: [] },
 ])
-  assert.equal(accepts("reminders", "ReminderInput", body), false);
-assert.ok(accepts("calendar", "EventEditInput", { title: "Changed" }));
-assert.equal(accepts("calendar", "EventEditInput", { allDay: "yes" }), false);
-assert.equal(accepts("calendar", "EventInput", { title: "New", allDay: true }), false);
+  assert.equal(accepts("ReminderInput", body), false);
+assert.ok(accepts("EventEditInput", { title: "Changed" }));
+assert.equal(accepts("EventEditInput", { allDay: "yes" }), false);
+assert.equal(accepts("EventInput", { title: "New", allDay: true }), false);
 const source = { name: "Feed", provider: "ics_generic", feedUrl: "https://example.com/feed.ics" };
-assert.ok(accepts("calendar", "ExternalSourceUpsert", source));
-assert.equal(accepts("calendar", "ExternalSourceUpsert", { ...source, enabled: true }), false);
-assert.ok(accepts("telemetry", "ClientLogBatch", { entries: [null, { level: "invalid" }] }));
-assert.equal(accepts("telemetry", "ClientLogBatch", { entries: "invalid" }), false);
-assert.equal(accepts("telemetry", "ClientLogEntryInput", { level: "invalid" }), false);
+assert.ok(accepts("ExternalSourcePut", source));
+assert.equal(accepts("ExternalSourcePut", { ...source, enabled: true }), false);
+assert.ok(accepts("ClientLogBatch", { entries: [null, { level: "invalid" }] }));
+assert.equal(accepts("ClientLogBatch", { entries: "invalid" }), false);
+assert.equal(accepts("ClientLogEntryInput", { level: "invalid" }), false);
 console.log("Maintained contract regression check: PASS");
 
 const { captureRoute } = await import("./capture-route.mjs");
@@ -236,7 +237,7 @@ for (const requestBody of [undefined, { type: "Buffer", data: [1, 2] }]) {
   assert.ok(result.unobservedBodies.some((id) => id.includes("application/octet-stream")));
 }
 assert.ok(
-  accepts("members", "Member", {
+  accepts("Member", {
     id: "demo:member:lisa",
     displayName: "Lisa",
     role: "child",
@@ -247,7 +248,7 @@ assert.ok(
   })
 );
 assert.equal(
-  accepts("members", "Member", {
+  accepts("Member", {
     id: "arbitrary",
     displayName: "Lisa",
     role: "child",
@@ -260,17 +261,17 @@ assert.equal(
 );
 console.log("Capture attribution and transport check: PASS");
 
-for (const name of ["daily-briefing", "briefing-render"]) {
+{
   const payload = (schemaVersion, type) => ({
     schemaVersion,
     member: { id: "m", displayName: "M" },
     date: "2026-10-01",
     blocks: [{ type, scope: "shared", status: "ok", data: {} }],
   });
-  assert.ok(accepts(name, "BriefingPayload", payload(1, "calendar")));
-  assert.ok(accepts(name, "BriefingPayload", payload(2, "today")));
-  assert.equal(accepts(name, "BriefingPayload", payload(1, "today")), false);
-  assert.equal(accepts(name, "BriefingPayload", payload(2, "calendar")), false);
+  assert.ok(accepts("BriefingPayload", payload(1, "calendar")));
+  assert.ok(accepts("BriefingPayload", payload(2, "today")));
+  assert.equal(accepts("BriefingPayload", payload(1, "today")), false);
+  assert.equal(accepts("BriefingPayload", payload(2, "calendar")), false);
 }
 const { discoverContracts } = await import("../check-openapi-drift.mjs");
 assert.equal(
@@ -293,8 +294,8 @@ const settingsFailure = {
   contentType: "application/json",
   body: { error: "Internal server error" },
 };
-for (const name of ["bootstrap", "weather"]) {
-  const documents = [{ path: `${name}.yaml`, doc: contract(name) }];
+{
+  const documents = [{ path: "docs/api/openapi.json", doc: generated }];
   assert.equal(audit(documents, [settingsFailure], { Ajv, formats }).findings.length, 0);
   assert.ok(
     audit(documents, [{ ...settingsFailure, body: {} }], { Ajv, formats }).findings.some(
@@ -302,4 +303,4 @@ for (const name of ["bootstrap", "weather"]) {
     )
   );
 }
-console.log("Overlapping settings failure contracts check: PASS");
+console.log("Settings failure contract check: PASS");

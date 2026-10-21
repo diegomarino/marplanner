@@ -3,6 +3,8 @@ import { requireFullAccess } from "../auth/capability.js";
 import { PLUGIN_IDS, type PluginCatalogEntry, type PluginId } from "../../shared/plugins.js";
 import { PluginLifecycleBusyError } from "./errors.js";
 import type { PluginLifecycle } from "./lifecycle.js";
+import { pluginsSchemas } from "../openapi/plugins.js";
+import { documented } from "../openapi/zod.js";
 
 const PLUGIN_ID_SET: ReadonlySet<string> = new Set(PLUGIN_IDS);
 const FAULT_CODES: ReadonlySet<string> = new Set([
@@ -68,23 +70,61 @@ export async function pluginRoutes(
 ): Promise<void> {
   const preHandler = requireFullAccess();
 
-  app.get("/api/plugins", { preHandler }, async (_request, reply) => {
-    try {
-      return reply.code(200).send({ plugins: await lifecycle.listCatalog() });
-    } catch {
-      return sendCatalogUnavailable(reply);
+  app.get(
+    "/api/plugins",
+    { ...documented(pluginsSchemas.listPlugins), preHandler },
+    async (_request, reply) => {
+      try {
+        return reply.code(200).send({ plugins: await lifecycle.listCatalog() });
+      } catch {
+        return sendCatalogUnavailable(reply);
+      }
     }
-  });
+  );
 
   for (const target of ["activate", "deactivate"] as const) {
-    app.post(`/api/plugins/:pluginId/${target}`, { preHandler }, async (request, reply) => {
+    const schema =
+      target === "activate" ? pluginsSchemas.activatePlugin : pluginsSchemas.deactivatePlugin;
+    app.post(
+      `/api/plugins/:pluginId/${target}`,
+      { ...documented(schema), preHandler },
+      async (request, reply) => {
+        const pluginId = pluginIdFrom(request.params);
+        if (pluginId === null) return sendPluginNotFound(reply);
+        const snapshot = await snapshotPlugin(lifecycle, pluginId);
+        if (snapshot === null) return sendCatalogUnavailable(reply);
+        try {
+          const plugin = await lifecycle[target](pluginId);
+          return reply.code(200).send(plugin);
+        } catch (error) {
+          return sendLifecycleError(
+            reply,
+            (await snapshotPlugin(lifecycle, pluginId)) ?? snapshot,
+            error
+          );
+        }
+      }
+    );
+  }
+
+  app.post(
+    "/api/plugins/:pluginId/fault",
+    { ...documented(pluginsSchemas.reportPluginFault), preHandler },
+    async (request, reply) => {
       const pluginId = pluginIdFrom(request.params);
       if (pluginId === null) return sendPluginNotFound(reply);
+      const fault = parseFaultBody(request.body);
+      if (fault === null) {
+        return reply.code(400).send({
+          code: "invalid_plugin_fault",
+          message: "The plugin fault report is invalid.",
+        });
+      }
       const snapshot = await snapshotPlugin(lifecycle, pluginId);
       if (snapshot === null) return sendCatalogUnavailable(reply);
       try {
-        const plugin = await lifecycle[target](pluginId);
-        return reply.code(200).send(plugin);
+        await lifecycle.reportFault(pluginId, fault);
+        return reply.code(204).send();
       } catch (error) {
         return sendLifecycleError(
           reply,
@@ -92,30 +132,6 @@ export async function pluginRoutes(
           error
         );
       }
-    });
-  }
-
-  app.post("/api/plugins/:pluginId/fault", { preHandler }, async (request, reply) => {
-    const pluginId = pluginIdFrom(request.params);
-    if (pluginId === null) return sendPluginNotFound(reply);
-    const fault = parseFaultBody(request.body);
-    if (fault === null) {
-      return reply.code(400).send({
-        code: "invalid_plugin_fault",
-        message: "The plugin fault report is invalid.",
-      });
     }
-    const snapshot = await snapshotPlugin(lifecycle, pluginId);
-    if (snapshot === null) return sendCatalogUnavailable(reply);
-    try {
-      await lifecycle.reportFault(pluginId, fault);
-      return reply.code(204).send();
-    } catch (error) {
-      return sendLifecycleError(
-        reply,
-        (await snapshotPlugin(lifecycle, pluginId)) ?? snapshot,
-        error
-      );
-    }
-  });
+  );
 }

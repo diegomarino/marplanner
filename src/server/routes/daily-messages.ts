@@ -9,6 +9,8 @@ import {
 } from "../modules/daily-messages/index";
 import { MemberReferenceError } from "../modules/members/referential";
 import type { DailyMessageUpsert } from "../../shared";
+import { dailyMessagesSchemas } from "../openapi/daily-messages";
+import { documented } from "../openapi/zod";
 
 const ALLOWED_UPSERT_KEYS = new Set(["memberId", "date", "text"]);
 
@@ -18,73 +20,89 @@ const ALLOWED_UPSERT_KEYS = new Set(["memberId", "date", "text"]);
  */
 export async function dailyMessagesRoutes(app: FastifyInstance): Promise<void> {
   // PUT /api/daily-messages — create or replace the message for (memberId, date)
-  app.put("/api/daily-messages", async (request: FastifyRequest, reply: FastifyReply) => {
-    const body = request.body;
-    if (!body || typeof body !== "object" || Array.isArray(body)) {
-      return reply
-        .code(400)
-        .send({ error: "validation_error", message: "Request body must be an object" });
+  app.put(
+    "/api/daily-messages",
+    documented(dailyMessagesSchemas.putDailyMessages),
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = request.body;
+      if (!body || typeof body !== "object" || Array.isArray(body)) {
+        return reply
+          .code(400)
+          .send({ error: "validation_error", message: "Request body must be an object" });
+      }
+      const unknownKeys = Object.keys(body).filter((key) => !ALLOWED_UPSERT_KEYS.has(key));
+      if (unknownKeys.length > 0) {
+        return reply.code(400).send({
+          error: "validation_error",
+          message: `Unsupported field(s) in daily message body: ${unknownKeys.join(", ")}`,
+        });
+      }
+      const { memberId, date, text } = body as DailyMessageUpsert;
+      try {
+        const message = upsertMessage(memberId, date, text);
+        return reply.code(200).send(message);
+      } catch (err) {
+        return handleDailyMessageError(err, reply);
+      }
     }
-    const unknownKeys = Object.keys(body).filter((key) => !ALLOWED_UPSERT_KEYS.has(key));
-    if (unknownKeys.length > 0) {
-      return reply.code(400).send({
-        error: "validation_error",
-        message: `Unsupported field(s) in daily message body: ${unknownKeys.join(", ")}`,
-      });
-    }
-    const { memberId, date, text } = body as DailyMessageUpsert;
-    try {
-      const message = upsertMessage(memberId, date, text);
-      return reply.code(200).send(message);
-    } catch (err) {
-      return handleDailyMessageError(err, reply);
-    }
-  });
+  );
 
   // GET /api/daily-messages/current?memberId=&date= — outbound single read (live, no snapshot)
-  app.get("/api/daily-messages/current", async (request: FastifyRequest, reply: FastifyReply) => {
-    const { memberId, date } = request.query as { memberId: string; date: string };
-    try {
-      const message = getMessage(memberId, date);
-      return reply.code(200).send(message);
-    } catch (err) {
-      return handleDailyMessageError(err, reply);
+  app.get(
+    "/api/daily-messages/current",
+    documented(dailyMessagesSchemas.getDailyMessagesCurrent),
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const { memberId, date } = request.query as { memberId: string; date: string };
+      try {
+        const message = getMessage(memberId, date);
+        return reply.code(200).send(message);
+      } catch (err) {
+        return handleDailyMessageError(err, reply);
+      }
     }
-  });
+  );
 
   // GET /api/daily-messages?memberId=&from=&days= — window list, date-ascending over [from, from+days)
-  app.get("/api/daily-messages", async (request: FastifyRequest, reply: FastifyReply) => {
-    const { memberId, from, days } = request.query as Record<string, unknown>;
-    if (typeof memberId !== "string" || typeof from !== "string" || typeof days !== "string") {
-      return reply.code(400).send({
-        error: "validation_error",
-        message: "memberId, from, and days query parameters are required",
-      });
+  app.get(
+    "/api/daily-messages",
+    documented(dailyMessagesSchemas.getDailyMessages),
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const { memberId, from, days } = request.query as Record<string, unknown>;
+      if (typeof memberId !== "string" || typeof from !== "string" || typeof days !== "string") {
+        return reply.code(400).send({
+          error: "validation_error",
+          message: "memberId, from, and days query parameters are required",
+        });
+      }
+      try {
+        const messages = listMessages(memberId, from, Number(days));
+        return reply.code(200).send(messages);
+      } catch (err) {
+        return handleDailyMessageError(err, reply);
+      }
     }
-    try {
-      const messages = listMessages(memberId, from, Number(days));
-      return reply.code(200).send(messages);
-    } catch (err) {
-      return handleDailyMessageError(err, reply);
-    }
-  });
+  );
 
   // DELETE /api/daily-messages?memberId=&date= — idempotent delete (missing message or unknown member -> 204 no-op)
-  app.delete("/api/daily-messages", async (request: FastifyRequest, reply: FastifyReply) => {
-    const { memberId, date } = request.query as Record<string, unknown>;
-    if (typeof memberId !== "string" || typeof date !== "string") {
-      return reply.code(400).send({
-        error: "validation_error",
-        message: "memberId and date query parameters are required",
-      });
+  app.delete(
+    "/api/daily-messages",
+    documented(dailyMessagesSchemas.deleteDailyMessages),
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const { memberId, date } = request.query as Record<string, unknown>;
+      if (typeof memberId !== "string" || typeof date !== "string") {
+        return reply.code(400).send({
+          error: "validation_error",
+          message: "memberId and date query parameters are required",
+        });
+      }
+      try {
+        deleteMessage(memberId, date);
+        return reply.code(204).send();
+      } catch (err) {
+        return handleDailyMessageError(err, reply);
+      }
     }
-    try {
-      deleteMessage(memberId, date);
-      return reply.code(204).send();
-    } catch (err) {
-      return handleDailyMessageError(err, reply);
-    }
-  });
+  );
 }
 
 function handleDailyMessageError(err: unknown, reply: FastifyReply): FastifyReply {
