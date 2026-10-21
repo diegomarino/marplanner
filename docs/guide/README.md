@@ -157,8 +157,9 @@ API: [daily briefing](../api/README.md#domains), [printing](../api/README.md#dom
 - **Local events** are created on the tablet or in admin. **ICS feeds** (school,
   public holidays, sports fixtures, astronomy…) are subscribed to and kept in sync in
   the background.
-- **Automatic assignment to members:** an event titled "Lisa's science fair" goes to
-  Lisa, whether it comes from a feed or not.
+- **Automatic assignment to members:** an event that arrives from an ICS feed titled
+  "Lisa's science fair" goes to Lisa. Local events get the members you pick when
+  you create them.
 - **Emoji highlights:** keyword rules (`pharmacy` → 💊, `music lesson` → 🎵) decorate
   titles when they are shown, without changing the stored event.
 

@@ -152,6 +152,16 @@ async function settle(page) {
   await page.waitForTimeout(600);
 }
 
+/** Opens the briefing preview tab and generates the first member's slip when needed. */
+async function generateBriefingPreview(p) {
+  const management = p.getByTestId("daily-briefing-management");
+  await management.getByTestId("daily-briefing-tab-preview").click();
+  await management.locator('[data-testid^="daily-briefing-member-pill-"]').first().click();
+  const generate = management.getByTestId("daily-briefing-generate");
+  if (await generate.isEnabled().catch(() => false)) await generate.click();
+  await management.getByTestId("daily-briefing-admin-preview-image").waitFor({ timeout: 20_000 });
+}
+
 /**
  * Shot list. `route` is visited in-app (`url` is a full page load outside the SPA); `admin` unlocks first; `crop` is a locator
  * factory for element screenshots (omit for a viewport capture); `prepare` runs
@@ -190,22 +200,14 @@ const SHOTS = [
     name: "briefing-preview",
     route: "/admin/daily-briefing",
     admin: true,
-    prepare: async (p) => {
-      const management = p.getByTestId("daily-briefing-management");
-      await management.getByTestId("daily-briefing-tab-preview").click();
-      await management.locator('[data-testid^="daily-briefing-member-pill-"]').first().click();
-      const generate = management.getByTestId("daily-briefing-generate");
-      if (await generate.isEnabled().catch(() => false)) await generate.click();
-      await management
-        .getByTestId("daily-briefing-admin-preview-image")
-        .waitFor({ timeout: 20_000 });
-    },
+    prepare: generateBriefingPreview,
     crop: (p) => p.getByTestId("daily-briefing-admin-preview-image"),
   },
   {
     name: "briefing-preview-top",
     route: "/admin/daily-briefing",
     admin: true,
+    prepare: generateBriefingPreview,
     crop: (p) => p.getByTestId("daily-briefing-admin-preview-image"),
     maxHeight: 640,
   },
@@ -329,6 +331,11 @@ async function main() {
     ONTHISDAY_ENDPOINT: FIXTURE,
     SCHEDULER_DISABLED: "1",
   };
+  // Storage overrides would point the seed and the backups shot at real data, so pin
+  // every storage path inside the throwaway directory.
+  env.BACKUPS_ROOT = join(dataDir, "backups");
+  delete env.DATABASE_PATH;
+  delete env.BASE_PATH;
   delete env.MP_SEED_ON_EMPTY;
   delete env.MP_MANAGEMENT_KEY;
 

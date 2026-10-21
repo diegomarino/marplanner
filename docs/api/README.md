@@ -50,6 +50,9 @@ The examples below run against the seeded Simpsons demo (`MP_SEED_ON_EMPTY=true`
 
 ```sh
 BASE=http://localhost:3000
+# Household-local dates (the demo household uses Europe/Madrid).
+TODAY=$(TZ=Europe/Madrid date +%F)
+TOMORROW=$(TZ=Europe/Madrid date -d tomorrow +%F 2>/dev/null || TZ=Europe/Madrid date -v+1d +%F)
 
 # 1. Provision a device for your script. Do this once and keep the key safe.
 curl -s -c jar.txt -X POST "$BASE/api/auth/provision" \
@@ -62,25 +65,30 @@ AUTH="Cookie: mp_device_key=$KEY"
 curl -s -H "$AUTH" "$BASE/api/members"
 
 # 3. Today's chore board, grouped by member and part of the day
-curl -s -H "$AUTH" "$BASE/api/chores/board?date=2026-10-21"
+curl -s -H "$AUTH" "$BASE/api/chores/board?date=$TODAY"
 
 # 4. Bart brushed his teeth (204 No Content)
 curl -s -X POST -H "$AUTH" -H "Content-Type: application/json" \
   "$BASE/api/chores/demo:chore:morning-launch:brush-teeth/completions" \
-  -d '{"memberId":"demo:member:bart","date":"2026-10-21"}'
+  -d "{\"memberId\":\"demo:member:bart\",\"date\":\"$TODAY\"}"
 
-# 5. What's on the calendar (local and ICS feeds merged)?
-curl -s -H "$AUTH" "$BASE/api/calendar/events?from=2026-10-21&to=2026-10-22"
+# 5. What's on the calendar today (local and ICS feeds merged)?
+#    Reads are limited to a window from 30 days back to 365 days ahead.
+curl -s -H "$AUTH" "$BASE/api/calendar/events?from=$TODAY&to=$TOMORROW"
 
-# 6. Add an event. A name in the title assigns it to that member (Lisa).
-curl -s -X POST -H "$AUTH" -H "Content-Type: application/json" \
+# 6. Add an event tomorrow at 18:00 Madrid time, then assign it to Lisa.
+#    Local events are not assigned from their title; only ICS feed events are.
+EVENT_ID=$(curl -s -X POST -H "$AUTH" -H "Content-Type: application/json" \
   "$BASE/api/calendar/events" \
-  -d '{"title":"Lisa saxophone recital","allDay":false,
-       "startUtc":"2026-10-23T16:00:00Z","endUtc":"2026-10-23T17:00:00Z",
-       "tzid":"Europe/Madrid"}'
+  -d "{\"title\":\"Saxophone recital\",\"allDay\":false,
+       \"startUtc\":\"${TOMORROW}T16:00:00Z\",\"endUtc\":\"${TOMORROW}T17:00:00Z\",
+       \"tzid\":\"Europe/Madrid\"}" | sed 's/.*"id":"\([^"]*\)".*/\1/')
+curl -s -X PUT -H "$AUTH" -H "Content-Type: application/json" \
+  "$BASE/api/calendar/events/$EVENT_ID/assignments" \
+  -d '{"memberIds":["demo:member:lisa"]}'
 
 # 7. What's for dinner?
-curl -s -H "$AUTH" "$BASE/api/menu?date=2026-10-21"
+curl -s -H "$AUTH" "$BASE/api/menu?date=$TODAY"
 ```
 
 > [!NOTE]
@@ -98,13 +106,17 @@ curl -s -H "$AUTH" "$BASE/api/menu?date=2026-10-21"
   - `401` for missing or invalid credentials
   - `403` for a missing permission
   - `404` for an unknown resource
-  - `409` for a conflicting state, including an inactive plugin
+  - `409` for a conflicting state, for example asking the daily briefing to print
+    while the Printing plugin is off (`plugin_inactive`)
+  - `503` for any route of a plugin that is itself inactive. This response comes
+    from the plugin gate and uses `code` instead of `error`:
+    `{ "code": "plugin_unavailable", "message": "This plugin is unavailable." }`
 - **Rate limiting:** repeated failed authentication returns `429` with a
   `Retry-After` header. The limits are 20 failures a minute for API keys and 5 every
   10 minutes for the bootstrap key.
-- **Plugins:** an inactive plugin contributes nothing: no settings, widgets or jobs.
-  Its write routes refuse work with `409 plugin_inactive`. Manage plugins under
-  `/api/plugins`.
+- **Plugins:** an inactive plugin contributes nothing: no settings, widgets or jobs,
+  and every one of its routes answers `503 plugin_unavailable` until it is activated
+  again. Manage plugins under `/api/plugins`.
 - **Base path:** when the server is mounted under `BASE_PATH`, every route, including
   `/api/docs`, is served under that prefix.
 
