@@ -77,7 +77,7 @@ export const API_TAGS = [
   {
     name: "network-devices",
     description:
-      "**Marplanner — Network Devices API**\n\nRegistered network devices, live controller inventory and block state. Every management route requires a management credential and network:admin capability. Provider failures use safe typed errors.",
+      '**Marplanner — Network Devices API**\n\nRegistered network devices, live controller inventory and block state. Every route requires an active credential with the network:admin (or full "*") capability; a normally provisioned household device qualifies. Provider failures use safe typed errors.',
   },
   {
     name: "backups",
