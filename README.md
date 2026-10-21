@@ -120,7 +120,8 @@ set `PUBLISHED_PORT` for an explicit port. Use a distinct project name for each
 installation to isolate ports and persistent volumes. The image runs as the
 non-root `node` user and stores SQLite and backups in `/data`. See
 [container operations](docs/operations.md#container-installation) for ownership,
-HTTPS, shutdown, upgrades and current root-path/single-instance limits.
+HTTPS, shutdown, upgrades, [subpath hosting with `BASE_PATH`](docs/operations.md#runtime-subpath-hosting)
+and the single-instance limit.
 
 ## Development and verification
 
