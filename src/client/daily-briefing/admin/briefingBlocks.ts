@@ -6,8 +6,8 @@ import type { BriefingSchedule, BriefingStatus } from "../../../shared";
 // Pure helpers for the Daily Briefing admin: the block registry mirror, label maps and the
 // rules that turn the blocks × weekdays matrix into block-settings writes (spec D4/D15).
 
-// ── Settings-layer types (docs/api/daily-briefing/openapi.yaml `DailyBriefingSettingsView`) ──
-// Hand-mirrored here (not imported from src/shared) — see docs/api/briefing-render/openapi.yaml
+// ── Settings-layer types (docs/api/openapi.json `DailyBriefingSettingsView`) ──
+// Hand-mirrored here (not imported from src/shared) — see src/server/openapi/daily-briefing.ts
 // for the source of truth these types must stay in lockstep with.
 
 // SC-009: ONE canonical weekday definition — the shared picker's own. An earlier revision of

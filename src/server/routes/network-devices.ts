@@ -1,5 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest, RouteHandlerMethod } from "fastify";
 import { requireCapability } from "../auth/capability";
+import { networkDevicesSchemas } from "../openapi/network-devices";
+import { documented, type RouteSchema } from "../openapi/zod";
 import { MemberReferenceError } from "../modules/members/referential";
 import {
   register,
@@ -20,7 +22,7 @@ import {
 } from "../modules/network-devices/index";
 import type { EditDeviceInput } from "../modules/network-devices/index";
 
-/** Whole-domain HTTP surface — docs/api/network-devices/openapi.yaml.
+/** Whole-domain HTTP surface — src/server/openapi/network-devices.ts (docs/api/openapi.json).
  * EVERY route declares `requireCapability('network:admin')` — registered fail-closed via
  * `registerNetworkDeviceRoutes` below. A provisioned device `*` cookie satisfies it like every
  * other household-tier admin endpoint (ADR-058, single household tier; owner decision
@@ -49,13 +51,14 @@ const NETWORK_DEVICES_CAPABILITY = "network:admin";
 interface NetworkDeviceRouteSpec {
   method: "get" | "post" | "patch" | "delete";
   path: string;
+  schema: RouteSchema;
   handler: RouteHandlerMethod;
 }
 
 function registerNetworkDeviceRoutes(app: FastifyInstance, routes: NetworkDeviceRouteSpec[]): void {
   const preHandler = [requireCapability(NETWORK_DEVICES_CAPABILITY)];
   for (const route of routes) {
-    app[route.method](route.path, { preHandler }, route.handler);
+    app[route.method](route.path, { preHandler, ...documented(route.schema) }, route.handler);
   }
 }
 
@@ -104,6 +107,7 @@ export async function networkDevicesRoutes(app: FastifyInstance): Promise<void> 
       // writes, INV-05).
       method: "get",
       path: "/api/network-devices",
+      schema: networkDevicesSchemas.getNetworkDevices,
       handler: async (_request: FastifyRequest, reply: FastifyReply) => {
         const result = list(Date.now());
         return reply.code(200).send(result);
@@ -113,6 +117,7 @@ export async function networkDevicesRoutes(app: FastifyInstance): Promise<void> 
       // GET /api/network-devices/live-clients — the picker feed.
       method: "get",
       path: "/api/network-devices/live-clients",
+      schema: networkDevicesSchemas.getNetworkDevicesLiveClients,
       handler: async (_request: FastifyRequest, reply: FastifyReply) => {
         const result = getLiveClientsSnapshot();
         return reply.code(200).send(result);
@@ -122,6 +127,7 @@ export async function networkDevicesRoutes(app: FastifyInstance): Promise<void> 
       // POST /api/network-devices — register a device from the fresh picker cache.
       method: "post",
       path: "/api/network-devices",
+      schema: networkDevicesSchemas.postNetworkDevices,
       handler: async (request: FastifyRequest, reply: FastifyReply) => {
         const body = request.body;
         if (!isPlainObjectBody(body)) {
@@ -151,6 +157,7 @@ export async function networkDevicesRoutes(app: FastifyInstance): Promise<void> 
       // PATCH /api/network-devices/:id — edit alias/assignment (local-only; MAC immutable).
       method: "patch",
       path: "/api/network-devices/:id",
+      schema: networkDevicesSchemas.patchNetworkDevicesById,
       handler: async (request: FastifyRequest, reply: FastifyReply) => {
         const { id } = request.params as { id: string };
         const body = request.body;
@@ -194,6 +201,7 @@ export async function networkDevicesRoutes(app: FastifyInstance): Promise<void> 
       // on its own (see index.ts's `remove` docblock, ROUTE-LAYER NOTE).
       method: "delete",
       path: "/api/network-devices/:id",
+      schema: networkDevicesSchemas.deleteNetworkDevicesById,
       handler: async (request: FastifyRequest, reply: FastifyReply) => {
         const { id } = request.params as { id: string };
         if (!exists(id)) {
@@ -207,6 +215,7 @@ export async function networkDevicesRoutes(app: FastifyInstance): Promise<void> 
       // POST /api/network-devices/:id/block — intent -> controller (authoritative) -> mirror.
       method: "post",
       path: "/api/network-devices/:id/block",
+      schema: networkDevicesSchemas.postNetworkDevicesByIdBlock,
       handler: async (request: FastifyRequest, reply: FastifyReply) => {
         const { id } = request.params as { id: string };
         try {
@@ -221,6 +230,7 @@ export async function networkDevicesRoutes(app: FastifyInstance): Promise<void> 
       // POST /api/network-devices/:id/unblock — symmetric to block.
       method: "post",
       path: "/api/network-devices/:id/unblock",
+      schema: networkDevicesSchemas.postNetworkDevicesByIdUnblock,
       handler: async (request: FastifyRequest, reply: FastifyReply) => {
         const { id } = request.params as { id: string };
         try {

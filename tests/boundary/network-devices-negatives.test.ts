@@ -1,12 +1,11 @@
-import { readFileSync } from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
-import { load as loadYaml } from "js-yaml";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { buildApp } from "../../src/server/app.ts";
 import { getDb } from "../../src/server/db/client.ts";
 import { reconcileManagement } from "../../src/server/auth/reconcile.ts";
 import { useIsolatedDb } from "../helpers/db";
+import { contractSlice } from "../helpers/openapi-contract";
 import {
   __setLiveCacheAccessorForTests,
   setLiveCacheAccessor,
@@ -62,9 +61,10 @@ describe("network-devices negatives — (assert-and-prove)", () => {
   // ── 1(a) SCHEMA level: no object schema in the contract admits an ip/ipAddress
   // property, and every response schema is closed (additionalProperties: false) ──────────
 
-  describe("schema-level: contracts/openapi.yaml admits no IP property anywhere", () => {
-    const contractPath = path.resolve(process.cwd(), "docs/api/network-devices/openapi.yaml");
-    const doc = loadYaml(readFileSync(contractPath, "utf8")) as {
+  describe("schema-level: the network-devices contract slice admits no IP property anywhere", () => {
+    // The `network-devices` operations of the generated docs/api/openapi.json plus every
+    // component schema they reference (transitively).
+    const doc = contractSlice("network-devices") as {
       components?: { schemas?: Record<string, unknown> };
     };
     const schemas = doc.components?.schemas ?? {};

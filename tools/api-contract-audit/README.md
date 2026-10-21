@@ -1,9 +1,13 @@
 # HTTP contract audit
 
-Validate synthetic HTTP observations against all 19 maintained OpenAPI contracts,
-including the 82 component entries skipped by the same-name DTO checker. This
-uses the installed Ajv 8 / ajv-formats dependencies, the existing contract cohort
-and Vitest node project. No dependency installation or product edits are needed.
+Validate synthetic HTTP observations against the maintained OpenAPI contract,
+`docs/api/openapi.json`, which is generated from the code-first zod route schemas in
+`src/server/openapi/` (`npm run generate:openapi`), including the component schemas
+skipped by the same-name DTO checker. Because the runtime treats those schemas as
+documentation only, this audit is the check that the zod schemas still describe the
+bodies the implementation actually accepts and returns. It uses the installed Ajv 8 /
+ajv-formats dependencies, the existing contract cohort and Vitest node project. No
+dependency installation or product edits are needed.
 
 ## Run
 
@@ -72,9 +76,8 @@ ranges and additional properties without coercing or rewriting payloads. Invalid
 requests are reported as conflicts only when accepted with a 2xx response.
 Rejected requests are still checked against their response contracts. Compilation
 errors remain findings; unknown keywords and broken references cannot silently
-pass. External references remain unsupported. The overlapping briefing-render contract
-contains local envelope schemas; the regression check keeps both contracts aligned
-with the complete registry and historical schemaVersion 1 vocabulary.
+pass. External references remain unsupported. The briefing envelope schemas are checked
+against the complete block registry and the historical schemaVersion 1 vocabulary.
 
 `previouslySkipped` reproduces the original checker's exact omission set.
 `observedUses` means a schema is transitively referenced by an observed body; it
@@ -103,8 +106,7 @@ This is an opt-in diagnostic, separate from `check:full`. See
 ## Prioritizing missing observations
 
 An unobserved body is a contract/status/media variant without captured validation,
-not an independent defect or a requirement for a new test. Overlapping contracts
-can list the same HTTP variant twice. Prioritize successful writes, permission
+not an independent defect or a requirement for a new test. Prioritize successful writes, permission
 boundaries, rejected writes that must preserve data, and binary transport checks.
 Use route matrices for shared authorization behavior and existing failure tests
 for shared error handling. A defensive branch unreachable behind assembled-app

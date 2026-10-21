@@ -10,6 +10,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { getDb } from "../db/client";
 import { apiKeys } from "../db/schema";
 import { AUTH_CREDENTIAL_INVALID_CODE, AUTH_SCOPE_DENIED_CODE } from "../../shared";
+import { documented, type RouteSchema } from "../openapi/zod";
 
 /** Capability seam (ADR-030) — declared per-route, fail-closed.
  * `authBoundary` (src/server/auth/boundary.ts) already proved the API key is LIVE (not
@@ -116,6 +117,8 @@ export interface CapabilityRoute {
   path: string;
   /** REQUIRED — omitting this (or passing an empty string) throws at registration (fail-closed). */
   capability: string | undefined;
+  /** Code-first OpenAPI route schema (documentation only; see src/server/openapi). */
+  schema?: RouteSchema;
   handler: RouteHandlerMethod;
 }
 
@@ -136,7 +139,10 @@ export function registerRoutesWithCapabilities(
     }
     app[route.method](
       route.path,
-      { preHandler: requireCapability(route.capability) },
+      {
+        preHandler: requireCapability(route.capability),
+        ...(route.schema && documented(route.schema)),
+      },
       route.handler
     );
   }

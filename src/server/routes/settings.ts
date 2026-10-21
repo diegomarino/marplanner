@@ -1,4 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { settingsSchemas } from "../openapi/settings";
+import { documented } from "../openapi/zod";
 
 export interface SettingsRouteDependencies {
   readEffectiveSettings: () => unknown;
@@ -17,20 +19,26 @@ export async function settingsRoutes(
   app: FastifyInstance,
   dependencies: SettingsRouteDependencies
 ): Promise<void> {
-  app.get("/api/settings", async () => dependencies.readEffectiveSettings());
+  app.get("/api/settings", documented(settingsSchemas.getSettings), async () =>
+    dependencies.readEffectiveSettings()
+  );
 
-  app.put("/api/settings", async (request: FastifyRequest, reply: FastifyReply) => {
-    const body = request.body;
-    if (!isPlainObject(body) || Object.keys(body).some((key) => !ENVELOPE_KEYS.has(key))) {
-      return reply.code(400).send({ error: "invalid_envelope" });
+  app.put(
+    "/api/settings",
+    documented(settingsSchemas.putSettings),
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = request.body;
+      if (!isPlainObject(body) || Object.keys(body).some((key) => !ENVELOPE_KEYS.has(key))) {
+        return reply.code(400).send({ error: "invalid_envelope" });
+      }
+      try {
+        return reply.code(200).send(dependencies.writeSettingsObject(body.object, body.settings));
+      } catch (error) {
+        if (dependencies.isValidationError(error))
+          return reply.code(400).send({ error: (error as Error).message });
+        request.log.error(error);
+        return reply.code(500).send({ error: "Internal server error" });
+      }
     }
-    try {
-      return reply.code(200).send(dependencies.writeSettingsObject(body.object, body.settings));
-    } catch (error) {
-      if (dependencies.isValidationError(error))
-        return reply.code(400).send({ error: (error as Error).message });
-      request.log.error(error);
-      return reply.code(500).send({ error: "Internal server error" });
-    }
-  });
+  );
 }

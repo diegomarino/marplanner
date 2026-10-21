@@ -1,11 +1,9 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { load as loadYaml } from "js-yaml";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { buildApp } from "../../src/server/app.ts";
 import { getDb } from "../../src/server/db/client.ts";
 import { hashKey } from "../../src/server/auth/credentials.ts";
 import { useIsolatedDb } from "../helpers/db";
+import { contractSlice } from "../helpers/openapi-contract";
 import {
   enqueueTestPrint,
   enqueuePrintJob,
@@ -154,9 +152,10 @@ describe("printing negatives — (FR-005, FR-020)", () => {
 
   // ── (b) every OBJECT schema in the contract is closed ────────────────────────────────────────
 
-  describe("(b) contracts/openapi.yaml — every object schema is closed (additionalProperties: false)", () => {
-    const contractPath = path.resolve(process.cwd(), "docs/api/printing/openapi.yaml");
-    const doc = loadYaml(readFileSync(contractPath, "utf8")) as Record<string, unknown>;
+  describe("(b) printing contract slice — every object schema is closed (additionalProperties: false)", () => {
+    // The `printing` operations of the generated docs/api/openapi.json plus every component
+    // schema they reference (transitively).
+    const doc = contractSlice("printing") as unknown as Record<string, unknown>;
 
     it("the contract file actually has schemas to scan (sanity — a vacuous scan proves nothing)", () => {
       const schemas =

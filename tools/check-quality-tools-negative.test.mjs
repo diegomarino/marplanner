@@ -171,7 +171,7 @@ test("runtime classifier cannot waive product checks for any changed path", () =
     "scripts/build-server.mjs",
     "vitest.config.ts",
     ".github/workflows/full-gate.yml",
-    "docs/api/bootstrap/openapi.yaml",
+    "docs/api/openapi.json",
     "package-lock.json",
     "README.md",
   ])

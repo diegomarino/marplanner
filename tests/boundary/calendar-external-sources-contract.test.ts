@@ -1,28 +1,20 @@
 import { readFileSync } from "node:fs";
-import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
+import { loadGeneratedContract } from "../helpers/openapi-contract";
 
 describe("calendar external-source public contract", () => {
   it("documents a masked response DTO and a route-level domain seam without exposing feedUrl", () => {
-    const contract = readFileSync("docs/api/calendar/openapi.yaml", "utf8");
+    const document = loadGeneratedContract();
     const shared = readFileSync("src/shared/index.ts", "utf8");
 
-    expect(contract).toContain("/api/calendar/external-sources:");
-    expect(contract).toContain("ExternalSourcePublic:");
-    expect(contract).toContain("maskedUrl:");
-    const document = loadYaml(contract) as {
-      components: {
-        schemas: {
-          ExternalSourcePublic: {
-            type: string;
-            additionalProperties: boolean;
-            required: string[];
-            properties: Record<string, unknown>;
-          };
-        };
-      };
+    expect(document.paths).toHaveProperty(["/api/calendar/external-sources"]);
+    expect(document.components.schemas).toHaveProperty("ExternalSourcePublic");
+    const schema = document.components.schemas.ExternalSourcePublic as {
+      type: string;
+      additionalProperties: boolean;
+      required: string[];
+      properties: Record<string, unknown>;
     };
-    const schema = document.components.schemas.ExternalSourcePublic;
     const fields = [
       "id",
       "name",

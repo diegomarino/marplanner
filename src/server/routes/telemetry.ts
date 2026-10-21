@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { registerRoutesWithCapabilities } from "../auth/capability";
+import { telemetrySchemas } from "../openapi/telemetry";
 import { writeClientLog, getClientLogPage } from "../telemetry/index";
 import { getBuildInfo } from "../lib/build-info";
 import type { ClientLogLevel, SystemStatus } from "../../shared";
@@ -23,6 +24,7 @@ export async function telemetryRoutes(app: FastifyInstance): Promise<void> {
     {
       method: "post",
       path: "/api/telemetry/client-log",
+      schema: telemetrySchemas.ingestClientLog,
       capability: "telemetry:write",
       handler: async (request: FastifyRequest, reply: FastifyReply) => {
         const body = request.body;
@@ -56,6 +58,7 @@ export async function telemetryRoutes(app: FastifyInstance): Promise<void> {
     {
       method: "get",
       path: "/api/telemetry/client-log",
+      schema: telemetrySchemas.readClientLog,
       capability: "telemetry:admin",
       handler: async (request: FastifyRequest, reply: FastifyReply) => {
         // Only level/component/from/to/cursor are recognized. Any other query param (e.g. an
@@ -119,6 +122,7 @@ export async function telemetryRoutes(app: FastifyInstance): Promise<void> {
     {
       method: "get",
       path: "/api/telemetry/system-status",
+      schema: telemetrySchemas.readSystemStatus,
       capability: "telemetry:admin",
       // Admin-only on purpose: the public /health probe must not disclose what is deployed.
       handler: async (_request: FastifyRequest, reply: FastifyReply) => {
