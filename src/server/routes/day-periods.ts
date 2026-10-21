@@ -35,7 +35,10 @@ export async function dayPeriodsRoutes(app: FastifyInstance): Promise<void> {
         if (e instanceof DayPeriodValidationError) {
           return reply.code(400).send({ error: "validation_error", message: e.message });
         }
-        throw e;
+        console.error("Unexpected error in day-periods handler:", e);
+        return reply
+          .code(500)
+          .send({ error: "internal_error", message: "An unexpected error occurred" });
       }
     }
   );
