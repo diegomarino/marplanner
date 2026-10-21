@@ -63,7 +63,7 @@ assignments — leaving no orphaned rows.
 
 - **FR-002**: Given an event assignment is written, when it targets a member, then the member MUST be active (any role), and archived members MUST drop from active reads while their historical rows remain read-only. Contract: CALENDAR-INV-02.
 
-- **FR-003**: Given a date value, when it is written or used as a range boundary, then it MUST be a strict calendar-valid `YYYY-MM-DD` in household tz, with the range's upper boundary the exclusive next-midnight. Contract: CALENDAR-INV-03.
+- **FR-003**: Given a date value, when it is written or used as a range boundary, then it MUST be a strict calendar-valid `YYYY-MM-DD` in household tz, with the range's upper boundary the exclusive next-midnight, and a read MUST return every occurrence that intersects the range (half-open), once, so a multi-day or overnight event appears on — and gates reminders on — every household day it covers. Contract: CALENDAR-INV-03.
 
 - **FR-004**: Given an all-day event, when it is stored, then it MUST be date-only `YYYY-MM-DD` half-open with `end` exclusive and `end > start` enforced (`start == end` rejected), reads MUST be pure date comparison with no tz conversion, and the inclusive end is shown only in the UI via a single conversion at the form edge. Contract: CALENDAR-INV-04.
 

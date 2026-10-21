@@ -32,7 +32,9 @@ queryFields, range})`** — no direct table access by other modules (ADR-018 / R
 2. **CALENDAR-INV-02** **Targeting:** new assignments target active members (any role) (ADR-002); archived
    members drop from active reads, historical rows read-only.
 3. **CALENDAR-INV-03** **Dates** strict calendar-valid `YYYY-MM-DD`, household-tz, exclusive next-midnight
-   range boundary (ADR-006/ADR-005).
+   range boundary (ADR-006/ADR-005). **Reads are overlap queries:** a range returns every
+   occurrence that intersects it (half-open), once, so a multi-day or overnight event belongs
+   to — and gates `calendar_gated` reminders on — every household day it covers.
 4. **CALENDAR-INV-04** **All-day = date-only half-open.** A timezone is a property of an instant, not a day;
    all-day events store `YYYY-MM-DD` start/`end`-exclusive (`end > start` enforced;
    `start==end` illegal). Read = pure date comparison; TZ conversion confined to timed

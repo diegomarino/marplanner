@@ -1,7 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { getDb } from "../../db/client";
-import type { FeedItem, EventInput } from "../../../shared";
+import {
+  occurrenceOverlaps,
+  type EventInput,
+  type FeedItem,
+  type OccurrenceRange,
+} from "../../../shared";
 import { expand, supportedRruleProblem, wallClockToInstant } from "./recurrence";
 import { listActiveMembers } from "../members/referential";
 import { readHouseholdTimezone, isStrictCalendarDate, isDateOnly } from "../../lib/household-date";
@@ -251,6 +256,22 @@ function buildExpandRange(from: string, to: string, tzid: string) {
   return { start: fromDt, end: toDt, startDay, endDay };
 }
 
+/** `range` extended backward by one occurrence's span, so the expander also emits occurrences
+ * that start before the range but end inside or after it (all-day: `spanDays`, at least one). */
+function widenForSpan(
+  range: ReturnType<typeof buildExpandRange>,
+  spanDays: number,
+  durationMs: number
+): ReturnType<typeof buildExpandRange> {
+  const extraDays = Math.max(spanDays - 1, 0);
+  const extraMs = Math.max(extraDays * 86_400_000, durationMs, 0);
+  return {
+    ...range,
+    start: new Date(range.start.getTime() - extraMs),
+    startDay: addDays(range.startDay, -extraDays),
+  };
+}
+
 function householdDateOf(instant: Date, tzid: string): string {
   const { y, m, d } = localDateParts(instant.getTime(), tzid);
   return `${String(y).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -489,6 +510,12 @@ function readEventEntries(
   }>;
 
   const entries: Array<{ item: FeedItem; description: string; location: string }> = [];
+  const overlapRange: OccurrenceRange = {
+    startDay: expandRange.startDay,
+    endDay: expandRange.endDay,
+    startMs: expandRange.start.getTime(),
+    endMs: expandRange.end.getTime(),
+  };
 
   for (const row of rows) {
     if (source !== "all" && row.source !== source) continue;
@@ -509,8 +536,6 @@ function readEventEntries(
         exdates,
       };
 
-      const occurrences = expand(occurrenceParams, expandRange);
-
       // Per-occurrence span (the expander emits only starts): timed carries the master's
       // fixed instant-duration; all-day carries the master's day-count. Each is applied to
       // the occurrence's own start.
@@ -526,6 +551,13 @@ function readEventEntries(
                 86_400_000
             )
           : 0;
+
+      // Reads are overlap queries: expand far enough back to reach an occurrence that began
+      // before the range but is still running in it, then keep only intersecting ones.
+      const occurrences = expand(
+        occurrenceParams,
+        widenForSpan(expandRange, row.all_day === 1 ? allDaySpanDays : 0, durationMs)
+      );
       const sourceUrl = row.source === "external" && row.feed_url ? new URL(row.feed_url) : null;
       const sourceRef = sourceUrl ? `${sourceUrl.protocol}//${sourceUrl.host}/***` : null;
 
@@ -549,6 +581,7 @@ function readEventEntries(
         if (row.description) item.description = row.description;
         if (row.location) item.location = row.location;
 
+        if (!occurrenceOverlaps(item, overlapRange)) continue;
         entries.push({ item, description: row.description ?? "", location: row.location ?? "" });
       }
     } catch (err) {

@@ -1,4 +1,10 @@
-import type { FeedItem, Member, MemberColorKey } from "../../shared";
+import {
+  occurrenceOverlaps,
+  type FeedItem,
+  type Member,
+  type MemberColorKey,
+  type OccurrenceRange,
+} from "../../shared";
 import { localDateParts, nextOccurrenceInTz } from "../../shared/householdTime";
 
 export interface AgendaPresentationItem {
@@ -35,14 +41,19 @@ export function presentAgenda(
   timezone: string,
   now: number
 ): AgendaPresentationItem[] {
-  const date = householdDate(timezone, now);
+  const day = householdDayRange(timezone, now);
+  const nextDate = new Date(`${day.date}T00:00:00Z`);
+  nextDate.setUTCDate(nextDate.getUTCDate() + 1);
+  const today: OccurrenceRange = {
+    startDay: day.date,
+    endDay: nextDate.toISOString().slice(0, 10),
+    startMs: Date.parse(day.from),
+    endMs: Date.parse(day.to),
+  };
   const profiles = new Map(members.map((member) => [member.id, member]));
   const items: AgendaPresentationItem[] = events
-    .filter((event) =>
-      event.allDay
-        ? event.occurrenceStart === date
-        : householdDate(timezone, Date.parse(event.occurrenceStart)) === date
-    )
+    // Same overlap rule as the Calendar read: an ongoing holiday or overnight event shows today.
+    .filter((event) => occurrenceOverlaps(event, today))
     // Stable sort preserves the owning read's tie order, including all-day items.
     .sort((a, b) => {
       if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;

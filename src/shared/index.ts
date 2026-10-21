@@ -210,6 +210,35 @@ export interface FeedItem {
   location?: string;
 }
 
+/** A Calendar read range: household dates `[startDay, endDay)` for all-day occurrences and
+ * instants `[startMs, endMs)` for timed ones. */
+export interface OccurrenceRange {
+  startDay: string;
+  endDay: string;
+  startMs: number;
+  endMs: number;
+}
+
+/** Whether an occurrence intersects `range` (half-open on both sides), so an ongoing multi-day
+ * or overnight event belongs to every day it covers. All-day spans `[occurrenceStart,
+ * occurrenceEnd)` in dates (one day when no end); a timed occurrence without a positive
+ * duration counts at its start instant. */
+export function occurrenceOverlaps(
+  item: Pick<FeedItem, "allDay" | "occurrenceStart" | "occurrenceEnd">,
+  range: OccurrenceRange
+): boolean {
+  if (item.allDay) {
+    const next = new Date(`${item.occurrenceStart}T00:00:00Z`);
+    next.setUTCDate(next.getUTCDate() + 1);
+    const end = item.occurrenceEnd ?? next.toISOString().slice(0, 10);
+    return item.occurrenceStart < range.endDay && end > range.startDay;
+  }
+  const start = Date.parse(item.occurrenceStart);
+  const end = item.occurrenceEnd ? Date.parse(item.occurrenceEnd) : start;
+  if (start >= range.endMs) return false;
+  return end > start ? end > range.startMs : start >= range.startMs;
+}
+
 export type ExternalSourceProvider = "google" | "microsoft" | "apple" | "ics_generic";
 
 export type ExternalSourceErrorCode =

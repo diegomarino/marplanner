@@ -529,7 +529,7 @@ guarantees:
     disposition: active
     owner: calendar
     spec: calendar
-    note: "Strict YYYY-MM-DD household-tz dates; exclusive next-midnight boundary."
+    note: "Strict YYYY-MM-DD household-tz dates; exclusive next-midnight boundary; reads return every intersecting occurrence."
   - id: CALENDAR-INV-04
     disposition: active
     owner: calendar

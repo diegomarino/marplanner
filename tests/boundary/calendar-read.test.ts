@@ -728,3 +728,121 @@ describe("calendar-read (all-day events keep their household date)", () => {
     ).toEqual(["2026-10-24"]);
   });
 });
+
+/** Calendar reads are overlap queries: an occurrence that began before the range but is still
+ * running belongs to every day it covers, once, under its own occurrence identity. */
+describe("calendar-read (ongoing multi-day and overnight events)", () => {
+  useIsolatedDb();
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-23T12:00:00.000Z"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  type Row =
+    | { id: string; allDay: true; startDate: string; endDate: string; rrule?: string }
+    | { id: string; allDay: false; startUtc: string; endUtc: string; rrule?: string };
+
+  /** Seed the device, household timezone and rows once; the returned reader queries a range. */
+  function seed(rows: Row[]) {
+    const deviceKey = `mpk-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const db = getDb();
+    db.prepare(
+      "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
+    ).run(`${Date.now()}-device`, hashKey(deviceKey), Date.now());
+    db.prepare(
+      "INSERT INTO settings_objects (object_name, data, updated_at) VALUES ('locale', ?, ?)"
+    ).run(JSON.stringify({ timezone: "UTC" }), Date.now());
+    for (const row of rows) {
+      db.prepare(
+        "INSERT INTO calendar_events (id, source, title, all_day, start_date, end_date, start_utc, end_utc, tzid, rrule, exdates, created_at, updated_at) VALUES (?, 'local', ?, ?, ?, ?, ?, ?, ?, ?, '[]', ?, ?)"
+      ).run(
+        row.id,
+        row.id,
+        row.allDay ? 1 : 0,
+        row.allDay ? row.startDate : null,
+        row.allDay ? row.endDate : null,
+        row.allDay ? null : row.startUtc,
+        row.allDay ? null : row.endUtc,
+        row.allDay ? null : "UTC",
+        row.rrule ?? null,
+        Date.now(),
+        Date.now()
+      );
+    }
+    return async (from: string, to = from) => {
+      const { buildApp } = await import("../../src/server/app.ts");
+      const app = await buildApp();
+      try {
+        const res = await app.inject({
+          method: "GET",
+          url: `/api/calendar/events?source=local&from=${from}&to=${to}`,
+          cookies: { mp_device_key: deviceKey },
+        });
+        expect(res.statusCode).toBe(200);
+        return (JSON.parse(res.body) as Array<{ id: string; occurrenceStart: string }>).map(
+          (item) => `${item.id}@${item.occurrenceStart}`
+        );
+      } finally {
+        await app.close();
+      }
+    };
+  }
+
+  const holiday: Row = {
+    id: "holiday",
+    allDay: true,
+    startDate: "2026-10-22",
+    endDate: "2026-10-26", // exclusive: covers the 22nd to the 25th
+  };
+
+  it.each([
+    ["2026-10-22", ["holiday@2026-10-22"]],
+    ["2026-10-23", ["holiday@2026-10-22"]],
+    ["2026-10-25", ["holiday@2026-10-22"]],
+    ["2026-10-21", []],
+    ["2026-10-26", []],
+  ])("lists a 22–25 October holiday on %s only while it runs", async (date, expected) => {
+    expect(await seed([holiday])(date)).toEqual(expected);
+  });
+
+  it("returns a multi-day event once for a range spanning several of its days", async () => {
+    expect(await seed([holiday])("2026-10-23", "2026-10-28")).toEqual(["holiday@2026-10-22"]);
+  });
+
+  it("includes a recurring weekend occurrence that began the day before", async () => {
+    const weekend: Row = {
+      id: "weekend",
+      allDay: true,
+      startDate: "2026-10-24",
+      endDate: "2026-10-26",
+      rrule: "FREQ=WEEKLY;COUNT=3",
+    };
+    const read = seed([weekend]);
+    expect(await read("2026-10-25")).toEqual(["weekend@2026-10-24"]);
+    expect(await read("2026-11-01")).toEqual(["weekend@2026-10-31"]);
+  });
+
+  it("lists an overnight timed event on the morning it ends, but not one ending at midnight", async () => {
+    const rows: Row[] = [
+      {
+        id: "overnight",
+        allDay: false,
+        startUtc: "2026-10-23T22:00:00.000Z",
+        endUtc: "2026-10-24T02:00:00.000Z",
+      },
+      {
+        id: "until-midnight",
+        allDay: false,
+        startUtc: "2026-10-23T21:00:00.000Z",
+        endUtc: "2026-10-24T00:00:00.000Z",
+      },
+    ];
+    const read = seed(rows);
+    expect(await read("2026-10-24")).toEqual(["overnight@2026-10-23T22:00:00.000Z"]);
+    expect(await read("2026-10-25")).toEqual([]);
+  });
+});

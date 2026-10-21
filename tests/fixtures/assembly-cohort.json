@@ -1199,7 +1199,15 @@
             "calendar-read (all-day events keep their household date) places a recurring all-day event on its own date in UTC",
             "calendar-read (all-day events keep their household date) keeps a recurring all-day event off the previous date in UTC",
             "calendar-read (all-day events keep their household date) returns exactly the requested dates of a daily all-day series west of UTC",
-            "calendar-read (all-day events keep their household date) maps an instant range to the household dates it covers"
+            "calendar-read (all-day events keep their household date) maps an instant range to the household dates it covers",
+            "calendar-read (ongoing multi-day and overnight events) lists a 22–25 October holiday on 2026-10-22 only while it runs",
+            "calendar-read (ongoing multi-day and overnight events) lists a 22–25 October holiday on 2026-10-23 only while it runs",
+            "calendar-read (ongoing multi-day and overnight events) lists a 22–25 October holiday on 2026-10-25 only while it runs",
+            "calendar-read (ongoing multi-day and overnight events) lists a 22–25 October holiday on 2026-10-21 only while it runs",
+            "calendar-read (ongoing multi-day and overnight events) lists a 22–25 October holiday on 2026-10-26 only while it runs",
+            "calendar-read (ongoing multi-day and overnight events) returns a multi-day event once for a range spanning several of its days",
+            "calendar-read (ongoing multi-day and overnight events) includes a recurring weekend occurrence that began the day before",
+            "calendar-read (ongoing multi-day and overnight events) lists an overnight timed event on the morning it ends, but not one ending at midnight"
           ],
           "tests/boundary/calendar-recurrence.test.ts": [
             "calendar recurrence expander DST transition (research R2 - the core hazard) expands weekly 09:00 Europe/Madrid across spring-forward (2026-03-29) with correct UTC instants",
@@ -2491,7 +2499,8 @@
             "reminders-calendar-gated (research.md D3, issue #496 single-day window) a non-matching query -> no emission, even though an assigned event exists that day",
             "reminders-calendar-gated (research.md D3, issue #496 single-day window) a rule scoped to queryFields:['location'] does NOT emit even though the assigned event's TITLE matches the query (unmodeled field)",
             "reminders-calendar-gated (research.md D3, issue #496 single-day window) single-day window (#496): a matching event that only occurs the NEXT day does not emit for today, but does emit on its own day (AC-02, evaluated every day)",
-            "reminders-calendar-gated (research.md D3, issue #496 single-day window) a specific rule with two members emits for each member on their own assigned events, survives a two-member PATCH, and dry-runs per member"
+            "reminders-calendar-gated (research.md D3, issue #496 single-day window) a specific rule with two members emits for each member on their own assigned events, survives a two-member PATCH, and dry-runs per member",
+            "reminders-calendar-gated (research.md D3, issue #496 single-day window) emits on every day an assigned multi-day event covers, and not after it ends"
           ],
           "tests/boundary/reminders-crud.test.ts": [
             "reminders-crud boundary tests POST /api/reminders creates an apply_to_all rule → 201",
@@ -4684,7 +4693,8 @@
             "household-day range and projection spans household midnight to the next one in Pacific/Kiritimati at 2026-12-31T11:30:00Z",
             "household-day range and projection spans household midnight to the next one in America/Los_Angeles at 2026-09-22T01:00:00Z",
             "household-day range and projection spans household midnight to the next one in Europe/Madrid at 2026-03-29T12:00:00Z",
-            "household-day range and projection spans household midnight to the next one in America/New_York at 2026-11-01T12:00:00Z"
+            "household-day range and projection spans household midnight to the next one in America/New_York at 2026-11-01T12:00:00Z",
+            "household-day range and projection shows ongoing multi-day and overnight events on every day they cover"
           ],
           "tests/client/today-chores.test.tsx": [
             "TodayChores behavior keeps each child's selected period through a server-authoritative refresh",
@@ -6802,7 +6812,7 @@
           "lines": 27,
           "statements": 32,
           "functions": 9,
-          "branches": 28
+          "branches": 26
         },
         "minimumRates": {
           "lines": 100,
