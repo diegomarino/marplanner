@@ -5501,6 +5501,12 @@
             "telemetry retention prune (research D7) CLIENT-LOGGING-TELEMETRY-INV-09: strictly-older-than-cutoff deletion idempotent re-run: a second prune at the same frozen instant deletes nothing further",
             "telemetry retention prune (research D7) real registration path — runJobNow(\"telemetry.prune\") CLIENT-LOGGING-TELEMETRY-AC-04/-INV-09: prunes aged rows and keeps fresh rows through the actual registered scheduler job",
             "telemetry retention prune (research D7) real registration path — runJobNow(\"telemetry.prune\") re-running the real registered job after a prune completes without deleting anything further"
+          ],
+          "tests/boundary/device-retirement.test.ts": [
+            "device credential retirement retires one device while the other and the household data stay intact",
+            "device credential retirement keeps the configured bootstrap key, which startup re-activates, but retires stale ones",
+            "device credential retirement rejects an empty or overlong label and prints usage for unknown commands",
+            "device credential retirement opens the server's database by its environment and never creates a missing one"
           ]
         }
       },
@@ -7769,6 +7775,36 @@
           "statements": 100,
           "functions": 100,
           "branches": 100
+        }
+      },
+      "src/server/auth/devices-cli.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 33,
+          "statements": 33,
+          "functions": 3,
+          "branches": 35
+        },
+        "minimumRates": {
+          "lines": 90.9,
+          "statements": 90.9,
+          "functions": 66.66,
+          "branches": 91.42
+        }
+      },
+      "src/server/auth/devices.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 22,
+          "statements": 25,
+          "functions": 6,
+          "branches": 20
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 90
         }
       },
       "src/server/auth/eff-wordlist.ts": {

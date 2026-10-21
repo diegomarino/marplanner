@@ -128,7 +128,13 @@ The frontend access token, device API credentials and UI PIN serve different pur
 
 Without `MP_ACCESS_TOKEN`, browser access is locked. Without `MP_BOOTSTRAP_KEY`, first-device provisioning is locked. The health endpoint remains available so an operator can distinguish a running process from an authorized session. Provisioning does not echo raw device keys back through an ordinary API read. The UI PIN is advisory and cannot replace backend authorization. Do not log or paste any raw credential, cookie, household data, IP address, or device identifier into an issue.
 
-**This household release has no key creation, listing, revocation or rotation API.** Changing or removing an environment key does not revoke its old persisted credential. Clearing browser cookies removes local access only; database key rows remain until a separately reviewed recovery. Do not treat an environment change as completed rotation. If a credential is compromised, stop the service and restrict access while arranging recovery; this guide does not prescribe live database edits.
+**Retiring a credential.** There is no key API; credentials are retired offline with the `devices` command, which reads `DATA_DIR` / `DATABASE_PATH` like the server, never prints keys and is safe to run while the server is up. From a checkout use `npm run devices -- <command>`; in the container use `docker compose exec marplanner node dist/server/devices.js <command>` (adjust the service name to your project).
+
+- `list` shows every credential's id, kind, state (`active`, `revoked`, `expired`), creation time and label. Provisioned devices carry no name, so label each one right after provisioning it with `label <id> <name>` (the newest `device` row is the device you just provisioned).
+- `revoke <id>` retires that credential: its next request is refused, every other credential and all household data are untouched. Clearing browser cookies alone removes local access only.
+- Changing or removing `MP_BOOTSTRAP_KEY` or `MP_MANAGEMENT_KEY` does not revoke the old persisted credential. To rotate the bootstrap key, change the variable, restart, then `revoke` the old `bootstrap` row; run the command with the server's environment, because startup re-activates the configured bootstrap key and the command refuses to revoke that one. A management credential can be revoked directly and stays revoked.
+
+If a credential is compromised, revoke it, then rotate the environment key it came from when it was a bootstrap or management key.
 
 There is no `set-pin` endpoint. To replace a forgotten advisory PIN, set `ADMIN_PIN` in the service environment, restart, and provision a browser again with the current bootstrap key. Each successful provisioning stores the configured PIN as an Argon2 hash. Existing device credentials remain valid; this procedure resets the UI PIN and does not rotate API credentials.
 

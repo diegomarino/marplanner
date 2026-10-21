@@ -60,7 +60,7 @@ It does not own member identity (Members), route structure or the admin-unlock U
 
 **Authorize a request.** The boundary resolves the credential: **cookie** on general `/api/*`, or **Bearer** only under `/api/plugins*`. It verifies the key record is active. Routes that register capability/full-access/management preHandlers apply those next; other household routes authorize any live device `*` admitted by the boundary. Missing/invalid credentials → 401/403 or failure-only 429 (ADR-037); capability denials do not consume backoff.
 
-**Revocation enforcement.** Authorization rejects `revokedAt` or elapsed expiry (`expires_at <= now` is inactive). No API mutates revocation or rotates keys. Env changes do not revoke old rows. Clearing browser cookies does not delete database keys.
+**Revocation enforcement.** Authorization rejects `revokedAt` or elapsed expiry (`expires_at <= now` is inactive). No API mutates revocation or rotates keys; the offline operator command `devices` (`src/server/auth/devices-cli.ts`, shipped as `dist/server/devices.js`) lists credentials and sets `revoked_at`, refusing only the configured `MP_BOOTSTRAP_KEY` row that startup re-activates. Env changes do not revoke old rows. Clearing browser cookies does not delete database keys.
 
 **Initialize / verify the PIN.** Each successful provisioning hashes `ADMIN_PIN` (fallback `0000`) with Argon2 and updates the database PIN. `verify-pin` is API-key protected and returns match/no-match without granting authority. There is no `set-pin` endpoint and none is planned. The hash is included in backups.
 
