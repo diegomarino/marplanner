@@ -69,7 +69,7 @@ family kiosk doesn't need an audio mixing console.
 
 ## Affected Specs
 
-- `../../09-time-announcements.md`
+- [time-announcements](../../features/time-announcements.md)
 
 ## Data / Setup Implications
 
@@ -99,6 +99,6 @@ browser-local (not server state). No new settings object.
 ## Traceability
 
 - Related prior: resolves spec `09` open questions.
-- Domain grill: `../domain-grills/time-announcements.md`
+- Domain grill: `domain-grills/time-announcements.md` (historical record, not preserved in this repository)
 - Related: `ADR-005`, `ADR-013`, `ADR-015`, `ADR-020`, `ADR-026`, `ADR-028`, `ADR-030`,
   `ADR-035`

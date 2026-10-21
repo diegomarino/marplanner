@@ -163,7 +163,7 @@ into the UI.
 
 ## Affected Specs
 
-- `../../19-client-logging-telemetry.md`, `../../12-auth-sessions.md` (redaction
+- [client-logging-telemetry](../../features/client-logging-telemetry.md), [auth-sessions](../../features/auth-sessions.md) (redaction
   enforcement), [developer verification policy](../../quality/verification.md) (logger ergonomics)
 
 ## Data / Setup Implications

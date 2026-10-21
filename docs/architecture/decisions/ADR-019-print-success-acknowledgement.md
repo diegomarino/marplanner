@@ -108,6 +108,6 @@ column on the briefing row; no client localStorage authority. No legacy import
 - Related: `ADR-035` (claim/at-least-once/idempotency), `ADR-040` (outcome
   events), `ADR-039` (namespace ownership, absence-tolerance), `ADR-009`
   (atomicity), `ADR-022` (regeneration — Q3)
-- Domain grill: `../domain-grills/daily-briefing-printing.md` (Q2)
+- Domain grill: `domain-grills/daily-briefing-printing.md` (historical record, not preserved in this repository) (Q2)
 - Peer review: not separately run; builds on peer-reviewed ADR-035 + ADR-040.
   Cluster contracts (Printing, Daily Briefing) to be reviewed when written.

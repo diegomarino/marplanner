@@ -42,7 +42,7 @@ never invalidates planned entries.
 
 ## Affected Specs
 
-- `../../04-meals-recipes.md` (recipe schema: required fields, slot semantics)
+- [meals-recipes](../../features/meals-recipes.md) (recipe schema: required fields, slot semantics)
 
 ## Data / Setup Implications
 
@@ -78,5 +78,5 @@ over-engineering.
 ## Traceability
 
 - Related prior: resolves recipe-catalogue open questions in spec `04`.
-- Domain grill: `../domain-grills/meals-recipes.md` (Q3, Q4)
+- Domain grill: `domain-grills/meals-recipes.md` (historical record, not preserved in this repository) (Q3, Q4)
 - Related: `ADR-045`, `ADR-015`

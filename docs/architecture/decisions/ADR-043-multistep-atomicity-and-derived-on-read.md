@@ -75,8 +75,8 @@ own primary state, recompute for derived, idempotent for mirrored.
 
 ## Affected Specs
 
-- `../../05-routines-chores.md`, `../../06-calendar.md`, `../../07-reminders.md`,
-  `../../01-members.md` (drops stored streak summary fields)
+- [routines-chores](../../features/routines-chores.md), [calendar](../../features/calendar.md), [reminders](../../features/reminders.md),
+  [members](../../features/members.md) (drops stored streak summary fields)
 
 ## Data / Setup Implications
 

@@ -37,4 +37,4 @@ The long-press is **not** a security control — a child could discover it. It i
 - Conflicts: `CR-024`
 - Related prior: `ADR-023`
 - Related: `ADR-013` (PIN gate behind the entry)
-- Domain grill: `../domain-grills/kiosk-shell-navigation.md`
+- Domain grill: `domain-grills/kiosk-shell-navigation.md` (historical record, not preserved in this repository)

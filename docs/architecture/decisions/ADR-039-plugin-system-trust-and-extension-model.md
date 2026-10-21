@@ -195,7 +195,7 @@ loader infrastructure provisioned.
 - Related: `ADR-028` (settings objects), `ADR-030` (scoped keys / `*` admin
   tier), `ADR-035` (runtime services, job claims), `ADR-016` (secret/telemetry
   redaction), `ADR-014` (background jobs)
-- Domain grill: `../domain-grills/plugin-system.md`
+- Domain grill: `domain-grills/plugin-system.md` (historical record, not preserved in this repository)
 - Peer review: codex-peer-review blind-debate (2026-06-28) — no critical/important
   security findings; three cheap spec refinements incorporated (Rule B
   enforcement mechanism named, re-activation re-runs migrations, deactivation

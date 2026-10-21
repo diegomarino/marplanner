@@ -22,15 +22,15 @@ Using active members for new targets prevents archived household participants fr
 
 ## Affected Specs
 
-- `../../01-members.md`
-- `../../05-routines-chores.md`
-- `../../06-calendar.md`
-- `../../07-reminders.md`
-- `../../08-daily-messages.md`
-- `../../10-network-devices.md`
-- `../../11-daily-briefing.md`
-- `../../13-printing-pipeline.md`
-- `../../15-kiosk-shell-navigation.md`
+- [members](../../features/members.md)
+- [routines-chores](../../features/routines-chores.md)
+- [calendar](../../features/calendar.md)
+- [reminders](../../features/reminders.md)
+- [daily-messages](../../features/daily-messages.md)
+- [network-devices](../../features/network-devices.md)
+- [daily-briefing](../../features/daily-briefing.md)
+- [printing](../../features/printing.md)
+- [kiosk-shell-navigation](../../features/kiosk-shell-navigation.md)
 - `ADR-025-member-lifecycle-archive.md`
 
 ## Data / Setup Implications
@@ -52,4 +52,4 @@ New v2 writes must reject archived targets. Child-facing writes/generation must 
 
 - Conflicts: `CR-002-active-child-targets`
 - Related prior: `ADR-002`
-- Domain grill: `../domain-grills/members.md`
+- Domain grill: `domain-grills/members.md` (historical record, not preserved in this repository)
