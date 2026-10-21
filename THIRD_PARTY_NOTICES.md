@@ -23,9 +23,16 @@ is included next to the vendored path data.
 
 `package-lock.json` records the installed versions and declared package licenses.
 A lockfile declaration does not replace a dependency's required license text or
-notices. Distributions that bundle dependency code must carry the applicable
-notices from those exact packages. Native binaries remain platform-specific
-installation artifacts; they are not committed to this source repository.
+notices, so every build writes a `THIRD_PARTY_LICENSES.txt` beside each bundle
+(`dist/server/`, `dist/daily-briefing-render/` and `dist/client/`, which the
+container image copies and the client serves at `THIRD_PARTY_LICENSES.txt`). Each
+lists the exact packages inlined into that bundle with their declared license and
+the license and notice files they ship (`scripts/bundled-licenses.mjs`). A few
+packages publish no license file; their entry records the declared license and
+source repository. Packages loaded at runtime from `node_modules` (native modules
+such as `better-sqlite3`, `argon2` and `@resvg/resvg-js`) keep their own license
+files there. Native binaries remain platform-specific installation artifacts;
+they are not committed to this source repository.
 
 ## Bundled briefing content — publication blocker
 
