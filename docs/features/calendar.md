@@ -127,7 +127,10 @@ assignments — leaving no orphaned rows.
 - Fresh data store; no legacy events are imported (ADR-026); the migration
   mapping `outlook→microsoft` / unknown→`ics_generic` is documented only.
 - Recurrence is expanded in a documented `−30d/+365d` window; cancelled events are
-  retained but purged once past the window.
+  retained but purged once past the window. Because feed rows are stored already
+  expanded, the first sync of each source per UTC day (and after a restart) fetches
+  without validators and re-reconciles even an unchanged feed, so the window keeps
+  moving; later syncs that day stay conditional (`If-None-Match` / content hash).
 - Local-event `rrule` is limited to `FREQ=DAILY|WEEKLY|MONTHLY|YEARLY` with
   `INTERVAL`, `COUNT`, `UNTIL`, `BYDAY`, `BYMONTHDAY`, `BYMONTH` and `WKST`; writes
   reject anything else with 400 and reads expand a previously stored unsupported

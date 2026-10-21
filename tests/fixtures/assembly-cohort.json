@@ -4974,7 +4974,10 @@
             "calendar feed synchronization retains a failed first source for retry and records safe durable health",
             "calendar feed synchronization publishes valid neighbours and records malformed-event isolation",
             "calendar feed synchronization persists validators and treats a conditional 304 as success without republishing events",
-            "calendar feed synchronization preserves the complete prior snapshot after a failed publication and records failure health"
+            "calendar feed synchronization preserves the complete prior snapshot after a failed publication and records failure health",
+            "calendar feed synchronization keeps the recurrence horizon moving re-materializes an unchanged feed answered by a conditional 304 two days later",
+            "calendar feed synchronization keeps the recurrence horizon moving re-materializes an unchanged feed answered by an identical body two days later",
+            "calendar feed synchronization keeps the recurrence horizon moving keeps using the conditional request for later syncs on the same day"
           ],
           "tests/integration/calendar-highlights.test.ts": [
             "Calendar highlight routes creates, lists, reorders, toggles and deletes with exact response shapes"
