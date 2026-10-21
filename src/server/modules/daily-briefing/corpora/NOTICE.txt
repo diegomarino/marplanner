@@ -9,12 +9,20 @@ trivia-questions.json
   reshaped to {question, correctAnswer, options, difficulty, category}.
 
 vocabulary-entries.json
-  Definitions, examples and pronunciations from the Free Dictionary API
-  (https://dictionaryapi.dev/), retrieved 2026-06-12, for a project word list.
+  Definitions, examples and pronunciations from Wiktionary (https://en.wiktionary.org/),
+  retrieved 2026-06-12 through the Free Dictionary API (https://dictionaryapi.dev/) for a
+  project word list. Source of each entry: https://en.wiktionary.org/wiki/<word>.
+  License: Creative Commons Attribution-ShareAlike 3.0
+  (https://creativecommons.org/licenses/by-sa/3.0/). This file is distributed under the
+  same license.
+  Changes: one definition, example and pronunciation kept per word, reshaped to
+  {word, level, type, definition, example, pronunciation}.
 
 number-facts.json
-  Math and trivia facts from number-trivia.com, retrieved 2026-06-12; numbers the
-  service did not answer use generated arithmetic sentences.
+  Math and trivia facts from number-trivia.com, retrieved 2026-06-12; 18 numbers the
+  service did not answer use generated arithmetic sentences. number-trivia.com
+  publishes no terms, license or data source; its responses repeat the text of the
+  retired Numbers API (numbersapi.com), which did not publish a data license either.
 
 word-search-corpus.json
   Words and frequency data from the Datamuse API (https://www.datamuse.com/api/),
