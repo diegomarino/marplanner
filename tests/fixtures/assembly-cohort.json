@@ -2685,7 +2685,9 @@
             "seed on empty against a real database refuses, without changing anything, when the household already has data",
             "runner with preloaded modules runs them in order instead of discovering a directory",
             "runner with preloaded modules still validates ids, duplicates and the public-only mode",
-            "runner with preloaded modules has no bundled modules outside the production build"
+            "runner with preloaded modules has no bundled modules outside the production build",
+            "seed on empty against a real database never marks a profile complete when no public module was found",
+            "seed on empty against a real database lets the next boot seed after a boot that found no modules"
           ],
           "tests/boundary/seed-ownership.test.ts": [
             "seed ownership boundary creates the running simpsons marker with canonical migration and lifecycle metadata",

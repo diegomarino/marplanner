@@ -57,6 +57,11 @@ export async function runSeedProfile(request: SeedRunRequest): Promise<SeedRunRe
   if (serverBoot && request.mode !== "public") {
     throw new SeedRunnerError("A server boot seed only supports public mode");
   }
+  // A missing or empty seeds directory (or a wrong cwd) must not be recorded as a completed
+  // profile: the marker would then block boot seeding and every later repair.
+  if (!modules.some((module) => module.visibility === "public")) {
+    throw new SeedRunnerError("No public seed modules found; nothing was seeded");
+  }
   const ownership = { asOfDate, nowMs, tolerateServerRuntimeRows: serverBoot };
   const marker = beginSeedProfile(db, ownership);
   const context: SeedContext = { db, asOfDate, nowMs };
