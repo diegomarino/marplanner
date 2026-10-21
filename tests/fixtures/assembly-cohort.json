@@ -4171,7 +4171,9 @@
             "RecipeDialog normalizes the form at the UI seam and preserves values after a failed save",
             "sends an explicit empty slots patch when an edited recipe is made valid for every slot",
             "localizes recipe field accessibility names from the household language",
-            "grows a long field to its content and closes on request"
+            "grows a long field to its content and closes on request",
+            "explains a missing name on the Name field, keeps the draft and saves once it is filled",
+            "reports a failed save as a save failure, not a loading failure"
           ],
           "tests/client/reminder-member-days.test.tsx": [
             "ReminderMemberDays shows a pill per member and day rows only for selected members",
