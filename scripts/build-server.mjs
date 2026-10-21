@@ -46,6 +46,8 @@ cpSync(
   "dist/server/fonts/jetbrains-mono",
   { recursive: true }
 );
+// The corpora are inlined into the bundle; their third-party data notice travels with it.
+cpSync("src/server/modules/daily-briefing/corpora/NOTICE.txt", "dist/server/CORPORA-NOTICE.txt");
 // Access-gate HTML inlines the same semantic tokens the SPA imports.
 cpSync("src/client/styles/tokens.css", "dist/server/ui-tokens.css");
 
