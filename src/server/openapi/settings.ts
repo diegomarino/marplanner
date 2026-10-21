@@ -6,8 +6,8 @@ import { z } from "zod";
 import { component, defineRouteSchemas } from "./zod";
 import { AuthForbidden, ErrorSchema, authenticationBackoffResponse } from "./common";
 
-export const LocaleSettings = component(
-  "LocaleSettings",
+export const LocaleObject = component(
+  "LocaleObject",
   z.strictObject({
     timezone: z.string().meta({ description: "IANA timezone, e.g. Europe/Madrid" }),
     language: z.enum(["es", "en"]),
@@ -75,7 +75,7 @@ export const PrinterTransportSettings = component(
 export const EffectiveSettings = component(
   "EffectiveSettings",
   z.strictObject({
-    locale: LocaleSettings,
+    locale: LocaleObject,
     weather: WeatherLocation.optional(),
     printer: PrinterSettings.optional(),
     printerTransport: PrinterTransportSettings.optional(),

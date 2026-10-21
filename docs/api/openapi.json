@@ -849,7 +849,7 @@
       "EffectiveSettings": {
         "type": "object",
         "properties": {
-          "locale": { "$ref": "#/components/schemas/LocaleSettings" },
+          "locale": { "$ref": "#/components/schemas/LocaleObject" },
           "weather": { "$ref": "#/components/schemas/WeatherLocation" },
           "printer": { "$ref": "#/components/schemas/PrinterSettings" },
           "printerTransport": { "$ref": "#/components/schemas/PrinterTransportSettings" }
@@ -1371,7 +1371,7 @@
         "required": ["state", "clients"],
         "additionalProperties": false
       },
-      "LocaleSettings": {
+      "LocaleObject": {
         "type": "object",
         "properties": {
           "timezone": { "type": "string", "description": "IANA timezone, e.g. Europe/Madrid" },
