@@ -54,7 +54,20 @@ export function noContent(description: string): z.ZodNull {
 }
 
 const acceptAnyInput = () => () => true;
-const serializeAsIs = () => (data: unknown) => JSON.stringify(data);
+/** Fastify's error path hands the serializer `Object.create(error, { error, message, statusCode })`,
+ * whose properties are non-enumerable, so plain `JSON.stringify` would send `{}`. Errors get the
+ * envelope Fastify's schemaless error serializer emits, in its key order; `code` drops out when
+ * undefined, as it does there. */
+const serializeAsIs = () => (data: unknown) => {
+  if (!(data instanceof Error)) return JSON.stringify(data);
+  const error = data as Error & { statusCode?: number; code?: string; error?: string };
+  return JSON.stringify({
+    statusCode: error.statusCode,
+    code: error.code,
+    error: error.error,
+    message: error.message,
+  });
+};
 
 /** Route options for a documented route: the zod `schema` plus per-route compilers that keep it
  * DOCUMENTATION-ONLY. The validator accepts every request unchanged (no coercion, defaults or
