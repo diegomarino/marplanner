@@ -34,7 +34,7 @@ operator configuration; synthetic test success does not establish their availabi
 
 **For developers:**
 
-- An API-first design: the UI uses the same documented HTTP API you can script against. See the [API guide](docs/api/README.md).
+- An API-first design: the UI uses the same documented HTTP API you can script against. See the [API guide](docs/api/README.md) and the [API reference](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/diegomarino/marplanner-project/main/docs/api/openapi.json).
 
 Take the [feature tour](docs/guide/README.md) for screenshots, or browse the [feature specs](docs/features/README.md).
 
@@ -132,4 +132,4 @@ npm run dev
 
 Replace the synthetic credentials in `.env.local`. `npm run dev` starts the API and frontend on distinct automatically assigned loopback ports and reports both URLs. Each worktree stores its development data in its own `.data/`. Set `PORT` and `WEB_PORT` to distinct nonzero values when explicit ports are needed; occupied explicit ports fail. The `package.json` scripts define the current check tiers: `npm run check:fast`, `npm run check:standard`, and `npm run check:full`. The full tier includes browser tests and requires their local browser dependencies. A passing focused tier is evidence for that tier only. [Verification guidance](docs/quality/verification.md) explains discovery, coverage, and cross-consumer checks.
 
-[Feature tour](docs/guide/README.md) · [Contributor guide](CONTRIBUTING.md) · [Architecture](docs/architecture/principles.md) · [API guide](docs/api/README.md) · [License](LICENSE)
+[Feature tour](docs/guide/README.md) · [Contributor guide](CONTRIBUTING.md) · [Architecture](docs/architecture/principles.md) · [API guide](docs/api/README.md) · [API reference](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/diegomarino/marplanner-project/main/docs/api/openapi.json) · [License](LICENSE)

@@ -317,7 +317,7 @@ are no private endpoints just for the UI.
 
 ![API reference](../images/features/api-reference.png)
 
-Start with the [API guide](../api/README.md).
+Start with the [API guide](../api/README.md), or browse the [API reference](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/diegomarino/marplanner-project/main/docs/api/openapi.json) online.
 
 ---
 
