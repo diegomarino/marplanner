@@ -32,6 +32,7 @@
     "check:ui-catalog": "node tools/dev/generate-ui-catalog.mjs --check",
     "check:ui-debt": "node tools/dev/count-ui-debt.mjs",
     "dev:chrome": "node tools/dev/chrome-cdp.mjs",
+    "docs:screenshots": "node tools/docs/capture-screenshots.mjs",
     "dev:fresh": "node tools/dev/fresh-local.mjs",
     "dev:server": "node --env-file-if-exists=.env.local --import tsx --watch src/server/index.ts",
     "dev:session": "node tools/dev/browser-session.mjs",
