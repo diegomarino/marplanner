@@ -896,6 +896,9 @@ export const messages = {
     "meals.recipes.createTitle": "Create Recipe",
     "meals.recipes.namePlaceholder": "Recipe name",
     "meals.recipes.nameLabel": "Name",
+    "meals.recipes.nameRequired": "Give the recipe a name before saving.",
+    "meals.recipes.saveError":
+      "The recipe could not be saved. Your changes are still here; try again.",
     "meals.recipes.ingredientsLabel": "Ingredients (one per line)",
     "meals.recipes.instructionsLabel": "Instructions",
     "meals.recipes.slotsLabel": "Slots",
@@ -2445,6 +2448,9 @@ export const messages = {
     "meals.recipes.createTitle": "Crear Receta",
     "meals.recipes.namePlaceholder": "Nombre de la receta",
     "meals.recipes.nameLabel": "Nombre",
+    "meals.recipes.nameRequired": "Ponle un nombre a la receta antes de guardarla.",
+    "meals.recipes.saveError":
+      "No se pudo guardar la receta. Tus cambios siguen aquí; inténtalo de nuevo.",
     "meals.recipes.ingredientsLabel": "Ingredientes (uno por línea)",
     "meals.recipes.instructionsLabel": "Instrucciones",
     "meals.recipes.slotsLabel": "Franjas",
