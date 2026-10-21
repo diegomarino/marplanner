@@ -6201,6 +6201,12 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected storage failure — nothing persisted. Opaque `internal_error` envelope; details go to the server log only.",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+            }
           }
         }
       }
