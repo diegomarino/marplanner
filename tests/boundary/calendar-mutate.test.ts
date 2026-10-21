@@ -516,6 +516,62 @@ describe("calendar-mutate (RED by design, turns green)", () => {
     }
   });
 
+  it("refuses to edit or delete a feed-owned event but still lets its participants change", async () => {
+    const deviceKey = insertDevice();
+    const memberA = insertMember("Alice");
+    const db = getDb();
+    const now = Date.now();
+    db.prepare(
+      "INSERT INTO calendar_external_sources (id, name, provider, feed_url, enabled, created_at, updated_at) VALUES ('feed', 'Feed', 'google', 'https://calendar.example.test/feed.ics', 1, ?, ?)"
+    ).run(now, now);
+    db.prepare(
+      "INSERT INTO calendar_events (id, source, title, all_day, start_utc, end_utc, tzid, rrule, exdates, created_at, updated_at) VALUES ('imported', 'external', 'Imported', 0, '2026-07-12T09:00:00.000Z', '2026-07-12T10:00:00.000Z', 'Europe/Madrid', NULL, '[]', ?, ?)"
+    ).run(now, now);
+    db.prepare(
+      "INSERT INTO calendar_external_event_meta (event_id, source_id, external_uid, recurrence_id, description, status, raw_hash, created_at, updated_at) VALUES ('imported', 'feed', 'uid-1', '', NULL, 'active', ?, ?, ?)"
+    ).run("a".repeat(64), now, now);
+    const snapshot = () => ({
+      event: db.prepare("SELECT * FROM calendar_events WHERE id = 'imported'").get(),
+      meta: db
+        .prepare("SELECT * FROM calendar_external_event_meta WHERE event_id = 'imported'")
+        .get(),
+    });
+    const before = snapshot();
+
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    try {
+      const patch = await app.inject({
+        method: "PATCH",
+        url: "/api/calendar/events/imported",
+        cookies: { mp_device_key: deviceKey },
+        payload: { title: "Renamed" },
+      });
+      expect(patch.statusCode).toBe(409);
+      expect(JSON.parse(patch.body).error).toBe("external_event_read_only");
+
+      const del = await app.inject({
+        method: "DELETE",
+        url: "/api/calendar/events/imported",
+        cookies: { mp_device_key: deviceKey },
+      });
+      expect(del.statusCode).toBe(409);
+      expect(JSON.parse(del.body).error).toBe("external_event_read_only");
+      expect(snapshot()).toEqual(before);
+
+      const assign = await app.inject({
+        method: "PUT",
+        url: "/api/calendar/events/imported/assignments",
+        cookies: { mp_device_key: deviceKey },
+        payload: { memberIds: [memberA] },
+      });
+      expect(assign.statusCode).toBe(200);
+      expect(snapshot()).toEqual(before);
+    } finally {
+      await app.close();
+    }
+  });
+
   // Test 7: PATCH on event with assignment returns real assignedTo
   it("PATCH /api/calendar/events/:id on an assigned event returns real assignedTo", async () => {
     const deviceKey = insertDevice();

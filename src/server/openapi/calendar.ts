@@ -399,6 +399,11 @@ export const calendarSchemas = defineRouteSchemas({
       400: { description: "validation", content: { "application/json": { schema: ErrorSchema } } },
       401: noContent("missing/invalid device key"),
       404: noContent("no such event"),
+      409: {
+        description:
+          "`external_event_read_only`: the event is synchronized from an external calendar; only its participant assignments are editable.",
+        content: { "application/json": { schema: ErrorSchema } },
+      },
       429: authenticationBackoffResponse,
     },
   },
@@ -413,6 +418,11 @@ export const calendarSchemas = defineRouteSchemas({
       204: noContent("deleted; event + all assignment rows removed in one transaction"),
       401: noContent("missing/invalid device key"),
       404: noContent("no such event"),
+      409: {
+        description:
+          "`external_event_read_only`: the event is synchronized from an external calendar; only its participant assignments are editable.",
+        content: { "application/json": { schema: ErrorSchema } },
+      },
       429: authenticationBackoffResponse,
     },
   },
