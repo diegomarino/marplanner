@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath } from "node:url";
 import { resolveBuildInfo } from "./scripts/build-info.mjs";
+import { bundledLicensesPlugin } from "./scripts/bundled-licenses.mjs";
 
 export default defineConfig(({ command }) => {
   const apiPort = process.env.VITE_API_PORT;
@@ -15,7 +16,8 @@ export default defineConfig(({ command }) => {
     );
   }
   return {
-    plugins: [react(), tailwindcss()],
+    // THIRD_PARTY_LICENSES.txt for the dependency code inlined into the client bundle.
+    plugins: [react(), tailwindcss(), bundledLicensesPlugin()],
     // The commit this bundle was built from, shown on the admin overview as "This device".
     define: { __MP_BUILD__: JSON.stringify(resolveBuildInfo()) },
     resolve: {
