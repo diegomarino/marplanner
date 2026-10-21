@@ -177,7 +177,7 @@ None of these outcomes stops the server from starting. The production bundle has
 3. Add the five variables listed above to the service.
 4. Optionally right-click the service and attach a volume mounted at `/data`, so the demo survives restarts.
 5. Choose **Create Template**, then publish it from the Templates page.
-6. Copy the template code from its URL (`https://railway.com/deploy/<code>`) and replace `RAILWAY_TEMPLATE_CODE` in the README button.
+6. Copy the template code from its URL (`https://railway.com/deploy/<code>`) and add the Railway button to the README with it (the exact line is in the README's TODO comment). Until then the README offers no Railway button.
 
 ## Synthetic seed and checks
 
