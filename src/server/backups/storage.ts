@@ -201,7 +201,9 @@ export function resolveBackupsRoot(): string {
   const root = process.env.BACKUPS_ROOT
     ? path.resolve(process.env.BACKUPS_ROOT)
     : path.resolve(process.env.DATA_DIR ?? process.cwd(), "backups");
-  fs.mkdirSync(root, { recursive: true });
+  // Snapshots are full household copies: a root created here is owner-only (an existing,
+  // operator-managed root keeps its mode).
+  fs.mkdirSync(root, { recursive: true, mode: 0o700 });
   return root;
 }
 

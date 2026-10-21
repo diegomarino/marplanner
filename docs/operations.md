@@ -10,7 +10,7 @@ npm run build
 DATA_DIR=/path/to/persistent/marplanner npm start
 ```
 
-Create `DATA_DIR` first and give the service process write access. The SQLite file defaults to `marplanner.db` inside that directory. `DATABASE_PATH` overrides the filename. A data directory backed by ephemeral container storage will lose household state. On startup the server checks directory writability and runs its ordered migrations. Existing production household databases from an earlier product are not imported automatically.
+Create `DATA_DIR` first, private to the service account (for example `install -d -m 0700`), and give the service process write access. Directories and a database the server creates itself are owner-only (`0700`/`0600`, including the SQLite `-wal`/`-shm` files and the backups root); an existing directory or database keeps the mode you gave it. The SQLite file defaults to `marplanner.db` inside that directory. `DATABASE_PATH` overrides the filename. A data directory backed by ephemeral container storage will lose household state. On startup the server checks directory writability and runs its ordered migrations. Existing production household databases from an earlier product are not imported automatically.
 
 The server listens on `HOST` (default `0.0.0.0`) and `PORT` (default `3000`). For a local-only trial, set `HOST=127.0.0.1`. Send `SIGINT` or `SIGTERM` for a normal shutdown and allow in-flight work to drain. Use Admin → Backups for a consistent snapshot before data-changing operations. Activate the Backups plugin first. Do not copy a live SQLite database without its transactional snapshot procedure.
 

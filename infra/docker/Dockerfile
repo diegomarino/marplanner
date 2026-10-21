@@ -38,7 +38,7 @@ COPY --from=build /app/dist/server/ dist/server/
 COPY --from=build /app/dist/daily-briefing-render/ dist/daily-briefing-render/
 COPY package.json LICENSE THIRD_PARTY_NOTICES.md ./
 COPY drizzle/ drizzle/
-RUN mkdir /data && chown node:node /data
+RUN install -d -m 0700 -o node -g node /data
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
