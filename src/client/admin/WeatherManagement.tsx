@@ -38,14 +38,17 @@ export function toWeatherFormState(weather: WeatherSettingsObject): WeatherFormS
 // location other than the one typed.
 const DECIMAL = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
 
-/** Why the pair cannot be written: only one coordinate filled, or a non-decimal one. */
-export function weatherFormProblem(form: WeatherFormState): "partial" | "invalid" | null {
+/** Why the pair cannot be written: only one coordinate filled, a non-decimal one, or one outside
+ * the latitude ±90 / longitude ±180 range the server enforces (caught here so a grouped save
+ * never sends it). */
+export function weatherFormProblem(form: WeatherFormState): "partial" | "invalid" | "range" | null {
   const lat = form.lat.trim();
   const lon = form.lon.trim();
   if ((lat === "") !== (lon === "")) return "partial";
   if ((lat !== "" && !DECIMAL.test(lat)) || (lon !== "" && !DECIMAL.test(lon))) {
     return "invalid";
   }
+  if (lat !== "" && (Math.abs(Number(lat)) > 90 || Math.abs(Number(lon)) > 180)) return "range";
   return null;
 }
 
@@ -158,7 +161,9 @@ export function WeatherManagement({ value, onChange, disabled = false }: Weather
           <p data-testid="weather-hint" className="text-muted-foreground text-control">
             {problem === "invalid"
               ? t("admin.settings.weatherInvalid")
-              : t("admin.settings.weatherIncomplete")}
+              : problem === "range"
+                ? t("admin.settings.weatherRange")
+                : t("admin.settings.weatherIncomplete")}
           </p>
         )}
 

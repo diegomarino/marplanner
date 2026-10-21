@@ -284,6 +284,10 @@ export const messages = {
     "admin.settings.retry": "Retry",
     "admin.settings.weatherIncomplete": "Enter both latitude and longitude, or clear both.",
     "admin.settings.weatherInvalid": "Latitude and longitude must be numbers, for example 40.4168.",
+    "admin.settings.weatherRange":
+      "Latitude must be between -90 and 90, and longitude between -180 and 180.",
+    "admin.settings.partialSaved":
+      "Language, week start and time zone were saved; the weather location was not.",
     "admin.settings.scopeNote":
       "Save applies to language, week start, time zone and weather. Day periods are saved on their own.",
     // admin-routines
@@ -1816,6 +1820,10 @@ export const messages = {
     "admin.settings.weatherIncomplete": "Introduce latitud y longitud, o borra ambas.",
     "admin.settings.weatherInvalid":
       "La latitud y la longitud deben ser números, por ejemplo 40.4168.",
+    "admin.settings.weatherRange":
+      "La latitud debe estar entre -90 y 90, y la longitud entre -180 y 180.",
+    "admin.settings.partialSaved":
+      "Se guardaron el idioma, el inicio de semana y la zona horaria; la ubicación del tiempo no.",
     "admin.settings.scopeNote":
       "Guardar aplica al idioma, el inicio de semana, la zona horaria y el tiempo. Los periodos del día se guardan por separado.",
     // admin-routines
