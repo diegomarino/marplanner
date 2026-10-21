@@ -746,6 +746,14 @@
             "rejects server reuse without an explicit matching data directory"
           ],
           "tools/fresh-local.test.mjs": [
+            "dev:fresh refuses to wipe the project root",
+            "dev:fresh refuses to wipe an empty value",
+            "dev:fresh refuses to wipe an ancestor of the project",
+            "dev:fresh refuses to wipe a non-normalized path to the project",
+            "dev:fresh refuses a symlink that resolves to the project root",
+            "dev:fresh refuses a non-empty directory it did not create",
+            "dev:fresh wipes and recreates its own marked store",
+            "dev:fresh still wipes a legacy unmarked .data-fresh store",
             "dev:fresh refuses wiping the default .data playground without force",
             "dev:fresh --help documents public and private seed then dev",
             "package scripts expose seed as seed:all of public and private"
