@@ -1131,7 +1131,7 @@ function menuBySlot(items: MenuItem[]): Record<Slot, MenuItem[]> {
 /** Derived week grid: the 7 local dates of the week containing `date`,
  * starting at the `weekStartDay` app-setting, each mapped to its derived day
  * menu grouped by slot (`date -> slot -> MenuItem[]`, an empty slot is `[]`
- * — matches `docs/api/meals/openapi.yaml` `WeekMenu`). A pure
+ * — matches the `WeekMenu` component in `src/server/openapi/meals.ts`). A pure
  * view — no stored week window (FR-019).
  */
 export function getWeekMenu(date: unknown): Record<string, Record<Slot, MenuItem[]>> {

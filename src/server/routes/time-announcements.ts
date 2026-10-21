@@ -9,6 +9,8 @@ import {
   TimeAnnouncementNotFoundError,
   TimeAnnouncementOverlapError,
 } from "../modules/time-announcements/index";
+import { timeAnnouncementsSchemas } from "../openapi/time-announcements";
+import { documented } from "../openapi/zod";
 
 /** Thin time-announcements HTTP boundary. GET is a PLAIN authenticated
  * route — no capability declared — since the rule list is kiosk-visible (AC-07); every write
@@ -18,19 +20,24 @@ import {
  * per the contract's 400/404/409 vocabulary.
  */
 export async function timeAnnouncementsRoutes(app: FastifyInstance): Promise<void> {
-  app.get("/api/time-announcements", async (_request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      const rules = listTimeAnnouncementRules();
-      return reply.code(200).send(rules);
-    } catch (err) {
-      return handleTimeAnnouncementError(err, reply);
+  app.get(
+    "/api/time-announcements",
+    documented(timeAnnouncementsSchemas.getTimeAnnouncements),
+    async (_request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const rules = listTimeAnnouncementRules();
+        return reply.code(200).send(rules);
+      } catch (err) {
+        return handleTimeAnnouncementError(err, reply);
+      }
     }
-  });
+  );
 
   registerRoutesWithCapabilities(app, [
     {
       method: "post",
       path: "/api/time-announcements",
+      schema: timeAnnouncementsSchemas.postTimeAnnouncements,
       capability: "time-announcements:admin",
       handler: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
@@ -44,6 +51,7 @@ export async function timeAnnouncementsRoutes(app: FastifyInstance): Promise<voi
     {
       method: "patch",
       path: "/api/time-announcements/:id",
+      schema: timeAnnouncementsSchemas.patchTimeAnnouncementsById,
       capability: "time-announcements:admin",
       handler: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
@@ -58,6 +66,7 @@ export async function timeAnnouncementsRoutes(app: FastifyInstance): Promise<voi
     {
       method: "delete",
       path: "/api/time-announcements/:id",
+      schema: timeAnnouncementsSchemas.deleteTimeAnnouncementsById,
       capability: "time-announcements:admin",
       handler: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
