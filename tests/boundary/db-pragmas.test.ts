@@ -149,3 +149,70 @@ describe("runtime storage safeguards", () => {
     nextRelease();
   });
 });
+
+/** Household state must not be readable by other local users even under a permissive umask:
+ * stores the server creates are owner-only, and existing operator-managed paths keep their mode. */
+describe("private storage creation", () => {
+  let parent: string;
+  let previousUmask: number;
+
+  beforeAll(() => {
+    previousUmask = process.umask(0o022);
+    parent = mkdtempSync(join(tmpdir(), "private-storage-"));
+  });
+
+  afterAll(() => {
+    process.umask(previousUmask);
+    rmSync(parent, { recursive: true, force: true });
+  });
+
+  const mode = (target: string) => fs.statSync(target).mode & 0o777;
+
+  it("creates a new database, its WAL and SHM owner-only", () => {
+    const file = join(parent, "fresh.db");
+    const fresh = openClient(file);
+    try {
+      fresh.exec("CREATE TABLE t (v INTEGER); INSERT INTO t VALUES (1);");
+      expect(mode(file)).toBe(0o600);
+      expect(mode(`${file}-wal`)).toBe(0o600);
+      expect(mode(`${file}-shm`)).toBe(0o600);
+    } finally {
+      fresh.close();
+    }
+  });
+
+  it("leaves the mode of an existing operator-managed database alone", () => {
+    const file = join(parent, "managed.db");
+    fs.writeFileSync(file, "");
+    fs.chmodSync(file, 0o640);
+    openClient(file).close();
+    expect(mode(file)).toBe(0o640);
+  });
+
+  it("creates new data and backups directories owner-only but keeps existing ones", async () => {
+    const { assertDataDirWritable } = await import("../../src/server/index.ts");
+    const { resolveBackupsRoot } = await import("../../src/server/backups/storage.ts");
+    const dataDir = join(parent, "data", "nested");
+    assertDataDirWritable(dataDir);
+    expect(mode(dataDir)).toBe(0o700);
+
+    const previous = { DATA_DIR: process.env.DATA_DIR, BACKUPS_ROOT: process.env.BACKUPS_ROOT };
+    try {
+      delete process.env.BACKUPS_ROOT;
+      process.env.DATA_DIR = dataDir;
+      expect(mode(resolveBackupsRoot())).toBe(0o700);
+
+      const managed = join(parent, "managed-backups");
+      fs.mkdirSync(managed, { mode: 0o750 });
+      fs.chmodSync(managed, 0o750);
+      process.env.BACKUPS_ROOT = managed;
+      resolveBackupsRoot();
+      expect(mode(managed)).toBe(0o750);
+    } finally {
+      for (const [key, value] of Object.entries(previous)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
+  });
+});

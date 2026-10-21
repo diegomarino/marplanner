@@ -1520,7 +1520,10 @@
             "runtime storage safeguards rejects recognized Linux network storage before any SQLite files are created",
             "runtime storage safeguards checks the existing database mount and propagates filesystem errors",
             "runtime storage safeguards rejects file aliases and preserves malformed sentinels",
-            "runtime storage safeguards holds ownership independently of product connections and releases idempotently"
+            "runtime storage safeguards holds ownership independently of product connections and releases idempotently",
+            "private storage creation creates a new database, its WAL and SHM owner-only",
+            "private storage creation leaves the mode of an existing operator-managed database alone",
+            "private storage creation creates new data and backups directories owner-only but keeps existing ones"
           ],
           "tests/boundary/default-credentials.test.ts": [
             "public default credential detection recognises only the repository's default access token",
