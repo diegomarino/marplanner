@@ -325,8 +325,14 @@ export const calendarSchemas = defineRouteSchemas({
     querystring: z.object({
       source: z.enum(["all", "local", "external"]).meta({ default: "all" }).optional(),
       assignedTo: z.string().meta({ description: "member id; strict (INV-09/AC-06)" }).optional(),
-      from: z.string().meta({ description: "range start (household tz)" }),
-      to: z.string().meta({ description: "exclusive next-midnight upper bound (INV-03)" }),
+      from: z.string().meta({
+        description:
+          "Range start: a YYYY-MM-DD household date (from its household midnight) or an ISO instant (inclusive). All-day events match by household date.",
+      }),
+      to: z.string().meta({
+        description:
+          "Range end: a YYYY-MM-DD household date, included (read up to the next household midnight, INV-03), or an exclusive ISO instant.",
+      }),
       query: z
         .string()
         .meta({

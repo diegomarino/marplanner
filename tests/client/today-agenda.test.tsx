@@ -76,13 +76,13 @@ describe("household-day range and projection", () => {
       "2026-12-31T11:30:00Z",
       "2027-01-01",
       "2026-12-31T10:00:00.000Z",
-      "2027-01-02T00:00:00.000Z",
+      "2027-01-01T10:00:00.000Z",
     ],
     [
       "America/Los_Angeles",
       "2026-09-22T01:00:00Z",
       "2026-09-21",
-      "2026-09-21T00:00:00.000Z",
+      "2026-09-21T07:00:00.000Z",
       "2026-09-22T07:00:00.000Z",
     ],
     [
@@ -90,18 +90,21 @@ describe("household-day range and projection", () => {
       "2026-03-29T12:00:00Z",
       "2026-03-29",
       "2026-03-28T23:00:00.000Z",
-      "2026-03-30T00:00:00.000Z",
+      "2026-03-29T22:00:00.000Z",
     ],
     [
       "America/New_York",
       "2026-11-01T12:00:00Z",
       "2026-11-01",
-      "2026-11-01T00:00:00.000Z",
+      "2026-11-01T04:00:00.000Z",
       "2026-11-02T05:00:00.000Z",
     ],
-  ])("covers timed and date-only anchors in %s at %s", (timezone, instant, date, from, to) => {
-    expect(householdDayRange(timezone, Date.parse(instant))).toEqual({ date, from, to });
-  });
+  ])(
+    "spans household midnight to the next one in %s at %s",
+    (timezone, instant, date, from, to) => {
+      expect(householdDayRange(timezone, Date.parse(instant))).toEqual({ date, from, to });
+    }
+  );
 
   it("keeps read order for ties, all-day first, and emphasizes every current interval", () => {
     const input = structuredClone(events);
@@ -386,7 +389,7 @@ describe("TodayAgenda", () => {
     const calendarRequests = requests.filter((url) => url.startsWith("/api/calendar/events?"));
     const last = new URL(calendarRequests.at(-1)!, "http://localhost");
     expect(last.searchParams.get("from")).toBe("2026-09-22T22:00:00.000Z");
-    expect(last.searchParams.get("to")).toBe("2026-09-24T00:00:00.000Z");
+    expect(last.searchParams.get("to")).toBe("2026-09-23T22:00:00.000Z");
   });
 
   it("renders sorted rows, temporal text/weight and all active identities with household times", async () => {
@@ -437,7 +440,7 @@ describe("TodayAgenda", () => {
     expect(Object.fromEntries(url.searchParams)).toEqual({
       source: "all",
       from: "2026-09-21T22:00:00.000Z",
-      to: "2026-09-23T00:00:00.000Z",
+      to: "2026-09-22T22:00:00.000Z",
     });
   });
 

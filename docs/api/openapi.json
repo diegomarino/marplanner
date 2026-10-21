@@ -3477,14 +3477,14 @@
             "in": "query",
             "name": "from",
             "required": true,
-            "description": "range start (household tz)"
+            "description": "Range start: a YYYY-MM-DD household date (from its household midnight) or an ISO instant (inclusive). All-day events match by household date."
           },
           {
             "schema": { "type": "string" },
             "in": "query",
             "name": "to",
             "required": true,
-            "description": "exclusive next-midnight upper bound (INV-03)"
+            "description": "Range end: a YYYY-MM-DD household date, included (read up to the next household midnight, INV-03), or an exclusive ISO instant."
           },
           {
             "schema": { "type": "string" },

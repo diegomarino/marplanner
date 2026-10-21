@@ -14,19 +14,18 @@ function householdDate(timezone: string, now: number): string {
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
-/** Calendar expands all-day anchors at UTC midnight, but timed anchors are instants.
- * Fetch the union of both windows, then project by each kind's date semantics below.
- * Explicit instants also avoid the endpoint's inclusive date-only `to` conversion.
+/** The household day as explicit instants, household midnight to the next one. Calendar maps
+ * instant bounds to the household dates they cover, so all-day events of `date` match too;
+ * explicit instants also avoid the endpoint's inclusive date-only `to` conversion.
  */
 export function householdDayRange(timezone: string, now: number) {
   const date = householdDate(timezone, now);
   const nextMidnight = nextOccurrenceInTz("00:00", timezone, now);
   const midnight = nextOccurrenceInTz("00:00", timezone, nextMidnight - 36 * 60 * 60 * 1000);
-  const dateAnchor = Date.parse(`${date}T00:00:00Z`);
   return {
     date,
-    from: new Date(Math.min(midnight, dateAnchor)).toISOString(),
-    to: new Date(Math.max(nextMidnight, dateAnchor + 24 * 60 * 60 * 1000)).toISOString(),
+    from: new Date(midnight).toISOString(),
+    to: new Date(nextMidnight).toISOString(),
   };
 }
 

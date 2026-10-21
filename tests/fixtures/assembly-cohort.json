@@ -1181,7 +1181,25 @@
             "calendar-read (US1 review-hardening — B1 resilience + B2 household-tz, pinned clock) honors the exclusive household-tz next-midnight upper bound",
             "calendar-read (US1 review-hardening — B1 resilience + B2 household-tz, pinned clock) uses the persisted household timezone for the range, not the default",
             "calendar-read (US1 review-hardening — B1 resilience + B2 household-tz, pinned clock) does not 500 the feed when a row has non-JSON stored exdates",
-            "calendar-read (US1 review-hardening — B1 resilience + B2 household-tz, pinned clock) does not 500 the feed when a row has an unparseable end_utc (NaN duration)"
+            "calendar-read (US1 review-hardening — B1 resilience + B2 household-tz, pinned clock) does not 500 the feed when a row has an unparseable end_utc (NaN duration)",
+            "calendar-read (all-day events keep their household date) places a single all-day event on its own date in America/New_York",
+            "calendar-read (all-day events keep their household date) keeps a single all-day event off the previous date in America/New_York",
+            "calendar-read (all-day events keep their household date) places a recurring all-day event on its own date in America/New_York",
+            "calendar-read (all-day events keep their household date) keeps a recurring all-day event off the previous date in America/New_York",
+            "calendar-read (all-day events keep their household date) places a single all-day event on its own date in Pacific/Honolulu",
+            "calendar-read (all-day events keep their household date) keeps a single all-day event off the previous date in Pacific/Honolulu",
+            "calendar-read (all-day events keep their household date) places a recurring all-day event on its own date in Pacific/Honolulu",
+            "calendar-read (all-day events keep their household date) keeps a recurring all-day event off the previous date in Pacific/Honolulu",
+            "calendar-read (all-day events keep their household date) places a single all-day event on its own date in Asia/Tokyo",
+            "calendar-read (all-day events keep their household date) keeps a single all-day event off the previous date in Asia/Tokyo",
+            "calendar-read (all-day events keep their household date) places a recurring all-day event on its own date in Asia/Tokyo",
+            "calendar-read (all-day events keep their household date) keeps a recurring all-day event off the previous date in Asia/Tokyo",
+            "calendar-read (all-day events keep their household date) places a single all-day event on its own date in UTC",
+            "calendar-read (all-day events keep their household date) keeps a single all-day event off the previous date in UTC",
+            "calendar-read (all-day events keep their household date) places a recurring all-day event on its own date in UTC",
+            "calendar-read (all-day events keep their household date) keeps a recurring all-day event off the previous date in UTC",
+            "calendar-read (all-day events keep their household date) returns exactly the requested dates of a daily all-day series west of UTC",
+            "calendar-read (all-day events keep their household date) maps an instant range to the household dates it covers"
           ],
           "tests/boundary/calendar-recurrence.test.ts": [
             "calendar recurrence expander DST transition (research R2 - the core hazard) expands weekly 09:00 Europe/Madrid across spring-forward (2026-03-29) with correct UTC instants",
@@ -4641,10 +4659,6 @@
             "time-announcements speech sink mirror gate (D9 — window.__mpAnnouncements, DEV/e2e-gated) caps the mirrored array at 50 entries (bounded, FIFO)"
           ],
           "tests/client/today-agenda.test.tsx": [
-            "household-day range and projection covers timed and date-only anchors in Pacific/Kiritimati at 2026-12-31T11:30:00Z",
-            "household-day range and projection covers timed and date-only anchors in America/Los_Angeles at 2026-09-22T01:00:00Z",
-            "household-day range and projection covers timed and date-only anchors in Europe/Madrid at 2026-03-29T12:00:00Z",
-            "household-day range and projection covers timed and date-only anchors in America/New_York at 2026-11-01T12:00:00Z",
             "household-day range and projection keeps read order for ties, all-day first, and emphasizes every current interval",
             "household-day range and projection selects only the first future tie when none is in progress; all-day cannot steal next",
             "household-day range and projection retains assignment order and readable archived/missing references without active identity",
@@ -4666,7 +4680,11 @@
             "TodayAgenda keeps a pending agenda local and shows an explicit empty state on success",
             "TodayAgenda reports calendar failure locally and retries without raw diagnostics",
             "TodayAgenda reports profiles failure locally and retries without raw diagnostics",
-            "TodayAgenda renders Spanish structural copy and next-only fallback"
+            "TodayAgenda renders Spanish structural copy and next-only fallback",
+            "household-day range and projection spans household midnight to the next one in Pacific/Kiritimati at 2026-12-31T11:30:00Z",
+            "household-day range and projection spans household midnight to the next one in America/Los_Angeles at 2026-09-22T01:00:00Z",
+            "household-day range and projection spans household midnight to the next one in Europe/Madrid at 2026-03-29T12:00:00Z",
+            "household-day range and projection spans household midnight to the next one in America/New_York at 2026-11-01T12:00:00Z"
           ],
           "tests/client/today-chores.test.tsx": [
             "TodayChores behavior keeps each child's selected period through a server-authoritative refresh",
@@ -6781,8 +6799,8 @@
       "src/client/home/agenda-presentation.ts": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 28,
-          "statements": 33,
+          "lines": 27,
+          "statements": 32,
           "functions": 9,
           "branches": 28
         },
