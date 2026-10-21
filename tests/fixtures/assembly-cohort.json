@@ -4315,7 +4315,10 @@
             "SettingsManagement hides \"Saved\" by itself",
             "SettingsManagement clears \"Saved\" as soon as the form is edited again",
             "SettingsManagement announces a failed load and retries it",
-            "SettingsManagement hosts the day periods on the same page"
+            "SettingsManagement hosts the day periods on the same page",
+            "SettingsManagement blocks the out-of-range location 100, 2 before any request, even with a locale edit",
+            "SettingsManagement blocks the out-of-range location -90.5, 2 before any request, even with a locale edit",
+            "SettingsManagement blocks the out-of-range location 40, 180.01 before any request, even with a locale edit"
           ],
           "tests/client/settings-timezones.test.ts": [
             "timeZoneGroups lists UTC first and the curated groups in order",

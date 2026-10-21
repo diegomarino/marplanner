@@ -203,7 +203,11 @@ export function SettingsManagement() {
       }
       setSaved(true);
     } catch (cause) {
-      setError(cause instanceof LocalizedApiError ? cause.message : t("admin.settings.saveError"));
+      const reason =
+        cause instanceof LocalizedApiError ? cause.message : t("admin.settings.saveError");
+      // Locale is written first, so a failure after a write means only the weather failed:
+      // say what was kept rather than suggesting nothing was saved.
+      setError(wrote ? `${t("admin.settings.partialSaved")} ${reason}` : reason);
     } finally {
       setSaving(false);
       if (wrote) household?.retry();
