@@ -29,6 +29,8 @@ import {
   reorderHighlightRules,
   setHighlightRuleEnabled,
 } from "../modules/calendar/highlights";
+import { calendarSchemas } from "../openapi/calendar";
+import { documented } from "../openapi/zod";
 
 const EXTERNAL_SOURCE_UPSERT_KEYS = new Set(["name", "provider", "feedUrl", "pollIntervalMin"]);
 const EXTERNAL_SOURCE_UPSERT_REQUIRED_KEYS = ["name", "feedUrl"] as const;
@@ -56,93 +58,118 @@ export async function calendarRoutes(
   app: FastifyInstance,
   calendarFeedDependencies: CalendarFeedDependencies = {}
 ): Promise<void> {
-  app.get("/api/calendar/highlight-rules", async (request, reply) => {
-    try {
-      return reply.code(200).send(listHighlightRules());
-    } catch (error) {
-      request.log.error(error);
-      return reply.code(500).send({ error: "Internal server error" });
+  app.get(
+    "/api/calendar/highlight-rules",
+    documented(calendarSchemas.getCalendarHighlightRules),
+    async (request, reply) => {
+      try {
+        return reply.code(200).send(listHighlightRules());
+      } catch (error) {
+        request.log.error(error);
+        return reply.code(500).send({ error: "Internal server error" });
+      }
     }
-  });
+  );
 
-  app.post("/api/calendar/highlight-rules", async (request, reply) => {
-    try {
-      return reply.code(201).send(createHighlightRule(request.body));
-    } catch (error) {
-      if (error instanceof HighlightValidationError)
-        return reply.code(400).send({ error: error.message });
-      request.log.error(error);
-      return reply.code(500).send({ error: "Internal server error" });
+  app.post(
+    "/api/calendar/highlight-rules",
+    documented(calendarSchemas.postCalendarHighlightRules),
+    async (request, reply) => {
+      try {
+        return reply.code(201).send(createHighlightRule(request.body));
+      } catch (error) {
+        if (error instanceof HighlightValidationError)
+          return reply.code(400).send({ error: error.message });
+        request.log.error(error);
+        return reply.code(500).send({ error: "Internal server error" });
+      }
     }
-  });
+  );
 
-  app.put("/api/calendar/highlight-rules/reorder", async (request, reply) => {
-    try {
+  app.put(
+    "/api/calendar/highlight-rules/reorder",
+    documented(calendarSchemas.putCalendarHighlightRulesReorder),
+    async (request, reply) => {
+      try {
+        const body = request.body;
+        if (
+          typeof body !== "object" ||
+          body === null ||
+          Array.isArray(body) ||
+          Object.keys(body).length !== 1 ||
+          !Object.hasOwn(body, "orderedIds")
+        )
+          return reply.code(400).send({ error: "invalid_highlight_order" });
+        return reply
+          .code(200)
+          .send(reorderHighlightRules((body as { orderedIds: unknown }).orderedIds));
+      } catch (error) {
+        if (error instanceof HighlightValidationError)
+          return reply.code(400).send({ error: error.message });
+        request.log.error(error);
+        return reply.code(500).send({ error: "Internal server error" });
+      }
+    }
+  );
+
+  app.patch(
+    "/api/calendar/highlight-rules/:id",
+    documented(calendarSchemas.patchCalendarHighlightRulesById),
+    async (request, reply) => {
       const body = request.body;
       if (
         typeof body !== "object" ||
         body === null ||
         Array.isArray(body) ||
         Object.keys(body).length !== 1 ||
-        !Object.hasOwn(body, "orderedIds")
+        typeof (body as { enabled?: unknown }).enabled !== "boolean"
       )
-        return reply.code(400).send({ error: "invalid_highlight_order" });
-      return reply
-        .code(200)
-        .send(reorderHighlightRules((body as { orderedIds: unknown }).orderedIds));
-    } catch (error) {
-      if (error instanceof HighlightValidationError)
-        return reply.code(400).send({ error: error.message });
-      request.log.error(error);
-      return reply.code(500).send({ error: "Internal server error" });
+        return reply.code(400).send({ error: "invalid_highlight_rule" });
+      try {
+        const { id } = request.params as { id: string };
+        const rule = setHighlightRuleEnabled(id, (body as { enabled: boolean }).enabled);
+        return rule
+          ? reply.code(200).send(rule)
+          : reply.code(404).send({ error: "highlight_rule_not_found" });
+      } catch (error) {
+        request.log.error(error);
+        return reply.code(500).send({ error: "Internal server error" });
+      }
     }
-  });
+  );
 
-  app.patch("/api/calendar/highlight-rules/:id", async (request, reply) => {
-    const body = request.body;
-    if (
-      typeof body !== "object" ||
-      body === null ||
-      Array.isArray(body) ||
-      Object.keys(body).length !== 1 ||
-      typeof (body as { enabled?: unknown }).enabled !== "boolean"
-    )
-      return reply.code(400).send({ error: "invalid_highlight_rule" });
-    try {
-      const { id } = request.params as { id: string };
-      const rule = setHighlightRuleEnabled(id, (body as { enabled: boolean }).enabled);
-      return rule
-        ? reply.code(200).send(rule)
-        : reply.code(404).send({ error: "highlight_rule_not_found" });
-    } catch (error) {
-      request.log.error(error);
-      return reply.code(500).send({ error: "Internal server error" });
+  app.delete(
+    "/api/calendar/highlight-rules/:id",
+    documented(calendarSchemas.deleteCalendarHighlightRulesById),
+    async (request, reply) => {
+      try {
+        const { id } = request.params as { id: string };
+        return deleteHighlightRule(id)
+          ? reply.code(204).send()
+          : reply.code(404).send({ error: "highlight_rule_not_found" });
+      } catch (error) {
+        request.log.error(error);
+        return reply.code(500).send({ error: "Internal server error" });
+      }
     }
-  });
+  );
 
-  app.delete("/api/calendar/highlight-rules/:id", async (request, reply) => {
-    try {
-      const { id } = request.params as { id: string };
-      return deleteHighlightRule(id)
-        ? reply.code(204).send()
-        : reply.code(404).send({ error: "highlight_rule_not_found" });
-    } catch (error) {
-      request.log.error(error);
-      return reply.code(500).send({ error: "Internal server error" });
+  app.get(
+    "/api/calendar/external-sources",
+    documented(calendarSchemas.getCalendarExternalSources),
+    async (request, reply) => {
+      try {
+        return reply.code(200).send(listExternalSourcesService().map(withPhase));
+      } catch (error) {
+        request.log.error(error);
+        return reply.code(500).send({ error: "Internal server error" });
+      }
     }
-  });
-
-  app.get("/api/calendar/external-sources", async (request, reply) => {
-    try {
-      return reply.code(200).send(listExternalSourcesService().map(withPhase));
-    } catch (error) {
-      request.log.error(error);
-      return reply.code(500).send({ error: "Internal server error" });
-    }
-  });
+  );
 
   app.put(
     "/api/calendar/external-sources/:id",
+    documented(calendarSchemas.putCalendarExternalSourcesById),
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const { id } = request.params as { id: string };
@@ -172,6 +199,7 @@ export async function calendarRoutes(
 
   app.patch(
     "/api/calendar/external-sources/:id",
+    documented(calendarSchemas.patchCalendarExternalSourcesById),
     async (request: FastifyRequest, reply: FastifyReply) => {
       const body = request.body;
       if (
@@ -197,6 +225,7 @@ export async function calendarRoutes(
 
   app.delete(
     "/api/calendar/external-sources/:id",
+    documented(calendarSchemas.deleteCalendarExternalSourcesById),
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const { id } = request.params as { id: string };
@@ -212,6 +241,7 @@ export async function calendarRoutes(
 
   app.post(
     "/api/calendar/external-sources/:id/sync",
+    documented(calendarSchemas.postCalendarExternalSourcesByIdSync),
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const { id } = request.params as { id: string };
@@ -239,6 +269,7 @@ export async function calendarRoutes(
     };
   }>(
     "/api/calendar/events",
+    documented(calendarSchemas.getCalendarEvents),
     async (
       request: FastifyRequest<{
         Querystring: {
@@ -300,6 +331,7 @@ export async function calendarRoutes(
     };
   }>(
     "/api/calendar/events",
+    documented(calendarSchemas.postCalendarEvents),
     async (
       request: FastifyRequest<{
         Body: {
@@ -334,55 +366,64 @@ export async function calendarRoutes(
     }
   );
 
-  app.patch("/api/calendar/events/:id", async (request: FastifyRequest, reply: FastifyReply) => {
-    const { id } = request.params as { id: string };
+  app.patch(
+    "/api/calendar/events/:id",
+    documented(calendarSchemas.patchCalendarEventsById),
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const { id } = request.params as { id: string };
 
-    try {
-      const body = request.body as Partial<{
-        title: string;
-        allDay: boolean;
-        startDate?: string;
-        endDate?: string;
-        startUtc?: string;
-        endUtc?: string;
-        tzid?: string;
-        rrule?: string | null;
-        exdates?: string[];
-      }>;
+      try {
+        const body = request.body as Partial<{
+          title: string;
+          allDay: boolean;
+          startDate?: string;
+          endDate?: string;
+          startUtc?: string;
+          endUtc?: string;
+          tzid?: string;
+          rrule?: string | null;
+          exdates?: string[];
+        }>;
 
-      const result = editEventService(id, body);
-      return reply.code(200).send(result);
-    } catch (e: unknown) {
-      const err = e as { name?: string; message?: string };
-      if (err.name === "ValidationError" || err.name === "WindowError") {
-        return reply.code(400).send({ error: err.message });
+        const result = editEventService(id, body);
+        return reply.code(200).send(result);
+      } catch (e: unknown) {
+        const err = e as { name?: string; message?: string };
+        if (err.name === "ValidationError" || err.name === "WindowError") {
+          return reply.code(400).send({ error: err.message });
+        }
+        if (err instanceof NotFoundError) {
+          return reply.code(404).send({ error: err.message });
+        }
+        request.log.error(e);
+        return reply.code(500).send({ error: "Internal server error" });
       }
-      if (err instanceof NotFoundError) {
-        return reply.code(404).send({ error: err.message });
-      }
-      request.log.error(e);
-      return reply.code(500).send({ error: "Internal server error" });
     }
-  });
+  );
 
-  app.delete("/api/calendar/events/:id", async (request: FastifyRequest, reply: FastifyReply) => {
-    const { id } = request.params as { id: string };
+  app.delete(
+    "/api/calendar/events/:id",
+    documented(calendarSchemas.deleteCalendarEventsById),
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const { id } = request.params as { id: string };
 
-    try {
-      deleteEventService(id);
-      return reply.code(204).send();
-    } catch (e: unknown) {
-      const err = e as { name?: string; message?: string };
-      if (err instanceof NotFoundError) {
-        return reply.code(404).send({ error: err.message });
+      try {
+        deleteEventService(id);
+        return reply.code(204).send();
+      } catch (e: unknown) {
+        const err = e as { name?: string; message?: string };
+        if (err instanceof NotFoundError) {
+          return reply.code(404).send({ error: err.message });
+        }
+        request.log.error(e);
+        return reply.code(500).send({ error: "Internal server error" });
       }
-      request.log.error(e);
-      return reply.code(500).send({ error: "Internal server error" });
     }
-  });
+  );
 
   app.put(
     "/api/calendar/events/:id/assignments",
+    documented(calendarSchemas.putCalendarEventsByIdAssignments),
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { id } = request.params as { id: string };
 
