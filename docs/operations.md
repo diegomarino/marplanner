@@ -201,8 +201,9 @@ routes and jobs. Installed code and persisted plugin data remain present.
 Configure the household timezone and members before authoring routines, reminders,
 meals and briefings. Core calendar and chores remain available without optional
 plugins. Weather needs a location. Network Devices requires operator controller
-configuration and a management credential; ordinary device credentials cannot
-manage it. Spoken time requires browser speech support. Printing requires pairing
+configuration; its routes accept any active credential with the `network:admin` (or
+full `*`) capability, so every normally provisioned device can manage it, and the
+advisory UI PIN is not an authorization boundary. Spoken time requires browser speech support. Printing requires pairing
 from a supported browser with an explicit user gesture. These integrations do not
 become live merely because their configuration form is available.
 

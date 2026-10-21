@@ -7262,7 +7262,7 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
             }
           },
-          "403": { "description": "device-kind key rejected" },
+          "403": { "description": "unauthenticated, unknown or out-of-scope key rejected (AC-06)" },
           "409": {
             "description": "MAC not in the current fresh cache (`reselect_required`) or already registered (INV-01)",
             "content": {
@@ -7322,7 +7322,7 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
             }
           },
-          "403": { "description": "device-kind key rejected" },
+          "403": { "description": "unauthenticated, unknown or out-of-scope key rejected (AC-06)" },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
             "headers": {
@@ -7382,7 +7382,7 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
             }
           },
-          "403": { "description": "device-kind key rejected" },
+          "403": { "description": "unauthenticated, unknown or out-of-scope key rejected (AC-06)" },
           "404": { "description": "unknown device" },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
@@ -7429,7 +7429,7 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
             }
           },
-          "403": { "description": "device-kind key rejected" },
+          "403": { "description": "unauthenticated, unknown or out-of-scope key rejected (AC-06)" },
           "404": { "description": "unknown device" },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
@@ -7483,7 +7483,7 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
             }
           },
-          "403": { "description": "device-kind key rejected" },
+          "403": { "description": "unauthenticated, unknown or out-of-scope key rejected (AC-06)" },
           "404": { "description": "unknown device" },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
@@ -7545,7 +7545,7 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
             }
           },
-          "403": { "description": "device-kind key rejected" },
+          "403": { "description": "unauthenticated, unknown or out-of-scope key rejected (AC-06)" },
           "404": { "description": "unknown device" },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
@@ -10831,7 +10831,7 @@
     },
     {
       "name": "network-devices",
-      "description": "**Marplanner — Network Devices API**\n\nRegistered network devices, live controller inventory and block state. Every management route requires a management credential and network:admin capability. Provider failures use safe typed errors."
+      "description": "**Marplanner — Network Devices API**\n\nRegistered network devices, live controller inventory and block state. Every route requires an active credential with the network:admin (or full \"*\") capability; a normally provisioned household device qualifies. Provider failures use safe typed errors."
     },
     {
       "name": "backups",

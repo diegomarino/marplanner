@@ -132,7 +132,7 @@ export const networkDevicesSchemas = defineRouteSchemas({
       },
       400: noContent("validation (alias, inactive member)"),
       401: authUnauthorizedResponse,
-      403: noContent("device-kind key rejected"),
+      403: noContent("unauthenticated, unknown or out-of-scope key rejected (AC-06)"),
       409: {
         description:
           "MAC not in the current fresh cache (`reselect_required`) or already registered (INV-01)",
@@ -153,7 +153,7 @@ export const networkDevicesSchemas = defineRouteSchemas({
         content: { "application/json": { schema: LiveClientsResponse } },
       },
       401: authUnauthorizedResponse,
-      403: noContent("device-kind key rejected"),
+      403: noContent("unauthenticated, unknown or out-of-scope key rejected (AC-06)"),
       429: authenticationBackoffResponse,
     },
   },
@@ -172,7 +172,7 @@ export const networkDevicesSchemas = defineRouteSchemas({
       },
       400: noContent("validation (inactive member on NEW assignment)"),
       401: authUnauthorizedResponse,
-      403: noContent("device-kind key rejected"),
+      403: noContent("unauthenticated, unknown or out-of-scope key rejected (AC-06)"),
       404: noContent("unknown device"),
       429: authenticationBackoffResponse,
     },
@@ -187,7 +187,7 @@ export const networkDevicesSchemas = defineRouteSchemas({
     response: {
       204: noContent("always succeeds locally, blocked devices included"),
       401: authUnauthorizedResponse,
-      403: noContent("device-kind key rejected"),
+      403: noContent("unauthenticated, unknown or out-of-scope key rejected (AC-06)"),
       404: noContent("unknown device"),
       429: authenticationBackoffResponse,
     },
@@ -206,7 +206,7 @@ export const networkDevicesSchemas = defineRouteSchemas({
         content: { "application/json": { schema: RegisteredDevice } },
       },
       401: authUnauthorizedResponse,
-      403: noContent("device-kind key rejected"),
+      403: noContent("unauthenticated, unknown or out-of-scope key rejected (AC-06)"),
       404: noContent("unknown device"),
       429: authenticationBackoffResponse,
       502: {
@@ -228,7 +228,7 @@ export const networkDevicesSchemas = defineRouteSchemas({
         content: { "application/json": { schema: RegisteredDevice } },
       },
       401: authUnauthorizedResponse,
-      403: noContent("device-kind key rejected"),
+      403: noContent("unauthenticated, unknown or out-of-scope key rejected (AC-06)"),
       404: noContent("unknown device"),
       429: authenticationBackoffResponse,
       502: {
