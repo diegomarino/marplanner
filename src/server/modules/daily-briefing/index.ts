@@ -154,21 +154,22 @@ function rowToBriefing(row: DailyBriefingRow): Briefing {
 
 const PRINTABLE_RECORD_KEY_PREFIX = "daily-briefing";
 
-/** Strict parse of a dated outputRef — throws on anything that isn't exactly 3 `:`-delimited parts. */
+/** Strict parse of a dated outputRef `daily-briefing:<memberId>:<YYYY-MM-DD>`. The member id may
+ * itself contain `:` (the shipped demo ids are `demo:member:<name>`), so the date is the last
+ * segment and everything between the prefix and it is the member id. Throws on anything else. */
 function parseDatedOutputRef(outputRef: string): { memberId: string; date: string } {
-  const parts = outputRef.split(":");
-  if (
-    parts.length !== 3 ||
-    parts[0] !== PRINTABLE_RECORD_KEY_PREFIX ||
-    parts[1].length === 0 ||
-    parts[2].length === 0
-  ) {
+  const prefix = `${PRINTABLE_RECORD_KEY_PREFIX}:`;
+  const rest = outputRef.startsWith(prefix) ? outputRef.slice(prefix.length) : "";
+  const split = rest.lastIndexOf(":");
+  const memberId = split > 0 ? rest.slice(0, split) : "";
+  const date = split > 0 ? rest.slice(split + 1) : "";
+  if (memberId.length === 0 || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     throw new Error(
       `daily-briefing printable provider: malformed outputRef "${outputRef}" ` +
         `(expected "daily-briefing:<memberId>:<date>")`
     );
   }
-  return { memberId: parts[1], date: parts[2] };
+  return { memberId, date };
 }
 
 /** Synchronous DB lookup of the EXACT member+date row's stored raster (the provider

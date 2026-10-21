@@ -5237,7 +5237,8 @@
             "daily-briefing skeleton — render -> store -> enqueue -> claim -> payload resolves the EXACT dated row's raster, not merely the newest row for the member (P1-4)",
             "daily-briefing skeleton — render -> store -> enqueue -> claim -> payload throws a malformed-outputRef error for missing date part (strict parse, FR-016)",
             "daily-briefing skeleton — render -> store -> enqueue -> claim -> payload throws a malformed-outputRef error for extra colon garbage (strict parse, FR-016)",
-            "daily-briefing skeleton — render -> store -> enqueue -> claim -> payload throws when no raster is stored for the exact member+date (absence-tolerant provider, never a crash caller-side)"
+            "daily-briefing skeleton — render -> store -> enqueue -> claim -> payload throws when no raster is stored for the exact member+date (absence-tolerant provider, never a crash caller-side)",
+            "daily-briefing print path for the shipped demo members enqueues, claims and resolves the raster of a seeded demo member"
           ],
           "tests/integration/daily-briefing-trigger.test.ts": [
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) AC-1: the last morning chore completed -> exactly one print job enqueued",

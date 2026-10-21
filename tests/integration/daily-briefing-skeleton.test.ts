@@ -11,6 +11,7 @@ import type { RenderEnvelope } from "../../src/server/modules/daily-briefing/ren
 // Importing the module (side effect at load time): registers the daily-briefing printable
 // provider (FR-016) — exactly what a real server boot does.
 import "../../src/server/modules/daily-briefing/index";
+import { runSeedProfile } from "../../src/server/db/seeds/runner";
 import { useIsolatedDb } from "../helpers/db";
 
 /** docs/features/daily-briefing.md (Constitution XIII runnable skeleton), as amended:
@@ -222,5 +223,57 @@ describe("daily-briefing skeleton — render -> store -> enqueue -> claim -> pay
     expect(claimed).not.toBeNull();
     const leaseToken = claimed?.leaseToken as string;
     expect(() => getPayload(enqueueResult.jobId, leaseToken, NOW)).toThrow();
+  });
+});
+
+/** The shipped demo member ids contain `:` (`demo:member:homer`), so a briefing printed for a
+ * seeded member must resolve its dated outputRef by the last segment, not by splitting on `:`. */
+describe("daily-briefing print path for the shipped demo members", () => {
+  useIsolatedDb();
+
+  const NOW = Date.UTC(2026, 8, 8, 6, 0, 0);
+  const DATE = "2026-09-08";
+
+  it("enqueues, claims and resolves the raster of a seeded demo member", async () => {
+    await runSeedProfile({ mode: "public", asOfDate: DATE, nowMs: NOW, disposableTarget: true });
+    const memberId = "demo:member:homer";
+    expect(getDb().prepare("SELECT id FROM members WHERE id = ?").get(memberId)).toEqual({
+      id: memberId,
+    });
+    const rasterByte = 0x3c;
+    getDb()
+      .prepare("DELETE FROM daily_briefing WHERE member_id = ? AND date = ?")
+      .run(memberId, DATE);
+    getDb()
+      .prepare(
+        `INSERT INTO daily_briefing
+          (id, member_id, date, status, payload, failed_render_blocks, raster_bits, raster_height, png, created_at, updated_at)
+         VALUES (?, ?, ?, 'ready', '{}', '[]', ?, 1, ?, ?, ?)`
+      )
+      .run(
+        `briefing-homer-${DATE}`,
+        memberId,
+        DATE,
+        Buffer.from(new Uint8Array(RASTER_BYTES_PER_ROW).fill(rasterByte)),
+        Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+        NOW,
+        NOW
+      );
+
+    const enqueued = enqueuePrintJob(
+      {
+        recordKey: `daily-briefing:${memberId}`,
+        targetDate: DATE,
+        outputRef: `daily-briefing:${memberId}:${DATE}`,
+        memberId,
+      },
+      NOW
+    );
+    expect(enqueued.enqueued).toBe(true);
+    const claimed = claimJob(NOW);
+    expect(claimed).not.toBeNull();
+
+    const payload = getPayload(enqueued.jobId, claimed?.leaseToken as string, NOW);
+    expect(new Set(payload.slice(12, 12 + RASTER_BYTES_PER_ROW))).toEqual(new Set([rasterByte]));
   });
 });
