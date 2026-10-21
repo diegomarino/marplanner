@@ -43,6 +43,17 @@ export class NotFoundError extends Error {
   }
 }
 
+/** A feed-owned (source=external) event: its fields belong to the feed snapshot, so the
+ * local edit/delete operations refuse it. Participant assignments stay editable. */
+export class ExternalEventReadOnlyError extends Error {
+  constructor(id: string) {
+    super(
+      `Event ${id} is synchronized from an external calendar and cannot be edited or deleted here`
+    );
+    this.name = "ExternalEventReadOnlyError";
+  }
+}
+
 // Public create/edit fields share one strict type boundary; merged-state validation follows.
 const eventFieldsSchema = z
   .object({
@@ -844,11 +855,13 @@ export function replaceAssignments(eventId: string, memberIds: string[]): FeedIt
 export function deleteEvent(id: string): void {
   const db = getDb();
 
-  // First verify the event exists
-  const existing = db.prepare("SELECT id FROM calendar_events WHERE id = ?").get(id);
+  // First verify the event exists and is local
+  const existing = db.prepare("SELECT source FROM calendar_events WHERE id = ?").get(id) as
+    { source: string } | undefined;
   if (!existing) {
     throw new NotFoundError(`Event not found: ${id}`);
   }
+  if (existing.source !== "local") throw new ExternalEventReadOnlyError(id);
 
   // Atomic: delete assignments + event in one transaction to prevent orphans
   db.transaction(() => {
@@ -892,6 +905,7 @@ export function editEvent(id: string, fields: Partial<EventInput>): FeedItem {
   if (!existing) {
     throw new NotFoundError(`Event not found: ${id}`);
   }
+  if (existing.source !== "local") throw new ExternalEventReadOnlyError(id);
 
   // Validate explicit-null rejection for non-nullable fields BEFORE merging/UPDATE
   const nonNullableFields: (keyof EventInput)[] = [
