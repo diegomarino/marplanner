@@ -9586,6 +9586,336 @@
           "branches": 86.36
         }
       },
+      "src/server/openapi/backups.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 11,
+          "statements": 11,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/bootstrap.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 5,
+          "statements": 5,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/calendar.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 15,
+          "statements": 15,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/common.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 7,
+          "statements": 7,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/daily-briefing.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 39,
+          "statements": 39,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/daily-messages.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 3,
+          "statements": 3,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/day-periods.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 5,
+          "statements": 5,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/docs.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 1,
+          "statements": 1,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/document.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 3,
+          "statements": 3,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/index.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 93,
+          "statements": 118,
+          "functions": 24,
+          "branches": 90
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 95.76,
+          "functions": 100,
+          "branches": 85.55
+        }
+      },
+      "src/server/openapi/meals.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 14,
+          "statements": 14,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/members.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 6,
+          "statements": 6,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/network-devices.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 10,
+          "statements": 10,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/plugins.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 22,
+          "statements": 22,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/printing.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 9,
+          "statements": 9,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/reminders.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 13,
+          "statements": 13,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/routines.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 15,
+          "statements": 15,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/settings.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 7,
+          "statements": 7,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/telemetry.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 9,
+          "statements": 9,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/time-announcements.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 6,
+          "statements": 6,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/weather.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 8,
+          "statements": 8,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/zod.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 11,
+          "statements": 14,
+          "functions": 6,
+          "branches": 2
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/server/plugins/errors.ts": {
         "layer": "server",
         "minimumTotals": {
