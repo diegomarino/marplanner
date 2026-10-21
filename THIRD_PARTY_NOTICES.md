@@ -54,12 +54,19 @@ distributed under the same license; the notice travels with the build as
 `dist/server/CORPORA-NOTICE.txt`.
 
 **`vocabulary-entries.json` (398 entries).** A project word list enriched on
-2026-06-12 (commit fe71295) with definitions, examples and pronunciations from the
-[Free Dictionary API](https://dictionaryapi.dev/).
+2026-06-12 (commit fe71295) through the [Free Dictionary API](https://dictionaryapi.dev/),
+which serves definitions from [Wiktionary](https://en.wiktionary.org/) and labels them
+[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/); each entry's source is
+`https://en.wiktionary.org/wiki/<word>`. Changes: one definition, example and
+pronunciation kept per word, reshaped to
+`{word, level, type, definition, example, pronunciation}`. This file is distributed under
+the same license. (The API's own GPL-3.0 license covers its server code, not this data.)
 
 **`number-facts.json` (366 entries).** Retrieved on 2026-06-12 (commit fe71295) from
-`number-trivia.com` math and trivia responses; entries the service did not answer
-use the script's own arithmetic sentences.
+`number-trivia.com` math and trivia responses; 18 numbers the service did not answer
+use the script's own arithmetic sentences. `number-trivia.com` publishes no terms,
+license or data source; its responses repeat the text of the retired Numbers API
+(`numbersapi.com`), which did not publish a data license either.
 
 **`word-search-corpus.json`.** Retrieved on 2026-06-10 (`generatedAt` in the file)
 from the [Datamuse API](https://www.datamuse.com/api/), acknowledged here as its
