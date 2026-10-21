@@ -11,6 +11,33 @@ owns household settings, member profiles, content, integrations and recovery.
 English and Spanish are supported. External providers and physical devices need
 operator configuration; synthetic test success does not establish their availability.
 
+![Marplanner home dashboard on a kiosk tablet](docs/images/features/home-dashboard.png)
+
+## Features
+
+**For the family:**
+
+- **Home dashboard:** today's agenda, chores, meals and weather at a glance.
+- **Routines & chores:** routines grouped by part of the day, emoji chores assigned to each child on chosen weekdays, and streaks.
+- **Meals & recipes:** a recipe catalogue, repeating weekly plans and one-off meals.
+- **Daily briefing, printed:** a personal paper slip for each child every morning, sent from the browser to a thermal printer over Bluetooth.
+- **Calendar:** local events plus ICS feeds, with automatic member assignment and emoji highlights.
+- **Reminders & daily messages**, **spoken time announcements**, **network device blocking (UniFi)** and **weather**.
+
+**For whoever runs it:**
+
+- Plugins you turn on or off.
+- Closed-by-default kiosk security.
+- Backups and restore.
+- Docker or one-click cloud demos.
+- English and Spanish.
+
+**For developers:**
+
+- An API-first design: the UI uses the same documented HTTP API you can script against. See the [API guide](docs/api/README.md).
+
+Take the [feature tour](docs/guide/README.md) for screenshots, or browse the [feature specs](docs/features/README.md).
+
 ## Try it in your own cloud
 
 Each button creates your own Marplanner instance on that host, filled with the
@@ -105,4 +132,4 @@ npm run dev
 
 Replace the synthetic credentials in `.env.local`. `npm run dev` starts the API and frontend on distinct automatically assigned loopback ports and reports both URLs. Each worktree stores its development data in its own `.data/`. Set `PORT` and `WEB_PORT` to distinct nonzero values when explicit ports are needed; occupied explicit ports fail. The `package.json` scripts define the current check tiers: `npm run check:fast`, `npm run check:standard`, and `npm run check:full`. The full tier includes browser tests and requires their local browser dependencies. A passing focused tier is evidence for that tier only. [Verification guidance](docs/quality/verification.md) explains discovery, coverage, and cross-consumer checks.
 
-[Contributor guide](CONTRIBUTING.md) · [Architecture](docs/architecture/principles.md) · [API contracts](docs/api/) · [License](LICENSE)
+[Feature tour](docs/guide/README.md) · [Contributor guide](CONTRIBUTING.md) · [Architecture](docs/architecture/principles.md) · [API guide](docs/api/README.md) · [License](LICENSE)
