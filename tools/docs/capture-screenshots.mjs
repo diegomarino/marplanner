@@ -153,7 +153,7 @@ async function settle(page) {
 }
 
 /**
- * Shot list. `route` is visited in-app; `admin` unlocks first; `crop` is a locator
+ * Shot list. `route` is visited in-app (`url` is a full page load outside the SPA); `admin` unlocks first; `crop` is a locator
  * factory for element screenshots (omit for a viewport capture); `prepare` runs
  * interactions before the capture.
  */
@@ -239,6 +239,8 @@ const SHOTS = [
     },
   },
   { name: "admin-settings", route: "/admin/settings", admin: true },
+  // 15. API-first: the generated reference served by the app itself
+  { name: "api-reference", url: "/api/docs/" },
 ];
 
 /** Spanish variants to show i18n; switched through the stored household language. */
@@ -266,6 +268,16 @@ async function capture(context, shots, suffix = "") {
     if (only && !only.some((prefix) => shot.name.startsWith(prefix))) continue;
     const file = join(OUT_DIR, `${shot.name}${suffix}.png`);
     try {
+      if (shot.url) {
+        await page.goto(BASE + shot.url);
+        await settle(page);
+        await page.waitForTimeout(1_500);
+        await page.screenshot({ path: file, animations: "disabled" });
+        console.log(`✓ ${shot.name}${suffix}`);
+        await page.goto(BASE);
+        await page.getByTestId("home-surface").waitFor({ timeout: 20_000 });
+        continue;
+      }
       if (shot.admin) await unlockAdmin(page);
       else if (new URL(page.url()).pathname.startsWith("/admin")) {
         await page.goto(BASE + shot.route);

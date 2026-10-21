@@ -81,7 +81,7 @@ Chores in Marplanner are built for kids, not for a to-do app:
 ![Routines admin](../images/features/admin-routines.png)
 
 Specs: [routines & chores](../features/routines-chores.md) ·
-[day periods](../features/day-periods.md) · API: [chores](../api/chores/openapi.yaml)
+[day periods](../features/day-periods.md) · API: [chores](../api/README.md#domains)
 
 ## 3. Meals and recipes
 
@@ -106,7 +106,7 @@ briefing.
 | --------------------------------------------------------- | ------------------------------------------------ |
 | ![Meal plan grid](../images/features/meals-plan-grid.png) | ![Recipes](../images/features/meals-recipes.png) |
 
-Specs: [meals & recipes](../features/meals-recipes.md) · API: [meals](../api/meals/openapi.yaml)
+Specs: [meals & recipes](../features/meals-recipes.md) · API: [meals](../api/README.md#domains)
 
 ## 4. Daily briefing, printed on a thermal printer
 
@@ -147,7 +147,7 @@ can also print automatically as soon as a child finishes their morning chores.
 </details>
 
 Specs: [daily briefing](../features/daily-briefing.md) · [printing](../features/printing.md) ·
-API: [daily briefing](../api/daily-briefing/openapi.yaml), [printing](../api/printing/openapi.yaml)
+API: [daily briefing](../api/README.md#domains), [printing](../api/README.md#domains)
 
 ## 5. Shared calendar and ICS feeds
 
@@ -166,7 +166,7 @@ API: [daily briefing](../api/daily-briefing/openapi.yaml), [printing](../api/pri
 
 ![Calendar admin](../images/features/admin-calendar.png)
 
-Specs: [calendar](../features/calendar.md) · API: [calendar](../api/calendar/openapi.yaml)
+Specs: [calendar](../features/calendar.md) · API: [calendar](../api/README.md#domains)
 
 ## 6. Reminders and daily messages
 
@@ -305,12 +305,17 @@ Specs: [i18n & localization](../features/i18n-localization.md) ·
 Everything the tablet does goes through the same HTTP API that is open to you. There
 are no private endpoints just for the UI.
 
-- An **OpenAPI 3.1 contract** for every domain, checked in CI against the routes that
-  are actually implemented.
+- An **OpenAPI 3.1 document** generated from the code. Every route declares its
+  schema, covering more than 120 operations.
 - **Script it with the same credentials as a tablet:** provision a device key once,
   then call the API from cron jobs, Home Assistant or your own dashboards.
 - A typed **domain event catalogue** and a **background job scheduler**, used by
   plugins.
+
+- An **interactive reference** at `/api/docs/` on every instance. It is generated
+  from the route schemas in the code, and CI fails if it falls out of date.
+
+![API reference](../images/features/api-reference.png)
 
 Start with the [API guide](../api/README.md).
 

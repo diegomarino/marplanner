@@ -222,6 +222,12 @@ export async function openApiDocsRoutes(app: FastifyInstance): Promise<void> {
       pageTitle: "Marplanner API reference",
       withDefaultFonts: false,
       hideClientButton: true,
+      // Self-hosted household API: no hosted Scalar extras (AI agent, MCP generator,
+      // developer toolbar) and no telemetry calls out of the instance.
+      agent: { disabled: true },
+      mcp: { disabled: true },
+      showDeveloperTools: "never",
+      telemetry: false,
     },
   });
 }

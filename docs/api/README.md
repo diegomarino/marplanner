@@ -5,12 +5,21 @@ the same HTTP API you can call from a script. Anything you can do on the tablet,
 such as ticking off a chore, adding an event or reading tonight's dinner, you can
 automate from cron, Home Assistant or your own dashboard.
 
-- **Reference:** the OpenAPI 3.1 document is generated from the route schemas at
-  build time and committed as [`openapi.json`](openapi.json). A running instance
-  serves it at `GET /api/openapi.json`, with an interactive reference at
-  `GET /api/docs`. Both need the same credentials as any other `/api` route.
-- **Kept honest by CI:** `npm run check:openapi` fails if the committed spec no
-  longer matches the routes that are implemented.
+- **Reference:** a running instance serves an interactive reference at
+  `GET /api/docs/` and the raw OpenAPI 3.1 document at `GET /api/openapi.json`.
+  Both need the same credentials as any other `/api` route. A copy is committed as
+  [`openapi.json`](openapi.json), so you can read it without running anything.
+- **Generated from the code:** every route declares its schema with zod, next to the
+  handler (`src/server/openapi/<domain>.ts`). `npm run generate:openapi` rewrites
+  `openapi.json` from those schemas, and `npm run check:openapi` fails CI if the
+  committed file is out of date, if a route has no schema, or if the documented
+  operations no longer match the route table.
+- **No second source of truth:** the schemas only document the API. Request checks
+  and error responses are still handled in `src/server/modules/*`, so documenting a
+  route never changes how it behaves. `npm run check:openapi-bodies` checks
+  the schemas against real requests and responses captured while the test suite runs.
+
+![Interactive API reference](../images/features/api-reference.png)
 
 ## Authentication
 
@@ -118,7 +127,17 @@ curl -s -H "$AUTH" "$BASE/api/menu?date=2026-10-21"
 | Telemetry          | `/api/telemetry`                                                                          |
 
 Browse the full list of operations with their request and response schemas at
-`/api/docs` on any instance.
+`/api/docs/` on any instance.
+
+## Adding or changing a route
+
+1. Declare or update its zod schema in `src/server/openapi/<domain>.ts`. Register
+   any shared shapes with `component()`, so they appear under
+   `#/components/schemas`.
+2. Attach the schema to the route with `documented(<domain>Schemas.<operation>)`.
+3. Run `npm run generate:openapi` and commit the updated `docs/api/openapi.json`.
+4. Run `npm run check:openapi` (and `check:openapi-shapes` if the change touches a
+   type in `src/shared`).
 
 ## Beyond HTTP
 
