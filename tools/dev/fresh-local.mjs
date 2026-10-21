@@ -9,9 +9,17 @@
  * with --force-data-dir.
  */
 import { spawn } from "node:child_process";
-import { existsSync, rmSync, mkdirSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  realpathSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { loadEnvFile } from "node:process";
-import { isAbsolute, resolve } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "../..");
 
@@ -30,6 +38,8 @@ runs seed:public then seed:private, then starts npm run dev.
 
 Default data dir: .data-fresh (under the project root).
 Refuses to wipe .data unless --force-data-dir is passed with an explicit --data-dir .data.
+Only wipes an empty directory, a store it created (marked ${STORE_MARKER}) or a .data-*
+directory directly under the project root; never the project root or its ancestors.
 `;
 }
 
@@ -58,12 +68,52 @@ function parseArgs(argv) {
   return { help: false, dataDir, forceDataDir };
 }
 
+/** Written into every store this script creates; only marked stores may be wiped anywhere. */
+const STORE_MARKER = ".mp-fresh-store";
+
+/** Absolute path with every symlink in its existing prefix resolved, so `..`, `./` and links
+ * cannot disguise the project (or one of its ancestors) as a disposable store. */
+function canonicalize(absPath) {
+  const missing = [];
+  let current = absPath;
+  while (!existsSync(current)) {
+    missing.unshift(basename(current));
+    const parent = dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  return join(realpathSync(current), ...missing);
+}
+
 function resolveDataDir(raw) {
-  return isAbsolute(raw) ? raw : resolve(ROOT, raw);
+  if (raw.trim() === "") throw new Error("Refusing an empty data dir; pass a disposable path.");
+  return canonicalize(isAbsolute(raw) ? raw : resolve(ROOT, raw));
 }
 
 function isDefaultPlayground(absPath) {
-  return absPath === resolve(ROOT, ".data");
+  return absPath === resolve(realpathSync(ROOT), ".data");
+}
+
+/** Wiping is allowed for a missing or empty directory, a store this script marked, or a
+ * legacy `.data-*` store directly under the project root. Never the root or its ancestors. */
+function assertDisposable(absPath) {
+  const root = realpathSync(ROOT);
+  const rel = relative(absPath, root);
+  const rootOutsideTarget = rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel);
+  if (!rootOutsideTarget) {
+    throw new Error(`Refusing to wipe ${absPath}: it is the project root or one of its ancestors.`);
+  }
+  if (!existsSync(absPath)) return;
+  if (!statSync(absPath).isDirectory()) {
+    throw new Error(`Refusing to wipe ${absPath}: it is not a directory.`);
+  }
+  if (readdirSync(absPath).length === 0 || existsSync(join(absPath, STORE_MARKER))) return;
+  const legacyStore = dirname(absPath) === root && basename(absPath).startsWith(".data");
+  if (!legacyStore) {
+    throw new Error(
+      `Refusing to wipe ${absPath}: it is not empty and was not created by dev:fresh (no ${STORE_MARKER}).`
+    );
+  }
 }
 
 function run(command, args, env) {
@@ -95,12 +145,14 @@ async function main() {
       `Refusing to wipe the default playground ${dataDir}. Pass a disposable --data-dir or --force-data-dir with an explicit path.`
     );
   }
+  assertDisposable(dataDir);
 
   if (existsSync(dataDir)) {
     console.log(`Removing disposable store: ${dataDir}`);
     rmSync(dataDir, { recursive: true, force: true });
   }
   mkdirSync(dataDir, { recursive: true });
+  writeFileSync(join(dataDir, STORE_MARKER), "Disposable store created by npm run dev:fresh.\n");
   console.log(`Fresh DATA_DIR: ${dataDir}`);
 
   const env = {
