@@ -1,5 +1,19 @@
 # Operating Marplanner
 
+**Something is wrong right now?**
+[Startup failed during an upgrade migration](#pre-migration-recovery-snapshots) ·
+[It refuses to start on a weekday integrity check](#weekday-integrity-at-startup) ·
+[Restore a backup](#snapshot-and-restore) ·
+[Find why an integration stopped reacting](#find-event-subscriber-failures)
+
+**Setting up:** [install and storage](#install-and-storage) ·
+[container](#container-installation) · [subpath hosting](#runtime-subpath-hosting) ·
+[credentials and provisioning](#credentials-and-provisioning) ·
+[plugins and integrations](#plugins-and-integrations) ·
+[one-click cloud demo](#one-click-cloud-demo) · [local development](#local-development) ·
+[synthetic seed and checks](#synthetic-seed-and-checks) ·
+[isolated verification](#isolated-verification)
+
 ## Install and storage
 
 Use Node.js `>=24.21.0 <25` (the development and CI pin is `24.21.0`) and npm `11.19.0`. Install from this repository's lockfile and build both client and server:
