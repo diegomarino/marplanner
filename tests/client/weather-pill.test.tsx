@@ -5,6 +5,7 @@ import { LanguageProvider } from "@/i18n";
 import { WeatherPill, WeatherPillView } from "@/home/WeatherPill";
 import { Shell } from "@/shell/Shell";
 import { writeWeatherCache } from "@/home/weatherCache";
+import { sliceUpcomingHours } from "@/home/weatherFormat";
 import type { ForecastHour, ForecastResult } from "../../src/shared";
 import type { PluginCatalogEntry, PluginId } from "../../src/shared/plugins";
 
@@ -809,5 +810,32 @@ describe("WeatherPillView — TTL-expiry recheck (Codex review on #656, P2)", ()
 
     expect(mockFetch).not.toHaveBeenCalled();
     expect(screen.getByTestId("weather-pill-condition")).toHaveTextContent("Clear");
+  });
+});
+
+/** `hour.time` is household-local wall time without an offset; the kiosk browser may run in
+ * another zone, so the current hour must come from the household timezone. */
+describe("sliceUpcomingHours in the household timezone", () => {
+  const day = Array.from({ length: 24 }, (_, h) => ({
+    time: `2026-10-21T${String(h).padStart(2, "0")}:00`,
+    conditionKey: "clear" as const,
+    tempC: 15,
+    rainPct: 0,
+  }));
+  const now = Date.parse("2026-10-21T12:45:00Z");
+
+  it.each([
+    ["Europe/Madrid", "2026-10-21T14:00"],
+    ["America/Los_Angeles", "2026-10-21T05:00"],
+    ["Asia/Tokyo", "2026-10-21T21:00"],
+    ["UTC", "2026-10-21T12:00"],
+  ])("starts at the current household hour in %s, whatever the browser zone", (zone, first) => {
+    const upcoming = sliceUpcomingHours(day, now, zone);
+    expect(upcoming[0]?.time).toBe(first);
+    expect(upcoming.at(-1)?.time).toBe("2026-10-21T23:00");
+  });
+
+  it("returns nothing once every forecast hour has passed in the household zone", () => {
+    expect(sliceUpcomingHours(day, Date.parse("2026-10-22T08:00:00Z"), "Asia/Tokyo")).toEqual([]);
   });
 });
