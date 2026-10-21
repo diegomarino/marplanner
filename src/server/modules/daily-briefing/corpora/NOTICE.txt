@@ -1,0 +1,24 @@
+Third-party data in the Daily Briefing corpora
+
+trivia-questions.json
+  Source: Open Trivia Database (https://opentdb.com/), retrieved 2026-06-12.
+  License: Creative Commons Attribution-ShareAlike 4.0 International
+  (https://creativecommons.org/licenses/by-sa/4.0/). This file is distributed under
+  the same license.
+  Changes: HTML entities decoded, duplicate questions removed, answer options sorted,
+  reshaped to {question, correctAnswer, options, difficulty, category}.
+
+vocabulary-entries.json
+  Definitions, examples and pronunciations from the Free Dictionary API
+  (https://dictionaryapi.dev/), retrieved 2026-06-12, for a project word list.
+
+number-facts.json
+  Math and trivia facts from number-trivia.com, retrieved 2026-06-12; numbers the
+  service did not answer use generated arithmetic sentences.
+
+word-search-corpus.json
+  Words and frequency data from the Datamuse API (https://www.datamuse.com/api/),
+  retrieved 2026-06-10; Datamuse documents Google Books Ngrams as the source of its
+  frequency data.
+
+All other corpora in this directory are part of Marplanner and covered by its license.
