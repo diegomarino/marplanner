@@ -56,7 +56,8 @@ export const EventEditInput = component(
       .string()
       .nullable()
       .meta({
-        description: "RFC-5545 RRULE; null = single occurrence. Validated by the shared expander.",
+        description:
+          "RFC-5545 RRULE; null = single occurrence. Supported subset: FREQ=DAILY|WEEKLY|MONTHLY|YEARLY with INTERVAL, COUNT, UNTIL, BYDAY, BYMONTHDAY, BYMONTH, WKST; anything else (sub-daily FREQ, BYHOUR/BYMINUTE/BYSECOND, BYSETPOS, BYYEARDAY, BYWEEKNO, a BYMONTH/BYMONTHDAY pair that never occurs) is a 400.",
         example: "FREQ=WEEKLY;BYDAY=MO",
       })
       .optional(),
@@ -128,7 +129,7 @@ export const EventInput = component(
         .nullable()
         .meta({
           description:
-            "RFC-5545 RRULE; null = single occurrence. Validated by the shared expander.",
+            "RFC-5545 RRULE; null = single occurrence. Supported subset: FREQ=DAILY|WEEKLY|MONTHLY|YEARLY with INTERVAL, COUNT, UNTIL, BYDAY, BYMONTHDAY, BYMONTH, WKST; anything else (sub-daily FREQ, BYHOUR/BYMINUTE/BYSECOND, BYSETPOS, BYYEARDAY, BYWEEKNO, a BYMONTH/BYMONTHDAY pair that never occurs) is a 400.",
           example: "FREQ=WEEKLY;BYDAY=MO",
         })
         .optional(),
