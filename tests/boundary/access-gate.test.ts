@@ -74,6 +74,42 @@ describe("access gate", () => {
     expect(res.headers["set-cookie"]).toBeUndefined();
   });
 
+  it("a refused submission explains the rejection without echoing it or revealing the setup", async () => {
+    const gateApp = await buildApp({ staticRoot: makeStaticRoot() });
+    app = gateApp;
+    const post = (body: string) =>
+      gateApp.inject({
+        method: "POST",
+        url: "/gate",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body,
+      });
+
+    const wrong = await post("token=mpg-wrong-guess-1234");
+    expect(wrong.statusCode).toBe(200);
+    expect(wrong.body).toContain('data-testid="access-gate-rejected"');
+    expect(wrong.body).toContain('role="alert"');
+    expect(wrong.body).toContain("ask whoever set up this");
+    expect(wrong.body).not.toContain("mpg-wrong-guess-1234");
+    expect(wrong.body).not.toContain(TOKEN);
+
+    const empty = await post("token=");
+    expect(empty.body).toContain('data-testid="access-gate-rejected"');
+
+    const firstVisit = await gateApp.inject({ method: "GET", url: "/" });
+    expect(firstVisit.body).toContain("access-gate-form");
+    expect(firstVisit.body).not.toContain("access-gate-rejected");
+
+    // Fail-closed (no usable token configured) reads exactly like a wrong token.
+    delete process.env.MP_ACCESS_TOKEN;
+    const unconfigured = await post("token=mpg-wrong-guess-1234");
+    expect(unconfigured.body).toBe(wrong.body);
+
+    process.env.MP_ACCESS_TOKEN = TOKEN;
+    const valid = await post(`token=${TOKEN}`);
+    expect(valid.statusCode).toBe(303);
+  });
+
   it("fail-closed: unset token ⇒ gate unpassable", async () => {
     delete process.env.MP_ACCESS_TOKEN;
     app = await buildApp({ staticRoot: makeStaticRoot() });
