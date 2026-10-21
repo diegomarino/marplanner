@@ -8,6 +8,8 @@ automate from cron, Home Assistant or your own dashboard.
 - **Browse it online:** [API reference](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/diegomarino/marplanner-project/main/docs/api/openapi.json), opened in Swagger UI from the
   `openapi.json` committed on `main`. You can read it without running an instance.
   "Try it out" calls will not reach your server, because they need its device cookie.
+  The viewer loads the file from `raw.githubusercontent.com`, so the link works only
+  while the repository is public.
 - **Reference:** a running instance serves an interactive reference at
   `GET /api/docs/` and the raw OpenAPI 3.1 document at `GET /api/openapi.json`.
   Both need the same credentials as any other `/api` route. A copy is committed as
