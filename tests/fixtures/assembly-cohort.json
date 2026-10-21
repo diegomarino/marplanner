@@ -2142,6 +2142,12 @@
             "OpenAPI document and reference UI honours BASE_PATH: prefixed routes, unprefixed paths and a matching server URL",
             "OpenAPI document and reference UI documents every API route it serves (no schemaless /api route reaches the document)"
           ],
+          "tests/boundary/openapi-documented-errors.test.ts": [
+            "documented() route schemas do not change Fastify error bodies a thrown Error at a documented 500 keeps Fastify's error envelope",
+            "documented() route schemas do not change Fastify error bodies a thrown Error carrying a code and statusCode keeps both at a documented status",
+            "documented() route schemas do not change Fastify error bodies Fastify's malformed-JSON rejection at a documented 400 keeps its error envelope",
+            "documented() route schemas do not change Fastify error bodies a plain-object reply at a documented status is sent unchanged"
+          ],
           "tests/boundary/operator-config.test.ts": [
             "getOperatorConfig returns undefined when the underlying env var is unset",
             "getOperatorConfig resolves 'weather.endpoint' to WEATHER_ENDPOINT",
