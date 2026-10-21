@@ -214,7 +214,11 @@ const gate = {
   payload: '<main data-testid="access-gate-form">',
 };
 assert.equal(captureRoute(gate), "(access-gate-form)");
+// The marker is the attribute, not the exact tag text (src/server/auth/gate.ts adds others).
+const styledGate = '<main class="panel" data-testid="access-gate-form" role="region">';
+assert.equal(captureRoute({ ...gate, payload: styledGate }), "(access-gate-form)");
 for (const changed of [
+  { payload: '<div data-testid="access-gate-form">' },
   { url: "/api/auth/provision" },
   { url: "/%61pi/other" },
   { url: "/%ZZpi/auth/provision" },
