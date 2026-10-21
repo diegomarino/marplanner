@@ -50,15 +50,25 @@ export const PrinterSettings = component(
 
 export const PrinterTransportSettings = component(
   "PrinterTransportSettings",
-  z.strictObject({
-    deviceId: z.string().min(1),
-    name: z.string().min(1),
-    serviceUuid: z.string().meta({ format: "uuid" }),
-    characteristicUuid: z.string().meta({ format: "uuid" }),
-  }),
+  z.union([
+    z.strictObject({
+      deviceId: z.string().min(1),
+      name: z.string().min(1),
+      serviceUuid: z.string().meta({ format: "uuid" }),
+      characteristicUuid: z.string().meta({ format: "uuid" }),
+    }),
+    z
+      .strictObject({
+        deviceId: z.literal(""),
+        name: z.literal(""),
+        serviceUuid: z.literal(""),
+        characteristicUuid: z.literal(""),
+      })
+      .meta({ description: "Unconfigured: the default every field falls back to." }),
+  ]),
   {
     description:
-      "Private local transport configuration accepted only while Printing is active; it is not pairing, connectivity, capability, or activity state.",
+      "Private local transport configuration accepted only while Printing is active; it is not pairing, connectivity, capability, or activity state. Either all four fields are empty (unconfigured) or `deviceId`/`name` are non-empty and both UUIDs are well-formed.",
   }
 );
 

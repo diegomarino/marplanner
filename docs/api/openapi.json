@@ -1910,16 +1910,32 @@
         "description": "Persisted printer configuration only; it does not assert a connected or capable printer."
       },
       "PrinterTransportSettings": {
-        "type": "object",
-        "properties": {
-          "deviceId": { "type": "string", "minLength": 1 },
-          "name": { "type": "string", "minLength": 1 },
-          "serviceUuid": { "type": "string", "format": "uuid" },
-          "characteristicUuid": { "type": "string", "format": "uuid" }
-        },
-        "required": ["deviceId", "name", "serviceUuid", "characteristicUuid"],
-        "additionalProperties": false,
-        "description": "Private local transport configuration accepted only while Printing is active; it is not pairing, connectivity, capability, or activity state."
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "deviceId": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1 },
+              "serviceUuid": { "type": "string", "format": "uuid" },
+              "characteristicUuid": { "type": "string", "format": "uuid" }
+            },
+            "required": ["deviceId", "name", "serviceUuid", "characteristicUuid"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "deviceId": { "type": "string", "const": "" },
+              "name": { "type": "string", "const": "" },
+              "serviceUuid": { "type": "string", "const": "" },
+              "characteristicUuid": { "type": "string", "const": "" }
+            },
+            "required": ["deviceId", "name", "serviceUuid", "characteristicUuid"],
+            "additionalProperties": false,
+            "description": "Unconfigured: the default every field falls back to."
+          }
+        ],
+        "description": "Private local transport configuration accepted only while Printing is active; it is not pairing, connectivity, capability, or activity state. Either all four fields are empty (unconfigured) or `deviceId`/`name` are non-empty and both UUIDs are well-formed."
       },
       "PrintingErrorResponse": {
         "type": "object",
