@@ -219,6 +219,8 @@ const styledGate = '<main class="panel" data-testid="access-gate-form" role="reg
 assert.equal(captureRoute({ ...gate, payload: styledGate }), "(access-gate-form)");
 for (const changed of [
   { payload: '<div data-testid="access-gate-form">' },
+  { payload: '<main not-data-testid="access-gate-form">' },
+  { payload: '<mainx data-testid="access-gate-form">' },
   { url: "/api/auth/provision" },
   { url: "/%61pi/other" },
   { url: "/%ZZpi/auth/provision" },
