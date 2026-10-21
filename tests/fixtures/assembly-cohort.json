@@ -868,7 +868,8 @@
             "access gate health untouched: GET /health with no cookie → 200",
             "access gate GET /gate with no cookie returns form (not shell sentinel)",
             "access gate form HTML inlines shared tokens.css (single palette source)",
-            "access gate loads shared tokens relative to its module when started outside the project directory"
+            "access gate loads shared tokens relative to its module when started outside the project directory",
+            "access gate a refused submission explains the rejection without echoing it or revealing the setup"
           ],
           "tests/boundary/auth-boundary.test.ts": [
             "full-access authentication boundary authorizes a live provisioned-device cookie with scope '*'",
