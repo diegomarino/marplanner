@@ -1137,7 +1137,8 @@
             "calendar-mutate (RED by design, turns green) PATCH /api/calendar/events/:id with rrule=null clears recurrence and returns 200",
             "calendar-mutate (RED by design, turns green) stores a local event's description and location, serves them, and clears them when blanked",
             "calendar-mutate (RED by design, turns green) PATCH switches an all-day event to timed and back, dropping the other shape's dates",
-            "calendar-mutate (RED by design, turns green) PATCH switches a weekly series to YEARLY (numeric zero frequency) and refuses MINUTELY"
+            "calendar-mutate (RED by design, turns green) PATCH switches a weekly series to YEARLY (numeric zero frequency) and refuses MINUTELY",
+            "calendar-mutate (RED by design, turns green) refuses to edit or delete a feed-owned event but still lets its participants change"
           ],
           "tests/boundary/calendar-parse.test.ts": [
             "Calendar ICS parser adapter normalizes RRULE, RDATE, EXDATE, overrides, cancellations, and DST instants",
