@@ -64,9 +64,9 @@ export function parseRouteTree(tree) {
  * the API surface (`/health` + `/api/*`) as a Set of "<METHOD> <path>" strings in
  * OpenAPI path syntax. Frontend/static routes (`/gate`, `/`, `/assets/*`,
  * `/index.html`) are excluded — they are not part of the OpenAPI contract
- * (ADR-031/059). Routes are schemaless in this module, so this is a path+method
- * drift check, not a full-schema generation (there are no route schemas to
- * generate from).
+ * (ADR-031/059). This is the raw route table (path+method only), independent of the
+ * OpenAPI collector; the full document is generated from the route schemas by
+ * tools/generate-openapi.mjs, and check-openapi-drift.mjs compares the two.
  */
 async function discoverIsolatedRoutes() {
   register();

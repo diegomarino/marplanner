@@ -1,6 +1,3 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { load as loadYaml } from "js-yaml";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FastifyInstance } from "fastify";
 import { hashKey } from "../../src/server/auth/credentials";
@@ -8,6 +5,7 @@ import { getDb } from "../../src/server/db/client";
 import { evaluateAutoPrintTrigger } from "../../src/server/modules/daily-briefing/trigger";
 import { seedMember } from "../helpers/daily-briefing-seed";
 import { useIsolatedDb } from "../helpers/db";
+import { contractSlice } from "../helpers/openapi-contract";
 
 /** docs/features/daily-briefing.md (FR-010) — six negative proofs the story's
  * per-file tasks don't already cover in one place: the read-purity fence, a schemaVersion-1
@@ -156,9 +154,20 @@ describe("daily-briefing negatives (FR-010)", () => {
 
   // ── (4) OpenAPI closed-schema walk ───────────────────────────────────────────────────────────
 
-  describe("(4) contracts/openapi.yaml — every object schema is closed (additionalProperties: false)", () => {
-    const contractPath = path.resolve(process.cwd(), "docs/api/briefing-render/openapi.yaml");
-    const doc = loadYaml(readFileSync(contractPath, "utf8")) as Record<string, unknown>;
+  describe("(4) daily-briefing contract slice — every object schema is closed (additionalProperties: false)", () => {
+    // The briefing-render surface (settings, read, preview, print, block order/settings and
+    // schedule) of the generated docs/api/openapi.json plus every component schema it
+    // references (transitively). Generation/opt-in/history keep their open legacy shapes.
+    const doc = contractSlice("daily-briefing", [
+      "GET /api/daily-briefing/settings",
+      "PUT /api/daily-briefing/settings",
+      "GET /api/daily-briefing/{memberId}/{date}",
+      "GET /api/daily-briefing/{memberId}/{date}/preview.png",
+      "POST /api/daily-briefing/{memberId}/{date}/print",
+      "PUT /api/daily-briefing/block-order",
+      "PUT /api/daily-briefing/block-settings/{memberId}/{blockType}",
+      "PUT /api/daily-briefing/schedule/{memberId}",
+    ]) as unknown as Record<string, unknown>;
 
     it("the contract file actually has schemas to scan (sanity — a vacuous scan proves nothing)", () => {
       const schemas =
@@ -171,10 +180,8 @@ describe("daily-briefing negatives (FR-010)", () => {
       // body schema (never registered under components.schemas) must not slip through unchecked
       // just because it isn't a top-level named schema (the 017 / 018 precedent, mirrored
       // verbatim from tests/boundary/printing-negatives.test.ts). A future route addition to
-      // THIS file is covered automatically, since the walk re-parses the YAML at test-run time —
-      // the walk does NOT follow `$ref` pointers into sibling contracts (e.g. this file's own
-      // `Briefing` reference into 010's openapi.yaml), so a schema that lives only on the other
-      // side of a `$ref` is out of this walk's scope, same as (b) in printing-negatives.test.ts.
+      // this domain is covered automatically, since the slice is rebuilt from the generated
+      // contract at test-run time and includes every referenced component schema.
       let checked = 0;
       function walk(node: unknown, nodePath: string): void {
         if (Array.isArray(node)) {

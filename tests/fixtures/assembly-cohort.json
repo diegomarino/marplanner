@@ -73,7 +73,15 @@
     },
     {
       "method": "GET",
+      "path": "/api/docs"
+    },
+    {
+      "method": "GET",
       "path": "/api/members"
+    },
+    {
+      "method": "GET",
+      "path": "/api/openapi.json"
     },
     {
       "method": "GET",
@@ -530,27 +538,7 @@
     "printing",
     "settings"
   ],
-  "apiContracts": [
-    "docs/api/backups/openapi.yaml",
-    "docs/api/bootstrap/openapi.yaml",
-    "docs/api/briefing-render/openapi.yaml",
-    "docs/api/calendar-feed-sync/openapi.yaml",
-    "docs/api/calendar-reminders/openapi.yaml",
-    "docs/api/calendar/openapi.yaml",
-    "docs/api/chores/openapi.yaml",
-    "docs/api/daily-briefing/openapi.yaml",
-    "docs/api/daily-messages/openapi.yaml",
-    "docs/api/day-periods/openapi.yaml",
-    "docs/api/meals/openapi.yaml",
-    "docs/api/members/openapi.yaml",
-    "docs/api/network-devices/openapi.yaml",
-    "docs/api/plugin-lifecycle/openapi.yaml",
-    "docs/api/printing/openapi.yaml",
-    "docs/api/reminders/openapi.yaml",
-    "docs/api/telemetry/openapi.yaml",
-    "docs/api/time-announcements/openapi.yaml",
-    "docs/api/weather/openapi.yaml"
-  ],
+  "apiContracts": ["docs/api/openapi.json"],
   "hostApiExportNames": [
     "DailyMessageNotFoundError",
     "MemberReferenceError",
@@ -699,7 +687,12 @@
             "negative: malformed contract YAML surfaces as a shape finding, not a crash",
             "negative: zero discovered contracts FAILS the shape check too",
             "negative: zero parsed src/shared types FAILS (parser breakage isn't a vacuous green)",
-            "maintained YAML descriptions do not become accidental null-valued fields"
+            "maintained YAML descriptions do not become accidental null-valued fields",
+            "discoverContracts: finds the generated openapi.json beside legacy per-domain YAML",
+            "parseContractRoutes reads the generated JSON document",
+            "negative: an undocumented implemented route is only exempt when explicitly listed",
+            "checkOperationSchemas: accepts documented operations, flags schemaless ones",
+            "the committed generated contract declares a schema for every operation"
           ],
           "tools/check-quality-tools-negative.test.mjs": [
             "fresh root exception ratchet uses exact reviewed empty bootstrap list",
@@ -1289,8 +1282,8 @@
             "daily-briefing negatives (FR-010) (1) GET for an ungenerated member/date creates no daily_briefing row",
             "daily-briefing negatives (FR-010) (2) GET still reads a pre-019 schemaVersion-1 row coherently, untouched by the v2 registry",
             "daily-briefing negatives (FR-010) (3) PUT block-settings with a language unavailable for the type 400s corpus_language_unavailable",
-            "daily-briefing negatives (FR-010) (4) contracts/openapi.yaml — every object schema is closed (additionalProperties: false) the contract file actually has schemas to scan (sanity — a vacuous scan proves nothing)",
-            "daily-briefing negatives (FR-010) (4) contracts/openapi.yaml — every object schema is closed (additionalProperties: false) every OBJECT-typed schema anywhere in the contract (named or inline) is closed",
+            "daily-briefing negatives (FR-010) (4) daily-briefing contract slice — every object schema is closed (additionalProperties: false) the contract file actually has schemas to scan (sanity — a vacuous scan proves nothing)",
+            "daily-briefing negatives (FR-010) (4) daily-briefing contract slice — every object schema is closed (additionalProperties: false) every OBJECT-typed schema anywhere in the contract (named or inline) is closed",
             "daily-briefing negatives (FR-010) (5) settings/block-order/member-block-settings writes leave a generated briefing row BYTE-IDENTICAL",
             "daily-briefing negatives (FR-010) (6) with autoPrintTrigger unbound and morning complete, the trigger evaluation enqueues nothing"
           ],
@@ -2033,9 +2026,9 @@
             "network-devices events — (RED-first) network.device_unblocked: emitting via the host-api barrel with NO subscriber never throws (ADR-040)"
           ],
           "tests/boundary/network-devices-negatives.test.ts": [
-            "network-devices negatives — (assert-and-prove) schema-level: contracts/openapi.yaml admits no IP property anywhere the contract file actually has schemas to scan (sanity — a vacuous scan proves nothing)",
-            "network-devices negatives — (assert-and-prove) schema-level: contracts/openapi.yaml admits no IP property anywhere no schema property name is 'ip'/'ipAddress' (case-insensitive) anywhere in the contract",
-            "network-devices negatives — (assert-and-prove) schema-level: contracts/openapi.yaml admits no IP property anywhere every OBJECT-typed schema anywhere in the contract is closed (additionalProperties: false)",
+            "network-devices negatives — (assert-and-prove) schema-level: the network-devices contract slice admits no IP property anywhere the contract file actually has schemas to scan (sanity — a vacuous scan proves nothing)",
+            "network-devices negatives — (assert-and-prove) schema-level: the network-devices contract slice admits no IP property anywhere no schema property name is 'ip'/'ipAddress' (case-insensitive) anywhere in the contract",
+            "network-devices negatives — (assert-and-prove) schema-level: the network-devices contract slice admits no IP property anywhere every OBJECT-typed schema anywhere in the contract is closed (additionalProperties: false)",
             "network-devices negatives — (assert-and-prove) payload-level: the IP-rich fixture never surfaces an IP anywhere list / live-clients / register / edit / block / unblock responses are all IP-free",
             "network-devices negatives — (assert-and-prove) a MAC-bearing telemetry entry through the REAL writeClientLog pipeline emerges redacted ('s patterns, not rebuilt)",
             "network-devices negatives — (assert-and-prove) unifi.* operator-config credential values never leak a genuinely-configured operator credential never appears in device rows, settings reads, or telemetry",
@@ -2138,6 +2131,16 @@
             "no-server-session / PIN-agnostic-authz (FR-014/015/017/018) verify-pin creates no session row (FR-014/FR-015/FR-016)",
             "no-server-session / PIN-agnostic-authz (FR-014/015/017/018) GET /api/settings authorized by key alone regardless of PIN state (FR-014/FR-017/FR-018)",
             "no-server-session / PIN-agnostic-authz (FR-014/015/017/018) verifying an incorrect PIN creates no session row and reports no-match (FR-014/FR-015/FR-026)"
+          ],
+          "tests/boundary/openapi-docs.test.ts": [
+            "OpenAPI document and reference UI /api/openapi.json is not public: no credential → 401 envelope",
+            "OpenAPI document and reference UI /api/docs is not public: no credential → 401 envelope",
+            "OpenAPI document and reference UI /api/docs/ is not public: no credential → 401 envelope",
+            "OpenAPI document and reference UI /api/docs/js/scalar.js is not public: no credential → 401 envelope",
+            "OpenAPI document and reference UI serves the generated OpenAPI 3.1 document, identical to the committed docs/api/openapi.json",
+            "OpenAPI document and reference UI serves the reference UI and its bundled script with a valid device key",
+            "OpenAPI document and reference UI honours BASE_PATH: prefixed routes, unprefixed paths and a matching server URL",
+            "OpenAPI document and reference UI documents every API route it serves (no schemaless /api route reaches the document)"
           ],
           "tests/boundary/operator-config.test.ts": [
             "getOperatorConfig returns undefined when the underlying env var is unset",
@@ -2322,8 +2325,8 @@
           "tests/boundary/printing-negatives.test.ts": [
             "printing negatives — (FR-005, FR-020) (a) production event payloads closed to the canonical catalog shape (FR-005/FR-008/FR-009) printing.completed via the REAL enqueue→claim→payload→ack flow is closed to exactly {jobId, outputRef, printedAt}",
             "printing negatives — (FR-005, FR-020) (a) production event payloads closed to the canonical catalog shape (FR-005/FR-008/FR-009) printing.failed via the REAL getPayload render_failure (permanent) path is closed to exactly {jobId, outputRef, errorCode}",
-            "printing negatives — (FR-005, FR-020) (b) contracts/openapi.yaml — every object schema is closed (additionalProperties: false) the contract file actually has schemas to scan (sanity — a vacuous scan proves nothing)",
-            "printing negatives — (FR-005, FR-020) (b) contracts/openapi.yaml — every object schema is closed (additionalProperties: false) every OBJECT-typed schema anywhere in the contract (named or inline) is closed",
+            "printing negatives — (FR-005, FR-020) (b) printing contract slice — every object schema is closed (additionalProperties: false) the contract file actually has schemas to scan (sanity — a vacuous scan proves nothing)",
+            "printing negatives — (FR-005, FR-020) (b) printing contract slice — every object schema is closed (additionalProperties: false) every OBJECT-typed schema anywhere in the contract (named or inline) is closed",
             "printing negatives — (FR-005, FR-020) (c) no route serves payload bytes without a valid lease token missing leaseToken query param -> 409, no bits served (valid token on the SAME job DOES serve real bytes)",
             "printing negatives — (FR-005, FR-020) (c) no route serves payload bytes without a valid lease token wrong leaseToken -> 409, no bits served, job stays claimed under the ORIGINAL lease (which DOES serve real bytes)",
             "printing negatives — (FR-005, FR-020) (c) no route serves payload bytes without a valid lease token expired-lease token (correct token, lease elapsed) -> 409, no bits served, lease not extended (a FRESH re-claim on the SAME job DOES serve real bytes)",

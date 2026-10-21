@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, expectTypeOf, it } from "vitest";
@@ -11,6 +11,7 @@ import type {
   HighlightRulePatch,
   SynchronizationPhase,
 } from "../../src/shared/index";
+import { loadGeneratedContract } from "../helpers/openapi-contract";
 
 type Schema = {
   type?: string;
@@ -21,7 +22,6 @@ type Schema = {
 };
 
 const plannedPath = path.resolve(process.cwd(), "docs/api/calendar-feed-sync/openapi.planned.yaml");
-const implementedPath = path.resolve(process.cwd(), "docs/api/calendar-feed-sync/openapi.yaml");
 const document = loadYaml(readFileSync(plannedPath, "utf8")) as {
   components?: { schemas?: Record<string, Schema> };
 };
@@ -29,12 +29,14 @@ const schemas = document.components?.schemas ?? {};
 
 describe("calendar feed synchronization contract", () => {
   it("publishes the implemented OpenAPI contract with source and highlight routes", () => {
-    expect(existsSync(implementedPath)).toBe(true);
-    const implemented = loadYaml(readFileSync(implementedPath, "utf8")) as {
-      paths?: Record<string, unknown>;
-    };
+    // Implemented contract: the calendar feed-sync slice of the generated docs/api/openapi.json.
+    const implemented = Object.keys(loadGeneratedContract().paths).filter(
+      (route) =>
+        route.startsWith("/api/calendar/external-sources") ||
+        route.startsWith("/api/calendar/highlight-rules")
+    );
 
-    expect(Object.keys(implemented.paths ?? {})).toEqual([
+    expect(implemented).toEqual([
       "/api/calendar/external-sources",
       "/api/calendar/external-sources/{id}",
       "/api/calendar/external-sources/{id}/sync",
