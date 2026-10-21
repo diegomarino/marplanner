@@ -48,6 +48,64 @@ const RANGE_PAD_MS = 48 * 60 * 60 * 1000;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** The local-event RRULE subset. Anything finer than a day (SECONDLY…HOURLY, BYHOUR,
+ * BYMINUTE, BYSECOND) or set-position / year-day / week-number filtering is refused: rrule.js
+ * expands synchronously, so such rules — or a BYMONTH/BYMONTHDAY pair that never occurs,
+ * which rrule.js scans for until year 9999 — would block the shared event loop on every read. */
+const SUPPORTED_FREQS: ReadonlySet<number> = new Set([
+  RRule.YEARLY,
+  RRule.MONTHLY,
+  RRule.WEEKLY,
+  RRule.DAILY,
+]);
+const SUPPORTED_PARTS: ReadonlySet<string> = new Set([
+  "freq",
+  "interval",
+  "count",
+  "until",
+  "byweekday",
+  "bymonthday",
+  "bymonth",
+  "wkst",
+]);
+/** Longest length of each month across all years (February counts its leap day). */
+const MONTH_MAX_DAYS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+const asList = (value: number | number[] | null | undefined): number[] =>
+  value === null || value === undefined ? [] : Array.isArray(value) ? value : [value];
+
+/** Why `rrule` is outside the supported local-event subset, or null when it is supported.
+ * Throws when the string is not parseable RRULE syntax at all. */
+export function supportedRruleProblem(rrule: string): string | null {
+  const options = RRule.parseString(rrule);
+  if (options.freq === undefined || options.freq === null) return "FREQ is required";
+  if (!SUPPORTED_FREQS.has(options.freq)) {
+    return "FREQ must be DAILY, WEEKLY, MONTHLY or YEARLY";
+  }
+  for (const [part, value] of Object.entries(options)) {
+    if (value !== undefined && value !== null && !SUPPORTED_PARTS.has(part)) {
+      return `${part.toUpperCase()} is not supported`;
+    }
+  }
+  const months = asList(options.bymonth);
+  const monthDays = asList(options.bymonthday);
+  if (months.length > 0 && monthDays.length > 0) {
+    const occurs = months.some((month) =>
+      monthDays.some((day) => Math.abs(day) <= MONTH_MAX_DAYS[month - 1])
+    );
+    if (!occurs) return "BYMONTH and BYMONTHDAY never coincide";
+  }
+  return null;
+}
+
+function isSupportedRrule(rrule: string): boolean {
+  try {
+    return supportedRruleProblem(rrule) === null;
+  } catch {
+    return false;
+  }
+}
+
 function readParts(tzid: string, at: Date): Record<string, number> {
   const dtf = new Intl.DateTimeFormat("en-US", {
     timeZone: tzid,
@@ -245,6 +303,10 @@ function expandAllDay(
  */
 export function expand(params: ExpandParams, range: ExpandRange): Occurrence[] {
   const { allDay, startUtc, startDate, tzid, rrule, exdates } = params;
+
+  // A row stored before the supported subset was enforced expands to nothing rather than
+  // stalling every read that touches it.
+  if (rrule && !isSupportedRrule(rrule)) return [];
 
   if (allDay) {
     if (!startDate) {

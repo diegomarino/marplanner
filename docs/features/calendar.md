@@ -128,4 +128,10 @@ assignments — leaving no orphaned rows.
   mapping `outlook→microsoft` / unknown→`ics_generic` is documented only.
 - Recurrence is expanded in a documented `−30d/+365d` window; cancelled events are
   retained but purged once past the window.
+- Local-event `rrule` is limited to `FREQ=DAILY|WEEKLY|MONTHLY|YEARLY` with
+  `INTERVAL`, `COUNT`, `UNTIL`, `BYDAY`, `BYMONTHDAY`, `BYMONTH` and `WKST`; writes
+  reject anything else with 400 and reads expand a previously stored unsupported
+  rule to no occurrences, because rrule.js expansion is synchronous and a sub-daily
+  or never-occurring rule would block the shared event loop
+  (`supportedRruleProblem`, `src/server/modules/calendar/recurrence.ts`).
 - Atomicity and date/weekday primitives are provided per ADR-043/ADR-005/ADR-006.

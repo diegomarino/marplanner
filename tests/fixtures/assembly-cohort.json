@@ -1064,7 +1064,14 @@
             "calendar-create (US1 hardening — Codex: exdates shape + strict dates) rejects exdates that is not an array (object) with 400",
             "calendar-create (US1 hardening — Codex: exdates shape + strict dates) rejects exdates that is a bare string with 400",
             "calendar-create (US1 hardening — Codex: exdates shape + strict dates) rejects an all-day event whose startDate is not a valid date with 400",
-            "calendar-create (US1 hardening — Codex: exdates shape + strict dates) rejects a non-existent calendar date (2026-02-30) rather than rolling it over"
+            "calendar-create (US1 hardening — Codex: exdates shape + strict dates) rejects a non-existent calendar date (2026-02-30) rather than rolling it over",
+            "calendar-create (supported RRULE subset) accepts an annual rule even though YEARLY is rrule.js frequency 0",
+            "calendar-create (supported RRULE subset) rejects FREQ=SECONDLY;COUNT=20000 with 400 and persists nothing",
+            "calendar-create (supported RRULE subset) rejects FREQ=MINUTELY with 400 and persists nothing",
+            "calendar-create (supported RRULE subset) rejects FREQ=HOURLY with 400 and persists nothing",
+            "calendar-create (supported RRULE subset) rejects FREQ=DAILY;BYHOUR=0,1,2;BYMINUTE=0,30 with 400 and persists nothing",
+            "calendar-create (supported RRULE subset) rejects FREQ=DAILY;BYMONTH=2;BYMONTHDAY=30 with 400 and persists nothing",
+            "calendar-create (supported RRULE subset) rejects COUNT=3 with 400 and persists nothing"
           ],
           "tests/boundary/calendar-external-sources-contract.test.ts": [
             "calendar external-source public contract documents a masked response DTO and a route-level domain seam without exposing feedUrl"
@@ -1129,7 +1136,8 @@
             "calendar-mutate (RED by design, turns green) PATCH /api/calendar/events/:id with exdates=null returns 400 and preserves prior state",
             "calendar-mutate (RED by design, turns green) PATCH /api/calendar/events/:id with rrule=null clears recurrence and returns 200",
             "calendar-mutate (RED by design, turns green) stores a local event's description and location, serves them, and clears them when blanked",
-            "calendar-mutate (RED by design, turns green) PATCH switches an all-day event to timed and back, dropping the other shape's dates"
+            "calendar-mutate (RED by design, turns green) PATCH switches an all-day event to timed and back, dropping the other shape's dates",
+            "calendar-mutate (RED by design, turns green) PATCH switches a weekly series to YEARLY (numeric zero frequency) and refuses MINUTELY"
           ],
           "tests/boundary/calendar-parse.test.ts": [
             "Calendar ICS parser adapter normalizes RRULE, RDATE, EXDATE, overrides, cancellations, and DST instants",
@@ -1191,7 +1199,29 @@
             "calendar recurrence expander millisecond precision preserves the startUtc milliseconds on a recurring occurrence",
             "calendar recurrence expander all-day recurrence expands all-day events as dates with no timezone conversion",
             "calendar recurrence expander pure-occurrence shape returns only { occurrenceStart, allDay } — no fabricated FeedItem fields",
-            "calendar recurrence expander range filtering returns only occurrences within the passed range"
+            "calendar recurrence expander range filtering returns only occurrences within the passed range",
+            "supported RRULE subset (dense-rule hazard) accepts FREQ=DAILY;COUNT=3",
+            "supported RRULE subset (dense-rule hazard) accepts FREQ=WEEKLY;BYDAY=MO,WE;INTERVAL=2",
+            "supported RRULE subset (dense-rule hazard) accepts FREQ=MONTHLY;BYMONTHDAY=31",
+            "supported RRULE subset (dense-rule hazard) accepts FREQ=YEARLY",
+            "supported RRULE subset (dense-rule hazard) accepts FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=29",
+            "supported RRULE subset (dense-rule hazard) accepts FREQ=YEARLY;BYMONTH=4;BYMONTHDAY=-30;UNTIL=20300101T000000Z",
+            "supported RRULE subset (dense-rule hazard) rejects COUNT=3",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=SECONDLY",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=MINUTELY",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=HOURLY",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=DAILY;BYHOUR=9",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=DAILY;BYMINUTE=0,30",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=DAILY;BYSECOND=0",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=MONTHLY;BYDAY=MO;BYSETPOS=1",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=YEARLY;BYYEARDAY=100",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=YEARLY;BYWEEKNO=1",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=DAILY;BYMONTH=2;BYMONTHDAY=30",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=YEARLY;BYMONTH=4,6;BYMONTHDAY=31",
+            "supported RRULE subset (dense-rule hazard) expands an annual all-day series once per year",
+            "supported RRULE subset (dense-rule hazard) skips a stored unsupported rule (FREQ=SECONDLY;COUNT=20000) instead of expanding it",
+            "supported RRULE subset (dense-rule hazard) skips a stored unsupported rule (FREQ=DAILY;BYHOUR=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23;BYMINUTE=0,10,20,30,40,50;BYSECOND=0,10,20,30,40,50) instead of expanding it",
+            "supported RRULE subset (dense-rule hazard) skips a stored unsupported rule (FREQ=DAILY;BYMONTH=2;BYMONTHDAY=30) instead of expanding it"
           ],
           "tests/boundary/calendar-source-lifecycle.test.ts": [
             "calendar external-source lifecycle hides retained rows on disable and immediately restores them on enable",

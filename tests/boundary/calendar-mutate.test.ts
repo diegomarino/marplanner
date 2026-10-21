@@ -473,6 +473,49 @@ describe("calendar-mutate (RED by design, turns green)", () => {
     }
   });
 
+  it("PATCH switches a weekly series to YEARLY (numeric zero frequency) and refuses MINUTELY", async () => {
+    const deviceKey = insertDevice();
+    const eventId = "yearly-switch-test-event";
+    insertEvent(
+      eventId,
+      "Anniversary",
+      "2026-07-12T09:00:00.000Z",
+      "2026-07-12T10:00:00.000Z",
+      "FREQ=WEEKLY;BYDAY=MO"
+    );
+
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    const storedRrule = () =>
+      (
+        getDb().prepare("SELECT rrule FROM calendar_events WHERE id = ?").get(eventId) as {
+          rrule: string;
+        }
+      ).rrule;
+
+    try {
+      const yearly = await app.inject({
+        method: "PATCH",
+        url: `/api/calendar/events/${eventId}`,
+        cookies: { mp_device_key: deviceKey },
+        payload: { rrule: "FREQ=YEARLY" },
+      });
+      expect(yearly.statusCode).toBe(200);
+      expect(storedRrule()).toBe("FREQ=YEARLY");
+
+      const minutely = await app.inject({
+        method: "PATCH",
+        url: `/api/calendar/events/${eventId}`,
+        cookies: { mp_device_key: deviceKey },
+        payload: { rrule: "FREQ=MINUTELY" },
+      });
+      expect(minutely.statusCode).toBe(400);
+      expect(storedRrule()).toBe("FREQ=YEARLY");
+    } finally {
+      await app.close();
+    }
+  });
+
   // Test 7: PATCH on event with assignment returns real assignedTo
   it("PATCH /api/calendar/events/:id on an assigned event returns real assignedTo", async () => {
     const deviceKey = insertDevice();

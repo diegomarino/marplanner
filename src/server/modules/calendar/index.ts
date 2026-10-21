@@ -1,12 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-// rrule is CJS with no top-level named ESM export — default-import + destructure is
-// interop-safe under Node native ESM (the externalized app/test load path), esbuild
-// bundling, and the vitest transform. `import { RRule }` throws under Node ESM.
-import rrulePkg from "rrule";
 import { getDb } from "../../db/client";
 import type { FeedItem, EventInput } from "../../../shared";
-import { expand, wallClockToInstant } from "./recurrence";
+import { expand, supportedRruleProblem, wallClockToInstant } from "./recurrence";
 import { listActiveMembers } from "../members/referential";
 import { readHouseholdTimezone, isStrictCalendarDate, isDateOnly } from "../../lib/household-date";
 import { decorateHighlightTitle, listHighlightRules } from "./highlights";
@@ -19,8 +15,6 @@ export {
   type ExternalSourceDependencies,
   type ExternalSourceInput,
 } from "./external-sources";
-
-const { RRule } = rrulePkg;
 
 export class ValidationError extends Error {
   constructor(message: string) {
@@ -123,14 +117,13 @@ function validateEventShape(input: Partial<EventInput>): void {
   }
 
   if (input.rrule !== undefined && input.rrule !== null) {
+    let problem: string | null;
     try {
-      const parsed = RRule.parseString(input.rrule);
-      if (!parsed || !parsed.freq) {
-        throw new Error("Invalid RRule syntax");
-      }
+      problem = supportedRruleProblem(input.rrule);
     } catch (e: any) {
       throw new ValidationError(`Invalid RRule: ${e.message}`);
     }
+    if (problem) throw new ValidationError(`Invalid RRule: ${problem}`);
   }
 
   if (input.exdates !== undefined && input.exdates !== null) {
