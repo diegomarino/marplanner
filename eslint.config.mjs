@@ -446,6 +446,7 @@ export default [
       ".data/",
       ".data-fresh/",
       ".worktrees/",
+      ".claude/",
       "coverage/",
       "playwright-report/",
       "test-results/",
