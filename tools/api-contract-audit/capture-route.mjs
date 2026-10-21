@@ -15,7 +15,7 @@ export function captureRoute({ method, route, url, status, contentType, payload 
     status === 200 &&
     contentType.split(";")[0] === "text/html" &&
     typeof payload === "string" &&
-    payload.includes('<main data-testid="access-gate-form">')
+    /<main\b[^>]*\sdata-testid="access-gate-form"/.test(payload)
     ? "(access-gate-form)"
     : route;
 }

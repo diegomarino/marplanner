@@ -4,7 +4,7 @@
 // src/server/modules/* so error envelopes remain byte-compatible.
 import { z } from "zod";
 import { component, defineRouteSchemas, noContent } from "./zod";
-import { authenticationBackoffResponse } from "./common";
+import { authUnauthorizedResponse, authenticationBackoffResponse } from "./common";
 
 export const ControllerErrorResponse = component(
   "ControllerErrorResponse",
@@ -113,6 +113,7 @@ export const networkDevicesSchemas = defineRouteSchemas({
         description: "The curated registry with derived live status.",
         content: { "application/json": { schema: NetworkDevicesListResponse } },
       },
+      401: authUnauthorizedResponse,
       403: noContent("unauthenticated, unknown or out-of-scope key rejected (AC-06)"),
       429: authenticationBackoffResponse,
     },
@@ -130,6 +131,7 @@ export const networkDevicesSchemas = defineRouteSchemas({
         content: { "application/json": { schema: RegisteredDevice } },
       },
       400: noContent("validation (alias, inactive member)"),
+      401: authUnauthorizedResponse,
       403: noContent("device-kind key rejected"),
       409: {
         description:
@@ -150,6 +152,7 @@ export const networkDevicesSchemas = defineRouteSchemas({
         description: "The live-client picker feed.",
         content: { "application/json": { schema: LiveClientsResponse } },
       },
+      401: authUnauthorizedResponse,
       403: noContent("device-kind key rejected"),
       429: authenticationBackoffResponse,
     },
@@ -168,6 +171,7 @@ export const networkDevicesSchemas = defineRouteSchemas({
         content: { "application/json": { schema: RegisteredDevice } },
       },
       400: noContent("validation (inactive member on NEW assignment)"),
+      401: authUnauthorizedResponse,
       403: noContent("device-kind key rejected"),
       404: noContent("unknown device"),
       429: authenticationBackoffResponse,
@@ -182,6 +186,7 @@ export const networkDevicesSchemas = defineRouteSchemas({
     params: z.object({ id: z.string() }),
     response: {
       204: noContent("always succeeds locally, blocked devices included"),
+      401: authUnauthorizedResponse,
       403: noContent("device-kind key rejected"),
       404: noContent("unknown device"),
       429: authenticationBackoffResponse,
@@ -200,6 +205,7 @@ export const networkDevicesSchemas = defineRouteSchemas({
           "Controller accepted; body reflects the belief (possibly beliefDiverged when the mirror write failed — AC-02).",
         content: { "application/json": { schema: RegisteredDevice } },
       },
+      401: authUnauthorizedResponse,
       403: noContent("device-kind key rejected"),
       404: noContent("unknown device"),
       429: authenticationBackoffResponse,
@@ -221,6 +227,7 @@ export const networkDevicesSchemas = defineRouteSchemas({
         description: "Device unblocked.",
         content: { "application/json": { schema: RegisteredDevice } },
       },
+      401: authUnauthorizedResponse,
       403: noContent("device-kind key rejected"),
       404: noContent("unknown device"),
       429: authenticationBackoffResponse,
