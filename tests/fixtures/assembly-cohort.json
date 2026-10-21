@@ -3169,7 +3169,9 @@
             "backups helpers covers every backup type with semantic token classes only",
             "shows localized recovery guidance for a terminal restore failure (en)",
             "shows localized recovery guidance for a terminal restore failure (es)",
-            "formats backup dates with Spanish household locale and timezone"
+            "formats backup dates with Spanish household locale and timezone",
+            "explains whole-household replacement and the pre-restore backup before confirming (en)",
+            "explains whole-household replacement and the pre-restore backup before confirming (es)"
           ],
           "tests/client/backups-telemetry-admin.test.tsx": [
             "BackupsManagement / TelemetryManagement — the shared AdminPanel L2 frame was ADOPTED (FR-009) BackupsManagement wraps the surface in a landmark region labelled by its own title",

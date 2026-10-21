@@ -1163,6 +1163,8 @@ export const messages = {
     "backups.management.deleteError": "Failed to delete this backup.",
     "backups.management.restoreConfirmTitle": "Confirm restore",
     "backups.management.restoreConfirmLabel": "Restoring",
+    "backups.management.restoreConfirmWarning":
+      "Restoring replaces all of the household's current data with this backup: anything changed after it was made disappears from the app. A Pre-restore backup of the current data is made first and appears in this list, so you can go back. This screen reloads when the restore finishes.",
     "backups.management.restoreConfirmInputLabel": "Type the exact filename to confirm",
     "backups.management.restoreConfirmPlaceholder": "Type the filename shown above",
     "backups.management.restoreMismatch": "The typed filename does not match — nothing was sent.",
@@ -2707,6 +2709,8 @@ export const messages = {
     "backups.management.deleteError": "Error al eliminar esta copia de seguridad.",
     "backups.management.restoreConfirmTitle": "Confirmar restauración",
     "backups.management.restoreConfirmLabel": "Restaurando",
+    "backups.management.restoreConfirmWarning":
+      "Restaurar sustituye todos los datos actuales del hogar por los de esta copia: lo que se cambió después de crearla desaparece de la app. Antes se hace una copia Pre-restauración de los datos actuales, que aparece en esta lista, para poder volver atrás. Esta pantalla se recarga al terminar.",
     "backups.management.restoreConfirmInputLabel":
       "Escribe el nombre exacto del archivo para confirmar",
     "backups.management.restoreConfirmPlaceholder": "Escribe el nombre de archivo mostrado arriba",
