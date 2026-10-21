@@ -5,6 +5,7 @@ import type { FeedItem, EventInput } from "../../../shared";
 import { expand, supportedRruleProblem, wallClockToInstant } from "./recurrence";
 import { listActiveMembers } from "../members/referential";
 import { readHouseholdTimezone, isStrictCalendarDate, isDateOnly } from "../../lib/household-date";
+import { localDateParts } from "../../../shared/householdTime";
 import { decorateHighlightTitle, listHighlightRules } from "./highlights";
 
 export {
@@ -235,7 +236,35 @@ function buildExpandRange(from: string, to: string, tzid: string) {
     throw new WindowError("Requested range exceeds the fixed window (-30d / +365d)");
   }
 
-  return { start: fromDt, end: toDt };
+  // All-day events are household calendar dates: a date-only bound is the date itself
+  // (`to` inclusive), an instant bound covers every household date it touches.
+  const startDay = isDateOnly(from) ? from : householdDateOf(fromDt, tzid);
+  let endDay: string;
+  if (isDateOnly(to)) {
+    endDay = addDays(to, 1);
+  } else {
+    const lastDay = householdDateOf(toDt, tzid);
+    endDay =
+      toDt.getTime() === householdMidnight(lastDay, tzid).getTime() ? lastDay : addDays(lastDay, 1);
+  }
+
+  return { start: fromDt, end: toDt, startDay, endDay };
+}
+
+function householdDateOf(instant: Date, tzid: string): string {
+  const { y, m, d } = localDateParts(instant.getTime(), tzid);
+  return `${String(y).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+function householdMidnight(date: string, tzid: string): Date {
+  const [year, month, day] = date.split("-").map(Number);
+  return wallClockToInstant(tzid, { year, month, day, hour: 0, minute: 0, second: 0 });
+}
+
+function addDays(date: string, days: number): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
 }
 
 /** The occurrence's end anchor, derived from the master's span:

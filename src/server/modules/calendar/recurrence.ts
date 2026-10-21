@@ -38,6 +38,20 @@ export interface ExpandRange {
   start: Date;
   /** exclusive upper bound (true instant). */
   end: Date;
+  /** inclusive lower calendar date (`YYYY-MM-DD`) for all-day occurrences. All-day events
+   * are date-only (CALENDAR-INV-04), so a household range is compared by date, never by the
+   * instant of its local midnight. Omitted: all-day anchors compare as UTC midnights. */
+  startDay?: string;
+  /** exclusive upper calendar date for all-day occurrences; set together with `startDay`. */
+  endDay?: string;
+}
+
+/** Whether an all-day occurrence on `date` (anchored at UTC midnight `anchor`) is in range. */
+function allDayInRange(date: string, anchor: Date, range: ExpandRange): boolean {
+  if (range.startDay !== undefined && range.endDay !== undefined) {
+    return date >= range.startDay && date < range.endDay;
+  }
+  return anchor >= range.start && anchor < range.end;
 }
 
 // No IANA zone applies an offset near 15h; pad the pseudo-UTC expansion window
@@ -287,8 +301,9 @@ function expandAllDay(
   const out: Occurrence[] = [];
   for (const occ of expandInWindow(set, range)) {
     // All-day occurrences anchor at UTC midnight of their calendar date.
-    if (occ >= range.start && occ < range.end) {
-      out.push({ occurrenceStart: formatDateOnly(occ), allDay: true });
+    const date = formatDateOnly(occ);
+    if (allDayInRange(date, occ, range)) {
+      out.push({ occurrenceStart: date, allDay: true });
     }
   }
   return out;
@@ -314,7 +329,7 @@ export function expand(params: ExpandParams, range: ExpandRange): Occurrence[] {
     }
     if (!rrule) {
       const single = new Date(`${startDate}T00:00:00.000Z`);
-      return single >= range.start && single < range.end
+      return allDayInRange(startDate, single, range)
         ? [{ occurrenceStart: startDate, allDay: true }]
         : [];
     }
