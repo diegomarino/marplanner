@@ -80,7 +80,10 @@ export interface BlockInstance {
   status: "ok" | "failed";
   data?: unknown;
   error?: string;
-  /** schemaVersion 2 only — 1-based ordinal position among this member's INCLUDED blocks. */
+  /** schemaVersion 2 only — 1-based position in the member's FULL effective block order at
+   * generation, not among the included blocks: a disabled, weekday-masked or omitted block leaves
+   * a gap (three ordered blocks with the second skipped yield indexes [1, 3]). Re-stamped on
+   * every run, so it is not a stable per-block identity. */
   index?: number;
   /** schemaVersion 2 only — "NN TITLE", zero-padded, re-stamped from `index` at generation. */
   title?: string;
