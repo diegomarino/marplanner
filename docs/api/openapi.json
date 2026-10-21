@@ -155,7 +155,11 @@
           "status": { "type": "string", "enum": ["ok", "failed"] },
           "data": { "description": "Frozen block data, present for successful blocks." },
           "error": { "type": "string" },
-          "index": { "type": "integer", "minimum": 1 },
+          "index": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "1-based position in the member's full effective block order at generation; omitted blocks leave gaps (e.g. [1, 3]). Not a stable identity."
+          },
           "title": { "type": "string" },
           "language": { "type": "string" },
           "params": { "$ref": "#/components/schemas/BlockParams" }

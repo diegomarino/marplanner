@@ -69,7 +69,14 @@ export const BlockInstance = component(
       .meta({ description: "Frozen block data, present for successful blocks." })
       .optional(),
     error: z.string().optional(),
-    index: z.int().min(1).optional(),
+    index: z
+      .int()
+      .min(1)
+      .meta({
+        description:
+          "1-based position in the member's full effective block order at generation; omitted blocks leave gaps (e.g. [1, 3]). Not a stable identity.",
+      })
+      .optional(),
     title: z.string().optional(),
     language: z.string().optional(),
     params: BlockParams.optional(),
