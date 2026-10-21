@@ -102,6 +102,11 @@ describe("day-periods-edit (RED boundary test)", () => {
       payload: { start: "11:45" },
     });
     expect(failedWrite.statusCode).toBe(500);
+    // Stable envelope only: no SQLite error code or raw driver message reaches the client.
+    expect(JSON.parse(failedWrite.payload)).toEqual({
+      error: "internal_error",
+      message: "An unexpected error occurred",
+    });
     expect(await getDayPeriods(app, rawKey)).toEqual(after);
   });
 

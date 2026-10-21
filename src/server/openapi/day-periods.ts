@@ -112,6 +112,11 @@ export const dayPeriodsSchemas = defineRouteSchemas({
         content: { "application/json": { schema: ErrorSchema } },
       },
       429: authenticationBackoffResponse,
+      500: {
+        description:
+          "Unexpected storage failure — nothing persisted. Opaque `internal_error` envelope; details go to the server log only.",
+        content: { "application/json": { schema: ErrorSchema } },
+      },
     },
   },
 });
