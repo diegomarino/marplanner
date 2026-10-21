@@ -4,7 +4,12 @@
 // src/server/modules/* so error envelopes remain byte-compatible.
 import { z } from "zod";
 import { component, defineRouteSchemas } from "./zod";
-import { ValidationError, authenticationBackoffResponse } from "./common";
+import {
+  ValidationError,
+  authForbiddenResponse,
+  authUnauthorizedResponse,
+  authenticationBackoffResponse,
+} from "./common";
 
 export const BuildInfo = component(
   "BuildInfo",
@@ -129,6 +134,8 @@ export const telemetrySchemas = defineRouteSchemas({
         description: "Invalid filter or cursor.",
         content: { "application/json": { schema: ValidationError } },
       },
+      401: authUnauthorizedResponse,
+      403: authForbiddenResponse,
       429: authenticationBackoffResponse,
     },
   },
@@ -149,6 +156,8 @@ export const telemetrySchemas = defineRouteSchemas({
         description: "Structurally unparseable body (not JSON / not the batch shape).",
         content: { "application/json": { schema: ValidationError } },
       },
+      401: authUnauthorizedResponse,
+      403: authForbiddenResponse,
       429: authenticationBackoffResponse,
     },
   },
@@ -164,6 +173,8 @@ export const telemetrySchemas = defineRouteSchemas({
         description: "The server answered; `build` names what is deployed.",
         content: { "application/json": { schema: SystemStatus } },
       },
+      401: authUnauthorizedResponse,
+      403: authForbiddenResponse,
       429: authenticationBackoffResponse,
     },
   },

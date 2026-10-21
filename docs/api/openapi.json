@@ -5974,6 +5974,12 @@
               }
             }
           },
+          "400": {
+            "description": "malformed date (DAILY-MESSAGES-INV-03)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+            }
+          },
           "401": { "description": "missing/invalid device key" },
           "404": {
             "description": "unknown member",
@@ -7175,6 +7181,12 @@
               }
             }
           },
+          "401": {
+            "description": "Missing, ambiguous or invalid API credential (shared authentication boundary).",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
+            }
+          },
           "403": { "description": "unauthenticated, unknown or out-of-scope key rejected (AC-06)" },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
@@ -7226,6 +7238,12 @@
             }
           },
           "400": { "description": "validation (alias, inactive member)" },
+          "401": {
+            "description": "Missing, ambiguous or invalid API credential (shared authentication boundary).",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
+            }
+          },
           "403": { "description": "device-kind key rejected" },
           "409": {
             "description": "MAC not in the current fresh cache (`reselect_required`) or already registered (INV-01)",
@@ -7278,6 +7296,12 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/LiveClientsResponse" }
               }
+            }
+          },
+          "401": {
+            "description": "Missing, ambiguous or invalid API credential (shared authentication boundary).",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
             }
           },
           "403": { "description": "device-kind key rejected" },
@@ -7334,6 +7358,12 @@
             }
           },
           "400": { "description": "validation (inactive member on NEW assignment)" },
+          "401": {
+            "description": "Missing, ambiguous or invalid API credential (shared authentication boundary).",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
+            }
+          },
           "403": { "description": "device-kind key rejected" },
           "404": { "description": "unknown device" },
           "429": {
@@ -7375,6 +7405,12 @@
         "security": [{ "deviceKeyCookie": [] }],
         "responses": {
           "204": { "description": "always succeeds locally, blocked devices included" },
+          "401": {
+            "description": "Missing, ambiguous or invalid API credential (shared authentication boundary).",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
+            }
+          },
           "403": { "description": "device-kind key rejected" },
           "404": { "description": "unknown device" },
           "429": {
@@ -7421,6 +7457,12 @@
             "description": "Controller accepted; body reflects the belief (possibly beliefDiverged when the mirror write failed — AC-02).",
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/RegisteredDevice" } }
+            }
+          },
+          "401": {
+            "description": "Missing, ambiguous or invalid API credential (shared authentication boundary).",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
             }
           },
           "403": { "description": "device-kind key rejected" },
@@ -7477,6 +7519,12 @@
             "description": "Device unblocked.",
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/RegisteredDevice" } }
+            }
+          },
+          "401": {
+            "description": "Missing, ambiguous or invalid API credential (shared authentication boundary).",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
             }
           },
           "403": { "description": "device-kind key rejected" },
@@ -10201,6 +10249,18 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/ValidationError" } }
             }
           },
+          "401": {
+            "description": "Missing, ambiguous or invalid API credential (shared authentication boundary).",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
+            }
+          },
+          "403": {
+            "description": "Revoked/expired credential or denied capability; code distinguishes credential loss from scope denial.",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthForbidden" } }
+            }
+          },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
             "headers": {
@@ -10278,6 +10338,18 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/ValidationError" } }
             }
           },
+          "401": {
+            "description": "Missing, ambiguous or invalid API credential (shared authentication boundary).",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
+            }
+          },
+          "403": {
+            "description": "Revoked/expired credential or denied capability; code distinguishes credential loss from scope denial.",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthForbidden" } }
+            }
+          },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
             "headers": {
@@ -10319,6 +10391,18 @@
             "description": "The server answered; `build` names what is deployed.",
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/SystemStatus" } }
+            }
+          },
+          "401": {
+            "description": "Missing, ambiguous or invalid API credential (shared authentication boundary).",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
+            }
+          },
+          "403": {
+            "description": "Revoked/expired credential or denied capability; code distinguishes credential loss from scope denial.",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthForbidden" } }
             }
           },
           "429": {

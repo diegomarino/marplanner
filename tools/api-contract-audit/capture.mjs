@@ -1,10 +1,19 @@
 // Synthetic tests only. Capture through Fastify's native instrumentation event.
-import { appendFileSync } from "node:fs";
+import { closeSync, openSync, writeSync } from "node:fs";
 import { channel } from "node:diagnostics_channel";
 import { afterAll, expect } from "vitest";
 import { captureRoute } from "./capture-route.mjs";
 
 const initialization = channel("fastify.initialization");
+// appendFileSync delegates to the exported fs.writeFileSync, which tests may spy on.
+function appendObservation(line) {
+  const fd = openSync(process.env.MP_CONTRACT_OBSERVATIONS, "a");
+  try {
+    writeSync(fd, line);
+  } finally {
+    closeSync(fd);
+  }
+}
 function capture({ fastify }) {
   const requests = new WeakMap();
   fastify.addHook("preValidation", (request, _reply, done) => {
@@ -15,8 +24,7 @@ function capture({ fastify }) {
     const type = String(reply.getHeader("content-type") ?? "");
     // Streams and binary payloads require separate transport checks.
     if (payload == null || typeof payload === "string") {
-      appendFileSync(
-        process.env.MP_CONTRACT_OBSERVATIONS,
+      appendObservation(
         JSON.stringify({
           method: request.method,
           route: captureRoute({

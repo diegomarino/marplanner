@@ -23,6 +23,19 @@ export const AuthUnauthorized = component(
   })
 );
 
+/** 401 from the shared authentication boundary (src/server/auth/boundary.ts). */
+export const authUnauthorizedResponse = {
+  description: "Missing, ambiguous or invalid API credential (shared authentication boundary).",
+  content: { "application/json": { schema: AuthUnauthorized } },
+} satisfies RouteResponse;
+
+/** 403 from the boundary (revoked/expired key) or a capability check (src/server/auth/capability.ts). */
+export const authForbiddenResponse = {
+  description:
+    "Revoked/expired credential or denied capability; code distinguishes credential loss from scope denial.",
+  content: { "application/json": { schema: AuthForbidden } },
+} satisfies RouteResponse;
+
 export const ErrorSchema = component(
   "Error",
   z.looseObject({

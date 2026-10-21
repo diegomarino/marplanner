@@ -118,6 +118,10 @@ export const dailyMessagesSchemas = defineRouteSchemas({
         description: "the current message, or null when the member has none that date",
         content: { "application/json": { schema: z.xor([DailyMessage, z.null()]) } },
       },
+      400: {
+        description: "malformed date (DAILY-MESSAGES-INV-03)",
+        content: { "application/json": { schema: ErrorSchema } },
+      },
       401: noContent("missing/invalid device key"),
       404: {
         description: "unknown member",
