@@ -4,7 +4,7 @@ Status: accepted
 Owner: product + architecture + security
 Decision date: 2026-06-30
 Peer-reviewed: yes (codex blind-debate, 2026-06-30 — re-grill of ADR-016; 1 Critical + 3 Important folded)
-Grill: `../domain-grills/client-logging-telemetry.md` (ADR-016 security re-grill)
+Grill: `domain-grills/client-logging-telemetry.md` (historical record, not preserved in this repository) (ADR-016 security re-grill)
 Builds on / refines: `ADR-016` (telemetry contract), `ADR-013` (PIN UI gate), `ADR-030` (capabilities),
 `ADR-035` (health), `ADR-042`/`ADR-017` (backups).
 
@@ -71,7 +71,7 @@ PIN is client-side) is documented honestly so the threat model is not misread la
 
 ## Affected Specs
 
-- `../../19-client-logging-telemetry.md` (read view), `../domain-contracts/client-logging-telemetry.md`
+- [client-logging-telemetry](../../features/client-logging-telemetry.md) (read view), `../domain-contracts/client-logging-telemetry.md`
 - `target-dx-contract-v2.md` (the view is part of the admin UI; rendering-escape + page-cap are impl
   invariants)
 

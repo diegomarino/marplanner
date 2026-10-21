@@ -101,4 +101,4 @@ payload version table; no staleness metadata. No legacy import (ADR-026).
 - Related: `ADR-019` (printedAt/idempotency), `ADR-035` (job claim/cancel),
   `ADR-008` (block order applies to future generation), `ADR-027` (per-user
   opt-in), `ADR-040` (outcome events)
-- Domain grill: `../domain-grills/daily-briefing-printing.md` (Q3)
+- Domain grill: `domain-grills/daily-briefing-printing.md` (historical record, not preserved in this repository) (Q3)

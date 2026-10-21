@@ -22,7 +22,7 @@ and reconciles the split vocabulary.
 
 ## Affected Specs
 
-- `../../06-calendar.md`
+- [calendar](../../features/calendar.md)
 
 ## Data / Setup Implications
 
@@ -42,4 +42,4 @@ No legacy rows imported (ADR-026). If a future import/export ingests legacy sour
 ## Traceability
 
 - Related prior: `ADR-024`
-- Domain grill: `../domain-grills/calendar-reminders-routines.md` (C1)
+- Domain grill: `domain-grills/calendar-reminders-routines.md` (historical record, not preserved in this repository) (C1)

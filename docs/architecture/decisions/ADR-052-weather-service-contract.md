@@ -78,8 +78,8 @@ not security.
 
 ## Affected Specs
 
-- `../../14-weather.md`, `../../03-app-settings-registry.md` (weather object gains
-  `label?` + range validation), `../../11-daily-briefing.md` (weather block)
+- [weather](../../features/weather.md), [app-settings-registry](../../features/app-settings-registry.md) (weather object gains
+  `label?` + range validation), [daily-briefing](../../features/daily-briefing.md) (weather block)
 
 ## Data / Setup Implications
 
@@ -112,6 +112,6 @@ as-is (not recomputed). Browser cache is client-local (coordinate-keyed), not do
 
 - Related prior: resolves spec `14` open questions (`ADR-005`/`ADR-007`/`ADR-009` weather
   applications).
-- Domain grill: `../domain-grills/weather.md`
+- Domain grill: `domain-grills/weather.md` (historical record, not preserved in this repository)
 - Related: `ADR-005`, `ADR-007`, `ADR-015`, `ADR-016`, `ADR-022`, `ADR-026`, `ADR-028`,
   `ADR-030`

@@ -18,9 +18,9 @@ Separating household identity from admin authority keeps Members responsible for
 
 ## Affected Specs
 
-- `../../01-members.md`
-- `../../12-auth-sessions.md`
-- `../../15-kiosk-shell-navigation.md`
+- [members](../../features/members.md)
+- [auth-sessions](../../features/auth-sessions.md)
+- [kiosk-shell-navigation](../../features/kiosk-shell-navigation.md)
 
 ## Data / Setup Implications
 
@@ -40,4 +40,4 @@ Existing nullable `pin_codes.member_id` and `sessions.member_id` links are evide
 
 - Conflicts: `CR-001-member-role-admin`
 - Related prior: `ADR-001`
-- Domain grill: `../domain-grills/members.md`
+- Domain grill: `domain-grills/members.md` (historical record, not preserved in this repository)
