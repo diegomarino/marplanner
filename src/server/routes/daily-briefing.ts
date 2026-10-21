@@ -29,6 +29,8 @@ import type {
   GenerateAllResponse,
   GenerateSkippedResponse,
 } from "../../shared";
+import { dailyBriefingSchemas } from "../openapi/daily-briefing";
+import { documented } from "../openapi/zod";
 
 const ALLOWED_GENERATE_KEYS = new Set(["memberId", "date"]);
 const ALLOWED_GENERATE_ALL_KEYS = new Set(["date"]);
@@ -39,50 +41,55 @@ const ALLOWED_SCHEDULE_KEYS = new Set(["weekdays"]);
 
 /** Thin HTTP boundary for the assembly seam's generate and pure-read routes. */
 export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
-  app.post("/api/daily-briefing/generate", async (request: FastifyRequest, reply: FastifyReply) => {
-    const body = request.body;
-    if (!body || typeof body !== "object" || Array.isArray(body)) {
-      return reply
-        .code(400)
-        .send({ error: "validation_error", message: "Request body must be an object" });
-    }
-
-    const unknownKeys = Object.keys(body).filter((key) => !ALLOWED_GENERATE_KEYS.has(key));
-    if (unknownKeys.length > 0) {
-      return reply.code(400).send({
-        error: "validation_error",
-        message: `Unsupported field(s) in daily briefing generate body: ${unknownKeys.join(", ")}`,
-      });
-    }
-
-    const { memberId, date } = body as { memberId?: unknown; date?: unknown };
-    if (
-      typeof memberId !== "string" ||
-      (date !== undefined && date !== null && typeof date !== "string")
-    ) {
-      return reply.code(400).send({
-        error: "validation_error",
-        message: "memberId is required and date must be a string",
-      });
-    }
-
-    try {
-      return reply.code(200).send(await generateBriefing(memberId, date ?? undefined));
-    } catch (err) {
-      if (err instanceof DailyBriefingPausedError) {
-        return reply.code(200).send({
-          skipped: true,
-          reason: "paused",
-          memberId: err.memberId,
-          date: err.date,
-        } satisfies GenerateSkippedResponse);
+  app.post(
+    "/api/daily-briefing/generate",
+    documented(dailyBriefingSchemas.postDailyBriefingGenerate),
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = request.body;
+      if (!body || typeof body !== "object" || Array.isArray(body)) {
+        return reply
+          .code(400)
+          .send({ error: "validation_error", message: "Request body must be an object" });
       }
-      return handleDailyBriefingError(err, reply);
+
+      const unknownKeys = Object.keys(body).filter((key) => !ALLOWED_GENERATE_KEYS.has(key));
+      if (unknownKeys.length > 0) {
+        return reply.code(400).send({
+          error: "validation_error",
+          message: `Unsupported field(s) in daily briefing generate body: ${unknownKeys.join(", ")}`,
+        });
+      }
+
+      const { memberId, date } = body as { memberId?: unknown; date?: unknown };
+      if (
+        typeof memberId !== "string" ||
+        (date !== undefined && date !== null && typeof date !== "string")
+      ) {
+        return reply.code(400).send({
+          error: "validation_error",
+          message: "memberId is required and date must be a string",
+        });
+      }
+
+      try {
+        return reply.code(200).send(await generateBriefing(memberId, date ?? undefined));
+      } catch (err) {
+        if (err instanceof DailyBriefingPausedError) {
+          return reply.code(200).send({
+            skipped: true,
+            reason: "paused",
+            memberId: err.memberId,
+            date: err.date,
+          } satisfies GenerateSkippedResponse);
+        }
+        return handleDailyBriefingError(err, reply);
+      }
     }
-  });
+  );
 
   app.post(
     "/api/daily-briefing/generate-all",
+    documented(dailyBriefingSchemas.postDailyBriefingGenerateAll),
     async (request: FastifyRequest, reply: FastifyReply) => {
       const body = request.body === undefined ? {} : request.body;
       if (body === null || typeof body !== "object" || Array.isArray(body)) {
@@ -157,16 +164,21 @@ export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
     }
   );
 
-  app.get("/api/daily-briefing/opt-in", async (_request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      return reply.code(200).send(listOptIns());
-    } catch (err) {
-      return handleDailyBriefingError(err, reply);
+  app.get(
+    "/api/daily-briefing/opt-in",
+    documented(dailyBriefingSchemas.getDailyBriefingOptIn),
+    async (_request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        return reply.code(200).send(listOptIns());
+      } catch (err) {
+        return handleDailyBriefingError(err, reply);
+      }
     }
-  });
+  );
 
   app.get(
     "/api/daily-briefing/history/:memberId",
+    documented(dailyBriefingSchemas.getDailyBriefingHistoryByMemberId),
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { memberId } = request.params as { memberId: string };
       try {
@@ -180,6 +192,7 @@ export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
   // Manual print through the server print queue (spec D6). No request body.
   app.post(
     "/api/daily-briefing/:memberId/:date/print",
+    documented(dailyBriefingSchemas.postDailyBriefingByMemberIdByDatePrint),
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { memberId, date } = request.params as { memberId: string; date: string };
       try {
@@ -192,6 +205,7 @@ export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
 
   app.get(
     "/api/daily-briefing/:memberId/:date",
+    documented(dailyBriefingSchemas.getDailyBriefingByMemberIdByDate),
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { memberId, date } = request.params as { memberId: string; date: string };
       try {
@@ -205,6 +219,7 @@ export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
   // ── Admin preview (FR-022) ───────────────────────────────────────────────────
   app.get(
     "/api/daily-briefing/:memberId/:date/preview.png",
+    documented(dailyBriefingSchemas.getDailyBriefingByMemberIdByDatePreviewPng),
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { memberId, date } = request.params as { memberId: string; date: string };
       try {
@@ -232,6 +247,7 @@ export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
 
   app.put(
     "/api/daily-briefing/opt-in/:memberId",
+    documented(dailyBriefingSchemas.putDailyBriefingOptInByMemberId),
     async (request: FastifyRequest, reply: FastifyReply) => {
       const body = request.body;
       if (!body || typeof body !== "object" || Array.isArray(body)) {
@@ -264,41 +280,50 @@ export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
 
   // ── Settings layer ( contracts/openapi.planned.yaml) ────────────
 
-  app.get("/api/daily-briefing/settings", async (_request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      return reply.code(200).send(readAllSettings());
-    } catch (err) {
-      return handleDailyBriefingError(err, reply);
+  app.get(
+    "/api/daily-briefing/settings",
+    documented(dailyBriefingSchemas.getDailyBriefingSettings),
+    async (_request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        return reply.code(200).send(readAllSettings());
+      } catch (err) {
+        return handleDailyBriefingError(err, reply);
+      }
     }
-  });
+  );
 
-  app.put("/api/daily-briefing/settings", async (request: FastifyRequest, reply: FastifyReply) => {
-    const body = request.body;
-    if (!body || typeof body !== "object" || Array.isArray(body)) {
-      return reply
-        .code(400)
-        .send({ error: "validation_error", message: "Request body must be an object" });
+  app.put(
+    "/api/daily-briefing/settings",
+    documented(dailyBriefingSchemas.putDailyBriefingSettings),
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = request.body;
+      if (!body || typeof body !== "object" || Array.isArray(body)) {
+        return reply
+          .code(400)
+          .send({ error: "validation_error", message: "Request body must be an object" });
+      }
+      const unknownKeys = Object.keys(body).filter((key) => !ALLOWED_SETTINGS_KEYS.has(key));
+      if (unknownKeys.length > 0) {
+        return reply.code(400).send({
+          error: "validation_error",
+          message: `Unsupported field(s) in daily briefing settings body: ${unknownKeys.join(", ")}`,
+        });
+      }
+      const { generationTime, autoPrintTrigger } = body as {
+        generationTime?: unknown;
+        autoPrintTrigger?: unknown;
+      };
+      try {
+        return reply.code(200).send(updateSettings({ generationTime, autoPrintTrigger }));
+      } catch (err) {
+        return handleDailyBriefingError(err, reply);
+      }
     }
-    const unknownKeys = Object.keys(body).filter((key) => !ALLOWED_SETTINGS_KEYS.has(key));
-    if (unknownKeys.length > 0) {
-      return reply.code(400).send({
-        error: "validation_error",
-        message: `Unsupported field(s) in daily briefing settings body: ${unknownKeys.join(", ")}`,
-      });
-    }
-    const { generationTime, autoPrintTrigger } = body as {
-      generationTime?: unknown;
-      autoPrintTrigger?: unknown;
-    };
-    try {
-      return reply.code(200).send(updateSettings({ generationTime, autoPrintTrigger }));
-    } catch (err) {
-      return handleDailyBriefingError(err, reply);
-    }
-  });
+  );
 
   app.put(
     "/api/daily-briefing/block-order",
+    documented(dailyBriefingSchemas.putDailyBriefingBlockOrder),
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         return reply.code(200).send({ blockOrder: writeBlockOrder(request.body) });
@@ -310,6 +335,7 @@ export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
 
   app.put(
     "/api/daily-briefing/block-settings/:memberId/:blockType",
+    documented(dailyBriefingSchemas.putDailyBriefingBlockSettingsByMemberIdByBlockType),
     async (request: FastifyRequest, reply: FastifyReply) => {
       const body = request.body;
       if (!body || typeof body !== "object" || Array.isArray(body)) {
@@ -342,6 +368,7 @@ export async function dailyBriefingRoutes(app: FastifyInstance): Promise<void> {
 
   app.put(
     "/api/daily-briefing/schedule/:memberId",
+    documented(dailyBriefingSchemas.putDailyBriefingScheduleByMemberId),
     async (request: FastifyRequest, reply: FastifyReply) => {
       const body = request.body;
       if (!body || typeof body !== "object" || Array.isArray(body)) {

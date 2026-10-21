@@ -4,6 +4,7 @@ import { Readable } from "node:stream";
 import Database from "better-sqlite3";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { registerRoutesWithCapabilities } from "../auth/capability";
+import { backupsSchemas } from "../openapi/backups";
 import {
   listBackups,
   getDbGeneration,
@@ -96,6 +97,7 @@ export async function backupsRoutes(
     {
       method: "get",
       path: "/api/backups",
+      schema: backupsSchemas.listBackups,
       capability: "backups:admin",
       handler: async (_request: FastifyRequest, reply: FastifyReply) => {
         const body: BackupListResponse = {
@@ -111,6 +113,7 @@ export async function backupsRoutes(
     {
       method: "post",
       path: "/api/backups/snapshot",
+      schema: backupsSchemas.createSnapshot,
       capability: "backups:admin",
       handler: async (_request: FastifyRequest, reply: FastifyReply) => {
         let runResult;
@@ -175,6 +178,7 @@ export async function backupsRoutes(
     {
       method: "post",
       path: "/api/backups/restore",
+      schema: backupsSchemas.restoreBackup,
       capability: "backups:admin",
       handler: async (request: FastifyRequest, reply: FastifyReply) => {
         const body = request.body as Partial<RestoreRequest> | null | undefined;
@@ -192,6 +196,7 @@ export async function backupsRoutes(
     {
       method: "delete",
       path: "/api/backups/:filename",
+      schema: backupsSchemas.deleteBackup,
       capability: "backups:admin",
       handler: async (request: FastifyRequest, reply: FastifyReply) => {
         const { filename } = request.params as { filename: string };
@@ -267,6 +272,7 @@ export async function backupsRoutes(
     {
       method: "get",
       path: "/api/backups/:filename/download",
+      schema: backupsSchemas.downloadBackup,
       capability: "backups:admin",
       handler: async (request: FastifyRequest, reply: FastifyReply) => {
         const { filename } = request.params as { filename: string };
@@ -318,6 +324,7 @@ export async function backupsRoutes(
     {
       method: "get",
       path: "/api/backups/:filename/download-sql",
+      schema: backupsSchemas.downloadBackupSql,
       capability: "backups:admin",
       handler: async (request: FastifyRequest, reply: FastifyReply) => {
         const { filename } = request.params as { filename: string };
@@ -421,6 +428,7 @@ async function registerUploadRoute(app: FastifyInstance): Promise<void> {
       {
         method: "post",
         path: "/api/backups/upload",
+        schema: backupsSchemas.uploadBackup,
         capability: "backups:admin",
         handler: async (request: FastifyRequest, reply: FastifyReply) => {
           const uploadedBody = request.body;

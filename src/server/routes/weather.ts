@@ -3,6 +3,8 @@ import { readHouseholdTimezone } from "../host-api";
 import { readWeatherLocation } from "../modules/weather";
 import { getForecastPort } from "../modules/weather/port";
 import type { WeatherResponse } from "../../shared";
+import { weatherSchemas } from "../openapi/weather";
+import { documented } from "../openapi/zod";
 
 /** Location read (reconciliation with): delegates to
  * `readWeatherLocation` (`src/server/modules/weather/index.ts`) — range-validated
@@ -23,13 +25,17 @@ import type { WeatherResponse } from "../../shared";
  * `GET /api/settings`.
  */
 export async function weatherRoutes(app: FastifyInstance): Promise<void> {
-  app.get("/api/weather", async (): Promise<WeatherResponse> => {
-    const location = readWeatherLocation();
-    if (!location) return { forecast: null };
+  app.get(
+    "/api/weather",
+    documented(weatherSchemas.getWeather),
+    async (): Promise<WeatherResponse> => {
+      const location = readWeatherLocation();
+      if (!location) return { forecast: null };
 
-    const tz = readHouseholdTimezone();
-    const port = getForecastPort();
-    const forecast = await port(location, tz);
-    return { forecast };
-  });
+      const tz = readHouseholdTimezone();
+      const port = getForecastPort();
+      const forecast = await port(location, tz);
+      return { forecast };
+    }
+  );
 }

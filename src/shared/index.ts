@@ -21,7 +21,7 @@ export enum Role {
 }
 
 /** LocaleObject — all three fields always present; defaults fill unset values.
- * Contract: docs/api/bootstrap/openapi.yaml `components/schemas/LocaleObject`
+ * Contract: docs/api/openapi.json `components/schemas/LocaleObject` (src/server/openapi/)
  */
 export interface LocaleObject {
   timezone: string;
@@ -29,17 +29,17 @@ export interface LocaleObject {
   weekStartDay: number;
 }
 
-// ─── API contract types (direct mapping of openapi.yaml schemas) ──────────────
+// ─── API contract types (direct mapping of the OpenAPI component schemas) ──────────────
 
 /** Health response schema.
- * Contract: docs/api/bootstrap/openapi.yaml `components/schemas/Health`
+ * Contract: docs/api/openapi.json `components/schemas/Health` (src/server/openapi/)
  */
 export interface Health {
   status: "ok";
 }
 
 /** ProvisionResult — success body carries NO raw key.
- * Contract: docs/api/bootstrap/openapi.yaml `components/schemas/ProvisionResult`
+ * Contract: docs/api/openapi.json `components/schemas/ProvisionResult` (src/server/openapi/)
  */
 export interface ProvisionResult {
   provisioned: true;
@@ -48,7 +48,7 @@ export interface ProvisionResult {
 /** Effective settings returned by the settings registry. Locale is always
  * present. Plugin-owned objects appear only while their plugin is active;
  * each present object fills unset fields from its defaults. The corresponding
- * B0 HTTP contract is in docs/api/bootstrap/openapi.yaml.
+ * B0 HTTP contract is in docs/api/openapi.json (generated from src/server/openapi/).
  */
 export interface EffectiveSettings {
   locale: LocaleObject;
@@ -70,14 +70,14 @@ export interface PrinterTransportSettings {
 }
 
 /** VerifyPinRequest payload.
- * Contract: docs/api/bootstrap/openapi.yaml `components/schemas/VerifyPinRequest`
+ * Contract: docs/api/openapi.json `components/schemas/VerifyPinRequest` (src/server/openapi/)
  */
 export interface VerifyPinRequest {
   pin: string;
 }
 
 /** VerifyPinResult — advisory only, no session created.
- * Contract: docs/api/bootstrap/openapi.yaml `components/schemas/VerifyPinResult`
+ * Contract: docs/api/openapi.json `components/schemas/VerifyPinResult` (src/server/openapi/)
  */
 export interface VerifyPinResult {
   match: boolean;
@@ -106,7 +106,7 @@ export interface Member {
 }
 
 /** Error body — never contains `mpk-`/`mpg-` values or raw PINs.
- * Contract: docs/api/bootstrap/openapi.yaml `components/schemas/Error`
+ * Contract: docs/api/openapi.json `components/schemas/Error` (src/server/openapi/)
  */
 export interface Error {
   error: string;

@@ -294,7 +294,7 @@ submit restore or delete the recovery snapshot. Backups may contain credentials
 and household data; protect downloads and restrict data-directory permissions.
 
 See [backup behavior](features/backups.md), [recovery architecture](architecture/database-lifecycle.md)
-and the [backup API contract](api/backups/openapi.yaml) for failure statuses and
+and the [backup API contract](api/openapi.json) for failure statuses and
 retention rules. This procedure does not migrate a legacy household database.
 
 ## Isolated verification

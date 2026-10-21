@@ -1,5 +1,5 @@
 // Contract checks exercise route discovery, cohort integrity and DTO shape drift.
-// Synthetic negative cases prove rejection; maintained YAML is checked for parse traps.
+// Synthetic negative cases prove rejection; maintained contracts are checked for parse traps.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -17,6 +17,8 @@ import {
   loadContractSchemas,
   parseDtoInterfaces,
   parseDtoEnums,
+  checkOperationSchemas,
+  DOCUMENTATION_UI_ROUTES,
 } from "./check-openapi-drift.mjs";
 
 function tmp(prefix) {
@@ -565,4 +567,74 @@ test("maintained YAML descriptions do not become accidental null-valued fields",
     for (const [key, child] of Object.entries(value)) inspect(child, `${location}/${key}`);
   }
   for (const file of discoverContracts("docs/api")) inspect(load(readFileSync(file, "utf8")), file);
+});
+
+// ── Code-first contract: generated docs/api/openapi.json ────────────────────────────────────────
+
+test("discoverContracts: finds the generated openapi.json beside legacy per-domain YAML", () => {
+  const root = tmp("mpk-openapi-generated-");
+  try {
+    writeFileSync(path.join(root, "openapi.json"), '{"paths":{}}\n');
+    mkdirSync(path.join(root, "legacy"), { recursive: true });
+    writeFileSync(path.join(root, "legacy", "openapi.yaml"), "paths: {}\n");
+    mkdirSync(path.join(root, "planned"), { recursive: true });
+    writeFileSync(path.join(root, "planned", "openapi.planned.yaml"), "paths: {}\n");
+    const found = discoverContracts(root).map((p) => path.relative(root, p));
+    assert.deepEqual(found, [path.join("legacy", "openapi.yaml"), "openapi.json"]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("parseContractRoutes reads the generated JSON document", () => {
+  const root = tmp("mpk-openapi-json-routes-");
+  try {
+    const file = path.join(root, "openapi.json");
+    const paths = { "/api/members/{id}": { patch: {}, delete: {} }, "/health": { get: {} } };
+    writeFileSync(file, JSON.stringify({ paths }));
+    assert.deepEqual([...parseContractRoutes(file)].sort(), [
+      "DELETE /api/members/{id}",
+      "GET /health",
+      "PATCH /api/members/{id}",
+    ]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("negative: an undocumented implemented route is only exempt when explicitly listed", () => {
+  const contracts = [{ path: "docs/api/openapi.json", routes: new Set(["GET /health"]) }];
+  const implSet = new Set(["GET /health", "GET /api/docs"]);
+  assert.equal(checkOpenApiDrift({ contracts, implSet }).exitCode, 1);
+  const exempted = checkOpenApiDrift({ contracts, implSet, exempt: DOCUMENTATION_UI_ROUTES });
+  assert.equal(exempted.exitCode, 0);
+  assert.ok(!DOCUMENTATION_UI_ROUTES.has("GET /api/openapi.json"));
+});
+
+test("checkOperationSchemas: accepts documented operations, flags schemaless ones", () => {
+  const documentedOp = {
+    operationId: "listMembers",
+    tags: ["members"],
+    responses: { 200: { description: "The member list." } },
+  };
+  assert.deepEqual(checkOperationSchemas({ paths: { "/api/members": { get: documentedOp } } }), []);
+  const findings = checkOperationSchemas({
+    paths: {
+      "/api/schemaless": { get: { responses: { 200: { description: "Default Response" } } } },
+      "/api/empty": { post: { operationId: "x", tags: ["t"], responses: {} } },
+    },
+  });
+  assert.ok(findings.some((f) => f.includes("GET /api/schemaless has no operationId")));
+  assert.ok(findings.some((f) => f.includes("GET /api/schemaless has no tag")));
+  assert.ok(
+    findings.some((f) => f.includes("GET /api/schemaless response 200 has no description"))
+  );
+  assert.ok(findings.some((f) => f.includes("POST /api/empty documents no response")));
+});
+
+test("the committed generated contract declares a schema for every operation", async () => {
+  const { readFileSync } = await import("node:fs");
+  const doc = JSON.parse(readFileSync("docs/api/openapi.json", "utf8"));
+  assert.equal(doc.openapi, "3.1.0");
+  assert.deepEqual(checkOperationSchemas(doc), []);
 });

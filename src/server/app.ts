@@ -35,6 +35,7 @@ import {
 import type { PluginId } from "../shared/plugins";
 import type { CalendarFeedDependencies } from "./modules/calendar/sync-coordinator";
 import { defaultCredentialsMetaTag } from "./auth/default-credentials";
+import { openApiDocsRoutes, registerOpenApi } from "./openapi";
 
 type QuiesceCountedRequest = FastifyRequest & {
   __quiesceCounted?: boolean;
@@ -65,6 +66,8 @@ export async function buildApp(opts?: BuildAppOptions): Promise<FastifyInstance>
   // exists until every durable lifecycle operation has reached its reconciled safe outcome.
   await pluginLifecycle.reconcileAll();
   const server = Fastify();
+  // Code-first OpenAPI: documentation-only route schemas, collected from every route below.
+  await registerOpenApi(server, basePath);
   const sockets = new Set<Socket>();
   let closingHttp = false;
   let idleCollector: ReturnType<typeof setInterval> | undefined;
@@ -185,6 +188,7 @@ export async function buildApp(opts?: BuildAppOptions): Promise<FastifyInstance>
         await registerPluginHttp(app, pluginLifecycle, pluginId, registerRoutes);
       }
       await pluginRoutes(app, pluginLifecycle);
+      await openApiDocsRoutes(app);
 
       // FR-028 / ADR-059 §5: serve the built SPA same-origin from the CLIENT build dir
       // ONLY (dist/client/). The server bundle lives OUTSIDE this root (dist/server/) so

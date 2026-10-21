@@ -1,7 +1,21 @@
 #!/usr/bin/env node
-// Compare the exact reviewed docs/api contract cohort with the installed app.
-// The reviewed cohort lives in tests/fixtures/assembly-cohort.json and must grow
-// with each accepted product batch before its API routes are enabled.
+// OpenAPI contract gate for the code-first API (src/server/openapi/*).
+//
+// The published contract is docs/api/openapi.json, GENERATED from the zod route schemas by
+// `npm run generate:openapi` (tools/generate-openapi.mjs). Any not-yet-migrated hand-written
+// contract (`docs/api/<domain>/openapi.yaml`) is still discovered and checked alongside it;
+// `openapi.planned.yaml` files describe unbuilt surface and are never part of the gate.
+//
+// `npm run check:openapi` fails when:
+// 1. the committed docs/api/openapi.json differs from a fresh generation (stale contract);
+// 2. the installed route table and the documented operations differ in either direction —
+//    a route registered before the OpenAPI collector, or hidden from it, would be missing from
+//    the generated document. The reference-UI asset routes are the only deliberate exemption;
+// 3. an operation is documented without a route schema (no operationId/tag, or a response
+//    described only by @fastify/swagger's "Default Response" placeholder).
+// `--shapes` compares the document's component schemas with the src/shared DTO types — still
+// two independently written sources (zod route schemas vs TypeScript DTOs), so not tautological.
+// The reviewed contract cohort lives in tests/fixtures/assembly-cohort.json (`apiContracts`).
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -11,7 +25,16 @@ import { generateApiRouteSet } from "./gen-openapi.mjs";
 
 const HTTP_METHODS = ["get", "post", "put", "patch", "delete"];
 
-// A missing root returns an empty discovery set; the executable gate rejects it.
+/** Generated document file name at the API docs root. */
+export const GENERATED_CONTRACT = "openapi.json";
+
+/** Implemented routes that are intentionally absent from the document: the interactive
+ * reference UI (HTML shell and its bundled script) is documentation, not API surface.
+ * `GET /api/openapi.json` itself IS documented. */
+export const DOCUMENTATION_UI_ROUTES = new Set(["GET /api/docs", "GET /api/docs/js/scalar.js"]);
+
+// Discovery: the generated document plus any remaining legacy per-domain YAML contract. A
+// missing root returns an empty discovery set; the executable gate rejects it.
 export function discoverContracts(apiRoot) {
   const out = [];
   let entries;
@@ -21,6 +44,7 @@ export function discoverContracts(apiRoot) {
     return out;
   }
   for (const entry of entries) {
+    if (entry.isFile() && entry.name === GENERATED_CONTRACT) out.push(join(apiRoot, entry.name));
     if (!entry.isDirectory()) continue;
     const contractPath = join(apiRoot, entry.name, "openapi.yaml");
     if (existsSync(contractPath)) out.push(contractPath);
@@ -44,7 +68,7 @@ export function validateContractCohort(expected, actual) {
   }
 }
 
-// Parse one OpenAPI contract file into a Set of "<METHOD> <path>" strings. Throws (YAMLException or
+// Parse one OpenAPI contract file (JSON or YAML) into a Set of "<METHOD> <path>" strings. Throws (YAMLException or
 // an fs error) on malformed/unreadable input — callers use `loadContract` below to turn that into
 // a normal finding instead of letting it propagate as a crash.
 export function parseContractRoutes(contractPath) {
@@ -75,12 +99,12 @@ export function loadContract(contractPath) {
 // loaded, one entry per discovered contract file — use `loadContract` to build these so malformed
 // YAML arrives as `error`, never a throw). `implSet`: Set<string> of implemented "<METHOD> <path>"
 // routes (app-wide — not per-slice). Returns { exitCode, findings, message }.
-export function checkOpenApiDrift({ contracts, implSet }) {
+export function checkOpenApiDrift({ contracts, implSet, exempt = new Set() }) {
   if (contracts.length === 0) {
     return {
       exitCode: 1,
       findings: [],
-      message: "FAIL — 0 OpenAPI contracts discovered under docs/api/*/openapi.yaml.",
+      message: "FAIL — 0 OpenAPI contracts discovered under docs/api/.",
     };
   }
 
@@ -100,7 +124,7 @@ export function checkOpenApiDrift({ contracts, implSet }) {
     }
   }
 
-  const undocumented = [...implSet].filter((r) => !documented.has(r)).sort();
+  const undocumented = [...implSet].filter((r) => !documented.has(r) && !exempt.has(r)).sort();
   if (undocumented.length) {
     findings.push(
       `implemented but NOT documented in any contract:\n    ${undocumented.join("\n    ")}`
@@ -249,7 +273,7 @@ export function checkOpenApiShapes({ contracts, dtoInterfaces, dtoEnums }) {
       exitCode: 1,
       findings: [],
       message:
-        "FAIL — 0 OpenAPI contracts discovered under docs/api/*/openapi.yaml. Either the " +
+        "FAIL — 0 OpenAPI contracts discovered under docs/api/. Either the " +
         "discovery path is broken or every contract vanished — this is not a vacuous pass.",
     };
   }
@@ -357,6 +381,30 @@ export function checkOpenApiShapes({ contracts, dtoInterfaces, dtoEnums }) {
   };
 }
 
+// ---- Operation schema completeness ------------------------------------------------------------
+// The generated document lists EVERY non-hidden route, so a route registered without a
+// `documented(...)` schema still appears — with no operationId/tags and @fastify/swagger's
+// placeholder "Default Response". Each such operation is a finding.
+export function checkOperationSchemas(doc, contractPath = "docs/api/openapi.json") {
+  const findings = [];
+  for (const [routePath, item] of Object.entries(doc?.paths ?? {})) {
+    for (const method of HTTP_METHODS) {
+      const op = item?.[method];
+      if (!op) continue;
+      const where = `${contractPath}: ${method.toUpperCase()} ${routePath}`;
+      if (typeof op.operationId !== "string" || !op.operationId)
+        findings.push(`${where} has no operationId (route declared without a schema?)`);
+      if (!Array.isArray(op.tags) || op.tags.length === 0) findings.push(`${where} has no tag`);
+      const responses = Object.entries(op.responses ?? {});
+      if (!responses.length) findings.push(`${where} documents no response`);
+      for (const [status, response] of responses)
+        if (!response?.description || response.description === "Default Response")
+          findings.push(`${where} response ${status} has no description`);
+    }
+  }
+  return findings;
+}
+
 // ---- CLI -------------------------------------------------------------------
 function report(exitCode, findings, message) {
   if (exitCode === 0) {
@@ -398,14 +446,37 @@ async function main() {
     process.exit(exitCode);
   }
 
+  const findings = [];
+  const { checkOpenApiDocument } = await import("./generate-openapi.mjs");
+  const freshness = await checkOpenApiDocument();
+  if (!freshness.fresh)
+    findings.push(
+      freshness.actual === null
+        ? "docs/api/openapi.json is missing — run `npm run generate:openapi`."
+        : "docs/api/openapi.json is stale — run `npm run generate:openapi` and commit the result."
+    );
+  const generated = contractPaths.find((p) => p.endsWith(GENERATED_CONTRACT));
+  if (generated && freshness.actual !== null)
+    findings.push(
+      ...checkOperationSchemas(JSON.parse(freshness.actual), relative(process.cwd(), generated))
+    );
+
   const contracts = contractPaths.map((p) => ({
     ...loadContract(p),
     path: relative(process.cwd(), p),
   }));
   const implSet = await generateApiRouteSet();
-  const { exitCode, findings, message } = checkOpenApiDrift({ contracts, implSet });
-  report(exitCode, findings, message);
-  process.exit(exitCode);
+  const drift = checkOpenApiDrift({ contracts, implSet, exempt: DOCUMENTATION_UI_ROUTES });
+  findings.push(...drift.findings);
+  if (findings.length) {
+    report(1, findings, drift.exitCode ? drift.message : "OpenAPI contract check failed:");
+    process.exit(1);
+  }
+  report(
+    0,
+    [],
+    `${drift.message} docs/api/openapi.json is up to date and every operation declares a schema.`
+  );
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) await main();
