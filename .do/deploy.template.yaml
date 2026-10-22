@@ -7,7 +7,7 @@ spec:
   services:
     - name: marplanner
       git:
-        repo_clone_url: https://github.com/diegomarino/marplanner-project.git
+        repo_clone_url: https://github.com/diegomarino/marplanner.git
         branch: main
       dockerfile_path: infra/docker/Dockerfile
       source_dir: /

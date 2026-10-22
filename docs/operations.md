@@ -187,7 +187,7 @@ None of these outcomes stops the server from starting. The production bundle has
 **Publishing the Railway template (maintainer, once).** Railway's button opens a published template, which only the maintainer's account can create:
 
 1. In the Railway dashboard, open the workspace's **Templates** page and choose **New Template**.
-2. Add a service from the GitHub repository `diegomarino/marplanner-project`, branch `main`. Railway reads `railway.json` for the build, health check and restart policy.
+2. Add a service from the GitHub repository `diegomarino/marplanner`, branch `main`. Railway reads `railway.json` for the build, health check and restart policy.
 3. Add the five variables listed above to the service.
 4. Optionally right-click the service and attach a volume mounted at `/data`, so the demo survives restarts.
 5. Choose **Create Template**, then publish it from the Templates page.
