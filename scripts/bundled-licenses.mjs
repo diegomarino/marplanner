@@ -7,6 +7,8 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 const NOTICE_FILE = /^(licen[cs]e|copying|notice)([.-].*)?$/i;
+const STYLESHEET = /\.(css|less|sass|scss|styl|stylus|pcss|postcss)(\?|$)/;
+const BARE_CSS_IMPORT = /@import\s+(?:url\(\s*)?["']([^"']+)["']/g;
 
 /** The package directory owning `modulePath`, or null for first-party code. */
 function packageDirectory(modulePath) {
@@ -16,6 +18,29 @@ function packageDirectory(modulePath) {
   if (index === -1 || index + 1 >= parts.length) return null;
   const length = parts[index + 1].startsWith("@") ? 2 : 1;
   return parts.slice(0, index + 1 + length).join(path.sep);
+}
+
+/** The installed directory of package `name` as seen from `fromDirectory`, or null. */
+function installedPackage(fromDirectory, name) {
+  for (let directory = fromDirectory; ; directory = path.dirname(directory)) {
+    const candidate = path.join(directory, "node_modules", name);
+    if (existsSync(path.join(candidate, "package.json"))) return candidate;
+    if (path.dirname(directory) === directory) return null;
+  }
+}
+
+/** Packages a first-party stylesheet pulls in with a bare `@import "<package>"`. CSS tools such
+ * as Tailwind inline those imports themselves, so they never reach the module graph. */
+function importedStylesheetPackages(code, importer) {
+  const directories = [];
+  for (const [, specifier] of code.matchAll(BARE_CSS_IMPORT)) {
+    if (/^([./]|[a-z][a-z0-9+.-]*:)/i.test(specifier)) continue;
+    const segments = specifier.split("/");
+    const name = segments.slice(0, specifier.startsWith("@") ? 2 : 1).join("/");
+    const directory = installedPackage(path.dirname(importer), name);
+    if (directory) directories.push(path.join(directory, "package.json"));
+  }
+  return directories;
 }
 
 /** One entry per bundled package (name@version), sorted by name, from the bundle's inputs. */
@@ -80,18 +105,33 @@ export function writeLicenses(file, title, modulePaths) {
   return packages;
 }
 
-/** Vite/Rollup plugin: emit THIRD_PARTY_LICENSES.txt for the packages in the client bundle. */
+/** Vite/Rollup plugin: emit THIRD_PARTY_LICENSES.txt for the packages in the client bundle,
+ * counting rendered JavaScript, stylesheets in the module graph and packages that first-party
+ * stylesheets `@import` (their CSS is emitted even though no JavaScript is rendered for it). */
 export function bundledLicensesPlugin() {
+  const stylesheetImports = new Set();
   return {
     name: "marplanner-bundled-licenses",
     apply: "build",
+    enforce: "pre",
+    transform: {
+      order: "pre",
+      handler(code, id) {
+        if (!STYLESHEET.test(id) || packageDirectory(id)) return null;
+        for (const file of importedStylesheetPackages(code, id)) stylesheetImports.add(file);
+        return null;
+      },
+    },
     generateBundle(_options, bundle) {
-      const modulePaths = [];
+      const modulePaths = [...stylesheetImports];
       for (const output of Object.values(bundle)) {
         if (output.type !== "chunk") continue;
         for (const [id, info] of Object.entries(output.modules)) {
           if (info.renderedLength > 0) modulePaths.push(id);
         }
+      }
+      for (const id of this.getModuleIds?.() ?? []) {
+        if (STYLESHEET.test(id)) modulePaths.push(id);
       }
       this.emitFile({
         type: "asset",
