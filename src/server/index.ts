@@ -4,7 +4,8 @@ import fs from "node:fs";
 import type { Scheduler } from "./scheduler/index";
 
 export function assertDataDirWritable(dir: string): void {
-  fs.mkdirSync(dir, { recursive: true });
+  // Directories created here are owner-only; an existing operator-managed one keeps its mode.
+  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
   fs.accessSync(dir, fs.constants.W_OK);
 }
 
