@@ -95,6 +95,20 @@ test("dev:fresh refuses a non-empty directory it did not create", async (t) => {
   assertSourceIntact();
 });
 
+test("dev:fresh refuses a non-empty .data-like directory that is not .data-*", async (t) => {
+  const { fixture, run, assertSourceIntact } = makeFixture(t);
+  for (const name of [".database", ".dataset"]) {
+    const foreign = join(fixture, name);
+    mkdirSync(foreign);
+    writeFileSync(join(foreign, "keep.txt"), "keep");
+    const result = await run(["--data-dir", name]);
+    assert.notEqual(result.code, 0);
+    assert.match(result.out, /Refusing/);
+    assert.equal(readFileSync(join(foreign, "keep.txt"), "utf8"), "keep");
+  }
+  assertSourceIntact();
+});
+
 test("dev:fresh wipes and recreates its own marked store", async (t) => {
   const { fixture, run, assertSourceIntact } = makeFixture(t);
   const store = join(fixture, "elsewhere-store");

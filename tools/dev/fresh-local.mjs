@@ -108,7 +108,9 @@ function assertDisposable(absPath) {
     throw new Error(`Refusing to wipe ${absPath}: it is not a directory.`);
   }
   if (readdirSync(absPath).length === 0 || existsSync(join(absPath, STORE_MARKER))) return;
-  const legacyStore = dirname(absPath) === root && basename(absPath).startsWith(".data");
+  // `.data` itself only reaches here with --force-data-dir (checked by the caller).
+  const name = basename(absPath);
+  const legacyStore = dirname(absPath) === root && (name === ".data" || name.startsWith(".data-"));
   if (!legacyStore) {
     throw new Error(
       `Refusing to wipe ${absPath}: it is not empty and was not created by dev:fresh (no ${STORE_MARKER}).`
