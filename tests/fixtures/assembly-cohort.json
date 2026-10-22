@@ -4863,7 +4863,9 @@
             "restore with detached calendar synchronization drains detached work or aborts safely (timeout=false, failure=false)",
             "restore with detached calendar synchronization drains detached work or aborts safely (timeout=false, failure=true)",
             "restore with detached calendar synchronization drains detached work or aborts safely (timeout=true, failure=false)",
-            "restore with detached calendar synchronization drains detached work or aborts safely (timeout=true, failure=true)"
+            "restore with detached calendar synchronization drains detached work or aborts safely (timeout=true, failure=true)",
+            "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) a restored database keeps the active database's mode 384 under a permissive umask",
+            "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) a restored database keeps the active database's mode 416 under a permissive umask"
           ],
           "tests/integration/backups-snapshot.test.ts": [
             "backups snapshot creation (BACKUPS-INV-09, FR-002) BACKUPS-INV-09: a snapshot is a consistent, independently-readable image — temp-write + atomic rename, and creation never mutates live data",

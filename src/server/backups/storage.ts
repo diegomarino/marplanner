@@ -336,7 +336,8 @@ export function openExistingBackupFd(candidatePath: string): number | null {
  * contract).
  */
 export function copyFdToPathSync(sourceFd: number, destPath: string): void {
-  const destFd = fs.openSync(destPath, "w");
+  // Created owner-only: the copy is a full household database.
+  const destFd = fs.openSync(destPath, "w", 0o600);
   try {
     const CHUNK_BYTES = 1024 * 1024; // 1 MiB — bounded, never the whole file at once
     const buffer = Buffer.allocUnsafe(CHUNK_BYTES);
