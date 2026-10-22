@@ -4839,6 +4839,9 @@
             "restore engine — lock refusals (BACKUPS-INV-02/INV-05, research D7) a second concurrent restore attempt is refused with restore_in_progress",
             "restore engine — lock refusals (BACKUPS-INV-02/INV-05, research D7) a restore attempt while a snapshot write is genuinely in flight is refused with snapshot_in_progress",
             "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) equal migration set -> restored, no forward migration needed",
+            "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) a restored database keeps the active database's mode 384 under a permissive umask",
+            "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) a restored database keeps the active database's mode 416 under a permissive umask",
+            "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) a restored database is owner-only when the active database file is gone",
             "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) strict subset (older backup) -> restored with migrated:true, forward-migrated current",
             "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) superset (backup has a migration the code does not) -> downgrade_rejected, active db untouched",
             "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) corrupt file (not a SQLite database) -> incompatible_backup, active db untouched",
@@ -4863,9 +4866,7 @@
             "restore with detached calendar synchronization drains detached work or aborts safely (timeout=false, failure=false)",
             "restore with detached calendar synchronization drains detached work or aborts safely (timeout=false, failure=true)",
             "restore with detached calendar synchronization drains detached work or aborts safely (timeout=true, failure=false)",
-            "restore with detached calendar synchronization drains detached work or aborts safely (timeout=true, failure=true)",
-            "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) a restored database keeps the active database's mode 384 under a permissive umask",
-            "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) a restored database keeps the active database's mode 416 under a permissive umask"
+            "restore with detached calendar synchronization drains detached work or aborts safely (timeout=true, failure=true)"
           ],
           "tests/integration/backups-snapshot.test.ts": [
             "backups snapshot creation (BACKUPS-INV-09, FR-002) BACKUPS-INV-09: a snapshot is a consistent, independently-readable image — temp-write + atomic rename, and creation never mutates live data",
