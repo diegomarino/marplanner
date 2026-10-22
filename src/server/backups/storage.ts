@@ -201,7 +201,9 @@ export function resolveBackupsRoot(): string {
   const root = process.env.BACKUPS_ROOT
     ? path.resolve(process.env.BACKUPS_ROOT)
     : path.resolve(process.env.DATA_DIR ?? process.cwd(), "backups");
-  fs.mkdirSync(root, { recursive: true });
+  // Snapshots are full household copies: a root created here is owner-only (an existing,
+  // operator-managed root keeps its mode).
+  fs.mkdirSync(root, { recursive: true, mode: 0o700 });
   return root;
 }
 
@@ -334,7 +336,8 @@ export function openExistingBackupFd(candidatePath: string): number | null {
  * contract).
  */
 export function copyFdToPathSync(sourceFd: number, destPath: string): void {
-  const destFd = fs.openSync(destPath, "w");
+  // Created owner-only: the copy is a full household database.
+  const destFd = fs.openSync(destPath, "w", 0o600);
   try {
     const CHUNK_BYTES = 1024 * 1024; // 1 MiB — bounded, never the whole file at once
     const buffer = Buffer.allocUnsafe(CHUNK_BYTES);

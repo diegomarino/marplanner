@@ -44,6 +44,19 @@ cpSync("src/client/styles/tokens.css", "dist/server/ui-tokens.css");
 
 console.log("server bundled → dist/server/index.js (+ fonts/jetbrains-mono, ui-tokens.css)");
 
+// Operator credential CLI, shipped beside the server so a container can run it.
+await build({
+  entryPoints: ["src/server/auth/devices-cli.ts"],
+  outfile: "dist/server/devices.js",
+  bundle: true,
+  platform: "node",
+  format: "esm",
+  target: "node24",
+  external: NATIVE_EXTERNALS,
+  banner: REQUIRE_SHIM_BANNER,
+});
+console.log("device credential CLI bundled → dist/server/devices.js");
+
 // Separate entry for the built renderer smoke.
 await build({
   entryPoints: ["src/server/modules/daily-briefing/render/index.ts"],

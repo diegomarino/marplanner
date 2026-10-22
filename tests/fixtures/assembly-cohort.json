@@ -1520,7 +1520,10 @@
             "runtime storage safeguards rejects recognized Linux network storage before any SQLite files are created",
             "runtime storage safeguards checks the existing database mount and propagates filesystem errors",
             "runtime storage safeguards rejects file aliases and preserves malformed sentinels",
-            "runtime storage safeguards holds ownership independently of product connections and releases idempotently"
+            "runtime storage safeguards holds ownership independently of product connections and releases idempotently",
+            "private storage creation creates a new database, its WAL and SHM owner-only",
+            "private storage creation leaves the mode of an existing operator-managed database alone",
+            "private storage creation creates new data and backups directories owner-only but keeps existing ones"
           ],
           "tests/boundary/default-credentials.test.ts": [
             "public default credential detection recognises only the repository's default access token",
@@ -4836,6 +4839,9 @@
             "restore engine — lock refusals (BACKUPS-INV-02/INV-05, research D7) a second concurrent restore attempt is refused with restore_in_progress",
             "restore engine — lock refusals (BACKUPS-INV-02/INV-05, research D7) a restore attempt while a snapshot write is genuinely in flight is refused with snapshot_in_progress",
             "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) equal migration set -> restored, no forward migration needed",
+            "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) a restored database keeps the active database's mode 384 under a permissive umask",
+            "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) a restored database keeps the active database's mode 416 under a permissive umask",
+            "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) a restored database is owner-only when the active database file is gone",
             "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) strict subset (older backup) -> restored with migrated:true, forward-migrated current",
             "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) superset (backup has a migration the code does not) -> downgrade_rejected, active db untouched",
             "restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02, FR-007) corrupt file (not a SQLite database) -> incompatible_backup, active db untouched",
@@ -5501,6 +5507,12 @@
             "telemetry retention prune (research D7) CLIENT-LOGGING-TELEMETRY-INV-09: strictly-older-than-cutoff deletion idempotent re-run: a second prune at the same frozen instant deletes nothing further",
             "telemetry retention prune (research D7) real registration path — runJobNow(\"telemetry.prune\") CLIENT-LOGGING-TELEMETRY-AC-04/-INV-09: prunes aged rows and keeps fresh rows through the actual registered scheduler job",
             "telemetry retention prune (research D7) real registration path — runJobNow(\"telemetry.prune\") re-running the real registered job after a prune completes without deleting anything further"
+          ],
+          "tests/boundary/device-retirement.test.ts": [
+            "device credential retirement retires one device while the other and the household data stay intact",
+            "device credential retirement keeps the configured bootstrap key, which startup re-activates, but retires stale ones",
+            "device credential retirement rejects an empty or overlong label and prints usage for unknown commands",
+            "device credential retirement opens the server's database by its environment and never creates a missing one"
           ]
         }
       },
@@ -7769,6 +7781,36 @@
           "statements": 100,
           "functions": 100,
           "branches": 100
+        }
+      },
+      "src/server/auth/devices-cli.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 33,
+          "statements": 33,
+          "functions": 3,
+          "branches": 35
+        },
+        "minimumRates": {
+          "lines": 90.9,
+          "statements": 90.9,
+          "functions": 66.66,
+          "branches": 91.42
+        }
+      },
+      "src/server/auth/devices.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 22,
+          "statements": 25,
+          "functions": 6,
+          "branches": 20
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 90
         }
       },
       "src/server/auth/eff-wordlist.ts": {

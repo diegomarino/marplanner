@@ -46,6 +46,7 @@
     "generate:openapi": "node tools/generate-openapi.mjs",
     "generate:ui-catalog": "node tools/dev/generate-ui-catalog.mjs",
     "lint": "npm run check:plugin-events && node tools/lint.mjs",
+    "devices": "node --env-file-if-exists=.env.local --import tsx src/server/auth/devices-cli.ts",
     "seed:all": "node tools/dev/seed-all.mjs",
     "seed:private": "node --env-file-if-exists=.env.local --import tsx src/server/db/seeds/cli.ts --mode private",
     "seed:public": "node --env-file-if-exists=.env.local --import tsx src/server/db/seeds/cli.ts --mode public",
