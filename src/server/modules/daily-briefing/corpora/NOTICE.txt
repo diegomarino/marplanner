@@ -1,0 +1,37 @@
+Third-party data in the Daily Briefing corpora
+
+trivia-questions.json
+  Source: Open Trivia Database (https://opentdb.com/), retrieved 2026-06-12.
+  License: Creative Commons Attribution-ShareAlike 4.0 International
+  (https://creativecommons.org/licenses/by-sa/4.0/). This file is distributed under
+  the same license.
+  Changes: HTML entities decoded, duplicate questions removed, answer options sorted,
+  reshaped to {question, correctAnswer, options, difficulty, category}.
+
+vocabulary-entries.json
+  Definitions, examples and pronunciations from Wiktionary (https://en.wiktionary.org/),
+  retrieved 2026-06-12 through the Free Dictionary API (https://dictionaryapi.dev/) for a
+  project word list. Source of each entry: https://en.wiktionary.org/wiki/<word>.
+  License: Creative Commons Attribution-ShareAlike 3.0
+  (https://creativecommons.org/licenses/by-sa/3.0/). This file is distributed under the
+  same license.
+  Changes: one definition, example and pronunciation kept per word, reshaped to
+  {word, level, type, definition, example, pronunciation}.
+
+number-facts.json
+  Math and trivia facts from number-trivia.com, retrieved 2026-06-12; 18 numbers the
+  service did not answer use generated arithmetic sentences. number-trivia.com
+  publishes no terms, license or data source; its responses repeat the text of the
+  retired Numbers API (numbersapi.com), which did not publish a data license either.
+
+number-facts.es.json
+  Spanish translation of number-facts.json made for Marplanner; the same source and
+  the absence of published terms apply.
+  Changes: each fact translated into Spanish, same numbers and kinds.
+
+word-search-corpus.json
+  Words and frequency data from the Datamuse API (https://www.datamuse.com/api/),
+  retrieved 2026-06-10; Datamuse documents Google Books Ngrams as the source of its
+  frequency data.
+
+All other corpora in this directory are part of Marplanner and covered by its license.

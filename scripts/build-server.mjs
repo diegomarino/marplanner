@@ -6,6 +6,7 @@ import { build } from "esbuild";
 import { cpSync, mkdirSync } from "node:fs";
 import { resolveBuildInfo } from "./build-info.mjs";
 import { assertNoPrivateInputs, seedBundlePlugin } from "./seed-bundle-plugin.mjs";
+import { writeLicenses } from "./bundled-licenses.mjs";
 
 const RESVG_EXTERNALS = ["@resvg/resvg-js", "@resvg/resvg-wasm"];
 const NATIVE_EXTERNALS = ["argon2", "better-sqlite3", ...RESVG_EXTERNALS];
@@ -32,6 +33,12 @@ const server = await build({
   metafile: true,
 });
 assertNoPrivateInputs(server.metafile);
+// Bundled dependency code travels without its packages' licence files: write them beside it.
+writeLicenses(
+  "dist/server/THIRD_PARTY_LICENSES.txt",
+  "Marplanner server bundle — third-party licences",
+  Object.keys(server.metafile.outputs["dist/server/index.js"].inputs)
+);
 
 mkdirSync("dist/server/fonts/jetbrains-mono", { recursive: true });
 cpSync(
@@ -39,6 +46,8 @@ cpSync(
   "dist/server/fonts/jetbrains-mono",
   { recursive: true }
 );
+// The corpora are inlined into the bundle; their third-party data notice travels with it.
+cpSync("src/server/modules/daily-briefing/corpora/NOTICE.txt", "dist/server/CORPORA-NOTICE.txt");
 // Access-gate HTML inlines the same semantic tokens the SPA imports.
 cpSync("src/client/styles/tokens.css", "dist/server/ui-tokens.css");
 
@@ -58,9 +67,10 @@ await build({
 console.log("device credential CLI bundled → dist/server/devices.js");
 
 // Separate entry for the built renderer smoke.
-await build({
+const render = await build({
   entryPoints: ["src/server/modules/daily-briefing/render/index.ts"],
   outfile: "dist/daily-briefing-render/index.js",
+  metafile: true,
   bundle: true,
   platform: "node",
   format: "esm",
@@ -73,6 +83,12 @@ cpSync(
   "src/server/modules/daily-briefing/render/fonts/jetbrains-mono",
   "dist/daily-briefing-render/fonts/jetbrains-mono",
   { recursive: true }
+);
+
+writeLicenses(
+  "dist/daily-briefing-render/THIRD_PARTY_LICENSES.txt",
+  "Marplanner briefing render bundle — third-party licences",
+  Object.keys(render.metafile.outputs["dist/daily-briefing-render/index.js"].inputs)
 );
 
 console.log("daily-briefing render module bundled → dist/daily-briefing-render/index.js");
