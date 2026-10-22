@@ -48,7 +48,7 @@ describe("private seed overlays", () => {
         disposableTarget: true,
         seedsDirectory: privateOnlyDirectory,
       })
-    ).rejects.toThrow("Seed module failed: private module");
+    ).rejects.toThrow("No public seed modules found");
     expect(getDb().prepare("SELECT COUNT(*) AS count FROM settings_objects").get()).toEqual({
       count: 0,
     });

@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import Database from "better-sqlite3";
 import { describe, expect, it, vi } from "vitest";
 import { reconcileBootstrap } from "../../src/server/auth/reconcile";
@@ -192,6 +195,41 @@ describe("seed on empty against a real database", () => {
       { id: "demo:member:two" },
     ]);
     await expect(seedOnEmpty({ env, modules: () => modules, log })).resolves.toBe("skipped");
+  });
+
+  it("never marks a profile complete when no public module was found", async () => {
+    const base = {
+      mode: "public",
+      asOfDate: AS_OF_DATE,
+      nowMs: NOW,
+      disposableTarget: true,
+    } as const;
+    const emptyDirectory = mkdtempSync(join(tmpdir(), "mp-empty-seeds-"));
+    try {
+      for (const seedsDirectory of [join(emptyDirectory, "absent"), emptyDirectory]) {
+        await expect(runSeedProfile({ ...base, seedsDirectory })).rejects.toThrow(
+          "No public seed modules found"
+        );
+      }
+      await expect(runSeedProfile({ ...base, modules: [] })).rejects.toThrow(
+        "No public seed modules found"
+      );
+    } finally {
+      rmSync(emptyDirectory, { recursive: true, force: true });
+    }
+    expect(readSeedProfileMarker(getDb())).toEqual({ state: "absent" });
+  });
+
+  it("lets the next boot seed after a boot that found no modules", async () => {
+    const log = { log: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    const env = { MP_SEED_ON_EMPTY: "true" };
+
+    await expect(seedOnEmpty({ env, modules: () => [], log })).resolves.toBe("failed");
+    expect(readSeedProfileMarker(getDb())).toEqual({ state: "absent" });
+    await expect(
+      seedOnEmpty({ env, modules: () => [memberModule("public:one", "one")], log })
+    ).resolves.toBe("seeded");
+    expect(getDb().prepare("SELECT id FROM members").all()).toEqual([{ id: "demo:member:one" }]);
   });
 
   it("repairs a seed a crashed boot left running, on that boot's as-of date", async () => {

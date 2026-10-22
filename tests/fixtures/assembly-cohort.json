@@ -746,6 +746,15 @@
             "rejects server reuse without an explicit matching data directory"
           ],
           "tools/fresh-local.test.mjs": [
+            "dev:fresh refuses to wipe the project root",
+            "dev:fresh refuses to wipe an empty value",
+            "dev:fresh refuses to wipe an ancestor of the project",
+            "dev:fresh refuses to wipe a non-normalized path to the project",
+            "dev:fresh refuses a symlink that resolves to the project root",
+            "dev:fresh refuses a non-empty directory it did not create",
+            "dev:fresh refuses a non-empty .data-like directory that is not .data-*",
+            "dev:fresh wipes and recreates its own marked store",
+            "dev:fresh still wipes a legacy unmarked .data-fresh store",
             "dev:fresh refuses wiping the default .data playground without force",
             "dev:fresh --help documents public and private seed then dev",
             "package scripts expose seed as seed:all of public and private"
@@ -2677,7 +2686,9 @@
             "seed on empty against a real database refuses, without changing anything, when the household already has data",
             "runner with preloaded modules runs them in order instead of discovering a directory",
             "runner with preloaded modules still validates ids, duplicates and the public-only mode",
-            "runner with preloaded modules has no bundled modules outside the production build"
+            "runner with preloaded modules has no bundled modules outside the production build",
+            "seed on empty against a real database never marks a profile complete when no public module was found",
+            "seed on empty against a real database lets the next boot seed after a boot that found no modules"
           ],
           "tests/boundary/seed-ownership.test.ts": [
             "seed ownership boundary creates the running simpsons marker with canonical migration and lifecycle metadata",
@@ -5227,7 +5238,8 @@
             "daily-briefing skeleton — render -> store -> enqueue -> claim -> payload resolves the EXACT dated row's raster, not merely the newest row for the member (P1-4)",
             "daily-briefing skeleton — render -> store -> enqueue -> claim -> payload throws a malformed-outputRef error for missing date part (strict parse, FR-016)",
             "daily-briefing skeleton — render -> store -> enqueue -> claim -> payload throws a malformed-outputRef error for extra colon garbage (strict parse, FR-016)",
-            "daily-briefing skeleton — render -> store -> enqueue -> claim -> payload throws when no raster is stored for the exact member+date (absence-tolerant provider, never a crash caller-side)"
+            "daily-briefing skeleton — render -> store -> enqueue -> claim -> payload throws when no raster is stored for the exact member+date (absence-tolerant provider, never a crash caller-side)",
+            "daily-briefing print path for the shipped demo members enqueues, claims and resolves the raster of a seeded demo member"
           ],
           "tests/integration/daily-briefing-trigger.test.ts": [
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) AC-1: the last morning chore completed -> exactly one print job enqueued",
