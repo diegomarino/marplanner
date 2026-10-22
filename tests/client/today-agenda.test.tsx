@@ -76,13 +76,13 @@ describe("household-day range and projection", () => {
       "2026-12-31T11:30:00Z",
       "2027-01-01",
       "2026-12-31T10:00:00.000Z",
-      "2027-01-02T00:00:00.000Z",
+      "2027-01-01T10:00:00.000Z",
     ],
     [
       "America/Los_Angeles",
       "2026-09-22T01:00:00Z",
       "2026-09-21",
-      "2026-09-21T00:00:00.000Z",
+      "2026-09-21T07:00:00.000Z",
       "2026-09-22T07:00:00.000Z",
     ],
     [
@@ -90,17 +90,41 @@ describe("household-day range and projection", () => {
       "2026-03-29T12:00:00Z",
       "2026-03-29",
       "2026-03-28T23:00:00.000Z",
-      "2026-03-30T00:00:00.000Z",
+      "2026-03-29T22:00:00.000Z",
     ],
     [
       "America/New_York",
       "2026-11-01T12:00:00Z",
       "2026-11-01",
-      "2026-11-01T00:00:00.000Z",
+      "2026-11-01T04:00:00.000Z",
       "2026-11-02T05:00:00.000Z",
     ],
-  ])("covers timed and date-only anchors in %s at %s", (timezone, instant, date, from, to) => {
-    expect(householdDayRange(timezone, Date.parse(instant))).toEqual({ date, from, to });
+  ])(
+    "spans household midnight to the next one in %s at %s",
+    (timezone, instant, date, from, to) => {
+      expect(householdDayRange(timezone, Date.parse(instant))).toEqual({ date, from, to });
+    }
+  );
+
+  it("shows ongoing multi-day and overnight events on every day they cover", () => {
+    const input = [
+      event("Holiday", "2026-09-20", "2026-09-24", { allDay: true }),
+      event("Ended holiday", "2026-09-18", "2026-09-22", { allDay: true }),
+      event("Night shift", "2026-09-21T22:00:00Z", "2026-09-22T06:00:00Z"),
+      event("Until midnight", "2026-09-21T21:00:00Z", "2026-09-22T00:00:00Z"),
+      event("Instant at midnight", "2026-09-22T00:00:00Z"),
+      event("Tomorrow", "2026-09-23T00:00:00Z", "2026-09-23T01:00:00Z"),
+    ];
+    expect(
+      presentAgenda(input, members, "UTC", NOW).map(({ event, temporalState }) => [
+        event.title,
+        temporalState,
+      ])
+    ).toEqual([
+      ["Holiday", "future"],
+      ["Night shift", "past"],
+      ["Instant at midnight", "past"],
+    ]);
   });
 
   it("keeps read order for ties, all-day first, and emphasizes every current interval", () => {
@@ -386,7 +410,7 @@ describe("TodayAgenda", () => {
     const calendarRequests = requests.filter((url) => url.startsWith("/api/calendar/events?"));
     const last = new URL(calendarRequests.at(-1)!, "http://localhost");
     expect(last.searchParams.get("from")).toBe("2026-09-22T22:00:00.000Z");
-    expect(last.searchParams.get("to")).toBe("2026-09-24T00:00:00.000Z");
+    expect(last.searchParams.get("to")).toBe("2026-09-23T22:00:00.000Z");
   });
 
   it("renders sorted rows, temporal text/weight and all active identities with household times", async () => {
@@ -437,7 +461,7 @@ describe("TodayAgenda", () => {
     expect(Object.fromEntries(url.searchParams)).toEqual({
       source: "all",
       from: "2026-09-21T22:00:00.000Z",
-      to: "2026-09-23T00:00:00.000Z",
+      to: "2026-09-22T22:00:00.000Z",
     });
   });
 

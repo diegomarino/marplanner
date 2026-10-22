@@ -901,7 +901,7 @@
             "example": "Europe/Madrid"
           },
           "rrule": {
-            "description": "RFC-5545 RRULE; null = single occurrence. Validated by the shared expander.",
+            "description": "RFC-5545 RRULE; null = single occurrence. Supported subset: FREQ=DAILY|WEEKLY|MONTHLY|YEARLY with INTERVAL, COUNT, UNTIL, BYDAY, BYMONTHDAY, BYMONTH, WKST; anything else (sub-daily FREQ, BYHOUR/BYMINUTE/BYSECOND, BYSETPOS, BYYEARDAY, BYWEEKNO, a BYMONTH/BYMONTHDAY pair that never occurs) is a 400.",
             "example": "FREQ=WEEKLY;BYDAY=MO",
             "type": ["string", "null"]
           },
@@ -953,7 +953,7 @@
             "example": "Europe/Madrid"
           },
           "rrule": {
-            "description": "RFC-5545 RRULE; null = single occurrence. Validated by the shared expander.",
+            "description": "RFC-5545 RRULE; null = single occurrence. Supported subset: FREQ=DAILY|WEEKLY|MONTHLY|YEARLY with INTERVAL, COUNT, UNTIL, BYDAY, BYMONTHDAY, BYMONTH, WKST; anything else (sub-daily FREQ, BYHOUR/BYMINUTE/BYSECOND, BYSETPOS, BYYEARDAY, BYWEEKNO, a BYMONTH/BYMONTHDAY pair that never occurs) is a 400.",
             "example": "FREQ=WEEKLY;BYDAY=MO",
             "type": ["string", "null"]
           },
@@ -3477,14 +3477,14 @@
             "in": "query",
             "name": "from",
             "required": true,
-            "description": "range start (household tz)"
+            "description": "Range start: a YYYY-MM-DD household date (from its household midnight) or an ISO instant (inclusive). All-day events match by household date."
           },
           {
             "schema": { "type": "string" },
             "in": "query",
             "name": "to",
             "required": true,
-            "description": "exclusive next-midnight upper bound (INV-03)"
+            "description": "Range end: a YYYY-MM-DD household date, included (read up to the next household midnight, INV-03), or an exclusive ISO instant."
           },
           {
             "schema": { "type": "string" },
@@ -3644,6 +3644,12 @@
           },
           "401": { "description": "missing/invalid device key" },
           "404": { "description": "no such event" },
+          "409": {
+            "description": "`external_event_read_only`: the event is synchronized from an external calendar; only its participant assignments are editable.",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+            }
+          },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
             "headers": {
@@ -3687,6 +3693,12 @@
           },
           "401": { "description": "missing/invalid device key" },
           "404": { "description": "no such event" },
+          "409": {
+            "description": "`external_event_read_only`: the event is synchronized from an external calendar; only its participant assignments are editable.",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+            }
+          },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
             "headers": {

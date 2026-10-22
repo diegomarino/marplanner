@@ -146,9 +146,10 @@ describe("Calendar demo seed integration", () => {
 
       expect(response.statusCode).toBe(200);
       const events = JSON.parse(response.body);
-      // Wed 23 – Sat 26: 6 asOfDate-relative events, 5 week-relative one-offs and 6 occurrences of
-      // weekly recurring events (3 plant shifts, saxophone, bowling league, baby gym).
-      expect(events).toHaveLength(17);
+      // Wed 23 – Sat 26: 6 asOfDate-relative events, 5 week-relative one-offs, 6 occurrences of
+      // weekly recurring events (3 plant shifts, saxophone, bowling league, baby gym) and the
+      // grandparents' visit that began on the 22nd and is still running (reads are overlaps).
+      expect(events).toHaveLength(18);
       expect(events).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -156,6 +157,11 @@ describe("Calendar demo seed integration", () => {
             title: "Lisa homework club",
             source: "local",
             allDay: false,
+          }),
+          expect.objectContaining({
+            id: "demo:calendar:event:grandparents-visiting",
+            occurrenceStart: "2026-09-22",
+            allDay: true,
           }),
           expect.objectContaining({
             id: "demo:calendar:event:family-bowling",

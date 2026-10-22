@@ -1,4 +1,10 @@
-import type { FeedItem, Member, MemberColorKey } from "../../shared";
+import {
+  occurrenceOverlaps,
+  type FeedItem,
+  type Member,
+  type MemberColorKey,
+  type OccurrenceRange,
+} from "../../shared";
 import { localDateParts, nextOccurrenceInTz } from "../../shared/householdTime";
 
 export interface AgendaPresentationItem {
@@ -14,19 +20,18 @@ function householdDate(timezone: string, now: number): string {
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
-/** Calendar expands all-day anchors at UTC midnight, but timed anchors are instants.
- * Fetch the union of both windows, then project by each kind's date semantics below.
- * Explicit instants also avoid the endpoint's inclusive date-only `to` conversion.
+/** The household day as explicit instants, household midnight to the next one. Calendar maps
+ * instant bounds to the household dates they cover, so all-day events of `date` match too;
+ * explicit instants also avoid the endpoint's inclusive date-only `to` conversion.
  */
 export function householdDayRange(timezone: string, now: number) {
   const date = householdDate(timezone, now);
   const nextMidnight = nextOccurrenceInTz("00:00", timezone, now);
   const midnight = nextOccurrenceInTz("00:00", timezone, nextMidnight - 36 * 60 * 60 * 1000);
-  const dateAnchor = Date.parse(`${date}T00:00:00Z`);
   return {
     date,
-    from: new Date(Math.min(midnight, dateAnchor)).toISOString(),
-    to: new Date(Math.max(nextMidnight, dateAnchor + 24 * 60 * 60 * 1000)).toISOString(),
+    from: new Date(midnight).toISOString(),
+    to: new Date(nextMidnight).toISOString(),
   };
 }
 
@@ -36,14 +41,19 @@ export function presentAgenda(
   timezone: string,
   now: number
 ): AgendaPresentationItem[] {
-  const date = householdDate(timezone, now);
+  const day = householdDayRange(timezone, now);
+  const nextDate = new Date(`${day.date}T00:00:00Z`);
+  nextDate.setUTCDate(nextDate.getUTCDate() + 1);
+  const today: OccurrenceRange = {
+    startDay: day.date,
+    endDay: nextDate.toISOString().slice(0, 10),
+    startMs: Date.parse(day.from),
+    endMs: Date.parse(day.to),
+  };
   const profiles = new Map(members.map((member) => [member.id, member]));
   const items: AgendaPresentationItem[] = events
-    .filter((event) =>
-      event.allDay
-        ? event.occurrenceStart === date
-        : householdDate(timezone, Date.parse(event.occurrenceStart)) === date
-    )
+    // Same overlap rule as the Calendar read: an ongoing holiday or overnight event shows today.
+    .filter((event) => occurrenceOverlaps(event, today))
     // Stable sort preserves the owning read's tie order, including all-day items.
     .sort((a, b) => {
       if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;
