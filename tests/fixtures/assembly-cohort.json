@@ -658,7 +658,8 @@
           "tools/bundled-licenses.test.mjs": [
             "bundled licences list each package once with its shipped licence and notice files",
             "the client plugin emits licences only for modules rendered into the bundle",
-            "the client plugin lists packages that contribute only CSS to the bundle"
+            "the client plugin lists packages that contribute only CSS to the bundle",
+            "packages without a licence file get their licence's standard text and manifest author"
           ],
           "tools/corpora-notice.test.mjs": [
             "the corpora notice covers the Spanish translation of every third-party corpus",

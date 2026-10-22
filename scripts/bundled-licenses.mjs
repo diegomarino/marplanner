@@ -5,8 +5,12 @@
  */
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const NOTICE_FILE = /^(licen[cs]e|copying|notice)([.-].*)?$/i;
+/** Standard licence texts for packages that declare one of these licences but ship no file. */
+const STANDARD_TEXTS = path.join(path.dirname(fileURLToPath(import.meta.url)), "licenses");
+const STANDARD_LICENSES = new Set(["MIT", "Apache-2.0"]);
 const STYLESHEET = /\.(css|less|sass|scss|styl|stylus|pcss|postcss)(\?|$)/;
 const BARE_CSS_IMPORT = /@import\s+(?:url\(\s*)?["']([^"']+)["']/g;
 
@@ -43,6 +47,23 @@ function importedStylesheetPackages(code, importer) {
   return directories;
 }
 
+/** The copyright holder a licence template names: the manifest's author, without contact details. */
+function copyrightHolder(manifest) {
+  const author = typeof manifest.author === "string" ? manifest.author : manifest.author?.name;
+  const name = author
+    ?.replace(/<[^>]*>|\([^)]*\)/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return name || `the ${manifest.name} authors`;
+}
+
+/** The standard text of `license` for a package that ships no licence file, or null. */
+function standardText(license, manifest) {
+  if (!STANDARD_LICENSES.has(license)) return null;
+  const text = readFileSync(path.join(STANDARD_TEXTS, `${license}.txt`), "utf8").trimEnd();
+  return text.replace("<copyright holders>", copyrightHolder(manifest));
+}
+
 /** One entry per bundled package (name@version), sorted by name, from the bundle's inputs. */
 export function bundledPackages(modulePaths) {
   const packages = new Map();
@@ -70,6 +91,7 @@ export function bundledPackages(modulePaths) {
       license,
       repository,
       texts,
+      standardText: texts.length === 0 ? standardText(license, manifest) : null,
     });
   }
   return [...packages.values()].sort((a, b) =>
@@ -90,6 +112,19 @@ export function renderLicenses(title, packages) {
   for (const pkg of packages) {
     lines.push("=".repeat(78), `${pkg.name} ${pkg.version} — ${pkg.license}`, "=".repeat(78));
     if (pkg.repository) lines.push(`Source: ${pkg.repository}`);
+    if (pkg.standardText) {
+      lines.push(
+        `(The package ships no licence file. The standard ${pkg.license} text follows${
+          pkg.standardText.includes("Copyright (c) ")
+            ? "; its copyright line names the package.json author"
+            : ""
+        }.)`,
+        `--- ${pkg.license} (standard text) ---`,
+        pkg.standardText,
+        ""
+      );
+      continue;
+    }
     if (pkg.texts.length === 0) {
       lines.push(`(The package ships no licence file; it declares ${pkg.license}.)`, "");
       continue;
