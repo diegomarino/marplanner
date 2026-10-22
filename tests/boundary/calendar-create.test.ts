@@ -632,3 +632,63 @@ describe("calendar-create (US1 hardening — Codex: exdates shape + strict dates
     }
   });
 });
+
+describe("calendar-create (supported RRULE subset)", () => {
+  useIsolatedDb();
+
+  async function postEvent(rrule: string) {
+    const { buildApp } = await import("../../src/server/app.ts");
+    const deviceKey = `mpk-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    getDb()
+      .prepare(
+        "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
+      )
+      .run(
+        `${Date.now()}-${Math.random().toString(36).slice(2)}-device`,
+        hashKey(deviceKey),
+        Date.now()
+      );
+    const app = await buildApp();
+    try {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/calendar/events",
+        cookies: { mp_device_key: deviceKey },
+        payload: {
+          title: "Recurring",
+          allDay: false,
+          startUtc: "2026-10-21T00:00:00Z",
+          endUtc: "2026-10-21T00:00:01Z",
+          tzid: "UTC",
+          rrule,
+        },
+      });
+      const stored = getDb().prepare("SELECT COUNT(*) AS c FROM calendar_events").get() as {
+        c: number;
+      };
+      return { status: res.statusCode, body: res.body, stored: stored.c };
+    } finally {
+      await app.close();
+    }
+  }
+
+  it("accepts an annual rule even though YEARLY is rrule.js frequency 0", async () => {
+    const result = await postEvent("FREQ=YEARLY");
+    expect(result.status).toBe(201);
+    expect(result.stored).toBe(1);
+  });
+
+  it.each([
+    "FREQ=SECONDLY;COUNT=20000",
+    "FREQ=MINUTELY",
+    "FREQ=HOURLY",
+    "FREQ=DAILY;BYHOUR=0,1,2;BYMINUTE=0,30",
+    "FREQ=DAILY;BYMONTH=2;BYMONTHDAY=30",
+    "COUNT=3",
+  ])("rejects %s with 400 and persists nothing", async (rrule) => {
+    const result = await postEvent(rrule);
+    expect(result.status).toBe(400);
+    expect(result.body).toMatch(/Invalid RRule/);
+    expect(result.stored).toBe(0);
+  });
+});

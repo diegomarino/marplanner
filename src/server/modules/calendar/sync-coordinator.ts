@@ -26,6 +26,21 @@ const runtime = new Map<string, RuntimeState>();
 const deleting = new Set<string>();
 const replacing = new Set<string>();
 const lifecycleVersions = new Map<string, number>();
+/** UTC day each source was last parsed and reconciled, per database connection. Feed rows are
+ * stored already expanded within a window that moves with the clock, so an unchanged feed (304 or
+ * identical body) is still fetched unconditionally and re-materialized once per day. Keying by
+ * the connection makes a restore (which reopens the database) or a restart start over. */
+const materializedDays = new WeakMap<object, Map<string, string>>();
+function materializedDay(): Map<string, string> {
+  const db = getDb();
+  let days = materializedDays.get(db);
+  if (!days) {
+    days = new Map();
+    materializedDays.set(db, days);
+  }
+  return days;
+}
+const utcDay = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
 
 export function getExternalSourceLifecycleVersion(sourceId: string): number {
   return lifecycleVersions.get(sourceId) ?? 0;
@@ -59,6 +74,7 @@ export function beginExternalSourceReplacement(
 
 export function finishExternalSourceReplacement(sourceId: string): void {
   runtime.delete(sourceId);
+  materializedDay().delete(sourceId);
   replacing.delete(sourceId);
 }
 
@@ -72,6 +88,7 @@ export function beginExternalSourceDeletion(sourceId: string): Promise<void> | n
 
 export function finishExternalSourceDeletion(sourceId: string): void {
   runtime.delete(sourceId);
+  materializedDay().delete(sourceId);
   advanceExternalSourceLifecycle(sourceId);
   deleting.delete(sourceId);
 }
@@ -128,11 +145,13 @@ async function runSynchronization(
           })))()
       : fetchIcsResult(
           source.feed_url,
-          {
-            etag: source.etag,
-            lastModified: source.last_modified,
-            contentHash: source.content_hash,
-          },
+          materializedDay().get(sourceId) === utcDay(now)
+            ? {
+                etag: source.etag,
+                lastModified: source.last_modified,
+                contentHash: source.content_hash,
+              }
+            : {},
           dependencies
         );
     const fetched = await result;
@@ -149,6 +168,7 @@ async function runSynchronization(
     try {
       if (parsed && fetched.kind === "modified") {
         reconcileExternalCalendar(sourceId, parsed, fetched);
+        materializedDay().set(sourceId, utcDay(now));
       } else {
         if (source.last_success_at === null && fetched.kind === "not_modified")
           throw new CalendarFeedFetchError("unavailable");

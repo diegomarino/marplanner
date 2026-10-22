@@ -334,4 +334,45 @@ describe("reminders-calendar-gated (research.md D3, issue #496 single-day window
       await app.close();
     }
   });
+
+  it("emits on every day an assigned multi-day event covers, and not after it ends", async () => {
+    const deviceKey = insertDevice();
+    const memberA = insertMember("Alice");
+    insertEvent("camp-evt", "Summer camp", "2026-08-17", "2026-08-20"); // the 17th to the 19th
+    assign("camp-evt", memberA);
+
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    try {
+      const createRes = await app.inject({
+        method: "POST",
+        url: "/api/reminders",
+        cookies: { mp_device_key: deviceKey },
+        payload: {
+          kind: "calendar_gated",
+          targetingMode: "apply_to_all",
+          text: "pack the camp bag",
+          query: "camp",
+        },
+      });
+      expect(createRes.statusCode).toBe(201);
+      const created = JSON.parse(createRes.body);
+
+      const emissions = async (date: string) => {
+        const res = await app.inject({
+          method: "GET",
+          url: `/api/reminders/emissions?memberId=${memberA}&date=${date}`,
+          cookies: { mp_device_key: deviceKey },
+        });
+        expect(res.statusCode).toBe(200);
+        return JSON.parse(res.body);
+      };
+      for (const date of ["2026-08-17", "2026-08-18", "2026-08-19"]) {
+        expect(await emissions(date)).toEqual([{ id: created.id, text: "pack the camp bag" }]);
+      }
+      expect(await emissions("2026-08-20")).toEqual([]);
+    } finally {
+      await app.close();
+    }
+  });
 });
