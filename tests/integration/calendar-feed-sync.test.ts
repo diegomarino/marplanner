@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getDb } from "../../src/server/db/client";
+import { getDb, resetDb } from "../../src/server/db/client";
 import { listExternalSources } from "../../src/server/modules/calendar/external-sources";
 import { getEvents } from "../../src/server/modules/calendar/index";
 import {
@@ -283,6 +283,23 @@ describe("calendar feed synchronization keeps the recurrence horizon moving", ()
     await startExternalSourceSynchronization("horizon", dependencies);
     expect(getExternalSourcePhase("horizon")).toBe("succeeded");
     expect(farEndCount()).toBe(1);
+  });
+
+  it("refetches unconditionally after the database is reopened, as a restore does", async () => {
+    const validators: Array<string | undefined> = [];
+    const dependencies = {
+      lookup: async () => [{ address: "8.8.8.8", family: 4 }],
+      request: async ({ headers }: { headers: Record<string, string> }) => {
+        validators.push(headers["if-none-match"]);
+        return headers["if-none-match"] === '"v1"'
+          ? { status: 304, headers: new Headers(), body: null, dispose: async () => undefined }
+          : ok('"v1"');
+      },
+    };
+    await startExternalSourceSynchronization("horizon", dependencies);
+    resetDb();
+    await startExternalSourceSynchronization("horizon", dependencies);
+    expect(validators).toEqual([undefined, undefined]);
   });
 
   it("keeps using the conditional request for later syncs on the same day", async () => {
