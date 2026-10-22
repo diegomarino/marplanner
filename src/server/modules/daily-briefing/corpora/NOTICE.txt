@@ -24,6 +24,11 @@ number-facts.json
   publishes no terms, license or data source; its responses repeat the text of the
   retired Numbers API (numbersapi.com), which did not publish a data license either.
 
+number-facts.es.json
+  Spanish translation of number-facts.json made for Marplanner; the same source and
+  the absence of published terms apply.
+  Changes: each fact translated into Spanish, same numbers and kinds.
+
 word-search-corpus.json
   Words and frequency data from the Datamuse API (https://www.datamuse.com/api/),
   retrieved 2026-06-10; Datamuse documents Google Books Ngrams as the source of its

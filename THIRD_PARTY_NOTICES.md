@@ -37,10 +37,11 @@ they are not committed to this source repository.
 ## Daily Briefing corpora derived from third-party data
 
 The corpora in `src/server/modules/daily-briefing/corpora/` are part of this
-project and licensed with it, except the four below, which were built from
-third-party services by import scripts in the predecessor
-[Marplanner repository](https://github.com/diegomarino/marplanner) and are bundled
-into the server build. Each keeps its source's terms.
+project and licensed with it, except the five below, which derive from
+third-party services and are bundled into the server build. Four were built by
+import scripts in the predecessor
+[Marplanner repository](https://github.com/diegomarino/marplanner); the fifth
+translates one of them. Each keeps its source's terms.
 
 **`trivia-questions.json` (832 questions).** Retrieved on 2026-06-12
 ([commit fe71295](https://github.com/diegomarino/marplanner/commit/fe7129584ad6daf3ef411299f047d1f965ca886e))
@@ -67,6 +68,11 @@ the same license. (The API's own GPL-3.0 license covers its server code, not thi
 use the script's own arithmetic sentences. `number-trivia.com` publishes no terms,
 license or data source; its responses repeat the text of the retired Numbers API
 (`numbersapi.com`), which did not publish a data license either.
+
+**`number-facts.es.json` (366 entries).** A Spanish translation of `number-facts.json`
+made for Marplanner and bundled for Spanish deployments; the same source and the
+absence of published terms apply. Changes: each fact translated into Spanish, same
+numbers and kinds.
 
 **`word-search-corpus.json`.** Retrieved on 2026-06-10 (`generatedAt` in the file)
 from the [Datamuse API](https://www.datamuse.com/api/), acknowledged here as its
