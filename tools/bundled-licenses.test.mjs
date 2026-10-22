@@ -83,3 +83,37 @@ test("the client plugin emits licences only for modules rendered into the bundle
   assert.match(emitted[0].source, /alpha 1\.0\.0 — MIT/);
   assert.doesNotMatch(emitted[0].source, /@scope\/beta/);
 });
+
+test("the client plugin lists packages that contribute only CSS to the bundle", (t) => {
+  const f = fixture(t);
+  const sheet = join(f.root, "node_modules/@scope/beta/lib/index.css");
+  writeFileSync(sheet, ".beta {}");
+  mkdirSync(join(f.root, "node_modules/delta/dist"), { recursive: true });
+  writeFileSync(
+    join(f.root, "node_modules/delta/package.json"),
+    JSON.stringify({ name: "delta", version: "3.0.0", license: "MIT" })
+  );
+  writeFileSync(join(f.root, "node_modules/delta/LICENSE"), "MIT License\nCopyright (c) Delta");
+  mkdirSync(join(f.root, "src/styles"), { recursive: true });
+  const globals = join(f.root, "src/styles/globals.css");
+  const plugin = bundledLicensesPlugin();
+  plugin.transform.handler.call(
+    {},
+    '@import "delta";\n@import "./tokens.css";\n@import url("https://example.test/x.css");',
+    globals
+  );
+  const emitted = [];
+  plugin.generateBundle.call(
+    { emitFile: (file) => emitted.push(file), getModuleIds: () => [f.mit, sheet, globals] },
+    {},
+    {
+      "index.js": {
+        type: "chunk",
+        modules: { [f.mit]: { renderedLength: 10 }, [sheet]: { renderedLength: 0 } },
+      },
+      "style.css": { type: "asset" },
+    }
+  );
+  assert.match(emitted[0].source, /@scope\/beta 2\.0\.0 — Apache-2\.0/);
+  assert.match(emitted[0].source, /delta 3\.0\.0 — MIT[\s\S]*Copyright \(c\) Delta/);
+});
