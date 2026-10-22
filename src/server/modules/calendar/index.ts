@@ -264,6 +264,9 @@ function buildExpandRange(from: string, to: string, tzid: string) {
       toDt.getTime() === householdMidnight(lastDay, tzid).getTime() ? lastDay : addDays(lastDay, 1);
   }
 
+  // An empty or reversed instant range holds no time, so it holds no household date either.
+  if (toDt.getTime() <= fromDt.getTime()) endDay = startDay;
+
   return { start: fromDt, end: toDt, startDay, endDay };
 }
 
