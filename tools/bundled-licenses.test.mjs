@@ -117,3 +117,42 @@ test("the client plugin lists packages that contribute only CSS to the bundle", 
   assert.match(emitted[0].source, /@scope\/beta 2\.0\.0 — Apache-2\.0/);
   assert.match(emitted[0].source, /delta 3\.0\.0 — MIT[\s\S]*Copyright \(c\) Delta/);
 });
+
+test("packages without a licence file get their licence's standard text and manifest author", (t) => {
+  const f = fixture(t);
+  const pkg = (dir, manifest) => {
+    mkdirSync(join(f.root, dir), { recursive: true });
+    writeFileSync(join(f.root, dir, "package.json"), JSON.stringify(manifest));
+    return join(f.root, dir, "index.js");
+  };
+  const packages = bundledPackages([
+    pkg("node_modules/mit-bare", {
+      name: "mit-bare",
+      version: "1.0.0",
+      license: "MIT",
+      author: "Ada Lovelace <ada@example.test> (https://example.test)",
+    }),
+    pkg("node_modules/mit-anon", { name: "mit-anon", version: "1.0.0", license: "MIT" }),
+    pkg("node_modules/apache-bare", {
+      name: "apache-bare",
+      version: "1.0.0",
+      license: "Apache-2.0",
+      author: { name: "Example Team" },
+    }),
+    f.nested,
+  ]);
+  const text = renderLicenses("Title", packages);
+  assert.match(
+    text,
+    /mit-bare 1\.0\.0 — MIT\n=+\n\(The package ships no licence file[^\n]*\)\n--- MIT \(standard text\) ---\nMIT License\n\nCopyright \(c\) Ada Lovelace\n\nPermission is hereby granted/
+  );
+  assert.match(text, /mit-anon 1\.0\.0 — MIT[\s\S]*?Copyright \(c\) the mit-anon authors\n/);
+  assert.match(
+    text,
+    /apache-bare 1\.0\.0 — Apache-2\.0\n=+\n\(The package ships no licence file\. The standard Apache-2\.0 text follows\.\)\n--- Apache-2\.0 \(standard text\) ---\n\s+Apache License\n\s+Version 2\.0, January 2004/
+  );
+  assert.match(
+    text,
+    /gamma 0\.1\.0 — ISC\n=+\nSource: https:\/\/example\.test\/gamma\n\(The package ships no licence file; it declares ISC\.\)/
+  );
+});

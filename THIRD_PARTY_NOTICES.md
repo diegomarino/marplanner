@@ -28,10 +28,12 @@ notices, so every build writes a `THIRD_PARTY_LICENSES.txt` beside each bundle
 container image copies and the client serves at `THIRD_PARTY_LICENSES.txt`). Each
 lists the exact packages inlined into that bundle with their declared license and
 the license and notice files they ship (`scripts/bundled-licenses.mjs`). A few
-packages publish no license file; their entry records the declared license and
-source repository. Packages loaded at runtime from `node_modules` (native modules
-such as `better-sqlite3`, `argon2` and `@resvg/resvg-js`) keep their own license
-files there. Native binaries remain platform-specific installation artifacts;
+packages publish no license file; for an MIT or Apache-2.0 package the entry
+carries that license's standard text (`scripts/licenses/`), with the MIT
+copyright line naming the package's `package.json` author, and any other
+license is recorded as declared, with the source repository. Packages loaded at
+runtime from `node_modules` (native modules such as `better-sqlite3`, `argon2` and
+`@resvg/resvg-js`) keep their own license files there. Native binaries remain platform-specific installation artifacts;
 they are not committed to this source repository.
 
 ## Daily Briefing corpora derived from third-party data
