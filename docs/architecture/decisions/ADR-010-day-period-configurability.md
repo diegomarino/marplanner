@@ -39,7 +39,7 @@ ADR-020's "choose a representation where the wrong state can't be written."
 
 ## Affected Specs
 
-- `../../02-day-periods.md`, `../../05-routines-chores.md`
+- [day-periods](../../features/day-periods.md), [routines-chores](../../features/routines-chores.md)
 
 ## Data / Setup Implications
 
@@ -66,5 +66,5 @@ period IDs unchanged; `night` is available as a new target.
 ## Traceability
 
 - Related prior: `ADR-010`
-- Domain grill: `../domain-grills/day-periods.md`
+- Domain grill: `domain-grills/day-periods.md` (historical record, not preserved in this repository)
 - Related: `ADR-011` (default start times), `ADR-005`, `ADR-029`, `ADR-020`

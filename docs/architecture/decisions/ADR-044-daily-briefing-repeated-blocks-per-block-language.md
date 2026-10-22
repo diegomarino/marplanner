@@ -42,7 +42,7 @@ ADR-010 (Day Periods).
 
 ## Affected Specs
 
-- `../../11-daily-briefing.md`, `../../17-i18n-localization.md`
+- [daily-briefing](../../features/daily-briefing.md), [i18n-localization](../../features/i18n-localization.md)
 
 ## Data / Setup Implications
 
@@ -85,5 +85,5 @@ Daily Briefing's block configuration stores an ordered list of block instances (
 ## Traceability
 
 - Related prior: extends `ADR-008`; driven by `ADR-015`
-- Domain grill: `../domain-grills/i18n-localization.md` (Q4)
+- Domain grill: `domain-grills/i18n-localization.md` (historical record, not preserved in this repository) (Q4)
 - Related: `ADR-022`, `ADR-027`, `ADR-028`

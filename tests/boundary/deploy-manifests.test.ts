@@ -122,6 +122,8 @@ describe("one-click deploy templates", () => {
     expect(readme).toContain(
       "https://cloud.digitalocean.com/apps/new?repo=https://github.com/diegomarino/marplanner-project/tree/main)"
     );
-    expect(readme).toMatch(/\(https:\/\/railway\.com\/deploy\/[A-Za-z0-9_-]+[?)]/);
+    // Railway's button needs a published template: never advertise the placeholder code.
+    const railway = readme.match(/\(https:\/\/railway\.com\/deploy\/([A-Za-z0-9_-]+)[?)]/);
+    expect(railway?.[1]).not.toBe("RAILWAY_TEMPLATE_CODE");
   });
 });

@@ -18,10 +18,10 @@ Daily Briefing is better modeled as a personalized daily packet that may be usef
 
 ## Affected Specs
 
-- `../../01-members.md`
-- `../../11-daily-briefing.md`
-- `../../13-printing-pipeline.md`
-- `../../15-kiosk-shell-navigation.md`
+- [members](../../features/members.md)
+- [daily-briefing](../../features/daily-briefing.md)
+- [printing](../../features/printing.md)
+- [kiosk-shell-navigation](../../features/kiosk-shell-navigation.md)
 - `ADR-002-active-member-targets.md`
 - `ADR-026-no-legacy-database-migration.md`
 
@@ -47,4 +47,4 @@ Legacy parent-linked Daily Briefing rows remain evidence only; no rows are impor
 
 - Conflicts: narrows `CR-002-active-child-targets`; affects `CR-003-parent-briefing-history`
 - Related: `ADR-002` (active targets), `ADR-009` (profile-only creation), `ADR-026` (fresh store).
-- Domain grill: `../domain-grills/members.md`
+- Domain grill: `domain-grills/members.md` (historical record, not preserved in this repository)

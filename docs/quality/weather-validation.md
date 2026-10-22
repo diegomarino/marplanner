@@ -14,7 +14,7 @@ Every live run begins with this record before execution:
 ## Live-read authorization <run-id>
 
 - Revision: `<full-commit>`
-- Runtime: `Node 22.23.1`
+- Runtime: `<output of node --version>` / npm `<output of npm --version>` (measured on the validating machine; the supported toolchain is `.nvmrc` and `package.json` `engines`)
 - Operator role: `<role-only>`
 - Approved window: `<start/end rounded to minute>`
 - Isolated runtime: `<non-sensitive description>`
@@ -101,7 +101,7 @@ and process or machine identity.
 ## Deterministic evidence
 
 - Revision: `<full-commit>`
-- Runtime: `Node 22.23.1`
+- Runtime: `<output of node --version>` / npm `<output of npm --version>` (measured on the validating machine; the supported toolchain is `.nvmrc` and `package.json` `engines`)
 - Commands: `<exact focused commands>`
 - Result: `<observed exit statuses and concise totals>`
 - Provenance: `deterministic-fixture`
