@@ -655,6 +655,16 @@
             "--files consumes paths only up to the next flag, leaving that flag's own value alone",
             "--files rejects a directory and a non-.tsx path in this script's own error style, not a raw stack trace"
           ],
+          "tools/bundled-licenses.test.mjs": [
+            "bundled licences list each package once with its shipped licence and notice files",
+            "the client plugin emits licences only for modules rendered into the bundle",
+            "the client plugin lists packages that contribute only CSS to the bundle",
+            "packages without a licence file get their licence's standard text and manifest author"
+          ],
+          "tools/corpora-notice.test.mjs": [
+            "the corpora notice covers the Spanish translation of every third-party corpus",
+            "THIRD_PARTY_NOTICES.md mirrors every corpus the shipped notice names"
+          ],
           "tools/candidate-identity.test.mjs": [
             "candidate identity binds bytes, modes and exact maintained inventory",
             "tracked checkout inventory comes from git and rejects untracked files",

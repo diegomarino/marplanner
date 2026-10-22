@@ -1,0 +1,158 @@
+import assert from "node:assert/strict";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import test from "node:test";
+
+import {
+  bundledLicensesPlugin,
+  bundledPackages,
+  renderLicenses,
+} from "../scripts/bundled-licenses.mjs";
+
+function fixture(t) {
+  const root = mkdtempSync(join(tmpdir(), "mp-licenses-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const pkg = (dir, manifest, files = {}) => {
+    mkdirSync(join(root, dir, "lib"), { recursive: true });
+    writeFileSync(join(root, dir, "package.json"), JSON.stringify(manifest));
+    writeFileSync(join(root, dir, "lib", "index.js"), "");
+    for (const [name, text] of Object.entries(files)) writeFileSync(join(root, dir, name), text);
+    return join(root, dir, "lib", "index.js");
+  };
+  return {
+    root,
+    mit: pkg(
+      "node_modules/alpha",
+      { name: "alpha", version: "1.0.0", license: "MIT" },
+      {
+        LICENSE: "MIT License\nCopyright (c) Alpha",
+      }
+    ),
+    scoped: pkg(
+      "node_modules/@scope/beta",
+      { name: "@scope/beta", version: "2.0.0", license: { type: "Apache-2.0" } },
+      { "LICENSE.txt": "Apache License", NOTICE: "Beta notice" }
+    ),
+    nested: pkg(
+      "node_modules/alpha/node_modules/gamma",
+      {
+        name: "gamma",
+        version: "0.1.0",
+        license: "ISC",
+        repository: { url: "https://example.test/gamma" },
+      },
+      {}
+    ),
+  };
+}
+
+test("bundled licences list each package once with its shipped licence and notice files", (t) => {
+  const f = fixture(t);
+  const packages = bundledPackages([f.mit, f.mit, f.scoped, f.nested, join(f.root, "src/app.ts")]);
+  assert.deepEqual(
+    packages.map((p) => [p.name, p.version, p.license, p.texts.map((x) => x.name)]),
+    [
+      ["@scope/beta", "2.0.0", "Apache-2.0", ["LICENSE.txt", "NOTICE"]],
+      ["alpha", "1.0.0", "MIT", ["LICENSE"]],
+      ["gamma", "0.1.0", "ISC", []],
+    ]
+  );
+  const text = renderLicenses("Title", packages);
+  assert.match(text, /alpha 1\.0\.0 — MIT[\s\S]*Copyright \(c\) Alpha/);
+  assert.match(text, /--- NOTICE ---\nBeta notice/);
+  assert.match(text, /Source: https:\/\/example\.test\/gamma\n\(The package ships no licence file/);
+});
+
+test("the client plugin emits licences only for modules rendered into the bundle", (t) => {
+  const f = fixture(t);
+  const emitted = [];
+  bundledLicensesPlugin().generateBundle.call(
+    { emitFile: (file) => emitted.push(file) },
+    {},
+    {
+      "index.js": {
+        type: "chunk",
+        modules: { [f.mit]: { renderedLength: 10 }, [f.scoped]: { renderedLength: 0 } },
+      },
+      "style.css": { type: "asset" },
+    }
+  );
+  assert.equal(emitted.length, 1);
+  assert.equal(emitted[0].fileName, "THIRD_PARTY_LICENSES.txt");
+  assert.match(emitted[0].source, /alpha 1\.0\.0 — MIT/);
+  assert.doesNotMatch(emitted[0].source, /@scope\/beta/);
+});
+
+test("the client plugin lists packages that contribute only CSS to the bundle", (t) => {
+  const f = fixture(t);
+  const sheet = join(f.root, "node_modules/@scope/beta/lib/index.css");
+  writeFileSync(sheet, ".beta {}");
+  mkdirSync(join(f.root, "node_modules/delta/dist"), { recursive: true });
+  writeFileSync(
+    join(f.root, "node_modules/delta/package.json"),
+    JSON.stringify({ name: "delta", version: "3.0.0", license: "MIT" })
+  );
+  writeFileSync(join(f.root, "node_modules/delta/LICENSE"), "MIT License\nCopyright (c) Delta");
+  mkdirSync(join(f.root, "src/styles"), { recursive: true });
+  const globals = join(f.root, "src/styles/globals.css");
+  const plugin = bundledLicensesPlugin();
+  plugin.transform.handler.call(
+    {},
+    '@import "delta";\n@import "./tokens.css";\n@import url("https://example.test/x.css");',
+    globals
+  );
+  const emitted = [];
+  plugin.generateBundle.call(
+    { emitFile: (file) => emitted.push(file), getModuleIds: () => [f.mit, sheet, globals] },
+    {},
+    {
+      "index.js": {
+        type: "chunk",
+        modules: { [f.mit]: { renderedLength: 10 }, [sheet]: { renderedLength: 0 } },
+      },
+      "style.css": { type: "asset" },
+    }
+  );
+  assert.match(emitted[0].source, /@scope\/beta 2\.0\.0 — Apache-2\.0/);
+  assert.match(emitted[0].source, /delta 3\.0\.0 — MIT[\s\S]*Copyright \(c\) Delta/);
+});
+
+test("packages without a licence file get their licence's standard text and manifest author", (t) => {
+  const f = fixture(t);
+  const pkg = (dir, manifest) => {
+    mkdirSync(join(f.root, dir), { recursive: true });
+    writeFileSync(join(f.root, dir, "package.json"), JSON.stringify(manifest));
+    return join(f.root, dir, "index.js");
+  };
+  const packages = bundledPackages([
+    pkg("node_modules/mit-bare", {
+      name: "mit-bare",
+      version: "1.0.0",
+      license: "MIT",
+      author: "Ada Lovelace <ada@example.test> (https://example.test)",
+    }),
+    pkg("node_modules/mit-anon", { name: "mit-anon", version: "1.0.0", license: "MIT" }),
+    pkg("node_modules/apache-bare", {
+      name: "apache-bare",
+      version: "1.0.0",
+      license: "Apache-2.0",
+      author: { name: "Example Team" },
+    }),
+    f.nested,
+  ]);
+  const text = renderLicenses("Title", packages);
+  assert.match(
+    text,
+    /mit-bare 1\.0\.0 — MIT\n=+\n\(The package ships no licence file[^\n]*\)\n--- MIT \(standard text\) ---\nMIT License\n\nCopyright \(c\) Ada Lovelace\n\nPermission is hereby granted/
+  );
+  assert.match(text, /mit-anon 1\.0\.0 — MIT[\s\S]*?Copyright \(c\) the mit-anon authors\n/);
+  assert.match(
+    text,
+    /apache-bare 1\.0\.0 — Apache-2\.0\n=+\n\(The package ships no licence file\. The standard Apache-2\.0 text follows\.\)\n--- Apache-2\.0 \(standard text\) ---\n\s+Apache License\n\s+Version 2\.0, January 2004/
+  );
+  assert.match(
+    text,
+    /gamma 0\.1\.0 — ISC\n=+\nSource: https:\/\/example\.test\/gamma\n\(The package ships no licence file; it declares ISC\.\)/
+  );
+});
