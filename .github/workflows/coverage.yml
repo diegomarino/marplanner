@@ -24,7 +24,7 @@ jobs:
     env:
       CI: "true"
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           path: ci-${{ github.run_id }}-${{ github.run_attempt }}-standard
@@ -36,7 +36,7 @@ jobs:
         run: |-
           printf 'Runner: %s; OS: %s\n' "$MACHINE" "$MACHINE_OS"
           uname -m
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.21.0
       - name: Prepare job-owned tools and caches
@@ -70,7 +70,7 @@ jobs:
           tar --format=pax -czf "$RUNNER_TEMP/standard-evidence.tar.gz" "${paths[@]}"
       - name: Retain raw discovery, results and V8 coverage
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: standard-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/standard-evidence.tar.gz
@@ -90,7 +90,7 @@ jobs:
     env:
       CI: "true"
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           path: ci-${{ github.run_id }}-${{ github.run_attempt }}-native
@@ -102,7 +102,7 @@ jobs:
         run: |-
           printf 'Runner: %s; OS: %s\n' "$MACHINE" "$MACHINE_OS"
           uname -m
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.21.0
       - name: Prepare job-owned tools and caches
@@ -125,7 +125,7 @@ jobs:
           echo "MP_CANDIDATE_ID=$MP_CANDIDATE_ID" >> "$GITHUB_ENV"
       - run: npx playwright install --with-deps --only-shell chromium
       - name: Download standard evidence from this workflow run
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: standard-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/standard-evidence
@@ -134,7 +134,7 @@ jobs:
       - run: npm run check:aggregate-only
       - name: Retain raw discovery, results, V8 coverage and browser report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: native-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           include-hidden-files: true
@@ -154,7 +154,7 @@ jobs:
     runs-on: ${{ fromJSON(needs.select.outputs.container_runner) }}
     timeout-minutes: ${{ contains(needs.select.outputs.container_runner, 'self-hosted') && 300 || 30 }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           path: ci-${{ github.run_id }}-${{ github.run_attempt }}-container
@@ -166,7 +166,7 @@ jobs:
         run: |-
           printf 'Runner: %s; OS: %s\n' "$MACHINE" "$MACHINE_OS"
           uname -m
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.21.0
       - name: Prepare job-owned tools and caches
@@ -200,7 +200,7 @@ jobs:
         run: npm run check:container -- --image marplanner:review
       - name: Retain container acceptance evidence
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: container-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           include-hidden-files: true
