@@ -22,7 +22,7 @@ import {
   endRequest,
   __resetRestoreStateForTests,
 } from "../../src/server/backups/restore";
-import { getDb } from "../../src/server/db/client";
+import { getDb, resolveDbPath } from "../../src/server/db/client";
 import { startExternalSourceSynchronization } from "../../src/server/modules/calendar/sync-coordinator";
 import { useIsolatedDb } from "../helpers/db";
 import { BASELINE_FILE, execBaseline } from "../helpers/baseline";
@@ -340,6 +340,26 @@ describe("restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02,
     // The active db now reflects the BACKUP's content, not the pre-restore active state.
     expect(memberNames()).toEqual(["From Backup"]);
   });
+
+  it.each([0o600, 0o640])(
+    "a restored database keeps the active database's mode %o under a permissive umask",
+    async (activeMode) => {
+      const filename = seedBackupFixture("snapshot", Date.now(), REAL_MIGRATION_FILES, [], (db) =>
+        seedMemberInto(db, "backup-member", "From Backup")
+      );
+      const dbPath = resolveDbPath();
+      fs.chmodSync(dbPath, activeMode);
+      const previousUmask = process.umask(0o022);
+      try {
+        const result = await restoreDatabase({ filename, confirmFilename: filename });
+        expect(result.status).toBe("restored");
+      } finally {
+        process.umask(previousUmask);
+      }
+      expect(fs.statSync(dbPath).mode & 0o777).toBe(activeMode);
+      expect(memberNames()).toEqual(["From Backup"]);
+    }
+  );
 
   it("strict subset (older backup) -> restored with migrated:true, forward-migrated current", async () => {
     // The flattened production history has one irreducible baseline, so a valid older backup

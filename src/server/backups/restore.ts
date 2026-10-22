@@ -270,7 +270,11 @@ function removeStaleWalShm(dbPath: string): void {
 function swapInPlace(sourceFd: number, targetPath: string): void {
   const tmpPath = `${targetPath}.restore-tmp`;
   try {
+    // The replacement keeps the active database's mode (owner-only for a store the server
+    // created), never the process umask's.
+    const mode = fs.existsSync(targetPath) ? fs.statSync(targetPath).mode & 0o777 : 0o600;
     copyFdToPathSync(sourceFd, tmpPath);
+    fs.chmodSync(tmpPath, mode);
     fs.renameSync(tmpPath, targetPath);
   } finally {
     try {
