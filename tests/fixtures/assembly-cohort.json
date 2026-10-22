@@ -868,7 +868,8 @@
             "access gate health untouched: GET /health with no cookie → 200",
             "access gate GET /gate with no cookie returns form (not shell sentinel)",
             "access gate form HTML inlines shared tokens.css (single palette source)",
-            "access gate loads shared tokens relative to its module when started outside the project directory"
+            "access gate loads shared tokens relative to its module when started outside the project directory",
+            "access gate a refused submission explains the rejection without echoing it or revealing the setup"
           ],
           "tests/boundary/auth-boundary.test.ts": [
             "full-access authentication boundary authorizes a live provisioned-device cookie with scope '*'",
@@ -3169,7 +3170,9 @@
             "backups helpers covers every backup type with semantic token classes only",
             "shows localized recovery guidance for a terminal restore failure (en)",
             "shows localized recovery guidance for a terminal restore failure (es)",
-            "formats backup dates with Spanish household locale and timezone"
+            "formats backup dates with Spanish household locale and timezone",
+            "explains whole-household replacement and the pre-restore backup before confirming (en)",
+            "explains whole-household replacement and the pre-restore backup before confirming (es)"
           ],
           "tests/client/backups-telemetry-admin.test.tsx": [
             "BackupsManagement / TelemetryManagement — the shared AdminPanel L2 frame was ADOPTED (FR-009) BackupsManagement wraps the surface in a landmark region labelled by its own title",
@@ -4168,7 +4171,9 @@
             "RecipeDialog normalizes the form at the UI seam and preserves values after a failed save",
             "sends an explicit empty slots patch when an edited recipe is made valid for every slot",
             "localizes recipe field accessibility names from the household language",
-            "grows a long field to its content and closes on request"
+            "grows a long field to its content and closes on request",
+            "explains a missing name on the Name field, keeps the draft and saves once it is filled",
+            "reports a failed save as a save failure, not a loading failure"
           ],
           "tests/client/reminder-member-days.test.tsx": [
             "ReminderMemberDays shows a pill per member and day rows only for selected members",
@@ -4312,7 +4317,10 @@
             "SettingsManagement hides \"Saved\" by itself",
             "SettingsManagement clears \"Saved\" as soon as the form is edited again",
             "SettingsManagement announces a failed load and retries it",
-            "SettingsManagement hosts the day periods on the same page"
+            "SettingsManagement hosts the day periods on the same page",
+            "SettingsManagement blocks the out-of-range location 100, 2 before any request, even with a locale edit",
+            "SettingsManagement blocks the out-of-range location -90.5, 2 before any request, even with a locale edit",
+            "SettingsManagement blocks the out-of-range location 40, 180.01 before any request, even with a locale edit"
           ],
           "tests/client/settings-timezones.test.ts": [
             "timeZoneGroups lists UTC first and the curated groups in order",
@@ -4743,7 +4751,12 @@
             "WeatherPillView — stale in-flight response discard (PR review P2-1, mutation M3b) a delayed response for OLD coordinates never overwrites a cache-hit render after an A -> B -> A sequence",
             "WeatherPillView — cache-miss clears stale data first (Codex review on #656, P1) switching from a loaded A to an uncached B with a NEVER-RESOLVING fetch shows the empty slot, never A's stale data (WEATHER-AC-06)",
             "WeatherPillView — TTL-expiry recheck (Codex review on #656, P2) a mounted pill refetches once the cached entry passes its 30-minute TTL, and renders the new data",
-            "WeatherPillView — TTL-expiry recheck (Codex review on #656, P2) stays a cheap no-op (no fetch) while the recheck interval fires but the cache is still fresh"
+            "WeatherPillView — TTL-expiry recheck (Codex review on #656, P2) stays a cheap no-op (no fetch) while the recheck interval fires but the cache is still fresh",
+            "sliceUpcomingHours in the household timezone starts at the current household hour in Europe/Madrid, whatever the browser zone",
+            "sliceUpcomingHours in the household timezone starts at the current household hour in America/Los_Angeles, whatever the browser zone",
+            "sliceUpcomingHours in the household timezone starts at the current household hour in Asia/Tokyo, whatever the browser zone",
+            "sliceUpcomingHours in the household timezone starts at the current household hour in UTC, whatever the browser zone",
+            "sliceUpcomingHours in the household timezone returns nothing once every forecast hour has passed in the household zone"
           ],
           "tests/client/weather-wmo-map.test.ts": [
             "WMO_CONDITION_MAP every mapped WMO code resolves to a WeatherConditionKey union member",

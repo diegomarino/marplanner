@@ -1,26 +1,32 @@
 import type { ForecastHour } from "../../shared";
 
-/** Slice the hourly forecast down to the CURRENT hour onward. Open-Meteo's
+/** Slice the hourly forecast down to the CURRENT household hour onward. Open-Meteo's
  * `hourly` block always starts at midnight of the requested day, so rendering the raw array
  * verbatim shows hours that already passed (at 21:45, the first 22 rows would be history).
- * `hour.time` is an ISO string with NO timezone suffix (household-tz-local, per the port's
- * `timezone=<household IANA>` request) — `new Date(...)` therefore parses it as LOCAL wall
- * time in whatever runtime evaluates it. The kiosk's own system clock IS the household's wall
- * clock (the same assumption the server-side pull-time fetch already relies on), so comparing
- * against the client's own `Date.now` this way needs no extra timezone math.
+ * `hour.time` is an offset-free household-local wall time (`YYYY-MM-DDTHH:mm`, per the port's
+ * `timezone=<household IANA>` request), so it is compared as text with the current wall hour
+ * in `timezone` — never parsed as browser-local time, since a kiosk's browser and the household
+ * may be in different zones. A null `timezone` (no settings yet) falls back to the browser's.
  */
-export function sliceUpcomingHours(hourly: readonly ForecastHour[], nowMs: number): ForecastHour[] {
-  const now = new Date(nowMs);
-  const currentHourStart = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    now.getHours(),
-    0,
-    0,
-    0
-  ).getTime();
-  const index = hourly.findIndex((hour) => new Date(hour.time).getTime() >= currentHourStart);
+export function sliceUpcomingHours(
+  hourly: readonly ForecastHour[],
+  nowMs: number,
+  timezone?: string | null
+): ForecastHour[] {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone ?? undefined,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(new Date(nowMs))
+      .map((part) => [part.type, part.value])
+  );
+  const currentHour = `${parts.year}-${parts.month}-${parts.day}T${parts.hour}`;
+  const index = hourly.findIndex((hour) => hour.time.slice(0, 13) >= currentHour);
   return index === -1 ? [] : hourly.slice(index);
 }
 

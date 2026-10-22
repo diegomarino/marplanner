@@ -197,6 +197,28 @@ describe("SettingsManagement", () => {
     }
   );
 
+  it.each([
+    ["100", "2"],
+    ["-90.5", "2"],
+    ["40", "180.01"],
+  ])(
+    "blocks the out-of-range location %s, %s before any request, even with a locale edit",
+    async (lat, lon) => {
+      mockApi(SETTINGS);
+      renderSettings();
+      const save = await screen.findByTestId("settings-save");
+      fireEvent.click(screen.getByTestId("settings-week-start-0"));
+      fireEvent.change(screen.getByTestId("weather-lat-input"), { target: { value: lat } });
+      fireEvent.change(screen.getByTestId("weather-lon-input"), { target: { value: lon } });
+      expect(save).toBeDisabled();
+      expect(screen.getByTestId("weather-hint")).toHaveTextContent(
+        messages.en["admin.settings.weatherRange"]
+      );
+      fireEvent.click(save);
+      expect(puts()).toEqual([]);
+    }
+  );
+
   it("saves a pill change as one locale object and asks the app to reload", async () => {
     mockApi(SETTINGS);
     renderSettings();
@@ -255,9 +277,10 @@ describe("SettingsManagement", () => {
     fireEvent.change(screen.getByTestId("weather-lat-input"), { target: { value: "41" } });
     fireEvent.click(screen.getByTestId("settings-save"));
 
-    expect(await screen.findByTestId("settings-error")).toHaveTextContent(
-      messages.en["admin.settings.saveError"]
-    );
+    const error = await screen.findByTestId("settings-error");
+    // Truthful: the locale write succeeded, only the weather failed.
+    expect(error).toHaveTextContent(messages.en["admin.settings.partialSaved"]);
+    expect(error).toHaveTextContent(messages.en["admin.settings.saveError"]);
     expect(screen.getByTestId("settings-save")).toBeEnabled();
     expect(screen.getByTestId("weather-lat-input")).toHaveValue("41");
     expect(screen.getByTestId("settings-week-start-0")).toBeChecked();
@@ -273,9 +296,9 @@ describe("SettingsManagement", () => {
     fireEvent.click(screen.getByTestId("settings-week-start-0"));
     fireEvent.click(screen.getByTestId("settings-save"));
 
-    expect(await screen.findByTestId("settings-error")).toHaveTextContent(
-      messages.en["admin.settings.saveError"]
-    );
+    const error = await screen.findByTestId("settings-error");
+    expect(error).toHaveTextContent(messages.en["admin.settings.saveError"]);
+    expect(error).not.toHaveTextContent(messages.en["admin.settings.partialSaved"]);
     expect(screen.getByTestId("settings-week-start-0")).toBeChecked();
     expect(screen.getByTestId("settings-save")).toBeEnabled();
     expect(retry).not.toHaveBeenCalled();

@@ -124,3 +124,38 @@ it("grows a long field to its content and closes on request", async () => {
     scrollHeight.mockRestore();
   }
 });
+
+it("explains a missing name on the Name field, keeps the draft and saves once it is filled", async () => {
+  const onSave = vi.fn().mockResolvedValue(true);
+  const onClose = vi.fn();
+  render(<RecipeDialog open mode="create" recipe={null} onClose={onClose} onSave={onSave} />);
+  fireEvent.change(screen.getByLabelText("Ingredients"), { target: { value: "patties" } });
+  fireEvent.change(screen.getByLabelText("Instructions"), { target: { value: "Grill." } });
+
+  for (const blank of ["", "   "]) {
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: blank } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    const name = screen.getByLabelText("Name");
+    expect(name).toHaveAttribute("aria-invalid", "true");
+    expect(name).toHaveAccessibleDescription("Give the recipe a name before saving.");
+  }
+  expect(onSave).not.toHaveBeenCalled();
+  expect(screen.queryByText("Failed to load meals data.")).not.toBeInTheDocument();
+  expect(screen.getByLabelText("Ingredients")).toHaveValue("patties");
+
+  fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Steamed Hams" } });
+  expect(screen.getByLabelText("Name")).not.toHaveAttribute("aria-invalid");
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+  expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ name: "Steamed Hams" }));
+});
+
+it("reports a failed save as a save failure, not a loading failure", async () => {
+  const onSave = vi.fn().mockResolvedValue(false);
+  render(<RecipeDialog open mode="create" recipe={null} onClose={vi.fn()} onSave={onSave} />);
+  fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Soup" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  expect(await screen.findByText(/The recipe could not be saved/)).toBeInTheDocument();
+  expect(screen.queryByText("Failed to load meals data.")).not.toBeInTheDocument();
+  expect(screen.getByLabelText("Name")).toHaveValue("Soup");
+});

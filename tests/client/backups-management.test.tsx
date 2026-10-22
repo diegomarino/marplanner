@@ -706,3 +706,42 @@ it("formats backup dates with Spanish household locale and timezone", async () =
     vi.unstubAllGlobals();
   }
 });
+
+it.each([
+  ["en", "replaces all of the household's current data", "Pre-restore"],
+  ["es", "sustituye todos los datos actuales del hogar", "Pre-restauración"],
+] as const)(
+  "explains whole-household replacement and the pre-restore backup before confirming (%s)",
+  async (language, replacement, preRestore) => {
+    const backup = ONE_BACKUP_LIST.backups[0];
+    const requests: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input) => {
+        requests.push(String(input));
+        if (String(input) === "/api/settings")
+          return jsonResponse({ locale: { language, timezone: "UTC" } });
+        if (String(input) === "/api/backups") return jsonResponse(ONE_BACKUP_LIST);
+        throw new Error("Unexpected request");
+      })
+    );
+    try {
+      renderManagement();
+      await screen.findByRole("button", { name: language === "es" ? "Restaurar" : "Restore" });
+      fireEvent.click(screen.getByTestId(`backups-restore-select-${backup.filename}`));
+
+      const warning = screen.getByTestId("backups-restore-warning");
+      expect(warning).toHaveTextContent(replacement);
+      expect(warning).toHaveTextContent(preRestore);
+      // The exact-filename confirmation is still required.
+      expect(screen.getByTestId("backups-restore-confirm-input")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId("backups-restore-cancel"));
+      expect(screen.queryByTestId("backups-restore-warning")).not.toBeInTheDocument();
+      expect(requests).not.toContain("/api/backups/restore");
+    } finally {
+      cleanup();
+      vi.unstubAllGlobals();
+    }
+  }
+);
