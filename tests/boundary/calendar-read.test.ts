@@ -717,6 +717,13 @@ describe("calendar-read (all-day events keep their household date)", () => {
     ).toEqual(["2026-10-24", "2026-10-25"]);
   });
 
+  it.each([
+    ["equal", "from=2026-10-24T15:00:00.000Z&to=2026-10-24T15:00:00.000Z"],
+    ["reversed", "from=2026-10-24T18:00:00.000Z&to=2026-10-24T15:00:00.000Z"],
+  ])("returns no all-day event for %s instant bounds, an empty range", async (_label, query) => {
+    expect(await readIds("America/New_York", query, "FREQ=DAILY;COUNT=5")).toEqual([]);
+  });
+
   it("maps an instant range to the household dates it covers", async () => {
     // New York midnight of 2026-10-24 (EDT, UTC-4) to the next midnight: only the 24th.
     expect(
