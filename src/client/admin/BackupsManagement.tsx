@@ -593,6 +593,9 @@ export function BackupsManagement() {
           <p className="text-muted-foreground mb-2 text-control">
             {t("backups.management.restoreConfirmLabel")}: <strong>{restoreTarget}</strong>
           </p>
+          <p className="mb-3 text-control" data-testid="backups-restore-warning">
+            {t("backups.management.restoreConfirmWarning")}
+          </p>
           <div className="flex flex-wrap items-end gap-3">
             <Field label={t("backups.management.restoreConfirmInputLabel")} error={restoreMismatch}>
               <Input

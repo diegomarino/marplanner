@@ -284,6 +284,10 @@ export const messages = {
     "admin.settings.retry": "Retry",
     "admin.settings.weatherIncomplete": "Enter both latitude and longitude, or clear both.",
     "admin.settings.weatherInvalid": "Latitude and longitude must be numbers, for example 40.4168.",
+    "admin.settings.weatherRange":
+      "Latitude must be between -90 and 90, and longitude between -180 and 180.",
+    "admin.settings.partialSaved":
+      "Language, week start and time zone were saved; the weather location was not.",
     "admin.settings.scopeNote":
       "Save applies to language, week start, time zone and weather. Day periods are saved on their own.",
     // admin-routines
@@ -892,6 +896,9 @@ export const messages = {
     "meals.recipes.createTitle": "Create Recipe",
     "meals.recipes.namePlaceholder": "Recipe name",
     "meals.recipes.nameLabel": "Name",
+    "meals.recipes.nameRequired": "Give the recipe a name before saving.",
+    "meals.recipes.saveError":
+      "The recipe could not be saved. Your changes are still here; try again.",
     "meals.recipes.ingredientsLabel": "Ingredients (one per line)",
     "meals.recipes.instructionsLabel": "Instructions",
     "meals.recipes.slotsLabel": "Slots",
@@ -1163,6 +1170,8 @@ export const messages = {
     "backups.management.deleteError": "Failed to delete this backup.",
     "backups.management.restoreConfirmTitle": "Confirm restore",
     "backups.management.restoreConfirmLabel": "Restoring",
+    "backups.management.restoreConfirmWarning":
+      "Restoring replaces all of the household's current data with this backup: anything changed after it was made disappears from the app. A Pre-restore backup of the current data is made first and appears in this list, so you can go back. This screen reloads when the restore finishes.",
     "backups.management.restoreConfirmInputLabel": "Type the exact filename to confirm",
     "backups.management.restoreConfirmPlaceholder": "Type the filename shown above",
     "backups.management.restoreMismatch": "The typed filename does not match — nothing was sent.",
@@ -1814,6 +1823,10 @@ export const messages = {
     "admin.settings.weatherIncomplete": "Introduce latitud y longitud, o borra ambas.",
     "admin.settings.weatherInvalid":
       "La latitud y la longitud deben ser números, por ejemplo 40.4168.",
+    "admin.settings.weatherRange":
+      "La latitud debe estar entre -90 y 90, y la longitud entre -180 y 180.",
+    "admin.settings.partialSaved":
+      "Se guardaron el idioma, el inicio de semana y la zona horaria; la ubicación del tiempo no.",
     "admin.settings.scopeNote":
       "Guardar aplica al idioma, el inicio de semana, la zona horaria y el tiempo. Los periodos del día se guardan por separado.",
     // admin-routines
@@ -2435,6 +2448,9 @@ export const messages = {
     "meals.recipes.createTitle": "Crear Receta",
     "meals.recipes.namePlaceholder": "Nombre de la receta",
     "meals.recipes.nameLabel": "Nombre",
+    "meals.recipes.nameRequired": "Ponle un nombre a la receta antes de guardarla.",
+    "meals.recipes.saveError":
+      "No se pudo guardar la receta. Tus cambios siguen aquí; inténtalo de nuevo.",
     "meals.recipes.ingredientsLabel": "Ingredientes (uno por línea)",
     "meals.recipes.instructionsLabel": "Instrucciones",
     "meals.recipes.slotsLabel": "Franjas",
@@ -2707,6 +2723,8 @@ export const messages = {
     "backups.management.deleteError": "Error al eliminar esta copia de seguridad.",
     "backups.management.restoreConfirmTitle": "Confirmar restauración",
     "backups.management.restoreConfirmLabel": "Restaurando",
+    "backups.management.restoreConfirmWarning":
+      "Restaurar sustituye todos los datos actuales del hogar por los de esta copia: lo que se cambió después de crearla desaparece de la app. Antes se hace una copia Pre-restauración de los datos actuales, que aparece en esta lista, para poder volver atrás. Esta pantalla se recarga al terminar.",
     "backups.management.restoreConfirmInputLabel":
       "Escribe el nombre exacto del archivo para confirmar",
     "backups.management.restoreConfirmPlaceholder": "Escribe el nombre de archivo mostrado arriba",

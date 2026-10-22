@@ -86,6 +86,15 @@ const GATE_LAYOUT_CSS = `
     line-height: 1.4;
   }
   .default-notice code { font-family: ui-monospace, monospace; }
+  .rejected-notice {
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--destructive);
+    border-radius: 0.375rem;
+    color: var(--destructive);
+    font-size: var(--control-font-size);
+    line-height: 1.4;
+  }
   form {
     display: flex;
     flex-direction: column;
@@ -228,8 +237,21 @@ const DEFAULT_TOKEN_NOTICE = `<p class="default-notice" role="note" data-testid=
       </p>
       `;
 
-export function sendGateForm(reply: FastifyReply, basePath = ""): FastifyReply {
+// Shown after a refused submission. Deliberately the same for a wrong, empty or (fail-closed)
+// unconfigured token: it neither echoes the input nor reveals whether a token is set.
+const REJECTED_NOTICE = `<p class="rejected-notice" role="alert" data-testid="access-gate-rejected">
+        That access token was not accepted. Check it and try again, or ask whoever set up this
+        device for the current token.
+      </p>
+      `;
+
+export function sendGateForm(
+  reply: FastifyReply,
+  basePath = "",
+  options: { rejected?: boolean } = {}
+): FastifyReply {
   let html = FORM_HTML.replace('action="/gate"', `action="${basePath}/gate"`);
+  if (options.rejected) html = html.replace("<form ", `${REJECTED_NOTICE}<form `);
   if (usesDefaultAccessToken()) {
     html = html
       .replace(
@@ -263,7 +285,7 @@ export async function accessGate(app: FastifyInstance, basePath = ""): Promise<v
       submitted.length === 0 ||
       !safeEqual(submitted, token)
     ) {
-      return sendGateForm(reply, basePath);
+      return sendGateForm(reply, basePath, { rejected: true });
     }
     return reply
       .header("Set-Cookie", serializeAuthCookie(GATE_COOKIE, sha256Hex(token), basePath))

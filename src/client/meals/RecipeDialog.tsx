@@ -49,6 +49,7 @@ export function RecipeDialog({ open, mode, recipe, onClose, onSave }: RecipeDial
   const [instructions, setInstructions] = useState("");
   const [slots, setSlots] = useState<Slot[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -57,9 +58,14 @@ export function RecipeDialog({ open, mode, recipe, onClose, onSave }: RecipeDial
     setInstructions(recipe?.instructions ?? "");
     setSlots(recipe?.slots ?? []);
     setError(null);
+    setNameError(null);
   }, [recipe, open]);
 
   async function save() {
+    if (!name.trim()) {
+      setNameError(t("meals.recipes.nameRequired"));
+      return;
+    }
     setSaving(true);
     setError(null);
     const normalizedIngredients = ingredients
@@ -75,7 +81,7 @@ export function RecipeDialog({ open, mode, recipe, onClose, onSave }: RecipeDial
     const success = await onSave(payload);
     setSaving(false);
     if (success) onClose();
-    else setError(t("meals.management.error"));
+    else setError(t("meals.recipes.saveError"));
   }
 
   return (
@@ -95,8 +101,14 @@ export function RecipeDialog({ open, mode, recipe, onClose, onSave }: RecipeDial
           </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-4">
-          <Field label={t("meals.recipes.nameLabel")}>
-            <Input value={name} onChange={(event) => setName(event.target.value)} />
+          <Field label={t("meals.recipes.nameLabel")} error={nameError}>
+            <Input
+              value={name}
+              onChange={(event) => {
+                setName(event.target.value);
+                setNameError(null);
+              }}
+            />
           </Field>
           <Field label={t("meals.recipes.ingredientsLabel")}>
             <GrowingTextarea
