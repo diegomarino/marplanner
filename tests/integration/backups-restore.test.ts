@@ -361,6 +361,24 @@ describe("restore engine — version gate matrix (BACKUPS-INV-04, BACKUPS-AC-02,
     }
   );
 
+  it("a restored database is owner-only when the active database file is gone", async () => {
+    const filename = seedBackupFixture("snapshot", Date.now(), REAL_MIGRATION_FILES, [], (db) =>
+      seedMemberInto(db, "backup-member", "From Backup")
+    );
+    const dbPath = resolveDbPath();
+    getDb();
+    fs.rmSync(dbPath);
+    const previousUmask = process.umask(0o022);
+    try {
+      const result = await restoreDatabase({ filename, confirmFilename: filename });
+      expect(result.status).toBe("restored");
+    } finally {
+      process.umask(previousUmask);
+    }
+    expect(fs.statSync(dbPath).mode & 0o777).toBe(0o600);
+    expect(memberNames()).toEqual(["From Backup"]);
+  });
+
   it("strict subset (older backup) -> restored with migrated:true, forward-migrated current", async () => {
     // The flattened production history has one irreducible baseline, so a valid older backup
     // must contain it. Add one disposable forward migration to make the test's running set
