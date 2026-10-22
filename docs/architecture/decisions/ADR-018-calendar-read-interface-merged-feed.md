@@ -48,7 +48,7 @@ normalization in one place instead of duplicating the matcher in Reminders.
 
 ## Affected Specs
 
-- `../../06-calendar.md`, `../../07-reminders.md`, `../../11-daily-briefing.md`
+- [calendar](../../features/calendar.md), [reminders](../../features/reminders.md), [daily-briefing](../../features/daily-briefing.md)
 
 ## Data / Setup Implications
 
@@ -74,5 +74,5 @@ changes. No legacy import (ADR-026).
 ## Traceability
 
 - Related prior: `ADR-018`
-- Domain grill: `../domain-grills/calendar-reminders-routines.md` (S1, R3)
+- Domain grill: `domain-grills/calendar-reminders-routines.md` (historical record, not preserved in this repository) (S1, R3)
 - Related: `ADR-040` (Rule B), `ADR-002`, `ADR-005`

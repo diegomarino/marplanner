@@ -89,4 +89,4 @@ it converts and delivers. No legacy import (ADR-026).
 - Related prior: relates to `ADR-019`, `ADR-028` (printer config registry), `ADR-015` (render/i18n)
 - Related: `ADR-035` (decision/execution split, capability registration),
   `ADR-039` (namespace ownership, absence-tolerance), `ADR-022` (fetch-at-execute)
-- Domain grill: `../domain-grills/daily-briefing-printing.md` (Q4)
+- Domain grill: `domain-grills/daily-briefing-printing.md` (historical record, not preserved in this repository) (Q4)

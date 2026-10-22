@@ -46,11 +46,11 @@ the current week). Nobody runs a shared demo: the instance is yours, in your acc
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/diegomarino/marplanner-project)
 [![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com%2Fdiegomarino%2Fmarplanner-project&branch=main&name=marplanner&builder=dockerfile&dockerfile=infra%2Fdocker%2FDockerfile&instance_type=free&instances_max=1&ports=3000%3Bhttp%3B%2F&hc_protocol%5B3000%5D=http&hc_path%5B3000%5D=%2Fhealth&hc_method%5B3000%5D=get&hc_grace_period%5B3000%5D=30&env%5BMP_ACCESS_TOKEN%5D=mpg-local-change-me&env%5BMP_BOOTSTRAP_KEY%5D=mpk-local-bootstrap-change-me&env%5BADMIN_PIN%5D=0000&env%5BMP_SEED_ON_EMPTY%5D=true&env%5BPORT%5D=3000)
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/RAILWAY_TEMPLATE_CODE?utm_medium=integration&utm_source=button&utm_campaign=marplanner)
 [![Deploy to DigitalOcean](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/diegomarino/marplanner-project/tree/main)
 
-<!-- TODO: the Railway button needs a published template; replace RAILWAY_TEMPLATE_CODE with its
-code once it exists (steps in docs/operations.md#one-click-cloud-demo). -->
+<!-- TODO: Railway is configured (railway.json) but its button needs a published template. Once
+it exists, add [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/<code>?utm_medium=integration&utm_source=button&utm_campaign=marplanner)
+here (steps in docs/operations.md#one-click-cloud-demo). -->
 
 The instance starts with the public default credentials from `.env.example`, and
 every sign-in screen shows them prefilled: access token `mpg-local-change-me`,
@@ -65,12 +65,12 @@ bootstrap key `mpk-local-bootstrap-change-me`, admin PIN `0000`.
 > [operations](docs/operations.md#one-click-cloud-demo)). The on-screen notices
 > disappear once the defaults are gone.
 
-| Host         | Cost of the demo              | Data on restart or redeploy                       |
-| ------------ | ----------------------------- | ------------------------------------------------- |
-| Render       | Free web service              | Lost (no disk on the free plan; sleeps when idle) |
-| Koyeb        | Free instance                 | Lost (no volumes on the free instance)            |
-| Railway      | Free or trial credit          | Kept only if you attach a volume at `/data`       |
-| DigitalOcean | Smallest paid service ($5/mo) | Lost (App Platform has no persistent volumes)     |
+| Host                                          | Cost of the demo              | Data on restart or redeploy                       |
+| --------------------------------------------- | ----------------------------- | ------------------------------------------------- |
+| Render                                        | Free web service              | Lost (no disk on the free plan; sleeps when idle) |
+| Koyeb                                         | Free instance                 | Lost (no volumes on the free instance)            |
+| Railway (button pending a published template) | Free or trial credit          | Kept only if you attach a volume at `/data`       |
+| DigitalOcean                                  | Smallest paid service ($5/mo) | Lost (App Platform has no persistent volumes)     |
 
 When data is lost, the next boot seeds the Simpsons again. Run one instance only:
 the server refuses a second process on the same database. More detail, including
@@ -120,7 +120,8 @@ set `PUBLISHED_PORT` for an explicit port. Use a distinct project name for each
 installation to isolate ports and persistent volumes. The image runs as the
 non-root `node` user and stores SQLite and backups in `/data`. See
 [container operations](docs/operations.md#container-installation) for ownership,
-HTTPS, shutdown, upgrades and current root-path/single-instance limits.
+HTTPS, shutdown, upgrades, [subpath hosting with `BASE_PATH`](docs/operations.md#runtime-subpath-hosting)
+and the single-instance limit.
 
 ## Development and verification
 

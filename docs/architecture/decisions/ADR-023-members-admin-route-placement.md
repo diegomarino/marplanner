@@ -22,9 +22,9 @@ This decision defines the product boundary. The exact admin authorization mechan
 
 ## Affected Specs
 
-- `../../01-members.md`
-- `../../12-auth-sessions.md`
-- `../../15-kiosk-shell-navigation.md`
+- [members](../../features/members.md)
+- [auth-sessions](../../features/auth-sessions.md)
+- [kiosk-shell-navigation](../../features/kiosk-shell-navigation.md)
 
 ## Data / Setup Implications
 
@@ -47,4 +47,4 @@ No legacy route behavior should be copied as a v2 permission model. The old `/me
 
 - Conflicts: `CR-024-kiosk-admin-entry`
 - Related prior: `ADR-023`
-- Domain grill: `../domain-grills/members.md`
+- Domain grill: `domain-grills/members.md` (historical record, not preserved in this repository)

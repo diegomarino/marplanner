@@ -603,8 +603,9 @@ export default [
                 "Plugin modules must reach core/host only through ../../host-api (ADR-039 §2b′).",
             },
             // Seventh plugin-module zone — network-devices.
-            // The sensitive-domain gate (`requireManagementKey`) and this module fence are the initial
-            // checkpoint for the registry, controller client, and poller. The module uses the same
+            // The route capability gate (`requireCapability("network:admin")` in
+            // src/server/routes/network-devices.ts) and this module fence guard the registry,
+            // controller client, and poller. The module uses the same
             // host-api-only seam as every zone above and consumes
             // `getOperatorConfig` (`unifi.*` keys) through
             // the SAME barrel + the SAME process.env ban below, never a direct read.

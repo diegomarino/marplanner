@@ -53,7 +53,7 @@ windows) as cheap correctness wins without new machinery.
 
 ## Affected Specs
 
-- `../../08-daily-messages.md`
+- [daily-messages](../../features/daily-messages.md)
 
 ## Data / Setup Implications
 
@@ -81,6 +81,6 @@ evidence only.
 
 - Related prior: extends `ADR-002` with Daily Messages targeting evidence; resolves spec `08`
   open questions.
-- Domain grill: `../domain-grills/daily-messages.md`
+- Domain grill: `domain-grills/daily-messages.md` (historical record, not preserved in this repository)
 - Related: `ADR-005`, `ADR-006`, `ADR-013`, `ADR-015`, `ADR-022`, `ADR-026`, `ADR-027`,
   `ADR-030`

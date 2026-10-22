@@ -68,7 +68,7 @@ duplicating a schedule, so it keeps working if the event moves day.
 
 ## Affected Specs
 
-- `../../07-reminders.md`, `../../06-calendar.md`, `../../11-daily-briefing.md`
+- [reminders](../../features/reminders.md), [calendar](../../features/calendar.md), [daily-briefing](../../features/daily-briefing.md)
 
 ## Data / Setup Implications
 
@@ -110,6 +110,6 @@ portability seam to note).
 ## Traceability
 
 - Related prior: refines `ADR-018` and the Reminders cluster outcome.
-- Domain grill: `../domain-grills/calendar-reminders-routines.md` (R3) +
-  `../domain-grills/daily-messages.md` (Reminders revisit)
+- Domain grill: `domain-grills/calendar-reminders-routines.md` (historical record, not preserved in this repository) (R3) +
+  `domain-grills/daily-messages.md` (historical record, not preserved in this repository) (Reminders revisit)
 - Related: `ADR-002`, `ADR-005`, `ADR-006`, `ADR-020`, `ADR-022`, `ADR-040`, `ADR-043`

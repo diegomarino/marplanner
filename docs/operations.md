@@ -1,5 +1,19 @@
 # Operating Marplanner
 
+**Something is wrong right now?**
+[Startup failed during an upgrade migration](#pre-migration-recovery-snapshots) ·
+[It refuses to start on a weekday integrity check](#weekday-integrity-at-startup) ·
+[Restore a backup](#snapshot-and-restore) ·
+[Find why an integration stopped reacting](#find-event-subscriber-failures)
+
+**Setting up:** [install and storage](#install-and-storage) ·
+[container](#container-installation) · [subpath hosting](#runtime-subpath-hosting) ·
+[credentials and provisioning](#credentials-and-provisioning) ·
+[plugins and integrations](#plugins-and-integrations) ·
+[one-click cloud demo](#one-click-cloud-demo) · [local development](#local-development) ·
+[synthetic seed and checks](#synthetic-seed-and-checks) ·
+[isolated verification](#isolated-verification)
+
 ## Install and storage
 
 Use Node.js `>=24.21.0 <25` (the development and CI pin is `24.21.0`) and npm `11.19.0`. Install from this repository's lockfile and build both client and server:
@@ -177,7 +191,7 @@ None of these outcomes stops the server from starting. The production bundle has
 3. Add the five variables listed above to the service.
 4. Optionally right-click the service and attach a volume mounted at `/data`, so the demo survives restarts.
 5. Choose **Create Template**, then publish it from the Templates page.
-6. Copy the template code from its URL (`https://railway.com/deploy/<code>`) and replace `RAILWAY_TEMPLATE_CODE` in the README button.
+6. Copy the template code from its URL (`https://railway.com/deploy/<code>`) and add the Railway button to the README with it (the exact line is in the README's TODO comment). Until then the README offers no Railway button.
 
 ## Synthetic seed and checks
 
@@ -201,8 +215,9 @@ routes and jobs. Installed code and persisted plugin data remain present.
 Configure the household timezone and members before authoring routines, reminders,
 meals and briefings. Core calendar and chores remain available without optional
 plugins. Weather needs a location. Network Devices requires operator controller
-configuration and a management credential; ordinary device credentials cannot
-manage it. Spoken time requires browser speech support. Printing requires pairing
+configuration; its routes accept any active credential with the `network:admin` (or
+full `*`) capability, so every normally provisioned device can manage it, and the
+advisory UI PIN is not an authorization boundary. Spoken time requires browser speech support. Printing requires pairing
 from a supported browser with an explicit user gesture. These integrations do not
 become live merely because their configuration form is available.
 

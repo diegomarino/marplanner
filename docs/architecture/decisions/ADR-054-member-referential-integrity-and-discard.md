@@ -68,7 +68,7 @@ family-kiosk model: no compliance-driven erase requirement, your own data on you
 
 ## Affected Specs
 
-- `../../01-members.md`, `../../05-routines-chores.md`
+- [members](../../features/members.md), [routines-chores](../../features/routines-chores.md)
 - `../domain-contracts/members.md` (adds the cross-cutting invariant; confirms no hard delete)
 - Routine assignment eligibility belongs to Routines; assignment-set writes follow `ADR-043` atomicity.
 
@@ -101,4 +101,4 @@ rows are imported (`ADR-026`).
 - Peer-reviewed: rejected the zero-reference-discard carve-out (issue-1 plugin-orphan +
   issue-2 missing-row vs archived-row); folded issue-4 (invariant covers INSERT+UPDATE).
 - Related: `ADR-039` (no cross-namespace FK), `ADR-043` (`foreign_keys=ON`), `ADR-040`.
-- Domain grill: `../domain-grills/members.md`
+- Domain grill: `domain-grills/members.md` (historical record, not preserved in this repository)

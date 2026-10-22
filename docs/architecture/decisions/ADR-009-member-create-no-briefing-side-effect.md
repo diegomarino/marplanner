@@ -18,8 +18,8 @@ The v2 product model now treats Daily Briefing as explicit per-active-member opt
 
 ## Affected Specs
 
-- `../../01-members.md`
-- `../../11-daily-briefing.md`
+- [members](../../features/members.md)
+- [daily-briefing](../../features/daily-briefing.md)
 - `ADR-027-daily-briefing-per-user-opt-in.md`
 
 ## Data / Setup Implications
@@ -38,4 +38,4 @@ No legacy member or Daily Briefing rows are imported under `ADR-026`.
 
 - Conflicts: `CR-009-multistep-atomicity`
 - Related prior: `ADR-009`
-- Domain grill: `../domain-grills/members.md`
+- Domain grill: `domain-grills/members.md` (historical record, not preserved in this repository)

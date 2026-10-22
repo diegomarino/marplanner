@@ -80,9 +80,9 @@ here forced by restore mechanics.
 
 ## Affected Specs
 
-- `../../18-backups.md`
-- `../../16-background-jobs-scheduler.md` (prune-after-confirmed-good, ADR-014)
-- `../../19-client-logging-telemetry.md` (sensitive-payload exclusion)
+- [backups](../../features/backups.md)
+- [background-jobs-scheduler](../../features/background-jobs-scheduler.md) (prune-after-confirmed-good, ADR-014)
+- [client-logging-telemetry](../../features/client-logging-telemetry.md) (sensitive-payload exclusion)
 
 ## Data / Setup Implications
 
@@ -117,7 +117,7 @@ imported automatically (ADR-026).
 
 ## Traceability
 
-- Conflicts: backup format/retention/manifest open questions in `../../18-backups.md` §12
+- Conflicts: backup format/retention/manifest open questions in [backups](../../features/backups.md) §12
 - Related prior: extends `ADR-017` scope; relates to `ADR-009` (atomicity), `ADR-026`
-- Domain grill: `../domain-grills/backups.md`
+- Domain grill: `domain-grills/backups.md` (historical record, not preserved in this repository)
 - Related: `ADR-014`, `ADR-030`, `ADR-031`, `ADR-033`, `ADR-039`

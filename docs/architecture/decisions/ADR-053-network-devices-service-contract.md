@@ -155,8 +155,8 @@ family-kiosk threat model: no capability tiers, no audit subsystem, no replace-M
 
 ## Affected Specs
 
-- `../../10-network-devices.md`
-- `../../03-app-settings-registry.md` (confirms: no UniFi credentials object — operator env)
+- [network-devices](../../features/network-devices.md)
+- [app-settings-registry](../../features/app-settings-registry.md) (confirms: no UniFi credentials object — operator env)
 - `../domain-contracts/plugin-system.md` (host-API gains read-only operator-config interface)
 - `../domain-contracts/client-logging-telemetry.md` (deny-list adds MAC + IP patterns)
 
@@ -201,7 +201,7 @@ premise), local, non-persisted.
 ## Traceability
 
 - Related prior: resolves spec `10` open questions (§12).
-- Domain grill: `../domain-grills/network-devices.md`
+- Domain grill: `domain-grills/network-devices.md` (historical record, not preserved in this repository)
 - Refines: `ADR-039` (host operator-config interface), `ADR-016` (deny-list MAC/IP).
 - Related: `ADR-002`, `ADR-005`, `ADR-007`, `ADR-013`, `ADR-014`, `ADR-017`, `ADR-026`,
   `ADR-028`, `ADR-030`, `ADR-031`, `ADR-040`, `ADR-043`, `ADR-049`.

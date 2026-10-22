@@ -45,4 +45,4 @@ A single management surface keeps plugin lifecycle in one auditable place. Hidin
 
 - Related prior: `ADR-029`
 - Related: `ADR-028` (settings objects), `ADR-035` (runtime services), `ADR-039` (accepted plugin trust model)
-- Domain grill: `../domain-grills/kiosk-shell-navigation.md`; future `../domain-grills/plugin-system.md`
+- Domain grill: `domain-grills/kiosk-shell-navigation.md` (historical record, not preserved in this repository); future `domain-grills/plugin-system.md` (historical record, not preserved in this repository)
