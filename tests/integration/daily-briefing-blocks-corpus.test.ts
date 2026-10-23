@@ -26,7 +26,7 @@ import { adaptBlockData } from "../../src/server/modules/daily-briefing/render/a
  * trivia/riddle answer-exposure contrast, EN/ES language resolution (FR-009/INV-06), the
  * numberFact dayOfYear keying, and the wordSearch FR-020 serial-loop confinement fence.
  * v1 seed-recipe verification table (v1 study, cross-checked against
- * `<marplanner-v1>/apps/api/src/lib/daily-briefing/blocks/*.ts` at dispatch time):
+ * `apps/api/src/lib/daily-briefing/blocks/*.ts` in the v1 codebase at dispatch time):
  * | block | v1 seed recipe | member-scoped? |
  * | --------------- | -------------------------------------------------------- | -------------- |
  * | dadJoke | `${date}\|joke` | no |
