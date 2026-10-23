@@ -3,7 +3,7 @@ import path from "node:path";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import type { FastifyInstance } from "fastify";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { hashKey } from "../../src/server/auth/credentials";
 import { createSnapshot } from "../../src/server/backups/storage";
 import { __resetRestoreStateForTests, restoreDatabase } from "../../src/server/backups/restore";
@@ -23,7 +23,15 @@ type BackupSnapshot = { ok: true; filename: string } | { ok: false; error: strin
 
 describe("database lifecycle aggregate recovery journey", () => {
   useIsolatedDb();
-  afterEach(() => __resetRestoreStateForTests());
+  // Keep the fixed Calendar fixtures inside the production rolling window; leave async timers real.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(NOW_MS);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    __resetRestoreStateForTests();
+  });
 
   it("recovers the ordered public profile through a later migration while preserving ordinary and failed-restore targets", async () => {
     expect(appliedMigrationFiles()).toEqual(CURRENT_MIGRATION_FILES);
