@@ -106,9 +106,9 @@ the translation set into a dimensioned structure so extension is additive.
 
 ## Affected Specs
 
-- `../../17-i18n-localization.md`, `../../03-app-settings-registry.md`,
-  `../../11-daily-briefing.md`, `../../09-time-announcements.md`, `../../14-weather.md`,
-  `../../02-day-periods.md`
+- [i18n-localization](../../features/i18n-localization.md), [app-settings-registry](../../features/app-settings-registry.md),
+  [daily-briefing](../../features/daily-briefing.md), [time-announcements](../../features/time-announcements.md), [weather](../../features/weather.md),
+  [day-periods](../../features/day-periods.md)
 
 ## Data / Setup Implications
 

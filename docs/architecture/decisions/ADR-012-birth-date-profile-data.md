@@ -20,8 +20,8 @@ Making the year optional avoids forcing collection of exact age while still supp
 
 ## Affected Specs
 
-- `../../01-members.md`
-- `../../11-daily-briefing.md`
+- [members](../../features/members.md)
+- [daily-briefing](../../features/daily-briefing.md)
 - `ADR-027-daily-briefing-per-user-opt-in.md`
 
 ## Data / Setup Implications
@@ -47,4 +47,4 @@ Fresh deployment member setup should allow birth date to be omitted. If provided
 
 - Conflicts: `CR-012-birth-date-ownership`
 - Related prior: `ADR-012`
-- Domain grill: `../domain-grills/members.md`
+- Domain grill: `domain-grills/members.md` (historical record, not preserved in this repository)

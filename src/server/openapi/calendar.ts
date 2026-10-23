@@ -56,7 +56,8 @@ export const EventEditInput = component(
       .string()
       .nullable()
       .meta({
-        description: "RFC-5545 RRULE; null = single occurrence. Validated by the shared expander.",
+        description:
+          "RFC-5545 RRULE; null = single occurrence. Supported subset: FREQ=DAILY|WEEKLY|MONTHLY|YEARLY with INTERVAL, COUNT, UNTIL, BYDAY, BYMONTHDAY, BYMONTH, WKST; anything else (sub-daily FREQ, BYHOUR/BYMINUTE/BYSECOND, BYSETPOS, BYYEARDAY, BYWEEKNO, a BYMONTH/BYMONTHDAY pair that never occurs) is a 400.",
         example: "FREQ=WEEKLY;BYDAY=MO",
       })
       .optional(),
@@ -128,7 +129,7 @@ export const EventInput = component(
         .nullable()
         .meta({
           description:
-            "RFC-5545 RRULE; null = single occurrence. Validated by the shared expander.",
+            "RFC-5545 RRULE; null = single occurrence. Supported subset: FREQ=DAILY|WEEKLY|MONTHLY|YEARLY with INTERVAL, COUNT, UNTIL, BYDAY, BYMONTHDAY, BYMONTH, WKST; anything else (sub-daily FREQ, BYHOUR/BYMINUTE/BYSECOND, BYSETPOS, BYYEARDAY, BYWEEKNO, a BYMONTH/BYMONTHDAY pair that never occurs) is a 400.",
           example: "FREQ=WEEKLY;BYDAY=MO",
         })
         .optional(),
@@ -324,8 +325,14 @@ export const calendarSchemas = defineRouteSchemas({
     querystring: z.object({
       source: z.enum(["all", "local", "external"]).meta({ default: "all" }).optional(),
       assignedTo: z.string().meta({ description: "member id; strict (INV-09/AC-06)" }).optional(),
-      from: z.string().meta({ description: "range start (household tz)" }),
-      to: z.string().meta({ description: "exclusive next-midnight upper bound (INV-03)" }),
+      from: z.string().meta({
+        description:
+          "Range start: a YYYY-MM-DD household date (from its household midnight) or an ISO instant (inclusive). All-day events match by household date.",
+      }),
+      to: z.string().meta({
+        description:
+          "Range end: a YYYY-MM-DD household date, included (read up to the next household midnight, INV-03), or an exclusive ISO instant.",
+      }),
       query: z
         .string()
         .meta({
@@ -392,6 +399,11 @@ export const calendarSchemas = defineRouteSchemas({
       400: { description: "validation", content: { "application/json": { schema: ErrorSchema } } },
       401: noContent("missing/invalid device key"),
       404: noContent("no such event"),
+      409: {
+        description:
+          "`external_event_read_only`: the event is synchronized from an external calendar; only its participant assignments are editable.",
+        content: { "application/json": { schema: ErrorSchema } },
+      },
       429: authenticationBackoffResponse,
     },
   },
@@ -406,6 +418,11 @@ export const calendarSchemas = defineRouteSchemas({
       204: noContent("deleted; event + all assignment rows removed in one transaction"),
       401: noContent("missing/invalid device key"),
       404: noContent("no such event"),
+      409: {
+        description:
+          "`external_event_read_only`: the event is synchronized from an external calendar; only its participant assignments are editable.",
+        content: { "application/json": { schema: ErrorSchema } },
+      },
       429: authenticationBackoffResponse,
     },
   },

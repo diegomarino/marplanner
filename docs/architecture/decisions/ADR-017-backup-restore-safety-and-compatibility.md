@@ -75,9 +75,9 @@ the pre-restore snapshot covers.
 
 ## Affected Specs
 
-- `../../18-backups.md`
-- `../../16-background-jobs-scheduler.md` (quiesce around ADR-014 in-flight guard)
-- `../../15-kiosk-shell-navigation.md` (post-restore client reload)
+- [backups](../../features/backups.md)
+- [background-jobs-scheduler](../../features/background-jobs-scheduler.md) (quiesce around ADR-014 in-flight guard)
+- [kiosk-shell-navigation](../../features/kiosk-shell-navigation.md) (post-restore client reload)
 
 ## Data / Setup Implications
 
@@ -115,7 +115,7 @@ upload path stores candidate files, but unsupported legacy lineage is rejected a
 
 ## Traceability
 
-- Conflicts: restore-safety open questions in `../../18-backups.md` §12
+- Conflicts: restore-safety open questions in [backups](../../features/backups.md) §12
 - Related prior: `ADR-017`
-- Domain grill: `../domain-grills/backups.md`
+- Domain grill: `domain-grills/backups.md` (historical record, not preserved in this repository)
 - Related: `ADR-042` (backup storage/format/retention), `ADR-014`, `ADR-026`

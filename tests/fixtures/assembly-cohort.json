@@ -655,6 +655,16 @@
             "--files consumes paths only up to the next flag, leaving that flag's own value alone",
             "--files rejects a directory and a non-.tsx path in this script's own error style, not a raw stack trace"
           ],
+          "tools/bundled-licenses.test.mjs": [
+            "bundled licences list each package once with its shipped licence and notice files",
+            "the client plugin emits licences only for modules rendered into the bundle",
+            "the client plugin lists packages that contribute only CSS to the bundle",
+            "packages without a licence file get their licence's standard text and manifest author"
+          ],
+          "tools/corpora-notice.test.mjs": [
+            "the corpora notice covers the Spanish translation of every third-party corpus",
+            "THIRD_PARTY_NOTICES.md mirrors every corpus the shipped notice names"
+          ],
           "tools/candidate-identity.test.mjs": [
             "candidate identity binds bytes, modes and exact maintained inventory",
             "tracked checkout inventory comes from git and rejects untracked files",
@@ -1064,7 +1074,14 @@
             "calendar-create (US1 hardening — Codex: exdates shape + strict dates) rejects exdates that is not an array (object) with 400",
             "calendar-create (US1 hardening — Codex: exdates shape + strict dates) rejects exdates that is a bare string with 400",
             "calendar-create (US1 hardening — Codex: exdates shape + strict dates) rejects an all-day event whose startDate is not a valid date with 400",
-            "calendar-create (US1 hardening — Codex: exdates shape + strict dates) rejects a non-existent calendar date (2026-02-30) rather than rolling it over"
+            "calendar-create (US1 hardening — Codex: exdates shape + strict dates) rejects a non-existent calendar date (2026-02-30) rather than rolling it over",
+            "calendar-create (supported RRULE subset) accepts an annual rule even though YEARLY is rrule.js frequency 0",
+            "calendar-create (supported RRULE subset) rejects FREQ=SECONDLY;COUNT=20000 with 400 and persists nothing",
+            "calendar-create (supported RRULE subset) rejects FREQ=MINUTELY with 400 and persists nothing",
+            "calendar-create (supported RRULE subset) rejects FREQ=HOURLY with 400 and persists nothing",
+            "calendar-create (supported RRULE subset) rejects FREQ=DAILY;BYHOUR=0,1,2;BYMINUTE=0,30 with 400 and persists nothing",
+            "calendar-create (supported RRULE subset) rejects FREQ=DAILY;BYMONTH=2;BYMONTHDAY=30 with 400 and persists nothing",
+            "calendar-create (supported RRULE subset) rejects COUNT=3 with 400 and persists nothing"
           ],
           "tests/boundary/calendar-external-sources-contract.test.ts": [
             "calendar external-source public contract documents a masked response DTO and a route-level domain seam without exposing feedUrl"
@@ -1129,7 +1146,9 @@
             "calendar-mutate (RED by design, turns green) PATCH /api/calendar/events/:id with exdates=null returns 400 and preserves prior state",
             "calendar-mutate (RED by design, turns green) PATCH /api/calendar/events/:id with rrule=null clears recurrence and returns 200",
             "calendar-mutate (RED by design, turns green) stores a local event's description and location, serves them, and clears them when blanked",
-            "calendar-mutate (RED by design, turns green) PATCH switches an all-day event to timed and back, dropping the other shape's dates"
+            "calendar-mutate (RED by design, turns green) PATCH switches an all-day event to timed and back, dropping the other shape's dates",
+            "calendar-mutate (RED by design, turns green) PATCH switches a weekly series to YEARLY (numeric zero frequency) and refuses MINUTELY",
+            "calendar-mutate (RED by design, turns green) refuses to edit or delete a feed-owned event but still lets its participants change"
           ],
           "tests/boundary/calendar-parse.test.ts": [
             "Calendar ICS parser adapter normalizes RRULE, RDATE, EXDATE, overrides, cancellations, and DST instants",
@@ -1173,7 +1192,35 @@
             "calendar-read (US1 review-hardening — B1 resilience + B2 household-tz, pinned clock) honors the exclusive household-tz next-midnight upper bound",
             "calendar-read (US1 review-hardening — B1 resilience + B2 household-tz, pinned clock) uses the persisted household timezone for the range, not the default",
             "calendar-read (US1 review-hardening — B1 resilience + B2 household-tz, pinned clock) does not 500 the feed when a row has non-JSON stored exdates",
-            "calendar-read (US1 review-hardening — B1 resilience + B2 household-tz, pinned clock) does not 500 the feed when a row has an unparseable end_utc (NaN duration)"
+            "calendar-read (US1 review-hardening — B1 resilience + B2 household-tz, pinned clock) does not 500 the feed when a row has an unparseable end_utc (NaN duration)",
+            "calendar-read (all-day events keep their household date) places a single all-day event on its own date in America/New_York",
+            "calendar-read (all-day events keep their household date) keeps a single all-day event off the previous date in America/New_York",
+            "calendar-read (all-day events keep their household date) places a recurring all-day event on its own date in America/New_York",
+            "calendar-read (all-day events keep their household date) keeps a recurring all-day event off the previous date in America/New_York",
+            "calendar-read (all-day events keep their household date) places a single all-day event on its own date in Pacific/Honolulu",
+            "calendar-read (all-day events keep their household date) keeps a single all-day event off the previous date in Pacific/Honolulu",
+            "calendar-read (all-day events keep their household date) places a recurring all-day event on its own date in Pacific/Honolulu",
+            "calendar-read (all-day events keep their household date) keeps a recurring all-day event off the previous date in Pacific/Honolulu",
+            "calendar-read (all-day events keep their household date) places a single all-day event on its own date in Asia/Tokyo",
+            "calendar-read (all-day events keep their household date) keeps a single all-day event off the previous date in Asia/Tokyo",
+            "calendar-read (all-day events keep their household date) places a recurring all-day event on its own date in Asia/Tokyo",
+            "calendar-read (all-day events keep their household date) keeps a recurring all-day event off the previous date in Asia/Tokyo",
+            "calendar-read (all-day events keep their household date) places a single all-day event on its own date in UTC",
+            "calendar-read (all-day events keep their household date) keeps a single all-day event off the previous date in UTC",
+            "calendar-read (all-day events keep their household date) places a recurring all-day event on its own date in UTC",
+            "calendar-read (all-day events keep their household date) keeps a recurring all-day event off the previous date in UTC",
+            "calendar-read (all-day events keep their household date) returns exactly the requested dates of a daily all-day series west of UTC",
+            "calendar-read (all-day events keep their household date) maps an instant range to the household dates it covers",
+            "calendar-read (ongoing multi-day and overnight events) lists a 22–25 October holiday on 2026-10-22 only while it runs",
+            "calendar-read (ongoing multi-day and overnight events) lists a 22–25 October holiday on 2026-10-23 only while it runs",
+            "calendar-read (ongoing multi-day and overnight events) lists a 22–25 October holiday on 2026-10-25 only while it runs",
+            "calendar-read (ongoing multi-day and overnight events) lists a 22–25 October holiday on 2026-10-21 only while it runs",
+            "calendar-read (ongoing multi-day and overnight events) lists a 22–25 October holiday on 2026-10-26 only while it runs",
+            "calendar-read (ongoing multi-day and overnight events) returns a multi-day event once for a range spanning several of its days",
+            "calendar-read (ongoing multi-day and overnight events) includes a recurring weekend occurrence that began the day before",
+            "calendar-read (ongoing multi-day and overnight events) lists an overnight timed event on the morning it ends, but not one ending at midnight",
+            "calendar-read (all-day events keep their household date) returns no all-day event for equal instant bounds, an empty range",
+            "calendar-read (all-day events keep their household date) returns no all-day event for reversed instant bounds, an empty range"
           ],
           "tests/boundary/calendar-recurrence.test.ts": [
             "calendar recurrence expander DST transition (research R2 - the core hazard) expands weekly 09:00 Europe/Madrid across spring-forward (2026-03-29) with correct UTC instants",
@@ -1191,7 +1238,29 @@
             "calendar recurrence expander millisecond precision preserves the startUtc milliseconds on a recurring occurrence",
             "calendar recurrence expander all-day recurrence expands all-day events as dates with no timezone conversion",
             "calendar recurrence expander pure-occurrence shape returns only { occurrenceStart, allDay } — no fabricated FeedItem fields",
-            "calendar recurrence expander range filtering returns only occurrences within the passed range"
+            "calendar recurrence expander range filtering returns only occurrences within the passed range",
+            "supported RRULE subset (dense-rule hazard) accepts FREQ=DAILY;COUNT=3",
+            "supported RRULE subset (dense-rule hazard) accepts FREQ=WEEKLY;BYDAY=MO,WE;INTERVAL=2",
+            "supported RRULE subset (dense-rule hazard) accepts FREQ=MONTHLY;BYMONTHDAY=31",
+            "supported RRULE subset (dense-rule hazard) accepts FREQ=YEARLY",
+            "supported RRULE subset (dense-rule hazard) accepts FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=29",
+            "supported RRULE subset (dense-rule hazard) accepts FREQ=YEARLY;BYMONTH=4;BYMONTHDAY=-30;UNTIL=20300101T000000Z",
+            "supported RRULE subset (dense-rule hazard) rejects COUNT=3",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=SECONDLY",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=MINUTELY",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=HOURLY",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=DAILY;BYHOUR=9",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=DAILY;BYMINUTE=0,30",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=DAILY;BYSECOND=0",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=MONTHLY;BYDAY=MO;BYSETPOS=1",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=YEARLY;BYYEARDAY=100",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=YEARLY;BYWEEKNO=1",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=DAILY;BYMONTH=2;BYMONTHDAY=30",
+            "supported RRULE subset (dense-rule hazard) rejects FREQ=YEARLY;BYMONTH=4,6;BYMONTHDAY=31",
+            "supported RRULE subset (dense-rule hazard) expands an annual all-day series once per year",
+            "supported RRULE subset (dense-rule hazard) skips a stored unsupported rule (FREQ=SECONDLY;COUNT=20000) instead of expanding it",
+            "supported RRULE subset (dense-rule hazard) skips a stored unsupported rule (FREQ=DAILY;BYHOUR=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23;BYMINUTE=0,10,20,30,40,50;BYSECOND=0,10,20,30,40,50) instead of expanding it",
+            "supported RRULE subset (dense-rule hazard) skips a stored unsupported rule (FREQ=DAILY;BYMONTH=2;BYMONTHDAY=30) instead of expanding it"
           ],
           "tests/boundary/calendar-source-lifecycle.test.ts": [
             "calendar external-source lifecycle hides retained rows on disable and immediately restores them on enable",
@@ -2443,7 +2512,8 @@
             "reminders-calendar-gated (research.md D3, issue #496 single-day window) a non-matching query -> no emission, even though an assigned event exists that day",
             "reminders-calendar-gated (research.md D3, issue #496 single-day window) a rule scoped to queryFields:['location'] does NOT emit even though the assigned event's TITLE matches the query (unmodeled field)",
             "reminders-calendar-gated (research.md D3, issue #496 single-day window) single-day window (#496): a matching event that only occurs the NEXT day does not emit for today, but does emit on its own day (AC-02, evaluated every day)",
-            "reminders-calendar-gated (research.md D3, issue #496 single-day window) a specific rule with two members emits for each member on their own assigned events, survives a two-member PATCH, and dry-runs per member"
+            "reminders-calendar-gated (research.md D3, issue #496 single-day window) a specific rule with two members emits for each member on their own assigned events, survives a two-member PATCH, and dry-runs per member",
+            "reminders-calendar-gated (research.md D3, issue #496 single-day window) emits on every day an assigned multi-day event covers, and not after it ends"
           ],
           "tests/boundary/reminders-crud.test.ts": [
             "reminders-crud boundary tests POST /api/reminders creates an apply_to_all rule → 201",
@@ -4611,10 +4681,6 @@
             "time-announcements speech sink mirror gate (D9 — window.__mpAnnouncements, DEV/e2e-gated) caps the mirrored array at 50 entries (bounded, FIFO)"
           ],
           "tests/client/today-agenda.test.tsx": [
-            "household-day range and projection covers timed and date-only anchors in Pacific/Kiritimati at 2026-12-31T11:30:00Z",
-            "household-day range and projection covers timed and date-only anchors in America/Los_Angeles at 2026-09-22T01:00:00Z",
-            "household-day range and projection covers timed and date-only anchors in Europe/Madrid at 2026-03-29T12:00:00Z",
-            "household-day range and projection covers timed and date-only anchors in America/New_York at 2026-11-01T12:00:00Z",
             "household-day range and projection keeps read order for ties, all-day first, and emphasizes every current interval",
             "household-day range and projection selects only the first future tie when none is in progress; all-day cannot steal next",
             "household-day range and projection retains assignment order and readable archived/missing references without active identity",
@@ -4636,7 +4702,12 @@
             "TodayAgenda keeps a pending agenda local and shows an explicit empty state on success",
             "TodayAgenda reports calendar failure locally and retries without raw diagnostics",
             "TodayAgenda reports profiles failure locally and retries without raw diagnostics",
-            "TodayAgenda renders Spanish structural copy and next-only fallback"
+            "TodayAgenda renders Spanish structural copy and next-only fallback",
+            "household-day range and projection spans household midnight to the next one in Pacific/Kiritimati at 2026-12-31T11:30:00Z",
+            "household-day range and projection spans household midnight to the next one in America/Los_Angeles at 2026-09-22T01:00:00Z",
+            "household-day range and projection spans household midnight to the next one in Europe/Madrid at 2026-03-29T12:00:00Z",
+            "household-day range and projection spans household midnight to the next one in America/New_York at 2026-11-01T12:00:00Z",
+            "household-day range and projection shows ongoing multi-day and overnight events on every day they cover"
           ],
           "tests/client/today-chores.test.tsx": [
             "TodayChores behavior keeps each child's selected period through a server-authoritative refresh",
@@ -4916,7 +4987,11 @@
             "calendar feed synchronization retains a failed first source for retry and records safe durable health",
             "calendar feed synchronization publishes valid neighbours and records malformed-event isolation",
             "calendar feed synchronization persists validators and treats a conditional 304 as success without republishing events",
-            "calendar feed synchronization preserves the complete prior snapshot after a failed publication and records failure health"
+            "calendar feed synchronization preserves the complete prior snapshot after a failed publication and records failure health",
+            "calendar feed synchronization keeps the recurrence horizon moving re-materializes an unchanged feed answered by a conditional 304 two days later",
+            "calendar feed synchronization keeps the recurrence horizon moving re-materializes an unchanged feed answered by an identical body two days later",
+            "calendar feed synchronization keeps the recurrence horizon moving keeps using the conditional request for later syncs on the same day",
+            "calendar feed synchronization keeps the recurrence horizon moving refetches unconditionally after the database is reopened, as a restore does"
           ],
           "tests/integration/calendar-highlights.test.ts": [
             "Calendar highlight routes creates, lists, reorders, toggles and deletes with exact response shapes"
@@ -6751,10 +6826,10 @@
       "src/client/home/agenda-presentation.ts": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 28,
-          "statements": 33,
+          "lines": 27,
+          "statements": 32,
           "functions": 9,
-          "branches": 28
+          "branches": 26
         },
         "minimumRates": {
           "lines": 100,

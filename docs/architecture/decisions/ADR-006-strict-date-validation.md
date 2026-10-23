@@ -29,7 +29,7 @@ an all-day event leaking to the wrong day. Cheap to enforce; high correctness va
 
 ## Affected Specs
 
-- `../../05-routines-chores.md`, `../../06-calendar.md`, `../../07-reminders.md`
+- [routines-chores](../../features/routines-chores.md), [calendar](../../features/calendar.md), [reminders](../../features/reminders.md)
 
 ## Data / Setup Implications
 
@@ -52,5 +52,5 @@ inputs. Pairs with ADR-005 (household-tz) and ADR-020 (weekday derivation).
 ## Traceability
 
 - Related prior: `ADR-006`
-- Domain grill: `../domain-grills/calendar-reminders-routines.md` (S3)
+- Domain grill: `domain-grills/calendar-reminders-routines.md` (historical record, not preserved in this repository) (S3)
 - Related: `ADR-005`, `ADR-020`

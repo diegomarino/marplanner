@@ -85,9 +85,9 @@ persistence layer that duplicates product state domains already keep.
 
 ## Affected Specs
 
-- `../../16-background-jobs-scheduler.md`
-- `../../06-calendar.md`, `../../11-daily-briefing.md`, `../../18-backups.md`,
-  `../../10-network-devices.md` (each owns its job content + status)
+- [background-jobs-scheduler](../../features/background-jobs-scheduler.md)
+- [calendar](../../features/calendar.md), [daily-briefing](../../features/daily-briefing.md), [backups](../../features/backups.md),
+  [network-devices](../../features/network-devices.md) (each owns its job content + status)
 
 ## Data / Setup Implications
 

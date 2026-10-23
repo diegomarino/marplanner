@@ -64,7 +64,7 @@ informed one — the cheap correctness guard appropriate to the threat/value mod
 
 ## Affected Specs
 
-- `../../04-meals-recipes.md` (recipe delete behavior; resolves the spec open question
+- [meals-recipes](../../features/meals-recipes.md) (recipe delete behavior; resolves the spec open question
   and the route/storage contradiction)
 
 ## Data / Setup Implications
@@ -108,5 +108,5 @@ consistent with on-read derivation and Class 1 atomicity; no over-engineering.
 ## Traceability
 
 - Related prior: resolves the recipe-deletion open question in `ADR-009`/spec `04`.
-- Domain grill: `../domain-grills/meals-recipes.md` (Q2)
+- Domain grill: `domain-grills/meals-recipes.md` (historical record, not preserved in this repository) (Q2)
 - Related: `ADR-043`, `ADR-045`, `ADR-013`, `ADR-030`, `ADR-026`

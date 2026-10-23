@@ -28,7 +28,7 @@ at `00:00`; `05:00` reflects a realistic household wake window, and `21:00` give
 
 ## Affected Specs
 
-- `../../02-day-periods.md`
+- [day-periods](../../features/day-periods.md)
 
 ## Data / Setup Implications
 
@@ -47,5 +47,5 @@ editable, these are initial values only.
 ## Traceability
 
 - Related prior: `ADR-011`
-- Domain grill: `../domain-grills/day-periods.md`
+- Domain grill: `domain-grills/day-periods.md` (historical record, not preserved in this repository)
 - Related: `ADR-010`, `ADR-005`

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { getDb } from "../../src/server/db/client";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getDb, resetDb } from "../../src/server/db/client";
 import { listExternalSources } from "../../src/server/modules/calendar/external-sources";
 import { getEvents } from "../../src/server/modules/calendar/index";
 import {
@@ -212,5 +212,110 @@ describe("calendar feed synchronization", () => {
         },
       })
     ).toEqual(before.read);
+  });
+});
+
+/** Feed rows are expanded within a window that moves with the clock (−30d/+365d). An unchanged
+ * feed (304 or identical body) must still be re-materialized as days pass, or its recurring
+ * events progressively vanish from the far end of the window. */
+describe("calendar feed synchronization keeps the recurrence horizon moving", () => {
+  useIsolatedDb();
+
+  const START = Date.parse("2026-10-21T12:00:00.000Z");
+  const DAILY_FEED =
+    "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:daily\nDTSTAMP:20261021T000000Z\nDTSTART;VALUE=DATE:20261021\nRRULE:FREQ=DAILY\nSUMMARY:Daily\nEND:VEVENT\nEND:VCALENDAR";
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(START);
+    getDb()
+      .prepare(
+        "INSERT INTO settings_objects (object_name, data, updated_at) VALUES ('locale', ?, ?)"
+      )
+      .run(JSON.stringify({ timezone: "UTC" }), START);
+    getDb()
+      .prepare(
+        "INSERT INTO calendar_external_sources (id, name, provider, feed_url, created_at, updated_at) VALUES ('horizon', 'Source', 'ics_generic', 'https://calendar.example.test/horizon', 1, 1)"
+      )
+      .run();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function ok(etag: string | null) {
+    return {
+      status: 200,
+      headers: new Headers({ "content-type": "text/calendar", ...(etag && { etag }) }),
+      body: new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(DAILY_FEED));
+          controller.close();
+        },
+      }),
+      dispose: async () => undefined,
+    };
+  }
+
+  const farEndCount = () =>
+    getEvents({ source: "external", range: { from: "2027-10-22", to: "2027-10-22" } }).length;
+
+  it.each([
+    [
+      "a conditional 304",
+      ({ headers }: { headers: Record<string, string> }) =>
+        headers["if-none-match"] === '"v1"'
+          ? { status: 304, headers: new Headers(), body: null, dispose: async () => undefined }
+          : ok('"v1"'),
+    ],
+    ["an identical body", () => ok(null)],
+  ])("re-materializes an unchanged feed answered by %s two days later", async (_label, request) => {
+    const dependencies = {
+      lookup: async () => [{ address: "8.8.8.8", family: 4 }],
+      request: async (input: { headers: Record<string, string> }) => request(input),
+    };
+    await startExternalSourceSynchronization("horizon", dependencies);
+    expect(getExternalSourcePhase("horizon")).toBe("succeeded");
+
+    vi.setSystemTime(START + 2 * 86_400_000);
+    expect(farEndCount()).toBe(0); // not materialized yet: beyond the first sync's window
+
+    await startExternalSourceSynchronization("horizon", dependencies);
+    expect(getExternalSourcePhase("horizon")).toBe("succeeded");
+    expect(farEndCount()).toBe(1);
+  });
+
+  it("refetches unconditionally after the database is reopened, as a restore does", async () => {
+    const validators: Array<string | undefined> = [];
+    const dependencies = {
+      lookup: async () => [{ address: "8.8.8.8", family: 4 }],
+      request: async ({ headers }: { headers: Record<string, string> }) => {
+        validators.push(headers["if-none-match"]);
+        return headers["if-none-match"] === '"v1"'
+          ? { status: 304, headers: new Headers(), body: null, dispose: async () => undefined }
+          : ok('"v1"');
+      },
+    };
+    await startExternalSourceSynchronization("horizon", dependencies);
+    resetDb();
+    await startExternalSourceSynchronization("horizon", dependencies);
+    expect(validators).toEqual([undefined, undefined]);
+  });
+
+  it("keeps using the conditional request for later syncs on the same day", async () => {
+    const validators: Array<string | undefined> = [];
+    const dependencies = {
+      lookup: async () => [{ address: "8.8.8.8", family: 4 }],
+      request: async ({ headers }: { headers: Record<string, string> }) => {
+        validators.push(headers["if-none-match"]);
+        return headers["if-none-match"] === '"v1"'
+          ? { status: 304, headers: new Headers(), body: null, dispose: async () => undefined }
+          : ok('"v1"');
+      },
+    };
+    await startExternalSourceSynchronization("horizon", dependencies);
+    vi.setSystemTime(START + 60 * 60 * 1000);
+    await startExternalSourceSynchronization("horizon", dependencies);
+    expect(validators).toEqual([undefined, '"v1"']);
   });
 });

@@ -8,6 +8,7 @@ import {
   listExternalSources as listExternalSourcesService,
   upsertExternalSource as upsertExternalSourceService,
   NotFoundError,
+  ExternalEventReadOnlyError,
 } from "../modules/calendar/index";
 import {
   getExternalSourcePhase,
@@ -392,6 +393,9 @@ export async function calendarRoutes(
         if (err.name === "ValidationError" || err.name === "WindowError") {
           return reply.code(400).send({ error: err.message });
         }
+        if (err instanceof ExternalEventReadOnlyError) {
+          return reply.code(409).send({ error: "external_event_read_only", message: err.message });
+        }
         if (err instanceof NotFoundError) {
           return reply.code(404).send({ error: err.message });
         }
@@ -412,6 +416,9 @@ export async function calendarRoutes(
         return reply.code(204).send();
       } catch (e: unknown) {
         const err = e as { name?: string; message?: string };
+        if (err instanceof ExternalEventReadOnlyError) {
+          return reply.code(409).send({ error: "external_event_read_only", message: err.message });
+        }
         if (err instanceof NotFoundError) {
           return reply.code(404).send({ error: err.message });
         }

@@ -51,7 +51,7 @@ describe("one-click deploy templates", () => {
     const params = new URL(url!.slice(1, -1)).searchParams;
     expect(Object.fromEntries([...params].filter(([key]) => !key.startsWith("env[")))).toEqual({
       type: "git",
-      repository: "github.com/diegomarino/marplanner-project",
+      repository: "github.com/diegomarino/marplanner",
       branch: "main",
       name: "marplanner",
       builder: "dockerfile",
@@ -103,7 +103,7 @@ describe("one-click deploy templates", () => {
     const [service] = template.spec.services;
     expect(service).toMatchObject({
       git: {
-        repo_clone_url: "https://github.com/diegomarino/marplanner-project.git",
+        repo_clone_url: "https://github.com/diegomarino/marplanner.git",
         branch: "main",
       },
       dockerfile_path: "infra/docker/Dockerfile",
@@ -117,11 +117,13 @@ describe("one-click deploy templates", () => {
   it("README buttons point at this repository", () => {
     const readme = read("README.md");
     expect(readme).toContain(
-      "https://render.com/deploy?repo=https://github.com/diegomarino/marplanner-project)"
+      "https://render.com/deploy?repo=https://github.com/diegomarino/marplanner)"
     );
     expect(readme).toContain(
-      "https://cloud.digitalocean.com/apps/new?repo=https://github.com/diegomarino/marplanner-project/tree/main)"
+      "https://cloud.digitalocean.com/apps/new?repo=https://github.com/diegomarino/marplanner/tree/main)"
     );
-    expect(readme).toMatch(/\(https:\/\/railway\.com\/deploy\/[A-Za-z0-9_-]+[?)]/);
+    // Railway's button needs a published template: never advertise the placeholder code.
+    const railway = readme.match(/\(https:\/\/railway\.com\/deploy\/([A-Za-z0-9_-]+)[?)]/);
+    expect(railway?.[1]).not.toBe("RAILWAY_TEMPLATE_CODE");
   });
 });

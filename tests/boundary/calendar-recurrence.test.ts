@@ -425,3 +425,65 @@ describe("calendar recurrence expander", () => {
     });
   });
 });
+
+describe("supported RRULE subset (dense-rule hazard)", () => {
+  let mod: typeof import("../../src/server/modules/calendar/recurrence");
+
+  beforeAll(async () => {
+    mod = await import("../../src/server/modules/calendar/recurrence");
+  });
+
+  it.each([
+    "FREQ=DAILY;COUNT=3",
+    "FREQ=WEEKLY;BYDAY=MO,WE;INTERVAL=2",
+    "FREQ=MONTHLY;BYMONTHDAY=31",
+    "FREQ=YEARLY",
+    "FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=29",
+    "FREQ=YEARLY;BYMONTH=4;BYMONTHDAY=-30;UNTIL=20300101T000000Z",
+  ])("accepts %s", (rrule) => {
+    expect(mod.supportedRruleProblem(rrule)).toBeNull();
+  });
+
+  it.each([
+    ["COUNT=3", /FREQ is required/],
+    ["FREQ=SECONDLY", /FREQ must be/],
+    ["FREQ=MINUTELY", /FREQ must be/],
+    ["FREQ=HOURLY", /FREQ must be/],
+    ["FREQ=DAILY;BYHOUR=9", /BYHOUR/],
+    ["FREQ=DAILY;BYMINUTE=0,30", /BYMINUTE/],
+    ["FREQ=DAILY;BYSECOND=0", /BYSECOND/],
+    ["FREQ=MONTHLY;BYDAY=MO;BYSETPOS=1", /BYSETPOS/],
+    ["FREQ=YEARLY;BYYEARDAY=100", /BYYEARDAY/],
+    ["FREQ=YEARLY;BYWEEKNO=1", /BYWEEKNO/],
+    ["FREQ=DAILY;BYMONTH=2;BYMONTHDAY=30", /never coincide/],
+    ["FREQ=YEARLY;BYMONTH=4,6;BYMONTHDAY=31", /never coincide/],
+  ])("rejects %s", (rrule, reason) => {
+    expect(mod.supportedRruleProblem(rrule)).toMatch(reason);
+  });
+
+  it("expands an annual all-day series once per year", () => {
+    const occurrences = mod.expand(
+      { allDay: true, startDate: "2026-03-15", rrule: "FREQ=YEARLY", exdates: [] },
+      { start: new Date("2026-01-01T00:00:00Z"), end: new Date("2029-01-01T00:00:00Z") }
+    );
+    expect(occurrences.map((o) => o.occurrenceStart)).toEqual([
+      "2026-03-15",
+      "2027-03-15",
+      "2028-03-15",
+    ]);
+  });
+
+  it.each([
+    "FREQ=SECONDLY;COUNT=20000",
+    "FREQ=DAILY;BYHOUR=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23;BYMINUTE=0,10,20,30,40,50;BYSECOND=0,10,20,30,40,50",
+    "FREQ=DAILY;BYMONTH=2;BYMONTHDAY=30",
+  ])("skips a stored unsupported rule (%s) instead of expanding it", (rrule) => {
+    const started = performance.now();
+    const occurrences = mod.expand(
+      { allDay: false, startUtc: "2026-10-21T00:00:00.000Z", tzid: "UTC", rrule, exdates: [] },
+      { start: new Date("2026-09-21T00:00:00Z"), end: new Date("2027-10-21T00:00:00Z") }
+    );
+    expect(occurrences).toEqual([]);
+    expect(performance.now() - started).toBeLessThan(100);
+  });
+});

@@ -3,7 +3,7 @@ import path from "node:path";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import type { FastifyInstance } from "fastify";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { hashKey } from "../../src/server/auth/credentials";
 import { createSnapshot } from "../../src/server/backups/storage";
 import { __resetRestoreStateForTests, restoreDatabase } from "../../src/server/backups/restore";
@@ -181,11 +181,20 @@ async function readMembers(app: FastifyInstance, deviceKey: string): Promise<Mem
 }
 
 async function expectPublicCalendarRead(app: FastifyInstance, deviceKey: string): Promise<void> {
-  const response = await app.inject({
-    method: "GET",
-    url: "/api/calendar/events?source=all&from=2026-09-23&to=2026-09-26",
-    cookies: { mp_device_key: deviceKey },
-  });
+  // Keep the fixed Calendar fixtures inside the production rolling window. Pin Date only for this
+  // read: restoreDatabase's drain deadline needs a real clock.
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(NOW_MS);
+  let response;
+  try {
+    response = await app.inject({
+      method: "GET",
+      url: "/api/calendar/events?source=all&from=2026-09-23&to=2026-09-26",
+      cookies: { mp_device_key: deviceKey },
+    });
+  } finally {
+    vi.useRealTimers();
+  }
   expect(response.statusCode).toBe(200);
   expect(response.json()).toEqual(
     expect.arrayContaining([

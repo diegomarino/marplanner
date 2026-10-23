@@ -20,15 +20,15 @@ This also makes downstream rules clearer: assignment/recipient creation should u
 
 ## Affected Specs
 
-- `../../01-members.md`
-- `../../05-routines-chores.md`
-- `../../06-calendar.md`
-- `../../07-reminders.md`
-- `../../08-daily-messages.md`
-- `../../10-network-devices.md`
-- `../../11-daily-briefing.md`
-- `../../13-printing-pipeline.md`
-- `../../15-kiosk-shell-navigation.md`
+- [members](../../features/members.md)
+- [routines-chores](../../features/routines-chores.md)
+- [calendar](../../features/calendar.md)
+- [reminders](../../features/reminders.md)
+- [daily-messages](../../features/daily-messages.md)
+- [network-devices](../../features/network-devices.md)
+- [daily-briefing](../../features/daily-briefing.md)
+- [printing](../../features/printing.md)
+- [kiosk-shell-navigation](../../features/kiosk-shell-navigation.md)
 
 ## Data / Setup Implications
 
@@ -48,4 +48,4 @@ Historical references to archived members must remain readable. New assignments,
 
 - Conflicts: related to `CR-002-active-child-targets`
 - Related prior: new improvement decision from Members grill
-- Domain grill: `../domain-grills/members.md`
+- Domain grill: `domain-grills/members.md` (historical record, not preserved in this repository)

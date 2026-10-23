@@ -155,7 +155,11 @@
           "status": { "type": "string", "enum": ["ok", "failed"] },
           "data": { "description": "Frozen block data, present for successful blocks." },
           "error": { "type": "string" },
-          "index": { "type": "integer", "minimum": 1 },
+          "index": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "1-based position in the member's full effective block order at generation; omitted blocks leave gaps (e.g. [1, 3]). Not a stable identity."
+          },
           "title": { "type": "string" },
           "language": { "type": "string" },
           "params": { "$ref": "#/components/schemas/BlockParams" }
@@ -901,7 +905,7 @@
             "example": "Europe/Madrid"
           },
           "rrule": {
-            "description": "RFC-5545 RRULE; null = single occurrence. Validated by the shared expander.",
+            "description": "RFC-5545 RRULE; null = single occurrence. Supported subset: FREQ=DAILY|WEEKLY|MONTHLY|YEARLY with INTERVAL, COUNT, UNTIL, BYDAY, BYMONTHDAY, BYMONTH, WKST; anything else (sub-daily FREQ, BYHOUR/BYMINUTE/BYSECOND, BYSETPOS, BYYEARDAY, BYWEEKNO, a BYMONTH/BYMONTHDAY pair that never occurs) is a 400.",
             "example": "FREQ=WEEKLY;BYDAY=MO",
             "type": ["string", "null"]
           },
@@ -953,7 +957,7 @@
             "example": "Europe/Madrid"
           },
           "rrule": {
-            "description": "RFC-5545 RRULE; null = single occurrence. Validated by the shared expander.",
+            "description": "RFC-5545 RRULE; null = single occurrence. Supported subset: FREQ=DAILY|WEEKLY|MONTHLY|YEARLY with INTERVAL, COUNT, UNTIL, BYDAY, BYMONTHDAY, BYMONTH, WKST; anything else (sub-daily FREQ, BYHOUR/BYMINUTE/BYSECOND, BYSETPOS, BYYEARDAY, BYWEEKNO, a BYMONTH/BYMONTHDAY pair that never occurs) is a 400.",
             "example": "FREQ=WEEKLY;BYDAY=MO",
             "type": ["string", "null"]
           },
@@ -3477,14 +3481,14 @@
             "in": "query",
             "name": "from",
             "required": true,
-            "description": "range start (household tz)"
+            "description": "Range start: a YYYY-MM-DD household date (from its household midnight) or an ISO instant (inclusive). All-day events match by household date."
           },
           {
             "schema": { "type": "string" },
             "in": "query",
             "name": "to",
             "required": true,
-            "description": "exclusive next-midnight upper bound (INV-03)"
+            "description": "Range end: a YYYY-MM-DD household date, included (read up to the next household midnight, INV-03), or an exclusive ISO instant."
           },
           {
             "schema": { "type": "string" },
@@ -3644,6 +3648,12 @@
           },
           "401": { "description": "missing/invalid device key" },
           "404": { "description": "no such event" },
+          "409": {
+            "description": "`external_event_read_only`: the event is synchronized from an external calendar; only its participant assignments are editable.",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+            }
+          },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
             "headers": {
@@ -3687,6 +3697,12 @@
           },
           "401": { "description": "missing/invalid device key" },
           "404": { "description": "no such event" },
+          "409": {
+            "description": "`external_event_read_only`: the event is synchronized from an external calendar; only its participant assignments are editable.",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+            }
+          },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
             "headers": {
@@ -7193,7 +7209,7 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
             }
           },
-          "403": { "description": "unauthenticated, unknown or out-of-scope key rejected (AC-06)" },
+          "403": { "description": "revoked, expired or out-of-scope credential rejected (AC-06)" },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
             "headers": {
@@ -7250,7 +7266,7 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
             }
           },
-          "403": { "description": "device-kind key rejected" },
+          "403": { "description": "revoked, expired or out-of-scope credential rejected (AC-06)" },
           "409": {
             "description": "MAC not in the current fresh cache (`reselect_required`) or already registered (INV-01)",
             "content": {
@@ -7310,7 +7326,7 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
             }
           },
-          "403": { "description": "device-kind key rejected" },
+          "403": { "description": "revoked, expired or out-of-scope credential rejected (AC-06)" },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
             "headers": {
@@ -7370,7 +7386,7 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
             }
           },
-          "403": { "description": "device-kind key rejected" },
+          "403": { "description": "revoked, expired or out-of-scope credential rejected (AC-06)" },
           "404": { "description": "unknown device" },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
@@ -7417,7 +7433,7 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
             }
           },
-          "403": { "description": "device-kind key rejected" },
+          "403": { "description": "revoked, expired or out-of-scope credential rejected (AC-06)" },
           "404": { "description": "unknown device" },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
@@ -7471,7 +7487,7 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
             }
           },
-          "403": { "description": "device-kind key rejected" },
+          "403": { "description": "revoked, expired or out-of-scope credential rejected (AC-06)" },
           "404": { "description": "unknown device" },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
@@ -7533,7 +7549,7 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
             }
           },
-          "403": { "description": "device-kind key rejected" },
+          "403": { "description": "revoked, expired or out-of-scope credential rejected (AC-06)" },
           "404": { "description": "unknown device" },
           "429": {
             "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
@@ -10819,7 +10835,7 @@
     },
     {
       "name": "network-devices",
-      "description": "**Marplanner — Network Devices API**\n\nRegistered network devices, live controller inventory and block state. Every management route requires a management credential and network:admin capability. Provider failures use safe typed errors."
+      "description": "**Marplanner — Network Devices API**\n\nRegistered network devices, live controller inventory and block state. Every route requires an active credential with the network:admin (or full \"*\") capability; a normally provisioned household device qualifies. Provider failures use safe typed errors."
     },
     {
       "name": "backups",

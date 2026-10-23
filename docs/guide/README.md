@@ -277,7 +277,7 @@ Specs: [backups](../features/backups.md)
   small VPS.
 - **Docker image** with a Compose file, running as a non-root user and storing its
   data in `/data`.
-- **One-click demos** on Render, Koyeb, Railway and DigitalOcean, already filled with
+- **One-click demos** on Render, Koyeb and DigitalOcean, already filled with
   the Simpsons household. See the [README](../../README.md#try-it-in-your-own-cloud).
 
 ![Admin overview](../images/features/admin-overview.png)
@@ -318,7 +318,7 @@ are no private endpoints just for the UI.
 
 ![API reference](../images/features/api-reference.png)
 
-Start with the [API guide](../api/README.md), or browse the [API reference](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/diegomarino/marplanner-project/main/docs/api/openapi.json) online.
+Start with the [API guide](../api/README.md), or browse the [API reference](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/diegomarino/marplanner/main/docs/api/openapi.json) online.
 
 ---
 

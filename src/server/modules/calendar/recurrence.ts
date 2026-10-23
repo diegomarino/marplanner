@@ -38,6 +38,20 @@ export interface ExpandRange {
   start: Date;
   /** exclusive upper bound (true instant). */
   end: Date;
+  /** inclusive lower calendar date (`YYYY-MM-DD`) for all-day occurrences. All-day events
+   * are date-only (CALENDAR-INV-04), so a household range is compared by date, never by the
+   * instant of its local midnight. Omitted: all-day anchors compare as UTC midnights. */
+  startDay?: string;
+  /** exclusive upper calendar date for all-day occurrences; set together with `startDay`. */
+  endDay?: string;
+}
+
+/** Whether an all-day occurrence on `date` (anchored at UTC midnight `anchor`) is in range. */
+function allDayInRange(date: string, anchor: Date, range: ExpandRange): boolean {
+  if (range.startDay !== undefined && range.endDay !== undefined) {
+    return date >= range.startDay && date < range.endDay;
+  }
+  return anchor >= range.start && anchor < range.end;
 }
 
 // No IANA zone applies an offset near 15h; pad the pseudo-UTC expansion window
@@ -47,6 +61,64 @@ export interface ExpandRange {
 const RANGE_PAD_MS = 48 * 60 * 60 * 1000;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** The local-event RRULE subset. Anything finer than a day (SECONDLY…HOURLY, BYHOUR,
+ * BYMINUTE, BYSECOND) or set-position / year-day / week-number filtering is refused: rrule.js
+ * expands synchronously, so such rules — or a BYMONTH/BYMONTHDAY pair that never occurs,
+ * which rrule.js scans for until year 9999 — would block the shared event loop on every read. */
+const SUPPORTED_FREQS: ReadonlySet<number> = new Set([
+  RRule.YEARLY,
+  RRule.MONTHLY,
+  RRule.WEEKLY,
+  RRule.DAILY,
+]);
+const SUPPORTED_PARTS: ReadonlySet<string> = new Set([
+  "freq",
+  "interval",
+  "count",
+  "until",
+  "byweekday",
+  "bymonthday",
+  "bymonth",
+  "wkst",
+]);
+/** Longest length of each month across all years (February counts its leap day). */
+const MONTH_MAX_DAYS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+const asList = (value: number | number[] | null | undefined): number[] =>
+  value === null || value === undefined ? [] : Array.isArray(value) ? value : [value];
+
+/** Why `rrule` is outside the supported local-event subset, or null when it is supported.
+ * Throws when the string is not parseable RRULE syntax at all. */
+export function supportedRruleProblem(rrule: string): string | null {
+  const options = RRule.parseString(rrule);
+  if (options.freq === undefined || options.freq === null) return "FREQ is required";
+  if (!SUPPORTED_FREQS.has(options.freq)) {
+    return "FREQ must be DAILY, WEEKLY, MONTHLY or YEARLY";
+  }
+  for (const [part, value] of Object.entries(options)) {
+    if (value !== undefined && value !== null && !SUPPORTED_PARTS.has(part)) {
+      return `${part.toUpperCase()} is not supported`;
+    }
+  }
+  const months = asList(options.bymonth);
+  const monthDays = asList(options.bymonthday);
+  if (months.length > 0 && monthDays.length > 0) {
+    const occurs = months.some((month) =>
+      monthDays.some((day) => Math.abs(day) <= MONTH_MAX_DAYS[month - 1])
+    );
+    if (!occurs) return "BYMONTH and BYMONTHDAY never coincide";
+  }
+  return null;
+}
+
+function isSupportedRrule(rrule: string): boolean {
+  try {
+    return supportedRruleProblem(rrule) === null;
+  } catch {
+    return false;
+  }
+}
 
 function readParts(tzid: string, at: Date): Record<string, number> {
   const dtf = new Intl.DateTimeFormat("en-US", {
@@ -229,8 +301,9 @@ function expandAllDay(
   const out: Occurrence[] = [];
   for (const occ of expandInWindow(set, range)) {
     // All-day occurrences anchor at UTC midnight of their calendar date.
-    if (occ >= range.start && occ < range.end) {
-      out.push({ occurrenceStart: formatDateOnly(occ), allDay: true });
+    const date = formatDateOnly(occ);
+    if (allDayInRange(date, occ, range)) {
+      out.push({ occurrenceStart: date, allDay: true });
     }
   }
   return out;
@@ -246,13 +319,17 @@ function expandAllDay(
 export function expand(params: ExpandParams, range: ExpandRange): Occurrence[] {
   const { allDay, startUtc, startDate, tzid, rrule, exdates } = params;
 
+  // A row stored before the supported subset was enforced expands to nothing rather than
+  // stalling every read that touches it.
+  if (rrule && !isSupportedRrule(rrule)) return [];
+
   if (allDay) {
     if (!startDate) {
       throw new Error("All-day events require startDate");
     }
     if (!rrule) {
       const single = new Date(`${startDate}T00:00:00.000Z`);
-      return single >= range.start && single < range.end
+      return allDayInRange(startDate, single, range)
         ? [{ occurrenceStart: startDate, allDay: true }]
         : [];
     }

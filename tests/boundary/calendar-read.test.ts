@@ -648,3 +648,208 @@ describe("calendar-read (US1 review-hardening — B1 resilience + B2 household-t
     }
   });
 });
+
+/** All-day events are household calendar dates (CALENDAR-INV-04). West of UTC the household
+ * midnight is after UTC midnight, so comparing each all-day anchor (UTC midnight) with the
+ * instant range moved every all-day event onto the previous household day. */
+describe("calendar-read (all-day events keep their household date)", () => {
+  useIsolatedDb();
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-23T12:00:00.000Z"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  async function readIds(timezone: string, query: string, rrule: string | null) {
+    const deviceKey = `mpk-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    getDb()
+      .prepare(
+        "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
+      )
+      .run(`${Date.now()}-device`, hashKey(deviceKey), Date.now());
+    getDb()
+      .prepare(
+        "INSERT INTO settings_objects (object_name, data, updated_at) VALUES ('locale', ?, ?)"
+      )
+      .run(JSON.stringify({ timezone }), Date.now());
+    getDb()
+      .prepare(
+        "INSERT INTO calendar_events (id, source, title, all_day, start_date, end_date, rrule, exdates, created_at, updated_at) VALUES ('holiday', 'local', 'School holiday', 1, '2026-10-23', '2026-10-24', ?, '[]', ?, ?)"
+      )
+      .run(rrule, Date.now(), Date.now());
+    const { buildApp } = await import("../../src/server/app.ts");
+    const app = await buildApp();
+    try {
+      const res = await app.inject({
+        method: "GET",
+        url: `/api/calendar/events?source=local&${query}`,
+        cookies: { mp_device_key: deviceKey },
+      });
+      expect(res.statusCode).toBe(200);
+      return (JSON.parse(res.body) as Array<{ occurrenceStart: string }>).map(
+        (item) => item.occurrenceStart
+      );
+    } finally {
+      await app.close();
+    }
+  }
+
+  for (const timezone of ["America/New_York", "Pacific/Honolulu", "Asia/Tokyo", "UTC"]) {
+    for (const rrule of [null, "FREQ=DAILY;COUNT=1"]) {
+      it(`places a ${rrule ? "recurring" : "single"} all-day event on its own date in ${timezone}`, async () => {
+        expect(await readIds(timezone, "from=2026-10-23&to=2026-10-23", rrule)).toEqual([
+          "2026-10-23",
+        ]);
+      });
+
+      it(`keeps a ${rrule ? "recurring" : "single"} all-day event off the previous date in ${timezone}`, async () => {
+        expect(await readIds(timezone, "from=2026-10-22&to=2026-10-22", rrule)).toEqual([]);
+      });
+    }
+  }
+
+  it("returns exactly the requested dates of a daily all-day series west of UTC", async () => {
+    expect(
+      await readIds("America/New_York", "from=2026-10-24&to=2026-10-25", "FREQ=DAILY;COUNT=5")
+    ).toEqual(["2026-10-24", "2026-10-25"]);
+  });
+
+  it.each([
+    ["equal", "from=2026-10-24T15:00:00.000Z&to=2026-10-24T15:00:00.000Z"],
+    ["reversed", "from=2026-10-24T18:00:00.000Z&to=2026-10-24T15:00:00.000Z"],
+  ])("returns no all-day event for %s instant bounds, an empty range", async (_label, query) => {
+    expect(await readIds("America/New_York", query, "FREQ=DAILY;COUNT=5")).toEqual([]);
+  });
+
+  it("maps an instant range to the household dates it covers", async () => {
+    // New York midnight of 2026-10-24 (EDT, UTC-4) to the next midnight: only the 24th.
+    expect(
+      await readIds(
+        "America/New_York",
+        "from=2026-10-24T04:00:00.000Z&to=2026-10-25T04:00:00.000Z",
+        "FREQ=DAILY;COUNT=5"
+      )
+    ).toEqual(["2026-10-24"]);
+  });
+});
+
+/** Calendar reads are overlap queries: an occurrence that began before the range but is still
+ * running belongs to every day it covers, once, under its own occurrence identity. */
+describe("calendar-read (ongoing multi-day and overnight events)", () => {
+  useIsolatedDb();
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-23T12:00:00.000Z"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  type Row =
+    | { id: string; allDay: true; startDate: string; endDate: string; rrule?: string }
+    | { id: string; allDay: false; startUtc: string; endUtc: string; rrule?: string };
+
+  /** Seed the device, household timezone and rows once; the returned reader queries a range. */
+  function seed(rows: Row[]) {
+    const deviceKey = `mpk-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const db = getDb();
+    db.prepare(
+      "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
+    ).run(`${Date.now()}-device`, hashKey(deviceKey), Date.now());
+    db.prepare(
+      "INSERT INTO settings_objects (object_name, data, updated_at) VALUES ('locale', ?, ?)"
+    ).run(JSON.stringify({ timezone: "UTC" }), Date.now());
+    for (const row of rows) {
+      db.prepare(
+        "INSERT INTO calendar_events (id, source, title, all_day, start_date, end_date, start_utc, end_utc, tzid, rrule, exdates, created_at, updated_at) VALUES (?, 'local', ?, ?, ?, ?, ?, ?, ?, ?, '[]', ?, ?)"
+      ).run(
+        row.id,
+        row.id,
+        row.allDay ? 1 : 0,
+        row.allDay ? row.startDate : null,
+        row.allDay ? row.endDate : null,
+        row.allDay ? null : row.startUtc,
+        row.allDay ? null : row.endUtc,
+        row.allDay ? null : "UTC",
+        row.rrule ?? null,
+        Date.now(),
+        Date.now()
+      );
+    }
+    return async (from: string, to = from) => {
+      const { buildApp } = await import("../../src/server/app.ts");
+      const app = await buildApp();
+      try {
+        const res = await app.inject({
+          method: "GET",
+          url: `/api/calendar/events?source=local&from=${from}&to=${to}`,
+          cookies: { mp_device_key: deviceKey },
+        });
+        expect(res.statusCode).toBe(200);
+        return (JSON.parse(res.body) as Array<{ id: string; occurrenceStart: string }>).map(
+          (item) => `${item.id}@${item.occurrenceStart}`
+        );
+      } finally {
+        await app.close();
+      }
+    };
+  }
+
+  const holiday: Row = {
+    id: "holiday",
+    allDay: true,
+    startDate: "2026-10-22",
+    endDate: "2026-10-26", // exclusive: covers the 22nd to the 25th
+  };
+
+  it.each([
+    ["2026-10-22", ["holiday@2026-10-22"]],
+    ["2026-10-23", ["holiday@2026-10-22"]],
+    ["2026-10-25", ["holiday@2026-10-22"]],
+    ["2026-10-21", []],
+    ["2026-10-26", []],
+  ])("lists a 22–25 October holiday on %s only while it runs", async (date, expected) => {
+    expect(await seed([holiday])(date)).toEqual(expected);
+  });
+
+  it("returns a multi-day event once for a range spanning several of its days", async () => {
+    expect(await seed([holiday])("2026-10-23", "2026-10-28")).toEqual(["holiday@2026-10-22"]);
+  });
+
+  it("includes a recurring weekend occurrence that began the day before", async () => {
+    const weekend: Row = {
+      id: "weekend",
+      allDay: true,
+      startDate: "2026-10-24",
+      endDate: "2026-10-26",
+      rrule: "FREQ=WEEKLY;COUNT=3",
+    };
+    const read = seed([weekend]);
+    expect(await read("2026-10-25")).toEqual(["weekend@2026-10-24"]);
+    expect(await read("2026-11-01")).toEqual(["weekend@2026-10-31"]);
+  });
+
+  it("lists an overnight timed event on the morning it ends, but not one ending at midnight", async () => {
+    const rows: Row[] = [
+      {
+        id: "overnight",
+        allDay: false,
+        startUtc: "2026-10-23T22:00:00.000Z",
+        endUtc: "2026-10-24T02:00:00.000Z",
+      },
+      {
+        id: "until-midnight",
+        allDay: false,
+        startUtc: "2026-10-23T21:00:00.000Z",
+        endUtc: "2026-10-24T00:00:00.000Z",
+      },
+    ];
+    const read = seed(rows);
+    expect(await read("2026-10-24")).toEqual(["overnight@2026-10-23T22:00:00.000Z"]);
+    expect(await read("2026-10-25")).toEqual([]);
+  });
+});

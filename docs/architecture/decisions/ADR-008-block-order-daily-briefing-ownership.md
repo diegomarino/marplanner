@@ -39,4 +39,4 @@ the product does not migrate any legacy `app_settings` rows, including any `dail
 
 - Conflicts: `CR-008`
 - Related prior: `ADR-008`
-- Domain grill: `../domain-grills/app-settings-registry.md`
+- Domain grill: `domain-grills/app-settings-registry.md` (historical record, not preserved in this repository)

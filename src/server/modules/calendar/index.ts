@@ -1,14 +1,16 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-// rrule is CJS with no top-level named ESM export — default-import + destructure is
-// interop-safe under Node native ESM (the externalized app/test load path), esbuild
-// bundling, and the vitest transform. `import { RRule }` throws under Node ESM.
-import rrulePkg from "rrule";
 import { getDb } from "../../db/client";
-import type { FeedItem, EventInput } from "../../../shared";
-import { expand, wallClockToInstant } from "./recurrence";
+import {
+  occurrenceOverlaps,
+  type EventInput,
+  type FeedItem,
+  type OccurrenceRange,
+} from "../../../shared";
+import { expand, supportedRruleProblem, wallClockToInstant } from "./recurrence";
 import { listActiveMembers } from "../members/referential";
 import { readHouseholdTimezone, isStrictCalendarDate, isDateOnly } from "../../lib/household-date";
+import { localDateParts } from "../../../shared/householdTime";
 import { decorateHighlightTitle, listHighlightRules } from "./highlights";
 
 export {
@@ -19,8 +21,6 @@ export {
   type ExternalSourceDependencies,
   type ExternalSourceInput,
 } from "./external-sources";
-
-const { RRule } = rrulePkg;
 
 export class ValidationError extends Error {
   constructor(message: string) {
@@ -40,6 +40,17 @@ export class NotFoundError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "NotFoundError";
+  }
+}
+
+/** A feed-owned (source=external) event: its fields belong to the feed snapshot, so the
+ * local edit/delete operations refuse it. Participant assignments stay editable. */
+export class ExternalEventReadOnlyError extends Error {
+  constructor(id: string) {
+    super(
+      `Event ${id} is synchronized from an external calendar and cannot be edited or deleted here`
+    );
+    this.name = "ExternalEventReadOnlyError";
   }
 }
 
@@ -123,14 +134,13 @@ function validateEventShape(input: Partial<EventInput>): void {
   }
 
   if (input.rrule !== undefined && input.rrule !== null) {
+    let problem: string | null;
     try {
-      const parsed = RRule.parseString(input.rrule);
-      if (!parsed || !parsed.freq) {
-        throw new Error("Invalid RRule syntax");
-      }
+      problem = supportedRruleProblem(input.rrule);
     } catch (e: any) {
       throw new ValidationError(`Invalid RRule: ${e.message}`);
     }
+    if (problem) throw new ValidationError(`Invalid RRule: ${problem}`);
   }
 
   if (input.exdates !== undefined && input.exdates !== null) {
@@ -242,7 +252,54 @@ function buildExpandRange(from: string, to: string, tzid: string) {
     throw new WindowError("Requested range exceeds the fixed window (-30d / +365d)");
   }
 
-  return { start: fromDt, end: toDt };
+  // All-day events are household calendar dates: a date-only bound is the date itself
+  // (`to` inclusive), an instant bound covers every household date it touches.
+  const startDay = isDateOnly(from) ? from : householdDateOf(fromDt, tzid);
+  let endDay: string;
+  if (isDateOnly(to)) {
+    endDay = addDays(to, 1);
+  } else {
+    const lastDay = householdDateOf(toDt, tzid);
+    endDay =
+      toDt.getTime() === householdMidnight(lastDay, tzid).getTime() ? lastDay : addDays(lastDay, 1);
+  }
+
+  // An empty or reversed instant range holds no time, so it holds no household date either.
+  if (toDt.getTime() <= fromDt.getTime()) endDay = startDay;
+
+  return { start: fromDt, end: toDt, startDay, endDay };
+}
+
+/** `range` extended backward by one occurrence's span, so the expander also emits occurrences
+ * that start before the range but end inside or after it (all-day: `spanDays`, at least one). */
+function widenForSpan(
+  range: ReturnType<typeof buildExpandRange>,
+  spanDays: number,
+  durationMs: number
+): ReturnType<typeof buildExpandRange> {
+  const extraDays = Math.max(spanDays - 1, 0);
+  const extraMs = Math.max(extraDays * 86_400_000, durationMs, 0);
+  return {
+    ...range,
+    start: new Date(range.start.getTime() - extraMs),
+    startDay: addDays(range.startDay, -extraDays),
+  };
+}
+
+function householdDateOf(instant: Date, tzid: string): string {
+  const { y, m, d } = localDateParts(instant.getTime(), tzid);
+  return `${String(y).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+function householdMidnight(date: string, tzid: string): Date {
+  const [year, month, day] = date.split("-").map(Number);
+  return wallClockToInstant(tzid, { year, month, day, hour: 0, minute: 0, second: 0 });
+}
+
+function addDays(date: string, days: number): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
 }
 
 /** The occurrence's end anchor, derived from the master's span:
@@ -467,6 +524,12 @@ function readEventEntries(
   }>;
 
   const entries: Array<{ item: FeedItem; description: string; location: string }> = [];
+  const overlapRange: OccurrenceRange = {
+    startDay: expandRange.startDay,
+    endDay: expandRange.endDay,
+    startMs: expandRange.start.getTime(),
+    endMs: expandRange.end.getTime(),
+  };
 
   for (const row of rows) {
     if (source !== "all" && row.source !== source) continue;
@@ -487,8 +550,6 @@ function readEventEntries(
         exdates,
       };
 
-      const occurrences = expand(occurrenceParams, expandRange);
-
       // Per-occurrence span (the expander emits only starts): timed carries the master's
       // fixed instant-duration; all-day carries the master's day-count. Each is applied to
       // the occurrence's own start.
@@ -504,6 +565,13 @@ function readEventEntries(
                 86_400_000
             )
           : 0;
+
+      // Reads are overlap queries: expand far enough back to reach an occurrence that began
+      // before the range but is still running in it, then keep only intersecting ones.
+      const occurrences = expand(
+        occurrenceParams,
+        widenForSpan(expandRange, row.all_day === 1 ? allDaySpanDays : 0, durationMs)
+      );
       const sourceUrl = row.source === "external" && row.feed_url ? new URL(row.feed_url) : null;
       const sourceRef = sourceUrl ? `${sourceUrl.protocol}//${sourceUrl.host}/***` : null;
 
@@ -527,6 +595,7 @@ function readEventEntries(
         if (row.description) item.description = row.description;
         if (row.location) item.location = row.location;
 
+        if (!occurrenceOverlaps(item, overlapRange)) continue;
         entries.push({ item, description: row.description ?? "", location: row.location ?? "" });
       }
     } catch (err) {
@@ -789,11 +858,13 @@ export function replaceAssignments(eventId: string, memberIds: string[]): FeedIt
 export function deleteEvent(id: string): void {
   const db = getDb();
 
-  // First verify the event exists
-  const existing = db.prepare("SELECT id FROM calendar_events WHERE id = ?").get(id);
+  // First verify the event exists and is local
+  const existing = db.prepare("SELECT source FROM calendar_events WHERE id = ?").get(id) as
+    { source: string } | undefined;
   if (!existing) {
     throw new NotFoundError(`Event not found: ${id}`);
   }
+  if (existing.source !== "local") throw new ExternalEventReadOnlyError(id);
 
   // Atomic: delete assignments + event in one transaction to prevent orphans
   db.transaction(() => {
@@ -837,6 +908,7 @@ export function editEvent(id: string, fields: Partial<EventInput>): FeedItem {
   if (!existing) {
     throw new NotFoundError(`Event not found: ${id}`);
   }
+  if (existing.source !== "local") throw new ExternalEventReadOnlyError(id);
 
   // Validate explicit-null rejection for non-nullable fields BEFORE merging/UPDATE
   const nonNullableFields: (keyof EventInput)[] = [

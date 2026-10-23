@@ -49,7 +49,7 @@ is needed. Bonus: aligns with ICS/RRULE `MO,TU,…` for any future recurrence in
 
 ## Affected Specs
 
-- `../../05-routines-chores.md`, `../../07-reminders.md`
+- [routines-chores](../../features/routines-chores.md), [reminders](../../features/reminders.md)
 
 ## Data / Setup Implications
 

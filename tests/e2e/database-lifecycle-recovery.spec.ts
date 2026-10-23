@@ -23,7 +23,9 @@ const execFileAsync = promisify(execFile);
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
 const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
-const AS_OF_DATE = "2026-09-23";
+// The server checks Calendar ranges against its real clock (-30d / +365d), so seed relative to today.
+const AS_OF_DATE = new Date().toISOString().slice(0, 10);
+const CALENDAR_TO = new Date(Date.parse(AS_OF_DATE) + 3 * 86_400_000).toISOString().slice(0, 10);
 const SERVER_ENTRY = resolve(process.cwd(), "dist", "server", "index.js");
 const HEALTH_TIMEOUT_MS = 30_000;
 
@@ -66,7 +68,7 @@ test("database recovery journey uses the existing Backups UI without a product r
       ])
     );
     const preSnapshotCalendar = await page.request.get(
-      `${base}/api/calendar/events?source=all&from=2026-09-23&to=2026-09-26`
+      `${base}/api/calendar/events?source=all&from=${AS_OF_DATE}&to=${CALENDAR_TO}`
     );
     expect(preSnapshotCalendar.status()).toBe(200);
     expect(await preSnapshotCalendar.json()).toEqual(
