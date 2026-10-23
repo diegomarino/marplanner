@@ -5,7 +5,7 @@ the same HTTP API you can call from a script. Anything you can do on the tablet,
 such as ticking off a chore, adding an event or reading tonight's dinner, you can
 automate from cron, Home Assistant or your own dashboard.
 
-- **Browse it online:** [API reference](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/diegomarino/marplanner-project/main/docs/api/openapi.json), opened in Swagger UI from the
+- **Browse it online:** [API reference](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/diegomarino/marplanner/main/docs/api/openapi.json), opened in Swagger UI from the
   `openapi.json` committed on `main`. You can read it without running an instance.
   "Try it out" calls will not reach your server, because they need its device cookie.
   The viewer loads the file from `raw.githubusercontent.com`, so the link works only

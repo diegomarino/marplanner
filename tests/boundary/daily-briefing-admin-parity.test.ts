@@ -19,7 +19,7 @@ import {
 import { isMissed, regenerateFailedBriefings } from "../../src/server/modules/daily-briefing/job";
 import { findBriefingRow, seedBriefingRow, seedMember } from "../helpers/daily-briefing-seed";
 
-/** Admin parity (docs/superpowers/specs/2026-10-15-admin-briefing-design.md): weekday pause
+/** Admin parity (docs/features/daily-briefing.md): weekday pause
  * schedule, skip semantics, history, manual print through the queue, 202 while rendering. */
 describe("daily-briefing admin parity", () => {
   useIsolatedDb();

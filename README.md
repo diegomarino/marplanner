@@ -34,7 +34,7 @@ operator configuration; synthetic test success does not establish their availabi
 
 **For developers:**
 
-- An API-first design: the UI uses the same documented HTTP API you can script against. See the [API guide](docs/api/README.md) and the [API reference](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/diegomarino/marplanner-project/main/docs/api/openapi.json).
+- An API-first design: the UI uses the same documented HTTP API you can script against. See the [API guide](docs/api/README.md) and the [API reference](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/diegomarino/marplanner/main/docs/api/openapi.json).
 
 Take the [feature tour](docs/guide/README.md) for screenshots, or browse the [feature specs](docs/features/README.md).
 
@@ -44,9 +44,9 @@ Each button creates your own Marplanner instance on that host, filled with the
 fictional Simpsons household (members, calendar, chores, reminders and meals for
 the current week). Nobody runs a shared demo: the instance is yours, in your account.
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/diegomarino/marplanner-project)
-[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com%2Fdiegomarino%2Fmarplanner-project&branch=main&name=marplanner&builder=dockerfile&dockerfile=infra%2Fdocker%2FDockerfile&instance_type=free&instances_max=1&ports=3000%3Bhttp%3B%2F&hc_protocol%5B3000%5D=http&hc_path%5B3000%5D=%2Fhealth&hc_method%5B3000%5D=get&hc_grace_period%5B3000%5D=30&env%5BMP_ACCESS_TOKEN%5D=mpg-local-change-me&env%5BMP_BOOTSTRAP_KEY%5D=mpk-local-bootstrap-change-me&env%5BADMIN_PIN%5D=0000&env%5BMP_SEED_ON_EMPTY%5D=true&env%5BPORT%5D=3000)
-[![Deploy to DigitalOcean](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/diegomarino/marplanner-project/tree/main)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/diegomarino/marplanner)
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com%2Fdiegomarino%2Fmarplanner&branch=main&name=marplanner&builder=dockerfile&dockerfile=infra%2Fdocker%2FDockerfile&instance_type=free&instances_max=1&ports=3000%3Bhttp%3B%2F&hc_protocol%5B3000%5D=http&hc_path%5B3000%5D=%2Fhealth&hc_method%5B3000%5D=get&hc_grace_period%5B3000%5D=30&env%5BMP_ACCESS_TOKEN%5D=mpg-local-change-me&env%5BMP_BOOTSTRAP_KEY%5D=mpk-local-bootstrap-change-me&env%5BADMIN_PIN%5D=0000&env%5BMP_SEED_ON_EMPTY%5D=true&env%5BPORT%5D=3000)
+[![Deploy to DigitalOcean](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/diegomarino/marplanner/tree/main)
 
 <!-- TODO: Railway is configured (railway.json) but its button needs a published template. Once
 it exists, add [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/<code>?utm_medium=integration&utm_source=button&utm_campaign=marplanner)
@@ -133,4 +133,4 @@ npm run dev
 
 Replace the synthetic credentials in `.env.local`. `npm run dev` starts the API and frontend on distinct automatically assigned loopback ports and reports both URLs. Each worktree stores its development data in its own `.data/`. Set `PORT` and `WEB_PORT` to distinct nonzero values when explicit ports are needed; occupied explicit ports fail. The `package.json` scripts define the current check tiers: `npm run check:fast`, `npm run check:standard`, and `npm run check:full`. The full tier includes browser tests and requires their local browser dependencies. A passing focused tier is evidence for that tier only. [Verification guidance](docs/quality/verification.md) explains discovery, coverage, and cross-consumer checks.
 
-[Feature tour](docs/guide/README.md) · [Contributor guide](CONTRIBUTING.md) · [Architecture](docs/architecture/principles.md) · [API guide](docs/api/README.md) · [API reference](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/diegomarino/marplanner-project/main/docs/api/openapi.json) · [License](LICENSE)
+[Feature tour](docs/guide/README.md) · [Contributor guide](CONTRIBUTING.md) · [Architecture](docs/architecture/principles.md) · [API guide](docs/api/README.md) · [API reference](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/diegomarino/marplanner/main/docs/api/openapi.json) · [License](LICENSE)
