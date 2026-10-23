@@ -36,7 +36,7 @@
 // needs the SAME client-list poll a blocked MAC stays visible in);
 // FR-016/FR-019; <homelab-unifi-notes>/docs/access.md +
 // scripts/check-clients.sh (LOCAL base shape, pagination, camelCase fields);
-// (v1's proven URL shapes, <marplanner-v1>/apps/api/src/lib/unifi/
+// (v1's proven URL shapes, v1's apps/api/src/lib/unifi/
 // client.ts + sta.ts).
 // ─────────────────────────────────────────────────────────────────────
 
