@@ -26,7 +26,8 @@ thermal printer next to the tablet, to take to the breakfast table. No screen ne
   countdowns and chore streaks.
 - **The fun part:** dad joke, word of the day, animal and number facts, on this day,
   trivia, a riddle printed upside down, would you rather, a word search and a drawing
-  prompt. More than 20 block types, in English or Spanish.
+  prompt. More than 20 block types, in English or Spanish (the dad joke, word of the day,
+  trivia, riddle and word search are English-only for now).
 - **You decide** who gets one, on which weekdays and with which blocks. Each slip is a
   frozen snapshot, and it can print by itself as soon as the morning chores are done.
 - **No print server or drivers:** the kiosk browser sends ESC/POS straight to the
