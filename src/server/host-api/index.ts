@@ -130,7 +130,7 @@ export type { JobRegistration, StopHandle, Trigger, RunJobResult } from "../sche
  * `siteId` unset (or NEITHER `host` nor `consoleId` set) means "controller unconfigured", a
  * NORMAL state (never conflated with a set-but-rejected credential, a distinct error state the
  * client itself reports).
- * Architect update 2026-09-05 (maintainer-supplied real UniFi docs, ~/Dev/p55-homelab/unifi,
+ * Architect update 2026-09-05 (maintainer-supplied real UniFi docs, the maintainer's UniFi homelab notes,
  * read-only reference): `unifi.host` + `unifi.tlsInsecure` added — the household's PROVEN path
  * is the LOCAL Integration API v1 (`docs/access.md` "API Local (Integration API v1)": "Para
  * scripts en LAN (este repo), usar siempre la API local directamente" — marplanner itself runs
