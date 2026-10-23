@@ -15,28 +15,65 @@ operator configuration; synthetic test success does not establish their availabi
 
 ## Features
 
-**For the family:**
+### A printed morning briefing for every child
 
-- **Home dashboard:** today's agenda, chores, meals and weather at a glance.
-- **Routines & chores:** routines grouped by part of the day, emoji chores assigned to each child on chosen weekdays, and streaks.
-- **Meals & recipes:** a recipe catalogue, repeating weekly plans and one-off meals.
-- **Daily briefing, printed:** a personal paper slip for each child every morning, sent from the browser to a thermal printer over Bluetooth.
-- **Calendar:** local events plus ICS feeds, with automatic member assignment and emoji highlights.
-- **Reminders & daily messages**, **spoken time announcements**, **network device blocking (UniFi)** and **weather**.
+<img src="docs/images/features/briefing-preview-top.png" alt="Top of a printed daily briefing slip" width="260" align="right">
 
-**For whoever runs it:**
+Every morning each child can get a **personal paper slip** from a cheap Bluetooth
+thermal printer next to the tablet, to take to the breakfast table. No screen needed.
 
-- Plugins you turn on or off.
-- Closed-by-default kiosk security.
-- Backups and restore.
-- Docker or one-click cloud demos.
-- English and Spanish.
+- **Their day:** events, meals, weather, reminders, a message from a parent, birthday
+  countdowns and chore streaks.
+- **The fun part:** dad joke, word of the day, animal and number facts, on this day,
+  trivia, a riddle printed upside down, would you rather, a word search and a drawing
+  prompt. More than 20 block types, in English or Spanish.
+- **You decide** who gets one, on which weekdays and with which blocks. Each slip is a
+  frozen snapshot, and it can print by itself as soon as the morning chores are done.
+- **No print server or drivers:** the kiosk browser sends ESC/POS straight to the
+  printer over Web Bluetooth.
 
-**For developers:**
+[See a full slip](docs/images/features/briefing-preview.png) ·
+[how it works](docs/guide/README.md#4-daily-briefing-printed-on-a-thermal-printer)
 
-- An API-first design: the UI uses the same documented HTTP API you can script against. See the [API guide](docs/api/README.md) and the [API reference](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/diegomarino/marplanner/main/docs/api/openapi.json).
+<br clear="right">
 
-Take the [feature tour](docs/guide/README.md) for screenshots, or browse the [feature specs](docs/features/README.md).
+### On the wall all day
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="docs/guide/README.md#2-routines-and-chores-with-streaks"><img src="docs/images/features/chores-board.png" alt="Chores board"></a>
+      <br><b>Routines &amp; chores.</b> Emoji chores grouped by part of the day, assigned to each child on chosen weekdays, with streaks.
+    </td>
+    <td width="50%" valign="top">
+      <a href="docs/guide/README.md#3-meals-and-recipes"><img src="docs/images/features/meals-board.png" alt="Meals board"></a>
+      <br><b>Meals &amp; recipes.</b> A recipe catalogue, repeating weekly plans and one-off meals, merged into one menu.
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="docs/guide/README.md#5-shared-calendar-and-ics-feeds"><img src="docs/images/features/calendar-month.png" alt="Calendar month view"></a>
+      <br><b>Calendar.</b> Local events plus ICS feeds, assigned to members automatically and decorated with emoji.
+    </td>
+    <td width="50%" valign="top">
+      <a href="docs/guide/README.md#10-plugins-turn-features-on-and-off"><img src="docs/images/features/admin-overview.png" alt="Admin overview"></a>
+      <br><b>Admin, behind a PIN.</b> Members, content, integrations and recovery, with every optional feature as a plugin.
+    </td>
+  </tr>
+</table>
+
+Also: **reminders and daily messages**, **spoken time announcements**, **weather**
+(Open-Meteo, no API key) and **network device blocking** for UniFi.
+
+**For whoever runs it:** plugins you turn on or off, closed-by-default kiosk
+security, backups and restore, Docker or one-click cloud demos, English and Spanish.
+
+**For developers:** an API-first design: the UI uses the same documented HTTP API you
+can script against. See the [API guide](docs/api/README.md) and the
+[API reference](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/diegomarino/marplanner/main/docs/api/openapi.json).
+
+Take the [feature tour](docs/guide/README.md) for every screen, or browse the
+[feature specs](docs/features/README.md).
 
 ## Try it in your own cloud
 
