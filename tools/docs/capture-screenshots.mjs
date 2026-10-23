@@ -38,6 +38,33 @@ const explore = args.includes("--explore");
 const onlyArg = args[args.indexOf("--only") + 1];
 const only = args.includes("--only") && onlyArg ? onlyArg.split(",") : null;
 
+/** CSS y of the last black block-title band of a briefing slip image that starts above
+ * `limit`, so a partial capture ends between two blocks instead of inside one. */
+async function lastBlockBandAbove(image, limit) {
+  return image.evaluate((img, max) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    const scale = img.naturalHeight / img.clientHeight;
+    const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const darkShare = (y) => {
+      let dark = 0;
+      for (let x = 0; x < canvas.width; x += 4)
+        if (data[(y * canvas.width + x) * 4] < 60) dark += 1;
+      return dark / Math.ceil(canvas.width / 4);
+    };
+    // A band starts where a nearly all-black row follows a nearly blank one; rows of the
+    // band's own white title text never count as blank.
+    let cut = max;
+    for (let y = 1; y < Math.min(canvas.height, max * scale); y += 1) {
+      if (darkShare(y) > 0.9 && darkShare(y - 1) < 0.1) cut = y / scale;
+    }
+    return cut;
+  }, limit);
+}
+
 /** Open-Meteo / zenquotes / onthisday stand-in with plausible autumn values, so
  * screenshots never depend on real egress or live weather. */
 function startFixture() {
@@ -164,8 +191,9 @@ async function generateBriefingPreview(p) {
 
 /**
  * Shot list. `route` is visited in-app (`url` is a full page load outside the SPA); `admin` unlocks first; `crop` is a locator
- * factory for element screenshots (omit for a viewport capture); `prepare` runs
- * interactions before the capture.
+ * factory for element screenshots (omit for a viewport capture); `maxHeight` keeps only the
+ * crop's top, and `cutAtBlockBand` moves that cut up to the last slip block boundary; `prepare`
+ * runs interactions before the capture.
  */
 const SHOTS = [
   // 1. Home
@@ -209,7 +237,8 @@ const SHOTS = [
     admin: true,
     prepare: generateBriefingPreview,
     crop: (p) => p.getByTestId("daily-briefing-admin-preview-image"),
-    maxHeight: 640,
+    maxHeight: 720,
+    cutAtBlockBand: true,
   },
   { name: "admin-printing", route: "/admin/printing", admin: true },
   // 5. Calendar
@@ -295,10 +324,15 @@ async function capture(context, shots, suffix = "") {
         console.log(`\n# ${shot.name} ${shot.route}\n${ids.join(" ")}`);
       }
       if (shot.crop && shot.maxHeight) {
+        // boundingBox() is viewport-relative, so bring the target's top to the viewport top
+        // and clip the viewport capture; a fullPage clip would be offset by the scroll.
+        await shot.crop(page).evaluate((el) => el.scrollIntoView({ block: "start" }));
         const box = await shot.crop(page).boundingBox();
         if (!box) throw new Error("crop target not visible");
-        const clip = { ...box, height: Math.min(box.height, shot.maxHeight) };
-        await page.screenshot({ path: file, clip, fullPage: true, animations: "disabled" });
+        let height = Math.min(box.height, shot.maxHeight);
+        if (shot.cutAtBlockBand) height = await lastBlockBandAbove(shot.crop(page), height);
+        const clip = { ...box, height };
+        await page.screenshot({ path: file, clip, animations: "disabled" });
       } else if (shot.crop) {
         await shot.crop(page).screenshot({ path: file, animations: "disabled" });
       } else await page.screenshot({ path: file, animations: "disabled" });
