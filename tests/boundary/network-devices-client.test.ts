@@ -335,7 +335,7 @@ describe("network-devices UniFi client transport", () => {
 
   // ── LOCAL Integration v1 (PRIMARY, PROVEN — architect update 2026-09-05) ────
   //
-  // ~/Dev/p55-homelab/unifi/docs/access.md "API Local (Integration API v1)" +
+  // The maintainer's UniFi homelab notes (docs/access.md) "API Local (Integration API v1)" +
   // scripts/check-clients.sh: the household's proven on-LAN path, base
   // https://<host>/proxy/network/integration/v1/sites/<siteId>, paginated
   // GET /clients?limit=200&offset=N, camelCase fields, {data:[...]} envelope
@@ -463,7 +463,7 @@ describe("network-devices UniFi client transport", () => {
       expect(url.origin).toBe("https://192.168.1.1");
     });
 
-    describe("pagination (limit=200/offset, ~/Dev/p55-homelab/unifi/scripts/check-clients.sh)", () => {
+    describe("pagination (limit=200/offset, homelab scripts/check-clients.sh)", () => {
       function page(count: number, startAt: number): Array<{ macAddress: string }> {
         return Array.from({ length: count }, (_, i) => ({ macAddress: `mac-${startAt + i}` }));
       }
