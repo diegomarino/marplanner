@@ -55,7 +55,7 @@ export const UNIFI_FIXTURE_ONLINE_MAC = "aa:bb:cc:dd:ee:01";
 export const UNIFI_FIXTURE_BLOCKED_MAC = "aa:bb:cc:dd:ee:02";
 
 /** Architect update 2026-09-05 — a RAW Integration v1 client-list response (LOCAL, PROVEN path),
- * shaped exactly like <homelab-unifi-notes>/scripts/check-clients.sh's own field reads
+ * shaped exactly like the homelab `scripts/check-clients.sh`'s own field reads
  * (`.name //.hostname`, `.ipAddress`, `.macAddress`, `.type`, `.ssid`, `.isBlocked`) —
  * deliberately RICH in the `ipAddress` field (the structural drop applies here too) plus the
  * same MAC-less/malformed-MAC/no-display-name edge cases the legacy fixture above covers.

@@ -35,7 +35,7 @@ function tryCanonicalizeMac(raw: unknown): string | null {
 
 function extractDisplayName(raw: RawUniFiClient): string | null {
   // `name`/`hostname` are the SAME field names in both shapes (architect update 2026-09-05,
-  // <homelab-unifi-notes>/scripts/check-clients.sh: `.name //.hostname // "unknown"`) — no
+  // the homelab `scripts/check-clients.sh`: `.name //.hostname // "unknown"`) — no
   // camelCase variant exists for these two.
   const name = typeof raw.name === "string" ? raw.name.trim() : "";
   if (name.length > 0) return name;

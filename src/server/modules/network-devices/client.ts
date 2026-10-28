@@ -6,7 +6,7 @@
 // `getUniFiClient`.
 //
 // Architect update 2026-09-05 (maintainer-supplied real UniFi docs/scripts,
-// <homelab-unifi-notes>, read-only reference — cited by relative path
+// the maintainer's UniFi homelab notes, read-only reference — cited by relative path
 // below): the household's PROVEN path is the LOCAL Integration API v1
 // (`docs/access.md` "API Local (Integration API v1)"), not the cloud
 // `api.ui.com` API this module originally guessed at — "Para scripts en LAN
@@ -34,7 +34,7 @@
 // Source: docs/features/network-devices.md (seam shape, unset vs
 // rejected, test-flag throw), D3 (block-sta/unblock-sta — reconciliation
 // needs the SAME client-list poll a blocked MAC stays visible in);
-// FR-016/FR-019; <homelab-unifi-notes>/docs/access.md +
+// FR-016/FR-019; the homelab notes' docs/access.md +
 // scripts/check-clients.sh (LOCAL base shape, pagination, camelCase fields);
 // (v1's proven URL shapes, v1's apps/api/src/lib/unifi/
 // client.ts + sta.ts).
@@ -45,7 +45,7 @@ import { getOperatorConfig, isTestRuntime } from "../../host-api";
 
 /** A single raw controller-reported client — deliberately loose/unknown-shaped (an external
  * boundary). THREE coexisting shapes land here:
- * - Integration v1, LOCAL (PROVEN — <homelab-unifi-notes>/scripts/check-clients.sh): camelCase
+ * - Integration v1, LOCAL (PROVEN — the homelab `scripts/check-clients.sh`): camelCase
  * `macAddress`/`ipAddress`/`isBlocked`, plus `name`/`hostname`/`type`/`ssid`.
  * - Integration v1, CLOUD (live-probed 2026-09-05, HTTP 200 against a real console, 23 clients —
  * a LIVE FINDING, not the local shape assumed at fix authoring time): a REDUCED
@@ -223,7 +223,7 @@ function classifyLegacyEnvelopeError(body: unknown): "rejected" | "unreachable" 
 }
 
 /** Strips an accidental `http(s)://` prefix off an operator-supplied bare host/IP (e.g.
- * `192.168.1.1`, matching every <homelab-unifi-notes> doc example) before it is interpolated
+ * `192.168.1.1`, matching every homelab-notes doc example) before it is interpolated
  * into an origin string — a copy-pasted full URL would otherwise double up the scheme. */
 function normalizeHost(host: string): string {
   return host.replace(/^https?:\/\//i, "");
@@ -240,7 +240,7 @@ function localIntegrationV1Url(config: UniFiClientConfig, path: string): URL {
 }
 
 /** LOCAL legacy command base (docs/access.md "Legacy local command path" —
- * `<homelab-unifi-notes>/docs/access.md`'s own `cmd/devmgr` example is the sibling of the
+ * the homelab notes' own `docs/access.md` `cmd/devmgr` example is the sibling of the
  * `cmd/stamgr` shape used here): `https://<host>/proxy/network/api/s/default`. Block/unblock has
  * no Integration v1 equivalent in the reference docs — the legacy command path is used
  * regardless of whether the client-list read goes through Integration v1. Fix: the site
@@ -394,8 +394,8 @@ async function legacyRequest(
   return json;
 }
 
-/** The Integration v1 `{ data: [...] }` envelope (<homelab-unifi-notes>/scripts/
- * check-clients.sh: `jq '.data | length'` / `jq -s '.[0] +.[1].data'`) — same key name as the
+/** The Integration v1 `{ data: [...] }` envelope (the homelab
+ * `scripts/check-clients.sh`: `jq '.data | length'` / `jq -s '.[0] +.[1].data'`) — same key name as the
  * legacy shape by coincidence, but a DIFFERENT, proper REST envelope with no `meta.rc`. */
 function extractIntegrationV1Page(body: unknown): RawUniFiClient[] {
   if (body && typeof body === "object" && Array.isArray((body as { data?: unknown }).data)) {
@@ -404,8 +404,8 @@ function extractIntegrationV1Page(body: unknown): RawUniFiClient[] {
   return [];
 }
 
-/** Shared PAGINATED Integration v1 client-list loop — exactly like <homelab-unifi-notes>/
- * scripts/check-clients.sh: `GET /clients?limit=200&offset=N`, looping while the returned page is
+/** Shared PAGINATED Integration v1 client-list loop — exactly like the homelab
+ * `scripts/check-clients.sh`: `GET /clients?limit=200&offset=N`, looping while the returned page is
  * a full page (`limit` items), stopping the first time a page comes back short (or empty). No
  * envelope validation (`rawRequest`, not `legacyRequest` — Integration v1 has no legacy
  * `meta.rc` concept). Factored out (fix part 3) so the LOCAL and CLOUD Integration v1
