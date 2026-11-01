@@ -1239,8 +1239,10 @@ describe("restore with detached calendar synchronization", () => {
       settled = true;
       return result;
     });
-    const body =
-      "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:before-restore\nDTSTAMP:20260929T000000Z\nDTSTART;VALUE=DATE:20260930\nSUMMARY:Before restore\nEND:VEVENT\nEND:VCALENDAR";
+    // Today's date, never a fixed one: the feed is only materialized inside the server's
+    // -30d/+365d window, so a hardcoded date ages out of it and the event silently vanishes.
+    const today = new Date().toISOString().slice(0, 10).replaceAll("-", "");
+    const body = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:before-restore\nDTSTAMP:20260929T000000Z\nDTSTART;VALUE=DATE:${today}\nSUMMARY:Before restore\nEND:VEVENT\nEND:VCALENDAR`;
     try {
       await new Promise((resolve) => setTimeout(resolve, 10));
       expect(settled).toBe(false);
