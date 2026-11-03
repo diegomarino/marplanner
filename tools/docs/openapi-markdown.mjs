@@ -25,11 +25,14 @@ export function renderOpenApiMarkdown(
   // Links are written relative to the tag files; the index and schemas.md strip the "../".
   const schemaLink = (name) => `[${name}](../schemas.md#${headingAnchor(name)})`;
 
+  // Every type string lands in a table cell, where a raw "|" (even inside a code span) splits it.
+  const code = (text) => `\`${String(text).replace(/\|/g, "\\|")}\``;
+
   function typeOf(schema) {
     if (!schema) return "any";
     if (schema.$ref) return schemaLink(refName(schema.$ref));
-    if (schema.const !== undefined) return `\`${JSON.stringify(schema.const)}\``;
-    if (schema.enum) return schema.enum.map((v) => `\`${JSON.stringify(v)}\``).join(" \\| ");
+    if (schema.const !== undefined) return code(JSON.stringify(schema.const));
+    if (schema.enum) return schema.enum.map((v) => code(JSON.stringify(v))).join(" \\| ");
     for (const key of ["oneOf", "anyOf"])
       if (schema[key]) return schema[key].map(typeOf).join(" \\| ");
     if (schema.allOf) return schema.allOf.map(typeOf).join(" & ");
@@ -37,7 +40,7 @@ export function renderOpenApiMarkdown(
     if (type === "array" || schema.items) return `array<${typeOf(schema.items)}>`;
     if (!type && schema.properties) type = "object";
     if (schema.format) type += ` (${schema.format})`;
-    if (schema.pattern) type += ` pattern \`${schema.pattern}\``;
+    if (schema.pattern) type += ` pattern ${code(schema.pattern)}`;
     return type ?? "any";
   }
 
@@ -52,7 +55,8 @@ export function renderOpenApiMarkdown(
       ["maxItems", "maxItems"],
     ])
       if (schema?.[key] !== undefined) notes.push(`${label} ${schema[key]}`);
-    if (schema?.default !== undefined) notes.push(`default \`${JSON.stringify(schema.default)}\``);
+    if (schema?.default !== undefined)
+      notes.push(`default ${code(JSON.stringify(schema.default))}`);
     return notes.join(", ");
   }
 
@@ -114,11 +118,13 @@ export function renderOpenApiMarkdown(
       ([status, response]) => status.startsWith("2") && response.content
     );
     const successSchema = success && Object.values(success[1].content)[0].schema;
-    const successTarget = successSchema?.$ref
-      ? schemas[refName(successSchema.$ref)]
-      : successSchema;
-    if (successTarget?.properties)
-      md += `\n**${success[0]} body**\n\n${fieldsTable(successSchema, true)}`;
+    // A list response documents the fields of its items.
+    const shown = successSchema?.type === "array" ? successSchema.items : successSchema;
+    const shownTarget = shown?.$ref ? schemas[refName(shown.$ref)] : shown;
+    if (shownTarget?.properties) {
+      const label = shown === successSchema ? "body" : "body items";
+      md += `\n**${success[0]} ${label}**\n\n${fieldsTable(shown, true)}`;
+    }
     return `${md}\n---\n\n`;
   }
 

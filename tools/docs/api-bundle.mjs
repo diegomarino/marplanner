@@ -88,13 +88,16 @@ async function scalarBundle() {
   }
 }
 
-/** Mirrors the `/api/docs` configuration in src/server/openapi/index.ts, with the document inline. */
+/** Mirrors the `/api/docs` configuration in src/server/openapi/index.ts, with the document inline
+ * and request sending hidden. */
 export function viewerHtml(spec) {
   const configuration = {
     content: spec,
-    servers: [{ url: "http://localhost:3000", description: "Local instance (change to yours)" }],
     withDefaultFonts: false,
     hideClientButton: true,
+    // From file:// the browser cannot send the HttpOnly SameSite=Lax device cookie cross-origin,
+    // and the server has no CORS, so request sending could never work: the offline copy is read-only.
+    hideTestRequestButton: true,
     agent: { disabled: true },
     mcp: { disabled: true },
     showDeveloperTools: "never",
@@ -137,7 +140,7 @@ const CONTENTS = `## Contents
 - \`endpoints/<domain>.md\`: each operation with parameters, request body fields, responses and the success body's fields.
 - \`schemas.md\`: the shared component schemas.
 - \`GUIDE.md\`: authentication, a curl quickstart and conventions.
-- \`html/index.html\`: the interactive reference (Scalar, the viewer \`/api/docs\` serves). Opens straight from disk. "Try it" calls need a running instance and its device cookie.
+- \`html/index.html\`: the interactive reference (Scalar, the viewer \`/api/docs\` serves). Opens straight from disk and is read-only; to send requests, use \`/api/docs\` on your instance.
 - \`openapi.json\`: the raw OpenAPI 3.1 document, the source of everything above.`;
 
 export async function buildApiBundle({ root = ROOT, outDir = join(root, "dist") } = {}) {

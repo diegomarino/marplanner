@@ -80,6 +80,10 @@ test("api docs viewer embeds the document without letting it close the inline sc
   assert.equal(html.match(/<\/script>/g).length, 2);
   assert.match(html, /\\u003c\/script>\\u003cb>x/);
   assert.match(html, /"telemetry":false/);
+  // Read-only offline: the device cookie can never reach the API from file://.
+  assert.match(html, /"hideTestRequestButton":true/);
+  const configuration = JSON.parse(html.match(/createApiReference\("#app", (.*)\);<\/script>/)[1]);
+  assert.equal(configuration.servers, undefined);
 });
 
 test("api docs guide keeps images local and sends other relative links to GitHub", () => {
@@ -91,4 +95,22 @@ test("api docs guide keeps images local and sends other relative links to GitHub
     text,
     "![shot](images/api-reference.png) see [ops](https://github.com/diegomarino/marplanner/blob/main/docs/operations.md) and [here](openapi.json)"
   );
+});
+
+test("api docs markdown keeps pattern alternations inside their table cell", () => {
+  const dayPeriods = renderOpenApiMarkdown(spec)["endpoints/day-periods.md"];
+  const row = dayPeriods.split("\n").find((line) => line.startsWith("| `start` |"));
+  assert.ok(row.includes("[01][0-9]\\|2[0-3]"), row);
+  // Only the four column separators remain unescaped.
+  assert.equal(row.replace(/\\\|/g, "").split("|").length - 1, 5, row);
+});
+
+test("api docs markdown documents the item fields of list responses", () => {
+  const members = renderOpenApiMarkdown(spec)["endpoints/members.md"];
+  const list = members.slice(
+    members.indexOf("### `GET /api/members`"),
+    members.indexOf("### `POST")
+  );
+  assert.match(list, /\*\*200 body items\*\*\n\nSchema: \[Member\]/);
+  assert.match(list, /\| `displayName` \| string \| yes \|/);
 });

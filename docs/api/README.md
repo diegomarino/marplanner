@@ -17,7 +17,7 @@ automate from cron, Home Assistant or your own dashboard.
 - **Offline bundle:** `npm run docs:api-bundle` writes `dist/marplanner-api-docs.zip`
   with `openapi.json`, a Markdown reference (one file per domain, plus the shared
   schemas), this guide and the same interactive viewer, which opens straight from
-  disk. It is generated from the committed `openapi.json` and is not committed itself.
+  disk as a read-only copy. It is generated from the committed `openapi.json` and is not committed itself.
 - **Generated from the code:** every route declares its schema with zod, next to the
   handler (`src/server/openapi/<domain>.ts`). `npm run generate:openapi` rewrites
   `openapi.json` from those schemas, and `npm run check:openapi` fails CI if the
