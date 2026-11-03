@@ -1239,8 +1239,13 @@ describe("restore with detached calendar synchronization", () => {
       settled = true;
       return result;
     });
-    const body =
-      "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:before-restore\nDTSTAMP:20260929T000000Z\nDTSTART;VALUE=DATE:20260930\nSUMMARY:Before restore\nEND:VEVENT\nEND:VCALENDAR";
+    // Tomorrow, so the event stays inside the importer's rolling window (-30d / +365d of the real
+    // clock); the drain deadlines below need real timers, so the clock is not pinned here.
+    const tomorrow = new Date(Date.now() + 86_400_000)
+      .toISOString()
+      .slice(0, 10)
+      .replaceAll("-", "");
+    const body = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:before-restore\nDTSTAMP:20260929T000000Z\nDTSTART;VALUE=DATE:${tomorrow}\nSUMMARY:Before restore\nEND:VEVENT\nEND:VCALENDAR`;
     try {
       await new Promise((resolve) => setTimeout(resolve, 10));
       expect(settled).toBe(false);

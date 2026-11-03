@@ -14,6 +14,10 @@ automate from cron, Home Assistant or your own dashboard.
   `GET /api/docs/` and the raw OpenAPI 3.1 document at `GET /api/openapi.json`.
   Both need the same credentials as any other `/api` route. A copy is committed as
   [`openapi.json`](openapi.json), so you can read it without running anything.
+- **Offline bundle:** `npm run docs:api-bundle` writes `dist/marplanner-api-docs.zip`
+  with `openapi.json`, a Markdown reference (one file per domain, plus the shared
+  schemas), this guide and the same interactive viewer, which opens straight from
+  disk as a read-only copy. It is generated from the committed `openapi.json` and is not committed itself.
 - **Generated from the code:** every route declares its schema with zod, next to the
   handler (`src/server/openapi/<domain>.ts`). `npm run generate:openapi` rewrites
   `openapi.json` from those schemas, and `npm run check:openapi` fails CI if the

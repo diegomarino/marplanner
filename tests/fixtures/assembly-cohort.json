@@ -584,6 +584,15 @@
     "runners": {
       "node": {
         "files": {
+          "tools/api-docs-bundle.test.mjs": [
+            "api docs zip round-trips names and contents and is byte-for-byte reproducible",
+            "api docs markdown lists every documented operation once, in its tag's file",
+            "api docs markdown expands referenced request bodies and links to real anchors",
+            "api docs viewer embeds the document without letting it close the inline script",
+            "api docs guide keeps images local and sends other relative links to GitHub",
+            "api docs markdown keeps pattern alternations inside their table cell",
+            "api docs markdown documents the item fields of list responses"
+          ],
           "tools/audit-accessible-names.test.mjs": [
             "input: fires with no aria-label/label/placeholder (RoutinesManagement.tsx:401 shape)",
             "select: fires with no aria-label/label (RoutinesManagement.tsx:320 shape)",

@@ -130,7 +130,7 @@ reported as executed cases.
 
 Concurrent isolated browser lanes may set `PORT` (matching `BASE_URL`), `MP_E2E_WEATHER_FIXTURE_PORT` and `MP_E2E_QUOTE_FIXTURE_PORT` to free loopback ports. The fixture providers and runner import the same values; defaults remain 41837/41839. Never reuse or terminate another lane’s listeners.
 
-The exception-list command defaults to the reviewed main predecessor `f8db1b6fc51d6952d06e224dba03b8e62f22d56c` (empty terminal list), replacing the absent historical `B0` ref. `MP_ACCEPTED_PREDECESSOR` can name an explicitly reviewed alternative; no synthetic tag or enlarged exception baseline is created.
+The exception-list command defaults to the reviewed main predecessor `d16341535ca8ffd11a1871495ae9e5ad75f9428c` (empty terminal list), replacing the absent historical `B0` ref. `MP_ACCEPTED_PREDECESSOR` can name an explicitly reviewed alternative; no synthetic tag or enlarged exception baseline is created.
 
 ## Test concurrency
 
