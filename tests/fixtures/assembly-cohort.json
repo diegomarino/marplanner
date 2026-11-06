@@ -890,6 +890,16 @@
             "readFlyEnv explains how to create a missing file",
             "the Fly env file and smoke cache are gitignored",
             "the required Fly keys are the deployment credentials"
+          ],
+          "tools/deploy-fly-cli.test.mjs": [
+            "readFlyApp reads the top-level app name",
+            "readFlyApp refuses the template placeholder",
+            "planSecrets stages every local key and reports added and extra names",
+            "secretsImportPayload keeps =, # and spaces intact",
+            "secretsImportPayload rejects multi-line values by key name only",
+            "parseSecretsList accepts both flyctl name casings",
+            "deployArgs pins single-machine remote deploys with build provenance",
+            "runFly sends secrets through stdin, never argv"
           ]
         }
       },
