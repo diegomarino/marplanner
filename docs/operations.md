@@ -152,6 +152,10 @@ If a credential is compromised, revoke it, then rotate the environment key it ca
 
 There is no `set-pin` endpoint. To replace a forgotten advisory PIN, set `ADMIN_PIN` in the service environment, restart, and provision a browser again with the current bootstrap key. Each successful provisioning stores the configured PIN as an Argon2 hash. Existing device credentials remain valid; this procedure resets the UI PIN and does not rotate API credentials.
 
+## Fly.io
+
+The Fly recipe in `infra/fly/` deploys the same image to a single machine with a volume. `npm run deploy:fly` runs the checks, pushes the git-ignored `.env.fly` as Fly secrets, deploys, and verifies health, the serving commit and every read route. See [Running Marplanner on Fly.io](../infra/fly/USING_FLYIO.md).
+
 ## One-click cloud demo
 
 The README buttons deploy `infra/docker/Dockerfile` (repository root as build context) to Render, Koyeb, Railway or DigitalOcean App Platform, each in the visitor's own account. All four use port 3000, the `GET /health` check and the same environment; `DATA_DIR=/data` comes from the image:
