@@ -92,12 +92,17 @@ export async function runSmoke({ baseUrl, bootstrapKey, cachePath, spec, fetch, 
     });
 
   async function check(path) {
-    let response = await get(path);
-    if (response.status === 401 && !reprovisioned) {
+    let response = await get(path).catch(() => null);
+    if (response?.status === 401 && !reprovisioned) {
       reprovisioned = true;
       fs.rmSync(cachePath, { force: true });
       cookie = await deviceCookie(auth);
-      response = await get(path);
+      response = await get(path).catch(() => null);
+    }
+    if (!response) {
+      result.failures.push(`GET ${path} → unreachable`);
+      log(`  ✘ GET ${path} → unreachable`);
+      return null;
     }
     const line = `GET ${path} → ${response.status}`;
     if (response.status >= 500 || response.status === 401) {
@@ -116,7 +121,7 @@ export async function runSmoke({ baseUrl, bootstrapKey, cachePath, spec, fetch, 
   const bodies = {};
   for (const path of direct) {
     const response = await check(path);
-    if (response.ok) bodies[path] = await response.json().catch(() => null);
+    if (response?.ok) bodies[path] = await response.json().catch(() => null);
   }
   for (const template of parametrized) {
     const path = fillParams(template, bodies, date);

@@ -34,13 +34,54 @@ export function planSecrets(local, remoteNames) {
   };
 }
 
-/** `fly secrets import` reads one NAME=VALUE per line. */
+/**
+ * One line as `fly secrets import` reads it (port of flyctl internal/command/secrets/parser.go,
+ * single-line branch): the value loses leading spaces, is cut at a `#` preceded by an even number
+ * of `"`, and loses one pair of surrounding quotes. Returns null where flyctl would start a
+ * multi-line value.
+ * @param {string} line
+ */
+export function flyParseLine(line) {
+  const eq = line.indexOf("=");
+  const key = line.slice(0, eq).trim();
+  let value = line.slice(eq + 1).replace(/^ +/, "");
+  const hash = value.indexOf("#");
+  if (hash !== -1) {
+    const before = value.slice(0, hash);
+    if ((before.match(/"/g) ?? []).length % 2 === 0) value = before.replace(/ +$/, "");
+  }
+  if (value.startsWith('"""')) {
+    if (value.length >= 6 && value.endsWith('"""')) return { key, value: value.slice(3, -3) };
+    return null;
+  }
+  if (
+    value.length >= 2 &&
+    ((value[0] === '"' && value.endsWith('"')) || (value[0] === "'" && value.endsWith("'")))
+  )
+    value = value.slice(1, -1);
+  return { key, value };
+}
+
+/** Encodes `value` so flyctl's parser reads it back unchanged, or returns null. */
+function encodeForFly(key, value) {
+  for (const candidate of [value, `"${value}"`, `'${value}'`, `"""${value}"""`]) {
+    if (flyParseLine(`${key}=${candidate}`)?.value === value) return candidate;
+  }
+  return null;
+}
+
+/** `fly secrets import` reads one NAME=VALUE per line, with its own quoting rules. */
 export function secretsImportPayload(local) {
   return Object.entries(local)
     .map(([key, value]) => {
       if (/[\r\n]/.test(value))
         throw new Error(`${key} contains a newline; Fly secrets import is line-based`);
-      return `${key}=${value}\n`;
+      const encoded = encodeForFly(key, value);
+      if (encoded === null)
+        throw new Error(
+          `${key} cannot be sent through fly secrets import unchanged; avoid # and quotes in it`
+        );
+      return `${key}=${encoded}\n`;
     })
     .join("");
 }

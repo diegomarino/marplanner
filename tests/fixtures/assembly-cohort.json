@@ -895,7 +895,8 @@
             "readFlyApp reads the top-level app name",
             "readFlyApp refuses the template placeholder",
             "planSecrets stages every local key and reports added and extra names",
-            "secretsImportPayload keeps =, # and spaces intact",
+            "flyParseLine matches flyctl's secrets import parser",
+            "secretsImportPayload values survive flyctl's own parser",
             "secretsImportPayload rejects multi-line values by key name only",
             "parseSecretsList accepts both flyctl name casings",
             "deployArgs pins single-machine remote deploys with build provenance",
@@ -912,7 +913,8 @@
             "runSmoke re-provisions once when the cached device is revoked",
             "runSmoke fails instead of looping when a fresh device is refused",
             "runSmoke fails on 5xx and warns on 4xx",
-            "smoke output never contains the bootstrap key or device cookie"
+            "smoke output never contains the bootstrap key or device cookie",
+            "runSmoke records an unreachable route as a failure"
           ],
           "tools/deploy-fly.test.mjs": [
             "parseDeployArgs knows every flag and rejects unknown ones",
@@ -926,7 +928,12 @@
             "release check waits until the new sha is serving",
             "no secret value reaches the log",
             "--reprovision discards the cached smoke device",
-            "a missing flyctl stops at pre-flight with install advice"
+            "a missing flyctl stops at pre-flight with install advice",
+            "a provisioning failure during the release check is reported as the release step",
+            "a logged-out flyctl says how to log in",
+            "only commands carrying secret values hide flyctl's stderr",
+            "a failed deploy warns that secrets are already staged",
+            "the smoke device key never enters the Docker build context"
           ]
         }
       },

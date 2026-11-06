@@ -245,3 +245,40 @@ test("a missing flyctl stops at pre-flight with install advice", async () => {
   assert.equal(await deployFly({ ...defaults, root: workspace() }, fake.deps), 1);
   assert.match(fake.lines.join("\n"), /pre-flight: flyctl not found.*brew install flyctl/);
 });
+
+test("a provisioning failure during the release check is reported as the release step", async () => {
+  const fake = deps();
+  const inner = fake.deps.fetch;
+  fake.deps.fetch = async (url, init) =>
+    new URL(url).pathname === "/api/auth/provision"
+      ? new Response("{}", { status: 429 })
+      : inner(url, init);
+  assert.equal(await deployFly({ ...defaults, root: workspace() }, fake.deps), 1);
+  assert.match(fake.lines.join("\n"), /✘ release: provisioning the smoke device failed \(429\)/);
+});
+
+test("a logged-out flyctl says how to log in", async () => {
+  const fake = deps({ flyCodes: { auth: 1 } });
+  assert.equal(await deployFly({ ...defaults, root: workspace() }, fake.deps), 1);
+  assert.match(fake.lines.join("\n"), /pre-flight: .*fly auth login/);
+});
+
+test("only commands carrying secret values hide flyctl's stderr", async () => {
+  const fake = deps({ remoteSecrets: ["OLD_KEY"] });
+  await deployFly({ ...defaults, prune: true, root: workspace() }, fake.deps);
+  for (const { args, options } of fake.flyCalls) {
+    const carriesSecrets = args[0] === "secrets" && ["import", "unset"].includes(args[1]);
+    assert.equal(Boolean(options.quiet), carriesSecrets, args.join(" "));
+  }
+});
+
+test("a failed deploy warns that secrets are already staged", async () => {
+  const fake = deps({ flyCodes: { deploy: 2 } });
+  await deployFly({ ...defaults, root: workspace() }, fake.deps);
+  assert.match(fake.lines.join("\n"), /staged on Fly.*next deploy or restart/);
+});
+
+test("the smoke device key never enters the Docker build context", () => {
+  const lines = fs.readFileSync(new URL("../.dockerignore", import.meta.url), "utf8").split("\n");
+  assert.ok(lines.includes("infra/fly/.smoke-device"));
+});

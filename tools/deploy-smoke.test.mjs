@@ -212,3 +212,22 @@ test("smoke output never contains the bootstrap key or device cookie", async () 
   assert.ok(!text.includes(BOOTSTRAP));
   assert.ok(!text.includes("COOKIE-SENTINEL"));
 });
+
+test("runSmoke records an unreachable route as a failure", async () => {
+  const fetch = fakeFetch({
+    "POST /api/auth/provision": () => provisioned("dk"),
+    "GET /api/members": () => {
+      throw new TypeError("fetch failed");
+    },
+  });
+  const result = await runSmoke({
+    baseUrl: BASE,
+    bootstrapKey: BOOTSTRAP,
+    cachePath: cachePath(),
+    spec: { paths: { "/api/members": { get: {} } } },
+    fetch,
+    fs,
+    log() {},
+  });
+  assert.deepEqual(result.failures, ["GET /api/members → unreachable"]);
+});

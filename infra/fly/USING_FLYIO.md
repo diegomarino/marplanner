@@ -41,8 +41,10 @@ ADMIN_PIN=<pin>                   # advisory Admin PIN
 
 Use unique values: the deploy refuses the defaults published in this repository
 (`mpg-local-change-me`, `mpk-local-bootstrap-change-me`, PINs `0000` and `1234`). Generate a token
-with `echo "mpg-$(openssl rand -hex 24)"`. Quote any value that contains `#` or spaces; an
-unquoted `#` starts a comment. Values cannot span lines.
+with `echo "mpg-$(openssl rand -hex 24)"`. In `.env.fly`, quote any value that contains `#` or
+spaces, because an unquoted `#` starts a comment there. The deploy then re-encodes each value for
+`fly secrets import`, which has its own quoting rules, so what Fly stores is exactly what the file
+says. Values cannot span lines.
 
 Non-secret settings (`NODE_ENV`, `PORT`, `DATA_DIR`) stay in `[env]` of `fly.toml`.
 

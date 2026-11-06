@@ -83,10 +83,16 @@ export async function deployFly(options, deps) {
     return result;
   };
 
+  let staged = false;
+  let deployed = false;
   try {
     log("▸ Pre-flight");
-    await fly("pre-flight", ["version"], { quiet: true });
-    await fly("pre-flight", ["auth", "whoami"], { quiet: true });
+    await fly("pre-flight", ["version"]);
+    await fly("pre-flight", ["auth", "whoami"]).catch((error) => {
+      if (!(error instanceof StepError) || error.message.startsWith("flyctl not found"))
+        throw error;
+      throw new StepError("pre-flight", "not logged in to Fly (run fly auth login)");
+    });
     let app;
     let env;
     try {
@@ -120,8 +126,7 @@ export async function deployFly(options, deps) {
 
     log("▸ Secrets");
     const remote = parseSecretsList(
-      (await fly("secrets", ["secrets", "list", "--json", "--config", FLY_CONFIG], { quiet: true }))
-        .stdout
+      (await fly("secrets", ["secrets", "list", "--json", "--config", FLY_CONFIG])).stdout
     );
     const plan = planSecrets(env, remote);
     log(`  Staging ${plan.stage.length} keys from .env.fly: ${plan.stage.join(", ")}`);
@@ -145,6 +150,7 @@ export async function deployFly(options, deps) {
       input: payload,
       quiet: true,
     });
+    staged = true;
     if (options.prune && plan.extra.length)
       await fly("secrets", ["secrets", "unset", "--stage", "--config", FLY_CONFIG, ...plan.extra], {
         quiet: true,
@@ -152,6 +158,7 @@ export async function deployFly(options, deps) {
 
     log("▸ Deploy");
     await fly("deploy", deployCommand, { stream: true });
+    deployed = true;
 
     log(`▸ Health ${baseUrl}/health`);
     await poll("health", sleep, async () => {
@@ -162,7 +169,7 @@ export async function deployFly(options, deps) {
     log("▸ Release");
     if (options.reprovision) fs.rmSync(cachePath, { force: true });
     const auth = { baseUrl, bootstrapKey: env.MP_BOOTSTRAP_KEY, cachePath, fetch, fs };
-    let cookie = await deviceCookie(auth);
+    let cookie = await asStep("release", () => deviceCookie(auth));
     let refreshed = options.reprovision;
     await poll("release", sleep, async () => {
       const response = await fetch(`${baseUrl}/api/telemetry/system-status`, {
@@ -171,7 +178,7 @@ export async function deployFly(options, deps) {
       if (response?.status === 401 && !refreshed) {
         refreshed = true;
         fs.rmSync(cachePath, { force: true });
-        cookie = await deviceCookie(auth);
+        cookie = await asStep("release", () => deviceCookie(auth));
         return "smoke device re-provisioned";
       }
       if (!response?.ok) return `last status ${response?.status ?? "unreachable"}`;
@@ -183,7 +190,7 @@ export async function deployFly(options, deps) {
     if (!options.skipSmoke) {
       log("▸ Smoke");
       const spec = JSON.parse(fs.readFileSync(join(root, "docs/api/openapi.json"), "utf8"));
-      const result = await runSmoke({ ...auth, spec, log });
+      const result = await asStep("smoke", () => runSmoke({ ...auth, spec, log }));
       if (result.failures.length)
         throw new StepError(
           "smoke",
@@ -199,7 +206,19 @@ export async function deployFly(options, deps) {
   } catch (error) {
     if (!(error instanceof StepError)) throw error;
     log(`✘ ${error.step}: ${error.message}`);
+    if (staged && !deployed)
+      log("  Secrets from .env.fly are staged on Fly and apply at the next deploy or restart.");
     return 1;
+  }
+}
+
+/** Runs `fn`, reporting any plain error as a failure of `step`. */
+async function asStep(step, fn) {
+  try {
+    return await fn();
+  } catch (error) {
+    if (error instanceof StepError) throw error;
+    throw new StepError(step, error.message);
   }
 }
 

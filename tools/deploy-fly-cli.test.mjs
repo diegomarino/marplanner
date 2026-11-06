@@ -4,6 +4,7 @@ import { PassThrough } from "node:stream";
 import test from "node:test";
 import {
   deployArgs,
+  flyParseLine,
   parseSecretsList,
   planSecrets,
   readFlyApp,
@@ -47,8 +48,31 @@ test("planSecrets stages every local key and reports added and extra names", () 
   });
 });
 
-test("secretsImportPayload keeps =, # and spaces intact", () => {
-  assert.equal(secretsImportPayload({ K: "a=b #c d" }), "K=a=b #c d\n");
+test("flyParseLine matches flyctl's secrets import parser", () => {
+  assert.deepEqual(flyParseLine("K=a#b"), { key: "K", value: "a" });
+  assert.deepEqual(flyParseLine('K="a#b"'), { key: "K", value: "a#b" });
+  assert.deepEqual(flyParseLine("K=  pad"), { key: "K", value: "pad" });
+  assert.deepEqual(flyParseLine("K='x y'"), { key: "K", value: "x y" });
+  assert.deepEqual(flyParseLine('K="""z"""'), { key: "K", value: "z" });
+  assert.equal(flyParseLine('K="""open'), null);
+});
+
+test("secretsImportPayload values survive flyctl's own parser", () => {
+  const values = [
+    "a=b #c d",
+    "12#34",
+    "mpg-a#b",
+    "  pad",
+    "x y ",
+    '"quoted"',
+    "it's",
+    'a"#b',
+    "plain",
+  ];
+  for (const value of values) {
+    const line = secretsImportPayload({ K: value }).replace(/\n$/, "");
+    assert.deepEqual(flyParseLine(line), { key: "K", value }, JSON.stringify(value));
+  }
 });
 
 test("secretsImportPayload rejects multi-line values by key name only", () => {
