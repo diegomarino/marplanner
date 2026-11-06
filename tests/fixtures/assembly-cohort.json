@@ -879,6 +879,17 @@
             "plugin event gate checks every conditional event name and rejects opaque names",
             "plugin event gate rejects missing, duplicate, unknown and foreign-owner manifest declarations",
             "plugin event gate ignores unrelated methods and rejects a missing typed catalog"
+          ],
+          "tools/deploy-env.test.mjs": [
+            "validateFlyEnv accepts a complete production env",
+            "validateFlyEnv names each missing or empty required key",
+            "validateFlyEnv enforces credential prefixes",
+            "validateFlyEnv refuses the published default credentials",
+            "validation messages never contain secret values",
+            "readFlyEnv parses quotes, export prefixes, comments and CRLF like Node",
+            "readFlyEnv explains how to create a missing file",
+            "the Fly env file and smoke cache are gitignored",
+            "the required Fly keys are the deployment credentials"
           ]
         }
       },
