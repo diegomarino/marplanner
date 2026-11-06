@@ -34,6 +34,7 @@
     "dev:chrome": "node tools/dev/chrome-cdp.mjs",
     "docs:api-bundle": "node tools/docs/api-bundle.mjs",
     "docs:screenshots": "node tools/docs/capture-screenshots.mjs",
+    "deploy:fly": "node tools/deploy/fly.mjs",
     "dev:fresh": "node tools/dev/fresh-local.mjs",
     "dev:server": "node --env-file-if-exists=.env.local --import tsx --watch src/server/index.ts",
     "dev:session": "node tools/dev/browser-session.mjs",

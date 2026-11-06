@@ -899,7 +899,8 @@
             "secretsImportPayload rejects multi-line values by key name only",
             "parseSecretsList accepts both flyctl name casings",
             "deployArgs pins single-machine remote deploys with build provenance",
-            "runFly sends secrets through stdin, never argv"
+            "runFly sends secrets through stdin, never argv",
+            "runFly can stream flyctl output to the terminal"
           ],
           "tools/deploy-smoke.test.mjs": [
             "planSmokeRoutes covers every GET except the skip list",
@@ -912,6 +913,20 @@
             "runSmoke fails instead of looping when a fresh device is refused",
             "runSmoke fails on 5xx and warns on 4xx",
             "smoke output never contains the bootstrap key or device cookie"
+          ],
+          "tools/deploy-fly.test.mjs": [
+            "parseDeployArgs knows every flag and rejects unknown ones",
+            "deployFly runs pre-flight, checks, secrets, deploy, health, release and smoke in order",
+            "--full runs check:standard and --skip-checks runs none",
+            "a dirty tree stops before any Fly write unless --allow-dirty",
+            "invalid .env.fly stops at pre-flight and names the keys",
+            "secrets are staged through stdin and extras are only unset with --prune",
+            "--dry-run performs no Fly writes and prints the deploy command",
+            "a flyctl failure reports the step and exit code",
+            "release check waits until the new sha is serving",
+            "no secret value reaches the log",
+            "--reprovision discards the cached smoke device",
+            "a missing flyctl stops at pre-flight with install advice"
           ]
         }
       },

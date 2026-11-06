@@ -69,25 +69,30 @@ export function deployArgs({ sha, subject }) {
 /**
  * Runs flyctl (`fly`, falling back to `flyctl`). stdout is captured; stderr streams to the
  * terminal unless `quiet`, which callers set for any command that carries secret values.
+ * `stream` sends stdout to the terminal too (long commands like deploy); stdout is then "".
  * @param {string[]} args
- * @param {{ input?: string, quiet?: boolean, spawn?: typeof nodeSpawn }} [options]
+ * @param {{ input?: string, quiet?: boolean, stream?: boolean, spawn?: typeof nodeSpawn }} [options]
  * @returns {Promise<{ code: number, stdout: string }>}
  */
-export async function runFly(args, { input, quiet = false, spawn = nodeSpawn } = {}) {
+export async function runFly(
+  args,
+  { input, quiet = false, stream = false, spawn = nodeSpawn } = {}
+) {
   try {
-    return await spawnOnce("fly", args, { input, quiet, spawn });
+    return await spawnOnce("fly", args, { input, quiet, stream, spawn });
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
-    return spawnOnce("flyctl", args, { input, quiet, spawn });
+    return spawnOnce("flyctl", args, { input, quiet, stream, spawn });
   }
 }
 
-function spawnOnce(bin, args, { input, quiet, spawn }) {
+function spawnOnce(bin, args, { input, quiet, stream, spawn }) {
   return new Promise((resolve, reject) => {
-    const child = spawn(bin, args, { stdio: ["pipe", "pipe", quiet ? "pipe" : "inherit"] });
+    const stdio = ["pipe", stream ? "inherit" : "pipe", quiet ? "pipe" : "inherit"];
+    const child = spawn(bin, args, { stdio });
     let stdout = "";
     child.on("error", reject);
-    child.stdout.on("data", (chunk) => (stdout += chunk));
+    child.stdout?.on("data", (chunk) => (stdout += chunk));
     child.stderr?.resume();
     child.on("close", (code) => resolve({ code: code ?? 1, stdout }));
     child.stdin.end(input ?? "");

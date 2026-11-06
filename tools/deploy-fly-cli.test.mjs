@@ -90,3 +90,17 @@ test("runFly sends secrets through stdin, never argv", async () => {
   assert.ok(!record[0].args.join(" ").includes("v-secret"));
   assert.equal(record[0].stdin, "K=v-secret\n");
 });
+
+test("runFly can stream flyctl output to the terminal", async () => {
+  let stdio;
+  const spawn = (bin, args, options) => {
+    stdio = options.stdio;
+    const child = new EventEmitter();
+    child.stdin = new PassThrough();
+    child.stdin.on("finish", () => setImmediate(() => child.emit("close", 0)));
+    return child;
+  };
+  const result = await runFly(["deploy"], { stream: true, spawn });
+  assert.deepEqual(stdio, ["pipe", "inherit", "inherit"]);
+  assert.equal(result.code, 0);
+});
