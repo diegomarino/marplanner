@@ -52,6 +52,7 @@
     "seed:private": "node --env-file-if-exists=.env.local --import tsx src/server/db/seeds/cli.ts --mode private",
     "seed:public": "node --env-file-if-exists=.env.local --import tsx src/server/db/seeds/cli.ts --mode public",
     "seed:sync-private": "node tools/dev/sync-private-seeds.mjs",
+    "smoke:deploy": "node tools/deploy/smoke.mjs",
     "seed": "node tools/dev/seed-all.mjs",
     "start": "node --env-file-if-exists=.env.local dist/server/index.js",
     "test:api-contract-audit": "node tools/api-contract-audit/audit.test.mjs .",

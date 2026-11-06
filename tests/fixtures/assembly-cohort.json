@@ -900,6 +900,18 @@
             "parseSecretsList accepts both flyctl name casings",
             "deployArgs pins single-machine remote deploys with build provenance",
             "runFly sends secrets through stdin, never argv"
+          ],
+          "tools/deploy-smoke.test.mjs": [
+            "planSmokeRoutes covers every GET except the skip list",
+            "every skipped route still exists in the API contract",
+            "fillParams substitutes known ids and today's date",
+            "fillParams returns null for an undiscoverable param",
+            "deviceCookie provisions with the bootstrap key and caches it privately",
+            "deviceCookie reuses a cached cookie without provisioning",
+            "runSmoke re-provisions once when the cached device is revoked",
+            "runSmoke fails instead of looping when a fresh device is refused",
+            "runSmoke fails on 5xx and warns on 4xx",
+            "smoke output never contains the bootstrap key or device cookie"
           ]
         }
       },
