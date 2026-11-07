@@ -46,7 +46,7 @@ test("the committed example documents credentials and defaults the local UI bypa
   for (const key of [
     "MP_ACCESS_TOKEN",
     "MP_BOOTSTRAP_KEY",
-    "ADMIN_PIN",
+    "MP_ADMIN_PIN",
     "VITE_DEV_BYPASS_ADMIN_PIN",
     "HOST",
     "PORT",

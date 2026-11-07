@@ -35,7 +35,7 @@ import { unlockAdmin } from "./admin-unlock";
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 
 /** `node dist/server/index.js` — the real production entrypoint (npm start). */
 const SERVER_ENTRY = resolve(process.cwd(), "dist", "server", "index.js");
@@ -77,7 +77,7 @@ async function startServer(port: number, dataDir: string): Promise<ChildProcess>
       // the child to a shared/alternate store (it resolves under DATA_DIR).
       DATABASE_PATH: "marplanner.db",
       MP_BOOTSTRAP_KEY: BOOTSTRAP_KEY,
-      ADMIN_PIN,
+      MP_ADMIN_PIN,
       MP_ACCESS_TOKEN: ACCESS_TOKEN,
       // This spec spawns its own server, bypassing playwright.config.ts's
       // webServer.env — pin the kill-switch here too so no real scheduler
@@ -238,7 +238,7 @@ test("B1 members: authorization, edit, archive, restore and restart", async ({ p
 
     // 5. Admin unlock (FR-017/018): hold the Options-menu Admin button for three seconds,
     // then enter the PIN through the touch keypad and verify it server-side.
-    await unlockAdmin(page, ADMIN_PIN);
+    await unlockAdmin(page, MP_ADMIN_PIN);
 
     // 6. Member create (FR-019/022/023): display name + role=parent → 201.
     // Language-agnostic selectors: the admin Members UI localizes to the household

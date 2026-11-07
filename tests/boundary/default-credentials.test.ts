@@ -10,6 +10,7 @@ import { buildApp } from "../../src/server/app";
 import {
   defaultCredentialsMetaTag,
   publicDefaultCredentials,
+  resolveAdminPin,
   usesDefaultAccessToken,
 } from "../../src/server/auth/default-credentials";
 import {
@@ -23,7 +24,17 @@ const CUSTOM_TOKEN = "mpg-operator-chosen-token-7f3a";
 const CUSTOM_KEY = "mpk-operator-chosen-key-91bc";
 const CUSTOM_PIN = "8642";
 const SHELL_SENTINEL = "APP_SHELL_SENTINEL";
-const ENV_KEYS = ["MP_ACCESS_TOKEN", "MP_BOOTSTRAP_KEY", "ADMIN_PIN"] as const;
+const ENV_KEYS = ["MP_ACCESS_TOKEN", "MP_BOOTSTRAP_KEY", "MP_ADMIN_PIN"] as const;
+
+describe("admin PIN environment variable", () => {
+  it("reads the PIN from MP_ADMIN_PIN", () => {
+    expect(resolveAdminPin({ MP_ADMIN_PIN: CUSTOM_PIN })).toBe(CUSTOM_PIN);
+  });
+
+  it("falls back to 0000 when MP_ADMIN_PIN is unset", () => {
+    expect(resolveAdminPin({})).toBe("0000");
+  });
+});
 
 describe("public default credential detection", () => {
   it("recognises only the repository's default access token", () => {
@@ -36,11 +47,11 @@ describe("public default credential detection", () => {
     expect(
       publicDefaultCredentials({
         MP_BOOTSTRAP_KEY: PUBLIC_DEFAULT_BOOTSTRAP_KEY,
-        ADMIN_PIN: "0000",
+        MP_ADMIN_PIN: "0000",
       })
     ).toEqual({ bootstrapKey: PUBLIC_DEFAULT_BOOTSTRAP_KEY, adminPin: "0000" });
-    expect(publicDefaultCredentials({ ADMIN_PIN: "1234" })).toEqual({ adminPin: "1234" });
-    // provision.ts seeds "0000" when ADMIN_PIN is unset, so that PIN is public too.
+    expect(publicDefaultCredentials({ MP_ADMIN_PIN: "1234" })).toEqual({ adminPin: "1234" });
+    // provision.ts seeds "0000" when MP_ADMIN_PIN is unset, so that PIN is public too.
     expect(publicDefaultCredentials({})).toEqual({ adminPin: "0000" });
   });
 
@@ -48,7 +59,7 @@ describe("public default credential detection", () => {
     const credentials = publicDefaultCredentials({
       MP_ACCESS_TOKEN: CUSTOM_TOKEN,
       MP_BOOTSTRAP_KEY: CUSTOM_KEY,
-      ADMIN_PIN: CUSTOM_PIN,
+      MP_ADMIN_PIN: CUSTOM_PIN,
     });
     expect(credentials).toEqual({});
     expect(JSON.stringify(credentials)).not.toMatch(/operator-chosen|8642/);
@@ -58,14 +69,14 @@ describe("public default credential detection", () => {
     expect(
       defaultCredentialsMetaTag({
         MP_BOOTSTRAP_KEY: PUBLIC_DEFAULT_BOOTSTRAP_KEY,
-        ADMIN_PIN: "0000",
+        MP_ADMIN_PIN: "0000",
       })
     ).toBe(
       `<meta name="${DEFAULT_CREDENTIALS_META}" content="{&quot;bootstrapKey&quot;:&quot;${PUBLIC_DEFAULT_BOOTSTRAP_KEY}&quot;,&quot;adminPin&quot;:&quot;0000&quot;}">`
     );
-    expect(defaultCredentialsMetaTag({ MP_BOOTSTRAP_KEY: CUSTOM_KEY, ADMIN_PIN: CUSTOM_PIN })).toBe(
-      ""
-    );
+    expect(
+      defaultCredentialsMetaTag({ MP_BOOTSTRAP_KEY: CUSTOM_KEY, MP_ADMIN_PIN: CUSTOM_PIN })
+    ).toBe("");
   });
 });
 
@@ -82,7 +93,7 @@ describe("auth screens served with public defaults or chosen credentials", () =>
   function useCredentials(token: string, bootstrapKey: string, pin: string): void {
     process.env.MP_ACCESS_TOKEN = token;
     process.env.MP_BOOTSTRAP_KEY = bootstrapKey;
-    process.env.ADMIN_PIN = pin;
+    process.env.MP_ADMIN_PIN = pin;
   }
 
   async function start(): Promise<FastifyInstance> {

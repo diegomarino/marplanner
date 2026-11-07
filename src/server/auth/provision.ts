@@ -6,6 +6,7 @@ import { getDb } from "../db/client";
 import { apiKeys } from "../db/schema";
 import { generateKey, hashKey, verifyKey } from "./credentials";
 import { DEVICE_COOKIE, serializeAuthCookie } from "./cookies";
+import { resolveAdminPin } from "./default-credentials";
 import argon2 from "argon2";
 
 import { authenticationBackoff, sendAuthenticationBackoff } from "./throttle";
@@ -99,9 +100,9 @@ export async function provisionDevice(app: FastifyInstance, basePath = ""): Prom
       );
       insertStmt.run(keyId, deviceKeyHash, now);
 
-      // Seed the advisory admin PIN from ADMIN_PIN (or documented default "0000" per:82).
+      // Seed the advisory admin PIN from MP_ADMIN_PIN (or the documented default "0000").
       // Always seed admin_config so verify-pin always has a row to compare against.
-      const adminPin = process.env.ADMIN_PIN ?? "0000";
+      const adminPin = resolveAdminPin();
       const pinHash = await argon2.hash(adminPin);
       db.prepare(
         "INSERT INTO admin_config (id, pin_hash, updated_at) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET pin_hash=excluded.pin_hash, updated_at=excluded.updated_at"

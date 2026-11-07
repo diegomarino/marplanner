@@ -1,3 +1,4 @@
+import argon2 from "argon2";
 import { describe, it, expect } from "vitest";
 import { buildApp } from "../../src/server/app.ts";
 import { getDb } from "../../src/server/db/client.ts";
@@ -52,6 +53,40 @@ describe("provision — FR-007", () => {
       if (previous === undefined) delete process.env.BASE_PATH;
       else process.env.BASE_PATH = previous;
     }
+  });
+
+  async function provisionedPinHash(env: Record<string, string>): Promise<string> {
+    const raw = "mpk-pin-seed-bootstrap";
+    const keys = ["MP_BOOTSTRAP_KEY", "MP_ADMIN_PIN"];
+    const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
+    for (const key of keys) delete process.env[key];
+    Object.assign(process.env, { MP_BOOTSTRAP_KEY: raw, ...env });
+    seedBootstrapKey(raw);
+    const app = await buildApp();
+    try {
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/auth/provision",
+        headers: { authorization: `Bearer ${raw}` },
+      });
+      expect(response.statusCode).toBe(200);
+      const row = getDb().prepare("SELECT pin_hash FROM admin_config WHERE id = 1").get() as {
+        pin_hash: string;
+      };
+      return row.pin_hash;
+    } finally {
+      await app.close();
+      for (const key of keys) {
+        if (previous[key] === undefined) delete process.env[key];
+        else process.env[key] = previous[key];
+      }
+    }
+  }
+
+  it("seeds the admin PIN from MP_ADMIN_PIN", async () => {
+    const hash = await provisionedPinHash({ MP_ADMIN_PIN: "8642" });
+    expect(await argon2.verify(hash, "8642")).toBe(true);
+    expect(await argon2.verify(hash, "0000")).toBe(false);
   });
 
   it("POST /api/auth/provision with valid raw * bootstrap key → 200, Set-Cookie sets mp_device_key, body has no raw key", async () => {

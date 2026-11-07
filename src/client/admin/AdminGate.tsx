@@ -242,7 +242,7 @@ export function AdminGate() {
               data-testid="admin-pin-default-notice"
             >
               This instance uses the public default PIN <strong>{defaultPin}</strong>. Set your own
-              ADMIN_PIN before sharing its address.
+              MP_ADMIN_PIN before sharing its address.
             </p>
           )}
           <ErrorNotice id="admin-pin-error" message={error} />

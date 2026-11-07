@@ -30,7 +30,7 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const FIXTURE = `http://127.0.0.1:${FIXTURE_PORT}`;
 const ACCESS_TOKEN = "mpg-docs-screenshots";
 const BOOTSTRAP_KEY = "mpk-docs-screenshots";
-const ADMIN_PIN = "1234";
+const MP_ADMIN_PIN = "1234";
 const VIEWPORT = { width: 1280, height: 800 };
 
 const args = process.argv.slice(2);
@@ -158,7 +158,7 @@ async function unlockAdmin(page) {
     await page.mouse.up();
   }
   await page.getByTestId("admin-pin-keypad").waitFor({ timeout: 15_000 });
-  for (const digit of ADMIN_PIN) await page.getByTestId(`admin-pin-digit-${digit}`).click();
+  for (const digit of MP_ADMIN_PIN) await page.getByTestId(`admin-pin-digit-${digit}`).click();
   await page.getByTestId("admin-pin-unlock").click();
   await page.getByTestId("admin-pin-keypad").waitFor({ state: "detached", timeout: 15_000 });
 }
@@ -359,7 +359,7 @@ async function main() {
     PORT: String(PORT),
     MP_ACCESS_TOKEN: ACCESS_TOKEN,
     MP_BOOTSTRAP_KEY: BOOTSTRAP_KEY,
-    ADMIN_PIN,
+    MP_ADMIN_PIN,
     WEATHER_ENDPOINT: FIXTURE,
     QUOTE_ENDPOINT: FIXTURE,
     ONTHISDAY_ENDPOINT: FIXTURE,

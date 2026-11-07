@@ -26,7 +26,7 @@ const USAGE = `Usage: npm run deploy:fly -- [flags]
   --skip-smoke    Skip the post-deploy smoke test
   --allow-dirty   Deploy with uncommitted changes
   --prune         Unset Fly secrets that are not in .env.fly
-  --reprovision   Provision a new smoke device (applies a changed ADMIN_PIN)
+  --reprovision   Provision a new smoke device (applies a changed MP_ADMIN_PIN)
   --url <url>     Public URL (default https://<app>.fly.dev)`;
 
 const FLAGS = {
@@ -200,7 +200,7 @@ export async function deployFly(options, deps) {
 
     log(`✔ Deployed ${sha} to ${baseUrl}`);
     log(
-      "  ADMIN_PIN applies only when a device provisions; run with --reprovision after changing it."
+      "  MP_ADMIN_PIN applies only when a device provisions; run with --reprovision after changing it."
     );
     return 0;
   } catch (error) {

@@ -50,8 +50,8 @@ describe("settings-coldread (red-by-design, turns green)", () => {
       "INSERT INTO settings_objects (object_name, data, updated_at) VALUES ('locale', ?, ?)"
     ).run(localeData, now);
 
-    // Seed the admin_config row (seeded at provisioning from ADMIN_PIN).
-    const adminPinHash = hashKey(process.env.ADMIN_PIN ?? "0000");
+    // Seed the admin_config row (seeded at provisioning from MP_ADMIN_PIN).
+    const adminPinHash = hashKey(process.env.MP_ADMIN_PIN ?? "0000");
     db.prepare("INSERT INTO admin_config (id, pin_hash, updated_at) VALUES (1, ?, ?)").run(
       adminPinHash,
       now

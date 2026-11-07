@@ -18,7 +18,7 @@ import { unlockAdmin } from "./admin-unlock";
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 
 /** HOUSEHOLD-tz calendar date (Europe/Madrid, the unseeded default), NOT the runner's local
  * date. The server derives "today" in the household timezone; a UTC CI runner disagrees with
@@ -77,7 +77,7 @@ test("daily-messages admin author→read: PUT then GET window + current (#462)",
   const today = todayIsoDate();
 
   // --- 4) Admin unlock (long-press → PIN) ---
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
   await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 
   // --- 5) Daily Messages tab ---

@@ -122,7 +122,7 @@ async function start(label, storage, port = 3000, extra = [], credentials = true
           "-e",
           `MP_BOOTSTRAP_KEY=${bootstrap}`,
           "-e",
-          `ADMIN_PIN=${pin}`,
+          `MP_ADMIN_PIN=${pin}`,
         ]
       : []),
     ...extra,

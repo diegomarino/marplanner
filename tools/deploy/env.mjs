@@ -11,7 +11,7 @@ import {
 export const REQUIRED_FLY_KEYS = Object.freeze([
   "MP_ACCESS_TOKEN",
   "MP_BOOTSTRAP_KEY",
-  "ADMIN_PIN",
+  "MP_ADMIN_PIN",
 ]);
 
 const PREFIXES = { MP_ACCESS_TOKEN: "mpg-", MP_BOOTSTRAP_KEY: "mpk-" };
@@ -19,7 +19,7 @@ const PREFIXES = { MP_ACCESS_TOKEN: "mpg-", MP_BOOTSTRAP_KEY: "mpk-" };
 const PUBLIC_DEFAULTS = {
   MP_ACCESS_TOKEN: [PUBLIC_DEFAULT_ACCESS_TOKEN],
   MP_BOOTSTRAP_KEY: [PUBLIC_DEFAULT_BOOTSTRAP_KEY],
-  ADMIN_PIN: PUBLIC_DEFAULT_ADMIN_PINS,
+  MP_ADMIN_PIN: PUBLIC_DEFAULT_ADMIN_PINS,
 };
 
 /**
@@ -55,9 +55,9 @@ export function validateFlyEnv(env) {
       errors.push(`${key} is a public default published in this repository; set a unique value`);
     } else if (PREFIXES[key] && !value.startsWith(PREFIXES[key])) {
       errors.push(`${key} must start with ${PREFIXES[key]}`);
-    } else if (key === "ADMIN_PIN" && !/^\d{4,6}$/.test(value)) {
+    } else if (key === "MP_ADMIN_PIN" && !/^\d{4,6}$/.test(value)) {
       // The Admin keypad (src/client/admin/AdminGate.tsx) enters digits only, 4 to 6 of them.
-      errors.push("ADMIN_PIN must be 4–6 digits, the only PINs the Admin keypad can enter");
+      errors.push("MP_ADMIN_PIN must be 4–6 digits, the only PINs the Admin keypad can enter");
     }
   }
   return { errors };

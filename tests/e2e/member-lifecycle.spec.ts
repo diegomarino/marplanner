@@ -13,7 +13,7 @@ import { unlockAdmin } from "./admin-unlock";
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 
 type MemberRecord = {
   id: string;
@@ -93,7 +93,7 @@ test("member lifecycle preserves active choices, historical reads, and colour id
   const m = messages[resolveLang(settings.locale.language)];
   const today = householdDate(settings.locale.timezone);
 
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
 
   // The server picks the first free colour; which one depends on the members other specs have
   // created in this shared database, so the spec reads colours back instead of naming them.
@@ -196,7 +196,7 @@ test("member lifecycle preserves active choices, historical reads, and colour id
     `var(--color-member-${memberColour}-500)`
   );
 
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
   await openAdminSection(page, "admin-nav-members-management");
   const activeCard = page.getByTestId(`member-card-${memberId}`);
   await expect(activeCard).toContainText(editedName);
@@ -254,7 +254,7 @@ test("member lifecycle preserves active choices, historical reads, and colour id
     timeout: 15_000,
   });
 
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
   await openAdminSection(page, "admin-nav-members-management");
   await page.getByTestId("members-tab-archived").click();
   const restoreCard = page.getByTestId(`member-card-${memberId}`);

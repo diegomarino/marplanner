@@ -9,7 +9,7 @@ import { unlockAdmin } from "./admin-unlock";
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 
 type LocaleBody = { locale: { timezone: string; language: string; weekStartDay: number } };
 
@@ -26,7 +26,7 @@ test("settings: pill change saves in one click and survives a reload; overview s
   await page.getByLabel("Bootstrap key").fill(BOOTSTRAP_KEY);
   await page.getByRole("button", { name: "Provision Device" }).click();
   await expect(page.getByTestId("home-surface")).toBeVisible({ timeout: 15_000 });
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
   await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 
   await expect(page.getByTestId("admin-overview-uptime")).toHaveText(/\d/);
@@ -70,7 +70,7 @@ test("settings: pill change saves in one click and survives a reload; overview s
     expect(after.locale.timezone).toBe(before.locale.timezone);
 
     await page.reload();
-    await unlockAdmin(page, ADMIN_PIN);
+    await unlockAdmin(page, MP_ADMIN_PIN);
     await openAdminSection(page, "admin-nav-settings");
     await expect(page.getByTestId(`settings-week-start-${target}`)).toBeChecked();
   } finally {

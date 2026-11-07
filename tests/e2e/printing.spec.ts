@@ -49,7 +49,7 @@ import { hashKey } from "../../src/server/auth/credentials";
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 
 /** DB PATH: derived exactly the way the server itself resolves it (`src/server/db/client.ts`'s * `resolveDbPath`: `path.resolve(DATA_DIR, DATABASE_PATH ?? "marplanner.db")`), from the SAME
  * env vars `playwright.config.ts` publishes for the shared `webServer` and test process
@@ -194,7 +194,7 @@ test("admin test-print → claim → degrade → retry → ack → printed; re-t
 
   // 5) Enter Admin through the visible family flow, then unlock -> Printing management -> trigger
   // the test print through the REAL UI.
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
   await openAdminSection(page, "admin-nav-printing");
   const management = page.getByTestId("printing-management");
   await expect(management).toBeVisible();
@@ -348,7 +348,7 @@ test("printing administration uses the same pair action as printer attention", a
 
   await page.goto("/admin/printing");
   await expect(page.getByTestId("admin-pin-keypad")).toBeVisible();
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
   await openAdminSection(page, "admin-nav-printing");
   await expect(page.getByTestId("printing-management-pair")).toBeVisible();
   await page.getByTestId("printing-management-pair").click();

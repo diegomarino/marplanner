@@ -50,7 +50,7 @@ export default defineConfig({
       VITE_E2E_PRINT_POLL_MS: "500",
       DATA_DIR: e2eDataDir.dataDir,
       MP_BOOTSTRAP_KEY: process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key",
-      ADMIN_PIN: process.env.ADMIN_PIN ?? "1234",
+      MP_ADMIN_PIN: process.env.MP_ADMIN_PIN ?? "1234",
       MP_ACCESS_TOKEN: process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token",
       VITE_E2E_HOOKS: "true",
       SCHEDULER_DISABLED: "1",

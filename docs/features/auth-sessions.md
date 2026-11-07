@@ -13,7 +13,7 @@ each endpoint requires (each domain declares its own).
 
 ## Implementation status
 
-Provisioning, failure-only authentication backoff, request authorization, frontend access gating and PIN verification are implemented. See the [auth contract](../architecture/contracts/auth-sessions.md). **Key create/list/revoke, last-key anti-lockout, and server cookie revocation are out of scope for this household release** (ops recovery only). **`set-pin` is not planned** — PIN replacement is `ADMIN_PIN` + restart + re-provision ([operations](../operations.md)). Deferred multi-integration requirements below are not operating instructions.
+Provisioning, failure-only authentication backoff, request authorization, frontend access gating and PIN verification are implemented. See the [auth contract](../architecture/contracts/auth-sessions.md). **Key create/list/revoke, last-key anti-lockout, and server cookie revocation are out of scope for this household release** (ops recovery only). **`set-pin` is not planned** — PIN replacement is `MP_ADMIN_PIN` + restart + re-provision ([operations](../operations.md)). Deferred multi-integration requirements below are not operating instructions.
 
 ## Behavior
 
