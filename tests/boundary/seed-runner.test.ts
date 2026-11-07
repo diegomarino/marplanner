@@ -1,4 +1,4 @@
-import { copyFileSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -168,10 +168,11 @@ function makeSeedsDirectory(files: Record<string, string>): string {
  * folder does not ship. */
 function makeMigrationsDirectory(files: Record<string, string>): string {
   const directory = makeDirectory();
-  copyFileSync(
-    join(__dirname, "../../drizzle/0000_baseline.sql"),
-    join(directory, "0000_baseline.sql")
-  );
+  // Every shipped migration: the shared database may already hold all of them in its ledger.
+  const drizzleDirectory = join(__dirname, "../../drizzle");
+  for (const name of readdirSync(drizzleDirectory).filter((file) => file.endsWith(".sql"))) {
+    copyFileSync(join(drizzleDirectory, name), join(directory, name));
+  }
   for (const [name, source] of Object.entries(files)) {
     writeFileSync(join(directory, name), source);
   }

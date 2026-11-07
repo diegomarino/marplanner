@@ -5,7 +5,7 @@ import { join } from "node:path";
 import Database from "better-sqlite3";
 import { describe, expect, it } from "vitest";
 import { getDb } from "../../src/server/db/client";
-import { execBaseline } from "../helpers/baseline";
+import { execBaseline, execDeltas, shippedMigrationFiles } from "../helpers/baseline";
 import { ALL_SCHEMA_TABLES } from "../helpers/schema-tables";
 import { useIsolatedDb } from "../helpers/db";
 
@@ -169,15 +169,16 @@ describe("database lifecycle fresh current baseline", () => {
   useIsolatedDb({ pluginState: "inactive" });
 
   it(
-    "is semantically equivalent to a clean Drizzle generation from the current TypeScript schema",
+    "with its deltas is semantically equivalent to a clean Drizzle generation from the current TypeScript schema",
     { timeout: 30_000 },
     () => {
       const tempDir = mkdtempSync(join(tmpdir(), "mp-current-baseline-catalog-"));
       try {
         const generated = generateCurrentSchemaCatalog(tempDir);
-        const committed = instantiateCatalog(join(tempDir, "baseline.sqlite"), (db) =>
-          execBaseline(db)
-        );
+        const committed = instantiateCatalog(join(tempDir, "baseline.sqlite"), (db) => {
+          execBaseline(db);
+          execDeltas(db);
+        });
 
         expect(committed).toEqual(generated);
       } finally {
@@ -186,7 +187,7 @@ describe("database lifecycle fresh current baseline", () => {
     }
   );
 
-  it("installs the re-derived schema from the single baseline and preserves foreign keys", () => {
+  it("installs the re-derived schema from the baseline and its deltas and preserves foreign keys", () => {
     const db = getDb();
     const tables = db
       .prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
@@ -198,7 +199,7 @@ describe("database lifecycle fresh current baseline", () => {
     expect(tables.map((table) => table.name)).toEqual(ALL_SCHEMA_TABLES);
     expect(
       db.prepare("SELECT fileName FROM drizzle_universe_migrations ORDER BY fileName").all()
-    ).toEqual([{ fileName: "0000_baseline.sql" }]);
+    ).toEqual(shippedMigrationFiles().map((fileName) => ({ fileName })));
 
     const foreignKeys = ALL_SCHEMA_TABLES.flatMap((table) =>
       (

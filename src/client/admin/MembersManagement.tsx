@@ -23,7 +23,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MEMBER_COLOR_KEYS, Member, Role, type MemberColorKey } from "../../shared";
+import {
+  DEFAULT_CELEBRATION,
+  MEMBER_COLOR_KEYS,
+  Member,
+  Role,
+  type MemberCelebration,
+  type MemberColorKey,
+} from "../../shared";
+import { MemberCelebrationField, celebrationProblem } from "./MemberCelebrationField";
 import type { MessageKey } from "@/i18n/messages";
 import { useTranslation } from "@/i18n";
 
@@ -150,6 +158,7 @@ function MembersManagementContent() {
   const [formDay, setFormDay] = useState<number | "">("");
   const [formYear, setFormYear] = useState<string>("");
   const [formColorKey, setFormColorKey] = useState<MemberColorKey | null>(null);
+  const [formCelebration, setFormCelebration] = useState<MemberCelebration>(DEFAULT_CELEBRATION);
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirming, setConfirming] = useState<"archive" | "restore" | null>(null);
@@ -157,7 +166,6 @@ function MembersManagementContent() {
   useEffect(() => {
     refreshMembers();
   }, []);
-
   const refreshMembers = () => {
     setLoading(true);
     setError(null);
@@ -205,6 +213,7 @@ function MembersManagementContent() {
     setFormName(member?.displayName ?? "");
     setFormRole(member?.role ?? "");
     setFormColorKey(member?.colorKey ?? null);
+    setFormCelebration(member?.celebration ?? DEFAULT_CELEBRATION);
     setFormMonth(member?.birthDate?.month ?? "");
     setFormDay(member?.birthDate?.day ?? "");
     setFormYear(
@@ -228,7 +237,13 @@ function MembersManagementContent() {
   };
 
   const readOnly = form?.kind === "archived";
-  const formValid = formName.trim().length > 0 && formRole !== "";
+  // The celebration plays when a block of chores is finished on the board, and the board has a
+  // column for each active child only; for anyone else the choice would never show.
+  const showCelebration = formRole === Role.child;
+  const formValid =
+    formName.trim().length > 0 &&
+    formRole !== "" &&
+    !(showCelebration && celebrationProblem(formCelebration));
   // A colour identifies one active member. Archived members hold no colour, matching the
   // server's own first-unused assignment.
   const takenColors = new Set(
@@ -271,6 +286,9 @@ function MembersManagementContent() {
     const creating = form.kind === "create";
     const body: Record<string, unknown> = { displayName: formName.trim(), role: formRole };
     if (formColorKey) body.colorKey = formColorKey;
+    // Creating leaves the default to the server, as with an unset colour.
+    if (showCelebration && !(creating && formCelebration.preset === DEFAULT_CELEBRATION.preset))
+      body.celebration = formCelebration;
     // Creating omits an unset birthday; editing sends null so a cleared one is removed.
     if (birthDate || !creating) body.birthDate = birthDate;
 
@@ -568,6 +586,25 @@ function MembersManagementContent() {
                 <p className="text-muted-foreground text-sm">{t("members.color.automatic")}</p>
               )}
             </div>
+
+            {showCelebration ? (
+              <MemberCelebrationField
+                value={formCelebration}
+                onChange={setFormCelebration}
+                colorKey={formColorKey ?? freeColors[0]}
+                disabled={saving || readOnly}
+              />
+            ) : (
+              form?.kind !== "archived" &&
+              formRole !== "" && (
+                <p
+                  className="text-muted-foreground text-sm"
+                  data-testid="member-celebration-unavailable"
+                >
+                  {t("members.celebration.noRoutines")}
+                </p>
+              )
+            )}
 
             <div className="flex flex-col gap-2">
               <Label id="members-edit-birthdate-group-label">{t("members.birthdate.label")}</Label>

@@ -10,13 +10,12 @@ import { __resetRestoreStateForTests, restoreDatabase } from "../../src/server/b
 import { getDb, resetDb } from "../../src/server/db/client";
 import { runMigrations } from "../../src/server/db/migrate";
 import { runSeedProfile } from "../../src/server/db/seeds/runner";
+import { shippedMigrationFiles } from "../helpers/baseline";
 import { useIsolatedDb } from "../helpers/db";
 
 const AS_OF_DATE = "2026-09-23";
 const NOW_MS = Date.parse("2026-09-23T12:00:00.000Z");
-const BASELINE_FILE = "0000_baseline.sql";
-const BASELINE_PATH = path.resolve(process.cwd(), "drizzle", BASELINE_FILE);
-const CURRENT_MIGRATION_FILES = [BASELINE_FILE];
+const CURRENT_MIGRATION_FILES = shippedMigrationFiles();
 
 type Member = { id: string; displayName: string; lifecycle: string };
 type BackupSnapshot = { ok: true; filename: string } | { ok: false; error: string };
@@ -150,8 +149,11 @@ function appliedMigrationFiles(): string[] {
 
 function makeMigrationsDirectory(laterMigrationSql: string): string {
   const directory = mkdtempSync(path.join(tmpdir(), "mp-recovery-journey-"));
-  fs.copyFileSync(BASELINE_PATH, path.join(directory, BASELINE_FILE));
-  fs.writeFileSync(path.join(directory, "0001_recovery_journey_probe.sql"), laterMigrationSql);
+  for (const file of CURRENT_MIGRATION_FILES) {
+    fs.copyFileSync(path.resolve(process.cwd(), "drizzle", file), path.join(directory, file));
+  }
+  // Sorts after every shipped migration, so it is the one "later" migration the restore applies.
+  fs.writeFileSync(path.join(directory, "9999_recovery_journey_probe.sql"), laterMigrationSql);
   return directory;
 }
 

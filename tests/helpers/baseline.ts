@@ -27,3 +27,30 @@ export function execBaseline(db: Database.Database, capturedAt = "2026-10-16T00:
     db.exec("DROP TABLE temp.plugin_lifecycle_migration_context");
   }
 }
+
+const DRIZZLE_DIR = path.resolve(process.cwd(), "drizzle");
+
+/** Every shipped migration in the order the runner applies it: the baseline, then its deltas. */
+export function shippedMigrationFiles(): string[] {
+  return fs
+    .readdirSync(DRIZZLE_DIR)
+    .filter((file) => file.endsWith(".sql"))
+    .sort();
+}
+
+/** Execute every delta after the baseline, as `runMigrations` does: foreign keys off around the
+ * batch (a table rebuild must not cascade), one transaction. Records nothing in the ledger;
+ * returns the applied file names so callers that need a ledger can write it. */
+export function execDeltas(db: Database.Database): string[] {
+  const deltas = shippedMigrationFiles().filter((file) => file !== BASELINE_FILE);
+  const foreignKeys = db.pragma("foreign_keys", { simple: true });
+  db.pragma("foreign_keys = OFF");
+  try {
+    db.transaction(() => {
+      for (const file of deltas) db.exec(fs.readFileSync(path.join(DRIZZLE_DIR, file), "utf8"));
+    })();
+  } finally {
+    db.pragma(`foreign_keys = ${foreignKeys ? "ON" : "OFF"}`);
+  }
+  return deltas;
+}

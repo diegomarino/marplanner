@@ -36,6 +36,7 @@ describe("public settings seed", () => {
       expect(response.statusCode).toBe(200);
       expect(JSON.parse(response.body)).toEqual({
         locale: { timezone: "Europe/Madrid", language: "en", weekStartDay: 1 },
+        celebration: { sound: true },
         weather: { lat: 39.7817, lon: -89.6501, label: "Springfield" },
         printer: { paperWidthDots: 576 },
         // Lifecycle activation inserts the unpaired transport default.

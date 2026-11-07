@@ -2,17 +2,40 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "@/i18n";
+import type { MessageKey } from "@/i18n/messages";
 import { cn } from "@/lib/utils";
 import { EMOJI_CATEGORIES } from "./emoji-catalog";
 import { NotoEmoji } from "./noto-emoji";
+
+/** Message keys for the trigger and popover; the chore-icon wording is the default. */
+export interface EmojiPickerLabels {
+  select: MessageKey;
+  /** Gets `{icon}` replaced with the current emoji. */
+  change: MessageKey;
+  title: MessageKey;
+  clear: MessageKey;
+}
+
+const CHORE_ICON_LABELS: EmojiPickerLabels = {
+  select: "routines.emojiPicker.select",
+  change: "routines.emojiPicker.change",
+  title: "routines.emojiPicker.title",
+  clear: "routines.emojiPicker.clear",
+};
 
 interface EmojiPickerProps {
   value: string | null | undefined;
   onChange: (emoji: string | null) => void;
   className?: string;
+  labels?: EmojiPickerLabels;
 }
 
-export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
+export function EmojiPicker({
+  value,
+  onChange,
+  className,
+  labels = CHORE_ICON_LABELS,
+}: EmojiPickerProps) {
   const { t, language } = useTranslation();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -40,11 +63,7 @@ export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
         variant="outline"
         // eslint-disable-next-line ui-policy/sizing -- Decorative 24px glyph; this icon-only button retains its density-controlled touch target.
         className="size-[var(--control-height)] p-0 [font-size:1.5rem]"
-        aria-label={
-          value
-            ? t("routines.emojiPicker.change").replace("{icon}", value)
-            : t("routines.emojiPicker.select")
-        }
+        aria-label={value ? t(labels.change).replace("{icon}", value) : t(labels.select)}
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={() => setOpen((current) => !current)}
@@ -54,7 +73,7 @@ export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
       {open && (
         <div
           role="dialog"
-          aria-label={t("routines.emojiPicker.title")}
+          aria-label={t(labels.title)}
           className="bg-card absolute top-full left-0 z-50 mt-2 w-max rounded-2xl border p-3 shadow-xl"
         >
           <Input
@@ -101,7 +120,7 @@ export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
               className="mt-2 w-full"
               onClick={() => choose(null)}
             >
-              {t("routines.emojiPicker.clear")}
+              {t(labels.clear)}
             </Button>
           )}
         </div>

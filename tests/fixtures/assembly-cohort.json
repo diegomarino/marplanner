@@ -1567,7 +1567,7 @@
           "tests/boundary/database-baseline.test.ts": [
             "database lifecycle current baseline keeps the reviewed sentinel, both tables, and canonical day-period rows in SQL",
             "database lifecycle current baseline uses a table oracle re-derived from the current TypeScript schema",
-            "database lifecycle current baseline keeps exactly one migration: the squashed baseline"
+            "database lifecycle current baseline keeps the squashed baseline first, followed only by reviewed deltas"
           ],
           "tests/boundary/day-periods-active.test.ts": [
             "day-periods-active (RED boundary test) FIXED clock at 13:00 → GET /api/day-periods/active returns activeId='afternoon' (FR-007)",
@@ -4492,7 +4492,8 @@
             "SettingsManagement hosts the day periods on the same page",
             "SettingsManagement blocks the out-of-range location 100, 2 before any request, even with a locale edit",
             "SettingsManagement blocks the out-of-range location -90.5, 2 before any request, even with a locale edit",
-            "SettingsManagement blocks the out-of-range location 40, 180.01 before any request, even with a locale edit"
+            "SettingsManagement blocks the out-of-range location 40, 180.01 before any request, even with a locale edit",
+            "SettingsManagement saves the completion sound switch as its own household object"
           ],
           "tests/client/settings-timezones.test.ts": [
             "timeZoneGroups lists UTC first and the curated groups in order",
@@ -5436,10 +5437,10 @@
             "daily-briefing auto-print trigger (US1, research D3, FR-017/FR-018) registerAutoPrintTrigger arms a REAL scheduler interval job at the configured cadence, and each tick re-evaluates"
           ],
           "tests/integration/database-baseline.test.ts": [
-            "database lifecycle fresh current baseline is semantically equivalent to a clean Drizzle generation from the current TypeScript schema",
             "database lifecycle fresh current baseline contains only canonical fixed rows and no legacy development data",
-            "database lifecycle fresh current baseline installs the re-derived schema from the single baseline and preserves foreign keys",
-            "database lifecycle fresh current baseline creates the ten-colour member palette and the briefing weekday schedule directly"
+            "database lifecycle fresh current baseline creates the ten-colour member palette and the briefing weekday schedule directly",
+            "database lifecycle fresh current baseline with its deltas is semantically equivalent to a clean Drizzle generation from the current TypeScript schema",
+            "database lifecycle fresh current baseline installs the re-derived schema from the baseline and its deltas and preserves foreign keys"
           ],
           "tests/integration/database-lifecycle-aggregate.test.ts": [
             "database lifecycle aggregate recovery journey recovers the ordered public profile through a later migration while preserving ordinary and failed-restore targets"
@@ -5676,6 +5677,89 @@
             "device credential retirement keeps the configured bootstrap key, which startup re-activates, but retires stale ones",
             "device credential retirement rejects an empty or overlong label and prints usage for unknown commands",
             "device credential retirement opens the server's database by its environment and never creates a missing one"
+          ],
+          "tests/client/chores-celebration.test.tsx": [
+            "chores board completion celebration celebrates once when the member's tap completes the last open chore of a period",
+            "chores board completion celebration does not celebrate a period that is already complete when the board loads",
+            "chores board completion celebration does not celebrate a completion that leaves chores open in the period",
+            "chores board completion celebration does not celebrate an uncompletion, nor the same period again in this session",
+            "chores board completion celebration still celebrates when session storage is unavailable"
+          ],
+          "tests/client/completion-celebration.test.tsx": [
+            "CompletionCelebration announces the title and message and rains the member's emojis",
+            "CompletionCelebration draws coloured paper in the member palette when the set has no emojis",
+            "CompletionCelebration dismisses itself after the celebration duration",
+            "CompletionCelebration dismisses on any tap without blocking the page",
+            "CompletionCelebration shows a still scene under reduced motion",
+            "CompletionCelebration plays the fanfare once when sound is on, also under reduced motion",
+            "CompletionCelebration plays nothing when sound is off",
+            "CompletionCelebration swallows a refused play()",
+            "CompletionCelebration swallows a play() that throws synchronously",
+            "celebration emojis are vendored every preset emoji is in the emoji catalog, so it renders as a Noto SVG"
+          ],
+          "tests/client/member-celebration-field.test.tsx": [
+            "member celebration field shows the member's preset and saves another one",
+            "member celebration field moves between presets with the arrow keys",
+            "member celebration field builds a custom set from the current one, adds and removes emojis, and saves it",
+            "member celebration field blocks saving an empty custom set",
+            "member celebration field previews the celebration in place, with the household sound",
+            "member celebration field previews silently when the household sound is off",
+            "member celebration field offers no celebration to a parent, who has no column on the board"
+          ],
+          "tests/boundary/celebration-shared.test.ts": [
+            "celebration presets lists every preset plus custom, with confetti as the emoji-less default",
+            "celebration presets holds only distinct single emojis within the custom maximum",
+            "celebration presets recognises preset ids only",
+            "celebration presets draws a preset's glyphs or a custom set's own",
+            "parseCelebration accepts a preset and a custom set, trimming the emojis",
+            "parseCelebration accepts exactly the custom maximum",
+            "parseCelebration refuses null",
+            "parseCelebration refuses [\"stars\"]",
+            "parseCelebration refuses {\"preset\":\"stars\",\"extra\":1}",
+            "parseCelebration refuses {\"preset\":\"dragons\"}",
+            "parseCelebration refuses {\"preset\":\"stars\",\"emojis\":[\"⭐\"]}",
+            "parseCelebration refuses {\"preset\":\"custom\"}",
+            "parseCelebration refuses {\"preset\":\"custom\",\"emojis\":\"⭐\"}",
+            "parseCelebration refuses {\"preset\":\"custom\",\"emojis\":[\"⭐\",\"🌟\",\"✨\",\"💫\",\"👑\",\"🏰\",\"🦄\"]}",
+            "parseCelebration refuses {\"preset\":\"custom\",\"emojis\":[\"a\"]}",
+            "parseCelebration refuses {\"preset\":\"custom\",\"emojis\":[\"⭐\",\" ⭐\"]}"
+          ],
+          "tests/boundary/member-celebration.test.ts": [
+            "member celebration over HTTP stores confetti when create omits the celebration",
+            "member celebration over HTTP stores an explicit preset or custom set on create",
+            "member celebration over HTTP PATCH sets the confetti preset",
+            "member celebration over HTTP PATCH sets the stars preset",
+            "member celebration over HTTP PATCH sets the videogames preset",
+            "member celebration over HTTP PATCH sets the soccer preset",
+            "member celebration over HTTP PATCH sets the fairytale preset",
+            "member celebration over HTTP PATCH replaces a custom set with a preset, clearing its emojis",
+            "member celebration over HTTP PATCH without the field keeps the celebration, and archive and restore keep it",
+            "member celebration over HTTP rejects an unknown preset with 400 on create and on PATCH",
+            "member celebration over HTTP rejects custom without emojis with 400 on create and on PATCH",
+            "member celebration over HTTP rejects custom with an empty list with 400 on create and on PATCH",
+            "member celebration over HTTP rejects emojis on a non-custom preset with 400 on create and on PATCH",
+            "member celebration over HTTP rejects more than six emojis with 400 on create and on PATCH",
+            "member celebration over HTTP rejects a repeated emoji with 400 on create and on PATCH",
+            "member celebration over HTTP rejects a non-emoji string with 400 on create and on PATCH",
+            "member celebration over HTTP rejects two emojis in one item with 400 on create and on PATCH",
+            "member celebration over HTTP rejects a non-string item with 400 on create and on PATCH",
+            "member celebration over HTTP rejects an unknown field with 400 on create and on PATCH",
+            "member celebration over HTTP rejects a non-object with 400 on create and on PATCH",
+            "member celebration over HTTP reads a stored value the shared rule no longer accepts as the default",
+            "member celebration over HTTP documents MemberCelebration on Member, CreateMemberRequest and UpdateMemberRequest",
+            "member celebration over HTTP exposes the household sound switch, on by default, and writes it through PUT",
+            "member celebration over HTTP rejects the invalid sound settings {\"sound\":\"yes\"}",
+            "member celebration over HTTP rejects the invalid sound settings {}",
+            "member celebration over HTTP rejects the invalid sound settings {\"sound\":true,\"volume\":1}",
+            "0002_member_celebration migration adds both columns and gives existing members the confetti default",
+            "0002_member_celebration migration refuses an unknown preset",
+            "0002_member_celebration migration refuses custom without emojis",
+            "0002_member_celebration migration refuses custom with an empty list",
+            "0002_member_celebration migration refuses custom with seven emojis",
+            "0002_member_celebration migration refuses emojis on a preset",
+            "0002_member_celebration migration accepts a custom set of one to six emojis",
+            "member celebration over HTTP refuses a non-object sound setting at the settings seam",
+            "member celebration over HTTP reads a stored sound setting that no longer validates as the default"
           ]
         }
       },
@@ -5708,7 +5792,8 @@
           "tests/e2e/calendar.spec.ts": ["fd11a3d0e6100edc747e-74db3b02bb030c6999ab"],
           "tests/e2e/chores-board.spec.ts": [
             "b8135b54a0320e142813-e9bd8d6d75365c6d27bf",
-            "b8135b54a0320e142813-efb78496d4d3491d9ea5"
+            "b8135b54a0320e142813-efb78496d4d3491d9ea5",
+            "b8135b54a0320e142813-e0fbec9ff25f5cc51b0f"
           ],
           "tests/e2e/critical-flow.spec.ts": ["e621337e095a26e8c527-1904dc1d69bc6003d74c"],
           "tests/e2e/daily-briefing.spec.ts": [
@@ -5904,6 +5989,21 @@
           "statements": 78.16,
           "functions": 72.46,
           "branches": 73.52
+        }
+      },
+      "src/client/admin/MemberCelebrationField.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 44,
+          "statements": 51,
+          "functions": 20,
+          "branches": 51
+        },
+        "minimumRates": {
+          "lines": 93.18,
+          "statements": 88.23,
+          "functions": 90,
+          "branches": 80.39
         }
       },
       "src/client/admin/MembersManagement.tsx": {
@@ -6341,6 +6441,21 @@
           "branches": 100
         }
       },
+      "src/client/chores/CompletionCelebration.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 26,
+          "statements": 31,
+          "functions": 12,
+          "branches": 28
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/client/chores/EmojiPicker.tsx": {
         "layer": "client",
         "minimumTotals": {
@@ -6354,6 +6469,21 @@
           "statements": 100,
           "functions": 100,
           "branches": 92.85
+        }
+      },
+      "src/client/chores/celebration-sound.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 17,
+          "statements": 20,
+          "functions": 5,
+          "branches": 8
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 95,
+          "functions": 100,
+          "branches": 87.5
         }
       },
       "src/client/chores/emoji-catalog.ts": {
@@ -9573,7 +9703,7 @@
           "lines": 79,
           "statements": 82,
           "functions": 14,
-          "branches": 90
+          "branches": 78
         },
         "minimumRates": {
           "lines": 100,
@@ -9600,9 +9730,24 @@
       "src/server/modules/members/referential.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 14,
-          "statements": 17,
-          "functions": 9,
+          "lines": 12,
+          "statements": 13,
+          "functions": 7,
+          "branches": 2
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/modules/members/row.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 5,
+          "statements": 5,
+          "functions": 3,
           "branches": 10
         },
         "minimumRates": {
@@ -10639,6 +10784,21 @@
           "statements": 9,
           "functions": 2,
           "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/shared/celebration.ts": {
+        "layer": "shared",
+        "minimumTotals": {
+          "lines": 28,
+          "statements": 30,
+          "functions": 5,
+          "branches": 29
         },
         "minimumRates": {
           "lines": 100,

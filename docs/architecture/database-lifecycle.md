@@ -94,7 +94,7 @@ snapshots, logs, or expected output.
 
 ## Migration squash (2026-10-16)
 
-`drizzle/` holds exactly one migration, `0000_baseline.sql`: `drizzle-kit generate` output for
+The squash left `drizzle/` with one migration, `0000_baseline.sql`: `drizzle-kit generate` output for
 `src/server/db/schema.ts`, plus `STRICT` on the three calendar-sync tables, the four day-period
 rows, and the lineage and plugin registry seed (every plugin inactive). It replaced
 `0000_current_baseline.sql` and the deltas `0001_calendar_feed_sync`, `0002_plugin_lifecycle`,
@@ -106,3 +106,14 @@ backup created before the squash is **unsupported**. The runner refuses a non-em
 writing anything (`Unsupported migration history.`); delete the `DATA_DIR` database and reseed.
 Restore reports such a backup as `unsupported_lineage`. `installation_lineage.kind` is now always
 `fresh`; the `prior_baseline` lineage (an install that predated plugin lifecycle) no longer exists.
+
+## Deltas after the squash
+
+Real installations hold data since the squash, so the baseline is never regenerated again. Schema
+changes land as numbered deltas after it, applied in order by the same runner (the pre-migration
+backup and the unknown-ledger refusal still apply):
+
+- `0002_member_celebration.sql` (#92): `members.celebration_preset` (`confetti` default; one of
+  `confetti`, `stars`, `videogames`, `soccer`, `fairytale`, `custom`) and
+  `members.celebration_emojis` (a JSON array of 1–6 items when the preset is `custom`, NULL
+  otherwise), each with a CHECK. Existing members read as `confetti`.
