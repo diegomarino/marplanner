@@ -9,12 +9,18 @@
 // (`src/shared/weather.ts`: `conditionKey`/`tempMinC`/`tempMaxC`/`rainPct`, no `hourly`, no
 // "current" reading). `render/adapter.ts`'s "weather"/"weatherText" case now passes that real
 // shape through unchanged, so this def is rewritten to consume it directly instead of the
-// never-produced v1 fields.
+// never-produced v1 fields. The icons are Weather Icons from `src/shared/weather-icons/`, one per
+// condition key, the same glyphs the home weather pill and the on-screen briefing draw.
 import { createElement, type ReactElement } from "react";
 import { defineBlock, type BlockDefinition } from "pressedslip";
 import { type ZodType, z } from "zod";
 import { labelsFromCtx } from "../labels";
 import type { WeatherConditionKey } from "../../../../../shared";
+import { weatherConditionIconName } from "../../../../../shared/weather-icons/conditionIcons";
+import {
+  WEATHER_ICON_PATHS,
+  type WeatherIconName,
+} from "../../../../../shared/weather-icons/paths";
 
 const conditionEnum = z.union([
   z.literal("clear"),
@@ -48,93 +54,50 @@ const schema: ZodType<{
 });
 export type WeatherData = z.infer<typeof schema>;
 
-/** Icon bucketing for the 16-key `WeatherConditionKey` union onto the 4 hand-drawn icon families
- * v1 shipped (sun / rain cloud / snow cloud / plain cloud) — thunderstorm variants join the rain
- * bucket (no dedicated storm icon exists), everything else with no precipitation joins the plain
- * cloud bucket. */
-function weatherIcon(conditionKey: WeatherConditionKey): ReactElement {
-  if (conditionKey === "clear") {
-    return createElement(
-      "svg",
-      { width: 72, height: 72, viewBox: "0 0 72 72", role: "img", "aria-label": "Clear" },
-      createElement("circle", { cx: 36, cy: 36, r: 14, fill: "black" }),
-      createElement(
-        "g",
-        { stroke: "black", strokeWidth: 5, strokeLinecap: "round" },
-        createElement("line", { x1: 36, y1: 4, x2: 36, y2: 16 }),
-        createElement("line", { x1: 36, y1: 56, x2: 36, y2: 68 }),
-        createElement("line", { x1: 4, y1: 36, x2: 16, y2: 36 }),
-        createElement("line", { x1: 56, y1: 36, x2: 68, y2: 36 }),
-        createElement("line", { x1: 13, y1: 13, x2: 21, y2: 21 }),
-        createElement("line", { x1: 51, y1: 51, x2: 59, y2: 59 }),
-        createElement("line", { x1: 13, y1: 59, x2: 21, y2: 51 }),
-        createElement("line", { x1: 51, y1: 21, x2: 59, y2: 13 })
-      )
-    );
-  }
+/** Vertical centre of each printed glyph inside its 30×30 box, measured from the path's bounding
+ * box (horizontally they are all centred at 15). Weather Icons sit the rain, snow and storm clouds
+ * low and the sun-and-cloud icons high, up to 3.6 units (~9px at 72px) off centre, which shows
+ * next to the text column; the view box shifts by the difference so every icon sits centred. */
+const CENTER_Y: Partial<Record<WeatherIconName, number>> = {
+  "wi-day-sunny-overcast": 12.19,
+  "wi-day-cloudy": 11.38,
+  "wi-fog": 16.19,
+  "wi-sprinkle": 15.78,
+  "wi-rain-mix": 17.7,
+  "wi-rain": 17.47,
+  "wi-sleet": 17.73,
+  "wi-snow": 17.44,
+  "wi-snowflake-cold": 14.39,
+  "wi-day-showers": 14.29,
+  "wi-snow-wind": 17.44,
+  "wi-thunderstorm": 17.64,
+  "wi-hail": 17.57,
+};
 
-  if (
-    conditionKey === "drizzle" ||
-    conditionKey === "freezingDrizzle" ||
-    conditionKey === "rain" ||
-    conditionKey === "freezingRain" ||
-    conditionKey === "rainShowers" ||
-    conditionKey === "thunderstorm" ||
-    conditionKey === "thunderstormHail"
-  ) {
-    return createElement(
-      "svg",
-      { width: 72, height: 72, viewBox: "0 0 72 72", role: "img", "aria-label": conditionKey },
-      createElement("path", {
-        d: "M20 40h32c7 0 12-5 12-12s-5-12-12-12c-3-8-10-12-18-12-11 0-20 8-21 19C6 25 2 30 2 36c0 7 6 12 18 12z",
-        fill: "black",
-      }),
-      createElement(
-        "g",
-        { stroke: "black", strokeWidth: 5, strokeLinecap: "round" },
-        createElement("line", { x1: 24, y1: 52, x2: 18, y2: 66 }),
-        createElement("line", { x1: 40, y1: 52, x2: 34, y2: 66 }),
-        createElement("line", { x1: 56, y1: 52, x2: 50, y2: 66 })
-      )
-    );
-  }
-
-  if (conditionKey === "snow" || conditionKey === "snowGrains" || conditionKey === "snowShowers") {
-    return createElement(
-      "svg",
-      { width: 72, height: 72, viewBox: "0 0 72 72", role: "img", "aria-label": "Snowy" },
-      createElement("path", {
-        d: "M20 38h32c7 0 12-5 12-12s-5-12-12-12c-3-8-10-12-18-12-11 0-20 8-21 19C6 23 2 28 2 34c0 7 6 12 18 12z",
-        fill: "black",
-      }),
-      createElement(
-        "g",
-        { fill: "black" },
-        createElement("circle", { cx: 22, cy: 58, r: 4 }),
-        createElement("circle", { cx: 38, cy: 58, r: 4 }),
-        createElement("circle", { cx: 54, cy: 58, r: 4 })
-      )
-    );
-  }
-
+/** A Weather Icons glyph (`src/shared/weather-icons/`, the set the home weather pill draws): one
+ * path on a 30×30 view box, re-centred vertically, filled black for the monochrome thermal print. */
+function weatherGlyph(name: WeatherIconName, size: number, label: string): ReactElement {
+  const top = (CENTER_Y[name] ?? 15) - 15;
   return createElement(
     "svg",
-    { width: 72, height: 72, viewBox: "0 0 72 72", role: "img", "aria-label": conditionKey },
-    createElement("path", {
-      d: "M20 46h32c7 0 12-5 12-12s-5-12-12-12c-3-8-10-12-18-12-11 0-20 8-21 19C6 31 2 36 2 42c0 7 6 12 18 12z",
-      fill: "black",
-    })
+    { width: size, height: size, viewBox: `0 ${top} 30 30`, role: "img", "aria-label": label },
+    createElement("path", { d: WEATHER_ICON_PATHS[name], fill: "black" })
   );
 }
 
-function raindropIcon(): ReactElement {
+/** `wi-raindrop` fills only 10×13 of its 30×30 box; an 18-unit box around it keeps the drop the
+ * size the v1 hand-drawn one printed at, in the same 36px slot. */
+function raindropGlyph(): ReactElement {
   return createElement(
     "svg",
-    { width: 32, height: 36, viewBox: "0 0 20 24", role: "img", "aria-label": "Rain probability" },
-    createElement("path", {
-      d: "M 10 2 Q 4 12 4 16 Q 4 22 10 22 Q 16 22 16 16 Q 16 12 10 2 Z",
-      fill: "black",
-    })
+    {
+      width: 36,
+      height: 36,
+      viewBox: "6 4.7 18 18",
+      role: "img",
+      "aria-label": "Rain probability",
+    },
+    createElement("path", { d: WEATHER_ICON_PATHS["wi-raindrop"], fill: "black" })
   );
 }
 
@@ -156,7 +119,12 @@ export const weatherBlock: BlockDefinition<WeatherData> = defineBlock({
       createElement(
         "div",
         { style: { display: "flex", width: 72, height: 72 } },
-        weatherIcon(data.conditionKey)
+        // A `ForecastDay` covers a whole day and carries no `isDay`: always the day icon.
+        weatherGlyph(
+          weatherConditionIconName(data.conditionKey),
+          72,
+          labelsFromCtx(ctx).weather.conditions[data.conditionKey]
+        )
       ),
       createElement(
         "div",
@@ -186,7 +154,7 @@ export const weatherBlock: BlockDefinition<WeatherData> = defineBlock({
                 gap: 4,
               },
             },
-            raindropIcon(),
+            raindropGlyph(),
             createElement(
               "div",
               { style: { display: "flex", fontSize: 22, fontWeight: 700, color: "black" } },
