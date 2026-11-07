@@ -17,11 +17,11 @@ describe("credentials — mpk- diceware", () => {
       }
     });
 
-    it("has exactly 6 words (5 separators)", () => {
+    it("has exactly 8 words (7 separators)", () => {
       const key = generateKey();
       const body = key.slice(PREFIX_LENGTH);
       const words = body.split("-");
-      expect(words.length).toBe(6);
+      expect(words.length).toBe(8);
     });
 
     it("every word comes from the embedded wordlist", () => {

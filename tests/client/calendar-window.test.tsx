@@ -69,7 +69,9 @@ describe("CalendarView — bounds the recurring-event list to a 28-day window (#
     });
 
     const rows = screen.getAllByTestId("calendar-event-row");
-    expect(rows.length).toBeLessThanOrEqual(5);
+    // A month grid spans up to six weeks, so a weekly event starting today shows at most six
+    // times (e.g. today = 2026-11-01, grid 2026-10-26..2026-12-06).
+    expect(rows.length).toBeLessThanOrEqual(6);
     // The fixture fed 10 occurrences — proves this is the window bounding it, not a
     // coincidence of the fixture itself only ever having a handful of rows.
     expect(rows.length).toBeLessThan(10);

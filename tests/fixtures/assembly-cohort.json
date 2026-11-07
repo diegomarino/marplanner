@@ -1356,7 +1356,7 @@
           "tests/boundary/credentials.test.ts": [
             "credentials — mpk- diceware generateKey keys start with 'mpk-'",
             "credentials — mpk- diceware generateKey words are lowercase",
-            "credentials — mpk- diceware generateKey has exactly 6 words (5 separators)",
+            "credentials — mpk- diceware generateKey has exactly 8 words (7 separators)",
             "credentials — mpk- diceware generateKey every word comes from the embedded wordlist",
             "credentials — mpk- diceware generateKey uses CSPRNG — two keys are never identical in 100 tries",
             "credentials — mpk- diceware hashKey returns a 64-char hex string (SHA-256)",

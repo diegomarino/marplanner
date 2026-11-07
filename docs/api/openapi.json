@@ -2781,7 +2781,7 @@
           {
             "schema": {
               "type": "string",
-              "example": "Bearer mpk-cedar-lantern-otter-ridge-velvet-amber"
+              "example": "Bearer mpk-cedar-lantern-otter-ridge-velvet-amber-quilt-harbor"
             },
             "in": "header",
             "name": "Authorization",
