@@ -4149,6 +4149,16 @@
             "PillToggle keeps the plain accent pill when no colour class is given",
             "PillToggle meets kiosk density: the hidden checkbox spans the full control height"
           ],
+          "tests/client/plugin-catalog-refresh.test.tsx": [
+            "plugin catalog refresh and recovery refetches when the tab becomes visible again and shows newly activated plugins",
+            "plugin catalog refresh and recovery refetches on window focus",
+            "plugin catalog refresh and recovery shows a notice, logs once, and recovers by itself after a failed first fetch",
+            "plugin catalog refresh and recovery keeps the last good catalog while a failed refresh retries",
+            "plugin catalog refresh and recovery retries from the notice button",
+            "plugin catalog refresh and recovery logs a parse failure as an invalid catalog",
+            "plugin catalog refresh and recovery does not let a refresh issued before a lifecycle change overwrite its result",
+            "plugin catalog refresh and recovery disables the Plugins page retry while a retry is in flight"
+          ],
           "tests/client/plugin-contributions.test.tsx": [
             "active plugin contribution projection renders active contributions only while core and active siblings remain",
             "active plugin contribution projection withdraws the inactive Meals home widget while preserving core widgets",
@@ -7387,6 +7397,21 @@
           "statements": 93.1,
           "functions": 85.71,
           "branches": 75
+        }
+      },
+      "src/client/plugins/PluginCatalogNotice.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 6,
+          "statements": 7,
+          "functions": 2,
+          "branches": 10
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/client/plugins/PluginCatalogProvider.tsx": {
