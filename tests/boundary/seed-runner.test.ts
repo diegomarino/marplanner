@@ -1,9 +1,10 @@
-import { copyFileSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { getDb } from "../../src/server/db/client";
 import { runSeedProfile } from "../../src/server/db/seeds/runner";
+import { copyShippedMigrations } from "../helpers/baseline";
 import { useIsolatedDb } from "../helpers/db";
 
 const AS_OF_DATE = "2026-09-23";
@@ -163,15 +164,12 @@ function makeSeedsDirectory(files: Record<string, string>): string {
   return directory;
 }
 
-/** A migrations folder holding the real baseline plus the given probe migrations: the isolated
- * database already has the baseline in its ledger, and the runner refuses a ledger entry the
+/** A migrations folder holding the real shipped migrations plus the given probe migrations: the
+ * isolated database already has them in its ledger, and the runner refuses a ledger entry the
  * folder does not ship. */
 function makeMigrationsDirectory(files: Record<string, string>): string {
   const directory = makeDirectory();
-  copyFileSync(
-    join(__dirname, "../../drizzle/0000_baseline.sql"),
-    join(directory, "0000_baseline.sql")
-  );
+  copyShippedMigrations(directory);
   for (const [name, source] of Object.entries(files)) {
     writeFileSync(join(directory, name), source);
   }

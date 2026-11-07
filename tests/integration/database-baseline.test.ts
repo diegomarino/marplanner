@@ -5,7 +5,7 @@ import { join } from "node:path";
 import Database from "better-sqlite3";
 import { describe, expect, it } from "vitest";
 import { getDb } from "../../src/server/db/client";
-import { execBaseline } from "../helpers/baseline";
+import { SHIPPED_MIGRATION_FILES, execShippedMigrations } from "../helpers/baseline";
 import { ALL_SCHEMA_TABLES } from "../helpers/schema-tables";
 import { useIsolatedDb } from "../helpers/db";
 
@@ -176,7 +176,7 @@ describe("database lifecycle fresh current baseline", () => {
       try {
         const generated = generateCurrentSchemaCatalog(tempDir);
         const committed = instantiateCatalog(join(tempDir, "baseline.sqlite"), (db) =>
-          execBaseline(db)
+          execShippedMigrations(db)
         );
 
         expect(committed).toEqual(generated);
@@ -198,7 +198,7 @@ describe("database lifecycle fresh current baseline", () => {
     expect(tables.map((table) => table.name)).toEqual(ALL_SCHEMA_TABLES);
     expect(
       db.prepare("SELECT fileName FROM drizzle_universe_migrations ORDER BY fileName").all()
-    ).toEqual([{ fileName: "0000_baseline.sql" }]);
+    ).toEqual(SHIPPED_MIGRATION_FILES.map((fileName) => ({ fileName })));
 
     const foreignKeys = ALL_SCHEMA_TABLES.flatMap((table) =>
       (

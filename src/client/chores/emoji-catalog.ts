@@ -204,6 +204,16 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
         keywords: ["gym", "weights", "gimnasio", "pesas", "exercise"],
       },
       { emoji: "🧘", label: "routines.emojiPicker.icon.yoga", keywords: ["yoga", "calm"] },
+      {
+        emoji: "🤸",
+        label: "routines.emojiPicker.icon.sports",
+        keywords: ["sports", "deporte", "gymnastics", "gimnasia", "exercise"],
+      },
+      {
+        emoji: "🩰",
+        label: "routines.emojiPicker.icon.ballet",
+        keywords: ["ballet", "dance", "baile", "danza"],
+      },
       { emoji: "🚗", label: "routines.emojiPicker.icon.car", keywords: ["car", "drive", "trip"] },
       {
         emoji: "🧳",
@@ -267,3 +277,12 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
     ],
   },
 ];
+
+const LABEL_BY_EMOJI = new Map(
+  EMOJI_CATEGORIES.flatMap((category) => category.items.map((item) => [item.emoji, item.label]))
+);
+
+/** The catalog label key of a picker emoji, or undefined for one outside the picker. */
+export function emojiLabelKey(emoji: string): MessageKey | undefined {
+  return LABEL_BY_EMOJI.get(emoji);
+}

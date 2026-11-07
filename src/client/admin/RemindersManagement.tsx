@@ -8,6 +8,7 @@ import {
   ReminderInput,
   ReminderEditInput,
   ReminderAssignmentInput,
+  ReminderContentType,
   ReminderKind,
   ReminderQueryField,
   DryRunResult,
@@ -26,6 +27,8 @@ import { ChoicePills } from "@/components/ChoicePills";
 import { MemberPills } from "@/components/MemberPills";
 import { PillToggle } from "@/components/PillToggle";
 import { ReminderMemberDays } from "./ReminderMemberDays";
+import { ReminderEmojiSequence } from "./ReminderEmojiSequence";
+import { NotoEmoji } from "@/chores/noto-emoji";
 import { MemberChip } from "@/routines/admin/MemberChip";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,7 +48,8 @@ import { NATIVE_SELECT_CLASSES } from "@/lib/recipes";
  * Only the first load and an explicit Retry show the loading state; later refreshes are silent so
  * open dialogs and panels survive. Each row names who it reaches as member-colour pills
  * (`MemberChip`), or a neutral "All members" label. The dialog's choices are shared pills (`ChoicePills`,
- * `WeekdayPicker`, `ReminderMemberDays`, `MemberPills`, `PillToggle`). */
+ * `WeekdayPicker`, `ReminderMemberDays`, `MemberPills`, `PillToggle`). A rule shows either text or,
+ * for pre-readers, an ordered emoji sequence (`ReminderEmojiSequence`). */
 
 export const WEEKDAY_LABEL_KEYS: Record<Weekday, MessageKey> = {
   mon: "reminders.weekday.mon",
@@ -99,6 +103,11 @@ function membershipToAssignments(memberIds: string[]): ReminderAssignmentInput[]
 }
 
 type FormState = { kind: "create" } | { kind: "edit"; reminder: Reminder } | null;
+
+/** A rule's accessible name: its text, or for an image rule without a description, its emojis. */
+function reminderName(reminder: Reminder): string {
+  return reminder.text || (reminder.emojis ?? []).join(" ");
+}
 
 type Translate = (key: MessageKey) => string;
 
@@ -424,7 +433,19 @@ function ReminderRow({
       <div className="flex flex-wrap items-center gap-3">
         <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-center gap-2 font-medium">
-            <span className="truncate">{reminder.text}</span>
+            {reminder.contentType === "images" ? (
+              <span
+                role="img"
+                aria-label={reminderName(reminder)}
+                data-testid={`reminder-emojis-${reminder.id}`}
+                className="inline-flex items-center gap-1"
+              >
+                {(reminder.emojis ?? []).map((emoji, index) => (
+                  <NotoEmoji key={`${emoji}-${index}`} emoji={emoji} size={28} />
+                ))}
+              </span>
+            ) : null}
+            {reminder.text && <span className="truncate">{reminder.text}</span>}
             <span className="bg-muted rounded-full px-2.5 py-0.5 text-sm font-medium">
               {isCalendarGated ? t("reminders.kind.calendarGated") : t("reminders.kind.scheduled")}
             </span>
@@ -457,7 +478,7 @@ function ReminderRow({
           variant="ghost"
           size="icon"
           data-testid={`reminder-edit-${reminder.id}`}
-          aria-label={`${t("reminders.action.edit")}: ${reminder.text}`}
+          aria-label={`${t("reminders.action.edit")}: ${reminderName(reminder)}`}
           onClick={onEdit}
         >
           <Pencil className="size-4" aria-hidden="true" />
@@ -468,7 +489,7 @@ function ReminderRow({
           size="icon"
           className="text-muted-foreground hover:text-destructive"
           data-testid={`reminder-delete-${reminder.id}`}
-          aria-label={`${t("reminders.action.delete")}: ${reminder.text}`}
+          aria-label={`${t("reminders.action.delete")}: ${reminderName(reminder)}`}
           onClick={onDelete}
         >
           <Trash2 className="size-4" aria-hidden="true" />
@@ -619,7 +640,11 @@ function ReminderFormDialog({
 }: ReminderFormDialogProps) {
   const editing = reminder !== null;
   const [kind, setKind] = useState<ReminderKind>(reminder?.kind ?? "scheduled");
+  const [contentType, setContentType] = useState<ReminderContentType>(
+    reminder?.contentType ?? "text"
+  );
   const [text, setText] = useState(reminder?.text ?? "");
+  const [emojis, setEmojis] = useState<string[]>(reminder?.emojis ?? []);
   const [targetingMode, setTargetingMode] = useState<TargetingMode>(
     reminder?.targetingMode ?? "apply_to_all"
   );
@@ -649,7 +674,7 @@ function ReminderFormDialog({
 
   const assignments = draftToAssignments(assignmentDraft);
   const canSubmit =
-    !!text.trim() &&
+    (contentType === "images" ? emojis.length > 0 : !!text.trim()) &&
     (kind === "scheduled"
       ? targetingMode === "apply_to_all"
         ? weekdays.length > 0
@@ -659,22 +684,26 @@ function ReminderFormDialog({
         (targetingMode === "apply_to_all" || cgMemberIds.length > 0));
 
   const buildBody = (): ReminderInput | ReminderEditInput => {
-    const trimmedText = text.trim();
+    // Both shapes send the content in full, so switching Text <-> Images in an edit is one PATCH.
+    const content =
+      contentType === "images"
+        ? { contentType, text: text.trim(), emojis }
+        : { contentType, text: text.trim() };
     if (kind === "scheduled") {
       if (targetingMode === "apply_to_all") {
         return editing
-          ? { text: trimmedText, targetingMode: "apply_to_all", weekdays }
-          : { kind: "scheduled", targetingMode: "apply_to_all", text: trimmedText, weekdays };
+          ? { ...content, targetingMode: "apply_to_all", weekdays }
+          : { kind: "scheduled", targetingMode: "apply_to_all", ...content, weekdays };
       }
       return editing
-        ? { text: trimmedText, targetingMode: "specific", assignments }
-        : { kind: "scheduled", targetingMode: "specific", text: trimmedText, assignments };
+        ? { ...content, targetingMode: "specific", assignments }
+        : { kind: "scheduled", targetingMode: "specific", ...content, assignments };
     }
     const trimmedQuery = query.trim();
     if (targetingMode === "apply_to_all") {
       return editing
         ? {
-            text: trimmedText,
+            ...content,
             targetingMode: "apply_to_all",
             query: trimmedQuery,
             queryFields,
@@ -682,7 +711,7 @@ function ReminderFormDialog({
         : {
             kind: "calendar_gated",
             targetingMode: "apply_to_all",
-            text: trimmedText,
+            ...content,
             query: trimmedQuery,
             queryFields,
           };
@@ -690,7 +719,7 @@ function ReminderFormDialog({
     const memberAssignments = membershipToAssignments(cgMemberIds);
     return editing
       ? {
-          text: trimmedText,
+          ...content,
           targetingMode: "specific",
           query: trimmedQuery,
           queryFields,
@@ -699,7 +728,7 @@ function ReminderFormDialog({
       : {
           kind: "calendar_gated",
           targetingMode: "specific",
-          text: trimmedText,
+          ...content,
           query: trimmedQuery,
           queryFields,
           assignments: memberAssignments,
@@ -780,13 +809,49 @@ function ReminderFormDialog({
             )}
           </div>
 
-          <Input
-            type="text"
-            placeholder={t("reminders.management.textPlaceholder")}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            aria-label={t("reminders.management.textPlaceholder")}
-          />
+          <div className="flex gap-2 items-center flex-wrap">
+            <span className="text-muted-foreground text-control">
+              {t("reminders.content.label")}
+            </span>
+            <ChoicePills<ReminderContentType>
+              value={contentType}
+              onChange={setContentType}
+              groupLabel={t("reminders.content.label")}
+              options={[
+                {
+                  value: "text",
+                  label: t("reminders.content.text"),
+                  "data-testid": "reminder-content-text",
+                },
+                {
+                  value: "images",
+                  label: t("reminders.content.images"),
+                  "data-testid": "reminder-content-images",
+                },
+              ]}
+            />
+          </div>
+
+          {contentType === "images" ? (
+            <>
+              <ReminderEmojiSequence value={emojis} onChange={setEmojis} />
+              <Input
+                type="text"
+                placeholder={t("reminders.images.descriptionPlaceholder")}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                aria-label={t("reminders.images.descriptionPlaceholder")}
+              />
+            </>
+          ) : (
+            <Input
+              type="text"
+              placeholder={t("reminders.management.textPlaceholder")}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              aria-label={t("reminders.management.textPlaceholder")}
+            />
+          )}
 
           <div className="flex gap-2 items-center flex-wrap">
             <span className="text-muted-foreground text-control">

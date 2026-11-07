@@ -219,11 +219,12 @@ describe("RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009)
       expect(countInteractiveControls(document.body)).toBe(11);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
 
-      // Phase 3 — add dialog (scheduled, all members): close X (1), kind pills (2), text (1),
-      // targeting pills (2), seven weekday pills (7), Cancel (1), Create (1) = +15 = 26.
+      // Phase 3 — add dialog (scheduled, all members): close X (1), kind pills (2), content
+      // pills (2), text (1), targeting pills (2), seven weekday pills (7), Cancel (1), Create (1)
+      // = +17 = 28.
       fireEvent.click(screen.getByTestId("reminders-add-rule"));
       await screen.findByTestId("reminder-form-dialog");
-      expect(countInteractiveControls(document.body)).toBe(26);
+      expect(countInteractiveControls(document.body)).toBe(28);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
@@ -245,10 +246,10 @@ describe("RemindersManagement — kiosk density (SC-001, SC-002, SC-003, SC-009)
       await screen.findByText("Pack the gym bag");
       fireEvent.click(screen.getByTestId("reminder-edit-r3"));
       await screen.findByTestId("reminder-form-dialog");
-      // Dialog: close X (1), text (1), targeting pills (2), 2 member pills (2) + their 2 x 7
-      // weekday pills (14), Cancel (1), Save (1) = 22; page behind it: Add rule, Deactivate, Edit,
-      // Delete = 4. Total 26.
-      expect(countInteractiveControls(document.body)).toBe(26);
+      // Dialog: close X (1), content pills (2), text (1), targeting pills (2), 2 member pills (2)
+      // + their 2 x 7 weekday pills (14), Cancel (1), Save (1) = 24; page behind it: Add rule,
+      // Deactivate, Edit, Delete = 4. Total 28.
+      expect(countInteractiveControls(document.body)).toBe(28);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
@@ -546,6 +547,7 @@ describe("RemindersManagement — the add/edit dialog", () => {
       expect(JSON.parse(String(post![1]!.body))).toEqual({
         kind: "scheduled",
         targetingMode: "specific",
+        contentType: "text",
         text: "Bus day",
         assignments: [{ memberId: "m1", weekdays: ["mon"] }],
       });
@@ -628,6 +630,7 @@ describe("RemindersManagement — the add/edit dialog", () => {
       );
       expect(patch).toBeTruthy();
       expect(JSON.parse(String(patch![1]!.body))).toEqual({
+        contentType: "text",
         text: "Take out the trash",
         targetingMode: "specific",
         assignments: [{ memberId: "m1", weekdays: ["tue"] }],
@@ -649,6 +652,7 @@ describe("RemindersManagement — the add/edit dialog", () => {
       );
       expect(patch).toBeTruthy();
       expect(JSON.parse(String(patch![1]!.body))).toEqual({
+        contentType: "text",
         text: "Vet appointment prep",
         targetingMode: "apply_to_all",
         query: "vet",
@@ -1023,5 +1027,124 @@ describe("label maps are transcribed correctly (SC-007's cast removal, pinned)",
         `reminders.dryRun.reason.${k}`
       );
     }
+  });
+});
+
+describe("RemindersManagement — image reminders for pre-readers (#96)", () => {
+  const REMINDER_IMAGES = {
+    id: "r4",
+    kind: "scheduled",
+    targetingMode: "apply_to_all",
+    contentType: "images",
+    text: "",
+    emojis: ["🩰", "👟"],
+    weekdays: ["tue"],
+    query: null,
+    queryFields: null,
+    active: true,
+    assignments: [],
+  };
+
+  function lastBody(mockFetch: ReturnType<typeof mockBackend>, url: string, method: string) {
+    const call = [...(mockFetch.mock.calls as FetchCall[])]
+      .reverse()
+      .find(([u, init]) => String(u) === url && init?.method === method);
+    return call ? JSON.parse(String(call[1]!.body)) : undefined;
+  }
+
+  function addEmoji(dialog: HTMLElement, search: string, name: string) {
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add emoji" }));
+    const picker = within(dialog).getByRole("dialog", { name: "Choose an emoji" });
+    fireEvent.change(within(picker).getByRole("textbox", { name: "Search icons" }), {
+      target: { value: search },
+    });
+    fireEvent.click(within(picker).getByRole("button", { name: `Select ${name}` }));
+  }
+
+  function sequence(dialog: HTMLElement): string[] {
+    return within(within(dialog).getByRole("list", { name: "Emojis, in order" }))
+      .queryAllByRole("listitem")
+      .map((item) => item.querySelector("[title]")?.getAttribute("title") ?? "");
+  }
+
+  it("switches to Images, picks, reorders and removes emojis, and creates the rule", async () => {
+    const mockFetch = mockBackend();
+    renderSurface();
+    await screen.findByText("Take out the trash");
+    fireEvent.click(screen.getByTestId("reminders-add-rule"));
+    const dialog = await screen.findByTestId("reminder-form-dialog");
+
+    fireEvent.click(within(dialog).getByTestId("reminder-content-images"));
+    expect(within(dialog).queryByPlaceholderText("Reminder text")).not.toBeInTheDocument();
+    expect(within(dialog).getByText("No emojis yet. Add the first one.")).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByTestId("reminders-weekday-form-tue"));
+    expect(within(dialog).getByTestId("reminder-save")).toBeDisabled();
+
+    addEmoji(dialog, "ballet", "Ballet");
+    addEmoji(dialog, "sports", "Sports");
+    addEmoji(dialog, "shoe", "Shoe");
+    expect(sequence(dialog)).toEqual(["Ballet", "Sports", "Shoe"]);
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Move Shoe earlier" }));
+    expect(sequence(dialog)).toEqual(["Ballet", "Shoe", "Sports"]);
+    expect(within(dialog).getByRole("button", { name: "Move Ballet earlier" })).toBeDisabled();
+    expect(within(dialog).getByRole("button", { name: "Move Sports later" })).toBeDisabled();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Remove Sports" }));
+    expect(sequence(dialog)).toEqual(["Ballet", "Shoe"]);
+
+    fireEvent.change(
+      within(dialog).getByPlaceholderText("Description (optional, for screen readers)"),
+      { target: { value: " Ballet day " } }
+    );
+    fireEvent.click(within(dialog).getByTestId("reminder-save"));
+
+    await waitFor(() =>
+      expect(lastBody(mockFetch, "/api/reminders", "POST")).toEqual({
+        kind: "scheduled",
+        targetingMode: "apply_to_all",
+        contentType: "images",
+        text: "Ballet day",
+        emojis: ["🩰", "👟"],
+        weekdays: ["tue"],
+      })
+    );
+  });
+
+  it("shows an image rule's emojis in its row, named for assistive tech", async () => {
+    mockBackend({ reminders: () => json([REMINDER_IMAGES]) });
+    renderSurface();
+    const emojis = await screen.findByTestId("reminder-emojis-r4");
+    expect(emojis).toHaveAttribute("role", "img");
+    expect(emojis).toHaveAccessibleName("🩰 👟");
+    expect(emojis.querySelectorAll("img, span[aria-hidden]")).toHaveLength(2);
+    expect(screen.getByTestId("reminder-edit-r4")).toHaveAccessibleName("Edit: 🩰 👟");
+  });
+
+  it("prefills an image rule when editing and switches it back to text in one PATCH", async () => {
+    const mockFetch = mockBackend({ reminders: () => json([REMINDER_IMAGES]) });
+    renderSurface();
+    await screen.findByTestId("reminder-emojis-r4");
+    fireEvent.click(screen.getByTestId("reminder-edit-r4"));
+    const dialog = await screen.findByTestId("reminder-form-dialog");
+
+    expect(within(dialog).getByTestId("reminder-content-images")).toBeChecked();
+    expect(sequence(dialog)).toEqual(["Ballet", "Shoe"]);
+
+    fireEvent.click(within(dialog).getByTestId("reminder-content-text"));
+    // A text rule needs words: Save stays disabled until there are some.
+    expect(within(dialog).getByTestId("reminder-save")).toBeDisabled();
+    fireEvent.change(within(dialog).getByPlaceholderText("Reminder text"), {
+      target: { value: "Ballet" },
+    });
+    fireEvent.click(within(dialog).getByTestId("reminder-save"));
+
+    await waitFor(() =>
+      expect(lastBody(mockFetch, "/api/reminders/r4", "PATCH")).toEqual({
+        contentType: "text",
+        text: "Ballet",
+        targetingMode: "apply_to_all",
+        weekdays: ["tue"],
+      })
+    );
   });
 });

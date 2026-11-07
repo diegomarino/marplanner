@@ -1,6 +1,6 @@
 /** Bundle the server outside the public client root. Native modules remain external
  * and resolve from node_modules at runtime. Both server and standalone render builds
- * receive the same fonts and license beside their module-relative loader.
+ * receive the same fonts, Noto emoji SVGs and license beside their module-relative loader.
  */
 import { build } from "esbuild";
 import { cpSync, mkdirSync } from "node:fs";
@@ -46,12 +46,15 @@ cpSync(
   "dist/server/fonts/jetbrains-mono",
   { recursive: true }
 );
+// Noto emoji SVGs for `images` reminders: reminder validation and the printed briefing read
+// them from disk beside the bundle (src/server/lib/noto-emoji.ts, render/emoji-images.ts).
+cpSync("src/shared/noto", "dist/server/noto", { recursive: true });
 // The corpora are inlined into the bundle; their third-party data notice travels with it.
 cpSync("src/server/modules/daily-briefing/corpora/NOTICE.txt", "dist/server/CORPORA-NOTICE.txt");
 // Access-gate HTML inlines the same semantic tokens the SPA imports.
 cpSync("src/client/styles/tokens.css", "dist/server/ui-tokens.css");
 
-console.log("server bundled → dist/server/index.js (+ fonts/jetbrains-mono, ui-tokens.css)");
+console.log("server bundled → dist/server/index.js (+ fonts/jetbrains-mono, noto, ui-tokens.css)");
 
 // Operator credential CLI, shipped beside the server so a container can run it.
 await build({
@@ -84,6 +87,7 @@ cpSync(
   "dist/daily-briefing-render/fonts/jetbrains-mono",
   { recursive: true }
 );
+cpSync("src/shared/noto", "dist/daily-briefing-render/noto", { recursive: true });
 
 writeLicenses(
   "dist/daily-briefing-render/THIRD_PARTY_LICENSES.txt",

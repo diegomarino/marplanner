@@ -94,14 +94,22 @@ snapshots, logs, or expected output.
 
 ## Migration squash (2026-10-16)
 
-`drizzle/` holds exactly one migration, `0000_baseline.sql`: `drizzle-kit generate` output for
+`drizzle/` starts with one migration, `0000_baseline.sql`: `drizzle-kit generate` output for
 `src/server/db/schema.ts`, plus `STRICT` on the three calendar-sync tables, the four day-period
 rows, and the lineage and plugin registry seed (every plugin inactive). It replaced
 `0000_current_baseline.sql` and the deltas `0001_calendar_feed_sync`, `0002_plugin_lifecycle`,
 `0003_calendar_event_details`, `0004_member_palette` and `0005_daily_briefing_schedule`, whose
 end state it reproduces (ten-colour `members` CHECK, `daily_briefing_optin.weekdays`).
 
-No upgrade path exists: v2 had no installed database with real data. A development database or a
+Schema changes after the squash ship as numbered forward migrations applied after the baseline
+(`0001_reminder_content.sql`, #96, adds a reminder's `content_type`/`emojis`), so an existing
+household upgrades in place; the baseline itself is never edited. A migration that needs a table
+rebuild (SQLite cannot add a CHECK in place) may drop and recreate a parent table: the runner turns
+foreign keys off around the batch and runs `foreign_key_check` before commit.
+`tests/integration/database-baseline.test.ts` compares the baseline plus every forward migration
+with a clean `drizzle-kit generate` of the schema.
+
+No upgrade path exists from before the squash: v2 had no installed database with real data. A development database or a
 backup created before the squash is **unsupported**. The runner refuses a non-empty ledger before
 writing anything (`Unsupported migration history.`); delete the `DATA_DIR` database and reseed.
 Restore reports such a backup as `unsupported_lineage`. `installation_lineage.kind` is now always
