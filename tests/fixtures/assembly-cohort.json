@@ -921,7 +921,10 @@
             "runSmoke fails on 5xx and warns on 4xx",
             "smoke output never contains the bootstrap key or device cookie",
             "runSmoke records an unreachable route as a failure",
-            "runSmoke re-provisions once when the cached device is revoked (403)"
+            "runSmoke re-provisions once when the cached device is revoked (403)",
+            "runSmoke skips routes of inactive plugins instead of failing",
+            "the inactive-plugin code matches the server's plugin_unavailable response",
+            "runSmoke fails for every errored plugin even though its routes answer plugin_unavailable"
           ],
           "tools/deploy-fly.test.mjs": [
             "parseDeployArgs knows every flag and rejects unknown ones",
@@ -1358,7 +1361,7 @@
           "tests/boundary/credentials.test.ts": [
             "credentials — mpk- diceware generateKey keys start with 'mpk-'",
             "credentials — mpk- diceware generateKey words are lowercase",
-            "credentials — mpk- diceware generateKey has exactly 6 words (5 separators)",
+            "credentials — mpk- diceware generateKey has exactly 8 words (7 separators)",
             "credentials — mpk- diceware generateKey every word comes from the embedded wordlist",
             "credentials — mpk- diceware generateKey uses CSPRNG — two keys are never identical in 100 tries",
             "credentials — mpk- diceware hashKey returns a 64-char hex string (SHA-256)",
@@ -1667,6 +1670,8 @@
             "private storage creation creates new data and backups directories owner-only but keeps existing ones"
           ],
           "tests/boundary/default-credentials.test.ts": [
+            "admin PIN environment variable reads the PIN from MP_ADMIN_PIN",
+            "admin PIN environment variable falls back to 0000 when MP_ADMIN_PIN is unset",
             "public default credential detection recognises only the repository's default access token",
             "public default credential detection reports the default bootstrap key and either public PIN, including the unset fallback",
             "public default credential detection never reports an operator-chosen value",
@@ -2530,6 +2535,7 @@
           ],
           "tests/boundary/provision.test.ts": [
             "provision — FR-007 scopes mounted device credentials and provisioning marker consistently",
+            "provision — FR-007 seeds the admin PIN from MP_ADMIN_PIN",
             "provision — FR-007 POST /api/auth/provision with valid raw * bootstrap key → 200, Set-Cookie sets mp_device_key, body has no raw key",
             "provision — FR-007 POST /api/auth/provision with invalid raw key → 401, body is { error, message }, no raw key leaked",
             "provision — FR-007 POST /api/auth/provision without Authorization header → 401, no cookie set, no raw key in body",
@@ -7919,9 +7925,9 @@
         "layer": "server",
         "minimumTotals": {
           "lines": 11,
-          "statements": 13,
-          "functions": 3,
-          "branches": 11
+          "statements": 14,
+          "functions": 4,
+          "branches": 12
         },
         "minimumRates": {
           "lines": 100,
@@ -8011,7 +8017,7 @@
           "lines": 42,
           "statements": 43,
           "functions": 3,
-          "branches": 22
+          "branches": 21
         },
         "minimumRates": {
           "lines": 89.18,

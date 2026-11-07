@@ -10,7 +10,7 @@ import { unlockAdmin } from "./admin-unlock";
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 
 async function provision(page: Page): Promise<void> {
   await page.goto("/");
@@ -31,7 +31,7 @@ test("admin page: create in the dialog, edit, deactivate, delete through Confirm
   test.setTimeout(90_000);
   await provision(page);
   await page.goto("/admin/time-announcements");
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
 
   let ruleId: string | null = null;
   try {

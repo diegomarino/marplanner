@@ -32,7 +32,7 @@ import { unlockAdmin } from "./admin-unlock";
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 
 test("synchronized imported occurrence gates one reminder on the household date", async () => {
   const { register } = await import("tsx/esm/api");
@@ -207,7 +207,7 @@ test("calendar_gated admin author → dry-run → emit: query + membership assig
   expect(assignResp.status()).toBe(200);
 
   // --- 5) Admin unlock (long-press → PIN) ---
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
   await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 
   // --- 6) Reminders tab ---

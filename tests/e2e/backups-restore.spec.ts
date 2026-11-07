@@ -27,7 +27,7 @@ import { prepareActivePlugins } from "./plugin-fixture-db";
 
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 
 /** `node dist/server/index.js` — the real production entrypoint (npm start). */
 const SERVER_ENTRY = resolve(process.cwd(), "dist", "server", "index.js");
@@ -60,7 +60,7 @@ async function startServer(port: number, dataDir: string): Promise<ChildProcess>
       DATABASE_PATH: "marplanner.db",
       MP_BOOTSTRAP_KEY: BOOTSTRAP_KEY,
       MP_ACCESS_TOKEN: ACCESS_TOKEN,
-      ADMIN_PIN,
+      MP_ADMIN_PIN,
       // The process-level scenario only uses /api paths. the visible scenario also enters the
       // real access/provisioning gates, so the synthetic access token is explicit in this server.
       // UNLIKE critical-flow.spec.ts, the scheduler is left ENABLED (no SCHEDULER_DISABLED) —
@@ -499,7 +499,7 @@ async function provisionAndUnlock(page: Page, base: string): Promise<void> {
 async function ensureAdminUnlocked(page: Page): Promise<void> {
   const management = page.getByTestId("backups-management");
   if (await management.isVisible().catch(() => false)) return;
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
   await expect(management).toBeVisible();
 }
 

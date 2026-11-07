@@ -18,7 +18,7 @@ const HOLD_MS = 3_000;
 /** The hold plus generous room for render and Playwright's visibility check. */
 const UNLOCK_TIMEOUT_MS = HOLD_MS + 2_500;
 
-export const DEFAULT_ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+export const DEFAULT_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 
 /** Long-press the Admin affordance (the Options button itself while Admin is its only entry,
  * otherwise the Admin item inside the Options menu) when entering from a family route,

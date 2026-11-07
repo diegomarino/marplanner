@@ -13,7 +13,7 @@ const read = (file: string) => readFileSync(join(repoRoot, file), "utf8");
 const DEMO_ENV = {
   MP_ACCESS_TOKEN: "mpg-local-change-me",
   MP_BOOTSTRAP_KEY: "mpk-local-bootstrap-change-me",
-  ADMIN_PIN: "0000",
+  MP_ADMIN_PIN: "0000",
   MP_SEED_ON_EMPTY: "true",
   PORT: "3000",
 };

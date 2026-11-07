@@ -22,7 +22,7 @@ import { prepareActivePlugins } from "./plugin-fixture-db";
 const execFileAsync = promisify(execFile);
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 // The server checks Calendar ranges against its real clock (-30d / +365d), so seed relative to today.
 const AS_OF_DATE = new Date().toISOString().slice(0, 10);
 const CALENDAR_TO = new Date(Date.parse(AS_OF_DATE) + 3 * 86_400_000).toISOString().slice(0, 10);
@@ -117,7 +117,7 @@ test("database recovery journey uses the existing Backups UI without a product r
     server = await startServer(port, dataDirectory, migrationRuntimeDirectory);
     await page.goto(`${base}/admin/backups`);
     await expect(page.getByTestId("admin-pin-keypad")).toBeVisible();
-    await unlockAdmin(page, ADMIN_PIN);
+    await unlockAdmin(page, MP_ADMIN_PIN);
     expect(await memberNamed(page, base, "migration:recovery:probe")).toMatchObject({
       displayName: "Migrated recovery probe",
     });
@@ -161,7 +161,7 @@ async function provisionAndUnlock(page: Page, base: string): Promise<void> {
   await expect(page.getByTestId("home-surface")).toBeVisible();
   await page.goto(`${base}/admin/backups`);
   await expect(page.getByTestId("admin-pin-keypad")).toBeVisible();
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
 }
 
 async function mutateHomerThroughMembersUi(page: Page): Promise<void> {
@@ -253,7 +253,7 @@ async function startServer(
       DATABASE_PATH: "marplanner.db",
       MP_ACCESS_TOKEN: ACCESS_TOKEN,
       MP_BOOTSTRAP_KEY: BOOTSTRAP_KEY,
-      ADMIN_PIN,
+      MP_ADMIN_PIN,
     },
     stdio: ["ignore", "ignore", "pipe"],
   });

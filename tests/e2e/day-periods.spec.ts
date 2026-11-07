@@ -14,7 +14,7 @@ import { messages, resolveLang } from "../../src/client/i18n/messages";
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 
 test("day periods critical-flow: view → edit → active now (US1, US2, US3)", async ({ page }) => {
   // --- Prelude: reach admin Períodos Diarios UI (copy member-lifecycle.spec.ts pattern) ---
@@ -31,7 +31,7 @@ test("day periods critical-flow: view → edit → active now (US1, US2, US3)", 
   await page.getByRole("button", { name: "Provision Device" }).click();
   await expect(page.getByTestId("home-surface")).toBeVisible({ timeout: 15_000 });
 
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
 
   await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 

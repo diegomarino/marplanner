@@ -8,7 +8,7 @@ import { startFreshPluginLifecycleServer } from "./plugin-lifecycle-server";
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 let server: Awaited<ReturnType<typeof startFreshPluginLifecycleServer>>;
 
 test.beforeAll(async () => {
@@ -50,7 +50,7 @@ test("fresh lifecycle catalog keeps API and UI aligned across a repeat activatio
   expect(freshCatalog.every(({ state }) => state === "inactive")).toBe(true);
   expect(freshCatalog.some(({ id }) => id === ("external-calendar-sync" as never))).toBe(false);
 
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
   await openAdminSection(page, "admin-nav-plugins");
   const rows = page.getByTestId(/^plugin-row-/);
   await expect(rows).toHaveCount(9);

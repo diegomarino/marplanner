@@ -10,6 +10,7 @@ import {
   planSmokeRoutes,
   runSmoke,
   SMOKE_SKIP,
+  PLUGIN_UNAVAILABLE,
 } from "./deploy/smoke.mjs";
 
 const spec = JSON.parse(readFileSync(new URL("../docs/api/openapi.json", import.meta.url), "utf8"));
@@ -256,4 +257,83 @@ test("runSmoke re-provisions once when the cached device is revoked (403)", asyn
   });
   assert.deepEqual(result.failures, []);
   assert.equal(calls.filter((c) => c.method === "POST").length, 1);
+});
+
+test("runSmoke skips routes of inactive plugins instead of failing", async () => {
+  const lines = [];
+  const fetch = fakeFetch({
+    "POST /api/auth/provision": () => provisioned("dk"),
+    "GET /api/members": () => Response.json([{ id: "m1" }]),
+    "GET /api/routines": () =>
+      Response.json(
+        { code: "plugin_unavailable", message: "This plugin is unavailable." },
+        { status: 503 }
+      ),
+    "GET /api/broken": () => Response.json({ code: "upstream_down" }, { status: 503 }),
+    "GET /api/missing-query": () => Response.json([]),
+  });
+  const result = await runSmoke({
+    baseUrl: BASE,
+    bootstrapKey: BOOTSTRAP,
+    cachePath: cachePath(),
+    spec: tinySpec,
+    fetch,
+    fs,
+    log: (line) => lines.push(line),
+  });
+  assert.deepEqual(result.failures, ["GET /api/broken → 503"]);
+  assert.ok(result.skipped.includes("/api/routines"));
+  assert.ok(result.skipped.includes("/api/routines/{id}"));
+  assert.match(lines.join("\n"), /GET \/api\/routines skipped \(plugin inactive\)/);
+});
+
+test("the inactive-plugin code matches the server's plugin_unavailable response", () => {
+  const source = readFileSync(new URL("../src/server/plugins/http.ts", import.meta.url), "utf8");
+  assert.match(
+    source,
+    new RegExp(
+      `PLUGIN_UNAVAILABLE_RESPONSE = Object\\.freeze\\(\\{\\s*code: "${PLUGIN_UNAVAILABLE}"`
+    )
+  );
+});
+
+test("runSmoke fails for every errored plugin even though its routes answer plugin_unavailable", async () => {
+  const lines = [];
+  const unavailable = () =>
+    Response.json(
+      { code: "plugin_unavailable", message: "This plugin is unavailable." },
+      { status: 503 }
+    );
+  const fetch = fakeFetch({
+    "POST /api/auth/provision": () => provisioned("dk"),
+    "GET /api/plugins": () =>
+      Response.json({
+        plugins: [
+          { id: "weather", state: "errored", error: { code: "activation_failed" } },
+          { id: "backups", state: "inactive", error: null },
+          { id: "reminders", state: "active", error: null },
+        ],
+      }),
+    "GET /api/weather": unavailable,
+    "GET /api/backups": unavailable,
+  });
+  const result = await runSmoke({
+    baseUrl: BASE,
+    bootstrapKey: BOOTSTRAP,
+    cachePath: cachePath(),
+    spec: {
+      paths: {
+        "/api/plugins": { get: {} },
+        "/api/weather": { get: {} },
+        "/api/backups": { get: {} },
+      },
+    },
+    fetch,
+    fs,
+    log: (line) => lines.push(line),
+  });
+  assert.deepEqual(result.failures, ["plugin weather is errored (activation_failed)"]);
+  assert.ok(result.skipped.includes("/api/backups"));
+  assert.ok(result.skipped.includes("/api/weather"));
+  assert.match(lines.join("\n"), /✘ plugin weather is errored \(activation_failed\)/);
 });

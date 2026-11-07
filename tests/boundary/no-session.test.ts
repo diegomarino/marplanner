@@ -119,7 +119,7 @@ describe("no-server-session / PIN-agnostic-authz (FR-014/015/017/018)", () => {
     // 'argon2id/scrypt hash; raw PIN never stored or returned (INV-10)').
     // CRITICAL: Do NOT use hashKey (SHA-256) for the PIN — the contract
     // requires argon2id. See line 79.
-    const correctPin = process.env.ADMIN_PIN ?? "0000";
+    const correctPin = process.env.MP_ADMIN_PIN ?? "0000";
     const pinHash = await argon2.hash(correctPin);
     db.prepare("INSERT INTO admin_config (id, pin_hash, updated_at) VALUES (1, ?, ?)").run(
       pinHash,
@@ -177,7 +177,7 @@ describe("no-server-session / PIN-agnostic-authz (FR-014/015/017/018)", () => {
 
     // Seed the admin_config with an argon2id hash ( pin_hash is
     // 'argon2id/scrypt hash; raw PIN never stored or returned (INV-10)').
-    const adminPin = process.env.ADMIN_PIN ?? "0000";
+    const adminPin = process.env.MP_ADMIN_PIN ?? "0000";
     const pinHash = await argon2.hash(adminPin);
     db.prepare("INSERT INTO admin_config (id, pin_hash, updated_at) VALUES (1, ?, ?)").run(
       pinHash,
@@ -234,7 +234,7 @@ describe("no-server-session / PIN-agnostic-authz (FR-014/015/017/018)", () => {
     const deviceHash = hashKey(deviceKey);
     const now = Date.now();
     const db = getDb();
-    const adminPin = process.env.ADMIN_PIN ?? "0000";
+    const adminPin = process.env.MP_ADMIN_PIN ?? "0000";
     // argon2id hash for admin_config ( pin_hash uses argon2id).
     const pinHash = await argon2.hash(adminPin);
     db.prepare(

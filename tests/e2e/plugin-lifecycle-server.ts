@@ -60,7 +60,7 @@ export async function startFreshPluginLifecycleServer(): Promise<{
       DATABASE_PATH: "marplanner.db",
       MP_BOOTSTRAP_KEY: process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key",
       MP_ACCESS_TOKEN: process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token",
-      ADMIN_PIN: process.env.ADMIN_PIN ?? "1234",
+      MP_ADMIN_PIN: process.env.MP_ADMIN_PIN ?? "1234",
       SCHEDULER_DISABLED: "1",
     },
     stdio: ["ignore", "ignore", "pipe"],

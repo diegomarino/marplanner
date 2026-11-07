@@ -44,7 +44,7 @@ import { prepareActivePlugins } from "./plugin-fixture-db";
 
 const MP_ACCESS_TOKEN = "mpg-e2e-network-devices-access-token";
 const MP_BOOTSTRAP_KEY = `mpk-e2e-network-devices-bootstrap-${Date.now()}`;
-const ADMIN_PIN = "1234";
+const MP_ADMIN_PIN = "1234";
 
 const SERVER_ENTRY = resolve(process.cwd(), "dist", "server", "index.js");
 const HEALTH_TIMEOUT_MS = 30_000;
@@ -105,7 +105,7 @@ async function startServer(
       DATABASE_PATH: "marplanner.db",
       MP_ACCESS_TOKEN,
       MP_BOOTSTRAP_KEY,
-      ADMIN_PIN,
+      MP_ADMIN_PIN,
       // Scheduler ENABLED (no SCHEDULER_DISABLED) — see module docblock: the poller must
       // actually run for the picker to ever show a fresh client.
       UNIFI_API_KEY: "e2e-fixture-api-key",
@@ -244,7 +244,7 @@ test("network devices lifecycle: seed live client -> register from picker -> blo
     const m = messages[lang];
 
     // --- Admin unlock (long-press affordance + PIN, AdminGate.tsx) ---
-    await unlockAdmin(page, ADMIN_PIN);
+    await unlockAdmin(page, MP_ADMIN_PIN);
 
     await openAdminSection(page, "admin-nav-network-devices");
 

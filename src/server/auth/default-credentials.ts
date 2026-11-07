@@ -6,6 +6,11 @@ import {
   type PublicDefaultCredentials,
 } from "../../shared/default-credentials";
 
+/** The advisory admin PIN that provisioning seeds: `MP_ADMIN_PIN`, else "0000". */
+export function resolveAdminPin(env: typeof process.env = process.env): string {
+  return env.MP_ADMIN_PIN ?? "0000";
+}
+
 /** True when the configured access token is the repository's public default. */
 export function usesDefaultAccessToken(env: typeof process.env = process.env): boolean {
   return env.MP_ACCESS_TOKEN === PUBLIC_DEFAULT_ACCESS_TOKEN;
@@ -21,8 +26,8 @@ export function publicDefaultCredentials(
   if (env.MP_BOOTSTRAP_KEY === PUBLIC_DEFAULT_BOOTSTRAP_KEY) {
     result.bootstrapKey = PUBLIC_DEFAULT_BOOTSTRAP_KEY;
   }
-  // Mirrors provision.ts, which seeds the PIN from ADMIN_PIN or falls back to "0000".
-  const adminPin = env.ADMIN_PIN ?? "0000";
+  // The same resolution provision.ts uses to seed the PIN.
+  const adminPin = resolveAdminPin(env);
   if (PUBLIC_DEFAULT_ADMIN_PINS.includes(adminPin)) result.adminPin = adminPin;
   return result;
 }

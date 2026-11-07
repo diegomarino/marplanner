@@ -37,7 +37,7 @@ import { prepareActivePlugins } from "./plugin-fixture-db";
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 
 /** `node dist/server/index.js` — the real production entrypoint (npm start). */
 const SERVER_ENTRY = resolve(process.cwd(), "dist", "server", "index.js");
@@ -77,7 +77,7 @@ async function startServer(
       DATA_DIR: dataDir,
       DATABASE_PATH: "marplanner.db",
       MP_BOOTSTRAP_KEY: BOOTSTRAP_KEY,
-      ADMIN_PIN,
+      MP_ADMIN_PIN,
       MP_ACCESS_TOKEN: ACCESS_TOKEN,
       SCHEDULER_DISABLED: "1",
       ...extraEnv,
@@ -188,7 +188,7 @@ async function provision(page: Page, baseUrl = ""): Promise<void> {
 
 /** Unlock, then wait for this suite's own entry point. The unlock itself is shared. */
 async function unlockAdminAndAwaitWeatherNav(page: Page): Promise<void> {
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
   await expect(page.getByTestId("admin-nav-settings")).toBeVisible({ timeout: 10_000 });
 }
 

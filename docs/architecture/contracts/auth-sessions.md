@@ -7,7 +7,7 @@ Depends on decisions: `ADR-001`, `ADR-007`, `ADR-013`, `ADR-030`, `ADR-031`, `AD
 
 ## Delivered interface boundary
 
-The installed API provides device provisioning and PIN verification. **Key create/list/revoke, last-key anti-lockout, and server-side cookie revocation are out of scope for this household release** (ops recovery only — see [operations](../../operations.md)). **`set-pin` is not planned:** replace the advisory PIN by setting `ADMIN_PIN`, restarting, and provisioning a browser again. Deferred multi-integration identifiers below do not claim delivered behavior.
+The installed API provides device provisioning and PIN verification. **Key create/list/revoke, last-key anti-lockout, and server-side cookie revocation are out of scope for this household release** (ops recovery only — see [operations](../../operations.md)). **`set-pin` is not planned:** replace the advisory PIN by setting `MP_ADMIN_PIN`, restarting, and provisioning a browser again. Deferred multi-integration identifiers below do not claim delivered behavior.
 
 ## Purpose
 
@@ -62,11 +62,11 @@ It does not own member identity (Members), route structure or the admin-unlock U
 
 **Revocation enforcement.** Authorization rejects `revokedAt` or elapsed expiry (`expires_at <= now` is inactive). No API mutates revocation or rotates keys; the offline operator command `devices` (`src/server/auth/devices-cli.ts`, shipped as `dist/server/devices.js`) lists credentials and sets `revoked_at`, refusing only the configured `MP_BOOTSTRAP_KEY` row that startup re-activates. Env changes do not revoke old rows. Clearing browser cookies does not delete database keys.
 
-**Initialize / verify the PIN.** Each successful provisioning hashes `ADMIN_PIN` (fallback `0000`) with Argon2 and updates the database PIN. `verify-pin` is API-key protected and returns match/no-match without granting authority. There is no `set-pin` endpoint and none is planned. The hash is included in backups.
+**Initialize / verify the PIN.** Each successful provisioning hashes `MP_ADMIN_PIN` (fallback `0000`) with Argon2 and updates the database PIN. `verify-pin` is API-key protected and returns match/no-match without granting authority. There is no `set-pin` endpoint and none is planned. The hash is included in backups.
 
 **Admin unlock (client-side).** On successful `verify-pin`, the frontend sets ephemeral "admin unlocked" UI state. It clears on leaving the admin route subtree, inactivity timeout, explicit Lock, or browser refresh. No server counterpart.
 
-**Reset a forgotten PIN.** Configure `ADMIN_PIN`, restart and provision a browser with the current bootstrap key. There is no dedicated PIN-reset route or in-kiosk recovery flow.
+**Reset a forgotten PIN.** Configure `MP_ADMIN_PIN`, restart and provision a browser with the current bootstrap key. There is no dedicated PIN-reset route or in-kiosk recovery flow.
 
 **Gate frontend pages.** Without a valid access-gate cookie, the server serves the access-token entry form instead of the app shell. The gate covers page serving only, not `/api/*`. Misconfiguration fails closed (does not serve the app open).
 

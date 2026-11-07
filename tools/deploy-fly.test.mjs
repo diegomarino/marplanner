@@ -7,7 +7,7 @@ import test from "node:test";
 import { deployFly, parseDeployArgs } from "./deploy/fly.mjs";
 
 const SECRET = "mpg-ACCESS-SENTINEL";
-const ENV = `MP_ACCESS_TOKEN=${SECRET}\nMP_BOOTSTRAP_KEY=mpk-BOOT-SENTINEL\nADMIN_PIN=8642\n`;
+const ENV = `MP_ACCESS_TOKEN=${SECRET}\nMP_BOOTSTRAP_KEY=mpk-BOOT-SENTINEL\nMP_ADMIN_PIN=8642\n`;
 const SHA = "abc1234";
 
 function workspace(env = ENV) {
@@ -158,11 +158,11 @@ test("a dirty tree stops before any Fly write unless --allow-dirty", async () =>
 
 test("invalid .env.fly stops at pre-flight and names the keys", async () => {
   const fake = deps();
-  const code = await deployFly({ ...defaults, root: workspace("ADMIN_PIN=0000\n") }, fake.deps);
+  const code = await deployFly({ ...defaults, root: workspace("MP_ADMIN_PIN=0000\n") }, fake.deps);
   assert.equal(code, 1);
   assert.deepEqual(writes(fake.flyCalls), []);
   const text = fake.lines.join("\n");
-  for (const key of ["MP_ACCESS_TOKEN", "MP_BOOTSTRAP_KEY", "ADMIN_PIN"])
+  for (const key of ["MP_ACCESS_TOKEN", "MP_BOOTSTRAP_KEY", "MP_ADMIN_PIN"])
     assert.match(text, new RegExp(key));
 });
 

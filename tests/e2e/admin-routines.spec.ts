@@ -10,7 +10,7 @@ import { messages, resolveLang } from "../../src/client/i18n/messages";
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 
 test("routines admin: create, add a chore, assign a child and move to another period", async ({
   page,
@@ -41,7 +41,7 @@ test("routines admin: create, add a chore, assign a child and move to another pe
   expect(memberResp.status()).toBe(201);
   const memberId = ((await memberResp.json()) as { id: string }).id;
 
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
   await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
   await openAdminSection(page, "admin-nav-routines-management");
   await expect(

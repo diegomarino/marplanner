@@ -22,7 +22,7 @@ spec:
           value: mpg-local-change-me
         - key: MP_BOOTSTRAP_KEY
           value: mpk-local-bootstrap-change-me
-        - key: ADMIN_PIN
+        - key: MP_ADMIN_PIN
           value: "0000"
         - key: MP_SEED_ON_EMPTY
           value: "true"

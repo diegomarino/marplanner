@@ -38,7 +38,7 @@ never copy host `node_modules` into an image.
 
 ```sh
 cp infra/docker/.env.example infra/docker/.env.local
-# Supply unique MP_ACCESS_TOKEN (mpg-...), MP_BOOTSTRAP_KEY (mpk-...), ADMIN_PIN.
+# Supply unique MP_ACCESS_TOKEN (mpg-...), MP_BOOTSTRAP_KEY (mpk-...), MP_ADMIN_PIN.
 docker compose --env-file infra/docker/.env.local -f infra/docker/compose.yaml -p marplanner-home config --quiet
 docker compose --env-file infra/docker/.env.local -f infra/docker/compose.yaml -p marplanner-home up --build -d
 docker compose --env-file infra/docker/.env.local -f infra/docker/compose.yaml -p marplanner-home port marplanner 3000
@@ -138,7 +138,7 @@ diagnostic command. Keep synthetic trials separate from household data.
 
 ## Credentials and provisioning
 
-The frontend access token, device API credentials and UI PIN serve different purposes. Set unique deployment values for `MP_ACCESS_TOKEN` and `MP_BOOTSTRAP_KEY`; set `ADMIN_PIN` to a unique PIN. `MP_MANAGEMENT_KEY` is optional and seeds an operator integration credential (Bearer on `/api/plugins*`); network-devices management works with the normal provisioned device cookie. **Transport:** ordinary household API calls use the device **cookie** after provisioning. `Authorization: Bearer` is accepted only on `/api/plugins*`. Do not expect a raw management Bearer to authorize general `/api/*` routes. Use the environment supplied by your service manager. For local development only, copy `.env.example` to ignored `.env.local` and replace every example value. `npm start` and seed scripts read that file when present; exported shell variables override it.
+The frontend access token, device API credentials and UI PIN serve different purposes. Set unique deployment values for `MP_ACCESS_TOKEN` and `MP_BOOTSTRAP_KEY`; set `MP_ADMIN_PIN` to a unique PIN. `MP_MANAGEMENT_KEY` is optional and seeds an operator integration credential (Bearer on `/api/plugins*`); network-devices management works with the normal provisioned device cookie. **Transport:** ordinary household API calls use the device **cookie** after provisioning. `Authorization: Bearer` is accepted only on `/api/plugins*`. Do not expect a raw management Bearer to authorize general `/api/*` routes. Use the environment supplied by your service manager. For local development only, copy `.env.example` to ignored `.env.local` and replace every example value. `npm start` and seed scripts read that file when present; exported shell variables override it.
 
 Without `MP_ACCESS_TOKEN`, browser access is locked. Without `MP_BOOTSTRAP_KEY`, first-device provisioning is locked. The health endpoint remains available so an operator can distinguish a running process from an authorized session. Provisioning does not echo raw device keys back through an ordinary API read. The UI PIN is advisory and cannot replace backend authorization. Do not log or paste any raw credential, cookie, household data, IP address, or device identifier into an issue.
 
@@ -150,7 +150,7 @@ Without `MP_ACCESS_TOKEN`, browser access is locked. Without `MP_BOOTSTRAP_KEY`,
 
 If a credential is compromised, revoke it, then rotate the environment key it came from when it was a bootstrap or management key.
 
-There is no `set-pin` endpoint. To replace a forgotten advisory PIN, set `ADMIN_PIN` in the service environment, restart, and provision a browser again with the current bootstrap key. Each successful provisioning stores the configured PIN as an Argon2 hash. Existing device credentials remain valid; this procedure resets the UI PIN and does not rotate API credentials.
+There is no `set-pin` endpoint. To replace a forgotten advisory PIN, set `MP_ADMIN_PIN` in the service environment, restart, and provision a browser again with the current bootstrap key. Each successful provisioning stores the configured PIN as an Argon2 hash. Existing device credentials remain valid; this procedure resets the UI PIN and does not rotate API credentials.
 
 ## Fly.io
 
@@ -163,7 +163,7 @@ The README buttons deploy `infra/docker/Dockerfile` (repository root as build co
 ```
 MP_ACCESS_TOKEN=mpg-local-change-me
 MP_BOOTSTRAP_KEY=mpk-local-bootstrap-change-me
-ADMIN_PIN=0000
+MP_ADMIN_PIN=0000
 MP_SEED_ON_EMPTY=true
 PORT=3000
 ```
@@ -184,7 +184,7 @@ None of these outcomes stops the server from starting. The production bundle has
 
 **One instance, and what persists.** The server refuses a second process on the same database, so every template runs exactly one instance. Render's free web services and Koyeb's free instance have no persistent storage and App Platform has no volumes: each restart, redeploy or (on Render and Koyeb) idle spin-down starts from an empty database, which the next boot reseeds. On Railway, attaching a volume at `/data` keeps data; Railway then stops the old deployment before starting the new one, with a short downtime.
 
-**Moving to real use.** Changing `MP_BOOTSTRAP_KEY` or `ADMIN_PIN` later does not revoke the default bootstrap key or devices already provisioned (see [credentials](#credentials-and-provisioning)), and the demo household stays in the database. On a host that keeps data, start real use on fresh storage: set your own `MP_ACCESS_TOKEN`, `MP_BOOTSTRAP_KEY` and `ADMIN_PIN`, remove `MP_SEED_ON_EMPTY`, and attach a new volume (or edit the values on the deploy form before the first boot).
+**Moving to real use.** Changing `MP_BOOTSTRAP_KEY` or `MP_ADMIN_PIN` later does not revoke the default bootstrap key or devices already provisioned (see [credentials](#credentials-and-provisioning)), and the demo household stays in the database. On a host that keeps data, start real use on fresh storage: set your own `MP_ACCESS_TOKEN`, `MP_BOOTSTRAP_KEY` and `MP_ADMIN_PIN`, remove `MP_SEED_ON_EMPTY`, and attach a new volume (or edit the values on the deploy form before the first boot).
 
 **Per-host files.** `render.yaml` is the Render Blueprint (free plan). Koyeb has no manifest: the README button URL carries the builder, Dockerfile path, free instance type, a single instance (`instances_max=1`), the port, the HTTP health check and the environment. The health check uses `hc_protocol[3000]=http`, `hc_path[3000]=/health`, `hc_method[3000]=get` and `hc_grace_period[3000]=30`. Koyeb's button documentation does not list these parameters, but the control panel's deploy page parses them and its own "Deploy to Koyeb button" generator emits them. If a later Koyeb release drops them, the service falls back to Koyeb's default TCP check on port 3000; set the HTTP check on `/health` under the service's Health checks settings. `railway.json` sets the Dockerfile builder, health check and restart policy. `.do/deploy.template.yaml` is the App Platform template, on the smallest paid size because App Platform's free tier covers static sites only. All buttons need the GitHub repository to be public.
 
