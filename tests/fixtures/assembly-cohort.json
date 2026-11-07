@@ -916,7 +916,9 @@
             "runSmoke fails on 5xx and warns on 4xx",
             "smoke output never contains the bootstrap key or device cookie",
             "runSmoke records an unreachable route as a failure",
-            "runSmoke re-provisions once when the cached device is revoked (403)"
+            "runSmoke re-provisions once when the cached device is revoked (403)",
+            "runSmoke skips routes of inactive plugins instead of failing",
+            "the inactive-plugin code matches the server's plugin_unavailable response"
           ],
           "tools/deploy-fly.test.mjs": [
             "parseDeployArgs knows every flag and rejects unknown ones",
