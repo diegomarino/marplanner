@@ -6,12 +6,9 @@
 # `fly volumes create <volume> --app <app> --region <region> --size 1`.
 #
 # One machine only: SQLite lives on the volume and the boot single-writer guard refuses a second
-# instance. Deploy from the repo root with:
-#   fly deploy . --config infra/fly/fly.toml --ha=false \
-#     --build-arg MP_BUILD_SHA=$(git rev-parse --short HEAD) \
-#     --build-arg "MP_BUILD_SUBJECT=$(git log -1 --format=%s)"
-# Secrets (set with `fly secrets`, never in this file): MP_ACCESS_TOKEN, MP_BOOTSTRAP_KEY,
-# MP_MANAGEMENT_KEY, ADMIN_PIN.
+# instance. Deploy from the repo root with `npm run deploy:fly`, which passes --ha=false and pushes
+# the credentials in the git-ignored .env.fly as Fly secrets (never put them in this file).
+# See infra/fly/USING_FLYIO.md.
 
 app = "your-marplanner-app"
 primary_region = "ams"

@@ -68,3 +68,6 @@ PR_BODY.md
 
 # Per-deployment Fly config (copy of infra/fly/fly.toml.example with the real app name)
 infra/fly/fly.toml
+# Production values pushed to Fly by npm run deploy:fly, and the smoke test's cached device key
+.env.fly
+infra/fly/.smoke-device
