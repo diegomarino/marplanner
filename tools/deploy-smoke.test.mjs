@@ -33,7 +33,7 @@ function fakeFetch(routes, calls = []) {
   return async (url, init = {}) => {
     const method = init.method ?? "GET";
     const path = new URL(url).pathname;
-    calls.push({ method, path, headers: init.headers ?? {} });
+    calls.push({ method, path, headers: init.headers ?? {}, body: init.body });
     const handler = routes[`${method} ${path}`] ?? routes[`${method} *`];
     return handler ? handler(init) : new Response("[]", { status: 200 });
   };
@@ -95,10 +95,13 @@ test("deviceCookie provisions with the bootstrap key and caches it privately", a
     cachePath: path,
     fetch,
     fs,
+    hostname: " release-box ",
   });
   assert.equal(cookie, "dk1");
   assert.equal(calls.length, 1);
   assert.equal(calls[0].headers.authorization, `Bearer ${BOOTSTRAP}`);
+  assert.equal(calls[0].headers["content-type"], "application/json");
+  assert.deepEqual(JSON.parse(calls[0].body), { label: "release-box" });
   assert.equal(readFileSync(path, "utf8").trim(), "dk1");
   assert.equal(statSync(path).mode & 0o777, 0o600);
 });

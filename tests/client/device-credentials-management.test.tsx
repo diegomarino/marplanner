@@ -97,6 +97,54 @@ describe("DeviceCredentialsManagement", () => {
     expect(within(revoked).queryByTestId("access-keys-revoke-old")).not.toBeInTheDocument();
   });
 
+  it("shows when each key was added to the minute, in the household timezone", async () => {
+    routeFetch({});
+    renderPanel();
+
+    expect(await screen.findByTestId("access-keys-created-kitchen")).toHaveTextContent(
+      "Added 21 Oct 2026, 14:00"
+    );
+    cleanup();
+
+    currentSettings.timezone = "America/New_York";
+    try {
+      renderPanel();
+      expect(await screen.findByTestId("access-keys-created-kitchen")).toHaveTextContent(
+        "Added 21 Oct 2026, 08:00"
+      );
+    } finally {
+      currentSettings.timezone = "Europe/Madrid";
+    }
+  });
+
+  it("dates expiries by day and falls back to the browser timezone before settings load", async () => {
+    const expiring = credential({
+      id: "guest",
+      label: "Guest phone",
+      expiresAt: Date.parse("2026-12-01T12:00:00Z"),
+    });
+    fetchMock.mockImplementation(async () => json({ credentials: [expiring] }));
+    const settings = currentSettings as { timezone: string | null };
+    settings.timezone = null;
+    try {
+      renderPanel();
+      const row = await screen.findByTestId("access-keys-row-guest");
+      expect(row).toHaveTextContent("Expires 1 Dec 2026");
+      const expected = new Date(expiring.createdAt).toLocaleString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      expect(screen.getByTestId("access-keys-created-guest")).toHaveTextContent(
+        `Added ${expected}`
+      );
+    } finally {
+      settings.timezone = "Europe/Madrid";
+    }
+  });
+
   it("disables revoking the configured bootstrap key and explains how to rotate it", async () => {
     routeFetch({});
     renderPanel();
