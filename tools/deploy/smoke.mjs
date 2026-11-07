@@ -12,6 +12,7 @@ export const SMOKE_CACHE = "infra/fly/.smoke-device";
 const DEVICE_COOKIE = "mp_device_key";
 /** The auth boundary answers 401 for an unknown key and 403 for a revoked or expired one. */
 export const STALE_CREDENTIAL = Object.freeze([401, 403]);
+export const PLUGIN_UNAVAILABLE = "plugin_unavailable";
 
 /** Routes that download household data, return binaries, need a lease or reach the home network. */
 export const SMOKE_SKIP = Object.freeze([
@@ -106,6 +107,19 @@ export async function runSmoke({ baseUrl, bootstrapKey, cachePath, spec, fetch, 
       log(`  ✘ GET ${path} → unreachable`);
       return null;
     }
+    // A plugin that is installed but not activated answers 503 plugin_unavailable
+    // (src/server/plugins/http.ts); a fresh deployment starts with plugins off.
+    if (response.status === 503) {
+      const body = await response
+        .clone()
+        .json()
+        .catch(() => null);
+      if (body?.code === PLUGIN_UNAVAILABLE) {
+        result.skipped.push(path);
+        log(`  · GET ${path} skipped (plugin inactive)`);
+        return null;
+      }
+    }
     const line = `GET ${path} → ${response.status}`;
     if (response.status >= 500 || STALE_CREDENTIAL.includes(response.status)) {
       result.failures.push(line);
@@ -124,6 +138,14 @@ export async function runSmoke({ baseUrl, bootstrapKey, cachePath, spec, fetch, 
   for (const path of direct) {
     const response = await check(path);
     if (response?.ok) bodies[path] = await response.json().catch(() => null);
+  }
+  // Inactive and errored plugins both answer 503 plugin_unavailable, so the skip above cannot tell
+  // them apart; the catalog can. An errored plugin is a broken feature and fails the smoke.
+  for (const plugin of bodies["/api/plugins"]?.plugins ?? []) {
+    if (plugin.state !== "errored") continue;
+    const line = `plugin ${plugin.id} is errored (${plugin.error?.code ?? "unknown"})`;
+    result.failures.push(line);
+    log(`  ✘ ${line}`);
   }
   for (const template of parametrized) {
     const path = fillParams(template, bodies, date);

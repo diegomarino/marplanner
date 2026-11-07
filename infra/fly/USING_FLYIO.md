@@ -67,7 +67,10 @@ Run it from the repository root with a clean working tree. In order, it:
 6. **Health**: waits for `GET /health`.
 7. **Release**: waits until `/api/telemetry/system-status` reports the deployed commit, so an old
    machine still answering during the rollout is not mistaken for success.
-8. **Smoke**: `GET`s every read route in `docs/api/openapi.json` and fails on any 5xx.
+8. **Smoke**: `GET`s every read route in `docs/api/openapi.json` and fails on any 5xx. Routes of
+   plugins that are not activated yet answer `503 plugin_unavailable` and are reported as skipped,
+   so a fresh deployment passes before you turn plugins on in Admin. A plugin in the `errored`
+   state (`/api/plugins`) still fails the smoke, naming the plugin and its error code.
 
 | Flag            | Effect                                                                    |
 | --------------- | ------------------------------------------------------------------------- |

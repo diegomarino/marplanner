@@ -916,7 +916,10 @@
             "runSmoke fails on 5xx and warns on 4xx",
             "smoke output never contains the bootstrap key or device cookie",
             "runSmoke records an unreachable route as a failure",
-            "runSmoke re-provisions once when the cached device is revoked (403)"
+            "runSmoke re-provisions once when the cached device is revoked (403)",
+            "runSmoke skips routes of inactive plugins instead of failing",
+            "the inactive-plugin code matches the server's plugin_unavailable response",
+            "runSmoke fails for every errored plugin even though its routes answer plugin_unavailable"
           ],
           "tools/deploy-fly.test.mjs": [
             "parseDeployArgs knows every flag and rejects unknown ones",
@@ -1353,7 +1356,7 @@
           "tests/boundary/credentials.test.ts": [
             "credentials — mpk- diceware generateKey keys start with 'mpk-'",
             "credentials — mpk- diceware generateKey words are lowercase",
-            "credentials — mpk- diceware generateKey has exactly 6 words (5 separators)",
+            "credentials — mpk- diceware generateKey has exactly 8 words (7 separators)",
             "credentials — mpk- diceware generateKey every word comes from the embedded wordlist",
             "credentials — mpk- diceware generateKey uses CSPRNG — two keys are never identical in 100 tries",
             "credentials — mpk- diceware hashKey returns a 64-char hex string (SHA-256)",

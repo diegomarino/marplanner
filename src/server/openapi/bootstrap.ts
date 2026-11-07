@@ -34,7 +34,7 @@ export const bootstrapSchemas = defineRouteSchemas({
     security: [],
     headers: z.object({
       Authorization: z.string().meta({
-        example: "Bearer mpk-cedar-lantern-otter-ridge-velvet-amber",
+        example: "Bearer mpk-cedar-lantern-otter-ridge-velvet-amber-quilt-harbor",
         description: "The raw `*` bootstrap key. Never logged; never returned.",
       }),
     }),
