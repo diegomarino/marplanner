@@ -213,15 +213,15 @@ function CatalogRow({ plugin }: { plugin: PluginCatalogEntry }) {
 
 export function PluginManagement() {
   const t = useT();
-  const { plugins, reload, status } = usePluginCatalog();
+  const { plugins, refreshing, reload, status } = usePluginCatalog();
 
   if (status === "loading") return <p aria-live="polite">{t("plugins.loading")}</p>;
   if (status === "error") {
     return (
       <section className="flex min-w-0 flex-col gap-4">
         <ErrorNotice message={t("plugins.loadError")} politeness="polite" />
-        <Button type="button" variant="outline" onClick={() => void reload()}>
-          {t("plugins.retry")}
+        <Button type="button" variant="outline" disabled={refreshing} onClick={() => void reload()}>
+          {refreshing ? t("plugins.retrying") : t("plugins.retry")}
         </Button>
       </section>
     );
