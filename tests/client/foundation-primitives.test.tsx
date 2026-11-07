@@ -145,6 +145,12 @@ it("scales the localized built-in dialog close in both densities and closes the 
       </Dialog>
     );
     const close = screen.getByRole("button", { name: "Cerrar" });
+    // Pin the GLYPH size, not just the box: `Button` renders an icon without an explicit size
+    // at 16px, so the hit area would meet the kiosk minimum while the glyph shrank.
+    expect(
+      close.querySelector("svg")?.getAttribute("class") ?? "",
+      "the close glyph must carry an explicit size- class or Button shrinks it to 16px"
+    ).toMatch(/\bsize-6\b/);
     expect(getComputedStyle(close).fontSize).toBe("var(--control-font-size)");
     expect(getComputedStyle(close).height).toBe("var(--control-height)");
     expect(getComputedStyle(close).getPropertyValue("--control-height").trim()).toBe("36px");

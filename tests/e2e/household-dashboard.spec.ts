@@ -231,7 +231,7 @@ test("household dashboard: integrated family flow remains independently usable",
   await page.goto("/");
   await expect(page.getByRole("region", { name: m["agenda.title"] })).toBeVisible();
   await expect(page.getByText(m["agenda.error"], { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: m["todayChores.title"] })).toBeVisible();
+  await expect(page.getByRole("region", { name: m["todayChores.title"] })).toBeVisible();
   await expect(page.getByRole("link", { name: m["todayMeals.open"], exact: true })).toBeVisible();
   await expect(page.getByTestId("today-meals-strip")).toContainText(mealNote);
 
