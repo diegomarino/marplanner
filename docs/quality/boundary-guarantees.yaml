@@ -132,6 +132,11 @@ guarantees:
     owner: reminders
     spec: reminders
     note: "Per-member assignment discriminant (ADR-004): specific holds N one-member assignments (weekdays for scheduled, membership for calendar_gated); invalid targeting/weekday combos rejected at boundary (mirrors INV-01); emission is AC-03."
+  - id: REMINDERS-INV-10
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "Content discriminant (#96): text rules carry non-blank text and no emojis; images rules carry 1-12 vendored catalog emojis and an optional description; backed by the reminders_content_check DB CHECK."
   - id: REMINDERS-AC-01
     disposition: active
     owner: reminders
@@ -177,6 +182,11 @@ guarantees:
     owner: reminders
     spec: reminders
     note: "calendar_gated non-emission explainable via dry-run/explain capability."
+  - id: REMINDERS-AC-11
+    disposition: active
+    owner: reminders
+    spec: reminders
+    note: "text | images content on either kind; invalid content rejected with nothing persisted; images rules emit their ordered emojis and print beside text items."
   - id: DAY-PERIODS-INV-01
     disposition: active
     owner: day-periods

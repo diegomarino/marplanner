@@ -22,6 +22,7 @@ import type { MessageKey } from "@/i18n/messages";
 import { formatDayLabel } from "@/home/weatherFormat";
 import { WEATHER_CONDITION_LABEL_KEYS } from "@/home/WeatherPill";
 import { SLOT_LABEL_KEYS } from "@/meals/MealsBoard";
+import { NotoEmoji } from "@/chores/noto-emoji";
 import type { BriefingMealItem, ForecastDay } from "../../shared";
 
 /** A single non-empty string, or `fallback` (an id) when the value is missing/blank. */
@@ -81,9 +82,11 @@ export interface BirthdayData {
   family: BirthdayFamilyEntry[];
 }
 
+/** `emojis` marks an image reminder (for pre-readers); `value` is then its optional description. */
 export interface ReminderItemV2 {
   id?: string;
   value: string;
+  emojis?: string[];
 }
 
 export interface ReminderGroupV2 {
@@ -254,6 +257,12 @@ export function BirthdayBlock({ data }: { data: BirthdayData }): React.JSX.Eleme
 
 /** schemaVersion-2 "reminders" shape — `{groups: [{title?, items: [{value}]}]}`, fixing the
  * empty-render bug where `Array.isArray(data)` was false for this object shape. */
+/** Size of an image reminder's emojis on screen: big enough for a pre-reader to recognise across
+ * the room. Unlike the printed slip (one column), they sit side by side and wrap. */
+const REMINDER_EMOJI_PX = 64;
+
+/** Text and image reminders share one list, in emission order. An image item is announced by its
+ * description, or by the emojis themselves when it has none. */
 export function RemindersBlock({ data }: { data: RemindersV2Data }): React.JSX.Element {
   const totalItems = data.groups.reduce((sum, group) => sum + group.items.length, 0);
   if (totalItems === 0) return <TextList items={[]} />;
@@ -262,11 +271,32 @@ export function RemindersBlock({ data }: { data: RemindersV2Data }): React.JSX.E
       {data.groups.map((group, groupIndex) => (
         <div key={groupIndex}>
           {group.title ? <p className="text-sm font-semibold">{group.title}</p> : null}
-          <TextList
-            items={group.items.map((item, itemIndex) =>
-              displayText(item.value, item.id ?? String(itemIndex))
-            )}
-          />
+          <ul className="space-y-1 text-base">
+            {group.items.map((item, itemIndex) => {
+              const key = item.id ?? String(itemIndex);
+              if (item.emojis && item.emojis.length > 0) {
+                return (
+                  <li key={key}>
+                    <span
+                      role="img"
+                      aria-label={displayText(item.value, item.emojis.join(" "))}
+                      data-testid="briefing-reminder-emojis"
+                      className="flex flex-wrap gap-3 py-1"
+                    >
+                      {item.emojis.map((emoji, emojiIndex) => (
+                        <NotoEmoji
+                          key={`${emoji}-${emojiIndex}`}
+                          emoji={emoji}
+                          size={REMINDER_EMOJI_PX}
+                        />
+                      ))}
+                    </span>
+                  </li>
+                );
+              }
+              return <li key={key}>{displayText(item.value, key)}</li>;
+            })}
+          </ul>
         </div>
       ))}
     </div>

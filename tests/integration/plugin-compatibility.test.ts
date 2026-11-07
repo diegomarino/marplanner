@@ -27,7 +27,7 @@ import {
   createScheduler,
 } from "../../src/server/scheduler/index.js";
 import { PLUGIN_IDS, type PluginId, type PluginState } from "../../src/shared/plugins.js";
-import { BASELINE_FILE, execBaseline } from "../helpers/baseline";
+import { SHIPPED_MIGRATION_FILES, execShippedMigrations } from "../helpers/baseline";
 
 const FIXTURES_DIR = path.resolve(process.cwd(), "tests/fixtures/plugin-lifecycle");
 const MIGRATIONS_DIR = path.resolve(process.cwd(), "drizzle");
@@ -187,9 +187,9 @@ function buildBackupFixture(
   const db = new Database(dbPath);
   try {
     db.pragma("foreign_keys = ON");
-    execBaseline(db, FROZEN_NOW);
+    execShippedMigrations(db, FROZEN_NOW);
     createJournal(db);
-    recordMigration(db, BASELINE_FILE);
+    for (const file of SHIPPED_MIGRATION_FILES) recordMigration(db, file);
     db.exec("UPDATE plugin_activation_registry SET state = 'active'");
     applyFixture("migrated-active", db);
     if (options.interruptedDeactivation) {

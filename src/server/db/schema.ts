@@ -480,6 +480,10 @@ export const choreCompletions = sqliteTable(
 );
 
 /** Reminder — scheduled or calendar_gated reminder rule (kind-aware discriminant CHECK, 0009).
+ * `content_type` says what the reminder shows: `text` (the `text` column, non-blank) or `images`
+ * (a non-empty JSON array of catalog emojis in `emojis`, for pre-readers; `text` is then an
+ * optional, possibly empty, screen-reader/admin description). Emoji membership and the list's
+ * length are module-validated, like `weekdays` (no JSON1 DB CHECK).
  */
 export const reminders = sqliteTable(
   "reminder",
@@ -488,6 +492,8 @@ export const reminders = sqliteTable(
     kind: text("kind").notNull(),
     targetingMode: text("targeting_mode").notNull(),
     text: text("text").notNull(),
+    contentType: text("content_type").notNull().default("text"),
+    emojis: text("emojis"),
     weekdays: text("weekdays"),
     query: text("query"),
     queryFields: text("query_fields"),
@@ -506,6 +512,10 @@ export const reminders = sqliteTable(
       sql`(${table.kind} = 'scheduled' AND ${table.query} IS NULL AND ${table.queryFields} IS NULL AND ((${table.targetingMode} = 'apply_to_all' AND ${table.weekdays} IS NOT NULL) OR (${table.targetingMode} = 'specific' AND ${table.weekdays} IS NULL))) OR (${table.kind} = 'calendar_gated' AND ${table.query} IS NOT NULL AND ${table.queryFields} IS NOT NULL AND ${table.weekdays} IS NULL)`
     ),
     activeCheck: check("reminders_active_check", sql`${table.active} IN (0, 1)`),
+    contentCheck: check(
+      "reminders_content_check",
+      sql`(${table.contentType} = 'text' AND ${table.emojis} IS NULL AND length(trim(${table.text})) > 0) OR (${table.contentType} = 'images' AND ${table.emojis} IS NOT NULL AND ${table.emojis} <> '[]')`
+    ),
   })
 );
 

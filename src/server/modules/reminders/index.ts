@@ -1,14 +1,17 @@
 import { validateWeekdays as validateWeekdayTokens } from "../../../shared/weekdays";
 import { randomUUID } from "node:crypto";
+import { MAX_REMINDER_EMOJIS } from "../../../shared";
 import type {
   DryRunResult,
   Reminder,
   ReminderAssignment,
+  ReminderContentType,
   ReminderEmission,
   ReminderQueryField,
   Weekday,
 } from "../../../shared";
 import {
+  hasNotoEmoji,
   isActiveMember,
   getEvents,
   WindowError,
@@ -50,7 +53,9 @@ function rowToReminder(
     id: string;
     kind: string;
     targeting_mode: string;
+    content_type: string;
     text: string;
+    emojis: string | null;
     weekdays: string | null;
     query?: string | null;
     query_fields?: string | null;
@@ -62,13 +67,69 @@ function rowToReminder(
     id: row.id,
     kind: row.kind as Reminder["kind"],
     targetingMode: row.targeting_mode as Reminder["targetingMode"],
+    contentType: row.content_type as ReminderContentType,
     text: row.text,
+    emojis: row.emojis ? (JSON.parse(row.emojis) as string[]) : null,
     weekdays: row.weekdays ? (JSON.parse(row.weekdays) as Weekday[]) : null,
     query: row.query ?? null,
     queryFields: row.query_fields ? (JSON.parse(row.query_fields) as ReminderQueryField[]) : null,
     active: row.active === 1,
     assignments,
   };
+}
+
+/** An `images` reminder's emoji list: 1–MAX_REMINDER_EMOJIS entries, in display order, each one
+ * the app ships a Noto SVG for (so the dashboard and the printed briefing can both draw it).
+ * Repeats are allowed ("🍎🍎" is a valid picture sentence). */
+function validateEmojis(emojis: unknown): string[] {
+  if (!Array.isArray(emojis) || emojis.length === 0) {
+    throw new ReminderValidationError(
+      "emojis is required and must be a non-empty array for contentType: images"
+    );
+  }
+  if (emojis.length > MAX_REMINDER_EMOJIS) {
+    throw new ReminderValidationError(`emojis accepts at most ${MAX_REMINDER_EMOJIS} entries`);
+  }
+  for (const emoji of emojis) {
+    if (typeof emoji !== "string" || !hasNotoEmoji(emoji)) {
+      throw new ReminderValidationError(
+        `Unsupported emoji "${String(emoji)}": pick one from the app's emoji catalog`
+      );
+    }
+  }
+  return emojis as string[];
+}
+
+interface ReminderContent {
+  contentType: ReminderContentType;
+  text: string;
+  emojis: string[] | null;
+}
+
+/** Resolve a create body's content fields. `contentType` defaults to `text`, which needs a
+ * non-blank `text` and no `emojis`; `images` needs `emojis` and keeps `text` as an optional
+ * (possibly empty) description. Mirrors the `reminders_content_check` DB CHECK. */
+function resolveCreateContent(
+  contentType: unknown,
+  text: unknown,
+  emojis: unknown
+): ReminderContent {
+  if (contentType === undefined || contentType === "text") {
+    if (emojis !== undefined) {
+      throw new ReminderValidationError("emojis is only accepted for contentType: images");
+    }
+    if (typeof text !== "string" || text.trim().length === 0) {
+      throw new ReminderValidationError("text is required and must not be blank");
+    }
+    return { contentType: "text", text: text.trim(), emojis: null };
+  }
+  if (contentType === "images") {
+    if (text !== undefined && typeof text !== "string") {
+      throw new ReminderValidationError("text must be a string");
+    }
+    return { contentType: "images", text: (text ?? "").trim(), emojis: validateEmojis(emojis) };
+  }
+  throw new ReminderValidationError('contentType must be "text" or "images"');
 }
 
 const VALID_QUERY_FIELDS = new Set<string>(["title", "description", "location"]);
@@ -89,11 +150,21 @@ function validateQueryFields(queryFields: unknown): ReminderQueryField[] {
 
 // Create-body allow-lists (pattern, mirrors daily-messages' ALLOWED_UPSERT_KEYS): reject an
 // unknown top-level key (e.g. a misspelled `weekdyas`) with 400 instead of silently discarding it.
-const SCHEDULED_CREATE_KEYS = new Set(["kind", "targetingMode", "text", "weekdays", "assignments"]);
+const SCHEDULED_CREATE_KEYS = new Set([
+  "kind",
+  "targetingMode",
+  "contentType",
+  "text",
+  "emojis",
+  "weekdays",
+  "assignments",
+]);
 const CALENDAR_GATED_CREATE_KEYS = new Set([
   "kind",
   "targetingMode",
+  "contentType",
   "text",
+  "emojis",
   "query",
   "queryFields",
   "assignments",
@@ -296,10 +367,22 @@ export function createReminder(input: unknown): Reminder {
     throw new ReminderValidationError("Request body must be an object");
   }
 
-  const { kind, targetingMode, text, weekdays, query, queryFields, assignments } = input as {
+  const {
+    kind,
+    targetingMode,
+    contentType,
+    text,
+    emojis,
+    weekdays,
+    query,
+    queryFields,
+    assignments,
+  } = input as {
     kind?: unknown;
     targetingMode?: unknown;
+    contentType?: unknown;
     text?: unknown;
+    emojis?: unknown;
     weekdays?: unknown;
     query?: unknown;
     queryFields?: unknown;
@@ -318,7 +401,9 @@ export function createReminder(input: unknown): Reminder {
   if (kind === "calendar_gated") {
     return createCalendarGatedReminder({
       targetingMode,
+      contentType,
       text,
+      emojis,
       weekdays,
       query,
       queryFields,
@@ -336,10 +421,8 @@ export function createReminder(input: unknown): Reminder {
     );
   }
 
-  if (typeof text !== "string" || text.trim().length === 0) {
-    throw new ReminderValidationError("text is required and must not be blank");
-  }
-  const trimmedText = text.trim();
+  const content = resolveCreateContent(contentType, text, emojis);
+  const storedEmojis = content.emojis ? JSON.stringify(content.emojis) : null;
 
   if (targetingMode === "apply_to_all") {
     if (assignments !== undefined) {
@@ -354,14 +437,24 @@ export function createReminder(input: unknown): Reminder {
 
     const db = getDb();
     db.prepare(
-      "INSERT INTO reminder (id, kind, targeting_mode, text, weekdays, active, created_at, updated_at) VALUES (?, 'scheduled', 'apply_to_all', ?, ?, 1, ?, ?)"
-    ).run(id, trimmedText, JSON.stringify(parsedWeekdays), now, now);
+      "INSERT INTO reminder (id, kind, targeting_mode, content_type, text, emojis, weekdays, active, created_at, updated_at) VALUES (?, 'scheduled', 'apply_to_all', ?, ?, ?, ?, 1, ?, ?)"
+    ).run(
+      id,
+      content.contentType,
+      content.text,
+      storedEmojis,
+      JSON.stringify(parsedWeekdays),
+      now,
+      now
+    );
 
     return rowToReminder({
       id,
       kind: "scheduled",
       targeting_mode: "apply_to_all",
-      text: trimmedText,
+      content_type: content.contentType,
+      text: content.text,
+      emojis: storedEmojis,
       weekdays: JSON.stringify(parsedWeekdays),
       active: 1,
     });
@@ -381,8 +474,8 @@ export function createReminder(input: unknown): Reminder {
 
     db.transaction(() => {
       db.prepare(
-        "INSERT INTO reminder (id, kind, targeting_mode, text, weekdays, active, created_at, updated_at) VALUES (?, 'scheduled', 'specific', ?, NULL, 1, ?, ?)"
-      ).run(id, trimmedText, now, now);
+        "INSERT INTO reminder (id, kind, targeting_mode, content_type, text, emojis, weekdays, active, created_at, updated_at) VALUES (?, 'scheduled', 'specific', ?, ?, ?, NULL, 1, ?, ?)"
+      ).run(id, content.contentType, content.text, storedEmojis, now, now);
 
       for (const { memberId, weekdays: memberWeekdays } of parsedAssignments) {
         db.prepare(
@@ -396,7 +489,9 @@ export function createReminder(input: unknown): Reminder {
         id,
         kind: "scheduled",
         targeting_mode: "specific",
-        text: trimmedText,
+        content_type: content.contentType,
+        text: content.text,
+        emojis: storedEmojis,
         weekdays: null,
         active: 1,
       },
@@ -414,13 +509,16 @@ export function createReminder(input: unknown): Reminder {
  */
 function createCalendarGatedReminder(input: {
   targetingMode: unknown;
+  contentType: unknown;
   text: unknown;
+  emojis: unknown;
   weekdays: unknown;
   query: unknown;
   queryFields: unknown;
   assignments: unknown;
 }): Reminder {
-  const { targetingMode, text, weekdays, query, queryFields, assignments } = input;
+  const { targetingMode, contentType, text, emojis, weekdays, query, queryFields, assignments } =
+    input;
 
   if (weekdays !== undefined) {
     throw new ReminderValidationError(
@@ -428,10 +526,8 @@ function createCalendarGatedReminder(input: {
     );
   }
 
-  if (typeof text !== "string" || text.trim().length === 0) {
-    throw new ReminderValidationError("text is required and must not be blank");
-  }
-  const trimmedText = text.trim();
+  const content = resolveCreateContent(contentType, text, emojis);
+  const storedEmojis = content.emojis ? JSON.stringify(content.emojis) : null;
 
   if (typeof query !== "string" || query.trim().length === 0) {
     throw new ReminderValidationError(
@@ -454,14 +550,25 @@ function createCalendarGatedReminder(input: {
     const now = Date.now();
     const db = getDb();
     db.prepare(
-      "INSERT INTO reminder (id, kind, targeting_mode, text, weekdays, query, query_fields, active, created_at, updated_at) VALUES (?, 'calendar_gated', 'apply_to_all', ?, NULL, ?, ?, 1, ?, ?)"
-    ).run(id, trimmedText, trimmedQuery, JSON.stringify(resolvedQueryFields), now, now);
+      "INSERT INTO reminder (id, kind, targeting_mode, content_type, text, emojis, weekdays, query, query_fields, active, created_at, updated_at) VALUES (?, 'calendar_gated', 'apply_to_all', ?, ?, ?, NULL, ?, ?, 1, ?, ?)"
+    ).run(
+      id,
+      content.contentType,
+      content.text,
+      storedEmojis,
+      trimmedQuery,
+      JSON.stringify(resolvedQueryFields),
+      now,
+      now
+    );
 
     return rowToReminder({
       id,
       kind: "calendar_gated",
       targeting_mode: "apply_to_all",
-      text: trimmedText,
+      content_type: content.contentType,
+      text: content.text,
+      emojis: storedEmojis,
       weekdays: null,
       query: trimmedQuery,
       query_fields: JSON.stringify(resolvedQueryFields),
@@ -478,8 +585,17 @@ function createCalendarGatedReminder(input: {
 
     db.transaction(() => {
       db.prepare(
-        "INSERT INTO reminder (id, kind, targeting_mode, text, weekdays, query, query_fields, active, created_at, updated_at) VALUES (?, 'calendar_gated', 'specific', ?, NULL, ?, ?, 1, ?, ?)"
-      ).run(id, trimmedText, trimmedQuery, JSON.stringify(resolvedQueryFields), now, now);
+        "INSERT INTO reminder (id, kind, targeting_mode, content_type, text, emojis, weekdays, query, query_fields, active, created_at, updated_at) VALUES (?, 'calendar_gated', 'specific', ?, ?, ?, NULL, ?, ?, 1, ?, ?)"
+      ).run(
+        id,
+        content.contentType,
+        content.text,
+        storedEmojis,
+        trimmedQuery,
+        JSON.stringify(resolvedQueryFields),
+        now,
+        now
+      );
 
       for (const { memberId } of parsedAssignments) {
         db.prepare(
@@ -493,7 +609,9 @@ function createCalendarGatedReminder(input: {
         id,
         kind: "calendar_gated",
         targeting_mode: "specific",
-        text: trimmedText,
+        content_type: content.contentType,
+        text: content.text,
+        emojis: storedEmojis,
         weekdays: null,
         query: trimmedQuery,
         query_fields: JSON.stringify(resolvedQueryFields),
@@ -512,7 +630,9 @@ type ReminderRow = {
   id: string;
   kind: string;
   targeting_mode: string;
+  content_type: string;
   text: string;
+  emojis: string | null;
   weekdays: string | null;
   query: string | null;
   query_fields: string | null;
@@ -526,7 +646,7 @@ export function listReminders(): Reminder[] {
   const db = getDb();
   const rows = db
     .prepare(
-      "SELECT id, kind, targeting_mode, text, weekdays, query, query_fields, active FROM reminder ORDER BY created_at ASC"
+      "SELECT id, kind, targeting_mode, content_type, text, emojis, weekdays, query, query_fields, active FROM reminder ORDER BY created_at ASC"
     )
     .all() as ReminderRow[];
 
@@ -538,7 +658,7 @@ export function getReminder(id: string): Reminder {
   const db = getDb();
   const row = db
     .prepare(
-      "SELECT id, kind, targeting_mode, text, weekdays, query, query_fields, active FROM reminder WHERE id = ?"
+      "SELECT id, kind, targeting_mode, content_type, text, emojis, weekdays, query, query_fields, active FROM reminder WHERE id = ?"
     )
     .get(id) as ReminderRow | undefined;
 
@@ -550,7 +670,9 @@ export function getReminder(id: string): Reminder {
 }
 
 const EDITABLE_REMINDER_KEYS = new Set([
+  "contentType",
   "text",
+  "emojis",
   "weekdays",
   "active",
   "query",
@@ -590,14 +712,14 @@ export function editReminder(id: string, patch: unknown): Reminder {
   }
   if (patchKeys.length === 0) {
     throw new ReminderValidationError(
-      "Patch body must include at least one of: text, weekdays, active, query, queryFields, targetingMode, assignments"
+      "Patch body must include at least one of: contentType, text, emojis, weekdays, active, query, queryFields, targetingMode, assignments"
     );
   }
 
   const db = getDb();
   const row = db
     .prepare(
-      "SELECT id, kind, targeting_mode, text, weekdays, query, query_fields, active FROM reminder WHERE id = ?"
+      "SELECT id, kind, targeting_mode, content_type, text, emojis, weekdays, query, query_fields, active FROM reminder WHERE id = ?"
     )
     .get(id) as ReminderRow | undefined;
 
@@ -605,8 +727,20 @@ export function editReminder(id: string, patch: unknown): Reminder {
     throw new ReminderNotFoundError(id);
   }
 
-  const { text, weekdays, active, query, queryFields, targetingMode, assignments } = patch as {
+  const {
+    contentType,
+    text,
+    emojis,
+    weekdays,
+    active,
+    query,
+    queryFields,
+    targetingMode,
+    assignments,
+  } = patch as {
+    contentType?: unknown;
     text?: unknown;
+    emojis?: unknown;
     weekdays?: unknown;
     active?: unknown;
     query?: unknown;
@@ -669,12 +803,14 @@ export function editReminder(id: string, patch: unknown): Reminder {
   const updates: string[] = [];
   const params: unknown[] = [];
 
-  if (text !== undefined) {
-    if (typeof text !== "string" || text.trim().length === 0) {
-      throw new ReminderValidationError("text must not be blank");
-    }
-    updates.push("text = ?");
-    params.push(text.trim());
+  const content = planContentEdit(row, contentType, text, emojis);
+  if (content) {
+    updates.push("content_type = ?", "text = ?", "emojis = ?");
+    params.push(
+      content.contentType,
+      content.text,
+      content.emojis ? JSON.stringify(content.emojis) : null
+    );
   }
 
   if (weekdays !== undefined) {
@@ -737,6 +873,45 @@ export function editReminder(id: string, patch: unknown): Reminder {
   })();
 
   return getReminder(id);
+}
+
+/** Resolve a patch's content fields against the stored row, or `null` when the patch touches none.
+ * The resulting content must satisfy the same rules as a create (`resolveCreateContent`):
+ * switching to `images` requires `emojis`; a `text` reminder keeps a non-blank `text` (switching
+ * from `images` reuses the stored description only if it is non-blank) and never carries
+ * `emojis`. Switching to `text` clears the emoji list. */
+function planContentEdit(
+  row: ReminderRow,
+  contentType: unknown,
+  text: unknown,
+  emojis: unknown
+): ReminderContent | null {
+  if (contentType === undefined && text === undefined && emojis === undefined) return null;
+  if (contentType !== undefined && contentType !== "text" && contentType !== "images") {
+    throw new ReminderValidationError('contentType must be "text" or "images"');
+  }
+  const nextType = (contentType ?? row.content_type) as ReminderContentType;
+  if (text !== undefined && typeof text !== "string") {
+    throw new ReminderValidationError("text must be a string");
+  }
+  const nextText = text !== undefined ? text.trim() : row.text;
+
+  if (nextType === "text") {
+    if (emojis !== undefined) {
+      throw new ReminderValidationError("emojis is only accepted for contentType: images");
+    }
+    if (nextText.length === 0) {
+      throw new ReminderValidationError("text must not be blank");
+    }
+    return { contentType: "text", text: nextText, emojis: null };
+  }
+
+  if (row.content_type !== "images" && emojis === undefined) {
+    throw new ReminderValidationError("emojis is required when switching to contentType: images");
+  }
+  const nextEmojis =
+    emojis !== undefined ? validateEmojis(emojis) : (JSON.parse(row.emojis as string) as string[]);
+  return { contentType: "images", text: nextText, emojis: nextEmojis };
 }
 
 /** Hard-delete a reminder rule; its `reminder_assignment` rows cascade via the FK. */
@@ -869,6 +1044,15 @@ export function replaceAssignments(reminderId: string, input: unknown): Reminder
 
 // ── Emission read (live, no snapshot — D4) ───────────────────────────────────
 
+type EmissionRow = { id: string; text: string; emojis: string | null };
+
+/** A text reminder emits `{id, text}` exactly as before; an images reminder adds its emojis. */
+function toEmission(row: EmissionRow): ReminderEmission {
+  return row.emojis === null
+    ? { id: row.id, text: row.text }
+    : { id: row.id, text: row.text, emojis: JSON.parse(row.emojis) as string[] };
+}
+
 /** Live emission read for one (member, date): active `apply_to_all` rules whose
  * weekday set contains `date`'s weekday, plus active `specific` rules with an
  * active assignment for this member whose weekday set contains it. Tolerant
@@ -896,59 +1080,59 @@ export function getReminders(
 
   const applyToAllRows = db
     .prepare(
-      "SELECT id, text, weekdays FROM reminder WHERE kind = 'scheduled' AND targeting_mode = 'apply_to_all' AND active = 1"
+      "SELECT id, text, emojis, weekdays FROM reminder WHERE kind = 'scheduled' AND targeting_mode = 'apply_to_all' AND active = 1"
     )
-    .all() as Array<{ id: string; text: string; weekdays: string | null }>;
+    .all() as Array<EmissionRow & { weekdays: string | null }>;
 
   const applyToAllEmissions = applyToAllRows
     .filter(
       (row) => row.weekdays !== null && (JSON.parse(row.weekdays) as string[]).includes(weekday)
     )
-    .map((row) => ({ id: row.id, text: row.text }));
+    .map(toEmission);
 
   const specificRows = db
     .prepare(
-      `SELECT r.id AS id, r.text AS text, ra.weekdays AS weekdays
+      `SELECT r.id AS id, r.text AS text, r.emojis AS emojis, ra.weekdays AS weekdays
        FROM reminder r
        JOIN reminder_assignment ra ON ra.reminder_id = r.id
        WHERE r.kind = 'scheduled' AND r.targeting_mode = 'specific' AND r.active = 1
          AND ra.member_id = ? AND ra.active = 1`
     )
-    .all(memberId) as Array<{ id: string; text: string; weekdays: string }>;
+    .all(memberId) as Array<EmissionRow & { weekdays: string }>;
 
   const specificEmissions = specificRows
     .filter((row) => (JSON.parse(row.weekdays) as string[]).includes(weekday))
-    .map((row) => ({ id: row.id, text: row.text }));
+    .map(toEmission);
 
   // calendar_gated apply_to_all — every active member is targeted; membership is implicit.
   // Emit iff a query-matching event is assigned to this member on `date` (AC-02/AC-05/INV-05) —
   // the gate reads ONLY via getEvents, never a direct calendar table read.
   const calendarGatedApplyToAllRows = db
     .prepare(
-      "SELECT id, text, query, query_fields FROM reminder WHERE kind = 'calendar_gated' AND targeting_mode = 'apply_to_all' AND active = 1"
+      "SELECT id, text, emojis, query, query_fields FROM reminder WHERE kind = 'calendar_gated' AND targeting_mode = 'apply_to_all' AND active = 1"
     )
-    .all() as Array<{ id: string; text: string; query: string; query_fields: string }>;
+    .all() as Array<EmissionRow & { query: string; query_fields: string }>;
 
   const calendarGatedApplyToAllEmissions = calendarGatedApplyToAllRows
     .filter((row) => calendarGateMatches(memberId, date, row.query, row.query_fields, txCtx))
-    .map((row) => ({ id: row.id, text: row.text }));
+    .map(toEmission);
 
   // calendar_gated specific — membership-only targeting (AC-05): a member is targeted iff
   // they hold an active assignment on the rule (assignments carry no weekdays, INV-09); the gate
   // still reads ONLY via getEvents, so member identification never touches member attributes.
   const calendarGatedSpecificRows = db
     .prepare(
-      `SELECT r.id AS id, r.text AS text, r.query AS query, r.query_fields AS query_fields
+      `SELECT r.id AS id, r.text AS text, r.emojis AS emojis, r.query AS query, r.query_fields AS query_fields
        FROM reminder r
        JOIN reminder_assignment ra ON ra.reminder_id = r.id
        WHERE r.kind = 'calendar_gated' AND r.targeting_mode = 'specific' AND r.active = 1
          AND ra.member_id = ? AND ra.active = 1`
     )
-    .all(memberId) as Array<{ id: string; text: string; query: string; query_fields: string }>;
+    .all(memberId) as Array<EmissionRow & { query: string; query_fields: string }>;
 
   const calendarGatedSpecificEmissions = calendarGatedSpecificRows
     .filter((row) => calendarGateMatches(memberId, date, row.query, row.query_fields, txCtx))
-    .map((row) => ({ id: row.id, text: row.text }));
+    .map(toEmission);
 
   return [
     ...applyToAllEmissions,

@@ -33,8 +33,11 @@ export interface RemindersBlockContext {
   txCtx?: CalendarReadContext;
 }
 
+/** `emojis` marks an `images` reminder (for pre-readers): the dashboard and the printed slip
+ * draw the emojis, and `value` is then its (possibly empty) description. */
 export interface RemindersBlockItem {
   value: string;
+  emojis?: string[];
 }
 
 export interface RemindersBlockGroup {
@@ -53,6 +56,14 @@ export const remindersBlock = {
   generate(ctx: RemindersBlockContext): RemindersBlockData | null {
     const emissions = getReminders(ctx.memberId, ctx.date, ctx.txCtx);
     if (emissions.length === 0) return null;
-    return { groups: [{ items: emissions.map((e) => ({ value: e.text })) }] };
+    return {
+      groups: [
+        {
+          items: emissions.map((e) =>
+            e.emojis ? { value: e.text, emojis: e.emojis } : { value: e.text }
+          ),
+        },
+      ],
+    };
   },
 };

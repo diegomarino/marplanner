@@ -77,6 +77,8 @@ describe("reminders-assembly (real-process smoke, Scenario A)", () => {
     expect(Object.keys(created).sort()).toEqual([
       "active",
       "assignments",
+      "contentType",
+      "emojis",
       "id",
       "kind",
       "query",
