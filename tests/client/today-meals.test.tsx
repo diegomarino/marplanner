@@ -145,11 +145,12 @@ it("keeps the strip read-only while providing the full meals destination", async
   expect(link.querySelectorAll("a, button, input, select, textarea")).toHaveLength(0);
 });
 
-it("renders a clear empty state without removing the meals destination", async () => {
+it("renders an empty day as four empty slots, with no empty-state sentence", async () => {
   mockTodayMealsBackend(() => new Response(JSON.stringify([])));
   renderTodayMeals();
 
-  expect(await screen.findByText("No meals planned for today.")).toBeInTheDocument();
+  expect(await screen.findAllByTestId("today-meals-empty-slot")).toHaveLength(4);
+  expect(screen.queryByText("No meals planned for today.")).not.toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Today's meals — open Meals" })).toHaveAttribute(
     "href",
     "/meals"
@@ -290,7 +291,7 @@ it("uses the household current day and refreshes after household midnight", asyn
     await Promise.resolve();
     await Promise.resolve();
   });
-  expect(screen.getByText("No meals planned for today.")).toBeInTheDocument();
+  expect(screen.getAllByTestId("today-meals-empty-slot")).toHaveLength(4);
   await act(async () => {
     await vi.advanceTimersByTimeAsync(60_000);
   });

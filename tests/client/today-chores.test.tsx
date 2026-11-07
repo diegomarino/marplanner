@@ -449,7 +449,8 @@ describe("TodayChores", () => {
 
     const child = screen.getByTestId("today-chores-column-ari");
     expect(screen.getByRole("region", { name: "Today's chores" })).toHaveClass("h-full");
-    expect(screen.getByRole("heading", { name: "Today's chores" })).toBeVisible();
+    // The region keeps its accessible name without a visible title.
+    expect(screen.queryByRole("heading", { name: "Today's chores" })).not.toBeInTheDocument();
     expect(child.style.getPropertyValue("--member-color")).toBe("var(--color-member-pink-500)");
     expect(within(child).getByTestId("today-chores-member-badge")).toHaveClass(
       "bg-member-pink-500",
