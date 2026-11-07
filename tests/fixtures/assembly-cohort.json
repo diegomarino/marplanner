@@ -5843,6 +5843,31 @@
             "0002_member_celebration migration accepts a custom set of one to six emojis",
             "member celebration over HTTP refuses a non-object sound setting at the settings seam",
             "member celebration over HTTP reads a stored sound setting that no longer validates as the default"
+          ],
+          "tests/boundary/daily-briefing-weather-icons.test.ts": [
+            "daily-briefing weather block — Weather Icons draws clear with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws mostlyClear with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws partlyCloudy with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws overcast with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws fog with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws drizzle with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws freezingDrizzle with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws rain with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws freezingRain with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws snow with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws snowGrains with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws rainShowers with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws snowShowers with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws thunderstorm with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws thunderstormHail with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws unknown with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons gives thunderstorm, fog, hail and partly cloudy their own icons, unknown reads n/a",
+            "daily-briefing weather block — Weather Icons draws wi-raindrop beside a rain probability and drops the rain column at 0%",
+            "daily-briefing weather block — Weather Icons renders every condition through the real pipeline without failures"
+          ],
+          "tests/client/daily-briefing-weather-icon.test.tsx": [
+            "renders the condition icon before the text, hidden from assistive tech",
+            "renders weatherText as text only"
           ]
         }
       },
@@ -7127,10 +7152,10 @@
       "src/client/home/WeatherIcon.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 11,
-          "statements": 11,
+          "lines": 9,
+          "statements": 9,
           "functions": 3,
-          "branches": 9
+          "branches": 5
         },
         "minimumRates": {
           "lines": 81.81,
@@ -7167,21 +7192,6 @@
           "statements": 100,
           "functions": 100,
           "branches": 96.42
-        }
-      },
-      "src/client/home/weather-icons/paths.ts": {
-        "layer": "client",
-        "minimumTotals": {
-          "lines": 1,
-          "statements": 1,
-          "functions": 0,
-          "branches": 0
-        },
-        "minimumRates": {
-          "lines": 100,
-          "statements": 100,
-          "functions": 100,
-          "branches": 100
         }
       },
       "src/client/home/weatherCache.ts": {
@@ -9558,16 +9568,16 @@
       "src/server/modules/daily-briefing/render/blocks/weather.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 12,
-          "statements": 12,
+          "lines": 8,
+          "statements": 8,
           "functions": 3,
-          "branches": 18
+          "branches": 4
         },
         "minimumRates": {
           "lines": 100,
           "statements": 100,
           "functions": 100,
-          "branches": 94.44
+          "branches": 100
         }
       },
       "src/server/modules/daily-briefing/render/blocks/word-of-day.ts": {
@@ -11128,6 +11138,36 @@
           "statements": 100,
           "functions": 100,
           "branches": 50
+        }
+      },
+      "src/shared/weather-icons/conditionIcons.ts": {
+        "layer": "shared",
+        "minimumTotals": {
+          "lines": 3,
+          "statements": 3,
+          "functions": 1,
+          "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/shared/weather-icons/paths.ts": {
+        "layer": "shared",
+        "minimumTotals": {
+          "lines": 1,
+          "statements": 1,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/shared/plugins.ts": {

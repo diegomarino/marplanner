@@ -5,9 +5,9 @@
 // Clarifications: each block's content renders faithfully but the view never replicates
 // print styling — the word search is a plain monospace character grid, the riddle answer
 // renders inline visually de-emphasized (no rotation, no interactivity), and the
-// text-variant twins (streakText/weatherText) render identically to their visual
-// counterparts. The printable raster is never embedded here — it may not exist at all
-// (DAILY-BRIEFING-AC-05).
+// text-variant twins (streakText/weatherText) render the same content as their visual
+// counterparts; weatherText leaves out the condition icon that weather draws. The printable
+// raster is never embedded here — it may not exist at all (DAILY-BRIEFING-AC-05).
 //
 // Data shapes below are the RAW envelope `block.data` payloads, ground-truthed against each
 // generator's own return type in `src/server/modules/daily-briefing/blocks/*.ts` (NOT the
@@ -21,6 +21,7 @@ import { useTranslation } from "@/i18n";
 import type { MessageKey } from "@/i18n/messages";
 import { formatDayLabel } from "@/home/weatherFormat";
 import { WEATHER_CONDITION_LABEL_KEYS } from "@/home/WeatherPill";
+import { WeatherConditionIcon } from "@/home/WeatherIcon";
 import { SLOT_LABEL_KEYS } from "@/meals/MealsBoard";
 import { NotoEmoji } from "@/chores/noto-emoji";
 import type { BriefingMealItem, ForecastDay } from "../../shared";
@@ -210,14 +211,36 @@ export function TodayBlock({ data }: { data: TodayData }): React.JSX.Element {
   return <TextList items={data.bullets} />;
 }
 
-/** `weather` and its text-only twin `weatherText` render identically (FR-023 Clarifications). */
-export function WeatherBlock({ data }: { data: ForecastDay }): React.JSX.Element {
+/** The forecast line shared by `weather` and its text-only twin `weatherText`. */
+function WeatherLine({ data }: { data: ForecastDay }): React.JSX.Element {
   const { t, language } = useTranslation();
   return (
-    <p className="text-base">
+    <>
       {formatDayLabel(data.date, language)} — {t(WEATHER_CONDITION_LABEL_KEYS[data.conditionKey])} —{" "}
       {t("dailyBriefing.view.weatherMin")} {Math.round(data.tempMinC)}° /{" "}
       {t("dailyBriefing.view.weatherMax")} {Math.round(data.tempMaxC)}° — {data.rainPct}%
+    </>
+  );
+}
+
+/** `weather`: the condition's Weather Icon (decorative, the label names it) before the line. */
+export function WeatherBlock({ data }: { data: ForecastDay }): React.JSX.Element {
+  return (
+    <p className="flex items-center gap-2 text-base">
+      <WeatherConditionIcon conditionKey={data.conditionKey} className="text-2xl" />
+      <span>
+        <WeatherLine data={data} />
+      </span>
+    </p>
+  );
+}
+
+/** `weatherText`: the text-variant twin renders the same line with no icon (FR-023
+ * Clarifications). */
+export function WeatherTextBlock({ data }: { data: ForecastDay }): React.JSX.Element {
+  return (
+    <p className="text-base">
+      <WeatherLine data={data} />
     </p>
   );
 }
