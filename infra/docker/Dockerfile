@@ -20,6 +20,8 @@ ARG MP_BUILD_SUBJECT=""
 ENV MP_BUILD_SHA=$MP_BUILD_SHA MP_BUILD_SUBJECT=$MP_BUILD_SUBJECT
 COPY index.html vite.config.ts tsconfig*.json ./
 COPY src/ src/
+# Static files Vite copies verbatim into dist/client/ (favicons).
+COPY public/ public/
 # Public demo seeds compiled into the server bundle for MP_SEED_ON_EMPTY (see
 # scripts/seed-bundle-plugin.mjs); .dockerignore keeps every *PRIVATE* overlay out of the context.
 COPY seeds/ seeds/

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- marplanner: a planner page with an M. Colours come from
+       src/client/styles/tokens.css: frame and M = primary, page = card. -->
+  <style>
+    .frame { fill: #5a5a40; }
+    .page { fill: #fdfbf8; }
+    .mark { fill: none; stroke: #5a5a40; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    @media (prefers-color-scheme: dark) {
+      .frame { fill: #a3a37a; }
+    }
+  </style>
+  <rect class="frame" x="2" y="4" width="28" height="26" rx="6"/>
+  <rect class="page" x="4" y="12" width="24" height="16" rx="2"/>
+  <path class="mark" d="M9.5 24.5V15.5L16 21L22.5 15.5V24.5"/>
+  <rect class="page" x="8" y="2" width="4" height="6" rx="2"/>
+  <rect class="page" x="20" y="2" width="4" height="6" rx="2"/>
+</svg>

@@ -764,6 +764,11 @@
             "preserves an explicitly supplied data directory",
             "rejects server reuse without an explicit matching data directory"
           ],
+          "tools/favicon.test.mjs": [
+            "index.html links the SVG favicon, its PNG fallback and the apple touch icon",
+            "the favicon files ship in public/ at their declared sizes",
+            "the container build copies public/ so the image serves the favicons"
+          ],
           "tools/fresh-local.test.mjs": [
             "dev:fresh refuses to wipe the project root",
             "dev:fresh refuses to wipe an empty value",
