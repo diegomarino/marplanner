@@ -5727,6 +5727,18 @@
             "DeviceCredentialsManagement renames a credential and rejects an empty name locally",
             "DeviceCredentialsManagement shows a retryable error when the list cannot load"
           ],
+          "tests/boundary/route-boundary.test.ts": [
+            "API-key boundary covers every URL spelling that routes to an /api handler refuses non-origin-form request targets before routing, even with a device key (BASE_PATH=\"\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler refuses non-origin-form request targets before routing, even with a device key (BASE_PATH=\"/family/planner\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler unauthenticated origin-form variants never return /api data (BASE_PATH=\"\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler unauthenticated origin-form variants never return /api data (BASE_PATH=\"/family/planner\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler authenticates by the matched route even under a router that normalizes URLs (BASE_PATH=\"\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler authenticates by the matched route even under a router that normalizes URLs (BASE_PATH=\"/family/planner\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler a live device key keeps working on canonical targets (BASE_PATH=\"\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler a live device key keeps working on canonical targets (BASE_PATH=\"/family/planner\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler provisioning and /health stay the only unauthenticated routes (BASE_PATH=\"\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler provisioning and /health stay the only unauthenticated routes (BASE_PATH=\"/family/planner\")"
+          ],
           "tests/boundary/reminders-content-type.test.ts": [
             "reminders content type (text | images) creates an images reminder, defaults a text reminder, and lists both with their content",
             "reminders content type (text | images) accepts images content on a calendar_gated rule",
