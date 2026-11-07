@@ -3804,7 +3804,7 @@
             "HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-style census) Phase 0 — silent absence (no location): zero controls, frozen helper throws DensityEmptyControlSetError (FR-022)",
             "HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-style census) meets kiosk density across the collapsed pill and the open forecast modal — two phases, mirrors chores-board.test.tsx",
             "HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-style census) DELIBERATE NEGATIVE — forcing the weather-pill trigger below the kiosk minimum makes the assertion fail",
-            "HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-style census) the census is not decorative — REMOVING the dialog's close button drops the count from 2 to 1",
+            "HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-style census) the census is not decorative — a control added inside the open modal raises the count from 1 to 2",
             "HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-style census) HomeSurface keeps dashboard widget density separate from shared-chrome WeatherPill ownership",
             "HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-style census) keeps weather's silent-absence fetch and no-error UI outside the direct dashboard fixture",
             "label maps are transcribed correctly (SC-007 traded a cast for a transcription risk) every meal slot maps to its own key",
@@ -4810,7 +4810,7 @@
             "renders subtle placeholders only for missing slots without creating meal item nodes",
             "keeps four slot placeholders visible while the menu is loading",
             "keeps the strip read-only while providing the full meals destination",
-            "renders a clear empty state without removing the meals destination",
+            "renders an empty day as four empty slots, with no empty-state sentence",
             "announces a failed household-current-day request",
             "clears an initial load error when the next interval successfully loads meals",
             "refetches today's meals after a successful workspace mutation event",
@@ -4907,7 +4907,7 @@
             "WeatherPill — shared family chrome does not render weather for the removed Daily Briefing family route",
             "WeatherPillView — modal content (PR review P1-2/P2-3) P1-2: the hourly list starts at the CURRENT hour, not midnight",
             "WeatherPillView — modal content (PR review P1-2/P2-3) P2-3: renders a localized (non-ISO) day label in es, not the raw date string",
-            "WeatherPillView — modal content (PR review P1-2/P2-3) localizes the dialog's close-button accessible label and provides a description (Radix a11y, review P3-2)",
+            "WeatherPillView — modal content (PR review P1-2/P2-3) has no close button and still closes on Escape (Radix a11y, review P3-2)",
             "WeatherPillView — modal content (PR review P1-2/P2-3) draws a tinted condition icon and today's range, and the rain chance only from 20%",
             "WeatherPillView — modal content (PR review P1-2/P2-3) shows humidity, wind and sun times only when the forecast carries them",
             "WeatherPillView — modal content (PR review P1-2/P2-3) caps the hourly strip at 24 hours and draws night hours with the moon icon",
@@ -6844,8 +6844,8 @@
       "src/client/home/TodayChores.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 3,
-          "statements": 3,
+          "lines": 2,
+          "statements": 2,
           "functions": 1,
           "branches": 0
         },
@@ -6862,7 +6862,7 @@
           "lines": 16,
           "statements": 16,
           "functions": 3,
-          "branches": 23
+          "branches": 21
         },
         "minimumRates": {
           "lines": 100,
