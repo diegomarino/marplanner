@@ -18,8 +18,8 @@ Rationale recorded for posterity: the legacy `tools/dev/set-api-key.sh` used `$R
 
 - **Every API key begins with the prefix `mpk-`.** This is mandatory and uniform across all API keys (bootstrap, device, integration). The prefix makes keys recognizable and, critically, **detectable**: an outbound redaction guard and secret scanners can match `mpk-` to ensure a key is never logged, sent in telemetry, or committed where it does not belong (ties to `ADR-016`).
 - Body: a **word list** (memorable, the household's preferred style) joined by a **non-confusing separator**. The separator is a plain hyphen `-`; digits and ambiguous symbols (`@`, `%`, `0`/`O`, `1`/`l`) are **not** used as separators. Words are all-lowercase (no random per-word casing — it added transcription friction for negligible gain).
-- Words come from a large standard list (EFF diceware, 7776 words ≈ 12.9 bits/word). Six words ≈ 77 bits, CSPRNG-selected — ample for the family threat model and still memorable/typeable.
-- Example shape: `mpk-cedar-lantern-otter-ridge-velvet-amber`.
+- Words come from a large standard list (EFF diceware, 7776 words ≈ 12.9 bits/word). Eight words ≈ 103 bits, CSPRNG-selected — ample for the family threat model, including offline guessing against the unsalted SHA-256 key hashes, and still memorable/typeable. (Originally six words ≈ 77 bits; raised to eight on 2026-11-07. Keys issued earlier stay valid because verification hashes the whole key.)
+- Example shape: `mpk-cedar-lantern-otter-ridge-velvet-amber-quilt-harbor`.
 
 ### Access-gate token format
 
