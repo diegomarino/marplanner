@@ -13,9 +13,10 @@ is included next to the fonts and copied into both render distributions.
 
 ## Weather Icons
 
-The weather pill and forecast dialog draw their condition icons from path data taken
+The weather pill, the forecast dialog and the daily briefing, both the in-app view and the
+printed slip the briefing renderer produces, draw their condition icons from path data taken
 from Weather Icons by Erik Flowers. The icons are licensed under the SIL Open Font
-License 1.1; the complete [license and notice](src/client/home/weather-icons/OFL.txt)
+License 1.1; the complete [license and notice](src/shared/weather-icons/OFL.txt)
 is included next to the vendored path data.
 [Upstream project](https://github.com/erikflowers/weather-icons).
 

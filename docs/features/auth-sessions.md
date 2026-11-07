@@ -23,6 +23,16 @@ The operator supplies a bootstrap `*` value in the deployment environment. At co
 (no valid cookie) a human submits that raw `*` key; the server mints a `*` device key
 with no expiry, binds it to an httpOnly cookie, and never returns the raw key. The key remains persisted even if its environment value is removed; no retirement endpoint is installed.
 
+Each new device key gets a label so the Admin → Access keys list can tell devices apart. A
+caller may send an optional `{ "label": string }` body (trimmed, 1–80 characters, no other keys;
+anything else is `400 invalid_label` and mints nothing); scripts and CLIs send `os.hostname()`.
+Without a label (no body, or `{}`) the server derives one from the `User-Agent` as
+`<Browser> · <OS> · <YYYY-MM-DD>` — for example `Safari · iPadOS · 2026-11-07` — dated in the
+household timezone, with `Unknown` for unrecognised parts and `Device · <YYYY-MM-DD>` when the
+header is missing. The browser provisioning screen relies on this fallback. The `User-Agent` is
+a display hint only and never an authorization input. Keys minted before labels existed keep
+`label = NULL`; there is no backfill.
+
 ### Integration credentials
 
 Startup reconciles `MP_MANAGEMENT_KEY` into an integration credential. Bearer transport for that class is limited to `/api/plugins*`; other routes use the cookie authentication path. There is no API to issue, list or revoke keys. See [operations](../operations.md).

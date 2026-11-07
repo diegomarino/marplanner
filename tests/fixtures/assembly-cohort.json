@@ -2560,6 +2560,57 @@
             "provision — FR-007 POST /api/auth/provision without Authorization header → 401, no cookie set, no raw key in body",
             "provision — FR-007 POST /api/auth/provision with valid key but NO active bootstrap row in DB → 401"
           ],
+          "tests/boundary/provision-label.test.ts": [
+            "provision — device key labels stores an explicit, trimmed label",
+            "provision — device key labels accepts a label of exactly 80 characters",
+            "provision — device key labels rejects an empty label with 400 invalid_label and mints nothing",
+            "provision — device key labels rejects a whitespace-only label with 400 invalid_label and mints nothing",
+            "provision — device key labels rejects an 81-character label with 400 invalid_label and mints nothing",
+            "provision — device key labels rejects a non-string label with 400 invalid_label and mints nothing",
+            "provision — device key labels rejects an extra key with 400 invalid_label and mints nothing",
+            "provision — device key labels rejects an unknown key without label with 400 invalid_label and mints nothing",
+            "provision — device key labels rejects an array body with 400 invalid_label and mints nothing",
+            "provision — device key labels still refuses a bad bootstrap key with 401 before looking at the label",
+            "provision — device key labels labels a key from Safari on iPadOS's User-Agent",
+            "provision — device key labels labels a key from Safari on iOS's User-Agent",
+            "provision — device key labels labels a key from Safari on macOS's User-Agent",
+            "provision — device key labels labels a key from Chrome on Android's User-Agent",
+            "provision — device key labels labels a key from Edge on Windows's User-Agent",
+            "provision — device key labels labels a key from Firefox on Linux's User-Agent",
+            "provision — device key labels labels a key from curl's User-Agent",
+            "provision — device key labels labels a key from Node.js fetch's User-Agent",
+            "provision — device key labels labels a key from an unknown client's User-Agent",
+            "provision — device key labels labels a key 'Device · <date>' when the User-Agent is missing",
+            "provision — device key labels keeps an empty-body request working exactly as before, with a derived label",
+            "provision — device key labels prefers an explicit label over the User-Agent",
+            "provision — device key labels dates the derived label in the household timezone"
+          ],
+          "tests/boundary/user-agent-label.test.ts": [
+            "user-agent-label parses \"Mozilla/5.0 (iPad; CPU OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1\" as Safari on iPadOS",
+            "user-agent-label parses \"Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1\" as Safari on iOS",
+            "user-agent-label parses \"Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/130.0.6723.90 Mobile/15E148 Safari/604.1\" as Chrome on iOS",
+            "user-agent-label parses \"Mozilla/5.0 (iPad; CPU OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/132.0 Mobile/15E148 Safari/605.1.15\" as Firefox on iPadOS",
+            "user-agent-label parses \"Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 EdgiOS/130.0.2849.80 Mobile/15E148 Safari/605.1.15\" as Edge on iOS",
+            "user-agent-label parses \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15\" as Safari on macOS",
+            "user-agent-label parses \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36\" as Chrome on macOS",
+            "user-agent-label parses \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36\" as Chrome on Windows",
+            "user-agent-label parses \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0\" as Edge on Windows",
+            "user-agent-label parses \"Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36 EdgA/130.0.0.0\" as Edge on Android",
+            "user-agent-label parses \"Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36\" as Chrome on Android",
+            "user-agent-label parses \"Mozilla/5.0 (Android 14; Mobile; rv:132.0) Gecko/132.0 Firefox/132.0\" as Firefox on Android",
+            "user-agent-label parses \"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0\" as Firefox on Windows",
+            "user-agent-label parses \"Mozilla/5.0 (X11; Linux x86_64; rv:132.0) Gecko/20100101 Firefox/132.0\" as Firefox on Linux",
+            "user-agent-label parses \"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36\" as Chrome on Linux",
+            "user-agent-label parses \"curl/8.7.1\" as curl on Unknown",
+            "user-agent-label parses \"node\" as Node.js on Unknown",
+            "user-agent-label parses \"undici\" as Node.js on Unknown",
+            "user-agent-label parses \"Node.js/24.0 (linux; x64)\" as Node.js on Linux",
+            "user-agent-label parses \"Wget/1.21.4\" as Unknown on Unknown",
+            "user-agent-label parses \"\" as Unknown on Unknown",
+            "user-agent-label formats '<Browser> · <OS> · <date>'",
+            "user-agent-label falls back to 'Device · <date>' without a User-Agent",
+            "user-agent-label never exceeds 80 characters"
+          ],
           "tests/boundary/reminders-assembly.test.ts": [
             "reminders-assembly (real-process smoke, Scenario A) Scenario A: create an apply_to_all reminder, then read emissions over real HTTP"
           ],
@@ -5720,6 +5771,8 @@
           ],
           "tests/client/device-credentials-management.test.tsx": [
             "DeviceCredentialsManagement lists credentials, marks this device and hides revoked keys behind a filter",
+            "DeviceCredentialsManagement shows when each key was added to the minute, in the household timezone",
+            "DeviceCredentialsManagement dates expiries by day and falls back to the browser timezone before settings load",
             "DeviceCredentialsManagement disables revoking the configured bootstrap key and explains how to rotate it",
             "DeviceCredentialsManagement revokes another device only after confirmation",
             "DeviceCredentialsManagement warns before revoking this device and logs the screen out afterwards",
@@ -5855,6 +5908,31 @@
             "0002_member_celebration migration accepts a custom set of one to six emojis",
             "member celebration over HTTP refuses a non-object sound setting at the settings seam",
             "member celebration over HTTP reads a stored sound setting that no longer validates as the default"
+          ],
+          "tests/boundary/daily-briefing-weather-icons.test.ts": [
+            "daily-briefing weather block — Weather Icons draws clear with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws mostlyClear with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws partlyCloudy with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws overcast with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws fog with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws drizzle with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws freezingDrizzle with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws rain with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws freezingRain with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws snow with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws snowGrains with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws rainShowers with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws snowShowers with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws thunderstorm with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws thunderstormHail with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws unknown with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons gives thunderstorm, fog, hail and partly cloudy their own icons, unknown reads n/a",
+            "daily-briefing weather block — Weather Icons draws wi-raindrop beside a rain probability and drops the rain column at 0%",
+            "daily-briefing weather block — Weather Icons renders every condition through the real pipeline without failures"
+          ],
+          "tests/client/daily-briefing-weather-icon.test.tsx": [
+            "renders the condition icon before the text, hidden from assistive tech",
+            "renders weatherText as text only"
           ]
         }
       },
@@ -7139,10 +7217,10 @@
       "src/client/home/WeatherIcon.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 11,
-          "statements": 11,
+          "lines": 9,
+          "statements": 9,
           "functions": 3,
-          "branches": 9
+          "branches": 5
         },
         "minimumRates": {
           "lines": 81.81,
@@ -7179,21 +7257,6 @@
           "statements": 100,
           "functions": 100,
           "branches": 96.42
-        }
-      },
-      "src/client/home/weather-icons/paths.ts": {
-        "layer": "client",
-        "minimumTotals": {
-          "lines": 1,
-          "statements": 1,
-          "functions": 0,
-          "branches": 0
-        },
-        "minimumRates": {
-          "lines": 100,
-          "statements": 100,
-          "functions": 100,
-          "branches": 100
         }
       },
       "src/client/home/weatherCache.ts": {
@@ -8328,6 +8391,21 @@
           "statements": 48,
           "functions": 4,
           "branches": 24
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/auth/user-agent-label.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 11,
+          "statements": 12,
+          "functions": 4,
+          "branches": 4
         },
         "minimumRates": {
           "lines": 100,
@@ -9570,16 +9648,16 @@
       "src/server/modules/daily-briefing/render/blocks/weather.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 12,
-          "statements": 12,
+          "lines": 8,
+          "statements": 8,
           "functions": 3,
-          "branches": 18
+          "branches": 4
         },
         "minimumRates": {
           "lines": 100,
           "statements": 100,
           "functions": 100,
-          "branches": 94.44
+          "branches": 100
         }
       },
       "src/server/modules/daily-briefing/render/blocks/word-of-day.ts": {
@@ -11140,6 +11218,36 @@
           "statements": 100,
           "functions": 100,
           "branches": 50
+        }
+      },
+      "src/shared/weather-icons/conditionIcons.ts": {
+        "layer": "shared",
+        "minimumTotals": {
+          "lines": 3,
+          "statements": 3,
+          "functions": 1,
+          "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/shared/weather-icons/paths.ts": {
+        "layer": "shared",
+        "minimumTotals": {
+          "lines": 1,
+          "statements": 1,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/shared/plugins.ts": {

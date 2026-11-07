@@ -4,6 +4,7 @@
 //
 // Usage: npm run smoke:deploy [-- --url https://<app>.fly.dev] [-- --reprovision]
 import * as nodeFs from "node:fs";
+import { hostname as osHostname } from "node:os";
 import { pathToFileURL } from "node:url";
 import { readFlyEnv } from "./env.mjs";
 import { FLY_CONFIG, readFlyApp } from "./fly-cli.mjs";
@@ -61,16 +62,23 @@ export function fillParams(path, bodies, today) {
 
 /**
  * The smoke device's cookie: cached in `cachePath` (mode 0600) or provisioned once with the
- * bootstrap key. Each provision adds a device, so the cache is reused across deploys.
+ * bootstrap key. Each provision adds a device, so the cache is reused across deploys. The new
+ * key is labelled with `hostname` (default: this machine's `os.hostname()`).
  */
-export async function deviceCookie({ baseUrl, bootstrapKey, cachePath, fetch, fs }) {
+export async function deviceCookie({ baseUrl, bootstrapKey, cachePath, fetch, fs, hostname }) {
   if (fs.existsSync(cachePath)) {
     const cached = fs.readFileSync(cachePath, "utf8").trim();
     if (cached) return cached;
   }
+  // Name the key after this machine so Admin → Access keys can tell smoke devices apart.
+  const label = (hostname ?? osHostname()).trim().slice(0, 80);
   const response = await fetch(`${baseUrl}/api/auth/provision`, {
     method: "POST",
-    headers: { authorization: `Bearer ${bootstrapKey}` },
+    headers: {
+      authorization: `Bearer ${bootstrapKey}`,
+      ...(label ? { "content-type": "application/json" } : {}),
+    },
+    ...(label ? { body: JSON.stringify({ label }) } : {}),
   });
   if (!response.ok) throw new Error(`provisioning the smoke device failed (${response.status})`);
   const prefix = `${DEVICE_COOKIE}=`;
