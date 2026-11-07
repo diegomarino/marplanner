@@ -889,7 +889,8 @@
             "readFlyEnv parses quotes, export prefixes, comments and CRLF like Node",
             "readFlyEnv explains how to create a missing file",
             "the Fly env file and smoke cache are gitignored",
-            "the required Fly keys are the deployment credentials"
+            "the required Fly keys are the deployment credentials",
+            "validateFlyEnv requires a PIN the Admin keypad can enter"
           ],
           "tools/deploy-fly-cli.test.mjs": [
             "readFlyApp reads the top-level app name",
@@ -910,11 +911,12 @@
             "fillParams returns null for an undiscoverable param",
             "deviceCookie provisions with the bootstrap key and caches it privately",
             "deviceCookie reuses a cached cookie without provisioning",
-            "runSmoke re-provisions once when the cached device is revoked",
+            "runSmoke re-provisions once when the cached device is refused with 401",
             "runSmoke fails instead of looping when a fresh device is refused",
             "runSmoke fails on 5xx and warns on 4xx",
             "smoke output never contains the bootstrap key or device cookie",
-            "runSmoke records an unreachable route as a failure"
+            "runSmoke records an unreachable route as a failure",
+            "runSmoke re-provisions once when the cached device is revoked (403)"
           ],
           "tools/deploy-fly.test.mjs": [
             "parseDeployArgs knows every flag and rejects unknown ones",
@@ -933,7 +935,8 @@
             "a logged-out flyctl says how to log in",
             "only commands carrying secret values hide flyctl's stderr",
             "a failed deploy warns that secrets are already staged",
-            "the smoke device key never enters the Docker build context"
+            "the smoke device key never enters the Docker build context",
+            "the release check replaces a revoked (403) smoke device"
           ]
         }
       },

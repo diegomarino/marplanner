@@ -118,7 +118,7 @@ test("deviceCookie reuses a cached cookie without provisioning", async () => {
   assert.equal(calls.length, 0);
 });
 
-test("runSmoke re-provisions once when the cached device is revoked", async () => {
+test("runSmoke re-provisions once when the cached device is refused with 401", async () => {
   const calls = [];
   const path = cachePath();
   writeFileSync(path, "revoked\n", { mode: 0o600 });
@@ -230,4 +230,30 @@ test("runSmoke records an unreachable route as a failure", async () => {
     log() {},
   });
   assert.deepEqual(result.failures, ["GET /api/members → unreachable"]);
+});
+
+test("runSmoke re-provisions once when the cached device is revoked (403)", async () => {
+  const calls = [];
+  const path = cachePath();
+  writeFileSync(path, "revoked\n", { mode: 0o600 });
+  const fetch = fakeFetch(
+    {
+      "POST /api/auth/provision": () => provisioned("fresh"),
+      "GET *": (init) =>
+        new Response("[]", { status: init.headers.cookie === "mp_device_key=fresh" ? 200 : 403 }),
+    },
+    calls
+  );
+  const spec = { paths: { "/api/members": { get: {} } } };
+  const result = await runSmoke({
+    baseUrl: BASE,
+    bootstrapKey: BOOTSTRAP,
+    cachePath: path,
+    spec,
+    fetch,
+    fs,
+    log() {},
+  });
+  assert.deepEqual(result.failures, []);
+  assert.equal(calls.filter((c) => c.method === "POST").length, 1);
 });

@@ -282,3 +282,17 @@ test("the smoke device key never enters the Docker build context", () => {
   const lines = fs.readFileSync(new URL("../.dockerignore", import.meta.url), "utf8").split("\n");
   assert.ok(lines.includes("infra/fly/.smoke-device"));
 });
+
+test("the release check replaces a revoked (403) smoke device", async () => {
+  const root = workspace();
+  writeFileSync(join(root, "infra/fly/.smoke-device"), "revoked\n");
+  const fake = deps();
+  const inner = fake.deps.fetch;
+  fake.deps.fetch = async (url, init = {}) =>
+    new URL(url).pathname === "/api/telemetry/system-status" &&
+    init.headers?.cookie === "mp_device_key=revoked"
+      ? new Response("{}", { status: 403 })
+      : inner(url, init);
+  assert.equal(await deployFly({ ...defaults, root }, fake.deps), 0);
+  assert.ok(fake.trace.includes("POST /api/auth/provision"));
+});

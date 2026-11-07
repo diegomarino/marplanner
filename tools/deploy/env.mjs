@@ -55,6 +55,9 @@ export function validateFlyEnv(env) {
       errors.push(`${key} is a public default published in this repository; set a unique value`);
     } else if (PREFIXES[key] && !value.startsWith(PREFIXES[key])) {
       errors.push(`${key} must start with ${PREFIXES[key]}`);
+    } else if (key === "ADMIN_PIN" && !/^\d{4,6}$/.test(value)) {
+      // The Admin keypad (src/client/admin/AdminGate.tsx) enters digits only, 4 to 6 of them.
+      errors.push("ADMIN_PIN must be 4–6 digits, the only PINs the Admin keypad can enter");
     }
   }
   return { errors };

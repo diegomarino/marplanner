@@ -89,3 +89,14 @@ test("the Fly env file and smoke cache are gitignored", () => {
 test("the required Fly keys are the deployment credentials", () => {
   assert.deepEqual([...REQUIRED_FLY_KEYS], ["MP_ACCESS_TOKEN", "MP_BOOTSTRAP_KEY", "ADMIN_PIN"]);
 });
+
+test("validateFlyEnv requires a PIN the Admin keypad can enter", () => {
+  for (const pin of ["12 34", "abcd", "123", "1234567", "12a4"]) {
+    const { errors } = validateFlyEnv({ ...valid, ADMIN_PIN: pin });
+    assert.equal(errors.length, 1, pin);
+    assert.match(errors[0], /ADMIN_PIN must be 4–6 digits/);
+    assert.ok(!errors[0].includes(pin), pin);
+  }
+  for (const pin of ["8642", "86420", "864209"])
+    assert.deepEqual(validateFlyEnv({ ...valid, ADMIN_PIN: pin }).errors, [], pin);
+});

@@ -10,6 +10,8 @@ import { FLY_CONFIG, readFlyApp } from "./fly-cli.mjs";
 
 export const SMOKE_CACHE = "infra/fly/.smoke-device";
 const DEVICE_COOKIE = "mp_device_key";
+/** The auth boundary answers 401 for an unknown key and 403 for a revoked or expired one. */
+export const STALE_CREDENTIAL = Object.freeze([401, 403]);
 
 /** Routes that download household data, return binaries, need a lease or reach the home network. */
 export const SMOKE_SKIP = Object.freeze([
@@ -93,7 +95,7 @@ export async function runSmoke({ baseUrl, bootstrapKey, cachePath, spec, fetch, 
 
   async function check(path) {
     let response = await get(path).catch(() => null);
-    if (response?.status === 401 && !reprovisioned) {
+    if (STALE_CREDENTIAL.includes(response?.status) && !reprovisioned) {
       reprovisioned = true;
       fs.rmSync(cachePath, { force: true });
       cookie = await deviceCookie(auth);
@@ -105,7 +107,7 @@ export async function runSmoke({ baseUrl, bootstrapKey, cachePath, spec, fetch, 
       return null;
     }
     const line = `GET ${path} → ${response.status}`;
-    if (response.status >= 500 || response.status === 401) {
+    if (response.status >= 500 || STALE_CREDENTIAL.includes(response.status)) {
       result.failures.push(line);
       log(`  ✘ ${line}`);
     } else if (response.status >= 400) {

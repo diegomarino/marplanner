@@ -17,7 +17,7 @@ import {
   runFly,
   secretsImportPayload,
 } from "./fly-cli.mjs";
-import { deviceCookie, runSmoke, SMOKE_CACHE } from "./smoke.mjs";
+import { deviceCookie, runSmoke, SMOKE_CACHE, STALE_CREDENTIAL } from "./smoke.mjs";
 
 const USAGE = `Usage: npm run deploy:fly -- [flags]
   --dry-run       Check and show the plan; change nothing
@@ -175,7 +175,7 @@ export async function deployFly(options, deps) {
       const response = await fetch(`${baseUrl}/api/telemetry/system-status`, {
         headers: { cookie: `mp_device_key=${cookie}`, accept: "application/json" },
       }).catch(() => null);
-      if (response?.status === 401 && !refreshed) {
+      if (STALE_CREDENTIAL.includes(response?.status) && !refreshed) {
         refreshed = true;
         fs.rmSync(cachePath, { force: true });
         cookie = await asStep("release", () => deviceCookie(auth));

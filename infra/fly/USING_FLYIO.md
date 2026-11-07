@@ -35,7 +35,7 @@ it without changing anything.
 # Every key in this file becomes a Fly secret on each deploy.
 MP_ACCESS_TOKEN=mpg-<random>      # web access gate
 MP_BOOTSTRAP_KEY=mpk-<random>     # provisions devices
-ADMIN_PIN=<pin>                   # advisory Admin PIN
+ADMIN_PIN=<4-6 digits>            # advisory Admin PIN (the keypad enters digits only)
 # MP_MANAGEMENT_KEY=mpk-<random>  # optional operator credential for /api/plugins*
 ```
 
@@ -149,5 +149,5 @@ fly status --config infra/fly/fly.toml
   with `npm run deploy:fly` (which passes `--ha=false`).
 - **Release check keeps reporting the old commit**: the rollout did not finish. Check
   `fly status` and `fly logs`; the previous release keeps serving until the new one is healthy.
-- **Smoke reports `401`**: the smoke device was refused even after one re-provision. Check that
+- **Smoke reports `401` or `403`**: the smoke device was refused even after one re-provision. Check that
   `MP_BOOTSTRAP_KEY` in `.env.fly` matches the deployed secret.
