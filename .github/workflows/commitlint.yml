@@ -28,7 +28,7 @@ jobs:
       - name: Lint the PR title
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
-        run: printf '%s\n' "$PR_TITLE" | npx --no-install commitlint --verbose
+        run: printf '%s\n' "$PR_TITLE" | npx --no-install commitlint --config commitlint.title.config.mjs --verbose
   commits:
     name: PR commits
     # Editing the title or body does not change the commits.
