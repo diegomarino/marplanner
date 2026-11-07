@@ -23,6 +23,16 @@ The operator supplies a bootstrap `*` value in the deployment environment. At co
 (no valid cookie) a human submits that raw `*` key; the server mints a `*` device key
 with no expiry, binds it to an httpOnly cookie, and never returns the raw key. The key remains persisted even if its environment value is removed; no retirement endpoint is installed.
 
+Each new device key gets a label so the Admin → Access keys list can tell devices apart. A
+caller may send an optional `{ "label": string }` body (trimmed, 1–80 characters, no other keys;
+anything else is `400 invalid_label` and mints nothing); scripts and CLIs send `os.hostname()`.
+Without a label (no body, or `{}`) the server derives one from the `User-Agent` as
+`<Browser> · <OS> · <YYYY-MM-DD>` — for example `Safari · iPadOS · 2026-11-07` — dated in the
+household timezone, with `Unknown` for unrecognised parts and `Device · <YYYY-MM-DD>` when the
+header is missing. The browser provisioning screen relies on this fallback. The `User-Agent` is
+a display hint only and never an authorization input. Keys minted before labels existed keep
+`label = NULL`; there is no backfill.
+
 ### Integration credentials
 
 Startup reconciles `MP_MANAGEMENT_KEY` into an integration credential. Bearer transport for that class is limited to `/api/plugins*`; other routes use the cookie authentication path. There is no API to issue, list or revoke keys. See [operations](../operations.md).
@@ -93,7 +103,9 @@ session row is created, and backend authorization never consults PIN state.
 - **API key record**: the durable authorization credential. Attributes: scopes (`*`
   wildcard or a set of `domain:verb` capabilities), `expiresAt` (null for device keys),
   `revokedAt`, and a kind (bootstrap / device / integration). The sole backend
-  authorization boundary; all key state lives in the database.
+  authorization boundary; all key state lives in the database. The boundary covers every
+  request that reaches an `/api/*` handler, decided from the route the request matched as
+  well as its decoded path, and the server serves only origin-form request targets.
 - **PIN record**: a single Argon2 hash of the client-side admin-UI gate, stored in the
   database and included in backups. Verified by the protected verify-pin endpoint; raw PINs are never
   persisted or returned.

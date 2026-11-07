@@ -1,32 +1,31 @@
 import { cn } from "@/lib/utils";
 import type { WeatherConditionKey } from "../../shared";
-import { WEATHER_ICON_PATHS, type WeatherIconName } from "./weather-icons/paths";
+import { WEATHER_ICON_PATHS, type WeatherIconName } from "../../shared/weather-icons/paths";
+import { weatherConditionIconName } from "../../shared/weather-icons/conditionIcons";
 
 type WeatherTone = "sun" | "rain" | "frost" | "storm" | "cloud";
 
-/** One icon per condition key, shared by the pill and the forecast dialog. `night` is set only
- * where the icon itself shows the sun, so it has a moon counterpart.
+/** Colour tone per condition key, shared by the pill, the forecast dialog and the on-screen
+ * briefing. Which icon each key draws lives in `src/shared/weather-icons/conditionIcons.ts`, so
+ * the printed briefing (black, no tone) draws the same glyph.
  */
-const CONDITION_ICONS: Record<
-  WeatherConditionKey,
-  { day: WeatherIconName; night?: WeatherIconName; tone: WeatherTone }
-> = {
-  clear: { day: "wi-day-sunny", night: "wi-night-clear", tone: "sun" },
-  mostlyClear: { day: "wi-day-sunny-overcast", night: "wi-night-alt-partly-cloudy", tone: "sun" },
-  partlyCloudy: { day: "wi-day-cloudy", night: "wi-night-alt-cloudy", tone: "sun" },
-  overcast: { day: "wi-cloudy", tone: "cloud" },
-  fog: { day: "wi-fog", tone: "cloud" },
-  drizzle: { day: "wi-sprinkle", tone: "rain" },
-  freezingDrizzle: { day: "wi-rain-mix", tone: "frost" },
-  rain: { day: "wi-rain", tone: "rain" },
-  freezingRain: { day: "wi-sleet", tone: "frost" },
-  snow: { day: "wi-snow", tone: "frost" },
-  snowGrains: { day: "wi-snowflake-cold", tone: "frost" },
-  rainShowers: { day: "wi-day-showers", night: "wi-night-alt-showers", tone: "rain" },
-  snowShowers: { day: "wi-snow-wind", tone: "frost" },
-  thunderstorm: { day: "wi-thunderstorm", tone: "storm" },
-  thunderstormHail: { day: "wi-hail", tone: "storm" },
-  unknown: { day: "wi-na", tone: "cloud" },
+const CONDITION_TONES: Record<WeatherConditionKey, WeatherTone> = {
+  clear: "sun",
+  mostlyClear: "sun",
+  partlyCloudy: "sun",
+  overcast: "cloud",
+  fog: "cloud",
+  drizzle: "rain",
+  freezingDrizzle: "frost",
+  rain: "rain",
+  freezingRain: "frost",
+  snow: "frost",
+  snowGrains: "frost",
+  rainShowers: "rain",
+  snowShowers: "frost",
+  thunderstorm: "storm",
+  thunderstormHail: "storm",
+  unknown: "cloud",
 };
 
 function toneClassName(tone: WeatherTone): string {
@@ -77,7 +76,10 @@ export function WeatherConditionIcon({
   isDay?: boolean;
   className?: string;
 }): React.JSX.Element {
-  const icon = CONDITION_ICONS[conditionKey];
-  const name = isDay === false && icon.night ? icon.night : icon.day;
-  return <WeatherGlyph name={name} className={cn(toneClassName(icon.tone), className)} />;
+  return (
+    <WeatherGlyph
+      name={weatherConditionIconName(conditionKey, isDay)}
+      className={cn(toneClassName(CONDITION_TONES[conditionKey]), className)}
+    />
+  );
 }

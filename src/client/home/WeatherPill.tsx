@@ -19,7 +19,7 @@ import { createWeatherFetchGuard, readWeatherCache, writeWeatherCache } from "./
 import { formatDayLabel, formatHourLabel, sliceUpcomingHours } from "./weatherFormat";
 import { usePresentationMode } from "@/shell/usePresentationMode";
 import { WeatherConditionIcon, WeatherGlyph } from "./WeatherIcon";
-import type { WeatherIconName } from "./weather-icons/paths";
+import type { WeatherIconName } from "../../shared/weather-icons/paths";
 
 /** Typed condition-key -> label-key map (mirrors ChoresBoard.tsx's `DAY_PERIOD_LABEL_KEYS` /
  * MealsBoard.tsx's `SLOT_LABEL_KEYS`) — removes the three `as MessageKey` casts this file needed

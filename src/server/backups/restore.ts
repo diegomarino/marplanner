@@ -1,6 +1,9 @@
 /** Restore validates the selected shelf file, quiesces traffic and scheduler work,
  * drains active requests, takes a pre-restore snapshot and swaps the database.
- * Post-swap migration, weekday integrity and plugin reconciliation run before traffic resumes.
+ * Post-swap migration, credential re-application, weekday integrity and plugin reconciliation
+ * run before traffic resumes. Credentials (`api_keys`) are not household data: the live rows are
+ * captured before the swap and re-applied over the restored ones (ADR-030), so a restore never
+ * changes who has access.
  * A forward failure rolls back to the pre-restore snapshot. If rollback fails,
  * keep the server quiesced and the scheduler stopped for manual recovery.
  * Validated file descriptors reject symlinks and recheck containment at use time.
@@ -306,6 +309,60 @@ function swapInPlaceFromValidatedPath(sourcePath: string, targetPath: string): v
   }
 }
 
+/** The live `api_keys` state, captured while quiesced and before the swap (ADR-030). */
+interface LiveCredentials {
+  columns: string[];
+  rows: Record<string, unknown>[];
+}
+
+const CREDENTIALS_TABLE = "api_keys";
+
+/** Read every live credential row with its column list. The live database is migrated current,
+ * so its columns are the code's columns; the restored file is migrated current before
+ * `reapplyLiveCredentials` writes them back. Throws on any read failure — the caller aborts
+ * before anything destructive has happened. */
+function captureLiveCredentials(): LiveCredentials {
+  const db = getDb();
+  const columns = (
+    db.prepare(`PRAGMA table_info(\`${CREDENTIALS_TABLE}\`)`).all() as { name: string }[]
+  ).map((column) => column.name);
+  if (columns.length === 0) throw new Error("The live database has no credentials table");
+  const rows = db.prepare(`SELECT * FROM \`${CREDENTIALS_TABLE}\``).all() as Record<
+    string,
+    unknown
+  >[];
+  return { columns, rows };
+}
+
+/** Replace the restored credential rows with the live ones in one transaction: keys revoked
+ * since the backup stay revoked, keys created since the backup (including the requesting
+ * device) keep working, and a key known only to the backup never becomes valid. Throws on any
+ * failure; the transaction leaves the restored file's rows untouched and the caller rolls the
+ * whole database back to the pre-restore snapshot. */
+function reapplyLiveCredentials(live: LiveCredentials): void {
+  const db = getDb();
+  // The shipped schema defines no triggers. A restored file whose trigger touches the
+  // credentials table could rewrite the rows below, or undo a later revocation, so refuse it,
+  // as well as a file where the credentials name is not a plain table.
+  const credentialObjects = db
+    .prepare(
+      "SELECT type FROM sqlite_master WHERE name = ? OR (type = 'trigger' AND (tbl_name = ? OR sql LIKE ?))"
+    )
+    .all(CREDENTIALS_TABLE, CREDENTIALS_TABLE, `%${CREDENTIALS_TABLE}%`) as { type: string }[];
+  if (credentialObjects.length !== 1 || credentialObjects[0].type !== "table") {
+    throw new Error("The restored database redefines the credentials table or its triggers");
+  }
+  const columnList = live.columns.map((column) => `\`${column}\``).join(", ");
+  const placeholders = live.columns.map(() => "?").join(", ");
+  db.transaction(() => {
+    db.prepare(`DELETE FROM \`${CREDENTIALS_TABLE}\``).run();
+    const insert = db.prepare(
+      `INSERT INTO \`${CREDENTIALS_TABLE}\` (${columnList}) VALUES (${placeholders})`
+    );
+    for (const row of live.rows) insert.run(live.columns.map((column) => row[column]));
+  })();
+}
+
 async function drainInFlight(deadlineMs: number, pollMs: number): Promise<boolean> {
   const deadline = Date.now() + deadlineMs;
   while (getInFlightCount() > 0) {
@@ -502,6 +559,22 @@ export async function restoreDatabase(
       };
     }
 
+    // 6b. Capture the live credentials (ADR-030) while quiesced, after the last possible write.
+    // Nothing destructive has happened yet, so a failure leaves the active database untouched.
+    let liveCredentials: LiveCredentials;
+    try {
+      liveCredentials = captureLiveCredentials();
+    } catch (err) {
+      quiescedState = false;
+      restartSchedulerIfWasStopped(schedulerWasStopped);
+      console.error("Backups: reading the live credentials before a restore failed", err);
+      return {
+        status: "pre_restore_failed",
+        message:
+          "The current access credentials could not be read; the active database is untouched",
+      };
+    }
+
     // 7. Force-close ALL database handles (recycling connections is unsafe — old inode/WAL
     // hazard, ADR-017). The filesystem swap, reopen, health probe, and migration steps
     // below stay synchronous; the first permitted yield is lifecycle reconciliation after
@@ -581,6 +654,22 @@ export async function restoreDatabase(
           pluginLifecycle
         );
       }
+    }
+
+    // 11b. Re-apply the live credentials over the restored ones (ADR-030): access after the
+    // restore equals access before it. A failure rolls everything back, credentials included.
+    try {
+      reapplyLiveCredentials(liveCredentials);
+    } catch (err) {
+      console.error("Backups: re-applying the live credentials failed — rolling back:", err);
+      return await rollbackToPreRestore(
+        preRestorePath,
+        preRestoreOutcome.filename,
+        dbPath,
+        schedulerWasStopped,
+        "incompatible_backup",
+        pluginLifecycle
+      );
     }
 
     try {

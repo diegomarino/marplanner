@@ -1,4 +1,4 @@
-import { requestAppPath } from "../../shared/base-path";
+import { requestAppPath, stripBasePath } from "../../shared/base-path";
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/better-sqlite3";
@@ -34,6 +34,27 @@ function readBearerKey(authorization: string | undefined): string | undefined {
   return rawKey.length > 0 ? rawKey : undefined;
 }
 
+/** Classify a request for the `/api/*` boundary; `null` means it is not an API request.
+ *
+ * Fastify routes before any onRequest hook runs, so this looks at BOTH the route the request
+ * matched and its decoded URL path, and treats the request as API if EITHER is under /api/.
+ * The matched route decides which handler runs, and the router normalizes spellings the raw
+ * URL does not show (it drops the `scheme://authority` of an absolute-form target, for one),
+ * so a URL-only check can miss a request that still reaches an /api handler. The URL path
+ * keeps unmatched /api/* requests failing closed. `path` is the routed path when a route
+ * matched (the handler that will run) and the decoded URL path otherwise. */
+export function classifyApiRequest(
+  request: FastifyRequest,
+  basePath: string
+): { path: string; isApiRoute: boolean } | null {
+  const routed = request.routeOptions.url;
+  const routedPath = routed ? stripBasePath(routed, basePath) : null;
+  const isApiRoute = routedPath?.startsWith("/api/") ?? false;
+  const pathname = requestAppPath(request.url, basePath);
+  if (!isApiRoute && !pathname?.startsWith("/api/")) return null;
+  return { path: routedPath ?? pathname ?? "", isApiRoute };
+}
+
 /** Single app-wide Fastify preHandler that enforces auth by API key only.
  * FR-001 – API key is the sole backend authorization boundary.
  * FR-002 – Fail-closed: `/health` and `/auth/provision` are the only
@@ -49,16 +70,16 @@ export async function authBoundary(app: FastifyInstance, basePath = ""): Promise
   app.addHook("onRequest", async (request: FastifyRequest, reply: FastifyReply) => {
     // FR-002: /health (GET) and /auth/provision (POST) are the only
     // unauthenticated routes — skip auth for these.
-    // Strip query string, compare EXACT path (no startsWith — that would match
-    // /healthx, /health-admin, /health/anything, which is fail-OPEN).
-    const pathname = requestAppPath(request.url, basePath);
     // ADR-059 §1/§2: the API-key boundary covers exactly /api/*. Frontend routes, the SPA
     // catch-all, and root /health are NOT subject to it.
-    if (!pathname?.startsWith("/api/")) {
+    const api = classifyApiRequest(request, basePath);
+    if (!api) {
       return;
     }
+    const { path: effectivePath, isApiRoute } = api;
     // Within /api/* provision authenticates the submitted raw key with no prior cookie.
-    if (pathname === PROVISION_PATH && request.method === "POST") {
+    // Exact match (never a prefix, which would be fail-OPEN for /api/auth/provision-x).
+    if (effectivePath === PROVISION_PATH && request.method === "POST") {
       return;
     }
 
@@ -67,7 +88,7 @@ export async function authBoundary(app: FastifyInstance, basePath = ""): Promise
     // source may be present there: choosing between identities would make authorization depend
     // on transport precedence.
     const isPluginManagementPath =
-      pathname === "/api/plugins" || pathname.startsWith("/api/plugins/");
+      effectivePath === "/api/plugins" || effectivePath.startsWith("/api/plugins/");
     const cookieKey = readDeviceCookie(request.headers.cookie);
     const bearerKey = isPluginManagementPath
       ? readBearerKey(request.headers.authorization)
@@ -83,9 +104,7 @@ export async function authBoundary(app: FastifyInstance, basePath = ""): Promise
 
     const rejectCredential = (status: number, message: string) => {
       // Unknown routes still fail closed, but are not credential guesses against an installed operation.
-      const seconds = requestAppPath(request.routeOptions.url ?? "", basePath)?.startsWith("/api/")
-        ? backoff.failure("api", request.ip)
-        : 0;
+      const seconds = isApiRoute ? backoff.failure("api", request.ip) : 0;
       if (seconds) return sendAuthenticationBackoff(reply, seconds);
       return reply.code(status).send({
         error: status === 401 ? "unauthorized" : "forbidden",
