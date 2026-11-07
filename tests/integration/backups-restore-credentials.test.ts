@@ -158,6 +158,34 @@ describe("restore preserves live credentials (ADR-030)", () => {
     expect(allKeys()).toEqual(keysBefore);
   });
 
+  it("refuses a backup whose triggers touch the credentials table", async () => {
+    insertKey("key-live", "mpk-key-live");
+    const keysBefore = allKeys();
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    for (const trigger of [
+      "CREATE TRIGGER keep_old AFTER DELETE ON api_keys BEGIN INSERT INTO api_keys SELECT * FROM api_keys_shadow; END",
+      "CREATE TRIGGER unrevoke AFTER INSERT ON members BEGIN UPDATE api_keys SET revoked_at = NULL; END",
+    ]) {
+      const filename = await snapshotFilename();
+      const backup = new Database(path.join(resolveBackupsRoot(), filename));
+      try {
+        backup.exec("CREATE TABLE api_keys_shadow AS SELECT * FROM api_keys");
+        backup.exec(trigger);
+      } finally {
+        backup.close();
+      }
+
+      const result = await restoreDatabase({ filename, confirmFilename: filename });
+
+      expect(result.status).toBe("incompatible_backup");
+      expect(allKeys()).toEqual(keysBefore);
+      expect(
+        getDb().prepare("SELECT name FROM sqlite_master WHERE type = 'trigger'").all()
+      ).toEqual([]);
+      expect(isQuiesced()).toBe(false);
+    }
+  });
+
   it("leaves credentials untouched when the restore fails after the swap", async () => {
     insertKey("key-a", "mpk-key-a");
     const filename = await snapshotFilename();

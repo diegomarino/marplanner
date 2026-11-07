@@ -5024,6 +5024,7 @@
             "restore preserves live credentials (ADR-030) keeps keys revoked since the backup revoked and keys created since the backup active",
             "restore preserves live credentials (ADR-030) never makes a key that existed only in the backup valid",
             "restore preserves live credentials (ADR-030) re-applies live credentials after migrating a backup that predates later migrations",
+            "restore preserves live credentials (ADR-030) refuses a backup whose triggers touch the credentials table",
             "restore preserves live credentials (ADR-030) leaves credentials untouched when the restore fails after the swap",
             "restore preserves live credentials (ADR-030) aborts before touching the database when the live credentials cannot be read",
             "restore preserves live credentials (ADR-030) rolls back to the pre-restore credentials when re-applying them fails",
@@ -8351,10 +8352,10 @@
       "src/server/backups/restore.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 184,
-          "statements": 197,
+          "lines": 187,
+          "statements": 200,
           "functions": 30,
-          "branches": 54
+          "branches": 58
         },
         "minimumRates": {
           "lines": 93.75,

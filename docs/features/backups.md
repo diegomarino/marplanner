@@ -26,7 +26,8 @@ Access credentials (`api_keys`) are not household data: the live rows are read
 before the swap and written back over the restored ones in one transaction
 (`ADR-030`). A key revoked since the backup stays revoked, a key created since the
 backup (including the device that asked for the restore) keeps working, and a key
-known only to the backup does not become valid. Any failure in that step rolls the
+known only to the backup does not become valid. A backup that redefines the
+credentials table or carries a trigger touching it is refused. Any failure in that step rolls the
 whole database back to the pre-restore snapshot.
 
 ### User Story 2 — Snapshot on cadence and prune safely

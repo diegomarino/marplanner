@@ -341,6 +341,17 @@ function captureLiveCredentials(): LiveCredentials {
  * whole database back to the pre-restore snapshot. */
 function reapplyLiveCredentials(live: LiveCredentials): void {
   const db = getDb();
+  // The shipped schema defines no triggers. A restored file whose trigger touches the
+  // credentials table could rewrite the rows below, or undo a later revocation, so refuse it,
+  // as well as a file where the credentials name is not a plain table.
+  const credentialObjects = db
+    .prepare(
+      "SELECT type FROM sqlite_master WHERE name = ? OR (type = 'trigger' AND (tbl_name = ? OR sql LIKE ?))"
+    )
+    .all(CREDENTIALS_TABLE, CREDENTIALS_TABLE, `%${CREDENTIALS_TABLE}%`) as { type: string }[];
+  if (credentialObjects.length !== 1 || credentialObjects[0].type !== "table") {
+    throw new Error("The restored database redefines the credentials table or its triggers");
+  }
   const columnList = live.columns.map((column) => `\`${column}\``).join(", ");
   const placeholders = live.columns.map(() => "?").join(", ");
   db.transaction(() => {
