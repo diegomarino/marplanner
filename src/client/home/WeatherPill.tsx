@@ -277,8 +277,10 @@ export function WeatherPillView({
         </DialogTrigger>
         <DialogContent
           data-testid="weather-modal"
-          // Escape and a click outside close the dialog, so it carries no "X" button.
-          showCloseButton={false}
+          closeLabel={t("weather.modal.close")}
+          // Escape and a click outside close the dialog, so the "X" is hidden from view. It stays
+          // in the focus order for keyboard, switch and screen-reader users, and shows on focus.
+          closeClassName="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:bg-card focus-visible:shadow-xs"
           // Taller than a short landscape viewport: scroll inside rather than run off its edges.
           className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl"
         >

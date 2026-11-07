@@ -48,9 +48,13 @@ function DialogContent({
   children,
   showCloseButton = true,
   closeLabel = "Close",
+  closeClassName,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
+  /** Extra classes for the built-in close button, e.g. to hide it visually while keeping it
+   * available to keyboard and assistive-technology users. */
+  closeClassName?: string;
   /** Accessible label for the close button's `sr-only` text — override per-caller for a
    * localized surface (a generic vendored primitive has no i18n context of its own). */
   closeLabel?: string;
@@ -75,7 +79,7 @@ function DialogContent({
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute top-4 right-4"
+              className={cn("absolute top-4 right-4", closeClassName)}
             >
               <XIcon className="size-6" />
               <span className="sr-only">{closeLabel}</span>

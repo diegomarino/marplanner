@@ -321,12 +321,12 @@ describe("HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-styl
 
       // Phase 2 — opening the modal portals DialogContent to document.body (SC-003, same
       // out-of-subtree case chores-board.test.tsx documents for ConfirmDialog) — asserted over
-      // document.body. The modal is read-only and dismissed by Escape or a click outside, so
-      // the pill button stays the only control.
+      // document.body, which now holds the pill button AND the dialog's close button: two. The
+      // close button is visually hidden until focused, but it still has to meet the kiosk size.
       fireEvent.click(screen.getByTestId("weather-pill"));
       await screen.findByRole("dialog");
 
-      expect(countInteractiveControls(document.body)).toBe(1);
+      expect(countInteractiveControls(document.body)).toBe(2);
       expect(() => assertKioskDensityCompliant(document.body)).not.toThrow();
     } finally {
       uninject();
@@ -364,7 +364,7 @@ describe("HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-styl
     }
   });
 
-  it("the census is not decorative — a control added inside the open modal raises the count from 1 to 2", async () => {
+  it("the census is not decorative — REMOVING the dialog's visually hidden close button drops the count from 2 to 1", async () => {
     mockWeatherFetch();
     const uninject = await injectDensityStyles();
     document.documentElement.setAttribute("data-density", "kiosk");
@@ -372,13 +372,15 @@ describe("HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-styl
     try {
       render(<WeatherPillView lat={40.4} lon={-3.7} />);
       fireEvent.click(await screen.findByTestId("weather-pill"));
-      const dialog = await screen.findByRole("dialog");
+      await screen.findByRole("dialog");
+
+      expect(countInteractiveControls(document.body)).toBe(2);
+
+      const closeButton = document.querySelector('[data-slot="dialog-close"]');
+      expect(closeButton).not.toBeNull();
+      closeButton?.remove();
 
       expect(countInteractiveControls(document.body)).toBe(1);
-      expect(dialog.querySelector('[data-slot="dialog-close"]')).toBeNull();
-
-      dialog.append(document.createElement("button"));
-      expect(countInteractiveControls(document.body)).toBe(2);
     } finally {
       uninject();
     }

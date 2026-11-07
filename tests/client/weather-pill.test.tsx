@@ -469,7 +469,7 @@ describe("WeatherPillView — modal content (PR review P1-2/P2-3)", () => {
     expect(dayRow.textContent).not.toContain("2026-09-04");
   });
 
-  it("has no close button and still closes on Escape (Radix a11y, review P3-2)", async () => {
+  it("keeps a localized close button hidden until focused and closes on Escape (Radix a11y, review P3-2)", async () => {
     const forecast: ForecastResult = {
       current: { conditionKey: "clear", tempC: 20, rainPct: 10 },
       hourly: [],
@@ -502,7 +502,11 @@ describe("WeatherPillView — modal content (PR review P1-2/P2-3)", () => {
     fireEvent.click(pill);
 
     const modal = await screen.findByTestId("weather-modal");
-    expect(within(modal).queryByRole("button")).not.toBeInTheDocument();
+    // Hidden from view (Escape and a click outside close the modal), but still reachable by
+    // keyboard, switch and screen-reader users, and shown when it takes keyboard focus.
+    const close = within(modal).getByRole("button", { name: "Cerrar" });
+    expect(close).toHaveClass("sr-only", "focus-visible:not-sr-only");
+    expect(screen.queryByText("Close")).not.toBeInTheDocument();
     fireEvent.keyDown(modal, { key: "Escape" });
     await waitFor(() => expect(screen.queryByTestId("weather-modal")).not.toBeInTheDocument());
   });

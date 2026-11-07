@@ -1262,6 +1262,7 @@ export const messages = {
     // `weather.management.*` (admin panel) below — no key overlap.
     "weather.modal.title": "Weather",
     "weather.modal.description": "Current conditions, next hours, and coming days.",
+    "weather.modal.close": "Close",
     "weather.modal.now": "Now",
     "weather.modal.hourly": "Next hours",
     "weather.modal.daily": "Coming days",
@@ -2813,6 +2814,7 @@ export const messages = {
     // `weather.management.*` (admin panel) below — no key overlap.
     "weather.modal.title": "Tiempo",
     "weather.modal.description": "Condiciones actuales, próximas horas y próximos días.",
+    "weather.modal.close": "Cerrar",
     "weather.modal.now": "Ahora",
     "weather.modal.hourly": "Próximas horas",
     "weather.modal.daily": "Próximos días",
