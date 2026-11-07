@@ -39,6 +39,7 @@ import { RoutinesManagement } from "./RoutinesManagement";
 import { SettingsManagement } from "./SettingsManagement";
 import { TelemetryManagement } from "./TelemetryManagement";
 import { TimeAnnouncementsManagement } from "./TimeAnnouncementsManagement";
+import { PluginCatalogNotice } from "@/plugins/PluginCatalogNotice";
 import { PluginManagement } from "@/plugins/PluginManagement";
 import { PluginContribution, usePluginContributionActive } from "@/plugins/contributions";
 import type { PluginId } from "../../shared/plugins";
@@ -321,6 +322,7 @@ export function AdminSidebar({
       // screen scrolls the list itself.
       className="bg-card flex shrink-0 flex-col gap-4 border-b p-3 lg:sticky lg:top-0 lg:h-[calc(100dvh-3.5rem)] lg:w-60 lg:self-start lg:overflow-y-auto lg:border-r lg:border-b-0"
     >
+      <PluginCatalogNotice />
       <nav aria-label={t("admin.sidebar.label")} className="flex flex-col gap-4">
         {sections.map((section) => (
           <div key={section.id} className="flex flex-col">
