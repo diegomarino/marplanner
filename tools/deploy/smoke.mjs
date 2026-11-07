@@ -139,6 +139,14 @@ export async function runSmoke({ baseUrl, bootstrapKey, cachePath, spec, fetch, 
     const response = await check(path);
     if (response?.ok) bodies[path] = await response.json().catch(() => null);
   }
+  // Inactive and errored plugins both answer 503 plugin_unavailable, so the skip above cannot tell
+  // them apart; the catalog can. An errored plugin is a broken feature and fails the smoke.
+  for (const plugin of bodies["/api/plugins"]?.plugins ?? []) {
+    if (plugin.state !== "errored") continue;
+    const line = `plugin ${plugin.id} is errored (${plugin.error?.code ?? "unknown"})`;
+    result.failures.push(line);
+    log(`  ✘ ${line}`);
+  }
   for (const template of parametrized) {
     const path = fillParams(template, bodies, date);
     if (path) await check(path);
