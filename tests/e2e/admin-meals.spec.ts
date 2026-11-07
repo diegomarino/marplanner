@@ -12,7 +12,7 @@ import { messages, resolveLang } from "../../src/client/i18n/messages";
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 
 function todayInTimezone(timezone: string): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
@@ -72,7 +72,7 @@ test("meals admin: edit the week menu and see recurring entries inside their pla
     expect(planResp.status()).toBe(201);
     planId = ((await planResp.json()) as { id: string }).id;
 
-    await unlockAdmin(page, ADMIN_PIN);
+    await unlockAdmin(page, MP_ADMIN_PIN);
     await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
     await openAdminSection(page, "admin-nav-meals-management");
     await expect(

@@ -35,7 +35,7 @@ it without changing anything.
 # Every key in this file becomes a Fly secret on each deploy.
 MP_ACCESS_TOKEN=mpg-<random>      # web access gate
 MP_BOOTSTRAP_KEY=mpk-<random>     # provisions devices
-ADMIN_PIN=<4-6 digits>            # advisory Admin PIN (the keypad enters digits only)
+MP_ADMIN_PIN=<4-6 digits>         # advisory Admin PIN (the keypad enters digits only)
 # MP_MANAGEMENT_KEY=mpk-<random>  # optional operator credential for /api/plugins*
 ```
 
@@ -72,16 +72,16 @@ Run it from the repository root with a clean working tree. In order, it:
    so a fresh deployment passes before you turn plugins on in Admin. A plugin in the `errored`
    state (`/api/plugins`) still fails the smoke, naming the plugin and its error code.
 
-| Flag            | Effect                                                              |
-| --------------- | ------------------------------------------------------------------- |
-| `--dry-run`     | Pre-flight, git and the secrets plan only; changes nothing          |
-| `--full`        | Run `check:standard` instead of `check:fast`                        |
-| `--skip-checks` | Skip the repository checks                                          |
-| `--skip-smoke`  | Skip the smoke test                                                 |
-| `--allow-dirty` | Deploy with uncommitted changes                                     |
-| `--prune`       | Unset Fly secrets that are not in `.env.fly`                        |
-| `--reprovision` | Provision a new smoke device (see [ADMIN_PIN](#rotating-admin_pin)) |
-| `--url <url>`   | Public URL when it is not `https://<app>.fly.dev`                   |
+| Flag            | Effect                                                                    |
+| --------------- | ------------------------------------------------------------------------- |
+| `--dry-run`     | Pre-flight, git and the secrets plan only; changes nothing                |
+| `--full`        | Run `check:standard` instead of `check:fast`                              |
+| `--skip-checks` | Skip the repository checks                                                |
+| `--skip-smoke`  | Skip the smoke test                                                       |
+| `--allow-dirty` | Deploy with uncommitted changes                                           |
+| `--prune`       | Unset Fly secrets that are not in `.env.fly`                              |
+| `--reprovision` | Provision a new smoke device (see [MP_ADMIN_PIN](#rotating-mp_admin_pin)) |
+| `--url <url>`   | Public URL when it is not `https://<app>.fly.dev`                         |
 
 Pass flags after `--`, for example `npm run deploy:fly -- --dry-run`. The smoke test also runs on
 its own: `npm run smoke:deploy [-- --url <url>]`.
@@ -100,9 +100,9 @@ Removing a key from `.env.fly` does not remove it from Fly; deploy with `--prune
 Rotating `MP_BOOTSTRAP_KEY` or `MP_MANAGEMENT_KEY` does not revoke credentials already issued:
 [retire them](#devices-and-the-smoke-device) afterwards.
 
-### Rotating `ADMIN_PIN`
+### Rotating `MP_ADMIN_PIN`
 
-The server stores `ADMIN_PIN` only when a device provisions, so editing it in `.env.fly` and
+The server stores `MP_ADMIN_PIN` only when a device provisions, so editing it in `.env.fly` and
 deploying is not enough. Deploy with `--reprovision`: the smoke test provisions a fresh device,
 which applies the new PIN. Then retire the previous smoke device.
 

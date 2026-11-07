@@ -1665,6 +1665,8 @@
             "private storage creation creates new data and backups directories owner-only but keeps existing ones"
           ],
           "tests/boundary/default-credentials.test.ts": [
+            "admin PIN environment variable reads the PIN from MP_ADMIN_PIN",
+            "admin PIN environment variable falls back to 0000 when MP_ADMIN_PIN is unset",
             "public default credential detection recognises only the repository's default access token",
             "public default credential detection reports the default bootstrap key and either public PIN, including the unset fallback",
             "public default credential detection never reports an operator-chosen value",
@@ -2528,6 +2530,7 @@
           ],
           "tests/boundary/provision.test.ts": [
             "provision — FR-007 scopes mounted device credentials and provisioning marker consistently",
+            "provision — FR-007 seeds the admin PIN from MP_ADMIN_PIN",
             "provision — FR-007 POST /api/auth/provision with valid raw * bootstrap key → 200, Set-Cookie sets mp_device_key, body has no raw key",
             "provision — FR-007 POST /api/auth/provision with invalid raw key → 401, body is { error, message }, no raw key leaked",
             "provision — FR-007 POST /api/auth/provision without Authorization header → 401, no cookie set, no raw key in body",
@@ -7917,9 +7920,9 @@
         "layer": "server",
         "minimumTotals": {
           "lines": 11,
-          "statements": 13,
-          "functions": 3,
-          "branches": 11
+          "statements": 14,
+          "functions": 4,
+          "branches": 12
         },
         "minimumRates": {
           "lines": 100,
@@ -8009,7 +8012,7 @@
           "lines": 42,
           "statements": 43,
           "functions": 3,
-          "branches": 22
+          "branches": 21
         },
         "minimumRates": {
           "lines": 89.18,

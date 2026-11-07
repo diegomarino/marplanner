@@ -39,7 +39,7 @@ describe("verify-pin: match/no-match no-session", () => {
       "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
     ).run(`${Date.now()}-device`, deviceHash, now);
 
-    // Seed the admin_config row (seeded at provisioning from ADMIN_PIN).
+    // Seed the admin_config row (seeded at provisioning from MP_ADMIN_PIN).
     // Use a known correct PIN so we can verify match/no-match.
     // CRITICAL: seed with argon2id (not hashKey/SHA-256) so the verify-pin route's
     // argon2.verify can actually match it —:79 requires argon2id/scrypt.

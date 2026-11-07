@@ -83,7 +83,7 @@ fictional Simpsons household (members, calendar, chores, reminders and meals for
 the current week). Nobody runs a shared demo: the instance is yours, in your account.
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/diegomarino/marplanner)
-[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com%2Fdiegomarino%2Fmarplanner&branch=main&name=marplanner&builder=dockerfile&dockerfile=infra%2Fdocker%2FDockerfile&instance_type=free&instances_max=1&ports=3000%3Bhttp%3B%2F&hc_protocol%5B3000%5D=http&hc_path%5B3000%5D=%2Fhealth&hc_method%5B3000%5D=get&hc_grace_period%5B3000%5D=30&env%5BMP_ACCESS_TOKEN%5D=mpg-local-change-me&env%5BMP_BOOTSTRAP_KEY%5D=mpk-local-bootstrap-change-me&env%5BADMIN_PIN%5D=0000&env%5BMP_SEED_ON_EMPTY%5D=true&env%5BPORT%5D=3000)
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com%2Fdiegomarino%2Fmarplanner&branch=main&name=marplanner&builder=dockerfile&dockerfile=infra%2Fdocker%2FDockerfile&instance_type=free&instances_max=1&ports=3000%3Bhttp%3B%2F&hc_protocol%5B3000%5D=http&hc_path%5B3000%5D=%2Fhealth&hc_method%5B3000%5D=get&hc_grace_period%5B3000%5D=30&env%5BMP_ACCESS_TOKEN%5D=mpg-local-change-me&env%5BMP_BOOTSTRAP_KEY%5D=mpk-local-bootstrap-change-me&env%5BMP_ADMIN_PIN%5D=0000&env%5BMP_SEED_ON_EMPTY%5D=true&env%5BPORT%5D=3000)
 [![Deploy to DigitalOcean](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/diegomarino/marplanner/tree/main)
 
 <!-- TODO: Railway is configured (railway.json) but its button needs a published template. Once
@@ -97,7 +97,7 @@ bootstrap key `mpk-local-bootstrap-change-me`, admin PIN `0000`.
 > [!WARNING]
 > Anyone who has read this README can open a demo instance. It is a demo, not a
 > household install: for real use, set your own `MP_ACCESS_TOKEN` (`mpg-` prefix),
-> `MP_BOOTSTRAP_KEY` (`mpk-` prefix) and `ADMIN_PIN`, and drop `MP_SEED_ON_EMPTY`,
+> `MP_BOOTSTRAP_KEY` (`mpk-` prefix) and `MP_ADMIN_PIN`, and drop `MP_SEED_ON_EMPTY`,
 > on fresh storage. Changing them later does not revoke the default bootstrap key or
 > devices already provisioned on a host that keeps its data (see
 > [operations](docs/operations.md#one-click-cloud-demo)). The on-screen notices
@@ -137,7 +137,7 @@ The app fails closed until the operator configures credentials. Put unique secre
 | `MP_ACCESS_TOKEN`   | Frontend access gate. Without it, browser access cannot pass the gate.                                                          |
 | `MP_BOOTSTRAP_KEY`  | Deployment bootstrap device credential. Without it, first-device provisioning remains locked.                                   |
 | `MP_MANAGEMENT_KEY` | Optional operator credential for management capabilities. Rotating the environment value does not revoke an already issued key. |
-| `ADMIN_PIN`         | Initial advisory UI PIN. It does not authorize backend requests. Set a unique value; the code's fallback is `0000`.             |
+| `MP_ADMIN_PIN`      | Initial advisory UI PIN. It does not authorize backend requests. Set a unique value; the code's fallback is `0000`.             |
 | `MP_SEED_ON_EMPTY`  | Optional. `true` seeds the public Simpsons demo on the first boot of an empty database; data already present is never touched.  |
 
 See [operations](docs/operations.md) for provisioning, storage, shutdown, and synthetic public seed guidance. See [security](SECURITY.md) before exposing the service beyond a trusted network.
@@ -148,7 +148,7 @@ Docker Engine and Docker Compose are required. From the repository root:
 
 ```sh
 cp infra/docker/.env.example infra/docker/.env.local
-# Fill MP_ACCESS_TOKEN (mpg- prefix), MP_BOOTSTRAP_KEY (mpk- prefix), ADMIN_PIN.
+# Fill MP_ACCESS_TOKEN (mpg- prefix), MP_BOOTSTRAP_KEY (mpk- prefix), MP_ADMIN_PIN.
 docker compose --env-file infra/docker/.env.local -f infra/docker/compose.yaml -p marplanner-home up --build -d
 docker compose --env-file infra/docker/.env.local -f infra/docker/compose.yaml -p marplanner-home port marplanner 3000
 ```

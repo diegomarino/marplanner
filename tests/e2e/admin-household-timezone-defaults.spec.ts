@@ -5,7 +5,7 @@ import { unlockAdmin } from "./admin-unlock";
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 const FROZEN_NOW = new Date("2026-01-15T23:00:00.000Z");
 const HOUSEHOLD_TODAY = "2026-01-16";
 
@@ -50,7 +50,7 @@ test("admin date defaults use the household timezone, not the browser timezone (
   expect(reminderResponse.status()).toBe(201);
   const reminderId = ((await reminderResponse.json()) as { id: string }).id;
 
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
   await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 
   // Freeze the browser after unlock. The assertion only proves that this device

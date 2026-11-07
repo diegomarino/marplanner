@@ -32,7 +32,7 @@ function boot(overrides = {}) {
       SCHEDULER_DISABLED: "1",
       MP_ACCESS_TOKEN: "mpg-test-secret-canary",
       MP_BOOTSTRAP_KEY: "mpk-test-secret-canary",
-      ADMIN_PIN: "817239",
+      MP_ADMIN_PIN: "817239",
       ...overrides,
     },
     stdio: ["ignore", "pipe", "pipe"],

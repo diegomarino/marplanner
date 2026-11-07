@@ -100,7 +100,7 @@ export const settingsObjects = sqliteTable("settings_objects", {
 });
 
 /** Admin Config — single-row holder of the advisory admin-PIN verifier.
- * Seeded at provisioning from `ADMIN_PIN` (or a documented default).
+ * Seeded at provisioning from `MP_ADMIN_PIN` (or a documented default).
  * `verify-pin` compares and returns `{ match }` only — advisory, no session row.
  */
 export const adminConfig = sqliteTable(

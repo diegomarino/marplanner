@@ -20,7 +20,7 @@ services:
       - BASE_PATH=${BASE_PATH:-/}
       - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN:?MP_ACCESS_TOKEN is required}
       - MP_BOOTSTRAP_KEY=${MP_BOOTSTRAP_KEY:?MP_BOOTSTRAP_KEY is required}
-      - ADMIN_PIN=${ADMIN_PIN:?ADMIN_PIN is required}
+      - MP_ADMIN_PIN=${MP_ADMIN_PIN:?MP_ADMIN_PIN is required}
       - MP_MANAGEMENT_KEY
       - MP_SEED_ON_EMPTY
       - BACKUPS_ROOT

@@ -51,7 +51,7 @@ const test = printerSessionTest.extend<{ resetDailyBriefingTrigger: void }>({
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 const DEVICE_TIMEZONE = "America/Los_Angeles";
 
 test.use({ timezoneId: DEVICE_TIMEZONE });
@@ -360,7 +360,7 @@ test("admin opt-in -> Generate -> complete ordered catalogue and raster preview 
   // 4) Admin unlock -> Daily Briefing management. The current admin UI sends
   // only memberId; observe that real request rather than mutating it.
 
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
 
   await openAdminSection(page, "admin-nav-daily-briefing-management");
   const management = page.getByTestId("daily-briefing-management");
@@ -610,7 +610,7 @@ test("admin briefing tabs: opt-in gate, matrix cell, keyboard reorder and Genera
     member.id = ((await memberResponse.json()) as { id: string }).id;
   }
 
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
   await openAdminSection(page, "admin-nav-daily-briefing-management");
   const management = page.getByTestId("daily-briefing-management");
 
@@ -988,7 +988,7 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   await expect(page.getByTestId(`chores-board-column-${optOutMember.id}`)).toBeVisible();
 
   // 4) Admin unlock enters the protected subtree before the existing long-press/PIN flow.
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
 
   // 5) Pair through the compact shared-session presentation (printing.spec.ts's precedent).
   // The same-document admin transition above preserves both the session and transport hook.
@@ -1152,7 +1152,7 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   // 10) The admin Printing panel (a DIFFERENT admin surface) shows it printed — force a fresh
   // mount, exactly like printing.spec.ts's `reopenPrintingPanel`, since `loadJobs` only
   // runs on mount.
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
   await openAdminSection(page, "admin-nav-members-management");
   await openAdminSection(page, "admin-nav-printing");
   await expect(page.getByTestId("printing-management")).toBeVisible();
@@ -1195,7 +1195,7 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   // clicking "Generate" again for an already-generated member IS the regenerate path. This
   // panel switch remounts DailyBriefingManagement (AdminContent's ternary chain fully
   // unmounts the previous panel), so the member has to be reselected from the dropdown.
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
   await openAdminSection(page, "admin-nav-members-management");
   await openAdminSection(page, "admin-nav-daily-briefing-management");
   const managementAgain = page.getByTestId("daily-briefing-management");
@@ -1241,7 +1241,7 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   // The regenerated job also actually prints, through the same fake-transport pipeline.
   await waitForPrinted(page.request, secondJobId);
 
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
   await openAdminSection(page, "admin-nav-members-management");
   await openAdminSection(page, "admin-nav-printing");
   await expect(page.getByTestId("printing-management")).toBeVisible();

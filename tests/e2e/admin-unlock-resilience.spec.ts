@@ -23,7 +23,7 @@ import { unlockAdmin } from "./admin-unlock";
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 
 const SPACER_ATTR = "data-mp-shift-probe";
 type Translations = (typeof messages)[ReturnType<typeof resolveLang>];
@@ -81,7 +81,7 @@ test("the hold SURVIVES a layout shift under a stationary pointer (#793 fixed vi
   await armOneShotShift(page);
 
   // A SINGLE press — the helper has no retry. If pointer capture regresses, this throws.
-  await unlockAdmin(page, ADMIN_PIN);
+  await unlockAdmin(page, MP_ADMIN_PIN);
 
   await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
   // The sabotage must actually have fired mid-hold — otherwise this spec proves nothing about
@@ -172,7 +172,7 @@ test("every protected destination survives direct load and refresh with its prim
   try {
     for (const destination of adminDestinations) {
       await page.goto(destination.path);
-      await unlockAdmin(page, ADMIN_PIN);
+      await unlockAdmin(page, MP_ADMIN_PIN);
       // The contract is reachability, not fourteen data mutations. These assertions prove
       // each original primary control remains available after routing and refresh without
       // generating, snapshotting, deleting, or otherwise altering isolated e2e data.
@@ -182,7 +182,7 @@ test("every protected destination survives direct load and refresh with its prim
       await expect(page.getByTestId("admin-pin-keypad")).toBeVisible();
       await expect(destination.primary(page, m)).not.toBeVisible();
 
-      await unlockAdmin(page, ADMIN_PIN);
+      await unlockAdmin(page, MP_ADMIN_PIN);
       await expect(destination.primary(page, m)).toBeVisible();
       expect(new URL(page.url()).pathname).toBe(destination.path);
     }

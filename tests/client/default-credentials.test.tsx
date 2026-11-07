@@ -126,7 +126,7 @@ describe("AdminGate with a public default PIN", () => {
     renderAdminGate();
     const notice = screen.getByTestId("admin-pin-default-notice");
     expect(notice).toHaveTextContent("public default PIN 0000");
-    expect(notice).toHaveTextContent("ADMIN_PIN");
+    expect(notice).toHaveTextContent("MP_ADMIN_PIN");
   });
 
   it("shows no notice when the PIN was changed or the tag carries an unknown PIN", () => {

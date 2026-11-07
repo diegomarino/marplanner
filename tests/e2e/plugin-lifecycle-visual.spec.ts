@@ -10,7 +10,7 @@ import { startFreshPluginLifecycleServer } from "./plugin-lifecycle-server";
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 const FIXED_AT = "2026-09-28T09:00:00.000Z";
 
 const VIEWPORTS = [
@@ -177,7 +177,7 @@ async function provisionWithKeyboard(page: Page, origin: string): Promise<Copy> 
 
 async function unlockCurrentAdminRouteWithKeyboard(page: Page): Promise<void> {
   await expect(page.getByTestId("admin-pin-keypad")).toBeVisible();
-  for (const digit of ADMIN_PIN) {
+  for (const digit of MP_ADMIN_PIN) {
     const digitButton = page.getByTestId(`admin-pin-digit-${digit}`);
     await tabTo(page, digitButton);
     await page.keyboard.press("Enter");

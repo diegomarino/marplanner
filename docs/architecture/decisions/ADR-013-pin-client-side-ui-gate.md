@@ -4,6 +4,9 @@ Status: accepted (amended 2026-10-03 — PIN recovery and hash algorithm)
 Owner: architecture / security
 Decision date: 2026-06-27
 
+> Note (2026-11-07): the PIN variable `ADMIN_PIN` was renamed to `MP_ADMIN_PIN`, matching the
+> `MP_` prefix of every other app variable.
+
 ## Decision
 
 The PIN is a **client-side admin-UI gate**, not a security boundary. Its only purpose is to prevent a child standing at the kiosk from wandering into admin screens (settings, member management). The real security boundary is the API key (`ADR-007`).
@@ -11,7 +14,7 @@ The PIN is a **client-side admin-UI gate**, not a security boundary. Its only pu
 ### Rules
 
 1. The backend stores a **single global PIN hash** (**Argon2**) owned by the Auth domain. Raw PIN values are never persisted or returned.
-2. The backend exposes **`verify-pin` only**. It is protected by the API key, exactly like every other endpoint. There is **no `set-pin` route** and none is planned: changing the advisory PIN is an **ops redeploy** (`ADMIN_PIN` in the service environment, restart, then provision a browser again with the current bootstrap key so provisioning rewrites the DB hash). See [operations](../../operations.md).
+2. The backend exposes **`verify-pin` only**. It is protected by the API key, exactly like every other endpoint. There is **no `set-pin` route** and none is planned: changing the advisory PIN is an **ops redeploy** (`MP_ADMIN_PIN` in the service environment, restart, then provision a browser again with the current bootstrap key so provisioning rewrites the DB hash). See [operations](../../operations.md).
 3. `verify-pin` returns only match / no-match. It does **not** create a server-side session, does **not** return a session token, and does **not** gate any other endpoint.
 4. The server-side `sessions` table is **eliminated entirely**. There is no `x-session-id` header, no 24-hour admin session, and no server-side session expiry, cleanup, or logout.
 5. On successful PIN verification, the **frontend** sets local "admin unlocked" UI state. This is pure UI state with no server counterpart. It re-locks on these triggers, with no grace period (PIN re-entry is cheap enough that no carry-over is warranted):
@@ -33,7 +36,7 @@ Because `verify-pin` is itself behind the API key, brute-forcing the PIN require
 
 The legacy server-side `sessions` table (88 rows in production) only protected `/auth/session`, `/auth/logout`, and existing-PIN replacement. All broad feature and settings writes were already API-key-only. Under `ADR-007`, those three remaining operations also become API-key-gated, so the server session provides no additional capability beyond the cookie. Removing it is a correct simplification with no security regression (confirmed by peer review).
 
-Verifying the PIN server-side (rather than purely client-side) centralizes the ground truth of the PIN across any browser or device that accesses the kiosk. After an ops PIN change (`ADMIN_PIN` + restart + re-provision), every device uses the new hash on the next `verify-pin`. A purely client-side PIN hash would produce stale state on other devices.
+Verifying the PIN server-side (rather than purely client-side) centralizes the ground truth of the PIN across any browser or device that accesses the kiosk. After an ops PIN change (`MP_ADMIN_PIN` + restart + re-provision), every device uses the new hash on the next `verify-pin`. A purely client-side PIN hash would produce stale state on other devices.
 
 ## Affected Specs
 
@@ -44,9 +47,9 @@ Verifying the PIN server-side (rather than purely client-side) centralizes the g
 ## Data / Setup Implications
 
 - Fresh setup creates no session rows. There is no `sessions` table.
-- A single record holds the global PIN hash. No legacy rows are migrated (`ADR-026`); first-run / each successful **device provisioning** writes the hash from `ADMIN_PIN` (fallback `0000`).
+- A single record holds the global PIN hash. No legacy rows are migrated (`ADR-026`); first-run / each successful **device provisioning** writes the hash from `MP_ADMIN_PIN` (fallback `0000`).
 - **PIN hash lives in the database** (household state, not infrastructure config). It is therefore included in backups: restoring the household to an earlier point restores that point's PIN, which is the coherent behavior.
-- **Forgotten-PIN recovery is deliberately simple and ops-only:** set `ADMIN_PIN` in the deployment environment, restart the service, and provision a browser again with the current bootstrap key. Provisioning stores the configured PIN as an Argon2 hash. There is no in-kiosk recovery flow and no `set-pin` API — the PIN never protected against someone holding the API key, and redeploying env is enough. Existing device API credentials remain valid; this procedure resets the UI PIN only.
+- **Forgotten-PIN recovery is deliberately simple and ops-only:** set `MP_ADMIN_PIN` in the deployment environment, restart the service, and provision a browser again with the current bootstrap key. Provisioning stores the configured PIN as an Argon2 hash. There is no in-kiosk recovery flow and no `set-pin` API — the PIN never protected against someone holding the API key, and redeploying env is enough. Existing device API credentials remain valid; this procedure resets the UI PIN only.
 
 ## Acceptance Criteria
 
@@ -58,7 +61,7 @@ Verifying the PIN server-side (rather than purely client-side) centralizes the g
 
 ## Open Questions
 
-- None. PIN hash storage (database, Argon2), recovery (`ADMIN_PIN` env + restart + re-provision; no `set-pin`), and leave-admin/idle/refresh/Lock re-lock are settled. API-key/cookie and access-gate questions resolved in `ADR-030` and `ADR-031`.
+- None. PIN hash storage (database, Argon2), recovery (`MP_ADMIN_PIN` env + restart + re-provision; no `set-pin`), and leave-admin/idle/refresh/Lock re-lock are settled. API-key/cookie and access-gate questions resolved in `ADR-030` and `ADR-031`.
 
 ## Traceability
 

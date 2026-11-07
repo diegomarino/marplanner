@@ -17,6 +17,6 @@ For a safe reproduction, use synthetic household data and redact access tokens, 
 - `MP_ACCESS_TOKEN` gates the frontend. Its cookie is a browser access boundary, not a device API credential.
 - `MP_BOOTSTRAP_KEY` establishes the first device credential. Device API keys are checked by backend authorization and may have separate scopes and revocation state.
 - `MP_MANAGEMENT_KEY` is an optional operator credential. Changing an environment value alone does not revoke a previously persisted key; rotate and revoke deliberately.
-- `ADMIN_PIN` is an advisory UI gate. It never grants API authorization.
+- `MP_ADMIN_PIN` is an advisory UI gate. It never grants API authorization.
 
 Deploy the app behind a transport and network boundary appropriate to its cookie and credential posture. Keep `DATA_DIR` private and persistent, restrict its permissions, and keep environment secrets outside version control. The supported Node range is `>=24.21.0 <25`; development and CI use `24.21.0`. See [authentication behavior](docs/features/auth-sessions.md) and [operations](docs/operations.md).

@@ -33,7 +33,7 @@ import { openAdminPinGate, unlockAdmin } from "./admin-unlock";
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
-const ADMIN_PIN = process.env.ADMIN_PIN ?? "1234";
+const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 
 /** The household's default timezone (see admin-household-timezone-defaults.spec.ts). */
 const HOUSEHOLD_TZ = "Europe/Madrid";
@@ -186,7 +186,7 @@ test.describe("time-announcements audio-free e2e", () => {
     // Navigate to an admin route BEFORE the second seeded fire — the headless service is
     // shell-mounted at the US0 hoist, present on every route, so it must keep
     // firing there too (KIOSK-SHELL-NAVIGATION-AC-07 — announcements half).
-    await unlockAdmin(page, ADMIN_PIN);
+    await unlockAdmin(page, MP_ADMIN_PIN);
     await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 
     await expect

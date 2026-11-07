@@ -4,7 +4,7 @@
  */
 export const PUBLIC_DEFAULT_ACCESS_TOKEN = "mpg-local-change-me";
 export const PUBLIC_DEFAULT_BOOTSTRAP_KEY = "mpk-local-bootstrap-change-me";
-/** `0000` is the provisioning fallback when `ADMIN_PIN` is unset; `1234` is `.env.example`. */
+/** `0000` is the provisioning fallback when `MP_ADMIN_PIN` is unset; `1234` is `.env.example`. */
 export const PUBLIC_DEFAULT_ADMIN_PINS: readonly string[] = ["0000", "1234"];
 
 /** What the server tells the client shell: only values that are already public. */
