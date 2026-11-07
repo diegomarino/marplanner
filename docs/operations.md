@@ -308,6 +308,8 @@ described in its own section.
 2. To restore, select the intended snapshot and type its exact filename to confirm.
 3. The server checks compatibility, blocks new API work, drains requests and jobs,
    takes a pre-restore snapshot, swaps the database and reconciles plugin state.
+   Access credentials are kept as they were before the restore: revoked keys stay
+   revoked and current devices stay connected.
 4. Wait for completion and reload the browser. Check members, calendar, plugin
    state and the backup shelf before resuming household use.
 

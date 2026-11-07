@@ -5020,6 +5020,15 @@
             "HTTP shutdown drainage drains a streamed request body received after shutdown begins",
             "HTTP shutdown drainage discards a never-requested connection accepted during preClose and removes its listeners"
           ],
+          "tests/integration/backups-restore-credentials.test.ts": [
+            "restore preserves live credentials (ADR-030) keeps keys revoked since the backup revoked and keys created since the backup active",
+            "restore preserves live credentials (ADR-030) never makes a key that existed only in the backup valid",
+            "restore preserves live credentials (ADR-030) re-applies live credentials after migrating a backup that predates later migrations",
+            "restore preserves live credentials (ADR-030) leaves credentials untouched when the restore fails after the swap",
+            "restore preserves live credentials (ADR-030) aborts before touching the database when the live credentials cannot be read",
+            "restore preserves live credentials (ADR-030) rolls back to the pre-restore credentials when re-applying them fails",
+            "restore over HTTP keeps the requesting device connected (ADR-030) the device that requested the restore still works and a backup-only key is refused"
+          ],
           "tests/integration/backups-restore.test.ts": [
             "restore engine — confirmation + validation (BACKUPS-AC-01, no side effects) empty/missing filename -> validation_error, no side effects",
             "restore engine — confirmation + validation (BACKUPS-AC-01, no side effects) a filename that fails the allowlist -> validation_error, no side effects",
@@ -8342,10 +8351,10 @@
       "src/server/backups/restore.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 160,
-          "statements": 168,
-          "functions": 23,
-          "branches": 52
+          "lines": 184,
+          "statements": 197,
+          "functions": 30,
+          "branches": 54
         },
         "minimumRates": {
           "lines": 93.75,

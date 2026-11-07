@@ -19,8 +19,15 @@ automatic pre-restore snapshot.
 An admin types the exact backup filename to confirm, the system takes a retained
 `pre-restore` snapshot, re-reads and lineage-checks the backup, quiesces writes,
 force-closes all DB handles, swaps to the backup, reopens fresh connections,
-migrates current, and signals clients to reload — with no half-restored state ever
-observable and no process restart.
+migrates current, re-applies the live access credentials, and signals clients to
+reload — with no half-restored state ever observable and no process restart.
+
+Access credentials (`api_keys`) are not household data: the live rows are read
+before the swap and written back over the restored ones in one transaction
+(`ADR-030`). A key revoked since the backup stays revoked, a key created since the
+backup (including the device that asked for the restore) keeps working, and a key
+known only to the backup does not become valid. Any failure in that step rolls the
+whole database back to the pre-restore snapshot.
 
 ### User Story 2 — Snapshot on cadence and prune safely
 
