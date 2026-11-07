@@ -5,10 +5,9 @@
 Every provisioned family route renders persistent chrome with visible Home, Calendar, Tasks, and
 Meals controls. The active destination is semantic. Options holds Admin only; printer pairing is
 not a menu item. While Admin is its only entry, the Options button is the Admin affordance itself
-(same long-press hold, same `admin-affordance` testid) rather than a one-item menu; a second entry
-turns it back into a disclosure menu with Admin first. A press released before the hold completes
-(a tap, or Enter/Space let go early) shows a short "Hold to open Admin" status under the affordance
-for a few seconds; a completed hold or a cancelled pointer shows nothing. `/daily-briefing` and unknown family paths
+(same `admin-affordance` testid) rather than a one-item menu; a second entry turns it back into a
+disclosure menu with Admin first. A plain tap, click, Enter/Space or assistive-technology activation
+opens the PIN gate at once; there is no hold, progress bar or hint (ADR-034). `/daily-briefing` and unknown family paths
 render a localized not-found outcome, never Home by substitution.
 
 Activating Admin from Options uses the same-document navigation seam and closes the Options menu (when
@@ -121,7 +120,10 @@ The ordered capability table is:
 Every destination is reached from the admin sidebar, grouped as Household, Daily briefing and
 System.
 
-While locked, the existing long-press and PIN flow is the only route to content. The pathname is
+While locked, the Admin tap and PIN flow is the only route to content. The keypad submits the PIN
+by itself once it has 4, 5 or 6 digits; 4- and 5-digit rejections are silent (no error, digits
+kept, nothing announced) so a longer PIN can be finished, while a 6-digit or manual (Unlock
+button, Enter) rejection shows the error and clears the digits. Verifications are sequential. The pathname is
 retained through unlock and refresh. Explicit lock, established inactivity, refresh, and leaving
 `/admin/**` relock. Unknown admin destinations remain protected and, after unlock, offer a route to
 `/admin` without rendering another panel.

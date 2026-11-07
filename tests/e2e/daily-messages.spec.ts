@@ -76,7 +76,7 @@ test("daily-messages admin author→read: PUT then GET window + current (#462)",
 
   const today = todayIsoDate();
 
-  // --- 4) Admin unlock (long-press → PIN) ---
+  // --- 4) Admin unlock (tap → PIN) ---
   await unlockAdmin(page, MP_ADMIN_PIN);
   await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 

@@ -40,7 +40,7 @@ Kiosk Shell & Navigation is the always-on household client frame. It owns how th
 A browser with no access-gate cookie sees the access-token form (`ADR-031`). With the gate passed but no device cookie, it sees the provisioning screen (`ADR-036`): the server URL may be pre-filled from a query param; the raw `*` key is entered manually (never via URL) and exchanged for a minted device key bound to an httpOnly cookie (`ADR-030`/`ADR-032`). A provisioned device never shows these screens again unless its key is revoked. Fail-closed: no credential → locked, never open (`ADR-033`).
 
 **Admin entry and unlock.**
-The admin/settings link is visible in the shell but requires a sustained long-press (~3s) to activate; a casual tap does nothing (`ADR-034`). After activation, the PIN gate is presented. On correct PIN, ephemeral admin-unlock UI state is set. It re-locks on three triggers, no grace period: leaving the admin subtree (immediate), inactivity (~5 min, configurable), and page refresh (clears). (`ADR-013`.)
+The admin/settings link is visible in the shell and a plain tap opens the PIN gate (`ADR-034`); the PIN is the safeguard against casual entry. On correct PIN, ephemeral admin-unlock UI state is set. It re-locks on three triggers, no grace period: leaving the admin subtree (immediate), inactivity (~5 min, configurable), and page refresh (clears). (`ADR-013`.)
 
 **Global runtime services (capability-based).**
 Global server-side services (briefing generation, calendar sync, backups, scheduling decisions) run once regardless of UI. UI-bound services (audio announcements, Bluetooth print delivery, PWA updates, telemetry) run per connected browser. Printing splits server-side decision from client-side execution: one claimant per active lease, capability registration and queued work with server-side staleness compaction. Time announcements evaluate and fire locally, elect one speaker per browser and allow multiple devices to speak; they have no server queue or capability registration (`ADR-051`/`ADR-065`). Time announcements run on all connected routes, including admin. Inactive plugins mount no services. (`ADR-035`.)
@@ -65,7 +65,7 @@ Plugin lifecycle (install/uninstall/activate/deactivate) is managed only from `a
 Conceptual:
 
 - Boot → access gate → provisioning → dashboard.
-- Admin entry (long-press) → PIN gate → admin unlock → admin routes.
+- Admin entry (tap) → PIN gate → admin unlock → admin routes.
 - Global health indicator (read of connection signal).
 - Plugin management surface (`admin/plugins`).
 - Delegated reads/writes through owning-domain APIs (the shell invents no domain logic).
@@ -89,7 +89,7 @@ outside the domain-event model entirely.
 ## Acceptance Criteria
 
 - **KIOSK-SHELL-NAVIGATION-AC-01** An unprovisioned device shows access gate then provisioning, never household data.
-- **KIOSK-SHELL-NAVIGATION-AC-02** Admin content is reachable only after long-press + PIN; the backend authorizes by API key regardless of PIN.
+- **KIOSK-SHELL-NAVIGATION-AC-02** Admin content is reachable only through the PIN gate; the backend authorizes by API key regardless of PIN.
 - **KIOSK-SHELL-NAVIGATION-AC-03** "Today" on every widget matches the household timezone.
 - **KIOSK-SHELL-NAVIGATION-AC-04** Inactive plugins appear nowhere except `admin/plugins`.
 - **KIOSK-SHELL-NAVIGATION-AC-05** API-down produces a prominent global health signal, not a silently empty dashboard.
@@ -103,4 +103,4 @@ outside the domain-event model entirely.
 
 - Plugin trust/permission/installation/sandbox model — Plugin System grill (`ADR-039`).
 - "Activate a plugin at first run" UX — partly `ADR-038`, partly Plugin System grill.
-- Long-press duration, inactivity timeout, refresh-idle threshold — configurable UI params with sensible defaults; possible future App Settings.
+- Inactivity timeout, refresh-idle threshold — configurable UI params with sensible defaults; possible future App Settings.

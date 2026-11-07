@@ -223,17 +223,12 @@ try {
     session = await provision(primary, "desktop", { width: 1280, height: 900 });
     const { page } = session;
     await page.getByRole("button", { name: /options|opciones/i }).click();
-    const admin = page.getByTestId("admin-affordance");
-    await admin.hover();
-    await page.mouse.down();
-    try {
-      await expect(page).toHaveURL(/\/admin$/, { timeout: 6000 });
-    } finally {
-      await page.mouse.up();
-    }
+    await page.getByTestId("admin-affordance").click();
+    await expect(page).toHaveURL(/\/admin$/);
     await expect(page.getByTestId("admin-pin-keypad")).toBeVisible();
+    // The completed PIN submits itself.
     for (const digit of pin) await page.getByTestId(`admin-pin-digit-${digit}`).click();
-    await page.getByTestId("admin-pin-unlock").click();
+    await expect(page.getByTestId("admin-pin-keypad")).toBeHidden();
     await page.getByTestId("admin-nav-members-management").click();
     await page.getByTestId("members-add-member").click();
     await page.locator("#member-edit-display-name").fill("Container Ada");
