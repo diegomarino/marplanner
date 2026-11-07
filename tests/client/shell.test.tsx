@@ -335,6 +335,31 @@ describe("Shell — unprovisioned gate", () => {
     expect(screen.queryByRole("group", { name: "Options" })).not.toBeInTheDocument();
   });
 
+  it("a second Admin activation on the open PIN gate adds no history entry and Cancel returns to the origin", async () => {
+    document.cookie = "mp_provisioned=1; path=/";
+    mockFetch.mockImplementation((url) => {
+      if (String(url) === "/api/plugins") return Promise.resolve(pluginCatalogResponse());
+      const value = String(url).includes("/api/settings")
+        ? { locale: { timezone: "UTC", language: "en", weekStartDay: 1 } }
+        : [];
+      return Promise.resolve(Response.json(value));
+    });
+    window.history.pushState({}, "", "/calendar");
+    render(<Shell />);
+
+    await screen.findByTestId("plugin-health-indicator");
+    const before = window.history.length;
+    fireEvent.click(await screen.findByTestId("admin-affordance"), { detail: 1 });
+    expect(await screen.findByTestId("admin-pin-keypad")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("admin-affordance"), { detail: 2 });
+
+    expect(window.history.length).toBe(before + 1);
+    expect(window.history.state).toEqual({ marplannerAdminReturnPath: "/calendar" });
+
+    fireEvent.click(screen.getByTestId("admin-pin-cancel"));
+    await waitFor(() => expect(window.location.pathname).toBe("/calendar"));
+  });
+
   it("opens admin immediately when the local PIN bypass flag is enabled", async () => {
     document.cookie = "mp_provisioned=1; path=/";
     vi.stubEnv("MODE", "development");

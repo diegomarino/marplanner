@@ -96,6 +96,10 @@ function HouseholdChromeContent({
 
   const openAdmin = useCallback(() => {
     setOptionsOpen(false);
+    // The locked PIN gate keeps this bar, so a second tap (or a double tap) lands here while
+    // already on /admin. Pushing again would stack a history entry whose return path is /admin
+    // and make Cancel lose the family route the parent came from.
+    if (currentPath === "/admin" || currentPath.startsWith("/admin/")) return;
     window.history.pushState({ marplannerAdminReturnPath: currentPath }, "", appUrl("/admin"));
     window.dispatchEvent(new PopStateEvent("popstate"));
   }, [currentPath]);

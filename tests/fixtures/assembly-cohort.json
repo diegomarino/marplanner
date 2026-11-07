@@ -4614,6 +4614,7 @@
             "Shell — unprovisioned gate organizes the household chrome into compact navigation, contextual center, and secondary actions",
             "Shell — unprovisioned gate keeps the unlocked admin subtree mounted when Printing is deactivated",
             "Shell — unprovisioned gate opens the PIN gate on a plain tap with no hold or progress indicator",
+            "Shell — unprovisioned gate a second Admin activation on the open PIN gate adds no history entry and Cancel returns to the origin",
             "Shell — unprovisioned gate opens admin immediately when the local PIN bypass flag is enabled",
             "Shell — unprovisioned gate opens the PIN gate from keyboard and synthetic AT activation",
             "Shell — unprovisioned gate does NOT bypass the provisioning gate at /calendar (fail-closed, FR-031/ADR-059)",
