@@ -3219,7 +3219,8 @@
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/telemetry to /admin/backups removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/backups to /admin/time-announcements removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/time-announcements to /admin/network-devices removes the first panel entirely",
-            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/network-devices to /admin/plugins removes the first panel entirely",
+            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/network-devices to /admin/access-keys removes the first panel entirely",
+            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/access-keys to /admin/plugins removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/plugins to /admin/printing removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/printing to /admin/settings removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/settings to /admin/calendar removes the first panel entirely"
