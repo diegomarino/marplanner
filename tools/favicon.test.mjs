@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url));
-const indexHtml = read("index.html").toString("utf8");
+// Whitespace-normalised so the check does not depend on how Prettier wraps long tags.
+const indexHtml = read("index.html").toString("utf8").replace(/\s+/g, " ");
 
 /** Width and height from a PNG's IHDR chunk. */
 function pngSize(bytes) {
@@ -16,7 +17,8 @@ test("index.html links the SVG favicon, its PNG fallback and the apple touch ico
   // against the <base href> the server injects, so they also work under a BASE_PATH mount.
   for (const tag of [
     '<link rel="icon" href="/favicon.svg" type="image/svg+xml" />',
-    '<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />',
+    '<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" media="(prefers-color-scheme: light)" />',
+    '<link rel="icon" href="/favicon-32-dark.png" type="image/png" sizes="32x32" media="(prefers-color-scheme: dark)" />',
     '<link rel="apple-touch-icon" href="/apple-touch-icon.png" />',
   ])
     assert.ok(indexHtml.includes(tag), `index.html is missing ${tag}`);
@@ -27,6 +29,8 @@ test("the favicon files ship in public/ at their declared sizes", () => {
   assert.match(svg, /^<svg [^>]*viewBox="0 0 32 32"/);
   assert.match(svg, /@media \(prefers-color-scheme: dark\)/);
   assert.deepEqual(pngSize(read("public/favicon-32.png")), [32, 32]);
+  assert.deepEqual(pngSize(read("public/favicon-32-dark.png")), [32, 32]);
+  assert.notDeepEqual(read("public/favicon-32-dark.png"), read("public/favicon-32.png"));
   assert.deepEqual(pngSize(read("public/apple-touch-icon.png")), [180, 180]);
 });
 
