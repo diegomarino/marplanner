@@ -3116,7 +3116,8 @@
             "rejects arbitrary-property density overrides while preserving tokens, growth and descendants"
           ],
           "tests/boundary/verify-pin.test.ts": [
-            "verify-pin: match/no-match no-session correct PIN ⇒ {match:true} and incorrect PIN ⇒ {match:false}, no session row either way (FR-016/FR-026)"
+            "verify-pin: match/no-match no-session correct PIN ⇒ {match:true} and incorrect PIN ⇒ {match:false}, no session row either way (FR-016/FR-026)",
+            "verify-pin: match/no-match no-session repeated 6-digit entries with 4- and 5-digit auto-submit probes never trigger backoff or lockout"
           ],
           "tests/boundary/weather-briefing-block.test.ts": [
             "daily-briefing weather block selects the daily[] entry matching the briefing's household-local date",
