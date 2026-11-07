@@ -17,6 +17,20 @@ export const ProvisionResult = component(
   }
 );
 
+export const ProvisionRequest = component(
+  "ProvisionRequest",
+  z.strictObject({
+    label: z.string().min(1).max(80).optional().meta({
+      description:
+        "Name for the new device key, trimmed, 1 to 80 characters after trimming. Scripts and CLIs send `os.hostname()`.",
+    }),
+  }),
+  {
+    description:
+      "Optional. Without a label (no body, or `{}`) the server derives one from the User-Agent as `<Browser> · <OS> · <YYYY-MM-DD>` in the household timezone, or `Device · <YYYY-MM-DD>` without a User-Agent. The User-Agent is a display hint only and never an authorization input.\n",
+  }
+);
+
 export const VerifyPinRequest = component("VerifyPinRequest", z.looseObject({ pin: z.string() }));
 
 export const VerifyPinResult = component("VerifyPinResult", z.looseObject({ match: z.boolean() }), {
@@ -30,7 +44,7 @@ export const bootstrapSchemas = defineRouteSchemas({
     tags: ["bootstrap"],
     summary: "First connect — present the raw `*` bootstrap key, mint a cookie-bound device key.",
     description:
-      "Validates the presented raw `*` key against the configured bootstrap credential. On success mints a no-expiry `*` device key, persists only its hash, and returns it via Set-Cookie. Fail-closed: an absent/invalid key yields 401 and the deployment stays locked (FR-003/004/007).\n",
+      "Validates the presented raw `*` key against the configured bootstrap credential. On success mints a no-expiry `*` device key, persists only its hash with a label (the optional body's, else one derived from the User-Agent), and returns it via Set-Cookie. Fail-closed: an absent/invalid key yields 401 and the deployment stays locked (FR-003/004/007).\n",
     security: [],
     headers: z.object({
       Authorization: z.string().meta({
@@ -38,6 +52,8 @@ export const bootstrapSchemas = defineRouteSchemas({
         description: "The raw `*` bootstrap key. Never logged; never returned.",
       }),
     }),
+    body: ProvisionRequest,
+    "x-mp-body-optional": true,
     response: {
       200: {
         description: "Provisioned. Device key delivered via Set-Cookie; body has no raw key.",
@@ -47,6 +63,11 @@ export const bootstrapSchemas = defineRouteSchemas({
             .meta({ example: "mp_device_key=mpk-…; HttpOnly; Secure; SameSite=Lax" }),
         },
         content: { "application/json": { schema: ProvisionResult } },
+      },
+      400: {
+        description:
+          "`invalid_label`: the body is not empty, `{}` or `{label}`, or the label is not a string of 1 to 80 trimmed characters. Nothing is minted.",
+        content: { "application/json": { schema: ErrorSchema } },
       },
       401: {
         description: "Missing/invalid bootstrap key — locked, never open.",

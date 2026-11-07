@@ -97,6 +97,26 @@ describe("DeviceCredentialsManagement", () => {
     expect(within(revoked).queryByTestId("access-keys-revoke-old")).not.toBeInTheDocument();
   });
 
+  it("shows when each key was added to the minute, in the household timezone", async () => {
+    routeFetch({});
+    renderPanel();
+
+    expect(await screen.findByTestId("access-keys-created-kitchen")).toHaveTextContent(
+      "Added 21 Oct 2026, 14:00"
+    );
+    cleanup();
+
+    currentSettings.timezone = "America/New_York";
+    try {
+      renderPanel();
+      expect(await screen.findByTestId("access-keys-created-kitchen")).toHaveTextContent(
+        "Added 21 Oct 2026, 08:00"
+      );
+    } finally {
+      currentSettings.timezone = "Europe/Madrid";
+    }
+  });
+
   it("disables revoking the configured bootstrap key and explains how to rotate it", async () => {
     routeFetch({});
     renderPanel();

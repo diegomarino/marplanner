@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { useTranslation } from "@/i18n";
 import type { MessageKey } from "@/i18n/messages";
 import { authFetch, reportCredentialLoss } from "@/lib/credential";
+import { useHouseholdSettings } from "@/lib/householdSettings";
 import { cn } from "@/lib/utils";
 import type {
   DeviceCredential,
@@ -54,6 +55,8 @@ async function readErrorCode(response: Response): Promise<string | null> {
 export function DeviceCredentialsManagement() {
   const { t, language } = useTranslation();
   const locale = language === "es" ? "es-ES" : "en-GB";
+  // Household timezone when known; the browser's own otherwise (`undefined`).
+  const timeZone = useHouseholdSettings().timezone ?? undefined;
   const [credentials, setCredentials] = useState<DeviceCredential[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showRevoked, setShowRevoked] = useState(false);
@@ -99,7 +102,22 @@ export function DeviceCredentialsManagement() {
 
   const nameOf = (credential: DeviceCredential) => credential.label ?? t("accessKeys.row.unnamed");
   const formatDate = (ms: number) =>
-    new Date(ms).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
+    new Date(ms).toLocaleDateString(locale, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      timeZone,
+    });
+  /** Down to the minute, so keys provisioned on the same day can be told apart. */
+  const formatDateTime = (ms: number) =>
+    new Date(ms).toLocaleString(locale, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone,
+    });
 
   function startRename(credential: DeviceCredential) {
     setRenaming(credential);
@@ -255,10 +273,12 @@ export function DeviceCredentialsManagement() {
                       </span>
                     </div>
                     <p className="text-muted-foreground text-control">
-                      {t("accessKeys.row.created").replace(
-                        "{date}",
-                        formatDate(credential.createdAt)
-                      )}
+                      <span data-testid={`access-keys-created-${credential.id}`}>
+                        {t("accessKeys.row.created").replace(
+                          "{date}",
+                          formatDateTime(credential.createdAt)
+                        )}
+                      </span>
                       {credential.expiresAt !== null && (
                         <>
                           {" · "}
