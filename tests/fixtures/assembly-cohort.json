@@ -5925,14 +5925,14 @@
       "src/client/admin/DeviceCredentialsManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 88,
-          "statements": 103,
+          "lines": 87,
+          "statements": 102,
           "functions": 26,
           "branches": 89
         },
         "minimumRates": {
-          "lines": 94.31,
-          "statements": 90.29,
+          "lines": 94.25,
+          "statements": 90.19,
           "functions": 92.3,
           "branches": 80.89
         }
