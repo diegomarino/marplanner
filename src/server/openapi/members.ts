@@ -31,6 +31,32 @@ export const MemberColorKey = component(
   { description: "Curated screen identity only; never a CSS value or a monochrome print input." }
 );
 
+export const MemberCelebration = component(
+  "MemberCelebration",
+  z.union([
+    z
+      .strictObject({
+        preset: z.enum(["confetti", "stars", "videogames", "soccer", "fairytale"]).meta({
+          description:
+            "A fixed set (src/shared/celebration.ts). `confetti` draws coloured paper with no emojis.",
+        }),
+      })
+      .meta({ description: "A preset; it takes no `emojis`." }),
+    z
+      .strictObject({
+        preset: z.literal("custom"),
+        emojis: z.array(z.string()).min(1).max(6).meta({
+          description: "1–6 distinct items, each exactly one emoji.",
+        }),
+      })
+      .meta({ description: "The member's own set." }),
+  ]),
+  {
+    description:
+      "The emoji set of the confetti played when the member finishes a block of chores: a preset, or `custom` with its own emojis.",
+  }
+);
+
 export const CreateMemberRequest = component(
   "CreateMemberRequest",
   z.strictObject({
@@ -44,6 +70,9 @@ export const CreateMemberRequest = component(
       .xor([BirthDate, z.null()])
       .meta({ description: "optional birth date; null or absent = no birth date set." })
       .optional(),
+    celebration: MemberCelebration.meta({
+      description: 'Optional; omitted stores `{ "preset": "confetti" }`.',
+    }).optional(),
   })
 );
 
@@ -69,6 +98,9 @@ export const Member = component(
       .xor([BirthDate, z.null()])
       .meta({ description: "null/absent when unset (FR-009a clear)." })
       .optional(),
+    celebration: MemberCelebration.meta({
+      description: "Always present, defaults filled in. Archive and restore keep it.",
+    }),
     createdAt: z.int(),
     updatedAt: z.int(),
   })
@@ -90,6 +122,9 @@ export const UpdateMemberRequest = component(
           "null explicitly clears the birth date (FR-009a). Omitted fields are unchanged.",
       })
       .optional(),
+    celebration: MemberCelebration.meta({
+      description: "Replaces the celebration as a whole. Omission keeps the current one.",
+    }).optional(),
   }),
   {
     minProperties: 1,
@@ -149,7 +184,7 @@ export const membersSchemas = defineRouteSchemas({
       },
       400: {
         description:
-          "Validation error — role=admin, unknown role, blank name, invalid birth date or colour key.",
+          "Validation error — role=admin, unknown role, blank name, invalid birth date, colour key or celebration (unknown preset, custom without emojis, emojis on a non-custom preset, more than 6, duplicates, non-emoji strings).",
         content: { "application/json": { schema: ErrorSchema } },
       },
       401: {
@@ -163,7 +198,8 @@ export const membersSchemas = defineRouteSchemas({
   updateMember: {
     operationId: "updateMember",
     tags: ["members"],
-    summary: "Edit a member profile (displayName, role, colorKey, birthDate incl. clear).",
+    summary:
+      "Edit a member profile (displayName, role, colorKey, birthDate incl. clear, celebration).",
     description:
       "Partial update. Send `birthDate:null` to clear the birth date (FR-009a). No downstream side effects. Returns 404 if member not found; 400 for validation errors (invalid date, role=admin, no fields to update).\n",
     security: [{ deviceKeyCookie: [] }],
@@ -172,7 +208,7 @@ export const membersSchemas = defineRouteSchemas({
     response: {
       200: { description: "Updated member.", content: { "application/json": { schema: Member } } },
       400: {
-        description: "Validation error (invalid date, role=admin, no fields).",
+        description: "Validation error (invalid date, role=admin, invalid celebration, no fields).",
         content: { "application/json": { schema: ErrorSchema } },
       },
       401: {

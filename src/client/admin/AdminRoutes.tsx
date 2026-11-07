@@ -5,6 +5,7 @@ import {
   CalendarDays,
   Clock,
   Database,
+  KeyRound,
   ListChecks,
   Lock,
   MessageSquare,
@@ -28,6 +29,7 @@ import { BackupsManagement } from "./BackupsManagement";
 import { CalendarManagement } from "./CalendarManagement";
 import { DailyBriefingManagement } from "./DailyBriefingManagement";
 import { DailyMessagesManagement } from "./DailyMessagesManagement";
+import { DeviceCredentialsManagement } from "./DeviceCredentialsManagement";
 import { MealsManagement } from "./MealsManagement";
 import { MembersManagement } from "./MembersManagement";
 import { NetworkDevicesManagement } from "./NetworkDevicesManagement";
@@ -134,6 +136,12 @@ export const adminRoutes: readonly AdminRoute[] = [
     contributionId: "network-devices",
   },
   {
+    path: "/admin/access-keys",
+    label: "admin.nav.accessKeys",
+    testId: "admin-nav-access-keys",
+    Component: DeviceCredentialsManagement,
+  },
+  {
     path: "/admin/plugins",
     label: "admin.nav.plugins",
     testId: "admin-nav-plugins",
@@ -207,6 +215,7 @@ export const adminSidebar: readonly SidebarSection[] = [
     items: [
       { path: "/admin/settings", label: "admin.sidebar.settings", Icon: Settings },
       { path: "/admin/backups", label: "admin.sidebar.backups", Icon: Database },
+      { path: "/admin/access-keys", label: "admin.sidebar.accessKeys", Icon: KeyRound },
       { path: "/admin/plugins", label: "admin.sidebar.plugins", Icon: Puzzle },
       { path: "/admin/telemetry", label: "admin.sidebar.logs", Icon: ScrollText },
     ],

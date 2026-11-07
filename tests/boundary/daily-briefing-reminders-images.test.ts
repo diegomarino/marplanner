@@ -98,9 +98,9 @@ describe("daily-briefing reminders block — image reminders", () => {
 
   it("skips an emoji the app no longer ships and falls back to text when none is left", () => {
     const adapted = adaptBlockData("reminders", {
-      groups: [{ items: [{ value: "Unicornio", emojis: ["🦄"] }] }],
+      groups: [{ items: [{ value: "Dinosaurio", emojis: ["🦖"] }] }],
     }) as { groups: { items: { value: string; images?: unknown }[] }[] };
-    expect(adapted.groups[0]!.items[0]).toEqual({ value: "Unicornio" });
+    expect(adapted.groups[0]!.items[0]).toEqual({ value: "Dinosaurio" });
   });
 
   it("renders the mixed group without failures, stacking each emoji vertically and dithered", async () => {

@@ -183,3 +183,89 @@
 @utility text-control {
   font-size: var(--control-font-size);
 }
+
+/* Completion celebration (CompletionCelebration.tsx). Per-particle values arrive as custom
+ * properties; the member colour arrives as --member-color. */
+.completion-celebration-wash {
+  background: radial-gradient(
+    circle at 50% 45%,
+    color-mix(in oklch, var(--member-color) 38%, transparent),
+    color-mix(in oklch, var(--member-color) 12%, transparent) 55%,
+    transparent 80%
+  );
+  animation: completion-celebration-fade var(--completion-celebration-duration, 3.6s) ease-out
+    forwards;
+}
+.completion-celebration-particle {
+  left: var(--particle-x);
+  top: var(--particle-y);
+  width: var(--particle-size);
+  height: var(--particle-size);
+  opacity: 0;
+  animation: completion-celebration-fall var(--particle-duration) cubic-bezier(0.2, 0.8, 0.2, 1)
+    var(--particle-delay) forwards;
+}
+.completion-celebration-paper {
+  width: calc(var(--particle-size) * 0.45);
+  height: calc(var(--particle-size) * 0.7);
+  border-radius: 0.25rem;
+  background: var(--particle-color);
+}
+.completion-celebration-card {
+  border-color: var(--member-color);
+  animation: completion-celebration-pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) forwards;
+}
+@keyframes completion-celebration-fall {
+  0% {
+    transform: translate3d(0, -8vh, 0) rotate(0deg) scale(1);
+    opacity: 0;
+  }
+  8%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--particle-drift), 72vh, 0) rotate(var(--particle-rotate))
+      scale(1.15);
+    opacity: 0;
+  }
+}
+@keyframes completion-celebration-pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes completion-celebration-fade {
+  0% {
+    opacity: 0;
+  }
+  12%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* Reduced motion: nothing falls, spins or pops; the scene fades in and out in place. */
+.completion-celebration[data-motion="reduced"] .completion-celebration-particle {
+  transform: rotate(var(--particle-tilt));
+  animation: completion-celebration-fade 3.6s ease-out forwards;
+}
+.completion-celebration[data-motion="reduced"] .completion-celebration-card {
+  animation: completion-celebration-fade 3.6s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .completion-celebration-particle {
+    transform: rotate(var(--particle-tilt));
+    animation: completion-celebration-fade 3.6s ease-out forwards;
+  }
+  .completion-celebration-card {
+    animation: completion-celebration-fade 3.6s ease-out forwards;
+  }
+}

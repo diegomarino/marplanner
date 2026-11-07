@@ -4,6 +4,7 @@ import type { WeatherSettingsObject } from "./weather.js";
 import type { LiveCacheState, LiveClient, RegisteredDevice } from "./networkDevices.js";
 import type { PrintJobState, DerivedPrintJobState } from "./printing.js";
 import type { MemberColorKey } from "./member-color.js";
+import type { CelebrationSettings, MemberCelebration } from "./celebration.js";
 
 export {
   MEMBER_COLOR_KEYS,
@@ -56,6 +57,8 @@ export interface EffectiveSettings {
   weather?: WeatherSettingsObject;
   printer?: PrinterSettings;
   printerTransport?: PrinterTransportSettings;
+  /** Core household object; defaults fill an unpersisted one. */
+  celebration: CelebrationSettings;
 }
 
 export interface PrinterSettings {
@@ -90,6 +93,8 @@ export interface CreateMemberRequest {
   role: Role;
   colorKey?: MemberColorKey;
   birthDate?: { month: number; day: number; year: number | null } | null;
+  /** Omitted: `{ preset: "confetti" }`. */
+  celebration?: MemberCelebration;
 }
 
 /** Member — full member record as returned by the API.
@@ -103,6 +108,8 @@ export interface Member {
   createdAt: number;
   updatedAt: number;
   birthDate?: { month: number; day: number; year: number | null } | null;
+  /** Always present; the emojis of the confetti played when a block of chores is finished. */
+  celebration: MemberCelebration;
 }
 
 /** Error body — never contains `mpk-`/`mpg-` values or raw PINs.
@@ -126,6 +133,8 @@ export interface MemberDTO {
   createdAt: number;
   updatedAt: number;
   birthDate?: { month: number; day: number; year: number | null } | null;
+  /** Always present; the emojis of the confetti played when a block of chores is finished. */
+  celebration: MemberCelebration;
 }
 
 // ─── Day Periods DTOs ───────────────────────────────────────
@@ -292,6 +301,7 @@ export interface HighlightRuleOrder {
 export * from "./events.js";
 export { detectCalendarProvider } from "./calendar-provider.js";
 export { isSingleEmoji } from "./emoji.js";
+export * from "./celebration.js";
 
 /** AssignmentReplace — full replacement set of member ids for an event (atomic
  * replace; each MUST be an active member, FR-006).
@@ -1058,3 +1068,36 @@ export interface ResetTodayPrintsResponse {
  */
 export const AUTH_CREDENTIAL_INVALID_CODE = "credential_invalid";
 export const AUTH_SCOPE_DENIED_CODE = "scope_denied";
+
+// ─── Device credential DTOs ──────────────────────────────────────────────
+
+/** One API credential as the admin Access keys page lists it (`GET /api/auth/credentials`).
+ * Never carries the raw key or its hash. `current` marks the credential this request
+ * authenticated with; `configuredBootstrap` marks the row MP_BOOTSTRAP_KEY names, which startup
+ * re-activates, so the server refuses to revoke it.
+ */
+export interface DeviceCredential {
+  id: string;
+  kind: "device" | "integration" | "bootstrap";
+  label: string | null;
+  createdAt: number;
+  expiresAt: number | null;
+  state: "active" | "revoked" | "expired";
+  current: boolean;
+  configuredBootstrap: boolean;
+}
+
+/** `GET /api/auth/credentials` 200 envelope, oldest first. */
+export interface DeviceCredentialList {
+  credentials: DeviceCredential[];
+}
+
+/** `POST /api/auth/credentials/{id}/revoke` 200 body; `revoked` is false when it already was. */
+export interface DeviceCredentialRevokeResult {
+  credential: DeviceCredential;
+  revoked: boolean;
+}
+
+/** Machine codes on the device-credential routes' `{code, message}` error body. */
+export type DeviceCredentialErrorCode =
+  "credential_not_found" | "invalid_label" | "configured_bootstrap";

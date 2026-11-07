@@ -49,9 +49,6 @@ export function TodayMeals(): React.JSX.Element {
             {t("todayMeals.loading")}
           </p>
         )}
-        {items?.length === 0 && (
-          <p className="mb-2 text-sm text-muted-foreground">{t("todayMeals.empty")}</p>
-        )}
         <ul className="m-0 grid min-w-full auto-cols-[minmax(10rem,1fr)] grid-flow-col grid-rows-1 gap-2 list-none p-0">
           {SLOTS.map((slot) => {
             const slotItems = itemsBySlot.get(slot) ?? [];

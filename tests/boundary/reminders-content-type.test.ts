@@ -140,7 +140,7 @@ describe("reminders content type (text | images)", () => {
   it.each([
     ["images without emojis", { contentType: "images" }],
     ["images with an empty list", { contentType: "images", emojis: [] }],
-    ["an emoji the app ships no artwork for", { contentType: "images", emojis: ["🦄"] }],
+    ["an emoji the app ships no artwork for", { contentType: "images", emojis: ["🦖"] }],
     ["a non-string emoji", { contentType: "images", emojis: [42] }],
     ["more than 12 emojis", { contentType: "images", emojis: Array(13).fill("🍎") }],
     ["emojis on a text reminder", { text: "Hola", emojis: ["🍎"] }],

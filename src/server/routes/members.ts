@@ -57,6 +57,7 @@ export async function membersRoutes(app: FastifyInstance): Promise<void> {
           role?: "parent" | "child";
           colorKey?: MemberColorKey;
           birthDate?: { month: number; day: number; year: number | null } | null;
+          celebration?: unknown;
         };
         const member = editMember(id, patch ?? {});
         return reply.code(200).send(member);

@@ -45,6 +45,10 @@
     },
     {
       "method": "GET",
+      "path": "/api/auth/credentials"
+    },
+    {
+      "method": "GET",
       "path": "/api/calendar/events"
     },
     {
@@ -121,6 +125,10 @@
     },
     {
       "method": "PATCH",
+      "path": "/api/auth/credentials/{id}"
+    },
+    {
+      "method": "PATCH",
       "path": "/api/calendar/events/{id}"
     },
     {
@@ -146,6 +154,10 @@
     {
       "method": "PATCH",
       "path": "/api/routines/{id}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/credentials/{id}/revoke"
     },
     {
       "method": "POST",
@@ -534,6 +546,7 @@
     "backups",
     "time-announcements",
     "network-devices",
+    "access-keys",
     "plugins",
     "printing",
     "settings"
@@ -3212,7 +3225,8 @@
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/telemetry to /admin/backups removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/backups to /admin/time-announcements removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/time-announcements to /admin/network-devices removes the first panel entirely",
-            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/network-devices to /admin/plugins removes the first panel entirely",
+            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/network-devices to /admin/access-keys removes the first panel entirely",
+            "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/access-keys to /admin/plugins removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/plugins to /admin/printing removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/printing to /admin/settings removes the first panel entirely",
             "AdminGate — hideAllPanels resets every panel on switch (review P1-1, table-driven) navigating from /admin/settings to /admin/calendar removes the first panel entirely"
@@ -3278,7 +3292,7 @@
           ],
           "tests/client/admin-routes.test.tsx": [
             "AdminRoutes renders the directly requested printing destination instead of the member-create default",
-            "AdminRoutes keeps the complete ordered fourteen-destination inventory",
+            "AdminRoutes keeps the complete ordered fifteen-destination inventory",
             "AdminRoutes shows the localized unknown-admin outcome without mounting a management panel"
           ],
           "tests/client/announcements-briefing-admin.test.tsx": [
@@ -3810,7 +3824,7 @@
             "HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-style census) Phase 0 — silent absence (no location): zero controls, frozen helper throws DensityEmptyControlSetError (FR-022)",
             "HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-style census) meets kiosk density across the collapsed pill and the open forecast modal — two phases, mirrors chores-board.test.tsx",
             "HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-style census) DELIBERATE NEGATIVE — forcing the weather-pill trigger below the kiosk minimum makes the assertion fail",
-            "HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-style census) the census is not decorative — REMOVING the dialog's close button drops the count from 2 to 1",
+            "HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-style census) the census is not decorative — REMOVING the dialog's visually hidden close button drops the count from 2 to 1",
             "HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-style census) HomeSurface keeps dashboard widget density separate from shared-chrome WeatherPill ownership",
             "HomeSurface/WeatherPill — kiosk density (SC-001, SC-002, SC-003-style census) keeps weather's silent-absence fetch and no-error UI outside the direct dashboard fixture",
             "label maps are transcribed correctly (SC-007 traded a cast for a transcription risk) every meal slot maps to its own key",
@@ -4502,7 +4516,8 @@
             "SettingsManagement hosts the day periods on the same page",
             "SettingsManagement blocks the out-of-range location 100, 2 before any request, even with a locale edit",
             "SettingsManagement blocks the out-of-range location -90.5, 2 before any request, even with a locale edit",
-            "SettingsManagement blocks the out-of-range location 40, 180.01 before any request, even with a locale edit"
+            "SettingsManagement blocks the out-of-range location 40, 180.01 before any request, even with a locale edit",
+            "SettingsManagement saves the completion sound switch as its own household object"
           ],
           "tests/client/settings-timezones.test.ts": [
             "timeZoneGroups lists UTC first and the curated groups in order",
@@ -4547,6 +4562,7 @@
             "closed route resolver recognizes protected destination /admin/backups without unlock state",
             "closed route resolver recognizes protected destination /admin/time-announcements without unlock state",
             "closed route resolver recognizes protected destination /admin/network-devices without unlock state",
+            "closed route resolver recognizes protected destination /admin/access-keys without unlock state",
             "closed route resolver recognizes protected destination /admin/printing without unlock state",
             "closed route resolver recognizes protected destination /admin/settings without unlock state",
             "closed route resolver classifies unknown pathname /admin/ without prefix leakage",
@@ -4830,7 +4846,7 @@
             "renders subtle placeholders only for missing slots without creating meal item nodes",
             "keeps four slot placeholders visible while the menu is loading",
             "keeps the strip read-only while providing the full meals destination",
-            "renders a clear empty state without removing the meals destination",
+            "renders an empty day as four empty slots, with no empty-state sentence",
             "announces a failed household-current-day request",
             "clears an initial load error when the next interval successfully loads meals",
             "refetches today's meals after a successful workspace mutation event",
@@ -4927,7 +4943,7 @@
             "WeatherPill — shared family chrome does not render weather for the removed Daily Briefing family route",
             "WeatherPillView — modal content (PR review P1-2/P2-3) P1-2: the hourly list starts at the CURRENT hour, not midnight",
             "WeatherPillView — modal content (PR review P1-2/P2-3) P2-3: renders a localized (non-ISO) day label in es, not the raw date string",
-            "WeatherPillView — modal content (PR review P1-2/P2-3) localizes the dialog's close-button accessible label and provides a description (Radix a11y, review P3-2)",
+            "WeatherPillView — modal content (PR review P1-2/P2-3) keeps a localized close button hidden until focused and closes on Escape (Radix a11y, review P3-2)",
             "WeatherPillView — modal content (PR review P1-2/P2-3) draws a tinted condition icon and today's range, and the rain chance only from 20%",
             "WeatherPillView — modal content (PR review P1-2/P2-3) shows humidity, wind and sun times only when the forecast carries them",
             "WeatherPillView — modal content (PR review P1-2/P2-3) caps the hourly strip at 24 hours and draws night hours with the moon icon",
@@ -5688,6 +5704,23 @@
             "device credential retirement rejects an empty or overlong label and prints usage for unknown commands",
             "device credential retirement opens the server's database by its environment and never creates a missing one"
           ],
+          "tests/boundary/device-credentials-routes.test.ts": [
+            "device credential admin routes requires an authenticated full-access device credential",
+            "device credential admin routes lists every credential with its state and never leaks key material",
+            "device credential admin routes revokes idempotently, and the revoked device is refused on its next request",
+            "device credential admin routes lets the admin revoke the device it is using, which logs it out",
+            "device credential admin routes refuses the configured bootstrap key but retires a stale one",
+            "device credential admin routes labels a credential and rejects invalid labels or bodies"
+          ],
+          "tests/client/device-credentials-management.test.tsx": [
+            "DeviceCredentialsManagement lists credentials, marks this device and hides revoked keys behind a filter",
+            "DeviceCredentialsManagement disables revoking the configured bootstrap key and explains how to rotate it",
+            "DeviceCredentialsManagement revokes another device only after confirmation",
+            "DeviceCredentialsManagement warns before revoking this device and logs the screen out afterwards",
+            "DeviceCredentialsManagement shows the bootstrap explanation, not a generic error, when the server refuses",
+            "DeviceCredentialsManagement renames a credential and rejects an empty name locally",
+            "DeviceCredentialsManagement shows a retryable error when the list cannot load"
+          ],
           "tests/boundary/reminders-content-type.test.ts": [
             "reminders content type (text | images) creates an images reminder, defaults a text reminder, and lists both with their content",
             "reminders content type (text | images) accepts images content on a calendar_gated rule",
@@ -5714,6 +5747,96 @@
           ],
           "tests/integration/reminder-content-migration.test.ts": [
             "0001_reminder_content migration on an existing household adds text/images content to existing rules without losing rules or assignments"
+          ],
+          "tests/client/chores-celebration.test.tsx": [
+            "chores board completion celebration celebrates once when the member's tap completes the last open chore of a period",
+            "chores board completion celebration does not celebrate a period that is already complete when the board loads",
+            "chores board completion celebration does not celebrate a completion that leaves chores open in the period",
+            "chores board completion celebration does not celebrate an uncompletion, nor the same period again in this session",
+            "chores board completion celebration still celebrates when session storage is unavailable",
+            "chores board completion celebration unlocks the fanfare inside the completion tap, before the request settles",
+            "chores board completion celebration neither unlocks nor plays the fanfare when the household sound is off"
+          ],
+          "tests/client/completion-celebration.test.tsx": [
+            "CompletionCelebration announces the title and message and rains the member's emojis",
+            "CompletionCelebration draws coloured paper in the member palette when the set has no emojis",
+            "CompletionCelebration dismisses itself after the celebration duration",
+            "CompletionCelebration dismisses on any tap without blocking the page",
+            "CompletionCelebration shows a still scene under reduced motion",
+            "CompletionCelebration plays the fanfare once when sound is on, also under reduced motion",
+            "CompletionCelebration plays nothing when sound is off",
+            "CompletionCelebration swallows a refused play()",
+            "CompletionCelebration swallows a play() that throws synchronously",
+            "celebration emojis are vendored every preset emoji is in the emoji catalog, so it renders as a Noto SVG",
+            "celebration sound priming starts the element muted inside the gesture, then pauses and unmutes it",
+            "celebration sound priming primes once; later taps leave the unlocked element alone",
+            "celebration sound priming retries priming after a refused play()",
+            "celebration sound priming never pauses a real play that starts before the priming play settles",
+            "celebration sound priming survives a priming play() that throws synchronously and retries next time"
+          ],
+          "tests/client/member-celebration-field.test.tsx": [
+            "member celebration field shows the member's preset and saves another one",
+            "member celebration field moves between presets with the arrow keys",
+            "member celebration field builds a custom set from the current one, adds and removes emojis, and saves it",
+            "member celebration field blocks saving an empty custom set",
+            "member celebration field previews the celebration in place, with the household sound",
+            "member celebration field previews silently when the household sound is off",
+            "member celebration field offers no celebration to a parent, who has no column on the board"
+          ],
+          "tests/boundary/celebration-shared.test.ts": [
+            "celebration presets lists every preset plus custom, with confetti as the emoji-less default",
+            "celebration presets holds only distinct single emojis within the custom maximum",
+            "celebration presets recognises preset ids only",
+            "celebration presets draws a preset's glyphs or a custom set's own",
+            "parseCelebration accepts a preset and a custom set, trimming the emojis",
+            "parseCelebration accepts exactly the custom maximum",
+            "parseCelebration refuses null",
+            "parseCelebration refuses [\"stars\"]",
+            "parseCelebration refuses {\"preset\":\"stars\",\"extra\":1}",
+            "parseCelebration refuses {\"preset\":\"dragons\"}",
+            "parseCelebration refuses {\"preset\":\"stars\",\"emojis\":[\"⭐\"]}",
+            "parseCelebration refuses {\"preset\":\"custom\"}",
+            "parseCelebration refuses {\"preset\":\"custom\",\"emojis\":\"⭐\"}",
+            "parseCelebration refuses {\"preset\":\"custom\",\"emojis\":[\"⭐\",\"🌟\",\"✨\",\"💫\",\"👑\",\"🏰\",\"🦄\"]}",
+            "parseCelebration refuses {\"preset\":\"custom\",\"emojis\":[\"a\"]}",
+            "parseCelebration refuses {\"preset\":\"custom\",\"emojis\":[\"⭐\",\" ⭐\"]}"
+          ],
+          "tests/boundary/member-celebration.test.ts": [
+            "member celebration over HTTP stores confetti when create omits the celebration",
+            "member celebration over HTTP stores an explicit preset or custom set on create",
+            "member celebration over HTTP PATCH sets the confetti preset",
+            "member celebration over HTTP PATCH sets the stars preset",
+            "member celebration over HTTP PATCH sets the videogames preset",
+            "member celebration over HTTP PATCH sets the soccer preset",
+            "member celebration over HTTP PATCH sets the fairytale preset",
+            "member celebration over HTTP PATCH replaces a custom set with a preset, clearing its emojis",
+            "member celebration over HTTP PATCH without the field keeps the celebration, and archive and restore keep it",
+            "member celebration over HTTP rejects an unknown preset with 400 on create and on PATCH",
+            "member celebration over HTTP rejects custom without emojis with 400 on create and on PATCH",
+            "member celebration over HTTP rejects custom with an empty list with 400 on create and on PATCH",
+            "member celebration over HTTP rejects emojis on a non-custom preset with 400 on create and on PATCH",
+            "member celebration over HTTP rejects more than six emojis with 400 on create and on PATCH",
+            "member celebration over HTTP rejects a repeated emoji with 400 on create and on PATCH",
+            "member celebration over HTTP rejects a non-emoji string with 400 on create and on PATCH",
+            "member celebration over HTTP rejects two emojis in one item with 400 on create and on PATCH",
+            "member celebration over HTTP rejects a non-string item with 400 on create and on PATCH",
+            "member celebration over HTTP rejects an unknown field with 400 on create and on PATCH",
+            "member celebration over HTTP rejects a non-object with 400 on create and on PATCH",
+            "member celebration over HTTP reads a stored value the shared rule no longer accepts as the default",
+            "member celebration over HTTP documents MemberCelebration on Member, CreateMemberRequest and UpdateMemberRequest",
+            "member celebration over HTTP exposes the household sound switch, on by default, and writes it through PUT",
+            "member celebration over HTTP rejects the invalid sound settings {\"sound\":\"yes\"}",
+            "member celebration over HTTP rejects the invalid sound settings {}",
+            "member celebration over HTTP rejects the invalid sound settings {\"sound\":true,\"volume\":1}",
+            "0002_member_celebration migration adds both columns and gives existing members the confetti default",
+            "0002_member_celebration migration refuses an unknown preset",
+            "0002_member_celebration migration refuses custom without emojis",
+            "0002_member_celebration migration refuses custom with an empty list",
+            "0002_member_celebration migration refuses custom with seven emojis",
+            "0002_member_celebration migration refuses emojis on a preset",
+            "0002_member_celebration migration accepts a custom set of one to six emojis",
+            "member celebration over HTTP refuses a non-object sound setting at the settings seam",
+            "member celebration over HTTP reads a stored sound setting that no longer validates as the default"
           ]
         }
       },
@@ -5746,7 +5869,8 @@
           "tests/e2e/calendar.spec.ts": ["fd11a3d0e6100edc747e-74db3b02bb030c6999ab"],
           "tests/e2e/chores-board.spec.ts": [
             "b8135b54a0320e142813-e9bd8d6d75365c6d27bf",
-            "b8135b54a0320e142813-efb78496d4d3491d9ea5"
+            "b8135b54a0320e142813-efb78496d4d3491d9ea5",
+            "b8135b54a0320e142813-e0fbec9ff25f5cc51b0f"
           ],
           "tests/e2e/critical-flow.spec.ts": ["e621337e095a26e8c527-1904dc1d69bc6003d74c"],
           "tests/e2e/daily-briefing.spec.ts": [
@@ -5929,6 +6053,21 @@
           "branches": 74
         }
       },
+      "src/client/admin/DeviceCredentialsManagement.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 87,
+          "statements": 102,
+          "functions": 26,
+          "branches": 89
+        },
+        "minimumRates": {
+          "lines": 94.25,
+          "statements": 90.19,
+          "functions": 92.3,
+          "branches": 80.89
+        }
+      },
       "src/client/admin/MealsManagement.tsx": {
         "layer": "client",
         "minimumTotals": {
@@ -5942,6 +6081,21 @@
           "statements": 78.16,
           "functions": 72.46,
           "branches": 73.52
+        }
+      },
+      "src/client/admin/MemberCelebrationField.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 44,
+          "statements": 51,
+          "functions": 20,
+          "branches": 51
+        },
+        "minimumRates": {
+          "lines": 93.18,
+          "statements": 88.23,
+          "functions": 90,
+          "branches": 80.39
         }
       },
       "src/client/admin/MembersManagement.tsx": {
@@ -6394,6 +6548,21 @@
           "branches": 100
         }
       },
+      "src/client/chores/CompletionCelebration.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 26,
+          "statements": 31,
+          "functions": 12,
+          "branches": 28
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/client/chores/EmojiPicker.tsx": {
         "layer": "client",
         "minimumTotals": {
@@ -6407,6 +6576,21 @@
           "statements": 100,
           "functions": 100,
           "branches": 92.85
+        }
+      },
+      "src/client/chores/celebration-sound.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 17,
+          "statements": 20,
+          "functions": 5,
+          "branches": 8
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 95,
+          "functions": 100,
+          "branches": 87.5
         }
       },
       "src/client/chores/emoji-catalog.ts": {
@@ -6907,8 +7091,8 @@
       "src/client/home/TodayChores.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 3,
-          "statements": 3,
+          "lines": 2,
+          "statements": 2,
           "functions": 1,
           "branches": 0
         },
@@ -6925,7 +7109,7 @@
           "lines": 16,
           "statements": 16,
           "functions": 3,
-          "branches": 23
+          "branches": 21
         },
         "minimumRates": {
           "lines": 100,
@@ -9656,7 +9840,7 @@
           "lines": 79,
           "statements": 82,
           "functions": 14,
-          "branches": 90
+          "branches": 78
         },
         "minimumRates": {
           "lines": 100,
@@ -9683,9 +9867,24 @@
       "src/server/modules/members/referential.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 14,
-          "statements": 17,
-          "functions": 9,
+          "lines": 12,
+          "statements": 13,
+          "functions": 7,
+          "branches": 2
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/modules/members/row.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 5,
+          "statements": 5,
+          "functions": 3,
           "branches": 10
         },
         "minimumRates": {
@@ -10022,6 +10221,21 @@
           "lines": 100,
           "statements": 100,
           "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/openapi/device-credentials.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 10,
+          "statements": 10,
+          "functions": 1,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100.0,
+          "statements": 100.0,
+          "functions": 100.0,
           "branches": 100
         }
       },
@@ -10430,6 +10644,21 @@
           "branches": 75
         }
       },
+      "src/server/routes/device-credentials.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 34,
+          "statements": 37,
+          "functions": 12,
+          "branches": 17
+        },
+        "minimumRates": {
+          "lines": 97.05,
+          "statements": 94.59,
+          "functions": 100.0,
+          "branches": 88.23
+        }
+      },
       "src/server/routes/health.ts": {
         "layer": "server",
         "minimumTotals": {
@@ -10722,6 +10951,21 @@
           "statements": 9,
           "functions": 2,
           "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/shared/celebration.ts": {
+        "layer": "shared",
+        "minimumTotals": {
+          "lines": 28,
+          "statements": 30,
+          "functions": 5,
+          "branches": 29
         },
         "minimumRates": {
           "lines": 100,

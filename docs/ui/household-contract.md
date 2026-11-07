@@ -105,10 +105,15 @@ The ordered capability table is:
 9. `/admin/backups` — backups: snapshot with success feedback, drag-and-drop .db upload, colour-coded types, relative dates, typed-filename restore, download with progress
 10. `/admin/time-announcements` — time announcements (card list; create/edit dialog; delete confirmation)
 11. `/admin/network-devices` — network devices (Registered devices and Add device tabs)
-12. `/admin/printing` — Printer: Settings tab (plugin and auto-print state, paper width, Bluetooth
+12. `/admin/access-keys` — access keys: every API credential with its kind, state, creation and
+    expiry dates and a "This device" badge on the one in use; revoked keys are hidden behind a
+    "Show revoked" filter and dimmed when shown. Rename opens a dialog; Revoke asks for
+    confirmation, with a log-out warning on this device. The configured `MP_BOOTSTRAP_KEY` row
+    cannot be revoked and says how to rotate it. Minting stays on the bootstrap flow
+13. `/admin/printing` — Printer: Settings tab (plugin and auto-print state, paper width, Bluetooth
     printer with pair/re-pair, name, device id and UUIDs, saved to `printer`/`printerTransport`) and
     Diagnostics tab (test print, reset today's print, recent prints)
-13. `/admin/settings` — language, week start and time zone in the left column and, while the
+14. `/admin/settings` — language, week start and time zone in the left column and, while the
     weather plugin is active, the weather location in the right column (stacked on narrow
     content), with one Save below both columns that is enabled only while a value differs from the
     stored one; below, the four day periods in a row, each always editable with its own Save

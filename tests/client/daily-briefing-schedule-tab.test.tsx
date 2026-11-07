@@ -20,6 +20,7 @@ const member = (id: string, name: string): MemberDTO => ({
   lifecycle: "active" as const,
   createdAt: 1,
   updatedAt: 1,
+  celebration: { preset: "confetti" },
   birthDate: null,
 });
 

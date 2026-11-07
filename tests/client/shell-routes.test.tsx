@@ -303,6 +303,7 @@ describe("closed route resolver", () => {
     ["/admin/backups", "backups"],
     ["/admin/time-announcements", "time-announcements"],
     ["/admin/network-devices", "network-devices"],
+    ["/admin/access-keys", "access-keys"],
     ["/admin/printing", "printing"],
     ["/admin/settings", "settings"],
   ])("recognizes protected destination %s without unlock state", (path, id) => {

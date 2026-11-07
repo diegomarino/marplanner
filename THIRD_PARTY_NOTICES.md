@@ -19,6 +19,15 @@ License 1.1; the complete [license and notice](src/client/home/weather-icons/OFL
 is included next to the vendored path data.
 [Upstream project](https://github.com/erikflowers/weather-icons).
 
+## Win Jingle
+
+The chores board plays "Win Jingle" by Fupi when a child finishes a block of chores. It is
+dedicated to the public domain under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/),
+so no attribution is required; it is credited here for provenance. The files live in
+`src/client/chores/audio/`: `win-jingle.ogg` is the original `winfretless_0.ogg`, unmodified, and
+`win-jingle.mp3` is a 96 kbps transcode of it (ffmpeg/libmp3lame) for browsers without Ogg Vorbis.
+[Source](https://opengameart.org/content/win-jingle).
+
 ## Dependencies
 
 `package-lock.json` records the installed versions and declared package licenses.

@@ -1,88 +1,45 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { MEMBER_COLOR_KEYS, chooseMemberColorKey } from "../../../shared/member-color";
+import { parseCelebration, type MemberCelebration } from "../../../shared/celebration";
 import { getDb } from "../../db/client";
-import type { MemberDTO, MemberColorKey, Role } from "../../../shared";
+import type { MemberDTO, MemberColorKey } from "../../../shared";
 import { listActiveMembers } from "./referential";
 import { parseBirthDate } from "./birthdate";
+import { MEMBER_COLUMNS, celebrationColumns, memberFromRow, type MemberRow } from "./row";
 
 export { listActiveMembers } from "./referential";
+
+function readMemberRow(id: string): MemberRow | undefined {
+  return getDb().prepare(`SELECT ${MEMBER_COLUMNS} FROM members WHERE id = ?`).get(id) as
+    MemberRow | undefined;
+}
 
 /** Archive a member: set lifecycle = 'archived' and bump updated_at.
  * True idempotent no-op: if already archived, do NOT update (no updated_at change).
  * Never deletes the row (Principle VI, MEMBERS-INV-04).
- * @returns {MemberDTO} The current member state (id, displayName, role, lifecycle, birthDate, createdAt, updatedAt).
+ * @returns {MemberDTO} The current member state.
  * @throws MemberNotFoundError if the member doesn't exist.
  */
 export function archiveMember(id: string): MemberDTO {
-  const db = getDb();
-
-  // Fetch current member
-  const row = db
-    .prepare(
-      "SELECT id, display_name, color_key, role, lifecycle, birth_month, birth_day, birth_year, created_at, updated_at FROM members WHERE id = ?"
-    )
-    .get(id) as
-    | {
-        id: string;
-        display_name: string;
-        color_key: MemberColorKey;
-        role: string;
-        lifecycle: string;
-        birth_month: number | null;
-        birth_day: number | null;
-        birth_year: number | null;
-        created_at: number;
-        updated_at: number;
-      }
-    | undefined;
-
+  const row = readMemberRow(id);
   if (!row) {
     throw new MemberNotFoundError(id);
   }
 
   // If already archived, return current state (true idempotent no-op)
   if (row.lifecycle === "archived") {
-    return {
-      id: row.id,
-      displayName: row.display_name,
-      colorKey: row.color_key,
-      role: row.role as Role,
-      lifecycle: row.lifecycle as MemberDTO["lifecycle"],
-      birthDate:
-        row.birth_month !== null && row.birth_day !== null
-          ? { month: row.birth_month, day: row.birth_day, year: row.birth_year }
-          : null,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
+    return memberFromRow(row);
   }
 
-  // Update lifecycle to archived and bump updated_at
   const now = Date.now();
-  db.prepare("UPDATE members SET lifecycle = 'archived', updated_at = ? WHERE id = ?").run(now, id);
+  getDb()
+    .prepare("UPDATE members SET lifecycle = 'archived', updated_at = ? WHERE id = ?")
+    .run(now, id);
 
-  return {
-    id: row.id,
-    displayName: row.display_name,
-    colorKey: row.color_key,
-    role: row.role as Role,
-    lifecycle: "archived" as MemberDTO["lifecycle"],
-    birthDate:
-      row.birth_month !== null && row.birth_day !== null
-        ? { month: row.birth_month, day: row.birth_day, year: row.birth_year }
-        : null,
-    createdAt: row.created_at,
-    updatedAt: now,
-  };
+  return memberFromRow({ ...row, lifecycle: "archived", updated_at: now });
 }
 
-/** Restore an archived member: set lifecycle = 'active' and bump updated_at.
- * True idempotent no-op: if already active, do NOT update (no updated_at change).
- * Never deletes the row (Principle VI, MEMBERS-INV-04).
- * @returns {MemberDTO} The current member state (id, displayName, role, lifecycle, birthDate, createdAt, updatedAt).
- * @throws MemberNotFoundError if the member doesn't exist.
- */
 /** Colours held by active members, optionally leaving one member out. Archived members hold
  * none.
  */
@@ -107,48 +64,22 @@ function assertColorAvailable(colorKey: MemberColorKey, exceptId?: string): void
   throw new MemberValidationError(`Colour "${colorKey}" is already used by another active member.`);
 }
 
+/** Restore an archived member: set lifecycle = 'active' and bump updated_at.
+ * True idempotent no-op: if already active, do NOT update (no updated_at change).
+ * Never deletes the row (Principle VI, MEMBERS-INV-04).
+ * @returns {MemberDTO} The current member state.
+ * @throws MemberNotFoundError if the member doesn't exist.
+ */
 export function restoreMember(id: string): MemberDTO {
   const db = getDb();
-
-  // Fetch current member
-  const row = db
-    .prepare(
-      "SELECT id, display_name, color_key, role, lifecycle, birth_month, birth_day, birth_year, created_at, updated_at FROM members WHERE id = ?"
-    )
-    .get(id) as
-    | {
-        id: string;
-        display_name: string;
-        color_key: MemberColorKey;
-        role: string;
-        lifecycle: string;
-        birth_month: number | null;
-        birth_day: number | null;
-        birth_year: number | null;
-        created_at: number;
-        updated_at: number;
-      }
-    | undefined;
-
+  const row = readMemberRow(id);
   if (!row) {
     throw new MemberNotFoundError(id);
   }
 
   // If already active, return current state (true idempotent no-op)
   if (row.lifecycle === "active") {
-    return {
-      id: row.id,
-      displayName: row.display_name,
-      colorKey: row.color_key,
-      role: row.role as Role,
-      lifecycle: row.lifecycle as MemberDTO["lifecycle"],
-      birthDate:
-        row.birth_month !== null && row.birth_day !== null
-          ? { month: row.birth_month, day: row.birth_day, year: row.birth_year }
-          : null,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
+    return memberFromRow(row);
   }
 
   // An archived member holds no colour, so someone may have taken theirs meanwhile. They come
@@ -165,19 +96,7 @@ export function restoreMember(id: string): MemberDTO {
     })
     .immediate();
 
-  return {
-    id: row.id,
-    displayName: row.display_name,
-    colorKey,
-    role: row.role as Role,
-    lifecycle: "active" as MemberDTO["lifecycle"],
-    birthDate:
-      row.birth_month !== null && row.birth_day !== null
-        ? { month: row.birth_month, day: row.birth_day, year: row.birth_year }
-        : null,
-    createdAt: row.created_at,
-    updatedAt: now,
-  };
+  return memberFromRow({ ...row, lifecycle: "active", color_key: colorKey, updated_at: now });
 }
 
 /** Error thrown when a member reference is not found.
@@ -199,7 +118,15 @@ export class MemberValidationError extends Error {
   }
 }
 
-/** Edit an existing member's displayName, role, and/or birthDate.
+/** The shared celebration rule, as a zod field so it reports through the same error path. */
+const celebrationField = z.unknown().transform((value, ctx): MemberCelebration => {
+  const parsed = parseCelebration(value);
+  if (parsed.ok) return parsed.value;
+  ctx.addIssue({ code: "custom", message: parsed.message });
+  return z.NEVER;
+});
+
+/** Edit an existing member's displayName, role, colorKey, birthDate and/or celebration.
  * - ABSENT field: leaves the existing value unchanged.
  * - PRESENT field: updates to new value.
  * - birthDate:null: explicitly clears the birth date.
@@ -213,6 +140,7 @@ export function editMember(
     role?: "parent" | "child";
     colorKey?: MemberColorKey;
     birthDate?: typeof parseBirthDate._output | null;
+    celebration?: unknown;
   }
 ): MemberDTO {
   const parsed = editMemberSchema.safeParse(patch);
@@ -221,42 +149,22 @@ export function editMember(
     throw new MemberValidationError(parsed.error.message);
   }
 
-  const { displayName, role, birthDate, colorKey } = parsed.data;
+  const { displayName, role, birthDate, colorKey, celebration } = parsed.data;
 
   // Reject patch with no fields to update
   if (
     displayName === undefined &&
     role === undefined &&
     birthDate === undefined &&
-    colorKey === undefined
+    colorKey === undefined &&
+    celebration === undefined
   ) {
     throw new MemberValidationError(
-      "Edit request must include at least one field to update (displayName, role, birthDate, or colorKey)."
+      "Edit request must include at least one field to update (displayName, role, birthDate, colorKey, or celebration)."
     );
   }
 
-  const db = getDb();
-
-  // Fetch current member
-  const row = db
-    .prepare(
-      "SELECT id, display_name, color_key, role, lifecycle, birth_month, birth_day, birth_year, created_at, updated_at FROM members WHERE id = ?"
-    )
-    .get(id) as
-    | {
-        id: string;
-        display_name: string;
-        color_key: MemberColorKey;
-        role: string;
-        lifecycle: string;
-        birth_month: number | null;
-        birth_day: number | null;
-        birth_year: number | null;
-        created_at: number;
-        updated_at: number;
-      }
-    | undefined;
-
+  const row = readMemberRow(id);
   if (!row) {
     throw new MemberNotFoundError(id);
   }
@@ -267,59 +175,58 @@ export function editMember(
   }
 
   const now = Date.now();
-
-  const displayNameOut = displayName ?? row.display_name;
-  const roleOut: Role = (role ?? row.role) as Role;
-  let birthMonth: number | null;
-  let birthDay: number | null;
-  let birthYear: number | null;
-
-  if (birthDate === undefined) {
-    birthMonth = row.birth_month;
-    birthDay = row.birth_day;
-    birthYear = row.birth_year;
-  } else if (birthDate === null) {
+  let birthMonth = row.birth_month;
+  let birthDay = row.birth_day;
+  let birthYear = row.birth_year;
+  if (birthDate === null) {
     birthMonth = null;
     birthDay = null;
     birthYear = null;
-  } else {
+  } else if (birthDate !== undefined) {
     birthMonth = birthDate.month;
     birthDay = birthDate.day;
     birthYear = birthDate.year ?? null;
   }
-
   if (birthMonth === null || birthDay === null) {
-    db.prepare(
-      "UPDATE members SET display_name = ?, role = ?, color_key = ?, birth_month = NULL, birth_day = NULL, birth_year = NULL, updated_at = ? WHERE id = ?"
-    ).run(displayNameOut, roleOut, colorKey ?? row.color_key, now, id);
-  } else {
-    db.prepare(
-      "UPDATE members SET display_name = ?, role = ?, color_key = ?, birth_month = ?, birth_day = ?, birth_year = ?, updated_at = ? WHERE id = ?"
-    ).run(
-      displayNameOut,
-      roleOut,
-      colorKey ?? row.color_key,
-      birthMonth,
-      birthDay,
-      birthYear,
+    birthMonth = null;
+    birthDay = null;
+    birthYear = null;
+  }
+  const stored = celebration
+    ? celebrationColumns(celebration)
+    : { preset: row.celebration_preset, emojis: row.celebration_emojis };
+
+  const next: MemberRow = {
+    ...row,
+    display_name: displayName ?? row.display_name,
+    role: role ?? row.role,
+    color_key: colorKey ?? row.color_key,
+    birth_month: birthMonth,
+    birth_day: birthDay,
+    birth_year: birthYear,
+    celebration_preset: stored.preset,
+    celebration_emojis: stored.emojis,
+    updated_at: now,
+  };
+
+  getDb()
+    .prepare(
+      "UPDATE members SET display_name = ?, role = ?, color_key = ?, birth_month = ?, birth_day = ?, birth_year = ?, celebration_preset = ?, celebration_emojis = ?, updated_at = ? WHERE id = ?"
+    )
+    .run(
+      next.display_name,
+      next.role,
+      next.color_key,
+      next.birth_month,
+      next.birth_day,
+      next.birth_year,
+      next.celebration_preset,
+      next.celebration_emojis,
       now,
       id
     );
-  }
 
-  return {
-    id: row.id,
-    displayName: displayNameOut,
-    colorKey: colorKey ?? row.color_key,
-    role: roleOut,
-    lifecycle: row.lifecycle as MemberDTO["lifecycle"],
-    birthDate:
-      birthMonth !== null && birthDay !== null
-        ? { month: birthMonth, day: birthDay, year: birthYear }
-        : null,
-    createdAt: row.created_at,
-    updatedAt: now,
-  };
+  return memberFromRow(next);
 }
 
 const createMemberSchema = z.object({
@@ -327,6 +234,7 @@ const createMemberSchema = z.object({
   role: z.enum(["parent", "child"]),
   birthDate: parseBirthDate.optional(),
   colorKey: z.enum(MEMBER_COLOR_KEYS).optional(),
+  celebration: celebrationField.optional(),
 });
 
 const editMemberSchema = z.object({
@@ -334,6 +242,7 @@ const editMemberSchema = z.object({
   role: z.enum(["parent", "child"]).optional(),
   birthDate: parseBirthDate.optional().nullable(),
   colorKey: z.enum(MEMBER_COLOR_KEYS).optional(),
+  celebration: celebrationField.optional(),
 });
 
 /** Validate member input and create exactly ONE members row in a single
@@ -350,6 +259,7 @@ export async function createMember(input: unknown): Promise<MemberDTO> {
   }
 
   const { displayName, role, birthDate } = parsed.data;
+  const celebration = celebrationColumns(parsed.data.celebration ?? { preset: "confetti" });
 
   const id = randomUUID();
   const now = Date.now();
@@ -367,7 +277,7 @@ export async function createMember(input: unknown): Promise<MemberDTO> {
       const assigned =
         parsed.data.colorKey ?? chooseMemberColorKey(activeKeys.map((row) => row.color_key));
       db.prepare(
-        "INSERT INTO members (id, display_name, color_key, role, lifecycle, birth_month, birth_day, birth_year, created_at, updated_at) VALUES (?, ?, ?, ?, 'active', ?, ?, ?, ?, ?)"
+        "INSERT INTO members (id, display_name, color_key, role, lifecycle, birth_month, birth_day, birth_year, celebration_preset, celebration_emojis, created_at, updated_at) VALUES (?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?)"
       ).run(
         id,
         displayName,
@@ -376,6 +286,8 @@ export async function createMember(input: unknown): Promise<MemberDTO> {
         birthDate?.month ?? null,
         birthDate?.day ?? null,
         birthDate?.year ?? null,
+        celebration.preset,
+        celebration.emojis,
         now,
         now
       );
@@ -383,19 +295,20 @@ export async function createMember(input: unknown): Promise<MemberDTO> {
     })
     .immediate();
 
-  return {
+  return memberFromRow({
     id,
-    displayName,
-    colorKey,
-    role: role as Role,
+    display_name: displayName,
+    color_key: colorKey,
+    role,
     lifecycle: "active",
-    birthDate:
-      birthDate === undefined || birthDate === null
-        ? null
-        : { month: birthDate.month, day: birthDate.day, year: birthDate.year ?? null },
-    createdAt: now,
-    updatedAt: now,
-  };
+    birth_month: birthDate?.month ?? null,
+    birth_day: birthDate?.day ?? null,
+    birth_year: birthDate?.year ?? null,
+    celebration_preset: celebration.preset,
+    celebration_emojis: celebration.emojis,
+    created_at: now,
+    updated_at: now,
+  });
 }
 
 /** List active members only (delegates to listActiveMembers — docs/features/auth-sessions.md SC-003 re-read).
@@ -408,73 +321,23 @@ export function listMembers(): MemberDTO[] {
 /** List only archived members.
  */
 export function listArchivedMembers(): MemberDTO[] {
-  const db = getDb();
-  const rows = db
+  const rows = getDb()
     .prepare(
-      "SELECT id, display_name, color_key, role, lifecycle, created_at, updated_at, birth_month, birth_day, birth_year FROM members WHERE lifecycle = 'archived' ORDER BY created_at ASC"
+      `SELECT ${MEMBER_COLUMNS} FROM members WHERE lifecycle = 'archived' ORDER BY created_at ASC`
     )
-    .all() as Array<{
-    id: string;
-    display_name: string;
-    color_key: MemberColorKey;
-    role: string;
-    lifecycle: string;
-    created_at: number;
-    updated_at: number;
-    birth_month: number | null;
-    birth_day: number | null;
-    birth_year: number | null;
-  }>;
-
-  return rows.map((r) => ({
-    id: r.id,
-    displayName: r.display_name,
-    colorKey: r.color_key,
-    role: r.role as Role,
-    lifecycle: r.lifecycle as MemberDTO["lifecycle"],
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-    birthDate:
-      r.birth_month !== null && r.birth_day !== null
-        ? { month: r.birth_month, day: r.birth_day, year: r.birth_year }
-        : null,
-  }));
+    .all() as MemberRow[];
+  return rows.map(memberFromRow);
 }
 
 /** List all members regardless of lifecycle (active + archived).
  */
 export function listAllMembers(): MemberDTO[] {
-  const db = getDb();
-  const rows = db
+  const rows = getDb()
     .prepare(
-      "SELECT id, display_name, color_key, role, lifecycle, created_at, updated_at, birth_month, birth_day, birth_year FROM members WHERE lifecycle IN ('active', 'archived') ORDER BY created_at ASC"
+      `SELECT ${MEMBER_COLUMNS} FROM members WHERE lifecycle IN ('active', 'archived') ORDER BY created_at ASC`
     )
-    .all() as Array<{
-    id: string;
-    display_name: string;
-    color_key: MemberColorKey;
-    role: string;
-    lifecycle: string;
-    created_at: number;
-    updated_at: number;
-    birth_month: number | null;
-    birth_day: number | null;
-    birth_year: number | null;
-  }>;
-
-  return rows.map((r) => ({
-    id: r.id,
-    displayName: r.display_name,
-    colorKey: r.color_key,
-    role: r.role as Role,
-    lifecycle: r.lifecycle as MemberDTO["lifecycle"],
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-    birthDate:
-      r.birth_month !== null && r.birth_day !== null
-        ? { month: r.birth_month, day: r.birth_day, year: r.birth_year }
-        : null,
-  }));
+    .all() as MemberRow[];
+  return rows.map(memberFromRow);
 }
 
 /** Lifecycle-aware listMembers with optional lifecycle filter.

@@ -114,3 +114,11 @@ backup created before the squash is **unsupported**. The runner refuses a non-em
 writing anything (`Unsupported migration history.`); delete the `DATA_DIR` database and reseed.
 Restore reports such a backup as `unsupported_lineage`. `installation_lineage.kind` is now always
 `fresh`; the `prior_baseline` lineage (an install that predated plugin lifecycle) no longer exists.
+
+## Forward migrations
+
+- `0001_reminder_content.sql` (#96): a reminder's `content_type` and `emojis`.
+- `0002_member_celebration.sql` (#92): rebuilds `members` with `celebration_preset` (`confetti`
+  default; one of `confetti`, `stars`, `videogames`, `soccer`, `fairytale`, `custom`) and
+  `celebration_emojis` (a JSON array of 1–6 items when the preset is `custom`, NULL otherwise),
+  each with a CHECK. Existing members read as `confetti`.

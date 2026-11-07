@@ -10,6 +10,7 @@ import { healthRoutes } from "./routes/health";
 import { provisionRoutes } from "./routes/provision";
 import { settingsModule } from "./modules/settings";
 import { verifyPinRoutes } from "./routes/verify-pin";
+import { deviceCredentialsRoutes } from "./routes/device-credentials";
 import { membersRoutes } from "./routes/members";
 import { dayPeriodsRoutes } from "./routes/day-periods";
 import { calendarRoutes } from "./routes/calendar";
@@ -165,6 +166,7 @@ export async function buildApp(opts?: BuildAppOptions): Promise<FastifyInstance>
       await provisionRoutes(app, basePath);
       await settingsModule(app);
       await verifyPinRoutes(app);
+      await deviceCredentialsRoutes(app);
       await membersRoutes(app);
       await dayPeriodsRoutes(app);
       await calendarRoutes(app, opts?.calendarFeed);

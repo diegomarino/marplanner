@@ -7,8 +7,14 @@ import type { Database } from "better-sqlite3";
  * that one is rotated by changing the variable (then the old row is revoked here); every
  * other credential, including a bootstrap key that is no longer configured, can be revoked.
  */
+export type DeviceCredentialErrorCode =
+  "credential_not_found" | "invalid_label" | "bootstrap_unknown" | "configured_bootstrap";
+
 export class DeviceCredentialError extends Error {
-  constructor(message: string) {
+  constructor(
+    message: string,
+    readonly code: DeviceCredentialErrorCode
+  ) {
     super(message);
     this.name = "DeviceCredentialError";
   }
@@ -20,10 +26,24 @@ export interface CredentialSummary {
   scope: string;
   label: string | null;
   createdAt: number;
+  expiresAt: number | null;
   state: "active" | "revoked" | "expired";
 }
 
 const MAX_LABEL_LENGTH = 80;
+
+/** The id of the bootstrap row the configured MP_BOOTSTRAP_KEY names, or null when none is
+ * configured or it has no row. `revokeCredential` refuses that row. */
+export function configuredBootstrapId(
+  db: Database,
+  configuredBootstrap: string | undefined
+): string | null {
+  if (!configuredBootstrap) return null;
+  const row = db
+    .prepare("SELECT id FROM api_keys WHERE kind = 'bootstrap' AND key_hash = ?")
+    .get(hashKey(configuredBootstrap)) as { id: string } | undefined;
+  return row?.id ?? null;
+}
 
 /** Every credential, oldest first, without key hashes. */
 export function listCredentials(db: Database, nowMs: number): CredentialSummary[] {
@@ -46,6 +66,7 @@ export function listCredentials(db: Database, nowMs: number): CredentialSummary[
     scope: row.scope,
     label: row.label,
     createdAt: row.created_at,
+    expiresAt: row.expires_at,
     state:
       row.revoked_at !== null
         ? "revoked"
@@ -61,7 +82,9 @@ function readCredential(
 ): { kind: string; key_hash: string; revoked_at: number | null } {
   const row = db.prepare("SELECT kind, key_hash, revoked_at FROM api_keys WHERE id = ?").get(id) as
     { kind: string; key_hash: string; revoked_at: number | null } | undefined;
-  if (!row) throw new DeviceCredentialError(`No credential with id ${id}`);
+  if (!row) {
+    throw new DeviceCredentialError(`No credential with id ${id}`, "credential_not_found");
+  }
   return row;
 }
 
@@ -69,7 +92,10 @@ function readCredential(
 export function labelCredential(db: Database, id: string, label: string): void {
   const trimmed = label.trim();
   if (trimmed.length === 0 || trimmed.length > MAX_LABEL_LENGTH) {
-    throw new DeviceCredentialError(`A label must have 1 to ${MAX_LABEL_LENGTH} characters`);
+    throw new DeviceCredentialError(
+      `A label must have 1 to ${MAX_LABEL_LENGTH} characters`,
+      "invalid_label"
+    );
   }
   readCredential(db, id);
   db.prepare("UPDATE api_keys SET label = ? WHERE id = ?").run(trimmed, id);
@@ -88,12 +114,14 @@ export function revokeCredential(
   if (row.kind === "bootstrap") {
     if (configuredBootstrap === undefined) {
       throw new DeviceCredentialError(
-        "Set MP_BOOTSTRAP_KEY as for the server so the configured bootstrap key is recognised"
+        "Set MP_BOOTSTRAP_KEY as for the server so the configured bootstrap key is recognised",
+        "bootstrap_unknown"
       );
     }
     if (hashKey(configuredBootstrap) === row.key_hash) {
       throw new DeviceCredentialError(
-        `Credential ${id} is the configured MP_BOOTSTRAP_KEY, which startup re-activates: change the variable and restart, then revoke this old credential`
+        `Credential ${id} is the configured MP_BOOTSTRAP_KEY, which startup re-activates: change the variable and restart, then revoke this old credential`,
+        "configured_bootstrap"
       );
     }
   }

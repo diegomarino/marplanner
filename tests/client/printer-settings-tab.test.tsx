@@ -19,6 +19,7 @@ vi.mock("@/lib/householdSettings", () => ({
     weatherLat: null,
     weatherLon: null,
     weatherLabel: null,
+    celebrationSound: null,
   }),
 }));
 vi.mock("@/printing/pluginStatus", () => ({ usePrintingPluginActive: () => true }));

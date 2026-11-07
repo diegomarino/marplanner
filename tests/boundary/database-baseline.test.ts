@@ -13,6 +13,7 @@ describe("database lifecycle current baseline", () => {
 
     expect(migrationFiles[0]).toBe(BASELINE_FILE);
     expect(migrationFiles).toContain("0001_reminder_content.sql");
+    expect(migrationFiles).toContain("0002_member_celebration.sql");
     for (const file of migrationFiles.slice(1)) expect(file).toMatch(/^\d{4}_[a-z0-9_]+\.sql$/);
   });
 

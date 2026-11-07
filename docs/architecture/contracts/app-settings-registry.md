@@ -55,7 +55,10 @@ Returns the effective settings map. Response shape is a plain object whose keys 
 Example with core only (no plugins active):
 
 ```json
-{ "locale": { "timezone": "Europe/Madrid", "language": "es", "weekStartDay": 1 } }
+{
+  "locale": { "timezone": "Europe/Madrid", "language": "es", "weekStartDay": 1 },
+  "celebration": { "sound": true }
+}
 ```
 
 Example with Printing plugin active:
@@ -63,6 +66,7 @@ Example with Printing plugin active:
 ```json
 {
   "locale": { "timezone": "Europe/Madrid", "language": "es", "weekStartDay": 1 },
+  "celebration": { "sound": true },
   "printer": { "paperWidthDots": 576 },
   "printerTransport": {
     "deviceId": "",
@@ -81,9 +85,10 @@ Accepts `{ "object": OBJECT_NAME, "settings": { ... } }`. Returns the updated ef
 
 ### Core objects
 
-| Object   | Fields                                                                                | Validation                                                                                                                                                                    |
-| -------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `locale` | `timezone` (IANA string), `language` (supported locale enum), `weekStartDay` (0 or 1) | `timezone` must be a valid IANA timezone name. `language` must be a member of the server-supported locale list (currently `en`, `es`). `weekStartDay` must be exactly 0 or 1. |
+| Object        | Fields                                                                                | Validation                                                                                                                                                                    |
+| ------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `locale`      | `timezone` (IANA string), `language` (supported locale enum), `weekStartDay` (0 or 1) | `timezone` must be a valid IANA timezone name. `language` must be a member of the server-supported locale list (currently `en`, `es`). `weekStartDay` must be exactly 0 or 1. |
+| `celebration` | `sound` (boolean, default `true`)                                                     | Exactly one boolean field; unknown keys are rejected. Turns the completion fanfare on or off for the whole household. Reduced motion never mutes it.                          |
 
 ### Plugin objects (examples; each plugin registers its own)
 

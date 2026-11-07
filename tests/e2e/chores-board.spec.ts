@@ -1,5 +1,7 @@
 import { test, expect, type Locator } from "@playwright/test";
 import { messages, resolveLang } from "../../src/client/i18n/messages";
+import { openAdminSection } from "./admin-nav";
+import { unlockAdmin } from "./admin-unlock";
 
 /** — chores board critical-flow e2e, reproducing
  * quickstart.md Scenarios A–E against the LIVE app.
@@ -500,4 +502,105 @@ test("a long chore name wraps instead of scrolling the page horizontally, at bot
   for (const id of memberIds) {
     await page.request.post(`/api/members/${id}/archive`);
   }
+});
+
+test("a custom celebration set in admin plays when a child finishes a period on the board (#92)", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  const rid = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+  await page.goto("/");
+  await page.getByTestId("access-gate-form").locator('input[name="token"]').fill(ACCESS_TOKEN);
+  await page.getByRole("button", { name: "Enter" }).click();
+  await page.getByLabel("Bootstrap key").fill(BOOTSTRAP_KEY);
+  await page.getByRole("button", { name: "Provision Device" }).click();
+  await expect(page.getByTestId("home-surface")).toBeVisible({ timeout: 15_000 });
+
+  const settings = await (await page.request.get("/api/settings")).json();
+  const m = messages[resolveLang(settings.locale?.language)];
+  const today = todayInTimezone(settings.locale.timezone as string);
+
+  const member = await (
+    await page.request.post("/api/members", {
+      data: { displayName: `Party Kid ${rid}`, role: "child" },
+    })
+  ).json();
+  const routine = await (
+    await page.request.post("/api/routines", {
+      data: { name: `Party Routine ${rid}`, dayPeriodId: "morning" },
+    })
+  ).json();
+  const choreIds: string[] = [];
+  for (const name of [`Shoes ${rid}`, `Coat ${rid}`]) {
+    const chore = await (
+      await page.request.post(`/api/routines/${routine.id}/chores`, { data: { name } })
+    ).json();
+    choreIds.push(chore.id as string);
+  }
+  expect(
+    (
+      await page.request.put(`/api/routines/${routine.id}/assignments/${member.id}`, {
+        data: { weekdays: [weekdayCode(today)], active: true },
+      })
+    ).status()
+  ).toBe(200);
+
+  // Admin: choose a custom set of two emojis for the child.
+  await unlockAdmin(page);
+  await openAdminSection(page, "admin-nav-members-management");
+  await page.getByTestId(`member-card-${member.id}`).click();
+  const dialog = page.getByTestId("member-form-dialog");
+  await dialog.getByTestId("member-celebration-preset-confetti").click();
+  await dialog.getByTestId("member-celebration-preset-custom").click();
+  for (const label of ["Unicorn", "Castle"]) {
+    await dialog.getByRole("button", { name: m["members.celebration.addEmoji"] }).click();
+    await page
+      .getByRole("button", { name: `${m["routines.emojiPicker.choose"]} ${label}` })
+      .click();
+  }
+  await dialog.getByTestId("member-save").click();
+  await expect(dialog).toBeHidden();
+  const saved = (await (await page.request.get("/api/members")).json()) as Array<{
+    id: string;
+    celebration: unknown;
+  }>;
+  expect(saved.find((candidate) => candidate.id === member.id)?.celebration).toEqual({
+    preset: "custom",
+    emojis: ["🦄", "🏰"],
+  });
+
+  // Board: one chore already done; tapping the last one finishes the morning.
+  await page.request.post(`/api/chores/${choreIds[0]}/completions`, {
+    data: { memberId: member.id, date: today },
+  });
+  await page.goto("/chores");
+  const column = page.getByTestId(`chores-board-column-${member.id}`);
+  await expect(column).toBeVisible({ timeout: 15_000 });
+  await selectPeriod(
+    column,
+    "morning",
+    m["todayChores.previousPeriod"],
+    m["todayChores.nextPeriod"]
+  );
+  await page.getByTestId(`chore-toggle-${choreIds[1]}`).click();
+
+  const overlay = page.getByTestId("completion-celebration");
+  await expect(overlay).toBeVisible();
+  await expect(overlay.getByRole("status")).toHaveText(
+    new RegExp(m["celebration.title.morning"].replace(/[!?¡¿]/g, "."))
+  );
+  const symbols = await overlay
+    .getByTestId("completion-celebration-particle")
+    .evaluateAll((nodes) => [...new Set(nodes.map((node) => node.getAttribute("data-symbol")))]);
+  expect(symbols.sort()).toEqual(["🏰", "🦄"].sort());
+  await expect(overlay).toBeHidden({ timeout: 6_000 });
+
+  // A reload with the period already complete does not celebrate again.
+  await page.reload();
+  await expect(column).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(500);
+  await expect(overlay).toHaveCount(0);
+
+  await page.request.post(`/api/members/${member.id}/archive`);
 });
