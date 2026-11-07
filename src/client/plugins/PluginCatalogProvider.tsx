@@ -4,11 +4,13 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 
 import { authFetch } from "@/lib/credential";
+import { log } from "@/lib/logger";
 import { PLUGIN_IDS, type PluginCatalogEntry, type PluginId } from "../../shared/plugins";
 
 type CatalogStatus = "loading" | "ready" | "error";
@@ -17,8 +19,16 @@ export type PluginCatalogFeedbackCode =
   "plugin_lifecycle_busy" | "plugin_lifecycle_failed" | "plugin_catalog_unavailable";
 
 interface PluginCatalogContextValue {
+  /**
+   * `ready` once any catalog has loaded; it stays `ready` (with the last good catalog) when a
+   * later refresh fails. `error` means no catalog has ever loaded.
+   */
   status: CatalogStatus;
   plugins: readonly PluginCatalogEntry[];
+  /** The most recent fetch failed; an automatic retry is scheduled. */
+  failed: boolean;
+  /** A catalog fetch is in flight. */
+  refreshing: boolean;
   feedback: Readonly<Partial<Record<PluginId, PluginCatalogFeedbackCode>>>;
   pendingActionFocus: PluginId | null;
   clearPendingActionFocus(pluginId: PluginId): void;
@@ -28,6 +38,15 @@ interface PluginCatalogContextValue {
     code: "contribution_render_failed" | "contribution_start_failed"
   ): Promise<void>;
   reload(): Promise<void>;
+}
+
+/** Delays before each automatic retry after consecutive failures; the last one repeats. */
+export const CATALOG_RETRY_DELAYS_MS = [2_000, 5_000, 15_000, 60_000] as const;
+
+class CatalogFetchError extends Error {
+  constructor(readonly reason: string) {
+    super(reason);
+  }
 }
 
 const PluginCatalogContext = createContext<PluginCatalogContextValue | null>(null);
@@ -114,24 +133,76 @@ export function PluginCatalogProvider({ children }: { children: ReactNode }) {
     setPendingActionFocus((current) => (current === pluginId ? null : current));
   }, []);
 
+  const [failures, setFailures] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const hasCatalog = useRef(false);
+  const failureStreak = useRef(0);
+  const latestRequest = useRef(0);
+  const inflight = useRef(0);
+
   const reload = useCallback(async () => {
-    setStatus("loading");
+    const request = ++latestRequest.current;
+    inflight.current += 1;
+    setRefreshing(true);
     try {
       const result = await authFetch("/api/plugins", { credentials: "include" });
-      if (!result.ok) throw new Error("catalog unavailable");
-      const catalog = parseCatalog(await result.json());
-      if (catalog === null) throw new Error("invalid catalog");
+      if (!result.ok) throw new CatalogFetchError(`http_${result.status}`);
+      const catalog = parseCatalog(await result.json().catch(() => null));
+      if (catalog === null) throw new CatalogFetchError("invalid_catalog");
+      // A newer request (for example after a lifecycle action) owns the catalog.
+      if (request !== latestRequest.current) return;
+      hasCatalog.current = true;
+      failureStreak.current = 0;
       setPlugins(catalog);
       setStatus("ready");
-    } catch {
-      setPlugins([]);
-      setStatus("error");
+      setFailures(0);
+    } catch (error) {
+      if (request !== latestRequest.current) return;
+      // One entry per outage: automatic retries of the same outage stay quiet.
+      if (failureStreak.current === 0) {
+        log("error", "plugin-catalog", "plugin catalog unavailable", {
+          reason: error instanceof CatalogFetchError ? error.reason : "network_error",
+        });
+      }
+      failureStreak.current += 1;
+      setFailures(failureStreak.current);
+      // Keep the last good catalog: replacing it would hide every plugin entry.
+      if (!hasCatalog.current) setStatus("error");
+    } finally {
+      inflight.current -= 1;
+      if (inflight.current === 0) setRefreshing(false);
     }
   }, []);
+
+  /** Background refresh: skipped while another fetch is already in flight. */
+  const refresh = useCallback(() => {
+    if (inflight.current > 0) return;
+    void reload();
+  }, [reload]);
 
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  // Lifecycle changes made in another tab, device or API client arrive when this tab returns.
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [refresh]);
+
+  useEffect(() => {
+    if (failures === 0) return;
+    const delay = CATALOG_RETRY_DELAYS_MS[Math.min(failures, CATALOG_RETRY_DELAYS_MS.length) - 1];
+    const timer = window.setTimeout(refresh, delay);
+    return () => window.clearTimeout(timer);
+  }, [failures, refresh]);
 
   const transition = useCallback(
     async (pluginId: PluginId, target: "activate" | "deactivate") => {
@@ -214,6 +285,8 @@ export function PluginCatalogProvider({ children }: { children: ReactNode }) {
     () => ({
       status,
       plugins,
+      failed: failures > 0,
+      refreshing,
       feedback,
       pendingActionFocus,
       clearPendingActionFocus,
@@ -223,8 +296,10 @@ export function PluginCatalogProvider({ children }: { children: ReactNode }) {
     }),
     [
       clearPendingActionFocus,
+      failures,
       feedback,
       pendingActionFocus,
+      refreshing,
       plugins,
       reload,
       reportFault,
