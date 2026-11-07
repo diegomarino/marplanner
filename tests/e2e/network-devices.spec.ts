@@ -243,7 +243,7 @@ test("network devices lifecycle: seed live client -> register from picker -> blo
     const lang = resolveLang(settings.locale?.language);
     const m = messages[lang];
 
-    // --- Admin unlock (long-press affordance + PIN, AdminGate.tsx) ---
+    // --- Admin unlock (Admin affordance tap + PIN, AdminGate.tsx) ---
     await unlockAdmin(page, MP_ADMIN_PIN);
 
     await openAdminSection(page, "admin-nav-network-devices");

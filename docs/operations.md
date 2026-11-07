@@ -211,7 +211,7 @@ weeks, and a rerun on a later date moves them forward and drops the stale rows.
 
 ## Plugins and integrations
 
-Open Admin with a long press on the family header and enter the advisory PIN.
+Open Admin from Options on the family header and enter the advisory PIN.
 Admin → Plugins distinguishes Active, Inactive and Needs attention. Activation
 creates defaults where needed; deactivation drains owned work and hides its UI,
 routes and jobs. Installed code and persisted plugin data remain present.

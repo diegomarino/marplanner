@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PluginCatalogProvider } from "@/plugins/PluginCatalogProvider";
@@ -40,7 +40,6 @@ describe("HouseholdChrome — Options menu", () => {
     expect(panel).toHaveAttribute("id", options.getAttribute("aria-controls"));
     const admin = within(panel).getByRole("button", { name: "Admin" });
     expect(admin).toHaveAttribute("data-testid", "admin-affordance");
-    expect(admin).toHaveAttribute("data-hold-state", "idle");
     expect(Array.from(panel.querySelectorAll("button, a"))).toEqual([
       admin,
       within(panel).getByRole("button", { name: "Print" }),
@@ -55,7 +54,7 @@ describe("HouseholdChrome — Options menu", () => {
     expect(screen.queryByRole("group", { name: "Options" })).not.toBeInTheDocument();
   });
 
-  describe("a tap on the Admin affordance", () => {
+  describe("the Admin affordance", () => {
     function renderChrome() {
       vi.stubGlobal(
         "fetch",
@@ -63,7 +62,7 @@ describe("HouseholdChrome — Options menu", () => {
       );
       render(
         <PluginCatalogProvider>
-          <HouseholdChrome currentPath="/" showWeather={false}>
+          <HouseholdChrome currentPath="/calendar" showWeather={false}>
             <main />
           </HouseholdChrome>
         </PluginCatalogProvider>
@@ -71,50 +70,51 @@ describe("HouseholdChrome — Options menu", () => {
       return screen.getByTestId("admin-affordance");
     }
 
-    it("explains that Admin needs a hold, then hides the hint", async () => {
+    it("opens Admin on a plain tap, with no hold timer or hint", () => {
       const admin = renderChrome();
       vi.useFakeTimers();
-      expect(screen.queryByTestId("admin-hold-hint")).not.toBeInTheDocument();
-
-      fireEvent.pointerDown(admin, { pointerId: 1 });
-      fireEvent.pointerUp(admin, { pointerId: 1 });
+      fireEvent.pointerDown(admin, { pointerId: 1, pointerType: "touch" });
+      fireEvent.pointerUp(admin, { pointerId: 1, pointerType: "touch" });
+      expect(window.location.pathname).toBe("/");
       fireEvent.click(admin, { detail: 1 });
 
-      const hint = screen.getByTestId("admin-hold-hint");
-      expect(hint).toHaveTextContent("Hold to open Admin");
-      expect(hint).toHaveAttribute("role", "status");
-      expect(window.location.pathname).toBe("/");
-
-      await act(() => vi.advanceTimersByTime(2_500));
-      expect(screen.queryByTestId("admin-hold-hint")).not.toBeInTheDocument();
-    });
-
-    it("shows the hint for an early keyboard release too", () => {
-      const admin = renderChrome();
-      fireEvent.keyDown(admin, { key: "Enter" });
-      fireEvent.keyUp(admin, { key: "Enter" });
-      expect(screen.getByTestId("admin-hold-hint")).toHaveTextContent("Hold to open Admin");
-      expect(window.location.pathname).toBe("/");
-    });
-
-    it("shows no hint after a completed hold", async () => {
-      const admin = renderChrome();
-      vi.useFakeTimers();
-      fireEvent.pointerDown(admin, { pointerId: 2 });
-      await act(() => vi.advanceTimersByTime(3_000));
       expect(window.location.pathname).toBe("/admin");
-      fireEvent.pointerUp(admin, { pointerId: 2 });
-      fireEvent.click(admin, { detail: 1 });
+      expect(window.history.state).toEqual({ marplannerAdminReturnPath: "/calendar" });
+      expect(admin).not.toHaveAttribute("data-hold-state");
+      expect(screen.queryByTestId("admin-hold-progress")).not.toBeInTheDocument();
       expect(screen.queryByTestId("admin-hold-hint")).not.toBeInTheDocument();
     });
 
-    it("hides the hint as soon as a new hold starts", () => {
+    it("opens Admin from the menu entry on a plain tap and closes the menu", () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() => Promise.resolve(Response.json({ plugins: [] })))
+      );
+      render(
+        <PluginCatalogProvider>
+          <HouseholdChrome
+            currentPath="/"
+            showWeather={false}
+            extraOptions={[{ id: "print", render: () => <button type="button">Print</button> }]}
+          >
+            <main />
+          </HouseholdChrome>
+        </PluginCatalogProvider>
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Options" }));
+      fireEvent.click(screen.getByRole("button", { name: "Admin" }), { detail: 1 });
+
+      expect(window.location.pathname).toBe("/admin");
+      expect(screen.queryByRole("group", { name: "Options" })).not.toBeInTheDocument();
+    });
+
+    it("opens Admin from keyboard and assistive-technology activation", () => {
       const admin = renderChrome();
-      fireEvent.pointerDown(admin, { pointerId: 3 });
-      fireEvent.pointerUp(admin, { pointerId: 3 });
-      expect(screen.getByTestId("admin-hold-hint")).toBeInTheDocument();
-      fireEvent.pointerDown(admin, { pointerId: 4 });
-      expect(screen.queryByTestId("admin-hold-hint")).not.toBeInTheDocument();
+      // A focused button turns Enter/Space into a click with `detail: 0`; so do switch, voice and
+      // screen-reader activations.
+      fireEvent.keyDown(admin, { key: "Enter" });
+      fireEvent.click(admin, { detail: 0 });
+      expect(window.location.pathname).toBe("/admin");
     });
   });
 });

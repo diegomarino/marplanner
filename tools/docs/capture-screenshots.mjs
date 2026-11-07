@@ -142,7 +142,7 @@ async function enterKiosk(page) {
   await page.getByTestId("home-surface").waitFor({ timeout: 20_000 });
 }
 
-/** Mirrors tests/e2e/admin-unlock.ts: 3 s long-press, then the touch keypad. */
+/** Mirrors tests/e2e/admin-unlock.ts: a tap, then the self-submitting touch keypad. */
 async function unlockAdmin(page) {
   if (new URL(page.url()).pathname.startsWith("/admin")) return;
   const adminButton = page.getByTestId("admin-affordance");
@@ -150,16 +150,10 @@ async function unlockAdmin(page) {
     await page.getByRole("button", { name: /options|opciones/i }).click();
   }
   await adminButton.waitFor({ timeout: 15_000 });
-  await adminButton.hover();
-  await page.mouse.down();
-  try {
-    await page.waitForURL((url) => url.pathname === "/admin", { timeout: 6_000 });
-  } finally {
-    await page.mouse.up();
-  }
+  await adminButton.click();
+  await page.waitForURL((url) => url.pathname === "/admin");
   await page.getByTestId("admin-pin-keypad").waitFor({ timeout: 15_000 });
   for (const digit of MP_ADMIN_PIN) await page.getByTestId(`admin-pin-digit-${digit}`).click();
-  await page.getByTestId("admin-pin-unlock").click();
   await page.getByTestId("admin-pin-keypad").waitFor({ state: "detached", timeout: 15_000 });
 }
 
