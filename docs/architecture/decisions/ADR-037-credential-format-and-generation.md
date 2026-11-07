@@ -44,7 +44,7 @@ Rate limiting applies **only to authentication failures**, never to overall requ
 
 ## Calibration (explicitly deferred / not needed for family threat model)
 
-- 160-bit entropy and base32+checksum formats are not required; ~77-bit diceware via CSPRNG is sufficient. (A checksum may be added later for typo-catching UX, optional.)
+- 160-bit entropy and base32+checksum formats are not required; ~103-bit (eight-word) diceware via CSPRNG is sufficient. The original ~77-bit (six-word) baseline was raised to eight words on 2026-11-07 for margin against offline guessing of the unsalted SHA-256 key hashes. (A checksum may be added later for typo-catching UX, optional.)
 - These can be revisited only if the deployment ever becomes a higher-value or more widely exposed target.
 
 ## Affected Specs
