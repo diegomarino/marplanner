@@ -8,6 +8,10 @@ import type {
 } from "../../../shared";
 import type { PluginId } from "../../../shared/plugins.js";
 import { DEFAULT_PRINTER_SETTINGS } from "../../../shared/printing";
+import {
+  DEFAULT_CELEBRATION_SETTINGS,
+  type CelebrationSettings,
+} from "../../../shared/celebration";
 import { getDb, type DatabaseConnection } from "../../db/client";
 import { settingsObjects } from "../../db/schema";
 import { evictWeatherCache } from "../daily-briefing/external/shared-cache";
@@ -27,8 +31,8 @@ interface SettingsObjectDef<T extends Record<string, unknown>> {
   ownerPluginId: PluginId | null;
 }
 
-export type LifecycleEffectiveSettings = Pick<EffectiveSettings, "locale"> &
-  Partial<Omit<EffectiveSettings, "locale">>;
+export type LifecycleEffectiveSettings = Pick<EffectiveSettings, "locale" | "celebration"> &
+  Partial<Omit<EffectiveSettings, "locale" | "celebration">>;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -71,6 +75,11 @@ function validateLocale(payload: unknown): LocaleObject | null {
   if (language !== "es" && language !== "en") return null;
   if (weekStartDay !== 0 && weekStartDay !== 1) return null;
   return { timezone, language, weekStartDay };
+}
+
+function validateCelebration(payload: unknown): CelebrationSettings | null {
+  if (!isPlainObject(payload) || Object.keys(payload).some((key) => key !== "sound")) return null;
+  return typeof payload.sound === "boolean" ? { sound: payload.sound } : null;
 }
 
 function validatePrinter(payload: unknown): PrinterSettings | null {
@@ -118,6 +127,11 @@ const REGISTRY = {
   locale: {
     defaults: LOCALE_DEFAULTS,
     validate: validateLocale,
+    ownerPluginId: null,
+  } as unknown as SettingsObjectDef<Record<string, unknown>>,
+  celebration: {
+    defaults: DEFAULT_CELEBRATION_SETTINGS,
+    validate: validateCelebration,
     ownerPluginId: null,
   } as unknown as SettingsObjectDef<Record<string, unknown>>,
   weather: {
@@ -197,6 +211,9 @@ export function readEffectiveSettings(
   const activePlugins = activePluginIds(db);
   const locale =
     validateLocale({ ...LOCALE_DEFAULTS, ...persisted.get("locale") }) ?? LOCALE_DEFAULTS;
+  const celebration =
+    validateCelebration({ ...DEFAULT_CELEBRATION_SETTINGS, ...persisted.get("celebration") }) ??
+    DEFAULT_CELEBRATION_SETTINGS;
   const weather = activePlugins.has("weather")
     ? (validateWeather(persisted.get("weather")) ?? WEATHER_DEFAULTS)
     : null;
@@ -209,6 +226,7 @@ export function readEffectiveSettings(
     : null;
   return {
     locale,
+    celebration,
     ...(weather === null ? {} : { weather }),
     ...(printer === null ? {} : { printer }),
     ...(printerTransport === null ? {} : { printerTransport }),

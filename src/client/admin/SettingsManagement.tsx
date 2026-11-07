@@ -20,7 +20,12 @@ import { LocalizedApiError, responseMessage } from "@/lib/api-error";
 import { authFetch } from "@/lib/credential";
 import { useHouseholdSettingsContext } from "@/lib/householdSettings";
 import { PluginContribution } from "@/plugins/contributions";
-import type { EffectiveSettings, LocaleObject } from "../../shared";
+import {
+  DEFAULT_CELEBRATION_SETTINGS,
+  type CelebrationSettings,
+  type EffectiveSettings,
+  type LocaleObject,
+} from "../../shared";
 import { DayPeriodsManagement } from "./DayPeriodsManagement";
 import { timeZoneGroups } from "./timezones";
 import {
@@ -44,12 +49,17 @@ const SAVED_VISIBLE_MS = 3000;
 
 interface SettingsFormState {
   locale: LocaleObject;
+  celebration: CelebrationSettings;
   /** null: the weather plugin contributes no settings, so none are shown or written. */
   weather: WeatherFormState | null;
 }
 
 function fromSettings(data: EffectiveSettings): SettingsFormState {
-  return { locale: data.locale, weather: data.weather ? toWeatherFormState(data.weather) : null };
+  return {
+    locale: data.locale,
+    celebration: data.celebration ?? DEFAULT_CELEBRATION_SETTINGS,
+    weather: data.weather ? toWeatherFormState(data.weather) : null,
+  };
 }
 
 /** A setting drawn as a caption, a description and a one-of-few choice. */
@@ -154,7 +164,7 @@ export function SettingsManagement() {
   }
 
   async function putObject(
-    object: "locale" | "weather",
+    object: "locale" | "celebration" | "weather",
     settings: unknown
   ): Promise<EffectiveSettings> {
     const response = await authFetch("/api/settings", {
@@ -175,12 +185,14 @@ export function SettingsManagement() {
     (form.locale.language !== persisted.locale.language ||
       form.locale.timezone !== persisted.locale.timezone ||
       form.locale.weekStartDay !== persisted.locale.weekStartDay);
+  const celebrationDirty =
+    form !== null && persisted !== null && form.celebration.sound !== persisted.celebration.sound;
   const weatherDirty =
     form?.weather != null &&
     persisted?.weather != null &&
     weatherFormDirty(form.weather, persisted.weather);
   const problem = form?.weather ? weatherFormProblem(form.weather) : null;
-  const canSave = !saving && (localeDirty || weatherDirty) && problem === null;
+  const canSave = !saving && (localeDirty || celebrationDirty || weatherDirty) && problem === null;
 
   async function save() {
     if (!form || !persisted || !canSave) return;
@@ -194,6 +206,12 @@ export function SettingsManagement() {
         setPersisted((p) => p && { ...p, locale: data.locale });
         setForm((f) => f && { ...f, locale: data.locale });
       }
+      if (celebrationDirty) {
+        const data = await putObject("celebration", form.celebration);
+        wrote = true;
+        setPersisted((p) => p && { ...p, celebration: data.celebration });
+        setForm((f) => f && { ...f, celebration: data.celebration });
+      }
       if (weatherDirty && form.weather) {
         const data = await putObject("weather", weatherPayload(form.weather));
         wrote = true;
@@ -205,8 +223,8 @@ export function SettingsManagement() {
     } catch (cause) {
       const reason =
         cause instanceof LocalizedApiError ? cause.message : t("admin.settings.saveError");
-      // Locale is written first, so a failure after a write means only the weather failed:
-      // say what was kept rather than suggesting nothing was saved.
+      // Objects are written one by one, so a failure after a write means only a later one
+      // failed: say what was kept rather than suggesting nothing was saved.
       setError(wrote ? `${t("admin.settings.partialSaved")} ${reason}` : reason);
     } finally {
       setSaving(false);
@@ -263,6 +281,30 @@ export function SettingsManagement() {
                     value: "0",
                     label: t("admin.settings.sunday"),
                     testId: "settings-week-start-0",
+                  },
+                ]}
+              />
+              <ChoiceRow
+                label={t("admin.settings.celebrationSound")}
+                description={t("admin.settings.celebrationSoundDescription")}
+                value={form.celebration.sound ? "on" : "off"}
+                disabled={saving}
+                onChange={(value) => {
+                  setForm((current) =>
+                    current ? { ...current, celebration: { sound: value === "on" } } : current
+                  );
+                  setSaved(false);
+                }}
+                options={[
+                  {
+                    value: "on",
+                    label: t("admin.settings.celebrationSoundOn"),
+                    testId: "settings-celebration-sound-on",
+                  },
+                  {
+                    value: "off",
+                    label: t("admin.settings.celebrationSoundOff"),
+                    testId: "settings-celebration-sound-off",
                   },
                 ]}
               />

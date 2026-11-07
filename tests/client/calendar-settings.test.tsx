@@ -22,6 +22,7 @@ vi.mock("@/lib/householdSettings", () => ({
     weatherLat: null,
     weatherLon: null,
     weatherLabel: null,
+    celebrationSound: null,
     retry: vi.fn(),
   }),
   useHouseholdSettingsContext: () => undefined,

@@ -4,6 +4,7 @@ import type { WeatherSettingsObject } from "./weather.js";
 import type { LiveCacheState, LiveClient, RegisteredDevice } from "./networkDevices.js";
 import type { PrintJobState, DerivedPrintJobState } from "./printing.js";
 import type { MemberColorKey } from "./member-color.js";
+import type { CelebrationSettings, MemberCelebration } from "./celebration.js";
 
 export {
   MEMBER_COLOR_KEYS,
@@ -56,6 +57,8 @@ export interface EffectiveSettings {
   weather?: WeatherSettingsObject;
   printer?: PrinterSettings;
   printerTransport?: PrinterTransportSettings;
+  /** Core household object; defaults fill an unpersisted one. */
+  celebration: CelebrationSettings;
 }
 
 export interface PrinterSettings {
@@ -90,6 +93,8 @@ export interface CreateMemberRequest {
   role: Role;
   colorKey?: MemberColorKey;
   birthDate?: { month: number; day: number; year: number | null } | null;
+  /** Omitted: `{ preset: "confetti" }`. */
+  celebration?: MemberCelebration;
 }
 
 /** Member — full member record as returned by the API.
@@ -103,6 +108,8 @@ export interface Member {
   createdAt: number;
   updatedAt: number;
   birthDate?: { month: number; day: number; year: number | null } | null;
+  /** Always present; the emojis of the confetti played when a block of chores is finished. */
+  celebration: MemberCelebration;
 }
 
 /** Error body — never contains `mpk-`/`mpg-` values or raw PINs.
@@ -126,6 +133,8 @@ export interface MemberDTO {
   createdAt: number;
   updatedAt: number;
   birthDate?: { month: number; day: number; year: number | null } | null;
+  /** Always present; the emojis of the confetti played when a block of chores is finished. */
+  celebration: MemberCelebration;
 }
 
 // ─── Day Periods DTOs ───────────────────────────────────────
@@ -292,6 +301,7 @@ export interface HighlightRuleOrder {
 export * from "./events.js";
 export { detectCalendarProvider } from "./calendar-provider.js";
 export { isSingleEmoji } from "./emoji.js";
+export * from "./celebration.js";
 
 /** AssignmentReplace — full replacement set of member ids for an event (atomic
  * replace; each MUST be an active member, FR-006).

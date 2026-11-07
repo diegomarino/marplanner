@@ -72,10 +72,22 @@ export const PrinterTransportSettings = component(
   }
 );
 
+export const CelebrationSettings = component(
+  "CelebrationSettings",
+  z.strictObject({
+    sound: z.boolean().meta({
+      description:
+        "Play the fanfare with a completion celebration. Household-wide; reduced motion does not mute it.",
+    }),
+  }),
+  { description: "Household completion-celebration settings. Default `{ sound: true }`." }
+);
+
 export const EffectiveSettings = component(
   "EffectiveSettings",
   z.strictObject({
     locale: LocaleObject,
+    celebration: CelebrationSettings,
     weather: WeatherLocation.optional(),
     printer: PrinterSettings.optional(),
     printerTransport: PrinterTransportSettings.optional(),
@@ -89,9 +101,9 @@ export const EffectiveSettings = component(
 export const WriteSettingsRequest = component(
   "WriteSettingsRequest",
   z.strictObject({
-    object: z.enum(["locale", "weather", "printer", "printerTransport"]).meta({
+    object: z.enum(["locale", "celebration", "weather", "printer", "printerTransport"]).meta({
       description:
-        "Registered object name. Core locale is always available; inactive plugin-owned objects are not projected by GET /api/settings.\n",
+        "Registered object name. Core locale and celebration are always available; inactive plugin-owned objects are not projected by GET /api/settings.\n",
     }),
     settings: z.looseObject({}).meta({
       description:

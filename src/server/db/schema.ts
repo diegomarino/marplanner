@@ -10,6 +10,7 @@ import {
 } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 import { MEMBER_COLOR_KEYS } from "../../shared/member-color";
+import { CELEBRATION_PRESET_IDS } from "../../shared/celebration";
 
 /** API Key — the authoritative, in-DB auth state.
  * Active predicate (evaluated per request, not cached):
@@ -66,6 +67,12 @@ export const members = sqliteTable(
     birthMonth: integer("birth_month"),
     birthDay: integer("birth_day"),
     birthYear: integer("birth_year"),
+    /** Confetti emoji set for finishing a block of chores; added by 0002_member_celebration. */
+    celebrationPreset: text("celebration_preset", { enum: CELEBRATION_PRESET_IDS })
+      .notNull()
+      .default("confetti"),
+    /** JSON array of 1–6 emojis when the preset is `custom`, NULL otherwise. */
+    celebrationEmojis: text("celebration_emojis"),
   },
   (table) => ({
     displayNameCheck: check(
@@ -80,6 +87,14 @@ export const members = sqliteTable(
     lifecycleCheck: check(
       "members_lifecycle_check",
       sql`${table.lifecycle} IN ('active', 'archived')`
+    ),
+    celebrationPresetCheck: check(
+      "members_celebration_preset_check",
+      sql`${table.celebrationPreset} IN ('confetti', 'stars', 'videogames', 'soccer', 'fairytale', 'custom')`
+    ),
+    celebrationEmojisCheck: check(
+      "members_celebration_emojis_check",
+      sql`CASE WHEN ${table.celebrationPreset} = 'custom' THEN ${table.celebrationEmojis} IS NOT NULL AND json_valid(${table.celebrationEmojis}) AND json_array_length(${table.celebrationEmojis}) BETWEEN 1 AND 6 ELSE ${table.celebrationEmojis} IS NULL END`
     ),
   })
 );

@@ -475,6 +475,18 @@
         "required": ["registered"],
         "additionalProperties": false
       },
+      "CelebrationSettings": {
+        "type": "object",
+        "properties": {
+          "sound": {
+            "type": "boolean",
+            "description": "Play the fanfare with a completion celebration. Household-wide; reduced motion does not mute it."
+          }
+        },
+        "required": ["sound"],
+        "additionalProperties": false,
+        "description": "Household completion-celebration settings. Default `{ sound: true }`."
+      },
       "Chore": {
         "type": "object",
         "properties": {
@@ -680,6 +692,10 @@
           "birthDate": {
             "oneOf": [{ "$ref": "#/components/schemas/BirthDate" }, { "type": "null" }],
             "description": "optional birth date; null or absent = no birth date set."
+          },
+          "celebration": {
+            "description": "Optional; omitted stores `{ \"preset\": \"confetti\" }`.",
+            "$ref": "#/components/schemas/MemberCelebration"
           }
         },
         "required": ["displayName", "role"],
@@ -927,11 +943,12 @@
         "type": "object",
         "properties": {
           "locale": { "$ref": "#/components/schemas/LocaleObject" },
+          "celebration": { "$ref": "#/components/schemas/CelebrationSettings" },
           "weather": { "$ref": "#/components/schemas/WeatherLocation" },
           "printer": { "$ref": "#/components/schemas/PrinterSettings" },
           "printerTransport": { "$ref": "#/components/schemas/PrinterTransportSettings" }
         },
-        "required": ["locale"],
+        "required": ["locale", "celebration"],
         "additionalProperties": false,
         "description": "Core settings and active plugin-owned settings, with defaults filling unpersisted fields. Weather is omitted while its plugin is inactive."
       },
@@ -1570,10 +1587,23 @@
             "oneOf": [{ "$ref": "#/components/schemas/BirthDate" }, { "type": "null" }],
             "description": "null/absent when unset (FR-009a clear)."
           },
+          "celebration": {
+            "description": "Always present, defaults filled in. Archive and restore keep it.",
+            "$ref": "#/components/schemas/MemberCelebration"
+          },
           "createdAt": { "type": "integer" },
           "updatedAt": { "type": "integer" }
         },
-        "required": ["id", "displayName", "colorKey", "role", "lifecycle", "createdAt", "updatedAt"]
+        "required": [
+          "id",
+          "displayName",
+          "colorKey",
+          "role",
+          "lifecycle",
+          "celebration",
+          "createdAt",
+          "updatedAt"
+        ]
       },
       "MemberBlockSettings": {
         "type": "object",
@@ -1626,6 +1656,40 @@
           }
         },
         "additionalProperties": false
+      },
+      "MemberCelebration": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "preset": {
+                "type": "string",
+                "enum": ["confetti", "stars", "videogames", "soccer", "fairytale"],
+                "description": "A fixed set (src/shared/celebration.ts). `confetti` draws coloured paper with no emojis."
+              }
+            },
+            "required": ["preset"],
+            "additionalProperties": false,
+            "description": "A preset; it takes no `emojis`."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "preset": { "type": "string", "const": "custom" },
+              "emojis": {
+                "minItems": 1,
+                "maxItems": 6,
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "1–6 distinct items, each exactly one emoji."
+              }
+            },
+            "required": ["preset", "emojis"],
+            "additionalProperties": false,
+            "description": "The member's own set."
+          }
+        ],
+        "description": "The emoji set of the confetti played when the member finishes a block of chores: a preset, or `custom` with its own emojis."
       },
       "MemberColorKey": {
         "type": "string",
@@ -2766,6 +2830,10 @@
           "birthDate": {
             "oneOf": [{ "$ref": "#/components/schemas/BirthDate" }, { "type": "null" }],
             "description": "null explicitly clears the birth date (FR-009a). Omitted fields are unchanged."
+          },
+          "celebration": {
+            "description": "Replaces the celebration as a whole. Omission keeps the current one.",
+            "$ref": "#/components/schemas/MemberCelebration"
           }
         },
         "additionalProperties": false,
@@ -2909,8 +2977,8 @@
         "properties": {
           "object": {
             "type": "string",
-            "enum": ["locale", "weather", "printer", "printerTransport"],
-            "description": "Registered object name. Core locale is always available; inactive plugin-owned objects are not projected by GET /api/settings.\n"
+            "enum": ["locale", "celebration", "weather", "printer", "printerTransport"],
+            "description": "Registered object name. Core locale and celebration are always available; inactive plugin-owned objects are not projected by GET /api/settings.\n"
           },
           "settings": {
             "type": "object",
@@ -7101,7 +7169,7 @@
             }
           },
           "400": {
-            "description": "Validation error — role=admin, unknown role, blank name, invalid birth date or colour key.",
+            "description": "Validation error — role=admin, unknown role, blank name, invalid birth date, colour key or celebration (unknown preset, custom without emojis, emojis on a non-custom preset, more than 6, duplicates, non-emoji strings).",
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
             }
@@ -7220,7 +7288,7 @@
     "/api/members/{id}": {
       "patch": {
         "operationId": "updateMember",
-        "summary": "Edit a member profile (displayName, role, colorKey, birthDate incl. clear).",
+        "summary": "Edit a member profile (displayName, role, colorKey, birthDate incl. clear, celebration).",
         "tags": ["members"],
         "description": "Partial update. Send `birthDate:null` to clear the birth date (FR-009a). No downstream side effects. Returns 404 if member not found; 400 for validation errors (invalid date, role=admin, no fields to update).\n",
         "requestBody": {
@@ -7246,7 +7314,7 @@
             }
           },
           "400": {
-            "description": "Validation error (invalid date, role=admin, no fields).",
+            "description": "Validation error (invalid date, role=admin, invalid celebration, no fields).",
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
             }

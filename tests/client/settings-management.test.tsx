@@ -59,9 +59,10 @@ vi.mock("@/components/ui/select", async () => {
 
 const SETTINGS: EffectiveSettings = {
   locale: { timezone: "Europe/Madrid", language: "en", weekStartDay: 1 },
+  celebration: { sound: true },
   weather: { lat: 40.4168, lon: -3.7038, label: "Madrid" },
 };
-const NO_WEATHER: EffectiveSettings = { locale: SETTINGS.locale };
+const NO_WEATHER: EffectiveSettings = { locale: SETTINGS.locale, celebration: { sound: true } };
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status });
@@ -237,6 +238,20 @@ describe("SettingsManagement", () => {
     ]);
     expect(await screen.findByTestId("settings-saved")).toBeInTheDocument();
     expect(screen.getByTestId("settings-save")).toBeDisabled();
+  });
+
+  it("saves the completion sound switch as its own household object", async () => {
+    mockApi(SETTINGS);
+    renderSettings();
+
+    await screen.findByTestId("settings-save");
+    expect(screen.getByTestId("settings-celebration-sound-on")).toBeChecked();
+    fireEvent.click(screen.getByTestId("settings-celebration-sound-off"));
+    fireEvent.click(screen.getByTestId("settings-save"));
+
+    await waitFor(() => expect(retry).toHaveBeenCalledTimes(1));
+    expect(puts()).toEqual([{ object: "celebration", settings: { sound: false } }]);
+    expect(screen.getByTestId("settings-celebration-sound-off")).toBeChecked();
   });
 
   it("saves only the weather when only the weather changed", async () => {

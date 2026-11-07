@@ -27,6 +27,7 @@ const MOCK_SETTINGS = {
   weatherLat: null,
   weatherLon: null,
   weatherLabel: null,
+  celebrationSound: null,
 } satisfies HouseholdSettingsValue;
 
 vi.mock("@/lib/householdSettings", () => ({

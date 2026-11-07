@@ -16,6 +16,7 @@ const members: Member[] = [
     lifecycle: "active",
     createdAt: 0,
     updatedAt: 0,
+    celebration: { preset: "confetti" },
   },
   {
     id: "b",
@@ -25,6 +26,7 @@ const members: Member[] = [
     lifecycle: "active",
     createdAt: 0,
     updatedAt: 0,
+    celebration: { preset: "confetti" },
   },
   {
     id: "c",
@@ -34,6 +36,7 @@ const members: Member[] = [
     lifecycle: "archived",
     createdAt: 0,
     updatedAt: 0,
+    celebration: { preset: "confetti" },
   },
 ];
 function event(id: string, start: string, end?: string, extra: Partial<FeedItem> = {}): FeedItem {
