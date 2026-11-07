@@ -5772,6 +5772,7 @@
           "tests/client/device-credentials-management.test.tsx": [
             "DeviceCredentialsManagement lists credentials, marks this device and hides revoked keys behind a filter",
             "DeviceCredentialsManagement shows when each key was added to the minute, in the household timezone",
+            "DeviceCredentialsManagement dates expiries by day and falls back to the browser timezone before settings load",
             "DeviceCredentialsManagement disables revoking the configured bootstrap key and explains how to rotate it",
             "DeviceCredentialsManagement revokes another device only after confirmation",
             "DeviceCredentialsManagement warns before revoking this device and logs the screen out afterwards",
