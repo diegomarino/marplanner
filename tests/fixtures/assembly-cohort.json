@@ -3116,7 +3116,8 @@
             "rejects arbitrary-property density overrides while preserving tokens, growth and descendants"
           ],
           "tests/boundary/verify-pin.test.ts": [
-            "verify-pin: match/no-match no-session correct PIN ⇒ {match:true} and incorrect PIN ⇒ {match:false}, no session row either way (FR-016/FR-026)"
+            "verify-pin: match/no-match no-session correct PIN ⇒ {match:true} and incorrect PIN ⇒ {match:false}, no session row either way (FR-016/FR-026)",
+            "verify-pin: match/no-match no-session repeated 6-digit entries with 4- and 5-digit auto-submit probes never trigger backoff or lockout"
           ],
           "tests/boundary/weather-briefing-block.test.ts": [
             "daily-briefing weather block selects the daily[] entry matching the briefing's household-local date",
@@ -3285,8 +3286,13 @@
             "AdminGate touch PIN keypad draws Backspace on the same circular key surface as the digits",
             "AdminGate touch PIN keypad accepts hardware keyboard digits, Backspace, and Enter to submit",
             "AdminGate touch PIN keypad keeps modified keys, editing fields, and focused control activation out of global PIN entry",
-            "AdminGate touch PIN keypad caps keyboard entry and freezes it while a PIN verification is pending",
-            "AdminGate touch PIN keypad submits only 4-6 digits and retains wrong-PIN and request-error feedback",
+            "AdminGate touch PIN keypad auto-submits at 4, 5 and 6 digits and unlocks on a match without the button",
+            "AdminGate touch PIN keypad keeps 4- and 5-digit rejections silent and leaves the digits in place",
+            "AdminGate touch PIN keypad shows the error and clears the digits when the 6-digit attempt is rejected",
+            "AdminGate touch PIN keypad never runs two verifications at once and sends only the latest waiting digits",
+            "AdminGate touch PIN keypad does not submit after Backspace and drops a waiting attempt for deleted digits",
+            "AdminGate touch PIN keypad caps keyboard entry and freezes it while the visible verification is pending",
+            "AdminGate touch PIN keypad keeps the Unlock button as a manual, visible submit for 4-6 digits",
             "AdminGate touch PIN keypad clears state and returns to the recorded family route on Cancel",
             "AdminGate touch PIN keypad falls back to Home when direct Admin navigation has no family history marker"
           ],
@@ -3863,10 +3869,10 @@
           ],
           "tests/client/household-options-menu.test.tsx": [
             "HouseholdChrome — Options menu opens a menu holding Admin and every extra entry once there is more than one",
-            "HouseholdChrome — Options menu a tap on the Admin affordance explains that Admin needs a hold, then hides the hint",
-            "HouseholdChrome — Options menu a tap on the Admin affordance shows the hint for an early keyboard release too",
-            "HouseholdChrome — Options menu a tap on the Admin affordance shows no hint after a completed hold",
-            "HouseholdChrome — Options menu a tap on the Admin affordance hides the hint as soon as a new hold starts"
+            "HouseholdChrome — Options menu the Admin affordance opens Admin on a plain tap, with no hold timer or hint",
+            "HouseholdChrome — Options menu the Admin affordance opens Admin from the menu entry on a plain tap and closes the menu",
+            "HouseholdChrome — Options menu the Admin affordance opens Admin from keyboard and assistive-technology activation",
+            "HouseholdChrome — Options menu the unlocked admin bar navigates Home and up the breadcrumb on a plain click, and leaves modified clicks native"
           ],
           "tests/client/logger.test.ts": [
             "client logger CLIENT-LOGGING-TELEMETRY-INV-03: an entry carries the canonical envelope shape",
@@ -4608,10 +4614,10 @@
             "Shell — unprovisioned gate marks the current family destination and makes Options the Admin affordance while Admin is its only entry",
             "Shell — unprovisioned gate organizes the household chrome into compact navigation, contextual center, and secondary actions",
             "Shell — unprovisioned gate keeps the unlocked admin subtree mounted when Printing is deactivated",
-            "Shell — unprovisioned gate requires a three-second physical hold, shows progress, and resets after an early release",
+            "Shell — unprovisioned gate opens the PIN gate on a plain tap with no hold or progress indicator",
+            "Shell — unprovisioned gate a second Admin activation on the open PIN gate adds no history entry and Cancel returns to the origin",
             "Shell — unprovisioned gate opens admin immediately when the local PIN bypass flag is enabled",
-            "Shell — unprovisioned gate rejects a quick physical tap but accepts keyboard hold and synthetic AT activation",
-            "Shell — unprovisioned gate captures the pointer, survives layout-shift leave events, and resets on cancellation",
+            "Shell — unprovisioned gate opens the PIN gate from keyboard and synthetic AT activation",
             "Shell — unprovisioned gate does NOT bypass the provisioning gate at /calendar (fail-closed, FR-031/ADR-059)",
             "Shell — stale mp_provisioned marker recovery (FR-013) falls back to the provisioning gate when an authenticated call 401s (no manual refresh needed)",
             "Shell — stale mp_provisioned marker recovery (FR-013) falls back to the provisioning gate on a 403 (revoked key) the same way",
@@ -5854,7 +5860,7 @@
           "tests/e2e/admin-routines.spec.ts": ["9039bdc4f4b37608b18c-2d67652f4c452d3453f0"],
           "tests/e2e/admin-settings.spec.ts": ["f375f71858043ffaa49e-780f363c12847aa39921"],
           "tests/e2e/admin-unlock-resilience.spec.ts": [
-            "224608ef7363313c2282-9f89fbd41fbab627eca2",
+            "224608ef7363313c2282-e9e7a481722f7c9f4ffc",
             "224608ef7363313c2282-8d68d3e6e84b83b77ca0"
           ],
           "tests/e2e/backups-restore.spec.ts": [
@@ -7916,10 +7922,10 @@
       "src/client/shell/HouseholdChrome.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 81,
-          "statements": 97,
-          "functions": 24,
-          "branches": 57
+          "lines": 51,
+          "statements": 57,
+          "functions": 20,
+          "branches": 44
         },
         "minimumRates": {
           "lines": 90.12,

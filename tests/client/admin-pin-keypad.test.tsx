@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AdminGate } from "@/admin/AdminGate";
@@ -10,6 +10,12 @@ function renderGate() {
       <AdminGate />
     </AdminUnlockProvider>
   );
+}
+
+function sentPins(fetchMock: { mock: { calls: unknown[][] } }): string[] {
+  return fetchMock.mock.calls
+    .filter((call) => String(call[0]).endsWith("/api/auth/verify-pin"))
+    .map((call) => (JSON.parse(String((call[1] as RequestInit).body)) as { pin: string }).pin);
 }
 
 afterEach(() => {
@@ -50,32 +56,27 @@ describe("AdminGate touch PIN keypad", () => {
   });
 
   it("accepts hardware keyboard digits, Backspace, and Enter to submit", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(Response.json({ match: false }));
+    const fetchMock = vi.fn(() => Promise.resolve(Response.json({ match: false })));
     vi.stubGlobal("fetch", fetchMock);
     renderGate();
 
-    fireEvent.keyDown(window, { key: "1" });
-    fireEvent.keyDown(window, { key: "2" });
-    fireEvent.keyDown(window, { key: "3" });
-    fireEvent.keyDown(window, { key: "4" });
-    expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●●●");
-
-    fireEvent.keyDown(window, { key: "Backspace" });
+    for (const digit of "123") fireEvent.keyDown(window, { key: digit });
     expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●●");
-
+    fireEvent.keyDown(window, { key: "Backspace" });
+    expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●");
     fireEvent.keyDown(window, { key: "5" });
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    // Four digits auto-probe silently; Enter then submits the same digits visibly.
+    fireEvent.keyDown(window, { key: "6" });
     fireEvent.keyDown(window, { key: "Enter" });
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
-    const body = JSON.parse(
-      (fetchMock.mock.calls[0][1] as NonNullable<Parameters<typeof fetch>[1]>).body as string
-    );
-    expect(body).toEqual({ pin: "1235" });
     expect(await screen.findByRole("alert")).toHaveTextContent("Incorrect PIN.");
+    expect(sentPins(fetchMock)).toEqual(["1256"]);
   });
 
   it("keeps modified keys, editing fields, and focused control activation out of global PIN entry", () => {
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn(() => new Promise<Response>(() => {}));
     vi.stubGlobal("fetch", fetchMock);
     render(
       <AdminUnlockProvider>
@@ -89,39 +90,131 @@ describe("AdminGate touch PIN keypad", () => {
     fireEvent.keyDown(screen.getByLabelText("External field"), { key: "2" });
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.getByTestId("admin-pin-display")).not.toHaveTextContent("●");
-    for (const digit of "1234") fireEvent.keyDown(window, { key: digit });
+    for (const digit of "123") fireEvent.keyDown(window, { key: digit });
     const digitButton = screen.getByTestId("admin-pin-digit-5");
     fireEvent.keyDown(digitButton, { key: "Backspace" });
     fireEvent.keyDown(digitButton, { key: "Enter" });
-    expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●●●");
+    expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●●");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("caps keyboard entry and freezes it while a PIN verification is pending", async () => {
-    let finish!: (response: Response) => void;
-    const fetchMock = vi.fn(
-      () =>
-        new Promise<Response>((resolve) => {
-          finish = resolve;
-        })
+  it("auto-submits at 4, 5 and 6 digits and unlocks on a match without the button", async () => {
+    const fetchMock = vi.fn((url: unknown, init?: RequestInit) =>
+      Promise.resolve(
+        String(url).endsWith("/api/auth/verify-pin")
+          ? Response.json({ match: JSON.parse(String(init?.body)).pin === "123456" })
+          : Response.json({})
+      )
     );
     vi.stubGlobal("fetch", fetchMock);
     renderGate();
-    for (const digit of "1234567") fireEvent.keyDown(window, { key: digit });
-    expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●●●●●");
+
+    for (const digit of "1234") fireEvent.keyDown(window, { key: digit });
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    fireEvent.keyDown(window, { key: "5" });
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    fireEvent.keyDown(window, { key: "6" });
+
+    await waitFor(() => expect(screen.queryByTestId("admin-pin-keypad")).not.toBeInTheDocument());
+    expect(sentPins(fetchMock)).toEqual(["1234", "12345", "123456"]);
+  });
+
+  it("keeps 4- and 5-digit rejections silent and leaves the digits in place", async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(Response.json({ match: false })));
+    vi.stubGlobal("fetch", fetchMock);
+    renderGate();
+
+    for (const digit of [1, 2, 3, 4])
+      fireEvent.click(screen.getByTestId(`admin-pin-digit-${digit}`));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    // The probe is in flight without freezing the keypad.
+    expect(screen.getByTestId("admin-pin-digit-5")).toBeEnabled();
+    fireEvent.click(screen.getByTestId("admin-pin-digit-5"));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    await act(() => Promise.resolve());
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●●●●");
+    expect(screen.getByTestId("admin-pin-unlock")).toHaveTextContent("→");
+  });
+
+  it("shows the error and clears the digits when the 6-digit attempt is rejected", async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(Response.json({ match: false })));
+    vi.stubGlobal("fetch", fetchMock);
+    renderGate();
+
+    for (const digit of "123456") fireEvent.keyDown(window, { key: digit });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Incorrect PIN.");
+    expect(screen.getByTestId("admin-pin-display")).not.toHaveTextContent("●");
+    // 12345 was still waiting behind the 1234 probe when 6 arrived, so only 123456 followed.
+    expect(sentPins(fetchMock)).toEqual(["1234", "123456"]);
+
+    fireEvent.keyDown(window, { key: "9" });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("never runs two verifications at once and sends only the latest waiting digits", async () => {
+    const pending: Array<(response: Response) => void> = [];
+    const fetchMock = vi.fn(() => new Promise<Response>((resolve) => pending.push(resolve)));
+    vi.stubGlobal("fetch", fetchMock);
+    renderGate();
+
+    for (const digit of "1234") fireEvent.keyDown(window, { key: digit });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    fireEvent.keyDown(window, { key: "5" });
+    fireEvent.keyDown(window, { key: "6" });
+    // 12345 and 123456 arrived while 1234 was in flight: only the latest waits.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("admin-pin-unlock")).toHaveTextContent("…");
+
+    pending[0](Response.json({ match: false }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(sentPins(fetchMock)).toEqual(["1234", "123456"]);
+    pending[1](Response.json({ match: false }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Incorrect PIN.");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not submit after Backspace and drops a waiting attempt for deleted digits", async () => {
+    const pending: Array<(response: Response) => void> = [];
+    const fetchMock = vi.fn(() => new Promise<Response>((resolve) => pending.push(resolve)));
+    vi.stubGlobal("fetch", fetchMock);
+    renderGate();
+
+    for (const digit of "12345") fireEvent.keyDown(window, { key: digit });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    fireEvent.keyDown(window, { key: "Backspace" });
+    fireEvent.keyDown(window, { key: "Backspace" });
+    pending[0](Response.json({ match: false }));
+    await act(() => Promise.resolve());
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●●");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("caps keyboard entry and freezes it while the visible verification is pending", async () => {
+    const pending: Array<(response: Response) => void> = [];
+    const fetchMock = vi.fn(() => new Promise<Response>((resolve) => pending.push(resolve)));
+    vi.stubGlobal("fetch", fetchMock);
+    renderGate();
+    for (const digit of "1234") fireEvent.keyDown(window, { key: digit });
     fireEvent.keyDown(window, { key: "Enter" });
     fireEvent.keyDown(window, { key: "8" });
     fireEvent.keyDown(window, { key: "Backspace" });
     fireEvent.keyDown(window, { key: "Enter" });
-    expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●●●●●");
+    expect(screen.getByTestId("admin-pin-display")).toHaveTextContent("●●●●");
+    // Enter promoted the in-flight probe for the same digits instead of resending them.
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    finish(Response.json({ match: false }));
+    pending[0](Response.json({ match: false }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Incorrect PIN.");
   });
 
-  it("submits only 4-6 digits and retains wrong-PIN and request-error feedback", async () => {
+  it("keeps the Unlock button as a manual, visible submit for 4-6 digits", async () => {
     const fetchMock = vi
       .fn()
+      .mockResolvedValueOnce(Response.json({ match: false }))
       .mockResolvedValueOnce(Response.json({ match: false }))
       .mockResolvedValueOnce(new Response(null, { status: 500 }));
     vi.stubGlobal("fetch", fetchMock);
@@ -133,9 +226,16 @@ describe("AdminGate touch PIN keypad", () => {
     expect(submit).toBeDisabled();
     fireEvent.click(screen.getByTestId("admin-pin-digit-4"));
     expect(submit).toBeEnabled();
+    // Let the silent probe settle, then submit the same digits manually.
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await act(() => Promise.resolve());
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     fireEvent.click(submit);
     expect(await screen.findByRole("alert")).toHaveTextContent("Incorrect PIN.");
+    expect(screen.getByTestId("admin-pin-display")).not.toHaveTextContent("●");
 
+    for (const digit of [1, 2, 3, 4])
+      fireEvent.click(screen.getByTestId(`admin-pin-digit-${digit}`));
     fireEvent.click(submit);
     expect(await screen.findByRole("alert")).toHaveTextContent("Request failed.");
   });

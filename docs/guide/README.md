@@ -49,7 +49,7 @@ answers the three questions every family asks each morning:
 - **What are we eating?** Breakfast, lunch, snack and dinner are shown straight from
   the meal plan.
 
-The top bar carries the weather pill and the printer status, and a long press opens
+The top bar carries the weather pill and the printer status, and Options opens
 the admin area (see [Security for a kiosk](#11-security-for-a-kiosk)).
 
 | Agenda                                        | Meals strip                                 |
@@ -248,7 +248,7 @@ around that:
   receives its own device key in an httpOnly cookie.
 - **Scoped keys:** every request is checked against `domain:verb` permissions. A
   separate management key (`MP_MANAGEMENT_KEY`) is reserved for plugin management.
-- **Admin PIN:** a long press followed by a touch keypad stops little hands from
+- **Admin PIN:** a touch keypad behind Options stops little hands from
   reaching the admin area. It is a deliberate barrier against accidental access,
   not a password: the backend never trusts it.
 - Repeated failed attempts are rate-limited (`429` with `Retry-After`).

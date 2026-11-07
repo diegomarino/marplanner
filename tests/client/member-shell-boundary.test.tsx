@@ -116,18 +116,9 @@ describe("B1 shell boundary", () => {
     expect(screen.queryByTestId("density-control-toggle")).not.toBeInTheDocument();
     const affordance = screen.getByRole("button", { name: "Options" });
     expect(affordance).toHaveAttribute("data-testid", "admin-affordance");
-    fireEvent.pointerDown(affordance, { button: 1, pointerId: 1 });
-    expect(affordance).toHaveAttribute("data-hold-state", "idle");
     fireEvent.pointerDown(affordance, { button: 0, pointerId: 1 });
-    expect(affordance).toHaveAttribute("data-hold-state", "holding");
-    fireEvent.pointerCancel(affordance, { pointerId: 1 });
-    expect(affordance).toHaveAttribute("data-hold-state", "idle");
-    fireEvent.keyDown(affordance, { key: "Enter", repeat: false });
-    expect(affordance).toHaveAttribute("data-hold-state", "holding");
-    fireEvent.keyUp(affordance, { key: "Enter" });
-    expect(affordance).toHaveAttribute("data-hold-state", "idle");
-    await new Promise((resolve) => setTimeout(resolve, 1));
-    fireEvent.click(screen.getByTestId("admin-affordance"), { detail: 0 });
+    fireEvent.pointerUp(affordance, { button: 0, pointerId: 1 });
+    fireEvent.click(screen.getByTestId("admin-affordance"), { detail: 1 });
     expect(await screen.findByTestId("admin-pin-keypad")).toBeVisible();
     expect(window.location.pathname).toBe("/admin");
     expect(
