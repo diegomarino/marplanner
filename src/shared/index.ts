@@ -1068,3 +1068,36 @@ export interface ResetTodayPrintsResponse {
  */
 export const AUTH_CREDENTIAL_INVALID_CODE = "credential_invalid";
 export const AUTH_SCOPE_DENIED_CODE = "scope_denied";
+
+// ─── Device credential DTOs ──────────────────────────────────────────────
+
+/** One API credential as the admin Access keys page lists it (`GET /api/auth/credentials`).
+ * Never carries the raw key or its hash. `current` marks the credential this request
+ * authenticated with; `configuredBootstrap` marks the row MP_BOOTSTRAP_KEY names, which startup
+ * re-activates, so the server refuses to revoke it.
+ */
+export interface DeviceCredential {
+  id: string;
+  kind: "device" | "integration" | "bootstrap";
+  label: string | null;
+  createdAt: number;
+  expiresAt: number | null;
+  state: "active" | "revoked" | "expired";
+  current: boolean;
+  configuredBootstrap: boolean;
+}
+
+/** `GET /api/auth/credentials` 200 envelope, oldest first. */
+export interface DeviceCredentialList {
+  credentials: DeviceCredential[];
+}
+
+/** `POST /api/auth/credentials/{id}/revoke` 200 body; `revoked` is false when it already was. */
+export interface DeviceCredentialRevokeResult {
+  credential: DeviceCredential;
+  revoked: boolean;
+}
+
+/** Machine codes on the device-credential routes' `{code, message}` error body. */
+export type DeviceCredentialErrorCode =
+  "credential_not_found" | "invalid_label" | "configured_bootstrap";

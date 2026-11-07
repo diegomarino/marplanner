@@ -808,6 +808,79 @@
         "required": ["id", "labelKey", "start", "sortOrder"],
         "additionalProperties": false
       },
+      "DeviceCredential": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "kind": { "type": "string", "enum": ["device", "integration", "bootstrap"] },
+          "label": { "type": ["string", "null"] },
+          "createdAt": { "type": "integer", "description": "epoch ms" },
+          "expiresAt": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "description": "epoch ms; null = no expiry"
+          },
+          "state": { "type": "string", "enum": ["active", "revoked", "expired"] },
+          "current": {
+            "type": "boolean",
+            "description": "the credential this request authenticated with"
+          },
+          "configuredBootstrap": {
+            "type": "boolean",
+            "description": "the bootstrap row MP_BOOTSTRAP_KEY names; startup re-activates it, so revoking it is refused"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "label",
+          "createdAt",
+          "expiresAt",
+          "state",
+          "current",
+          "configuredBootstrap"
+        ],
+        "additionalProperties": false,
+        "description": "An API credential without its key or key hash."
+      },
+      "DeviceCredentialError": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": ["credential_not_found", "invalid_label", "configured_bootstrap"]
+          },
+          "message": { "type": "string" }
+        },
+        "required": ["code", "message"],
+        "additionalProperties": false
+      },
+      "DeviceCredentialLabelRequest": {
+        "type": "object",
+        "properties": { "label": { "type": "string", "minLength": 1, "maxLength": 80 } },
+        "required": ["label"],
+        "additionalProperties": false,
+        "description": "Trimmed before storing; 1 to 80 characters after trimming."
+      },
+      "DeviceCredentialList": {
+        "type": "object",
+        "properties": {
+          "credentials": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DeviceCredential" }
+          }
+        },
+        "required": ["credentials"],
+        "additionalProperties": false
+      },
+      "DeviceCredentialRevokeResult": {
+        "type": "object",
+        "properties": {
+          "credential": { "$ref": "#/components/schemas/DeviceCredential" },
+          "revoked": { "type": "boolean", "description": "false when it was already revoked" }
+        },
+        "required": ["credential", "revoked"],
+        "additionalProperties": false
+      },
       "DryRunInput": {
         "type": "object",
         "properties": {
@@ -2918,6 +2991,223 @@
     }
   },
   "paths": {
+    "/api/auth/credentials": {
+      "get": {
+        "operationId": "listDeviceCredentials",
+        "summary": "List every API credential (never its key or hash), oldest first",
+        "tags": ["bootstrap"],
+        "description": "Requires a provisioned `*` device cookie (`requireFullAccess`). The Admin PIN is a UI-only gate and is never evaluated here.\n",
+        "security": [{ "deviceKeyCookie": [] }],
+        "responses": {
+          "200": {
+            "description": "Every credential with its derived state",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeviceCredentialList" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, ambiguous or invalid API credential (shared authentication boundary).",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
+            }
+          },
+          "403": {
+            "description": "Revoked/expired credential or denied capability; code distinguishes credential loss from scope denial.",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthForbidden" } }
+            }
+          },
+          "429": {
+            "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
+            "headers": {
+              "Retry-After": {
+                "schema": { "type": "integer", "minimum": 1 },
+                "description": "Remaining cooldown in seconds, rounded up. Retry manually.",
+                "required": true
+              },
+              "Cache-Control": {
+                "schema": { "type": "string", "const": "no-store" },
+                "required": true
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "enum": ["too_many_requests"] },
+                    "message": { "type": "string", "enum": ["Authentication retry required"] }
+                  },
+                  "required": ["error", "message"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/credentials/{id}": {
+      "patch": {
+        "operationId": "labelDeviceCredential",
+        "summary": "Name a credential so a device can be identified later",
+        "tags": ["bootstrap"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DeviceCredentialLabelRequest" }
+            }
+          }
+        },
+        "parameters": [
+          { "schema": { "type": "string" }, "in": "path", "name": "id", "required": true }
+        ],
+        "security": [{ "deviceKeyCookie": [] }],
+        "responses": {
+          "200": {
+            "description": "The relabelled credential",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DeviceCredential" } }
+            }
+          },
+          "400": {
+            "description": "The body is not `{label}` or the label is empty or too long",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeviceCredentialError" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, ambiguous or invalid API credential (shared authentication boundary).",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
+            }
+          },
+          "403": {
+            "description": "Revoked/expired credential or denied capability; code distinguishes credential loss from scope denial.",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthForbidden" } }
+            }
+          },
+          "404": {
+            "description": "No credential with this id",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeviceCredentialError" }
+              }
+            }
+          },
+          "429": {
+            "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
+            "headers": {
+              "Retry-After": {
+                "schema": { "type": "integer", "minimum": 1 },
+                "description": "Remaining cooldown in seconds, rounded up. Retry manually.",
+                "required": true
+              },
+              "Cache-Control": {
+                "schema": { "type": "string", "const": "no-store" },
+                "required": true
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "enum": ["too_many_requests"] },
+                    "message": { "type": "string", "enum": ["Authentication retry required"] }
+                  },
+                  "required": ["error", "message"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/credentials/{id}/revoke": {
+      "post": {
+        "operationId": "revokeDeviceCredential",
+        "summary": "Idempotently retire a credential; its next request is refused",
+        "tags": ["bootstrap"],
+        "description": "Revoking the credential this request uses succeeds; the device is logged out on its next request. The bootstrap key configured in MP_BOOTSTRAP_KEY is refused with 409: change the variable and restart, then revoke the old row.\n",
+        "parameters": [
+          { "schema": { "type": "string" }, "in": "path", "name": "id", "required": true }
+        ],
+        "security": [{ "deviceKeyCookie": [] }],
+        "responses": {
+          "200": {
+            "description": "The credential after revocation",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeviceCredentialRevokeResult" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, ambiguous or invalid API credential (shared authentication boundary).",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthUnauthorized" } }
+            }
+          },
+          "403": {
+            "description": "Revoked/expired credential or denied capability; code distinguishes credential loss from scope denial.",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthForbidden" } }
+            }
+          },
+          "404": {
+            "description": "No credential with this id",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeviceCredentialError" }
+              }
+            }
+          },
+          "409": {
+            "description": "The credential is the configured MP_BOOTSTRAP_KEY",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeviceCredentialError" }
+              }
+            }
+          },
+          "429": {
+            "description": "Repeated credential failures from this transport source. Valid active credentials remain usable; this is failure-only retry backpressure, not a hard guess or request-volume limit.\n",
+            "headers": {
+              "Retry-After": {
+                "schema": { "type": "integer", "minimum": 1 },
+                "description": "Remaining cooldown in seconds, rounded up. Retry manually.",
+                "required": true
+              },
+              "Cache-Control": {
+                "schema": { "type": "string", "const": "no-store" },
+                "required": true
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "enum": ["too_many_requests"] },
+                    "message": { "type": "string", "enum": ["Authentication retry required"] }
+                  },
+                  "required": ["error", "message"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/provision": {
       "post": {
         "operationId": "provisionDevice",

@@ -142,6 +142,7 @@ describe("scheduler emits zero bus events (US3 — BACKGROUND-JOBS-SCHEDULER-INV
  * UPDATE (touches content, never row COUNT).
  */
 const GET_ROUTE_TEMPLATES = [
+  "/api/auth/credentials",
   "/api/backups",
   "/api/backups/:filename/download",
   "/api/backups/:filename/download-sql",
@@ -331,6 +332,12 @@ describe("reads stay pure across every GET surface (US3 — BACKGROUND-JOBS-SCHE
     db.prepare(
       "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'integration', ?)"
     ).run(`${Date.now()}-integration`, sweepKeyHash, now);
+    // Cookie routes use a provisioned device key: `requireFullAccess` routes such as
+    // `/api/auth/credentials` admit a cookie only for `kind='device'`.
+    const deviceKey = `${sweepKey}-device`;
+    db.prepare(
+      "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
+    ).run(`${Date.now()}-device`, hashKey(deviceKey), now);
 
     const app = await buildApp();
     try {
@@ -343,7 +350,7 @@ describe("reads stay pure across every GET surface (US3 — BACKGROUND-JOBS-SCHE
           url: toRequestUrl(template),
           ...(isPluginCatalog
             ? { headers: { authorization: `Bearer ${sweepKey}` } }
-            : { cookies: { mp_device_key: sweepKey } }),
+            : { cookies: { mp_device_key: deviceKey } }),
         });
         // Not a contract test — a fake id 404ing or an unfilled optional
         // filter 400ing is expected and fine (REQUIRED_QUERY supplies

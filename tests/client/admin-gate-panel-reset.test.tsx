@@ -105,6 +105,11 @@ const PANELS: PanelSpec[] = [
     path: "/admin/network-devices",
     testId: "network-devices-management",
   },
+  {
+    nav: "admin-nav-access-keys",
+    path: "/admin/access-keys",
+    testId: "access-keys-management",
+  },
   { nav: "admin-nav-plugins", path: "/admin/plugins", testId: "plugin-catalog" },
   { nav: "admin-nav-printing", path: "/admin/printing", testId: "printing-management" },
   { nav: "admin-nav-settings", path: "/admin/settings", testId: "settings-management" },
@@ -190,6 +195,7 @@ function respondFor(url: string): unknown {
     return { state: "fresh", clients: [] };
   }
   if (url.startsWith("/api/network-devices")) return { devices: [], cacheState: "fresh" };
+  if (url === "/api/auth/credentials") return { credentials: [] };
   if (url.startsWith("/api/telemetry/client-log")) return { rows: [], nextCursor: null };
   if (url.startsWith("/api/backups")) return { backups: [] };
   if (url.startsWith("/api/printing/jobs")) return { jobs: [] };

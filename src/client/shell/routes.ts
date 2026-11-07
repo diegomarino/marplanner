@@ -35,6 +35,7 @@ const adminDestinations = [
   { id: "backups", path: "/admin/backups" },
   { id: "time-announcements", path: "/admin/time-announcements" },
   { id: "network-devices", path: "/admin/network-devices" },
+  { id: "access-keys", path: "/admin/access-keys" },
   { id: "plugins", path: "/admin/plugins" },
   { id: "printing", path: "/admin/printing" },
   { id: "settings", path: "/admin/settings" },
