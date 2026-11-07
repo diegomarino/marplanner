@@ -1,7 +1,7 @@
 import { createHash, randomInt, timingSafeEqual } from "node:crypto";
 import { EFF_WORDLIST } from "./eff-wordlist";
 
-const WORD_COUNT = 6;
+const WORD_COUNT = 8;
 const SEPARATOR = "-";
 const PREFIX = "mpk-";
 
@@ -10,7 +10,7 @@ const PREFIX = "mpk-";
 // the token count and breaks the "WORD_COUNT words / WORD_COUNT-1 separators"
 // invariant. The EFF large wordlist has 4 such entries (drop-down, felt-tip,
 // t-shirt, yo-yo); exclude them once at load. Entropy loss is negligible
-// (7772 vs 7776 words ≈ 0.003 bits over 6 words).
+// (7772 vs 7776 words ≈ 0.006 bits over 8 words).
 const WORD_POOL: readonly string[] = EFF_WORDLIST.filter((w) => !w.includes(SEPARATOR));
 
 /** Generate a diceware-style credential key.
