@@ -630,5 +630,29 @@ describe("daily-briefing domain blocks (FR-013)", () => {
       const result = remindersBlock.generate({ memberId, date: DATE });
       expect(result).toEqual({ groups: [{ items: [{ value: "Bring your kit" }] }] });
     });
+
+    it("carries an images reminder's emojis next to text reminders in one group (#96)", async () => {
+      seedMember(memberId);
+      const now = Date.now();
+      const db = getDb();
+      db.prepare(
+        `INSERT INTO reminder (id, kind, targeting_mode, text, weekdays, active, created_at, updated_at)
+         VALUES ('reminder-text', 'scheduled', 'apply_to_all', 'Pack the school bag', '["fri"]', 1, ?, ?)`
+      ).run(now, now);
+      db.prepare(
+        `INSERT INTO reminder (id, kind, targeting_mode, content_type, text, emojis, weekdays, active, created_at, updated_at)
+         VALUES ('reminder-images', 'scheduled', 'apply_to_all', 'images', '', '["🩰","👟"]', '["fri"]', 1, ?, ?)`
+      ).run(now + 1, now + 1);
+
+      const result = remindersBlock.generate({ memberId, date: DATE });
+      expect(result).toEqual({
+        groups: [
+          {
+            items: [{ value: "Pack the school bag" }, { value: "", emojis: ["🩰", "👟"] }],
+          },
+        ],
+      });
+      expect(() => adaptBlockData("reminders", result)).not.toThrow();
+    });
   });
 });

@@ -28,6 +28,10 @@ interface EmojiPickerProps {
   onChange: (emoji: string | null) => void;
   className?: string;
   labels?: EmojiPickerLabels;
+  /** Accessible names of the trigger when nothing is selected and of the popover (default to the
+   * labels' wording); let a caller that only adds emojis, such as an image reminder, name it. */
+  emptyLabel?: string;
+  dialogLabel?: string;
 }
 
 export function EmojiPicker({
@@ -35,6 +39,8 @@ export function EmojiPicker({
   onChange,
   className,
   labels = CHORE_ICON_LABELS,
+  emptyLabel,
+  dialogLabel,
 }: EmojiPickerProps) {
   const { t, language } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -63,7 +69,9 @@ export function EmojiPicker({
         variant="outline"
         // eslint-disable-next-line ui-policy/sizing -- Decorative 24px glyph; this icon-only button retains its density-controlled touch target.
         className="size-[var(--control-height)] p-0 [font-size:1.5rem]"
-        aria-label={value ? t(labels.change).replace("{icon}", value) : t(labels.select)}
+        aria-label={
+          value ? t(labels.change).replace("{icon}", value) : (emptyLabel ?? t(labels.select))
+        }
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={() => setOpen((current) => !current)}
@@ -73,7 +81,7 @@ export function EmojiPicker({
       {open && (
         <div
           role="dialog"
-          aria-label={t(labels.title)}
+          aria-label={dialogLabel ?? t(labels.title)}
           className="bg-card absolute top-full left-0 z-50 mt-2 w-max rounded-2xl border p-3 shadow-xl"
         >
           <Input

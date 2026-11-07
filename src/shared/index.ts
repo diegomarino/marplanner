@@ -442,14 +442,26 @@ export type TargetingMode = "apply_to_all" | "specific";
  */
 export type ReminderQueryField = "title" | "description" | "location";
 
+/** ReminderContentType — what a reminder shows: words (`text`) or a picture sequence (`images`)
+ * for family members who cannot read yet.
+ */
+export type ReminderContentType = "text" | "images";
+
+/** Most emojis an `images` reminder may hold — pressedslip's image block prints at most 12. */
+export const MAX_REMINDER_EMOJIS = 12;
+
 /** Reminder — a scheduled or calendar_gated reminder rule as returned by the API.
- * The calendar-gated variant extends the scheduled reminder response shape.
+ * The calendar-gated variant extends the scheduled reminder response shape. An `images` reminder
+ * carries its ordered catalog emojis in `emojis`; its `text` is an optional description (possibly
+ * empty) for screen readers and admin lists. A `text` reminder has `emojis: null`.
  */
 export interface Reminder {
   id: string;
   kind: ReminderKind;
   targetingMode: TargetingMode;
+  contentType: ReminderContentType;
   text: string;
+  emojis: string[] | null;
   weekdays: Weekday[] | null;
   query?: string | null;
   queryFields?: ReminderQueryField[] | null;
@@ -465,7 +477,10 @@ export interface Reminder {
 export interface ReminderInput {
   kind: ReminderKind;
   targetingMode: TargetingMode;
-  text: string;
+  /** Defaults to `text`. `images` requires `emojis` and makes `text` optional. */
+  contentType?: ReminderContentType;
+  text?: string;
+  emojis?: string[];
   weekdays?: Weekday[];
   query?: string;
   queryFields?: ReminderQueryField[];
@@ -480,7 +495,10 @@ export interface ReminderInput {
  * `kind` is immutable and is not part of this payload.
  */
 export interface ReminderEditInput {
+  /** Switching to `images` requires `emojis`; switching to `text` requires a non-blank `text`. */
+  contentType?: ReminderContentType;
   text?: string;
+  emojis?: string[];
   weekdays?: Weekday[];
   query?: string;
   queryFields?: ReminderQueryField[];
@@ -511,11 +529,13 @@ export interface ReminderAssignmentSetInput {
   assignments: ReminderAssignmentInput[];
 }
 
-/** ReminderEmission — one emitting reminder for a (member,date) read.
+/** ReminderEmission — one emitting reminder for a (member,date) read. `emojis` is present only
+ * for an `images` reminder; `text` is then its (possibly empty) description.
  */
 export interface ReminderEmission {
   id: string;
   text: string;
+  emojis?: string[];
 }
 
 /** DryRunReason — the 3 mutually-exclusive reasons a calendar_gated rule would not emit.

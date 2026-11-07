@@ -6,12 +6,15 @@ const DRIZZLE_DIR = "drizzle";
 const BASELINE_FILE = "0000_baseline.sql";
 
 describe("database lifecycle current baseline", () => {
-  it("keeps the squashed baseline first, followed only by reviewed deltas", () => {
+  it("starts from the squashed baseline; later changes ship as numbered forward migrations", () => {
     const migrationFiles = readdirSync(DRIZZLE_DIR)
       .filter((file) => file.endsWith(".sql"))
       .sort();
 
-    expect(migrationFiles).toEqual([BASELINE_FILE, "0002_member_celebration.sql"]);
+    expect(migrationFiles[0]).toBe(BASELINE_FILE);
+    expect(migrationFiles).toContain("0001_reminder_content.sql");
+    expect(migrationFiles).toContain("0002_member_celebration.sql");
+    for (const file of migrationFiles.slice(1)) expect(file).toMatch(/^\d{4}_[a-z0-9_]+\.sql$/);
   });
 
   it("keeps the reviewed sentinel, both tables, and canonical day-period rows in SQL", () => {
