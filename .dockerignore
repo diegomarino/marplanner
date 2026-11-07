@@ -38,3 +38,6 @@ ORCA_*
 orca-done.sh
 PR_BODY.md
 .pr_body.md
+
+# The smoke test's cached production device key (npm run deploy:fly)
+infra/fly/.smoke-device

@@ -584,6 +584,15 @@
     "runners": {
       "node": {
         "files": {
+          "tools/api-docs-bundle.test.mjs": [
+            "api docs zip round-trips names and contents and is byte-for-byte reproducible",
+            "api docs markdown lists every documented operation once, in its tag's file",
+            "api docs markdown expands referenced request bodies and links to real anchors",
+            "api docs viewer embeds the document without letting it close the inline script",
+            "api docs guide keeps images local and sends other relative links to GitHub",
+            "api docs markdown keeps pattern alternations inside their table cell",
+            "api docs markdown documents the item fields of list responses"
+          ],
           "tools/audit-accessible-names.test.mjs": [
             "input: fires with no aria-label/label/placeholder (RoutinesManagement.tsx:401 shape)",
             "select: fires with no aria-label/label (RoutinesManagement.tsx:320 shape)",
@@ -870,6 +879,64 @@
             "plugin event gate checks every conditional event name and rejects opaque names",
             "plugin event gate rejects missing, duplicate, unknown and foreign-owner manifest declarations",
             "plugin event gate ignores unrelated methods and rejects a missing typed catalog"
+          ],
+          "tools/deploy-env.test.mjs": [
+            "validateFlyEnv accepts a complete production env",
+            "validateFlyEnv names each missing or empty required key",
+            "validateFlyEnv enforces credential prefixes",
+            "validateFlyEnv refuses the published default credentials",
+            "validation messages never contain secret values",
+            "readFlyEnv parses quotes, export prefixes, comments and CRLF like Node",
+            "readFlyEnv explains how to create a missing file",
+            "the Fly env file and smoke cache are gitignored",
+            "the required Fly keys are the deployment credentials",
+            "validateFlyEnv requires a PIN the Admin keypad can enter"
+          ],
+          "tools/deploy-fly-cli.test.mjs": [
+            "readFlyApp reads the top-level app name",
+            "readFlyApp refuses the template placeholder",
+            "planSecrets stages every local key and reports added and extra names",
+            "flyParseLine matches flyctl's secrets import parser",
+            "secretsImportPayload values survive flyctl's own parser",
+            "secretsImportPayload rejects multi-line values by key name only",
+            "parseSecretsList accepts both flyctl name casings",
+            "deployArgs pins single-machine remote deploys with build provenance",
+            "runFly sends secrets through stdin, never argv",
+            "runFly can stream flyctl output to the terminal"
+          ],
+          "tools/deploy-smoke.test.mjs": [
+            "planSmokeRoutes covers every GET except the skip list",
+            "every skipped route still exists in the API contract",
+            "fillParams substitutes known ids and today's date",
+            "fillParams returns null for an undiscoverable param",
+            "deviceCookie provisions with the bootstrap key and caches it privately",
+            "deviceCookie reuses a cached cookie without provisioning",
+            "runSmoke re-provisions once when the cached device is refused with 401",
+            "runSmoke fails instead of looping when a fresh device is refused",
+            "runSmoke fails on 5xx and warns on 4xx",
+            "smoke output never contains the bootstrap key or device cookie",
+            "runSmoke records an unreachable route as a failure",
+            "runSmoke re-provisions once when the cached device is revoked (403)"
+          ],
+          "tools/deploy-fly.test.mjs": [
+            "parseDeployArgs knows every flag and rejects unknown ones",
+            "deployFly runs pre-flight, checks, secrets, deploy, health, release and smoke in order",
+            "--full runs check:standard and --skip-checks runs none",
+            "a dirty tree stops before any Fly write unless --allow-dirty",
+            "invalid .env.fly stops at pre-flight and names the keys",
+            "secrets are staged through stdin and extras are only unset with --prune",
+            "--dry-run performs no Fly writes and prints the deploy command",
+            "a flyctl failure reports the step and exit code",
+            "release check waits until the new sha is serving",
+            "no secret value reaches the log",
+            "--reprovision discards the cached smoke device",
+            "a missing flyctl stops at pre-flight with install advice",
+            "a provisioning failure during the release check is reported as the release step",
+            "a logged-out flyctl says how to log in",
+            "only commands carrying secret values hide flyctl's stderr",
+            "a failed deploy warns that secrets are already staged",
+            "the smoke device key never enters the Docker build context",
+            "the release check replaces a revoked (403) smoke device"
           ]
         }
       },
