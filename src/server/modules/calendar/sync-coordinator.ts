@@ -164,6 +164,10 @@ async function runSynchronization(
         throw new Error("parse_failed", { cause: error });
       }
     }
+    if (parsed?.limits) {
+      // Counts only: neither feed content nor the token-bearing URL is logged.
+      console.warn("calendar.external-sources.feed-limits", { sourceId, ...parsed.limits });
+    }
     await setPhase("reconciling");
     try {
       if (parsed && fetched.kind === "modified") {

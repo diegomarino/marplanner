@@ -171,4 +171,40 @@ describe("calendar external-source lifecycle", () => {
       consecutive_failures: 1,
     });
   });
+
+  it("publishes the rest of a feed and logs only counts when one event exceeds the feed limits", async () => {
+    insertSource();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const overLimit = [
+      "BEGIN:VEVENT",
+      "UID:over-limit",
+      "DTSTAMP:20260928T000000Z",
+      "DTSTART:20261015T080000Z",
+      "SUMMARY:Over limit",
+      "RRULE:FREQ=HOURLY",
+      "END:VEVENT",
+    ];
+    const lines = feed.split("\r\n");
+    const mixed = [...lines.slice(0, -1), ...overLimit, lines.at(-1)].join("\r\n");
+    try {
+      await startExternalSourceSynchronization(sourceId, {
+        ...dependencies,
+        transport: async () => mixed,
+      });
+      expect(getEvents({ source: "external", range }).map((event) => event.title)).toEqual([
+        "Alex school day",
+      ]);
+      expect(warn).toHaveBeenCalledWith("calendar.external-sources.feed-limits", {
+        sourceId,
+        unsupported_rrule: 1,
+      });
+      expect(
+        getDb()
+          .prepare("SELECT last_error_code, last_skipped_count FROM calendar_external_sources")
+          .get()
+      ).toEqual({ last_error_code: null, last_skipped_count: 1 });
+    } finally {
+      warn.mockRestore();
+    }
+  });
 });

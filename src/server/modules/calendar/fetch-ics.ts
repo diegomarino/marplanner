@@ -10,7 +10,8 @@ import {
 
 const MAX_REDIRECTS = 5;
 const FETCH_TIMEOUT_MS = 12_000;
-const MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
+/** Feed download cap; parse-ics re-exports it as `ICS_FEED_LIMITS.maxFeedBytes`. */
+export const MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
 export type CalendarFeedErrorCode =
