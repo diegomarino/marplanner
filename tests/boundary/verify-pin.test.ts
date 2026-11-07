@@ -109,8 +109,9 @@ describe("verify-pin: match/no-match no-session", () => {
       "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
     ).run(`${now}-device`, hashKey(deviceKey), now);
     const correctPin = "135790";
+    // Minimal Argon2 cost keeps thirty verifications fast; the route verifies any argon2 hash.
     db.prepare("INSERT INTO admin_config (id, pin_hash, updated_at) VALUES (1, ?, ?)").run(
-      await argon2.hash(correctPin),
+      await argon2.hash(correctPin, { memoryCost: 1024, timeCost: 1, parallelism: 1 }),
       now
     );
 
@@ -141,5 +142,5 @@ describe("verify-pin: match/no-match no-session", () => {
     } finally {
       await app.close();
     }
-  });
+  }, 30_000);
 });

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PluginCatalogProvider } from "@/plugins/PluginCatalogProvider";
 import { HouseholdChrome } from "@/shell/HouseholdChrome";
+import { AdminUnlockProvider } from "@/lib/adminUnlock";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -115,6 +116,44 @@ describe("HouseholdChrome — Options menu", () => {
       fireEvent.keyDown(admin, { key: "Enter" });
       fireEvent.click(admin, { detail: 0 });
       expect(window.location.pathname).toBe("/admin");
+    });
+  });
+
+  describe("the unlocked admin bar", () => {
+    it("navigates Home and up the breadcrumb on a plain click, and leaves modified clicks native", () => {
+      vi.stubEnv("MODE", "development");
+      vi.stubEnv("VITE_DEV_BYPASS_ADMIN_PIN", "1");
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() => Promise.resolve(Response.json({ plugins: [] })))
+      );
+      window.history.replaceState({}, "", "/admin/members");
+      try {
+        render(
+          <AdminUnlockProvider>
+            <PluginCatalogProvider>
+              <HouseholdChrome currentPath="/admin/members" showWeather={false}>
+                <main />
+              </HouseholdChrome>
+            </PluginCatalogProvider>
+          </AdminUnlockProvider>
+        );
+
+        const breadcrumb = screen.getByTestId("admin-breadcrumb");
+        const root = within(breadcrumb).getAllByRole("link")[0];
+        fireEvent.click(root, { ctrlKey: true });
+        expect(window.location.pathname).toBe("/admin/members");
+        fireEvent.click(root);
+        expect(window.location.pathname).toBe("/admin");
+
+        const home = screen.getByTestId("admin-topbar-home");
+        fireEvent.click(home, { metaKey: true });
+        expect(window.location.pathname).toBe("/admin");
+        fireEvent.click(home);
+        expect(window.location.pathname).toBe("/");
+      } finally {
+        vi.unstubAllEnvs();
+      }
     });
   });
 });

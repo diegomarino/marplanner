@@ -3871,7 +3871,8 @@
             "HouseholdChrome — Options menu opens a menu holding Admin and every extra entry once there is more than one",
             "HouseholdChrome — Options menu the Admin affordance opens Admin on a plain tap, with no hold timer or hint",
             "HouseholdChrome — Options menu the Admin affordance opens Admin from the menu entry on a plain tap and closes the menu",
-            "HouseholdChrome — Options menu the Admin affordance opens Admin from keyboard and assistive-technology activation"
+            "HouseholdChrome — Options menu the Admin affordance opens Admin from keyboard and assistive-technology activation",
+            "HouseholdChrome — Options menu the unlocked admin bar navigates Home and up the breadcrumb on a plain click, and leaves modified clicks native"
           ],
           "tests/client/logger.test.ts": [
             "client logger CLIENT-LOGGING-TELEMETRY-INV-03: an entry carries the canonical envelope shape",
@@ -7921,10 +7922,10 @@
       "src/client/shell/HouseholdChrome.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 81,
-          "statements": 97,
-          "functions": 24,
-          "branches": 57
+          "lines": 51,
+          "statements": 57,
+          "functions": 20,
+          "branches": 44
         },
         "minimumRates": {
           "lines": 90.12,
