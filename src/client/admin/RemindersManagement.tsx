@@ -434,9 +434,13 @@ function ReminderRow({
         <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-center gap-2 font-medium">
             {reminder.contentType === "images" ? (
+              // With a visible description the emojis are decorative (the text names the rule);
+              // without one, the emoji group itself carries the name. Never both, or a screen
+              // reader announces the description twice.
               <span
-                role="img"
-                aria-label={reminderName(reminder)}
+                {...(reminder.text
+                  ? { "aria-hidden": true }
+                  : { role: "img", "aria-label": reminderName(reminder) })}
                 data-testid={`reminder-emojis-${reminder.id}`}
                 className="inline-flex items-center gap-1"
               >

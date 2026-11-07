@@ -1120,6 +1120,18 @@ describe("RemindersManagement — image reminders for pre-readers (#96)", () => 
     expect(screen.getByTestId("reminder-edit-r4")).toHaveAccessibleName("Edit: 🩰 👟");
   });
 
+  it("names a described image rule once: the emojis turn decorative next to the visible text", async () => {
+    mockBackend({ reminders: () => json([{ ...REMINDER_IMAGES, text: "Ballet day" }]) });
+    renderSurface();
+    const emojis = await screen.findByTestId("reminder-emojis-r4");
+    expect(emojis).toHaveAttribute("aria-hidden", "true");
+    expect(emojis).not.toHaveAttribute("role");
+    expect(emojis).not.toHaveAttribute("aria-label");
+    const row = screen.getByTestId("reminder-r4");
+    expect(within(row).queryByRole("img", { name: "Ballet day" })).toBeNull();
+    expect(within(row).getAllByText("Ballet day")).toHaveLength(1);
+  });
+
   it("prefills an image rule when editing and switches it back to text in one PATCH", async () => {
     const mockFetch = mockBackend({ reminders: () => json([REMINDER_IMAGES]) });
     renderSurface();

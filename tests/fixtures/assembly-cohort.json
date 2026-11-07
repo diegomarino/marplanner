@@ -4405,6 +4405,7 @@
             "label maps are transcribed correctly (SC-007's cast removal, pinned) every dry-run reason maps to its own key",
             "RemindersManagement — image reminders for pre-readers (#96) switches to Images, picks, reorders and removes emojis, and creates the rule",
             "RemindersManagement — image reminders for pre-readers (#96) shows an image rule's emojis in its row, named for assistive tech",
+            "RemindersManagement — image reminders for pre-readers (#96) names a described image rule once: the emojis turn decorative next to the visible text",
             "RemindersManagement — image reminders for pre-readers (#96) prefills an image rule when editing and switches it back to text in one PATCH"
           ],
           "tests/client/routine-week-grid.test.tsx": [
