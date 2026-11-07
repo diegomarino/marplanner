@@ -2125,10 +2125,14 @@
             "enum": ["apply_to_all", "specific"],
             "description": "editable through PATCH (FR-019); kind is immutable."
           },
+          "contentType": { "$ref": "#/components/schemas/ReminderContentType" },
           "text": {
             "type": "string",
-            "minLength": 1,
-            "description": "parent-authored, stored as authored."
+            "description": "parent-authored, stored as authored (trimmed). Non-blank for a `text` reminder; an optional, possibly empty, description of an `images` reminder."
+          },
+          "emojis": {
+            "anyOf": [{ "$ref": "#/components/schemas/ReminderEmojis" }, { "type": "null" }],
+            "description": "the emoji sequence of an `images` reminder; null for `text`."
           },
           "weekdays": {
             "oneOf": [
@@ -2152,7 +2156,17 @@
             "anyOf": [{ "$ref": "#/components/schemas/QueryFields" }, { "type": "null" }]
           }
         },
-        "required": ["id", "kind", "targetingMode", "text", "weekdays", "active", "assignments"],
+        "required": [
+          "id",
+          "kind",
+          "targetingMode",
+          "contentType",
+          "text",
+          "emojis",
+          "weekdays",
+          "active",
+          "assignments"
+        ],
         "additionalProperties": false,
         "description": "Stored discriminated rule. Scheduled specific assignments carry non-empty weekdays; calendar-gated assignments carry empty weekdays and a query. Active-member and uniqueness invariants are enforced by the service.",
         "allOf": [
@@ -2186,6 +2200,21 @@
               "required": ["targetingMode"]
             },
             "then": { "properties": { "assignments": { "maxItems": 0 } } }
+          },
+          {
+            "if": {
+              "properties": { "contentType": { "const": "images" } },
+              "required": ["contentType"]
+            },
+            "then": {
+              "properties": { "emojis": { "$ref": "#/components/schemas/ReminderEmojis" } }
+            },
+            "else": {
+              "properties": {
+                "text": { "minLength": 1, "pattern": "\\S" },
+                "emojis": { "type": "null" }
+              }
+            }
           }
         ]
       },
@@ -2235,10 +2264,26 @@
         "additionalProperties": false,
         "description": "The full desired active assignment set for a specific-mode rule. Applied atomically (last-write-wins, no If-Match/409 — deferred #395): members present are upserted, members absent are deactivated. MUST be non-empty (a specific rule may not drop to zero active assignments — INV-02).\n The stored rule kind determines whether weekdays must be non-empty (scheduled) or absent/empty (calendar_gated)."
       },
+      "ReminderContentType": {
+        "type": "string",
+        "enum": ["text", "images"],
+        "description": "What the reminder shows: words (`text`) or an ordered emoji sequence (`images`) for family members who cannot read yet."
+      },
       "ReminderEditInput": {
         "type": "object",
         "properties": {
-          "text": { "type": "string", "minLength": 1, "pattern": "\\S" },
+          "contentType": {
+            "description": "switching to images requires emojis; switching to text requires a non-blank text (given, or the stored description) and clears emojis.",
+            "$ref": "#/components/schemas/ReminderContentType"
+          },
+          "text": {
+            "type": "string",
+            "description": "must be non-blank when the resulting contentType is text."
+          },
+          "emojis": {
+            "description": "full replacement list; accepted only when the resulting contentType is images.",
+            "$ref": "#/components/schemas/ReminderEmojis"
+          },
           "weekdays": {
             "minItems": 1,
             "type": "array",
@@ -2272,17 +2317,39 @@
       },
       "ReminderEmission": {
         "type": "object",
-        "properties": { "id": { "type": "string" }, "text": { "type": "string" } },
+        "properties": {
+          "id": { "type": "string" },
+          "text": { "type": "string" },
+          "emojis": { "$ref": "#/components/schemas/ReminderEmojis" }
+        },
         "required": ["id", "text"],
         "additionalProperties": false,
-        "description": "one emitting reminder for a (member,date); ordering/priority deferred to Daily Briefing."
+        "description": "one emitting reminder for a (member,date); ordering/priority deferred to Daily Briefing. `emojis` is present only for an `images` reminder, whose `text` is then its (possibly empty) description."
+      },
+      "ReminderEmojis": {
+        "minItems": 1,
+        "maxItems": 12,
+        "type": "array",
+        "items": { "type": "string", "minLength": 1 },
+        "description": "Ordered catalog emojis of an `images` reminder (1–12; repeats allowed). Each must be one the app ships a Noto SVG for; others are rejected 400."
       },
       "ReminderInput": {
         "type": "object",
         "properties": {
           "kind": { "type": "string", "enum": ["scheduled", "calendar_gated"] },
           "targetingMode": { "type": "string", "enum": ["apply_to_all", "specific"] },
-          "text": { "type": "string", "minLength": 1, "pattern": "\\S" },
+          "contentType": {
+            "description": "defaults to text.",
+            "$ref": "#/components/schemas/ReminderContentType"
+          },
+          "text": {
+            "type": "string",
+            "description": "required and non-blank for a text reminder; an optional description for images."
+          },
+          "emojis": {
+            "description": "required iff contentType=images; rejected for text.",
+            "$ref": "#/components/schemas/ReminderEmojis"
+          },
           "weekdays": {
             "minItems": 1,
             "type": "array",
@@ -2303,10 +2370,22 @@
           "query": { "type": "string", "minLength": 1, "pattern": "\\S" },
           "queryFields": { "$ref": "#/components/schemas/QueryFields" }
         },
-        "required": ["kind", "targetingMode", "text"],
+        "required": ["kind", "targetingMode"],
         "additionalProperties": false,
         "description": "Scheduled rules require weekday targeting; calendar-gated rules require a query and membership-only targeting. Active-member and duplicate checks are enforced by the service.",
         "allOf": [
+          {
+            "if": {
+              "properties": { "contentType": { "const": "images" } },
+              "required": ["contentType"]
+            },
+            "then": { "required": ["emojis"] },
+            "else": {
+              "required": ["text"],
+              "properties": { "text": { "minLength": 1, "pattern": "\\S" } },
+              "not": { "required": ["emojis"] }
+            }
+          },
           {
             "if": { "properties": { "kind": { "const": "scheduled" } }, "required": ["kind"] },
             "then": {

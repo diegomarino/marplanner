@@ -14,6 +14,9 @@
 // NOT carried into the Slot — pressedslip derives its own synthetic id
 // from `${blockType}-${index}` internally.
 // ─────────────────────────────────────────────────────────────────────
+import { notoEmojiPngDataUri } from "./emoji-images";
+import { REMINDER_EMOJI_PX, type RemindersData } from "./blocks/reminders";
+
 export class AdapterError extends Error {
   constructor(blockType: string, field: string, reason: string) {
     super(`daily-briefing-adapter: block "${blockType}" field "${field}": ${reason}`);
@@ -44,6 +47,25 @@ function needArray<T>(t: string, f: string, v: unknown, of: string): T[] {
   const got = need(t, f, v, `array<${of}>`);
   if (!Array.isArray(got)) throw new AdapterError(t, f, `expected array, got ${typeof got}`);
   return got as T[];
+}
+
+/** Image sources for an `images` reminder item: one vendored Noto SVG per emoji, in order. An
+ * emoji the app no longer ships (removed from the catalog after the briefing was generated) is
+ * skipped rather than failing the whole block; with none left the item prints its text. */
+function reminderEmojiImages(
+  emojis: string[],
+  alt: string
+): NonNullable<RemindersData["groups"][number]["items"][number]["images"]> {
+  const images: NonNullable<RemindersData["groups"][number]["items"][number]["images"]> = [];
+  for (const emoji of emojis) {
+    const src = typeof emoji === "string" ? notoEmojiPngDataUri(emoji, REMINDER_EMOJI_PX) : null;
+    if (src === null) {
+      console.warn("daily-briefing.adapter.reminder-emoji-missing", { emoji: String(emoji) });
+      continue;
+    }
+    images.push({ src, alt: alt || emoji });
+  }
+  return images;
 }
 
 /** Dispatch by block.type. Returns the data shape the corresponding pressedslip
@@ -183,14 +205,26 @@ export function adaptBlockData(blockType: string, raw: unknown): unknown {
           const out: {
             separator?: string;
             title?: string;
-            items: { id?: string; value: string }[];
+            items: RemindersData["groups"][number]["items"];
           } = {
             items: items.map((it, ii) => {
-              const item: { id?: string; value: string } = {
+              const item: RemindersData["groups"][number]["items"][number] = {
                 value: needString(blockType, `groups[${gi}].items[${ii}].value`, it.value),
               };
               if (it.id !== undefined) {
                 item.id = needString(blockType, `groups[${gi}].items[${ii}].id`, it.id);
+              }
+              if (it.emojis !== undefined) {
+                const images = reminderEmojiImages(
+                  needArray<string>(
+                    blockType,
+                    `groups[${gi}].items[${ii}].emojis`,
+                    it.emojis,
+                    "string"
+                  ),
+                  item.value
+                );
+                if (images.length > 0) item.images = images;
               }
               return item;
             }),

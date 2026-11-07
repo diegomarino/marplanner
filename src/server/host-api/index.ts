@@ -43,6 +43,9 @@ export {
  * `src/server/modules/* ` (ADR-039 Rule B / INV-07).
  */
 export { readSettingsObject } from "../lib/settings-objects";
+/** Vendored Noto emoji lookup: the reminders plugin accepts an `images` reminder's emojis only
+ * when the app ships an SVG for each, so the dashboard and the printed briefing can draw them. */
+export { hasNotoEmoji } from "../lib/noto-emoji";
 export { readEffectiveSettings } from "../modules/settings";
 export { getDb } from "../db/client";
 export { emit } from "../lib/event-bus";

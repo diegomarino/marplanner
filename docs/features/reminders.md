@@ -3,7 +3,7 @@
 Behavior reference. The [owning contract](../architecture/contracts/reminders.md) defines invariants and extension limits.
 
 > Phase 2.5 reference slice. Realizes the `reminders` domain contract's boundary
-> guarantees (REMINDERS-AC-01..08, AC-10; REMINDERS-INV-01..09). Each Functional
+> guarantees (REMINDERS-AC-01..08, AC-10..11; REMINDERS-INV-01..10). Each Functional
 > Requirement carries a `Contract: <ID>.` back-reference and the co-located
 > `> Source <ID> — …` quote, per the Phase 2.4 traceability convention.
 
@@ -79,12 +79,14 @@ is not mistaken for a broken feature.
 
 - **FR-018**: Given a rule write, when its `targeting_mode` and weekday placement are validated, then a `specific`-mode rule MUST hold N assignments each binding one active member to its own weekday set (`scheduled`) or membership only (`calendar_gated`), and invalid combinations MUST be rejected at the boundary — a rule-level weekday set on a `specific` rule, per-assignment weekdays on an `apply_to_all` rule, or any weekdays on a `calendar_gated` assignment. Contract: REMINDERS-INV-09.
 - **FR-019**: Given an existing rule, when its targeting is edited, then `targetingMode` MUST be switchable between `apply_to_all` and `specific` in one request that also carries what the new mode needs (`assignments` for `specific`, `weekdays` for a `scheduled` rule moving to `apply_to_all`), the rule row and its assignments MUST commit atomically, a rejected edit MUST persist nothing, switching to `apply_to_all` MUST deactivate rather than delete the rule's assignments, and `kind` MUST stay immutable. Contract: REMINDERS-INV-02, REMINDERS-INV-08, REMINDERS-INV-09.
+- **FR-020**: Given a rule of either `kind`, when its content is written, then `contentType` MUST be `text` (non-blank text, no emojis) or `images` (1–12 emojis the app ships a Noto SVG for, in order, repeats allowed, with an optional description as `text`); switching content on edit MUST carry what the new type needs (`emojis` for `images`, non-blank text for `text`), an invalid combination MUST persist nothing, and an `images` rule MUST emit its emojis so the briefing shows them on screen and prints them (one column, dithered) next to text items. Contract: REMINDERS-INV-10, REMINDERS-AC-11.
 
 ### Key Entities
 
 - **Reminder rule**: a durable instruction that may emit one briefing item. A
   discriminated union on `kind` — `scheduled` (weekday-driven) or `calendar_gated`
-  (event-driven). Attributes: text, `targeting_mode`, active flag, priority; plus
+  (event-driven). Attributes: content (`text`, or `images` — ordered catalog emojis for
+  pre-readers, with an optional description), `targeting_mode`, active flag, priority; plus
   `query`/`queryFields` (`calendar_gated`) or, for `scheduled` + `apply_to_all`, a
   rule-level `weekdays` set (`ADR-004`).
 - **Reminder assignment** (`ADR-004`): a `specific`-mode link binding one active member to

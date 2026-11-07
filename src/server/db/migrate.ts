@@ -5,8 +5,9 @@ import { getDb } from "./client";
 const DRIZZLE_DIR = path.resolve(process.cwd(), "drizzle");
 
 const MIGRATIONS_TABLE = "drizzle_universe_migrations";
-/** The single baseline (squashed 2026-10-16). It also seeds the installation lineage and the
- * plugin registry from the context handed over below. */
+/** The baseline every ledger starts with (squashed 2026-10-16); later forward migrations apply after
+ * it. It also seeds the installation lineage and the plugin registry from the context handed over
+ * below. */
 const BASELINE_MIGRATION = "0000_baseline.sql";
 const LIFECYCLE_CONTEXT_TABLE = "plugin_lifecycle_migration_context";
 
