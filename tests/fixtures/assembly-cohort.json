@@ -5683,7 +5683,9 @@
             "chores board completion celebration does not celebrate a period that is already complete when the board loads",
             "chores board completion celebration does not celebrate a completion that leaves chores open in the period",
             "chores board completion celebration does not celebrate an uncompletion, nor the same period again in this session",
-            "chores board completion celebration still celebrates when session storage is unavailable"
+            "chores board completion celebration still celebrates when session storage is unavailable",
+            "chores board completion celebration unlocks the fanfare inside the completion tap, before the request settles",
+            "chores board completion celebration neither unlocks nor plays the fanfare when the household sound is off"
           ],
           "tests/client/completion-celebration.test.tsx": [
             "CompletionCelebration announces the title and message and rains the member's emojis",
@@ -5695,7 +5697,12 @@
             "CompletionCelebration plays nothing when sound is off",
             "CompletionCelebration swallows a refused play()",
             "CompletionCelebration swallows a play() that throws synchronously",
-            "celebration emojis are vendored every preset emoji is in the emoji catalog, so it renders as a Noto SVG"
+            "celebration emojis are vendored every preset emoji is in the emoji catalog, so it renders as a Noto SVG",
+            "celebration sound priming starts the element muted inside the gesture, then pauses and unmutes it",
+            "celebration sound priming primes once; later taps leave the unlocked element alone",
+            "celebration sound priming retries priming after a refused play()",
+            "celebration sound priming never pauses a real play that starts before the priming play settles",
+            "celebration sound priming survives a priming play() that throws synchronously and retries next time"
           ],
           "tests/client/member-celebration-field.test.tsx": [
             "member celebration field shows the member's preset and saves another one",

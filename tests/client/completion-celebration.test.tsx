@@ -9,7 +9,11 @@ import {
   CompletionCelebration,
   celebrationParticles,
 } from "@/chores/CompletionCelebration";
-import { resetCelebrationSoundForTests } from "@/chores/celebration-sound";
+import {
+  playCelebrationSound,
+  primeCelebrationSound,
+  resetCelebrationSoundForTests,
+} from "@/chores/celebration-sound";
 import { EMOJI_CATEGORIES, NON_PICKER_ICON_EMOJIS } from "@/chores/emoji-catalog";
 import { CELEBRATION_PRESETS } from "../../src/shared/celebration";
 
@@ -138,6 +142,89 @@ describe("CompletionCelebration", () => {
       throw new Error("no audio device");
     });
     expect(() => renderCelebration({ sound: true })).not.toThrow();
+  });
+});
+
+describe("celebration sound priming", () => {
+  let play: ReturnType<typeof vi.fn<(this: HTMLMediaElement) => Promise<void>>>;
+  let pause: ReturnType<typeof vi.fn<(this: HTMLMediaElement) => void>>;
+  let mutedAtPlay: boolean[];
+
+  beforeEach(() => {
+    resetCelebrationSoundForTests();
+    mutedAtPlay = [];
+    play = vi.fn<(this: HTMLMediaElement) => Promise<void>>(function (this: HTMLMediaElement) {
+      mutedAtPlay.push(this.muted);
+      return Promise.resolve();
+    });
+    pause = vi.fn<(this: HTMLMediaElement) => void>();
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(play);
+    vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(pause);
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("starts the element muted inside the gesture, then pauses and unmutes it", async () => {
+    primeCelebrationSound();
+    expect(mutedAtPlay).toEqual([true]);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(pause).toHaveBeenCalledTimes(1);
+    const audio = play.mock.contexts[0] as HTMLMediaElement;
+    expect(audio.muted).toBe(false);
+    expect(audio.currentTime).toBe(0);
+  });
+
+  it("primes once; later taps leave the unlocked element alone", async () => {
+    primeCelebrationSound();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    primeCelebrationSound();
+    expect(play).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries priming after a refused play()", async () => {
+    play.mockImplementationOnce(() =>
+      Promise.reject(new DOMException("blocked", "NotAllowedError"))
+    );
+    primeCelebrationSound();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    primeCelebrationSound();
+    expect(play).toHaveBeenCalledTimes(2);
+  });
+
+  it("survives a priming play() that throws synchronously and retries next time", () => {
+    play.mockImplementationOnce(() => {
+      throw new Error("no audio device");
+    });
+    expect(() => primeCelebrationSound()).not.toThrow();
+    const audio = play.mock.contexts[0] as HTMLMediaElement;
+    expect(audio.muted).toBe(false);
+    primeCelebrationSound();
+    expect(play).toHaveBeenCalledTimes(2);
+  });
+
+  it("never pauses a real play that starts before the priming play settles", async () => {
+    let settlePrime: () => void = () => undefined;
+    play.mockImplementationOnce(function (this: HTMLMediaElement) {
+      mutedAtPlay.push(this.muted);
+      return new Promise<void>((resolve) => {
+        settlePrime = resolve;
+      });
+    });
+    primeCelebrationSound();
+    playCelebrationSound();
+    settlePrime();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(mutedAtPlay).toEqual([true, false]);
+    expect(pause).not.toHaveBeenCalled();
   });
 });
 

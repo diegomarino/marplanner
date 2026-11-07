@@ -33,22 +33,28 @@ export const MemberColorKey = component(
 
 export const MemberCelebration = component(
   "MemberCelebration",
-  z.strictObject({
-    preset: z.enum(["confetti", "stars", "videogames", "soccer", "fairytale", "custom"]).meta({
-      description:
-        "The emoji set of the confetti played when the member finishes a block of chores. `confetti` draws coloured paper with no emojis; the other presets are fixed sets (src/shared/celebration.ts).",
-    }),
-    emojis: z
-      .array(z.string())
-      .min(1)
-      .max(6)
-      .meta({
-        description:
-          "Required when, and only when, preset = custom: 1–6 distinct items, each exactly one emoji.",
+  z.union([
+    z
+      .strictObject({
+        preset: z.enum(["confetti", "stars", "videogames", "soccer", "fairytale"]).meta({
+          description:
+            "A fixed set (src/shared/celebration.ts). `confetti` draws coloured paper with no emojis.",
+        }),
       })
-      .optional(),
-  }),
-  { description: "A member's completion celebration." }
+      .meta({ description: "A preset; it takes no `emojis`." }),
+    z
+      .strictObject({
+        preset: z.literal("custom"),
+        emojis: z.array(z.string()).min(1).max(6).meta({
+          description: "1–6 distinct items, each exactly one emoji.",
+        }),
+      })
+      .meta({ description: "The member's own set." }),
+  ]),
+  {
+    description:
+      "The emoji set of the confetti played when the member finishes a block of chores: a preset, or `custom` with its own emojis.",
+  }
 );
 
 export const CreateMemberRequest = component(

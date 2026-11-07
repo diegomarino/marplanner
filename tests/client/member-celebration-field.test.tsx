@@ -72,11 +72,17 @@ async function openMember(id: string) {
 }
 
 describe("member celebration field", () => {
-  let play: ReturnType<typeof vi.fn<() => Promise<void>>>;
+  let play: ReturnType<typeof vi.fn<(this: HTMLMediaElement) => Promise<void>>>;
+  let mutedAtPlay: boolean[];
 
   beforeEach(() => {
     resetCelebrationSoundForTests();
-    play = vi.fn<() => Promise<void>>(() => Promise.resolve());
+    mutedAtPlay = [];
+    play = vi.fn<(this: HTMLMediaElement) => Promise<void>>(function (this: HTMLMediaElement) {
+      mutedAtPlay.push(this.muted);
+      return Promise.resolve();
+    });
+    vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => undefined);
     vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(play);
   });
   afterEach(() => {
@@ -168,7 +174,8 @@ describe("member celebration field", () => {
           .map((particle) => particle.getAttribute("data-symbol"))
       )
     ).toEqual(new Set(["⭐", "🌟", "✨", "💫"]));
-    await waitFor(() => expect(play).toHaveBeenCalledTimes(1));
+    // A muted priming play inside the click, then the audible one.
+    await waitFor(() => expect(mutedAtPlay).toEqual([true, false]));
   });
 
   it("previews silently when the household sound is off", async () => {

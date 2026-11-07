@@ -6,6 +6,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ChoreColumns } from "@/chores/ChoreColumns";
+import { resetCelebrationSoundForTests } from "@/chores/celebration-sound";
 import { HouseholdSettingsProvider } from "@/lib/householdSettings";
 import { LanguageProvider } from "@/i18n";
 
@@ -164,6 +165,48 @@ describe("chores board completion celebration", () => {
       expect(screen.getByTestId("chore-toggle-c2")).toHaveAttribute("aria-pressed", "true")
     );
     expect(screen.queryByTestId("completion-celebration")).toBeNull();
+  });
+
+  it("unlocks the fanfare inside the completion tap, before the request settles", async () => {
+    resetCelebrationSoundForTests();
+    const mutedAtPlay: boolean[] = [];
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(function (
+      this: HTMLMediaElement
+    ) {
+      mutedAtPlay.push(this.muted);
+      return Promise.resolve();
+    });
+    vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => undefined);
+    try {
+      mockBackend({ initiallyDone: ["c1"], sound: true });
+      renderBoard();
+      // The board only loads once the household settings (and their sound switch) have.
+      const toggle = await screen.findByTestId("chore-toggle-c2");
+      fireEvent.click(toggle);
+      // Synchronously, in the tap: one muted priming play.
+      expect(mutedAtPlay).toEqual([true]);
+      await screen.findByTestId("completion-celebration");
+      // Then the real, audible play once the celebration is known.
+      await waitFor(() => expect(mutedAtPlay).toEqual([true, false]));
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("neither unlocks nor plays the fanfare when the household sound is off", async () => {
+    resetCelebrationSoundForTests();
+    const play = vi
+      .spyOn(HTMLMediaElement.prototype, "play")
+      .mockImplementation(() => Promise.resolve());
+    try {
+      mockBackend({ initiallyDone: ["c1"], sound: false });
+      renderBoard();
+      await tap("c2");
+      await screen.findByTestId("completion-celebration");
+      expect(play).not.toHaveBeenCalled();
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 
   it("still celebrates when session storage is unavailable", async () => {

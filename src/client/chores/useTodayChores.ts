@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/credential";
 import { notifyPrintIntentEnqueued } from "@/printing/queueWakeup";
 import { useHouseholdSettings } from "@/lib/householdSettings";
+import { primeCelebrationSound } from "./celebration-sound";
 import { useTranslation } from "@/i18n";
 import type { BoardChore, BoardColumn, CompletionInput, PeriodId } from "../../shared";
 
@@ -67,7 +68,7 @@ export interface TodayChoresState {
 /** Shared public board read and completion state for the board and home surfaces. */
 export function useTodayChores(forDate?: string): TodayChoresState {
   const { t } = useTranslation();
-  const { timezone: householdTimezone } = useHouseholdSettings();
+  const { timezone: householdTimezone, celebrationSound } = useHouseholdSettings();
   const [columns, setColumns] = useState<BoardColumn[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [timezone, setTimezone] = useState<string | null>(null);
@@ -183,10 +184,16 @@ export function useTodayChores(forDate?: string): TodayChoresState {
 
   const requestToggle = useCallback(
     (chore: BoardChore, memberId: string) => {
-      if (chore.completed) setConfirmTarget({ chore, memberId });
-      else void toggleChore(chore, memberId);
+      if (chore.completed) {
+        setConfirmTarget({ chore, memberId });
+        return;
+      }
+      // Still inside the tap: a completion may turn into a celebration once the request and
+      // refetch settle, and by then the browser may no longer allow audio to start.
+      if (celebrationSound !== false) primeCelebrationSound();
+      void toggleChore(chore, memberId);
     },
-    [toggleChore]
+    [toggleChore, celebrationSound]
   );
 
   const dismissCelebration = useCallback(() => setCelebration(null), []);

@@ -1585,24 +1585,38 @@
         "additionalProperties": false
       },
       "MemberCelebration": {
-        "type": "object",
-        "properties": {
-          "preset": {
-            "type": "string",
-            "enum": ["confetti", "stars", "videogames", "soccer", "fairytale", "custom"],
-            "description": "The emoji set of the confetti played when the member finishes a block of chores. `confetti` draws coloured paper with no emojis; the other presets are fixed sets (src/shared/celebration.ts)."
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "preset": {
+                "type": "string",
+                "enum": ["confetti", "stars", "videogames", "soccer", "fairytale"],
+                "description": "A fixed set (src/shared/celebration.ts). `confetti` draws coloured paper with no emojis."
+              }
+            },
+            "required": ["preset"],
+            "additionalProperties": false,
+            "description": "A preset; it takes no `emojis`."
           },
-          "emojis": {
-            "minItems": 1,
-            "maxItems": 6,
-            "type": "array",
-            "items": { "type": "string" },
-            "description": "Required when, and only when, preset = custom: 1–6 distinct items, each exactly one emoji."
+          {
+            "type": "object",
+            "properties": {
+              "preset": { "type": "string", "const": "custom" },
+              "emojis": {
+                "minItems": 1,
+                "maxItems": 6,
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "1–6 distinct items, each exactly one emoji."
+              }
+            },
+            "required": ["preset", "emojis"],
+            "additionalProperties": false,
+            "description": "The member's own set."
           }
-        },
-        "required": ["preset"],
-        "additionalProperties": false,
-        "description": "A member's completion celebration."
+        ],
+        "description": "The emoji set of the confetti played when the member finishes a block of chores: a preset, or `custom` with its own emojis."
       },
       "MemberColorKey": {
         "type": "string",

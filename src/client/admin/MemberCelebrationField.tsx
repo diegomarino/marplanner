@@ -3,6 +3,7 @@ import { PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { CELEBRATION_CHEER_KEYS, CompletionCelebration } from "@/chores/CompletionCelebration";
+import { primeCelebrationSound } from "@/chores/celebration-sound";
 import { EmojiPicker, type EmojiPickerLabels } from "@/chores/EmojiPicker";
 import { NotoEmoji } from "@/chores/noto-emoji";
 import { useTranslation } from "@/i18n";
@@ -118,6 +119,8 @@ export function MemberCelebrationField({
   };
 
   const preview = () => {
+    // The fanfare starts from an effect after this click; prime it while the click still counts.
+    if (celebrationSound !== false) primeCelebrationSound();
     setCheerKey(CELEBRATION_CHEER_KEYS[Math.floor(Math.random() * CELEBRATION_CHEER_KEYS.length)]);
     setPreviewId((current) => (current ?? 0) + 1);
   };
