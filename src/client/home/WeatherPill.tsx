@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
 
 import { authFetch } from "@/lib/credential";
+import { cn } from "@/lib/utils";
 import { useHouseholdSettings } from "@/lib/householdSettings";
 import { useTranslation } from "@/i18n";
 import type { MessageKey } from "@/i18n/messages";
@@ -276,7 +277,8 @@ export function WeatherPillView({
         </DialogTrigger>
         <DialogContent
           data-testid="weather-modal"
-          closeLabel={t("weather.modal.close")}
+          // Escape and a click outside close the dialog, so it carries no "X" button.
+          showCloseButton={false}
           // Taller than a short landscape viewport: scroll inside rather than run off its edges.
           className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl"
         >
@@ -286,7 +288,7 @@ export function WeatherPillView({
           </DialogHeader>
           <section
             aria-labelledby="weather-modal-now"
-            className="mr-10 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-2xl border bg-muted px-5 py-4"
+            className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-2xl border bg-muted px-5 py-4"
           >
             <h3 id="weather-modal-now" className="sr-only">
               {t("weather.modal.now")}
@@ -329,29 +331,39 @@ export function WeatherPillView({
           <section aria-labelledby="weather-modal-hourly" className="min-w-0">
             <SectionHeading id="weather-modal-hourly">{t("weather.modal.hourly")}</SectionHeading>
             <ul className="flex gap-1 overflow-x-auto pb-2">
-              {upcomingHours.map((hour) => (
-                <li
-                  key={hour.time}
-                  data-testid="weather-modal-hour"
-                  // `relative` anchors the visually hidden labels to their own entry, so the ones
-                  // scrolled out of the strip do not widen the dialog.
-                  className="relative flex w-14 shrink-0 flex-col items-center gap-1 tabular-nums"
-                >
-                  <span className="text-sm text-muted-foreground">
-                    {formatHourLabel(hour.time, language)}
-                  </span>
-                  <WeatherConditionIcon
-                    conditionKey={hour.conditionKey}
-                    isDay={hour.isDay}
-                    className="text-3xl"
-                  />
-                  <span className="sr-only">
-                    {t(WEATHER_CONDITION_LABEL_KEYS[hour.conditionKey])}
-                  </span>
-                  <span className="font-semibold">{Math.round(hour.tempC)}°</span>
-                  <RainChance pct={hour.rainPct} />
-                </li>
-              ))}
+              {upcomingHours.map((hour, index) => {
+                // `hour.time` is household wall time, so the date prefix marks the day change.
+                const startsDay =
+                  index > 0 &&
+                  hour.time.slice(0, 10) !== upcomingHours[index - 1].time.slice(0, 10);
+                return (
+                  <li
+                    key={hour.time}
+                    data-testid="weather-modal-hour"
+                    data-day-start={startsDay || undefined}
+                    // `relative` anchors the visually hidden labels to their own entry, so the ones
+                    // scrolled out of the strip do not widen the dialog.
+                    className={cn(
+                      "relative flex w-14 shrink-0 flex-col items-center gap-1 tabular-nums",
+                      startsDay && "border-l-2 border-muted-foreground/50"
+                    )}
+                  >
+                    <span className="text-sm text-muted-foreground">
+                      {formatHourLabel(hour.time, language)}
+                    </span>
+                    <WeatherConditionIcon
+                      conditionKey={hour.conditionKey}
+                      isDay={hour.isDay}
+                      className="text-3xl"
+                    />
+                    <span className="sr-only">
+                      {t(WEATHER_CONDITION_LABEL_KEYS[hour.conditionKey])}
+                    </span>
+                    <span className="font-semibold">{Math.round(hour.tempC)}°</span>
+                    <RainChance pct={hour.rainPct} />
+                  </li>
+                );
+              })}
             </ul>
           </section>
           <section aria-labelledby="weather-modal-daily">

@@ -469,7 +469,7 @@ describe("WeatherPillView — modal content (PR review P1-2/P2-3)", () => {
     expect(dayRow.textContent).not.toContain("2026-09-04");
   });
 
-  it("localizes the dialog's close-button accessible label and provides a description (Radix a11y, review P3-2)", async () => {
+  it("has no close button and still closes on Escape (Radix a11y, review P3-2)", async () => {
     const forecast: ForecastResult = {
       current: { conditionKey: "clear", tempC: 20, rainPct: 10 },
       hourly: [],
@@ -501,9 +501,10 @@ describe("WeatherPillView — modal content (PR review P1-2/P2-3)", () => {
     const pill = await screen.findByTestId("weather-pill");
     fireEvent.click(pill);
 
-    await screen.findByTestId("weather-modal");
-    expect(screen.getByText("Cerrar")).toBeInTheDocument();
-    expect(screen.queryByText("Close")).not.toBeInTheDocument();
+    const modal = await screen.findByTestId("weather-modal");
+    expect(within(modal).queryByRole("button")).not.toBeInTheDocument();
+    fireEvent.keyDown(modal, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByTestId("weather-modal")).not.toBeInTheDocument());
   });
 
   it("draws a tinted condition icon and today's range, and the rain chance only from 20%", async () => {
@@ -623,6 +624,12 @@ describe("WeatherPillView — modal content (PR review P1-2/P2-3)", () => {
     // A hidden label is absolutely positioned: unanchored, the ones scrolled out of the strip
     // would widen the dialog itself.
     for (const row of hourRows) expect(row).toHaveClass("relative");
+    // 18:00..23:00 on the 4th, then the 5th: a border marks the day change before 00:00 only.
+    const dayStarts = hourRows.filter((row) => row.hasAttribute("data-day-start"));
+    expect(dayStarts).toEqual([hourRows[6]]);
+    expect(hourRows[6]).toHaveTextContent("00:00");
+    expect(hourRows[6]).toHaveClass("border-l-2");
+    expect(hourRows[5]).not.toHaveClass("border-l-2");
 
     const dayRow = screen.getByTestId("weather-modal-day");
     expect(dayRow.querySelector("svg")).toHaveAttribute("data-weather-icon", "wi-snow");

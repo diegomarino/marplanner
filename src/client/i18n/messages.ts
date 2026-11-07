@@ -998,7 +998,6 @@ export const messages = {
     "todayMeals.title": "Today's meals",
     "todayMeals.loading": "Loading today's meals…",
     "todayMeals.error": "Today's meals could not be loaded.",
-    "todayMeals.empty": "No meals planned for today.",
     "todayMeals.open": "Today's meals — open Meals",
     "home.widgetError": "This section could not be displayed.",
     "dailyMessages.management.title": "Messages",
@@ -1258,7 +1257,6 @@ export const messages = {
     // `weather.management.*` (admin panel) below — no key overlap.
     "weather.modal.title": "Weather",
     "weather.modal.description": "Current conditions, next hours, and coming days.",
-    "weather.modal.close": "Close",
     "weather.modal.now": "Now",
     "weather.modal.hourly": "Next hours",
     "weather.modal.daily": "Coming days",
@@ -2553,7 +2551,6 @@ export const messages = {
     "todayMeals.title": "Comidas de hoy",
     "todayMeals.loading": "Cargando las comidas de hoy…",
     "todayMeals.error": "No se pudieron cargar las comidas de hoy.",
-    "todayMeals.empty": "No hay comidas planeadas para hoy.",
     "todayMeals.open": "Comidas de hoy — abrir Comidas",
     "home.widgetError": "No se pudo mostrar esta sección.",
     "dailyMessages.management.title": "Mensajes",
@@ -2805,7 +2802,6 @@ export const messages = {
     // `weather.management.*` (admin panel) below — no key overlap.
     "weather.modal.title": "Tiempo",
     "weather.modal.description": "Condiciones actuales, próximas horas y próximos días.",
-    "weather.modal.close": "Cerrar",
     "weather.modal.now": "Ahora",
     "weather.modal.hourly": "Próximas horas",
     "weather.modal.daily": "Próximos días",
