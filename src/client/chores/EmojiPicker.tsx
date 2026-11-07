@@ -10,9 +10,19 @@ interface EmojiPickerProps {
   value: string | null | undefined;
   onChange: (emoji: string | null) => void;
   className?: string;
+  /** Accessible names of the trigger when nothing is selected and of the popover (default to the
+   * chore-icon wording); let a caller that only adds emojis, such as an image reminder, name it. */
+  emptyLabel?: string;
+  dialogLabel?: string;
 }
 
-export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
+export function EmojiPicker({
+  value,
+  onChange,
+  className,
+  emptyLabel,
+  dialogLabel,
+}: EmojiPickerProps) {
   const { t, language } = useTranslation();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -43,7 +53,7 @@ export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
         aria-label={
           value
             ? t("routines.emojiPicker.change").replace("{icon}", value)
-            : t("routines.emojiPicker.select")
+            : (emptyLabel ?? t("routines.emojiPicker.select"))
         }
         aria-expanded={open}
         aria-haspopup="dialog"
@@ -54,7 +64,7 @@ export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
       {open && (
         <div
           role="dialog"
-          aria-label={t("routines.emojiPicker.title")}
+          aria-label={dialogLabel ?? t("routines.emojiPicker.title")}
           className="bg-card absolute top-full left-0 z-50 mt-2 w-max rounded-2xl border p-3 shadow-xl"
         >
           <Input

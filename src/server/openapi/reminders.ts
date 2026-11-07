@@ -41,6 +41,22 @@ export const DryRunResult = component(
   }
 );
 
+export const ReminderContentType = component(
+  "ReminderContentType",
+  z.enum(["text", "images"]).meta({
+    description:
+      "What the reminder shows: words (`text`) or an ordered emoji sequence (`images`) for family members who cannot read yet.",
+  })
+);
+
+export const ReminderEmojis = component(
+  "ReminderEmojis",
+  z.array(z.string().min(1)).min(1).max(12).meta({
+    description:
+      "Ordered catalog emojis of an `images` reminder (1–12; repeats allowed). Each must be one the app ships a Noto SVG for; others are rejected 400.",
+  })
+);
+
 export const QueryFields = component(
   "QueryFields",
   z.array(z.enum(["title", "description", "location"])).min(1)
@@ -66,7 +82,14 @@ export const Reminder = component(
     targetingMode: z
       .enum(["apply_to_all", "specific"])
       .meta({ description: "editable through PATCH (FR-019); kind is immutable." }),
-    text: z.string().min(1).meta({ description: "parent-authored, stored as authored." }),
+    contentType: ReminderContentType,
+    text: z.string().meta({
+      description:
+        "parent-authored, stored as authored (trimmed). Non-blank for a `text` reminder; an optional, possibly empty, description of an `images` reminder.",
+    }),
+    emojis: z.union([ReminderEmojis, z.null()]).meta({
+      description: "the emoji sequence of an `images` reminder; null for `text`.",
+    }),
     weekdays: z.xor([z.array(Weekday).min(1), z.null()]).meta({
       description:
         "rule-level weekday set for apply_to_all; null for specific (per-member weekdays live on each assignment). Cross-field discriminant (INV-09).\n",
@@ -114,6 +137,13 @@ export const Reminder = component(
         },
         then: { properties: { assignments: { maxItems: 0 } } },
       },
+      {
+        if: { properties: { contentType: { const: "images" } }, required: ["contentType"] },
+        then: { properties: { emojis: { $ref: "#/components/schemas/ReminderEmojis" } } },
+        else: {
+          properties: { text: { minLength: 1, pattern: "\\S" }, emojis: { type: "null" } },
+        },
+      },
     ],
   }
 );
@@ -140,7 +170,17 @@ export const ReminderAssignmentSetInput = component(
 export const ReminderEditInput = component(
   "ReminderEditInput",
   z.strictObject({
-    text: z.string().min(1).regex(new RegExp("\\S")).optional(),
+    contentType: ReminderContentType.meta({
+      description:
+        "switching to images requires emojis; switching to text requires a non-blank text (given, or the stored description) and clears emojis.",
+    }).optional(),
+    text: z
+      .string()
+      .meta({ description: "must be non-blank when the resulting contentType is text." })
+      .optional(),
+    emojis: ReminderEmojis.meta({
+      description: "full replacement list; accepted only when the resulting contentType is images.",
+    }).optional(),
     weekdays: z.array(Weekday).min(1).optional(),
     active: z.boolean().optional(),
     targetingMode: z.enum(["apply_to_all", "specific"]).optional(),
@@ -170,10 +210,10 @@ export const ReminderEditInput = component(
 
 export const ReminderEmission = component(
   "ReminderEmission",
-  z.strictObject({ id: z.string(), text: z.string() }),
+  z.strictObject({ id: z.string(), text: z.string(), emojis: ReminderEmojis.optional() }),
   {
     description:
-      "one emitting reminder for a (member,date); ordering/priority deferred to Daily Briefing.",
+      "one emitting reminder for a (member,date); ordering/priority deferred to Daily Briefing. `emojis` is present only for an `images` reminder, whose `text` is then its (possibly empty) description.",
   }
 );
 
@@ -182,7 +222,17 @@ export const ReminderInput = component(
   z.strictObject({
     kind: z.enum(["scheduled", "calendar_gated"]),
     targetingMode: z.enum(["apply_to_all", "specific"]),
-    text: z.string().min(1).regex(new RegExp("\\S")),
+    contentType: ReminderContentType.meta({ description: "defaults to text." }).optional(),
+    text: z
+      .string()
+      .meta({
+        description:
+          "required and non-blank for a text reminder; an optional description for images.",
+      })
+      .optional(),
+    emojis: ReminderEmojis.meta({
+      description: "required iff contentType=images; rejected for text.",
+    }).optional(),
     weekdays: z
       .array(Weekday)
       .min(1)
@@ -200,6 +250,15 @@ export const ReminderInput = component(
     description:
       "Scheduled rules require weekday targeting; calendar-gated rules require a query and membership-only targeting. Active-member and duplicate checks are enforced by the service.",
     allOf: [
+      {
+        if: { properties: { contentType: { const: "images" } }, required: ["contentType"] },
+        then: { required: ["emojis"] },
+        else: {
+          required: ["text"],
+          properties: { text: { minLength: 1, pattern: "\\S" } },
+          not: { required: ["emojis"] },
+        },
+      },
       {
         if: { properties: { kind: { const: "scheduled" } }, required: ["kind"] },
         then: {

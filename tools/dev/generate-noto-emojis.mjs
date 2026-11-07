@@ -4,9 +4,9 @@
  * generate-noto-emojis.mjs
  *
  * Vendors the Noto Emoji SVGs referenced by the chores emoji catalog into
- * src/client/chores/noto/ so NotoEmoji can bundle them via Vite without any
- * network access at build or CI time (mirrors the generate/--check pattern
- * used by generate-member-colors.mjs).
+ * src/shared/noto/ so NotoEmoji (client, bundled by Vite) and the printed-briefing renderer
+ * (server, read from disk) can both use them without any network access at build or CI time
+ * (mirrors the generate/--check pattern used by generate-member-colors.mjs).
  *
  * SOURCE: GitHub release https://github.com/googlefonts/noto-emoji (v2.051).
  *         The tarball is downloaded once into tools/dev/.noto-emoji-cache/
@@ -25,7 +25,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 const DEFAULT_CATALOG_PATH = join(ROOT, "src/client/chores/emoji-catalog.ts");
-const DEFAULT_VENDOR_DIR = join(ROOT, "src/client/chores/noto");
+const DEFAULT_VENDOR_DIR = join(ROOT, "src/shared/noto");
 const DEFAULT_CACHE_DIR = join(ROOT, "tools/dev/.noto-emoji-cache");
 
 const NOTO_VERSION = "v2.051";

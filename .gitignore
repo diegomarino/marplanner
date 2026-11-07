@@ -8,7 +8,7 @@ test-results/
 *.tsbuildinfo
 
 # Noto Emoji download cache (tools/dev/generate-noto-emojis.mjs) — the vendored SVGs
-# under src/client/chores/noto/ are committed; this raw upstream cache is not.
+# under src/shared/noto/ are committed; this raw upstream cache is not.
 tools/dev/.noto-emoji-cache/
 
 # Per-worktree development storage

@@ -33,6 +33,8 @@ during briefing generation, do not notify in real time, and schedule no backgrou
   "title-derived member assignment" (member identification is Calendar's job; the rule
   only consumes existing explicit assignments and adds its text query).
 - **Priority** — ordering of untimed reminder items in the briefing.
+- **Content type** — what a rule shows: `text` (words) or `images` (an ordered list of 1–12
+  catalog emojis, for family members who cannot read yet). Independent of `kind`.
 
 ## Invariants
 
@@ -70,6 +72,11 @@ member`, and per ADR-018 only events explicitly assigned to that member match
    mirroring INV-01): a rule-level weekday set on a `specific` rule, per-assignment weekdays
    on an `apply_to_all` rule, or any weekdays on a `calendar_gated` assignment. (`apply_to_all`
    carries a single rule-level weekday set for `scheduled`; emission semantics are AC-03.)
+9. **REMINDERS-INV-10** **Content discriminant** (#96): a `text` rule has non-blank text and no
+   emojis; an `images` rule has 1–12 emojis (order kept, repeats allowed), each one the app
+   ships a Noto SVG for, and its text is an optional, possibly empty, description for screen
+   readers and admin lists. Enforced by the service and backed by the `reminders_content_check`
+   DB CHECK (non-blank text / non-empty emoji list; membership and length are service-checked).
 
 ## Behaviors
 
@@ -87,7 +94,10 @@ member`, and per ADR-018 only events explicitly assigned to that member match
   event). Timed-event match attaches the earliest matched time range; all-day/`scheduled`
   emit untimed.
 - **Render** in briefing: untimed first by priority desc, then timed by start asc; text
-  emoji-stripped on output.
+  emoji-stripped on output. An `images` item emits its emojis (`ReminderEmission.emojis`) and
+  shares the group with text items: on screen as large Noto artwork side by side; on paper
+  through pressedslip's built-in image block, stacked in one column, each emoji rasterized
+  and Floyd–Steinberg dithered for the 1-bit printer.
 - **Emission diagnostic (ADR-049 peer-review I-Probe4):** the domain exposes a
   **dry-run / explain** capability — "would this rule emit for `(member, date)`, and if
   not, why" — so the authoring UI surfaces the opaque `calendar_gated` failure modes
@@ -138,6 +148,10 @@ behavior is from spec/seed, not production data. No legacy import (ADR-026).
 - **REMINDERS-AC-08** Weekday/date writes follow ADR-020/ADR-006.
 - **REMINDERS-AC-10** A `calendar_gated` rule's non-emission is explainable via the dry-run capability (no
   matching event / unassigned event / query miss).
+- **REMINDERS-AC-11** A rule's content is `text` or `images` (either `kind`); creating or editing
+  into an invalid combination (images without emojis, an unknown or excess emoji, emojis on a
+  text rule, blank text on a text rule) is rejected and persists nothing; an `images` rule
+  emits its ordered emojis and prints them in the briefing next to text items.
 
 ## Peer Review
 

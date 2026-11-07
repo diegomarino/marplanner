@@ -1,14 +1,8 @@
-const VARIATION_SELECTOR_16 = 0xfe0f;
+import { emojiToCodepoint } from "../../shared/notoEmoji";
 
-export function emojiToCodepoint(emoji: string): string {
-  return [...emoji]
-    .map((char) => char.codePointAt(0) ?? 0)
-    .filter((codePoint) => codePoint !== VARIATION_SELECTOR_16)
-    .map((codePoint) => codePoint.toString(16))
-    .join("_");
-}
+export { emojiToCodepoint };
 
-const notoModules = import.meta.glob("./noto/*.svg", {
+const notoModules = import.meta.glob("../../shared/noto/*.svg", {
   eager: true,
   query: "?url",
   import: "default",
@@ -16,7 +10,7 @@ const notoModules = import.meta.glob("./noto/*.svg", {
 
 export const NOTO_EMOJI_URLS: Record<string, string> = Object.fromEntries(
   Object.entries(notoModules).map(([path, url]) => {
-    const codepoint = path.replace(/^\.\/noto\/emoji_u/, "").replace(/\.svg$/, "");
+    const codepoint = path.replace(/^.*\/noto\/emoji_u/, "").replace(/\.svg$/, "");
     return [codepoint, url];
   })
 );
