@@ -149,13 +149,14 @@ export function PluginCatalogProvider({ children }: { children: ReactNode }) {
       if (!result.ok) throw new CatalogFetchError(`http_${result.status}`);
       const catalog = parseCatalog(await result.json().catch(() => null));
       if (catalog === null) throw new CatalogFetchError("invalid_catalog");
-      // A newer request (for example after a lifecycle action) owns the catalog.
+      failureStreak.current = 0;
+      setFailures(0);
+      // A newer read or lifecycle response owns the catalog; this one only proves the
+      // endpoint is healthy again.
       if (request !== latestRequest.current) return;
       hasCatalog.current = true;
-      failureStreak.current = 0;
       setPlugins(catalog);
       setStatus("ready");
-      setFailures(0);
     } catch (error) {
       if (request !== latestRequest.current) return;
       // One entry per outage: automatic retries of the same outage stay quiet.
@@ -172,6 +173,12 @@ export function PluginCatalogProvider({ children }: { children: ReactNode }) {
       inflight.current -= 1;
       if (inflight.current === 0) setRefreshing(false);
     }
+  }, []);
+
+  /** An authoritative single-plugin response supersedes every catalog read already in flight. */
+  const applyPlugin = useCallback((plugin: PluginCatalogEntry) => {
+    latestRequest.current += 1;
+    setPlugins((current) => replacePlugin(current, plugin));
   }, []);
 
   /** Background refresh: skipped while another fetch is already in flight. */
@@ -233,7 +240,7 @@ export function PluginCatalogProvider({ children }: { children: ReactNode }) {
             ? (body as { plugin: unknown }).plugin
             : body;
         if (isCatalogEntry(returnedPlugin)) {
-          setPlugins((current) => replacePlugin(current, returnedPlugin));
+          applyPlugin(returnedPlugin);
         }
         if (!result.ok) {
           setFeedback((current) => ({
@@ -246,7 +253,7 @@ export function PluginCatalogProvider({ children }: { children: ReactNode }) {
         await reload();
       }
     },
-    [reload]
+    [applyPlugin, reload]
   );
 
   const reportFault = useCallback(
@@ -268,7 +275,7 @@ export function PluginCatalogProvider({ children }: { children: ReactNode }) {
             ? (body as { plugin: unknown }).plugin
             : body;
         if (isCatalogEntry(returnedPlugin)) {
-          setPlugins((current) => replacePlugin(current, returnedPlugin));
+          applyPlugin(returnedPlugin);
         } else if (result.ok) {
           await reload();
         } else if (!result.ok) {
@@ -278,7 +285,7 @@ export function PluginCatalogProvider({ children }: { children: ReactNode }) {
         await reload();
       }
     },
-    [reload]
+    [applyPlugin, reload]
   );
 
   const value = useMemo(

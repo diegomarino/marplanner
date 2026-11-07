@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AdminSidebar } from "@/admin/AdminRoutes";
 import { log } from "@/lib/logger";
-import { PluginCatalogProvider } from "@/plugins/PluginCatalogProvider";
+import { PluginCatalogProvider, usePluginCatalog } from "@/plugins/PluginCatalogProvider";
+import { PluginManagement } from "@/plugins/PluginManagement";
 import { PLUGIN_IDS, type PluginCatalogEntry, type PluginState } from "../../src/shared/plugins";
 
 vi.mock("@/lib/logger", () => ({ log: vi.fn() }));
@@ -44,10 +45,20 @@ function failure(): Response {
   return new Response(JSON.stringify({ error: "unavailable" }), { status: 503 });
 }
 
+function ActivateBriefing() {
+  const { transition } = usePluginCatalog();
+  return (
+    <button type="button" onClick={() => void transition("daily-briefing", "activate")}>
+      Activate briefing
+    </button>
+  );
+}
+
 function renderSidebar() {
   return render(
     <PluginCatalogProvider>
       <AdminSidebar pathname="/admin" onLock={() => undefined} />
+      <ActivateBriefing />
     </PluginCatalogProvider>
   );
 }
@@ -195,5 +206,57 @@ describe("plugin catalog refresh and recovery", () => {
       "plugin catalog unavailable",
       { reason: "invalid_catalog" }
     );
+  });
+
+  it("does not let a refresh issued before a lifecycle change overwrite its result", async () => {
+    fetchMock.mockResolvedValueOnce(catalogResponse("inactive"));
+    renderSidebar();
+    await settle();
+
+    let resolveStaleRead!: (response: Response) => void;
+    fetchMock.mockReturnValueOnce(
+      new Promise<Response>((resolve) => {
+        resolveStaleRead = resolve;
+      })
+    );
+    act(() => void window.dispatchEvent(new Event("focus")));
+
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ plugin: entry("daily-briefing", "active") }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Activate briefing" }));
+    await settle();
+    expect(screen.getByText("Briefing")).toBeTruthy();
+
+    resolveStaleRead(catalogResponse("inactive"));
+    await settle();
+    expect(screen.getByText("Briefing")).toBeTruthy();
+  });
+
+  it("disables the Plugins page retry while a retry is in flight", async () => {
+    fetchMock.mockResolvedValueOnce(failure());
+    render(
+      <PluginCatalogProvider>
+        <PluginManagement />
+      </PluginCatalogProvider>
+    );
+    await settle();
+
+    let resolveRetry!: (response: Response) => void;
+    fetchMock.mockReturnValueOnce(
+      new Promise<Response>((resolve) => {
+        resolveRetry = resolve;
+      })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Retry plugin catalog" }));
+    await settle();
+    expect(screen.getByRole("button", { name: "Retrying…" }).hasAttribute("disabled")).toBe(true);
+
+    resolveRetry(catalogResponse("active"));
+    await settle();
+    expect(screen.getByTestId("plugin-catalog")).toBeTruthy();
   });
 });
