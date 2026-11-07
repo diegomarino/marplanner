@@ -103,7 +103,9 @@ session row is created, and backend authorization never consults PIN state.
 - **API key record**: the durable authorization credential. Attributes: scopes (`*`
   wildcard or a set of `domain:verb` capabilities), `expiresAt` (null for device keys),
   `revokedAt`, and a kind (bootstrap / device / integration). The sole backend
-  authorization boundary; all key state lives in the database.
+  authorization boundary; all key state lives in the database. The boundary covers every
+  request that reaches an `/api/*` handler, decided from the route the request matched as
+  well as its decoded path, and the server serves only origin-form request targets.
 - **PIN record**: a single Argon2 hash of the client-side admin-UI gate, stored in the
   database and included in backups. Verified by the protected verify-pin endpoint; raw PINs are never
   persisted or returned.

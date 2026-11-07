@@ -4,7 +4,7 @@ import path from "node:path";
 import type { Socket } from "node:net";
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
 import fastifyStatic from "@fastify/static";
-import { authBoundary } from "./auth/boundary";
+import { authBoundary, classifyApiRequest } from "./auth/boundary";
 import { isQuiesced, beginRequest, endRequest, RESTORE_ROUTE_PATH } from "./backups/restore";
 import { healthRoutes } from "./routes/health";
 import { provisionRoutes } from "./routes/provision";
@@ -66,7 +66,19 @@ export async function buildApp(opts?: BuildAppOptions): Promise<FastifyInstance>
   // startup barrier: no Fastify instance (and therefore no injectable/listening traffic)
   // exists until every durable lifecycle operation has reached its reconciled safe outcome.
   await pluginLifecycle.reconcileAll();
-  const server = Fastify();
+  // Router normalization is pinned to Fastify's strict defaults (and no `rewriteUrl`; a `;` is
+  // not a path delimiter, also the default) so the
+  // URL path the frontend gate and the not-found handler classify stays the path the router
+  // matches. The API-key boundary does not rely on this: it also classifies by the matched
+  // route (see classifyApiRequest), so any spelling the router still normalizes (such as an
+  // absolute-form target) is authenticated wherever it reaches an /api handler.
+  const server = Fastify({
+    routerOptions: {
+      caseSensitive: true,
+      ignoreTrailingSlash: false,
+      ignoreDuplicateSlashes: false,
+    },
+  });
   // Code-first OpenAPI: documentation-only route schemas, collected from every route below.
   await registerOpenApi(server, basePath);
   const sockets = new Set<Socket>();
@@ -104,6 +116,13 @@ export async function buildApp(opts?: BuildAppOptions): Promise<FastifyInstance>
   });
   server.addHook("onClose", async () => stopIdleCollector());
   server.addHook("onRequest", async (request, reply) => {
+    // Only origin-form request targets (`/path?query`) are served. The router would still match
+    // an absolute-form (`scheme://authority/path`) or asterisk-form target by dropping what
+    // precedes the path, while every URL-based classification below (the frontend gate, the
+    // API-key boundary, BASE_PATH mounting) reads the target as sent; one shape keeps them all
+    // looking at the path the router matches. Browsers and API clients always send origin-form
+    // to an origin server; absolute-form is only meant for forward proxies.
+    if (!request.url.startsWith("/")) return reply.code(400).send({ error: "bad_request" });
     if (request.url.split("?")[0] === "/health") return;
     if (requestAppPath(request.url, basePath) === null)
       return reply.code(404).send({ error: "not_found" });
@@ -135,9 +154,10 @@ export async function buildApp(opts?: BuildAppOptions): Promise<FastifyInstance>
     };
   });
   app.addHook("onRequest", async (request: FastifyRequest, reply: FastifyReply) => {
-    const pathname = requestAppPath(request.url, basePath);
-    if (!pathname?.startsWith("/api/")) return;
-    if (request.method === "POST" && pathname === RESTORE_ROUTE_PATH) return;
+    // Same classification as the API-key boundary: every request that reaches an /api handler.
+    const api = classifyApiRequest(request, basePath);
+    if (!api) return;
+    if (request.method === "POST" && api.path === RESTORE_ROUTE_PATH) return;
 
     if (isQuiesced()) {
       reply.header("Retry-After", "2");
