@@ -33,3 +33,9 @@ Lint exceptions must name the specific rule and explain the reason after `--`, p
 The published density behavior and its coordinated re-enable conditions are recorded in the [style guide](docs/development/style-guide.md#release-density-behavior).
 
 The canonical design references are [principles](docs/architecture/principles.md), [contracts](docs/architecture/contracts/README.md), [decisions](docs/architecture/decisions/README.md), and [security](SECURITY.md). Update the relevant page when behavior or an interface changes. Keep instructions executable in this repository without access to any development or import workspace.
+
+## Commit messages and PR titles
+
+Write commit subjects and PR titles as [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): summary`, for example `feat(auth): add an admin Access keys page` or `fix(deploy): skip inactive plugins`. Types are `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style` and `test`; the scope is optional and open. Keep the header within 100 characters.
+
+Pull requests are squash-merged, so the PR title becomes the commit subject on `main`. The `Conventional Commits` workflow lints the title and every commit of a pull request against `commitlint.config.mjs`; merge commits are skipped. Check your branch locally with `npx commitlint --from origin/main --to HEAD`, or a title with `echo "feat(ui): ..." | npx commitlint`.
