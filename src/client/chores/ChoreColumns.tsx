@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Check, ChevronDown, ChevronUp, Flame, Loader2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ErrorNotice } from "@/components/ErrorNotice";
@@ -6,6 +6,13 @@ import { StatusToggle } from "@/components/StatusToggle";
 import { Button } from "@/components/ui/button";
 import { NotoEmoji } from "./noto-emoji";
 import { useTodayChores } from "@/chores/useTodayChores";
+import {
+  CELEBRATION_CHEER_KEYS,
+  CELEBRATION_TITLE_KEYS,
+  CompletionCelebration,
+} from "@/chores/CompletionCelebration";
+import { preloadCelebrationSound } from "@/chores/celebration-sound";
+import { useHouseholdSettings } from "@/lib/householdSettings";
 import { useTranslation } from "@/i18n";
 import type { MessageKey } from "@/i18n/messages";
 import { authFetch } from "@/lib/credential";
@@ -15,8 +22,10 @@ import {
   type BoardChore,
   type BoardColumn,
   type DayPeriodDTO,
+  type MemberCelebration,
   type MemberColorKey,
   type PeriodId,
+  celebrationEmojis,
 } from "../../shared";
 import { resolveActivePeriod } from "../../shared/dayPeriods";
 
@@ -27,7 +36,11 @@ const DAY_PERIOD_LABEL_KEYS: Record<PeriodId, MessageKey> = {
   night: "dayPeriod.night",
 };
 
-type MemberColorProfile = { id: string; colorKey: MemberColorKey };
+type MemberColorProfile = {
+  id: string;
+  colorKey: MemberColorKey;
+  celebration?: MemberCelebration;
+};
 type MemberScale = {
   column: string;
   badge: string;
@@ -164,6 +177,22 @@ export function ChoreColumns({ date, layout }: ChoreColumnsProps): React.JSX.Ele
   const [periods, setPeriods] = useState<DayPeriodDTO[] | null>(null);
   const [memberProfiles, setMemberProfiles] = useState<Map<string, MemberColorProfile>>(new Map());
   const [activePeriodByMember, setActivePeriodByMember] = useState<Record<string, PeriodId>>({});
+  const { celebrationSound } = useHouseholdSettings();
+  const celebration = chores.celebration;
+  const celebrationProfile = celebration ? memberProfiles.get(celebration.memberId) : undefined;
+  // Chosen once per celebration, so a re-render does not swap the line mid-animation.
+  const cheerKey = useMemo(
+    () =>
+      celebration
+        ? CELEBRATION_CHEER_KEYS[Math.floor(Math.random() * CELEBRATION_CHEER_KEYS.length)]
+        : null,
+    [celebration]
+  );
+
+  // Load the fanfare ahead of the first tap, so it plays with no delay.
+  useEffect(() => {
+    if (celebrationSound !== false) preloadCelebrationSound();
+  }, [celebrationSound]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -288,6 +317,17 @@ export function ChoreColumns({ date, layout }: ChoreColumnsProps): React.JSX.Ele
           layout === "fit" ? "today-chores-uncomplete-cancel" : "chores-uncomplete-cancel"
         }
       />
+      {celebration && (
+        <CompletionCelebration
+          key={celebration.id}
+          colorKey={celebrationProfile?.colorKey ?? MEMBER_COLOR_KEYS[0]}
+          emojis={celebrationEmojis(celebrationProfile?.celebration ?? { preset: "confetti" })}
+          title={t(CELEBRATION_TITLE_KEYS[celebration.periodId])}
+          message={cheerKey ? t(cheerKey) : undefined}
+          sound={celebrationSound !== false}
+          onDismiss={chores.dismissCelebration}
+        />
+      )}
     </>
   );
 }

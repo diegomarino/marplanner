@@ -20,6 +20,7 @@ const EXPECTED_MEMBERS = [
     birthDate: { month: 5, day: 12, year: null },
     createdAt: NOW_MS,
     updatedAt: NOW_MS,
+    celebration: { preset: "confetti" },
   },
   {
     id: "demo:member:marge",
@@ -30,6 +31,7 @@ const EXPECTED_MEMBERS = [
     birthDate: { month: 5, day: 19, year: null },
     createdAt: NOW_MS,
     updatedAt: NOW_MS,
+    celebration: { preset: "confetti" },
   },
   {
     id: "demo:member:bart",
@@ -40,6 +42,7 @@ const EXPECTED_MEMBERS = [
     birthDate: { month: 2, day: 23, year: null },
     createdAt: NOW_MS,
     updatedAt: NOW_MS,
+    celebration: { preset: "confetti" },
   },
   {
     id: "demo:member:lisa",
@@ -50,6 +53,7 @@ const EXPECTED_MEMBERS = [
     birthDate: { month: 5, day: 9, year: null },
     createdAt: NOW_MS,
     updatedAt: NOW_MS,
+    celebration: { preset: "confetti" },
   },
   {
     id: "demo:member:maggie",
@@ -60,6 +64,7 @@ const EXPECTED_MEMBERS = [
     birthDate: { month: 1, day: 12, year: null },
     createdAt: NOW_MS,
     updatedAt: NOW_MS,
+    celebration: { preset: "confetti" },
   },
 ] as const;
 

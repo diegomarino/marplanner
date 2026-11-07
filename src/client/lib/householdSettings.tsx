@@ -37,6 +37,8 @@ export interface HouseholdSettingsValue {
   weatherLat: number | null;
   weatherLon: number | null;
   weatherLabel: string | null;
+  /** Household completion fanfare switch; `null` until the settings read succeeds. */
+  celebrationSound: boolean | null;
 }
 
 export interface HouseholdSettingsState extends HouseholdSettingsValue {
@@ -54,6 +56,7 @@ const EMPTY_SETTINGS: HouseholdSettingsState = {
   weatherLat: null,
   weatherLon: null,
   weatherLabel: null,
+  celebrationSound: null,
   retry: () => undefined,
 };
 
@@ -103,6 +106,8 @@ export function HouseholdSettingsProvider({ children }: { children: ReactNode })
           weatherLon: bothPresent ? lon : null,
           weatherLabel:
             bothPresent && typeof data?.weather?.label === "string" ? data.weather.label : null,
+          celebrationSound:
+            typeof data?.celebration?.sound === "boolean" ? data.celebration.sound : null,
           retry: EMPTY_SETTINGS.retry,
         });
       })

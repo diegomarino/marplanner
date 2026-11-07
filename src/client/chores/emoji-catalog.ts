@@ -25,7 +25,6 @@ export const NON_PICKER_ICON_EMOJIS: ReadonlyArray<{ emoji: string; usedBy: stri
   { emoji: "☀️", usedBy: "chores carried over from the original app's seed" },
   { emoji: "💧", usedBy: "chores carried over from the original app's seed" },
   { emoji: "🏫", usedBy: "chores carried over from the original app's seed" },
-  { emoji: "🎮", usedBy: "chores carried over from the original app's seed" },
   { emoji: "📦", usedBy: "chores carried over from the original app's seed" },
   { emoji: "🛁", usedBy: "chores carried over from the original app's seed" },
 ];
@@ -274,6 +273,72 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
       { emoji: "📅", label: "routines.emojiPicker.icon.calendar", keywords: ["calendar", "event"] },
       { emoji: "🏆", label: "routines.emojiPicker.icon.trophy", keywords: ["win", "award"] },
       { emoji: "⭐", label: "routines.emojiPicker.icon.star", keywords: ["important", "star"] },
+    ],
+  },
+  {
+    id: "celebration",
+    name: "routines.emojiPicker.category.celebration",
+    items: [
+      {
+        emoji: "🎮",
+        label: "routines.emojiPicker.icon.videogame",
+        keywords: ["videogame", "game", "play", "videojuego"],
+      },
+      {
+        emoji: "👾",
+        label: "routines.emojiPicker.icon.alien-monster",
+        keywords: ["alien", "monster", "arcade", "marciano"],
+      },
+      {
+        emoji: "🕹️",
+        label: "routines.emojiPicker.icon.joystick",
+        keywords: ["joystick", "arcade", "game", "mando"],
+      },
+      {
+        emoji: "🥅",
+        label: "routines.emojiPicker.icon.goal-net",
+        keywords: ["goal", "soccer", "football", "porteria", "gol"],
+      },
+      {
+        emoji: "👑",
+        label: "routines.emojiPicker.icon.crown",
+        keywords: ["crown", "king", "queen", "princess", "corona"],
+      },
+      {
+        emoji: "🏰",
+        label: "routines.emojiPicker.icon.castle",
+        keywords: ["castle", "fairytale", "princess", "castillo"],
+      },
+      {
+        emoji: "✨",
+        label: "routines.emojiPicker.icon.sparkles",
+        keywords: ["sparkles", "magic", "shine", "brillo"],
+      },
+      {
+        emoji: "🌟",
+        label: "routines.emojiPicker.icon.glowing-star",
+        keywords: ["star", "glow", "shine", "estrella"],
+      },
+      {
+        emoji: "💫",
+        label: "routines.emojiPicker.icon.dizzy",
+        keywords: ["star", "dizzy", "shooting", "estrella"],
+      },
+      {
+        emoji: "💖",
+        label: "routines.emojiPicker.icon.sparkling-heart",
+        keywords: ["heart", "love", "sparkle", "corazon"],
+      },
+      {
+        emoji: "💎",
+        label: "routines.emojiPicker.icon.gem",
+        keywords: ["gem", "diamond", "jewel", "diamante"],
+      },
+      {
+        emoji: "🦄",
+        label: "routines.emojiPicker.icon.unicorn",
+        keywords: ["unicorn", "magic", "fairytale", "unicornio"],
+      },
     ],
   },
 ];

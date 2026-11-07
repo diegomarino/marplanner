@@ -153,6 +153,7 @@ function makeMember(overrides: Partial<Member> = {}): Member {
     lifecycle: "active",
     createdAt: 0,
     updatedAt: 0,
+    celebration: { preset: "confetti" },
     ...overrides,
   };
 }

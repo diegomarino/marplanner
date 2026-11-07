@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
 import { getDb, resetDb } from "../../src/server/db/client";
 import { runMigrations } from "../../src/server/db/migrate";
-import { BASELINE_FILE, BASELINE_PATH } from "../helpers/baseline";
+import { BASELINE_FILE, BASELINE_PATH, SHIPPED_MIGRATION_FILES } from "../helpers/baseline";
 import { useIsolatedDb } from "../helpers/db";
 
 /** `0001_reminder_content.sql` (#96) upgrades a household that already ran the baseline: the real
@@ -40,7 +40,11 @@ describe("0001_reminder_content migration on an existing household", () => {
 
       expect(
         db.prepare("SELECT fileName FROM drizzle_universe_migrations ORDER BY fileName").all()
-      ).toEqual([{ fileName: BASELINE_FILE }, { fileName: "0001_reminder_content.sql" }]);
+      ).toEqual(SHIPPED_MIGRATION_FILES.map((fileName) => ({ fileName })));
+      expect(SHIPPED_MIGRATION_FILES.slice(0, 2)).toEqual([
+        BASELINE_FILE,
+        "0001_reminder_content.sql",
+      ]);
       expect(
         db
           .prepare(

@@ -32,6 +32,7 @@ const MEMBER: MemberDTO = {
   lifecycle: "active",
   createdAt: 1,
   updatedAt: 1,
+  celebration: { preset: "confetti" },
   birthDate: null,
 };
 
