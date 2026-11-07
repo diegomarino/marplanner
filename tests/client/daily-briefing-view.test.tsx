@@ -392,6 +392,7 @@ describe("DailyBriefingView — full block registry", () => {
     expect(weather).toHaveTextContent("Clear");
     expect(weather).toHaveTextContent("18");
     expect(weather).toHaveTextContent("26");
+    expect(weather.querySelector('svg[data-weather-icon="wi-day-sunny"]')).not.toBeNull();
 
     // Regression: meals object shape — every slot label + value visible.
     const meals = screen.getByTestId("daily-briefing-block-meals");
@@ -483,6 +484,8 @@ describe("DailyBriefingView — full block registry", () => {
     expect(weatherText).toHaveTextContent("Rain");
     expect(weatherText).toHaveTextContent("10");
     expect(weatherText).toHaveTextContent("14");
+    // ...but weatherText is the text variant: no icon (FR-023 Clarifications).
+    expect(weatherText.querySelector("svg")).toBeNull();
   });
 
   it("renders an unrecognized/future block type as a quiet fallback — title only, no crash", async () => {

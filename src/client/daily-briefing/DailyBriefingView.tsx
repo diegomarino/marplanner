@@ -44,6 +44,7 @@ import {
   TodayBlock,
   TriviaBlock,
   WeatherBlock,
+  WeatherTextBlock,
   WordOfDayBlock,
   WordSearchBlock,
   WouldYouRatherBlock,
@@ -277,8 +278,9 @@ function BlockData({ type, data }: Pick<BlockInstance, "type" | "data">): React.
     case "today":
       return <TodayBlock data={data as TodayData} />;
     case "weather":
-    case "weatherText":
       return <WeatherBlock data={data as ForecastDay} />;
+    case "weatherText":
+      return <WeatherTextBlock data={data as ForecastDay} />;
     case "birthday":
       return <BirthdayBlock data={data as BirthdayData} />;
     case "wordOfDay":
