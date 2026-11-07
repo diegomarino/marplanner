@@ -95,4 +95,52 @@ describe("verify-pin: match/no-match no-session", () => {
       await app.close();
     }
   });
+
+  it("repeated 6-digit entries with 4- and 5-digit auto-submit probes never trigger backoff or lockout", async () => {
+    // The admin keypad submits at 4, 5 and 6 digits (ADR-034), so one typed 6-digit PIN is up to
+    // three verify-pin requests, two of them failed probes. Ten entries in a row (30 requests, 20+
+    // of them mismatches) exceed the API-boundary failure threshold, which must not apply here:
+    // only failed device credentials count, never a PIN mismatch.
+    const { buildApp } = await import("../../src/server/app.ts");
+    const deviceKey = `mpk-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const now = Date.now();
+    const db = getDb();
+    db.prepare(
+      "INSERT INTO api_keys (id, key_hash, scope, kind, created_at) VALUES (?, ?, '*', 'device', ?)"
+    ).run(`${now}-device`, hashKey(deviceKey), now);
+    const correctPin = "135790";
+    // Minimal Argon2 cost keeps thirty verifications fast; the route verifies any argon2 hash.
+    db.prepare("INSERT INTO admin_config (id, pin_hash, updated_at) VALUES (1, ?, ?)").run(
+      await argon2.hash(correctPin, { memoryCost: 1024, timeCost: 1, parallelism: 1 }),
+      now
+    );
+
+    const app = await buildApp();
+    try {
+      for (let entry = 0; entry < 10; entry += 1) {
+        const typed = entry % 2 === 0 ? correctPin : "135791";
+        for (const length of [4, 5, 6]) {
+          const res = await app.inject({
+            method: "POST",
+            url: "/api/auth/verify-pin",
+            cookies: { mp_device_key: deviceKey },
+            payload: { pin: typed.slice(0, length) },
+          });
+          expect(res.statusCode).toBe(200);
+          expect(res.headers["retry-after"]).toBeUndefined();
+          expect(JSON.parse(res.body)).toEqual({ match: typed === correctPin && length === 6 });
+        }
+      }
+
+      // The device stays fully usable for ordinary API traffic afterwards.
+      const settings = await app.inject({
+        method: "GET",
+        url: "/api/settings",
+        cookies: { mp_device_key: deviceKey },
+      });
+      expect(settings.statusCode).toBe(200);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
 });

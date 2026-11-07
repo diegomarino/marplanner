@@ -108,53 +108,123 @@ export function AdminGate() {
   }, [adminUnlocked, bypassPin, setUnlocked]);
 
   /* -- pin submit ----------------------------------------------- */
+  /*
+   * The PIN is 4–6 digits and its length is not shown, so every length from 4 is tried as it is
+   * reached. Attempts at 4 and 5 digits are silent probes: a rejection shows nothing and keeps
+   * the digits so the parent keeps typing. A rejection at 6 digits, or of a manual submit (the
+   * Unlock button or Enter), is the visible outcome: error plus cleared digits. Requests are
+   * strictly sequential; a newer entry waits for the one in flight and only the latest waits.
+   * `verify-pin` has no attempt counter (ADR-013: the PIN is advisory and the device key is the
+   * authority), so probes cannot lock a household out.
+   */
 
-  const handleSubmit = useCallback(() => {
-    if (pin.length < 4 || pin.length > 6 || submitting) return;
+  const pinRef = useRef("");
+  const inFlightRef = useRef<{ pin: string; visible: boolean } | null>(null);
+  const queuedRef = useRef<{ pin: string; visible: boolean } | null>(null);
+  // Bumped on cancel and unmount so a late answer for an abandoned entry is ignored.
+  const generationRef = useRef(0);
 
-    setSubmitting(true);
-    setError(null);
+  useEffect(
+    () => () => {
+      generationRef.current += 1;
+    },
+    []
+  );
+
+  const updatePin = useCallback((next: string) => {
+    pinRef.current = next;
+    setPin(next);
+  }, []);
+
+  const runVerification = useCallback(() => {
+    const attempt = queuedRef.current;
+    if (!attempt || inFlightRef.current) return;
+    queuedRef.current = null;
+    inFlightRef.current = attempt;
+    const generation = generationRef.current;
+
+    const settle = (outcome: "match" | "mismatch" | "failed") => {
+      if (generation !== generationRef.current) return;
+      // Read `visible` at settle time: a manual submit may have promoted this probe meanwhile.
+      const visible = inFlightRef.current?.visible ?? false;
+      inFlightRef.current = null;
+      if (outcome === "match") {
+        queuedRef.current = null;
+        setSubmitting(false);
+        updatePin("");
+        setUnlocked(true);
+        return;
+      }
+      if (visible) {
+        queuedRef.current = null;
+        setSubmitting(false);
+        updatePin("");
+        setError(outcome === "mismatch" ? "Incorrect PIN." : "Request failed.");
+        return;
+      }
+      runVerification();
+    };
 
     authFetch("/api/auth/verify-pin", {
       method: "POST",
       credentials: "include",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ pin } satisfies VerifyPinRequest),
+      body: JSON.stringify({ pin: attempt.pin } satisfies VerifyPinRequest),
     })
       .then((res) => {
         if (!res.ok) throw new Error(`verify-pin: ${res.status}`);
         return res.json() as Promise<VerifyPinResult>;
       })
-      .then((data) => {
-        if (data.match) {
-          setUnlocked(true);
-          setPin("");
-        } else {
-          setError("Incorrect PIN.");
-        }
-      })
-      .catch(() => {
-        setError("Request failed.");
-      })
-      .finally(() => {
-        setSubmitting(false);
-      });
-  }, [pin, submitting, setUnlocked]);
+      .then(
+        (data) => settle(data.match ? "match" : "mismatch"),
+        () => settle("failed")
+      );
+  }, [setUnlocked, updatePin]);
+
+  const requestVerification = useCallback(
+    (candidate: string, visible: boolean) => {
+      if (visible) {
+        setSubmitting(true);
+        setError(null);
+      }
+      const inFlight = inFlightRef.current;
+      if (inFlight && inFlight.pin === candidate) {
+        // The same digits are already on the wire: wait for that answer instead of resending.
+        inFlight.visible ||= visible;
+        queuedRef.current = null;
+        return;
+      }
+      queuedRef.current = { pin: candidate, visible };
+      runVerification();
+    },
+    [runVerification]
+  );
+
+  const handleSubmit = useCallback(() => {
+    const current = pinRef.current;
+    if (current.length < 4 || current.length > 6 || submitting) return;
+    requestVerification(current, true);
+  }, [submitting, requestVerification]);
 
   const addDigit = useCallback(
     (digit: string) => {
-      if (submitting) return;
-      setPin((current) => (current.length >= 6 ? current : `${current}${digit}`));
+      const current = pinRef.current;
+      if (submitting || current.length >= 6) return;
+      const next = `${current}${digit}`;
+      updatePin(next);
       setError(null);
+      if (next.length >= 4) requestVerification(next, next.length === 6);
     },
-    [submitting]
+    [submitting, updatePin, requestVerification]
   );
 
   const deleteDigit = useCallback(() => {
     if (submitting) return;
-    setPin((current) => current.slice(0, -1));
+    // A probe already sent still settles; one not yet sent is for digits that no longer exist.
+    queuedRef.current = null;
+    updatePin(pinRef.current.slice(0, -1));
     setError(null);
-  }, [submitting]);
+  }, [submitting, updatePin]);
 
   /* -- hardware keyboard while the PIN gate is showing ------------ */
 
@@ -208,7 +278,11 @@ export function AdminGate() {
   /* -- locked: PIN gate (English, pre-unlock) -------------------- */
 
   const cancelPin = () => {
-    setPin("");
+    generationRef.current += 1;
+    inFlightRef.current = null;
+    queuedRef.current = null;
+    setSubmitting(false);
+    updatePin("");
     setError(null);
     const returnPath = window.history.state?.marplannerAdminReturnPath;
     if (typeof returnPath === "string" && !returnPath.startsWith("/admin")) {

@@ -6,7 +6,7 @@ import { AdminUnlockProvider } from "@/lib/adminUnlock";
 
 /** ADR-061 invariant (lines 60-66): the settings-backed LanguageProvider mounts INSIDE the
  * admin-unlock subtree; the shell performs NO boot-time /api probe. Pre-unlock surfaces
- * (the long-press affordance + the PIN gate) must therefore issue NO authenticated
+ * (the Admin affordance + the PIN gate) must therefore issue NO authenticated
  * GET /api/settings. Re-hoisting the provider causes this regression test to fail.
  */
 describe("AdminGate — ADR-061: no boot-time /api/settings probe pre-unlock", () => {

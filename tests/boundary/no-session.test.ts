@@ -191,7 +191,7 @@ describe("no-server-session / PIN-agnostic-authz (FR-014/015/017/018)", () => {
       // and MUST remain client-side UI state only.
       // FR-017: An admin route MUST be gated by the client-side admin unlock only,
       // and the backend MUST NOT gate on the PIN.
-      // FR-018: Admin content MUST be reachable only after long-press plus PIN,
+      // FR-018: Admin content MUST be reachable only through the PIN gate,
       // while the backend authorizes by API key regardless of PIN state.
       //
       // Use GET /api/settings (which EXISTS) to prove key-alone authorization:
