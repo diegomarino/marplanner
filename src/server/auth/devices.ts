@@ -30,7 +30,20 @@ export interface CredentialSummary {
   state: "active" | "revoked" | "expired";
 }
 
-const MAX_LABEL_LENGTH = 80;
+export const MAX_LABEL_LENGTH = 80;
+
+/** The stored form of an operator-supplied label: trimmed, 1 to MAX_LABEL_LENGTH characters.
+ * Shared by relabelling and by provisioning with an explicit label. */
+export function normalizeLabel(label: string): string {
+  const trimmed = label.trim();
+  if (trimmed.length === 0 || trimmed.length > MAX_LABEL_LENGTH) {
+    throw new DeviceCredentialError(
+      `A label must have 1 to ${MAX_LABEL_LENGTH} characters`,
+      "invalid_label"
+    );
+  }
+  return trimmed;
+}
 
 /** The id of the bootstrap row the configured MP_BOOTSTRAP_KEY names, or null when none is
  * configured or it has no row. `revokeCredential` refuses that row. */
@@ -90,13 +103,7 @@ function readCredential(
 
 /** Name a credential so an operator can tell provisioned devices apart later. */
 export function labelCredential(db: Database, id: string, label: string): void {
-  const trimmed = label.trim();
-  if (trimmed.length === 0 || trimmed.length > MAX_LABEL_LENGTH) {
-    throw new DeviceCredentialError(
-      `A label must have 1 to ${MAX_LABEL_LENGTH} characters`,
-      "invalid_label"
-    );
-  }
+  const trimmed = normalizeLabel(label);
   readCredential(db, id);
   db.prepare("UPDATE api_keys SET label = ? WHERE id = ?").run(trimmed, id);
 }

@@ -1,7 +1,8 @@
 // Path data vendored from Weather Icons by Erik Flowers
 // (https://github.com/erikflowers/weather-icons, svg/<name>.svg), licensed under the
 // SIL Open Font License 1.1 — see OFL.txt next to this file. Each icon is one path on a
-// 30×30 view box. Only the icons the weather surfaces use are carried.
+// 30×30 view box. Only the icons the weather surfaces use are carried: the home pill, the forecast
+// dialog and the daily briefing (screen and print) all read them from here.
 
 export const WEATHER_ICON_PATHS = {
   "wi-day-sunny":

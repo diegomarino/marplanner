@@ -52,7 +52,7 @@ It does not own member identity (Members), route structure or the admin-unlock U
 
 **Establish the bootstrap key.** On startup, if the deployment config provides a bootstrap value and no matching active `*` key record exists, the system seeds a `*` key record for it. Deployment-agnostic: the config value is an environment variable / secret, with no hosting-platform coupling.
 
-**Provision a device.** In connection-setup (no valid cookie), a human submits a raw `*` key. The server mints a new `*` device key (`expiresAt = null`), binds the httpOnly API cookie to it, and never returns the raw device key. The same bootstrap key may provision multiple devices.
+**Provision a device.** In connection-setup (no valid cookie), a human submits a raw `*` key. The server mints a new `*` device key (`expiresAt = null`), binds the httpOnly API cookie to it, and never returns the raw device key. The same bootstrap key may provision multiple devices. The minted key is labelled: an optional `{ "label": string }` body (trimmed, 1–80 characters, no other keys, else `400 invalid_label` with nothing minted) names it; otherwise the server derives `<Browser> · <OS> · <YYYY-MM-DD>` from the `User-Agent` (household timezone; `Unknown` for unrecognised parts; `Device · <YYYY-MM-DD>` without the header; capped at 80 characters). The `User-Agent` is a display hint for the Access keys list and MUST NOT feed any authorization decision. Existing unlabelled keys are not backfilled.
 
 **Bootstrap retirement (not this release).** Removing the environment value stops new provisioning, but the persisted key remains usable for authorized API requests. There is no retirement endpoint or last-key guard.
 
@@ -105,7 +105,7 @@ without inventing one when absent/malformed, and offers manual retry without an 
 
 Implemented interfaces:
 
-- Provision device (connection-setup): raw `*` key → device key + bound cookie.
+- Provision device (connection-setup): raw `*` key (+ optional `{label}`) → labelled device key + bound cookie.
 - Authorize request: live key via cookie (general API) or Bearer (`/api/plugins*` only); optional capability/management preHandlers where registered.
 - Verify PIN; provisioning initializes or replaces it from configuration.
 - Provisioning sets the API cookie; server-side revocation API is not in this release.
