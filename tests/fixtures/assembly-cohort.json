@@ -45,6 +45,10 @@
     },
     {
       "method": "GET",
+      "path": "/api/auth/credentials"
+    },
+    {
+      "method": "GET",
       "path": "/api/calendar/events"
     },
     {
@@ -121,6 +125,10 @@
     },
     {
       "method": "PATCH",
+      "path": "/api/auth/credentials/{id}"
+    },
+    {
+      "method": "PATCH",
       "path": "/api/calendar/events/{id}"
     },
     {
@@ -146,6 +154,10 @@
     {
       "method": "PATCH",
       "path": "/api/routines/{id}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/credentials/{id}/revoke"
     },
     {
       "method": "POST",
@@ -534,6 +546,7 @@
     "backups",
     "time-announcements",
     "network-devices",
+    "access-keys",
     "plugins",
     "printing",
     "settings"
@@ -3272,7 +3285,7 @@
           ],
           "tests/client/admin-routes.test.tsx": [
             "AdminRoutes renders the directly requested printing destination instead of the member-create default",
-            "AdminRoutes keeps the complete ordered fourteen-destination inventory",
+            "AdminRoutes keeps the complete ordered fifteen-destination inventory",
             "AdminRoutes shows the localized unknown-admin outcome without mounting a management panel"
           ],
           "tests/client/announcements-briefing-admin.test.tsx": [
@@ -4527,6 +4540,7 @@
             "closed route resolver recognizes protected destination /admin/backups without unlock state",
             "closed route resolver recognizes protected destination /admin/time-announcements without unlock state",
             "closed route resolver recognizes protected destination /admin/network-devices without unlock state",
+            "closed route resolver recognizes protected destination /admin/access-keys without unlock state",
             "closed route resolver recognizes protected destination /admin/printing without unlock state",
             "closed route resolver recognizes protected destination /admin/settings without unlock state",
             "closed route resolver classifies unknown pathname /admin/ without prefix leakage",
@@ -5666,6 +5680,23 @@
             "device credential retirement keeps the configured bootstrap key, which startup re-activates, but retires stale ones",
             "device credential retirement rejects an empty or overlong label and prints usage for unknown commands",
             "device credential retirement opens the server's database by its environment and never creates a missing one"
+          ],
+          "tests/boundary/device-credentials-routes.test.ts": [
+            "device credential admin routes requires an authenticated full-access device credential",
+            "device credential admin routes lists every credential with its state and never leaks key material",
+            "device credential admin routes revokes idempotently, and the revoked device is refused on its next request",
+            "device credential admin routes lets the admin revoke the device it is using, which logs it out",
+            "device credential admin routes refuses the configured bootstrap key but retires a stale one",
+            "device credential admin routes labels a credential and rejects invalid labels or bodies"
+          ],
+          "tests/client/device-credentials-management.test.tsx": [
+            "DeviceCredentialsManagement lists credentials, marks this device and hides revoked keys behind a filter",
+            "DeviceCredentialsManagement disables revoking the configured bootstrap key and explains how to rotate it",
+            "DeviceCredentialsManagement revokes another device only after confirmation",
+            "DeviceCredentialsManagement warns before revoking this device and logs the screen out afterwards",
+            "DeviceCredentialsManagement shows the bootstrap explanation, not a generic error, when the server refuses",
+            "DeviceCredentialsManagement renames a credential and rejects an empty name locally",
+            "DeviceCredentialsManagement shows a retryable error when the list cannot load"
           ]
         }
       },
@@ -5879,6 +5910,21 @@
           "statements": 86.66,
           "functions": 92.85,
           "branches": 74
+        }
+      },
+      "src/client/admin/DeviceCredentialsManagement.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 88,
+          "statements": 103,
+          "functions": 26,
+          "branches": 89
+        },
+        "minimumRates": {
+          "lines": 94.31,
+          "statements": 90.29,
+          "functions": 92.3,
+          "branches": 80.89
         }
       },
       "src/client/admin/MealsManagement.tsx": {
@@ -9917,6 +9963,21 @@
           "branches": 100
         }
       },
+      "src/server/openapi/device-credentials.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 10,
+          "statements": 10,
+          "functions": 1,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100.0,
+          "statements": 100.0,
+          "functions": 100.0,
+          "branches": 100
+        }
+      },
       "src/server/openapi/docs.ts": {
         "layer": "server",
         "minimumTotals": {
@@ -10320,6 +10381,21 @@
           "statements": 96.77,
           "functions": 100,
           "branches": 75
+        }
+      },
+      "src/server/routes/device-credentials.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 34,
+          "statements": 37,
+          "functions": 12,
+          "branches": 17
+        },
+        "minimumRates": {
+          "lines": 97.05,
+          "statements": 94.59,
+          "functions": 100.0,
+          "branches": 88.23
         }
       },
       "src/server/routes/health.ts": {
