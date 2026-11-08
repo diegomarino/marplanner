@@ -226,8 +226,8 @@ test("runner selector queues trusted jobs and requires explicit hosted execution
       ["disconnected", { runners: [] }, "true", "false", "test", false, local, local],
       ["lookup failure", {}, "true", "false", "test", true, local, local],
       ["no credentials", {}, "true", "false", "", true, local, local],
-      ["fork", {}, "false", "false", "", true, ["macos-15"], ["ubuntu-latest"]],
-      ["unknown trust", {}, "", "false", "", true, ["macos-15"], ["ubuntu-latest"]],
+      ["fork", {}, "false", "false", "", true, ["ubuntu-latest"], ["ubuntu-latest"]],
+      ["unknown trust", {}, "", "false", "", true, ["ubuntu-latest"], ["ubuntu-latest"]],
       [
         "dependabot",
         {},
@@ -235,7 +235,7 @@ test("runner selector queues trusted jobs and requires explicit hosted execution
         "false",
         "",
         true,
-        ["macos-15"],
+        ["ubuntu-latest"],
         ["ubuntu-latest"],
       ],
       [
@@ -245,11 +245,11 @@ test("runner selector queues trusted jobs and requires explicit hosted execution
         "false",
         "",
         true,
-        ["macos-15"],
+        ["ubuntu-latest"],
         ["ubuntu-latest"],
       ],
-      ["forced", {}, "true", "true", "", true, ["macos-15"], ["ubuntu-latest"]],
-      ["forced fork", {}, "false", "true", "", true, ["macos-15"], ["ubuntu-latest"]],
+      ["forced", {}, "true", "true", "", true, ["ubuntu-latest"], ["ubuntu-latest"]],
+      ["forced fork", {}, "false", "true", "", true, ["ubuntu-latest"], ["ubuntu-latest"]],
     ]) {
       const output = join(root, label);
       const runner = {

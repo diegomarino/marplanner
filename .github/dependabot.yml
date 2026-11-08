@@ -4,6 +4,7 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    rebase-strategy: disabled
     # The runtime is pinned to Node 24 (`engines.node` in package.json,
     # `.nvmrc`), so its type definitions must not move past the 24.x line.
     ignore:
@@ -77,6 +78,7 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    rebase-strategy: disabled
     groups:
       actions:
         patterns:

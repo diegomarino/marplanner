@@ -45,7 +45,7 @@ jobs:
           import os
           import sys
 
-          runner = ["macos-15"]
+          runner = ["ubuntu-latest"]
           container_runner = ["ubuntu-latest"]
           if os.environ.get("TRUSTED") == "true" and os.environ.get("FORCE_HOSTED") != "true":
               try:
@@ -73,5 +73,5 @@ jobs:
         run: |
           printf 'Runner: %s\n' "$RUNNER_NAME"
           uname -m
-          sw_vers
+          if command -v sw_vers >/dev/null; then sw_vers; else grep PRETTY_NAME /etc/os-release; fi
     if: ${{ !inputs.selector_only }}

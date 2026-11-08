@@ -22,8 +22,8 @@ hosted fallback. Local outages leave CI waiting. GitHub currently cancels
 self-hosted jobs after [24 hours in the queue](https://docs.github.com/en/actions/reference/limits),
 so the required checks can fail without execution.
 
-Fork PRs, Dependabot runs/PRs and events without established trust retain hosted execution: macOS for
-native checks and Ubuntu for containers. The `force_hosted` workflow-dispatch
+Fork PRs, Dependabot runs/PRs and events without established trust retain hosted execution on GitHub-hosted
+Ubuntu for both native checks and containers. The `force_hosted` workflow-dispatch
 boolean defaults to false and explicitly selects those hosted routes. The trust
 guard checks both the initiating actor and PR author, so rerunning a Dependabot
 PR as a maintainer does not route it to the persistent runner. The old
