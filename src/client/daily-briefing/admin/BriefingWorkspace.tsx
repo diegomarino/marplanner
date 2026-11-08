@@ -226,8 +226,9 @@ export function BriefingWorkspace({
         );
       }
       const result = (await response.json()) as BriefingPrintResponse;
-      // Wake the shared executor so the new job is claimed now, not on its next 15 s poll.
-      if (result.enqueued) notifyPrintIntentEnqueued();
+      // Wake the shared executor so the job is claimed now, not on its next 15 s poll. Also when
+      // it was already queued (a retry): an extra claim attempt is harmless.
+      notifyPrintIntentEnqueued();
       setNotice({
         testId: "daily-briefing-print-notice",
         text: t(

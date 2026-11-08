@@ -255,7 +255,7 @@ describe("BriefingWorkspace", () => {
     expect(screen.getByTestId("daily-briefing-print-unavailable")).toBeVisible();
   });
 
-  it("wakes the print executor when Print enqueues a new job, so it prints without waiting for the poll", async () => {
+  it("wakes the print executor whenever Print queues a job, so it prints without waiting for the poll", async () => {
     const wakeups = vi.fn();
     window.addEventListener(PRINT_INTENT_ENQUEUED_EVENT, wakeups);
     try {
@@ -275,7 +275,7 @@ describe("BriefingWorkspace", () => {
       expect(await screen.findByTestId("daily-briefing-print-notice")).toHaveTextContent(
         "Already waiting in the printer queue."
       );
-      expect(wakeups).not.toHaveBeenCalled();
+      expect(wakeups).toHaveBeenCalledTimes(1);
     } finally {
       window.removeEventListener(PRINT_INTENT_ENQUEUED_EVENT, wakeups);
     }
