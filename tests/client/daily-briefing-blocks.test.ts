@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   ALL_BLOCK_TYPES,
+  COUNT_BLOCK_TYPES,
+  DIFFICULTY_BLOCK_TYPES,
+  LEVEL_BLOCK_TYPES,
   WEEKDAY_LABEL_KEYS,
+  countOptions,
   cellToggleInput,
   rowToggleInput,
   defaultMemberBlockSettings,
@@ -121,5 +125,15 @@ describe("briefingBlocks — dates and labels", () => {
         `dailyBriefing.admin.weekday.${day}`
       );
     }
+  });
+});
+
+describe("briefingBlocks — catalogue-derived controls", () => {
+  it("offers each block's declared count range and none to blocks without a count", () => {
+    expect(countOptions("phonics")).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(countOptions("trivia")).toEqual([]);
+    expect([...COUNT_BLOCK_TYPES]).toEqual(["phonics"]);
+    expect([...LEVEL_BLOCK_TYPES]).toEqual(["wordOfDay", "phonics"]);
+    expect([...DIFFICULTY_BLOCK_TYPES]).toEqual(["trivia", "wordSearch"]);
   });
 });

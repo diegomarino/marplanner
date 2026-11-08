@@ -169,10 +169,6 @@ export function blockScope(type: BlockRegistryType): BlockScope {
   return blockDescriptor(type).scope;
 }
 
-export function blockKind(type: BlockRegistryType): BlockKind {
-  return blockDescriptor(type).kind;
-}
-
 export function isExternalBlockType(type: unknown): type is ExternalBlockType {
   return typeof type === "string" && BY_TYPE.get(type)?.kind === "external";
 }
