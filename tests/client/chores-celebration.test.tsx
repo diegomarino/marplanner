@@ -149,9 +149,12 @@ describe("chores board completion celebration", () => {
     renderBoard();
     await tap("c2");
     await screen.findByTestId("completion-celebration");
-    // A tap anywhere dismisses it.
-    fireEvent.pointerDown(document.body);
-    await waitFor(() => expect(screen.queryByTestId("completion-celebration")).toBeNull());
+    // A tap anywhere dismisses it. The listener is attached in an effect that can run
+    // after the overlay is already in the DOM, so tap until the overlay is gone.
+    await waitFor(() => {
+      fireEvent.pointerDown(document.body);
+      expect(screen.queryByTestId("completion-celebration")).toBeNull();
+    });
 
     await tap("c2");
     await confirmUncomplete();
