@@ -37,6 +37,7 @@ export const BlockType = component(
     "drawingPrompt",
     "streakText",
     "weatherText",
+    "firstWords",
   ])
 );
 
@@ -50,6 +51,12 @@ export const BlockParams = component(
     language: z
       .string()
       .meta({ description: "validated against corpus availability (FR-009)" })
+      .optional(),
+    count: z
+      .int()
+      .min(1)
+      .max(6)
+      .meta({ description: "firstWords only: how many words to print." })
       .optional(),
   }),
   {
@@ -149,6 +156,7 @@ export const BriefingPayload = component(
                       "drawingPrompt",
                       "streakText",
                       "weatherText",
+                      "firstWords",
                     ],
                   },
                 },

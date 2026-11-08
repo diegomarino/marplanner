@@ -30,7 +30,7 @@ export type BlockType =
   // Retired schemaVersion 1 names.
   | "calendar"
   | "chores"
-  // The 21-block registry, verbatim from `ALL_BLOCK_TYPES`.
+  // The block registry, verbatim from `ALL_BLOCK_TYPES`.
   | "shotgun"
   | "message"
   | "streak"
@@ -51,7 +51,8 @@ export type BlockType =
   | "wordSearch"
   | "drawingPrompt"
   | "streakText"
-  | "weatherText";
+  | "weatherText"
+  | "firstWords";
 
 /** BlockScope — `chores`/`reminders` = member; `calendar`/`meals` = shared.
  */

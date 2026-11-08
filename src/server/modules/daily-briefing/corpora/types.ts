@@ -47,6 +47,16 @@ export interface VocabularyEntry {
   pronunciation: string | null;
 }
 
+/** One early-reader word (`first-words.json`). `graphemes` spell `word` exactly, one entry per
+ * sound (`ship` -> `["sh", "i", "p"]`); `tricky` words are printed without sound buttons.
+ */
+export interface FirstWordsEntry {
+  word: string;
+  level: "L1" | "L2" | "L3" | "L4";
+  graphemes: string[];
+  tricky: boolean;
+}
+
 export type WordSearchDifficulty = "easy" | "medium" | "hard";
 
 /** The on-disk word-search corpus shape (v1 `word-search-corpus.ts`) is a superset of this —

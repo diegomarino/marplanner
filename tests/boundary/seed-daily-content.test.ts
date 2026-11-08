@@ -50,6 +50,7 @@ describe("daily content demo seed boundary", () => {
       "drawingPrompt",
       "streakText",
       "weatherText",
+      "firstWords",
     ];
     expect(readAllSettings().blockOrder.map(({ type }) => type)).toEqual(types);
     for (const memberId of ["demo:member:homer", "demo:member:lisa", "demo:member:marge"]) {
@@ -147,6 +148,7 @@ describe("daily content demo seed boundary", () => {
         { type: "drawingPrompt" },
         { type: "streakText" },
         { type: "weatherText" },
+        { type: "firstWords" },
       ],
       memberBlockSettings: [
         {
@@ -158,6 +160,13 @@ describe("daily content demo seed boundary", () => {
         },
         {
           memberId: "demo:member:homer",
+          blockType: "firstWords",
+          enabled: true,
+          weekdays: null,
+          params: null,
+        },
+        {
+          memberId: "demo:member:homer",
           blockType: "message",
           enabled: true,
           weekdays: null,
@@ -172,6 +181,13 @@ describe("daily content demo seed boundary", () => {
         },
         {
           memberId: "demo:member:lisa",
+          blockType: "firstWords",
+          enabled: true,
+          weekdays: null,
+          params: null,
+        },
+        {
+          memberId: "demo:member:lisa",
           blockType: "message",
           enabled: true,
           weekdays: null,
@@ -180,6 +196,13 @@ describe("daily content demo seed boundary", () => {
         {
           memberId: "demo:member:lisa",
           blockType: "onThisDay",
+          enabled: true,
+          weekdays: null,
+          params: null,
+        },
+        {
+          memberId: "demo:member:marge",
+          blockType: "firstWords",
           enabled: true,
           weekdays: null,
           params: null,

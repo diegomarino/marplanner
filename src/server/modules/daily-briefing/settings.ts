@@ -18,6 +18,11 @@ import {
   isCorpusLanguageAvailable,
   isKnownBlockType,
 } from "./corpora/index";
+import {
+  FIRST_WORDS_MAX_COUNT,
+  FIRST_WORDS_MIN_COUNT,
+  isValidFirstWordsCount,
+} from "./blocks/first-words";
 import { DailyBriefingValidationError } from "./errors";
 import { getBriefingTime, rearmDailyBriefingSchedule } from "./job";
 import { listMemberSchedules } from "./schedule";
@@ -42,7 +47,7 @@ const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 const VALID_LEVELS = new Set(["L1", "L2", "L3", "L4"]);
 const VALID_DIFFICULTIES = new Set(["easy", "medium", "hard"]);
-const ALLOWED_PARAM_KEYS = new Set(["level", "difficulty", "language"]);
+const ALLOWED_PARAM_KEYS = new Set(["level", "difficulty", "language", "count"]);
 
 const DEFAULT_GENERATION_TIME = "06:00";
 
@@ -126,6 +131,11 @@ function validateParams(blockType: string, value: unknown): Record<string, unkno
   ) {
     throw new DailyBriefingValidationError(
       `Invalid difficulty "${String(params.difficulty)}": must be one of easy, medium, hard`
+    );
+  }
+  if (params.count !== undefined && !isValidFirstWordsCount(params.count)) {
+    throw new DailyBriefingValidationError(
+      `Invalid count "${String(params.count)}": must be an integer ${FIRST_WORDS_MIN_COUNT}-${FIRST_WORDS_MAX_COUNT}`
     );
   }
   if (params.language !== undefined) {

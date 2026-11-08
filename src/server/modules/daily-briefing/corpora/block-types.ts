@@ -23,13 +23,14 @@ export const ALL_BLOCK_TYPES = [
   "drawingPrompt",
   "streakText",
   "weatherText",
+  "firstWords",
 ] as const;
 
 export type BlockRegistryType = (typeof ALL_BLOCK_TYPES)[number];
 
 const ALL_BLOCK_TYPES_SET: ReadonlySet<string> = new Set(ALL_BLOCK_TYPES);
 
-/** True for exactly the 21 registry types above — the write-boundary "known type" gate. */
+/** True for exactly the registry types above — the write-boundary "known type" gate. */
 export function isKnownBlockType(type: unknown): type is BlockRegistryType {
   return typeof type === "string" && ALL_BLOCK_TYPES_SET.has(type);
 }
@@ -37,7 +38,11 @@ export function isKnownBlockType(type: unknown): type is BlockRegistryType {
 /** Block types default-disabled when no `daily_briefing_member_block_settings` row exists
  * (FR-013 — v1 parity: every other type defaults enabled). Consumed by `../settings.ts`'s * read-path default-resolution rule; no seed row is ever written for this.
  */
-export const DEFAULT_DISABLED_BLOCK_TYPES: ReadonlySet<string> = new Set(["onThisDay"]);
+export const DEFAULT_DISABLED_BLOCK_TYPES: ReadonlySet<string> = new Set([
+  "onThisDay",
+  // Early-reader content only suits households with a beginning reader: opt-in.
+  "firstWords",
+]);
 
 /** Corpus-backed block types — the subset offering a `params.language` override (FR-008/FR-009). */
 export const CORPUS_BLOCK_TYPES = [
@@ -50,6 +55,7 @@ export const CORPUS_BLOCK_TYPES = [
   "wouldYouRather",
   "wordSearch",
   "drawingPrompt",
+  "firstWords",
 ] as const;
 
 export type CorpusBlockType = (typeof CORPUS_BLOCK_TYPES)[number];
@@ -79,6 +85,7 @@ export const CORPUS_LANGUAGE_AVAILABILITY: Readonly<
   wouldYouRather: ["en", "es"],
   wordSearch: ["en"],
   drawingPrompt: ["en", "es"],
+  firstWords: ["en"],
 };
 
 export function corpusLanguagesFor(type: CorpusBlockType): readonly CorpusLanguage[] {

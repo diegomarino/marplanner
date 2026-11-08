@@ -132,6 +132,23 @@ describe("BlockMatrix", () => {
     expect(props.onParamChange).toHaveBeenCalledWith("wordOfDay", { level: undefined });
   });
 
+  it("offers level and word count for firstWords", () => {
+    const props = renderMatrix();
+    fireEvent.change(screen.getByTestId("daily-briefing-admin-block-level-firstWords"), {
+      target: { value: "L3" },
+    });
+    expect(props.onParamChange).toHaveBeenCalledWith("firstWords", { level: "L3" });
+    fireEvent.change(screen.getByTestId("daily-briefing-admin-block-count-firstWords"), {
+      target: { value: "5" },
+    });
+    expect(props.onParamChange).toHaveBeenCalledWith("firstWords", { count: 5 });
+    fireEvent.change(screen.getByTestId("daily-briefing-admin-block-count-firstWords"), {
+      target: { value: "" },
+    });
+    expect(props.onParamChange).toHaveBeenCalledWith("firstWords", { count: undefined });
+    expect(screen.queryByTestId("daily-briefing-admin-block-count-wordOfDay")).toBeNull();
+  });
+
   it("names the drag handles and disables them while the order saves", () => {
     renderMatrix({ orderSaving: true });
     expect(screen.getByRole("button", { name: "Reorder Weather" })).toBeDisabled();

@@ -1533,6 +1533,12 @@
             "daily-briefing settings boundary rejects a language with no on-disk corpus for that type (riddle is EN-only) with 400 corpus_language_unavailable",
             "daily-briefing settings boundary accepts a language with an available corpus",
             "daily-briefing settings boundary also rejects an unavailable block-order instance language (params validated the same way)",
+            "daily-briefing settings boundary accepts firstWords level and count params",
+            "daily-briefing settings boundary rejects firstWords count 0 with 400",
+            "daily-briefing settings boundary rejects firstWords count 7 with 400",
+            "daily-briefing settings boundary rejects firstWords count 2.5 with 400",
+            "daily-briefing settings boundary rejects firstWords count \"3\" with 400",
+            "daily-briefing settings boundary firstWords resolves disabled by default with no persisted row",
             "daily-briefing settings boundary onThisDay resolves disabled by default with no persisted row (no seed write)",
             "daily-briefing settings boundary every other block type resolves enabled by default with no persisted row",
             "daily-briefing settings boundary an explicit write can still enable onThisDay for one member",
@@ -3651,6 +3657,7 @@
             "BlockMatrix disables a paused column's cells but keeps their value, and toggles the pause",
             "BlockMatrix disables only the saving row, and the pause row while the schedule saves",
             "BlockMatrix offers params inline and reports changes",
+            "BlockMatrix offers level and word count for firstWords",
             "BlockMatrix names the drag handles and disables them while the order saves",
             "BlockMatrix contains the hidden cell labels inside its own scroll box (no page-wide sideways scroll)",
             "BlockMatrix meets kiosk density"
@@ -5363,6 +5370,8 @@
             "daily-briefing corpora corpus-availability map (FR-008/FR-009) trivia + es -> available:false",
             "daily-briefing corpora corpus-availability map (FR-008/FR-009) riddle + en -> available:true",
             "daily-briefing corpora corpus-availability map (FR-008/FR-009) riddle + es -> available:false",
+            "daily-briefing corpora corpus-availability map (FR-008/FR-009) firstWords + en -> available:true",
+            "daily-briefing corpora corpus-availability map (FR-008/FR-009) firstWords + es -> available:false",
             "daily-briefing corpora corpus-availability map (FR-008/FR-009) wouldYouRather + en -> available:true",
             "daily-briefing corpora corpus-availability map (FR-008/FR-009) wouldYouRather + es -> available:true",
             "daily-briefing corpora corpus-availability map (FR-008/FR-009) wordSearch + en -> available:true",
@@ -5961,6 +5970,30 @@
           "tests/client/daily-briefing-weather-icon.test.tsx": [
             "renders the condition icon before the text, hidden from assistive tech",
             "renders weatherText as text only"
+          ],
+          "tests/integration/daily-briefing-first-words.test.ts": [
+            "firstWords corpus holds roughly 100 unique lowercase words",
+            "firstWords corpus keeps words short: at least 90% have 5 letters or fewer",
+            "firstWords corpus segments every word into graphemes that spell it exactly",
+            "firstWords corpus fills all four levels with at least 20 words each",
+            "firstWords corpus L1 words use only single-letter graphemes",
+            "firstWords corpus L2 words each carry a consonant digraph and no vowel digraph",
+            "firstWords corpus L3 words each carry a vowel digraph or trigraph",
+            "firstWords corpus marks exactly the L4 words as tricky",
+            "generateFirstWords defaults to level L1 and the default count",
+            "generateFirstWords is deterministic per date+level and the same for every member",
+            "generateFirstWords varies across dates",
+            "generateFirstWords returns `count` distinct words from the chosen level, a larger count extending a smaller one",
+            "generateFirstWords carries graphemes and the tricky flag through to the block data",
+            "generateFirstWords throws on an invalid level, an out-of-range count, or an unavailable language",
+            "firstWords render adapter passes valid words through",
+            "firstWords render adapter rejects graphemes that do not spell the word",
+            "firstWords render adapter rejects a missing tricky flag",
+            "layoutFirstWords picks the largest font whose longest word still fits the content width",
+            "layoutFirstWords caps the font for very short words",
+            "layoutFirstWords puts a dot under single letters and a dash under digraphs, spanning their cells",
+            "layoutFirstWords prints tricky words without marks",
+            "firstWords through the real render bridge renders without failed or unrendered blocks"
           ]
         }
       },
@@ -10357,9 +10390,9 @@
           "branches": 0
         },
         "minimumRates": {
-          "lines": 100.0,
-          "statements": 100.0,
-          "functions": 100.0,
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
           "branches": 100
         }
       },
@@ -10779,7 +10812,7 @@
         "minimumRates": {
           "lines": 97.05,
           "statements": 94.59,
-          "functions": 100.0,
+          "functions": 100,
           "branches": 88.23
         }
       },
@@ -11336,6 +11369,36 @@
           "statements": 100,
           "functions": 100,
           "branches": 100
+        }
+      },
+      "src/server/modules/daily-briefing/blocks/first-words.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 18,
+          "statements": 19,
+          "functions": 4,
+          "branches": 12
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/server/modules/daily-briefing/render/blocks/first-words.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 30,
+          "statements": 32,
+          "functions": 8,
+          "branches": 8
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 87.5
         }
       }
     }

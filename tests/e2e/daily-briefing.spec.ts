@@ -210,6 +210,7 @@ const EXPECTED_ABSENT_BLOCK_TYPES = [
   "weatherText", // pure delegate of "weather" — absent under the same precondition
   "birthday", // neither seeded member has a birthDate
   "onThisDay", // ships default-disabled (FR-013) — never enabled by this spec
+  "firstWords", // ships default-disabled (early readers opt in) — never enabled by this spec
 ];
 
 type Member = { id: string; name: string; choreName: string };

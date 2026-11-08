@@ -149,6 +149,7 @@ describe("daily content demo seed integration", () => {
           { type: "drawingPrompt" },
           { type: "streakText" },
           { type: "weatherText" },
+          { type: "firstWords" },
         ],
         memberBlockSettings: [
           {
@@ -161,6 +162,14 @@ describe("daily content demo seed integration", () => {
           },
           {
             memberId: "demo:member:homer",
+            blockType: "firstWords",
+            enabled: true,
+            weekdays: null,
+            params: null,
+            updatedAt: NOW_MS,
+          },
+          {
+            memberId: "demo:member:homer",
             blockType: "message",
             enabled: true,
             weekdays: null,
@@ -177,6 +186,14 @@ describe("daily content demo seed integration", () => {
           },
           {
             memberId: "demo:member:lisa",
+            blockType: "firstWords",
+            enabled: true,
+            weekdays: null,
+            params: null,
+            updatedAt: NOW_MS,
+          },
+          {
+            memberId: "demo:member:lisa",
             blockType: "message",
             enabled: true,
             weekdays: null,
@@ -186,6 +203,14 @@ describe("daily content demo seed integration", () => {
           {
             memberId: "demo:member:lisa",
             blockType: "onThisDay",
+            enabled: true,
+            weekdays: null,
+            params: null,
+            updatedAt: NOW_MS,
+          },
+          {
+            memberId: "demo:member:marge",
+            blockType: "firstWords",
             enabled: true,
             weekdays: null,
             params: null,

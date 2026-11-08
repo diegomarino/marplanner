@@ -1,10 +1,11 @@
-// Register all 21 supported briefing block renderers. Structural copy uses the household
+// Register all supported briefing block renderers. Structural copy uses the household
 // language through labels.ts; missing renderers remain visible as unrenderedBlocks.
 import { createRegistry, type Registry } from "pressedslip";
 import { animalFactBlock } from "./blocks/animal-fact";
 import { birthdayBlock } from "./blocks/birthday";
 import { dadJokeBlock } from "./blocks/dad-joke";
 import { drawingPromptBlock } from "./blocks/drawing-prompt";
+import { firstWordsBlock } from "./blocks/first-words";
 import { mealsBlock } from "./blocks/meals";
 import { messageBlock } from "./blocks/message";
 import { numberFactBlock } from "./blocks/number-fact";
@@ -45,4 +46,5 @@ export const dailyBriefingRenderRegistry: Registry = createRegistry([
   weatherTextBlock,
   shotgunBlock,
   wordSearchBlock,
+  firstWordsBlock,
 ]);

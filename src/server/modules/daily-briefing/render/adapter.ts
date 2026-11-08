@@ -99,6 +99,32 @@ export function adaptBlockData(blockType: string, raw: unknown): unknown {
       }
       return out;
     }
+    case "firstWords":
+      return {
+        words: needArray<Record<string, unknown>>(blockType, "words", data.words, "object").map(
+          (w, i) => {
+            const field = `words[${i}]`;
+            if (typeof w !== "object" || w === null) {
+              throw new AdapterError(blockType, field, "expected object");
+            }
+            const word = needString(blockType, `${field}.word`, w.word);
+            const graphemes = needArray<unknown>(
+              blockType,
+              `${field}.graphemes`,
+              w.graphemes,
+              "string"
+            ).map((g, gi) => needString(blockType, `${field}.graphemes[${gi}]`, g));
+            if (graphemes.join("") !== word) {
+              throw new AdapterError(blockType, `${field}.graphemes`, `do not spell "${word}"`);
+            }
+            const tricky = need(blockType, `${field}.tricky`, w.tricky, "boolean");
+            if (typeof tricky !== "boolean") {
+              throw new AdapterError(blockType, `${field}.tricky`, "expected boolean");
+            }
+            return { word, graphemes, tricky };
+          }
+        ),
+      };
     case "wouldYouRather":
       return {
         optionA: needString(blockType, "optionA", data.optionA),
