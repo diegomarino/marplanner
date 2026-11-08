@@ -414,9 +414,20 @@ export function createBluetoothPrintTransport(): PrintTransport {
     });
   }
 
+  // Every pair/reconnect/disconnect starts a new operation. A superseded one (a slow
+  // background reconnect overtaken by a manual pair, say) must never touch the shared
+  // `device`/`characteristic` or tear down a link the newer operation now owns.
+  let operation = 0;
+
+  function superseded(): PrintTransportError {
+    return new PrintTransportError("connect_failed", "Superseded by a newer printer operation.");
+  }
+
   /** Attach `target`, connect its GATT server and select a writable characteristic, trying
-   * `services` in order. Leaves no half-open connection behind when nothing is writable. */
+   * `services` in order. Leaves no half-open connection behind when nothing is writable, and
+   * aborts without side effects once operation `token` is no longer the current one. */
   async function attachAndDiscover(
+    token: number,
     target: BluetoothDevice,
     services: (number | string)[],
     preferredCharacteristic: string | undefined,
@@ -427,6 +438,7 @@ export function createBluetoothPrintTransport(): PrintTransport {
     characteristic = null;
     target.addEventListener("gattserverdisconnected", notifyUnexpectedDisconnect);
     const server = await connect();
+    if (token !== operation) throw superseded();
 
     for (const serviceId of services) {
       let service: BluetoothRemoteGATTService;
@@ -441,6 +453,7 @@ export function createBluetoothPrintTransport(): PrintTransport {
       } catch {
         continue;
       }
+      if (token !== operation) throw superseded();
       const writableCharacteristics = characteristics.filter(
         (c) => c.properties.write || c.properties.writeWithoutResponse
       );
@@ -457,6 +470,7 @@ export function createBluetoothPrintTransport(): PrintTransport {
         };
       }
     }
+    if (token !== operation) throw superseded();
 
     //: a GATT connection was established above but no candidate service
     // exposed a writable characteristic — disconnect it before throwing, or a re-click of
@@ -489,12 +503,15 @@ export function createBluetoothPrintTransport(): PrintTransport {
   return {
     async pair(preference) {
       ensureBluetoothAvailable();
+      const token = ++operation;
       const services = orderCandidateServices(preference?.serviceUuid);
       const paired = await navigator.bluetooth.requestDevice({
         filters: [{ services: [BLUETOOTH_PRINTER_FILTER_SERVICE] }],
         optionalServices: services,
       });
+      if (token !== operation) throw superseded();
       return attachAndDiscover(
+        token,
         paired,
         services,
         preference?.characteristicUuid?.toLowerCase(),
@@ -503,7 +520,9 @@ export function createBluetoothPrintTransport(): PrintTransport {
     },
     async reconnect(remembered) {
       ensureBluetoothAvailable();
+      const token = ++operation;
       const target = remembered.deviceId ? await findGrantedDevice(remembered.deviceId) : null;
+      if (token !== operation) throw superseded();
       if (!target) {
         throw new PrintTransportError(
           "pairing_required",
@@ -512,6 +531,7 @@ export function createBluetoothPrintTransport(): PrintTransport {
       }
       try {
         return await attachAndDiscover(
+          token,
           target,
           orderCandidateServices(remembered.serviceUuid),
           remembered.characteristicUuid.toLowerCase(),
@@ -526,6 +546,15 @@ export function createBluetoothPrintTransport(): PrintTransport {
           }
         );
       } catch (err) {
+        if (token !== operation) {
+          // Superseded: the newer operation owns the shared state. Only release what is ours —
+          // never a link to the device the newer operation is now using.
+          if (target !== device) {
+            target.removeEventListener("gattserverdisconnected", notifyUnexpectedDisconnect);
+            target.gatt?.disconnect();
+          }
+          throw superseded();
+        }
         // Keep the device reference for the next attempt, but never a half-open connection or
         // a listener that would report our own teardown as an unexpected drop.
         detachDeviceListener();
@@ -554,6 +583,7 @@ export function createBluetoothPrintTransport(): PrintTransport {
       }
     },
     disconnect() {
+      operation += 1; // cancels any in-flight pair/reconnect
       detachDeviceListener(); // self-initiated — never notify onDisconnect subscribers
       device?.gatt?.disconnect();
       device = null;

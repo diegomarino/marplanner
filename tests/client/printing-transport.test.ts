@@ -548,6 +548,65 @@ describe("createBluetoothPrintTransport reconnect() (gesture-free)", () => {
       expect.any(Function)
     );
   });
+  it("a reconnect overtaken by a manual pair never replaces the new printer's characteristic", async () => {
+    const stale = makeDevice("dev-1");
+    let releaseStale: (() => void) | undefined;
+    stale.gatt.connect.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          releaseStale = () => {
+            stale.gatt.connected = true;
+            resolve({ getPrimaryService: stale.getPrimaryService });
+          };
+        })
+    );
+    const fresh = makeDevice("dev-2");
+    const writeValue = vi.fn(async () => {});
+    const staleWrite = vi.fn(async () => {});
+    fresh.getPrimaryService.mockImplementation(async (serviceId: number | string) => ({
+      uuid: String(serviceId),
+      getCharacteristics: async () => [
+        {
+          uuid: remembered.characteristicUuid,
+          properties: { write: true, writeWithoutResponse: false },
+          writeValue,
+        },
+      ],
+    }));
+    stale.getPrimaryService.mockImplementation(async (serviceId: number | string) => ({
+      uuid: String(serviceId),
+      getCharacteristics: async () => [
+        {
+          uuid: remembered.characteristicUuid,
+          properties: { write: true, writeWithoutResponse: false },
+          writeValue: staleWrite,
+        },
+      ],
+    }));
+    vi.stubGlobal("navigator", {
+      ...globalThis.navigator,
+      bluetooth: {
+        requestDevice: vi.fn().mockResolvedValue(fresh),
+        getDevices: vi.fn().mockResolvedValue([stale]),
+      },
+    });
+
+    const transport = createBluetoothPrintTransport();
+    const slowReconnect = transport.reconnect(remembered);
+    const slowOutcome = expect(slowReconnect).rejects.toMatchObject({ code: "connect_failed" });
+    await vi.waitFor(() => expect(stale.gatt.connect).toHaveBeenCalled());
+
+    await expect(transport.pair(remembered)).resolves.toMatchObject({ deviceId: "dev-2" });
+    releaseStale?.();
+    await slowOutcome;
+
+    expect(transport.isReady()).toBe(true);
+    await transport.printJob(new Uint8Array([1, 2, 3]));
+    expect(writeValue).toHaveBeenCalledTimes(1);
+    expect(staleWrite).not.toHaveBeenCalled();
+    expect(fresh.gatt.disconnect).not.toHaveBeenCalled();
+    expect(stale.gatt.disconnect).toHaveBeenCalled(); // the stale link is released
+  });
 });
 
 describe("createFakePrintTransport reconnect()", () => {
