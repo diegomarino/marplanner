@@ -1,8 +1,5 @@
 name: Mac mini runner verification
 "on":
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       force_hosted:

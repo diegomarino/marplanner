@@ -74,7 +74,7 @@ test("CI binds the checked-out tree instead of a stale embedded candidate hash",
     config.jobs.container["runs-on"],
     "${{ fromJSON(needs.select.outputs.container_runner) }}"
   );
-  assert.deepEqual(config.jobs.container.needs, ["select", "standard"]);
+  assert.deepEqual(config.jobs.container.needs, ["select"]);
   for (const job of ["standard", "native"]) {
     assert.equal(config.jobs[job]["runs-on"], "${{ fromJSON(needs.select.outputs.runner) }}");
     assert.ok(config.jobs[job].needs.includes("select"));

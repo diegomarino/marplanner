@@ -76,6 +76,8 @@ describe("Admin Calendar sources", () => {
   });
 
   it("creates a source with a fixed 15-minute interval and keeps failed first sync retryable", async () => {
+    // Fake timers skip the 1 s poll interval; shouldAdvanceTime keeps waitFor working.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     const calls: Array<[string, string, unknown]> = [];
     let current = [] as ExternalSourcePublic[];
     vi.stubGlobal(
@@ -112,7 +114,7 @@ describe("Admin Calendar sources", () => {
     expect(screen.getByText("Requesting feed…")).toBeInTheDocument();
     current = [{ ...source, phase: "failed", lastErrorCode: "timeout" }];
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1100));
+      await vi.advanceTimersByTimeAsync(1100);
     });
     expect(screen.getByText("The feed request timed out.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Sync now" }));
@@ -148,6 +150,8 @@ describe("Admin Calendar sources", () => {
   });
 
   it("polls only active phases and refreshes Calendar events after success", async () => {
+    // Fake timers skip the 1 s poll interval; shouldAdvanceTime keeps waitFor working.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     let current: ExternalSourcePublic[] = [{ ...source, phase: "parsing" }];
     const calls: string[] = [];
     vi.stubGlobal(
@@ -164,13 +168,13 @@ describe("Admin Calendar sources", () => {
     expect(await screen.findByText("Parsing events…")).toBeInTheDocument();
     current = [{ ...source, phase: "succeeded", lastSuccessAt: Date.now() }];
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1100));
+      await vi.advanceTimersByTimeAsync(1100);
     });
     expect(screen.getByText("Calendar updated")).toBeInTheDocument();
     expect(calls.some((url) => url.includes("/api/calendar/events?"))).toBe(true);
     const sourceReads = calls.filter((url) => url.endsWith("/external-sources")).length;
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1100));
+      await vi.advanceTimersByTimeAsync(1100);
     });
     expect(calls.filter((url) => url.endsWith("/external-sources"))).toHaveLength(sourceReads);
   });
