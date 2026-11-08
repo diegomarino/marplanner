@@ -1,4 +1,4 @@
-// phonics render-def: early-reader words printed as large as the paper allows, one word per
+// phonics render-def: early-reader words printed in large letters (up to ~20mm), one word per
 // line, with "sound buttons" underneath — a dot under each single-letter grapheme and a dash
 // under each multi-letter grapheme (digraph/trigraph). Tricky words print without marks.
 //
@@ -11,9 +11,10 @@ import { type ZodType, z } from "zod";
 
 /** Advance width of every JetBrains Mono glyph, in em (hmtx 600 / unitsPerEm 1000). */
 export const PHONICS_GLYPH_ADVANCE_EM = 0.6;
-/** Ceiling for very short words (2-letter tricky words would otherwise reach ~440px). A 3-letter
- * CVC word on 80mm paper (~293px) still prints at full width. */
-export const PHONICS_MAX_FONT_PX = 300;
+/** Font ceiling: 160px is ~20mm at 203dpi. On 80mm paper a 5-letter word fits at 176px, so every
+ * word of up to five letters (99% of the corpus) prints at this same size and only longer words
+ * shrink to fit. Without it a 3-letter word would fill the width at ~293px (~37mm). */
+export const PHONICS_MAX_FONT_PX = 160;
 
 const LINE_HEIGHT_EM = 1.2;
 const MARK_GAP_EM = 0.04;

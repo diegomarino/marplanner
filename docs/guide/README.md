@@ -125,7 +125,7 @@ content block:
 - **Fun content:** dad joke, word of the day, animal fact, number fact, on this day,
   quote of the day, trivia, riddle (printed upside down), would you rather, a word
   search and a drawing prompt with an empty box to fill in.
-- **Early readers:** "phonics" prints a few words as large as the paper allows, with
+- **Early readers:** "phonics" prints a few words in large letters (about 2 cm), with
   sound buttons underneath (a dot per single-letter sound, a dash per digraph such as sh
   or ee). Pick the level (L1 CVC words, L2 consonant digraphs, L3 vowel digraphs, L4
   tricky words, printed without marks) and how many words; the block walks the whole

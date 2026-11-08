@@ -5995,8 +5995,8 @@
             "phonics render adapter passes valid words through",
             "phonics render adapter rejects graphemes that do not spell the word",
             "phonics render adapter rejects a missing tricky flag",
-            "layoutPhonics picks the largest font whose longest word still fits the content width",
-            "layoutPhonics caps the font for very short words",
+            "layoutPhonics shrinks below the cap only when the longest word would not fit the content width",
+            "layoutPhonics caps the font at 160px (~20mm at 203dpi), so every word of up to 5 letters prints the same size on 80mm paper",
             "layoutPhonics puts a dot under single letters and a dash under digraphs, spanning their cells",
             "layoutPhonics prints tricky words without marks",
             "phonics through the real render bridge renders without failed or unrendered blocks"
