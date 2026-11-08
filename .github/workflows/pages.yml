@@ -13,6 +13,9 @@ name: Landing page
       - docs/images/features/**
       - public/favicon.svg
       - tools/docs/**
+      # The reference's Scalar bundle comes from node_modules, so a dependency bump changes it.
+      - package.json
+      - package-lock.json
       - .github/workflows/pages.yml
   workflow_dispatch: null
 permissions:
