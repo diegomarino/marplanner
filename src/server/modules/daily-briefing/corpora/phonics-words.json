@@ -6,15 +6,105 @@
     "tricky": false
   },
   {
+    "word": "bat",
+    "level": "L1",
+    "graphemes": ["b", "a", "t"],
+    "tricky": false
+  },
+  {
+    "word": "hat",
+    "level": "L1",
+    "graphemes": ["h", "a", "t"],
+    "tricky": false
+  },
+  {
+    "word": "mat",
+    "level": "L1",
+    "graphemes": ["m", "a", "t"],
+    "tricky": false
+  },
+  {
+    "word": "rat",
+    "level": "L1",
+    "graphemes": ["r", "a", "t"],
+    "tricky": false
+  },
+  {
     "word": "sat",
     "level": "L1",
     "graphemes": ["s", "a", "t"],
     "tricky": false
   },
   {
-    "word": "pin",
+    "word": "pat",
     "level": "L1",
-    "graphemes": ["p", "i", "n"],
+    "graphemes": ["p", "a", "t"],
+    "tricky": false
+  },
+  {
+    "word": "fat",
+    "level": "L1",
+    "graphemes": ["f", "a", "t"],
+    "tricky": false
+  },
+  {
+    "word": "van",
+    "level": "L1",
+    "graphemes": ["v", "a", "n"],
+    "tricky": false
+  },
+  {
+    "word": "can",
+    "level": "L1",
+    "graphemes": ["c", "a", "n"],
+    "tricky": false
+  },
+  {
+    "word": "fan",
+    "level": "L1",
+    "graphemes": ["f", "a", "n"],
+    "tricky": false
+  },
+  {
+    "word": "man",
+    "level": "L1",
+    "graphemes": ["m", "a", "n"],
+    "tricky": false
+  },
+  {
+    "word": "pan",
+    "level": "L1",
+    "graphemes": ["p", "a", "n"],
+    "tricky": false
+  },
+  {
+    "word": "ran",
+    "level": "L1",
+    "graphemes": ["r", "a", "n"],
+    "tricky": false
+  },
+  {
+    "word": "tan",
+    "level": "L1",
+    "graphemes": ["t", "a", "n"],
+    "tricky": false
+  },
+  {
+    "word": "cap",
+    "level": "L1",
+    "graphemes": ["c", "a", "p"],
+    "tricky": false
+  },
+  {
+    "word": "map",
+    "level": "L1",
+    "graphemes": ["m", "a", "p"],
+    "tricky": false
+  },
+  {
+    "word": "nap",
+    "level": "L1",
+    "graphemes": ["n", "a", "p"],
     "tricky": false
   },
   {
@@ -24,21 +114,75 @@
     "tricky": false
   },
   {
-    "word": "dog",
+    "word": "lap",
     "level": "L1",
-    "graphemes": ["d", "o", "g"],
+    "graphemes": ["l", "a", "p"],
     "tricky": false
   },
   {
-    "word": "mum",
+    "word": "gap",
     "level": "L1",
-    "graphemes": ["m", "u", "m"],
+    "graphemes": ["g", "a", "p"],
     "tricky": false
   },
   {
-    "word": "sun",
+    "word": "bag",
     "level": "L1",
-    "graphemes": ["s", "u", "n"],
+    "graphemes": ["b", "a", "g"],
+    "tricky": false
+  },
+  {
+    "word": "rag",
+    "level": "L1",
+    "graphemes": ["r", "a", "g"],
+    "tricky": false
+  },
+  {
+    "word": "tag",
+    "level": "L1",
+    "graphemes": ["t", "a", "g"],
+    "tricky": false
+  },
+  {
+    "word": "wag",
+    "level": "L1",
+    "graphemes": ["w", "a", "g"],
+    "tricky": false
+  },
+  {
+    "word": "jam",
+    "level": "L1",
+    "graphemes": ["j", "a", "m"],
+    "tricky": false
+  },
+  {
+    "word": "ham",
+    "level": "L1",
+    "graphemes": ["h", "a", "m"],
+    "tricky": false
+  },
+  {
+    "word": "dad",
+    "level": "L1",
+    "graphemes": ["d", "a", "d"],
+    "tricky": false
+  },
+  {
+    "word": "sad",
+    "level": "L1",
+    "graphemes": ["s", "a", "d"],
+    "tricky": false
+  },
+  {
+    "word": "pad",
+    "level": "L1",
+    "graphemes": ["p", "a", "d"],
+    "tricky": false
+  },
+  {
+    "word": "bad",
+    "level": "L1",
+    "graphemes": ["b", "a", "d"],
     "tricky": false
   },
   {
@@ -54,15 +198,147 @@
     "tricky": false
   },
   {
-    "word": "hat",
+    "word": "fed",
     "level": "L1",
-    "graphemes": ["h", "a", "t"],
+    "graphemes": ["f", "e", "d"],
     "tricky": false
   },
   {
-    "word": "map",
+    "word": "led",
     "level": "L1",
-    "graphemes": ["m", "a", "p"],
+    "graphemes": ["l", "e", "d"],
+    "tricky": false
+  },
+  {
+    "word": "ten",
+    "level": "L1",
+    "graphemes": ["t", "e", "n"],
+    "tricky": false
+  },
+  {
+    "word": "hen",
+    "level": "L1",
+    "graphemes": ["h", "e", "n"],
+    "tricky": false
+  },
+  {
+    "word": "pen",
+    "level": "L1",
+    "graphemes": ["p", "e", "n"],
+    "tricky": false
+  },
+  {
+    "word": "men",
+    "level": "L1",
+    "graphemes": ["m", "e", "n"],
+    "tricky": false
+  },
+  {
+    "word": "den",
+    "level": "L1",
+    "graphemes": ["d", "e", "n"],
+    "tricky": false
+  },
+  {
+    "word": "net",
+    "level": "L1",
+    "graphemes": ["n", "e", "t"],
+    "tricky": false
+  },
+  {
+    "word": "pet",
+    "level": "L1",
+    "graphemes": ["p", "e", "t"],
+    "tricky": false
+  },
+  {
+    "word": "wet",
+    "level": "L1",
+    "graphemes": ["w", "e", "t"],
+    "tricky": false
+  },
+  {
+    "word": "jet",
+    "level": "L1",
+    "graphemes": ["j", "e", "t"],
+    "tricky": false
+  },
+  {
+    "word": "vet",
+    "level": "L1",
+    "graphemes": ["v", "e", "t"],
+    "tricky": false
+  },
+  {
+    "word": "get",
+    "level": "L1",
+    "graphemes": ["g", "e", "t"],
+    "tricky": false
+  },
+  {
+    "word": "let",
+    "level": "L1",
+    "graphemes": ["l", "e", "t"],
+    "tricky": false
+  },
+  {
+    "word": "peg",
+    "level": "L1",
+    "graphemes": ["p", "e", "g"],
+    "tricky": false
+  },
+  {
+    "word": "leg",
+    "level": "L1",
+    "graphemes": ["l", "e", "g"],
+    "tricky": false
+  },
+  {
+    "word": "beg",
+    "level": "L1",
+    "graphemes": ["b", "e", "g"],
+    "tricky": false
+  },
+  {
+    "word": "web",
+    "level": "L1",
+    "graphemes": ["w", "e", "b"],
+    "tricky": false
+  },
+  {
+    "word": "yes",
+    "level": "L1",
+    "graphemes": ["y", "e", "s"],
+    "tricky": false
+  },
+  {
+    "word": "pin",
+    "level": "L1",
+    "graphemes": ["p", "i", "n"],
+    "tricky": false
+  },
+  {
+    "word": "bin",
+    "level": "L1",
+    "graphemes": ["b", "i", "n"],
+    "tricky": false
+  },
+  {
+    "word": "tin",
+    "level": "L1",
+    "graphemes": ["t", "i", "n"],
+    "tricky": false
+  },
+  {
+    "word": "win",
+    "level": "L1",
+    "graphemes": ["w", "i", "n"],
+    "tricky": false
+  },
+  {
+    "word": "fin",
+    "level": "L1",
+    "graphemes": ["f", "i", "n"],
     "tricky": false
   },
   {
@@ -78,51 +354,21 @@
     "tricky": false
   },
   {
-    "word": "bus",
+    "word": "dig",
     "level": "L1",
-    "graphemes": ["b", "u", "s"],
+    "graphemes": ["d", "i", "g"],
     "tricky": false
   },
   {
-    "word": "cup",
+    "word": "wig",
     "level": "L1",
-    "graphemes": ["c", "u", "p"],
+    "graphemes": ["w", "i", "g"],
     "tricky": false
   },
   {
-    "word": "net",
+    "word": "fig",
     "level": "L1",
-    "graphemes": ["n", "e", "t"],
-    "tricky": false
-  },
-  {
-    "word": "top",
-    "level": "L1",
-    "graphemes": ["t", "o", "p"],
-    "tricky": false
-  },
-  {
-    "word": "hen",
-    "level": "L1",
-    "graphemes": ["h", "e", "n"],
-    "tricky": false
-  },
-  {
-    "word": "leg",
-    "level": "L1",
-    "graphemes": ["l", "e", "g"],
-    "tricky": false
-  },
-  {
-    "word": "fan",
-    "level": "L1",
-    "graphemes": ["f", "a", "n"],
-    "tricky": false
-  },
-  {
-    "word": "run",
-    "level": "L1",
-    "graphemes": ["r", "u", "n"],
+    "graphemes": ["f", "i", "g"],
     "tricky": false
   },
   {
@@ -132,33 +378,135 @@
     "tricky": false
   },
   {
-    "word": "mop",
+    "word": "hit",
     "level": "L1",
-    "graphemes": ["m", "o", "p"],
+    "graphemes": ["h", "i", "t"],
     "tricky": false
   },
   {
-    "word": "jam",
+    "word": "bit",
     "level": "L1",
-    "graphemes": ["j", "a", "m"],
+    "graphemes": ["b", "i", "t"],
     "tricky": false
   },
   {
-    "word": "van",
+    "word": "kit",
     "level": "L1",
-    "graphemes": ["v", "a", "n"],
+    "graphemes": ["k", "i", "t"],
     "tricky": false
   },
   {
-    "word": "web",
+    "word": "fit",
     "level": "L1",
-    "graphemes": ["w", "e", "b"],
+    "graphemes": ["f", "i", "t"],
     "tricky": false
   },
   {
-    "word": "fox",
+    "word": "lip",
     "level": "L1",
-    "graphemes": ["f", "o", "x"],
+    "graphemes": ["l", "i", "p"],
+    "tricky": false
+  },
+  {
+    "word": "dip",
+    "level": "L1",
+    "graphemes": ["d", "i", "p"],
+    "tricky": false
+  },
+  {
+    "word": "hip",
+    "level": "L1",
+    "graphemes": ["h", "i", "p"],
+    "tricky": false
+  },
+  {
+    "word": "tip",
+    "level": "L1",
+    "graphemes": ["t", "i", "p"],
+    "tricky": false
+  },
+  {
+    "word": "zip",
+    "level": "L1",
+    "graphemes": ["z", "i", "p"],
+    "tricky": false
+  },
+  {
+    "word": "six",
+    "level": "L1",
+    "graphemes": ["s", "i", "x"],
+    "tricky": false
+  },
+  {
+    "word": "mix",
+    "level": "L1",
+    "graphemes": ["m", "i", "x"],
+    "tricky": false
+  },
+  {
+    "word": "fix",
+    "level": "L1",
+    "graphemes": ["f", "i", "x"],
+    "tricky": false
+  },
+  {
+    "word": "dog",
+    "level": "L1",
+    "graphemes": ["d", "o", "g"],
+    "tricky": false
+  },
+  {
+    "word": "log",
+    "level": "L1",
+    "graphemes": ["l", "o", "g"],
+    "tricky": false
+  },
+  {
+    "word": "hog",
+    "level": "L1",
+    "graphemes": ["h", "o", "g"],
+    "tricky": false
+  },
+  {
+    "word": "fog",
+    "level": "L1",
+    "graphemes": ["f", "o", "g"],
+    "tricky": false
+  },
+  {
+    "word": "jog",
+    "level": "L1",
+    "graphemes": ["j", "o", "g"],
+    "tricky": false
+  },
+  {
+    "word": "cot",
+    "level": "L1",
+    "graphemes": ["c", "o", "t"],
+    "tricky": false
+  },
+  {
+    "word": "dot",
+    "level": "L1",
+    "graphemes": ["d", "o", "t"],
+    "tricky": false
+  },
+  {
+    "word": "hot",
+    "level": "L1",
+    "graphemes": ["h", "o", "t"],
+    "tricky": false
+  },
+  {
+    "word": "pot",
+    "level": "L1",
+    "graphemes": ["p", "o", "t"],
+    "tricky": false
+  },
+  {
+    "word": "got",
+    "level": "L1",
+    "graphemes": ["g", "o", "t"],
     "tricky": false
   },
   {
@@ -168,15 +516,165 @@
     "tricky": false
   },
   {
-    "word": "yes",
+    "word": "fox",
     "level": "L1",
-    "graphemes": ["y", "e", "s"],
+    "graphemes": ["f", "o", "x"],
     "tricky": false
   },
   {
-    "word": "zip",
+    "word": "top",
     "level": "L1",
-    "graphemes": ["z", "i", "p"],
+    "graphemes": ["t", "o", "p"],
+    "tricky": false
+  },
+  {
+    "word": "hop",
+    "level": "L1",
+    "graphemes": ["h", "o", "p"],
+    "tricky": false
+  },
+  {
+    "word": "mop",
+    "level": "L1",
+    "graphemes": ["m", "o", "p"],
+    "tricky": false
+  },
+  {
+    "word": "pop",
+    "level": "L1",
+    "graphemes": ["p", "o", "p"],
+    "tricky": false
+  },
+  {
+    "word": "rod",
+    "level": "L1",
+    "graphemes": ["r", "o", "d"],
+    "tricky": false
+  },
+  {
+    "word": "job",
+    "level": "L1",
+    "graphemes": ["j", "o", "b"],
+    "tricky": false
+  },
+  {
+    "word": "sun",
+    "level": "L1",
+    "graphemes": ["s", "u", "n"],
+    "tricky": false
+  },
+  {
+    "word": "bun",
+    "level": "L1",
+    "graphemes": ["b", "u", "n"],
+    "tricky": false
+  },
+  {
+    "word": "fun",
+    "level": "L1",
+    "graphemes": ["f", "u", "n"],
+    "tricky": false
+  },
+  {
+    "word": "run",
+    "level": "L1",
+    "graphemes": ["r", "u", "n"],
+    "tricky": false
+  },
+  {
+    "word": "cup",
+    "level": "L1",
+    "graphemes": ["c", "u", "p"],
+    "tricky": false
+  },
+  {
+    "word": "pup",
+    "level": "L1",
+    "graphemes": ["p", "u", "p"],
+    "tricky": false
+  },
+  {
+    "word": "bus",
+    "level": "L1",
+    "graphemes": ["b", "u", "s"],
+    "tricky": false
+  },
+  {
+    "word": "cut",
+    "level": "L1",
+    "graphemes": ["c", "u", "t"],
+    "tricky": false
+  },
+  {
+    "word": "hut",
+    "level": "L1",
+    "graphemes": ["h", "u", "t"],
+    "tricky": false
+  },
+  {
+    "word": "nut",
+    "level": "L1",
+    "graphemes": ["n", "u", "t"],
+    "tricky": false
+  },
+  {
+    "word": "rug",
+    "level": "L1",
+    "graphemes": ["r", "u", "g"],
+    "tricky": false
+  },
+  {
+    "word": "bug",
+    "level": "L1",
+    "graphemes": ["b", "u", "g"],
+    "tricky": false
+  },
+  {
+    "word": "hug",
+    "level": "L1",
+    "graphemes": ["h", "u", "g"],
+    "tricky": false
+  },
+  {
+    "word": "mug",
+    "level": "L1",
+    "graphemes": ["m", "u", "g"],
+    "tricky": false
+  },
+  {
+    "word": "jug",
+    "level": "L1",
+    "graphemes": ["j", "u", "g"],
+    "tricky": false
+  },
+  {
+    "word": "tub",
+    "level": "L1",
+    "graphemes": ["t", "u", "b"],
+    "tricky": false
+  },
+  {
+    "word": "rub",
+    "level": "L1",
+    "graphemes": ["r", "u", "b"],
+    "tricky": false
+  },
+  {
+    "word": "cub",
+    "level": "L1",
+    "graphemes": ["c", "u", "b"],
+    "tricky": false
+  },
+  {
+    "word": "mum",
+    "level": "L1",
+    "graphemes": ["m", "u", "m"],
+    "tricky": false
+  },
+  {
+    "word": "gum",
+    "level": "L1",
+    "graphemes": ["g", "u", "m"],
     "tricky": false
   },
   {
@@ -204,9 +702,63 @@
     "tricky": false
   },
   {
+    "word": "wish",
+    "level": "L2",
+    "graphemes": ["w", "i", "sh"],
+    "tricky": false
+  },
+  {
+    "word": "cash",
+    "level": "L2",
+    "graphemes": ["c", "a", "sh"],
+    "tricky": false
+  },
+  {
+    "word": "mash",
+    "level": "L2",
+    "graphemes": ["m", "a", "sh"],
+    "tricky": false
+  },
+  {
+    "word": "rush",
+    "level": "L2",
+    "graphemes": ["r", "u", "sh"],
+    "tricky": false
+  },
+  {
     "word": "shed",
     "level": "L2",
     "graphemes": ["sh", "e", "d"],
+    "tricky": false
+  },
+  {
+    "word": "shut",
+    "level": "L2",
+    "graphemes": ["sh", "u", "t"],
+    "tricky": false
+  },
+  {
+    "word": "shell",
+    "level": "L2",
+    "graphemes": ["sh", "e", "ll"],
+    "tricky": false
+  },
+  {
+    "word": "shin",
+    "level": "L2",
+    "graphemes": ["sh", "i", "n"],
+    "tricky": false
+  },
+  {
+    "word": "shot",
+    "level": "L2",
+    "graphemes": ["sh", "o", "t"],
+    "tricky": false
+  },
+  {
+    "word": "shock",
+    "level": "L2",
+    "graphemes": ["sh", "o", "ck"],
     "tricky": false
   },
   {
@@ -228,9 +780,21 @@
     "tricky": false
   },
   {
-    "word": "rich",
+    "word": "chat",
     "level": "L2",
-    "graphemes": ["r", "i", "ch"],
+    "graphemes": ["ch", "a", "t"],
+    "tricky": false
+  },
+  {
+    "word": "chick",
+    "level": "L2",
+    "graphemes": ["ch", "i", "ck"],
+    "tricky": false
+  },
+  {
+    "word": "chess",
+    "level": "L2",
+    "graphemes": ["ch", "e", "ss"],
     "tricky": false
   },
   {
@@ -240,9 +804,45 @@
     "tricky": false
   },
   {
+    "word": "rich",
+    "level": "L2",
+    "graphemes": ["r", "i", "ch"],
+    "tricky": false
+  },
+  {
+    "word": "such",
+    "level": "L2",
+    "graphemes": ["s", "u", "ch"],
+    "tricky": false
+  },
+  {
+    "word": "check",
+    "level": "L2",
+    "graphemes": ["ch", "e", "ck"],
+    "tricky": false
+  },
+  {
+    "word": "lunch",
+    "level": "L2",
+    "graphemes": ["l", "u", "n", "ch"],
+    "tricky": false
+  },
+  {
+    "word": "bench",
+    "level": "L2",
+    "graphemes": ["b", "e", "n", "ch"],
+    "tricky": false
+  },
+  {
     "word": "thin",
     "level": "L2",
     "graphemes": ["th", "i", "n"],
+    "tricky": false
+  },
+  {
+    "word": "thick",
+    "level": "L2",
+    "graphemes": ["th", "i", "ck"],
     "tricky": false
   },
   {
@@ -258,9 +858,45 @@
     "tricky": false
   },
   {
+    "word": "math",
+    "level": "L2",
+    "graphemes": ["m", "a", "th"],
+    "tricky": false
+  },
+  {
+    "word": "with",
+    "level": "L2",
+    "graphemes": ["w", "i", "th"],
+    "tricky": false
+  },
+  {
     "word": "that",
     "level": "L2",
     "graphemes": ["th", "a", "t"],
+    "tricky": false
+  },
+  {
+    "word": "this",
+    "level": "L2",
+    "graphemes": ["th", "i", "s"],
+    "tricky": false
+  },
+  {
+    "word": "then",
+    "level": "L2",
+    "graphemes": ["th", "e", "n"],
+    "tricky": false
+  },
+  {
+    "word": "them",
+    "level": "L2",
+    "graphemes": ["th", "e", "m"],
+    "tricky": false
+  },
+  {
+    "word": "thud",
+    "level": "L2",
+    "graphemes": ["th", "u", "d"],
     "tricky": false
   },
   {
@@ -276,6 +912,18 @@
     "tricky": false
   },
   {
+    "word": "sing",
+    "level": "L2",
+    "graphemes": ["s", "i", "ng"],
+    "tricky": false
+  },
+  {
+    "word": "wing",
+    "level": "L2",
+    "graphemes": ["w", "i", "ng"],
+    "tricky": false
+  },
+  {
     "word": "song",
     "level": "L2",
     "graphemes": ["s", "o", "ng"],
@@ -285,6 +933,48 @@
     "word": "long",
     "level": "L2",
     "graphemes": ["l", "o", "ng"],
+    "tricky": false
+  },
+  {
+    "word": "bang",
+    "level": "L2",
+    "graphemes": ["b", "a", "ng"],
+    "tricky": false
+  },
+  {
+    "word": "hang",
+    "level": "L2",
+    "graphemes": ["h", "a", "ng"],
+    "tricky": false
+  },
+  {
+    "word": "rang",
+    "level": "L2",
+    "graphemes": ["r", "a", "ng"],
+    "tricky": false
+  },
+  {
+    "word": "sang",
+    "level": "L2",
+    "graphemes": ["s", "a", "ng"],
+    "tricky": false
+  },
+  {
+    "word": "lung",
+    "level": "L2",
+    "graphemes": ["l", "u", "ng"],
+    "tricky": false
+  },
+  {
+    "word": "hung",
+    "level": "L2",
+    "graphemes": ["h", "u", "ng"],
+    "tricky": false
+  },
+  {
+    "word": "thing",
+    "level": "L2",
+    "graphemes": ["th", "i", "ng"],
     "tricky": false
   },
   {
@@ -312,6 +1002,72 @@
     "tricky": false
   },
   {
+    "word": "neck",
+    "level": "L2",
+    "graphemes": ["n", "e", "ck"],
+    "tricky": false
+  },
+  {
+    "word": "lock",
+    "level": "L2",
+    "graphemes": ["l", "o", "ck"],
+    "tricky": false
+  },
+  {
+    "word": "rock",
+    "level": "L2",
+    "graphemes": ["r", "o", "ck"],
+    "tricky": false
+  },
+  {
+    "word": "sack",
+    "level": "L2",
+    "graphemes": ["s", "a", "ck"],
+    "tricky": false
+  },
+  {
+    "word": "pack",
+    "level": "L2",
+    "graphemes": ["p", "a", "ck"],
+    "tricky": false
+  },
+  {
+    "word": "luck",
+    "level": "L2",
+    "graphemes": ["l", "u", "ck"],
+    "tricky": false
+  },
+  {
+    "word": "deck",
+    "level": "L2",
+    "graphemes": ["d", "e", "ck"],
+    "tricky": false
+  },
+  {
+    "word": "pick",
+    "level": "L2",
+    "graphemes": ["p", "i", "ck"],
+    "tricky": false
+  },
+  {
+    "word": "tick",
+    "level": "L2",
+    "graphemes": ["t", "i", "ck"],
+    "tricky": false
+  },
+  {
+    "word": "sick",
+    "level": "L2",
+    "graphemes": ["s", "i", "ck"],
+    "tricky": false
+  },
+  {
+    "word": "lick",
+    "level": "L2",
+    "graphemes": ["l", "i", "ck"],
+    "tricky": false
+  },
+  {
     "word": "bell",
     "level": "L2",
     "graphemes": ["b", "e", "ll"],
@@ -330,6 +1086,48 @@
     "tricky": false
   },
   {
+    "word": "fill",
+    "level": "L2",
+    "graphemes": ["f", "i", "ll"],
+    "tricky": false
+  },
+  {
+    "word": "well",
+    "level": "L2",
+    "graphemes": ["w", "e", "ll"],
+    "tricky": false
+  },
+  {
+    "word": "tell",
+    "level": "L2",
+    "graphemes": ["t", "e", "ll"],
+    "tricky": false
+  },
+  {
+    "word": "sell",
+    "level": "L2",
+    "graphemes": ["s", "e", "ll"],
+    "tricky": false
+  },
+  {
+    "word": "will",
+    "level": "L2",
+    "graphemes": ["w", "i", "ll"],
+    "tricky": false
+  },
+  {
+    "word": "bill",
+    "level": "L2",
+    "graphemes": ["b", "i", "ll"],
+    "tricky": false
+  },
+  {
+    "word": "yell",
+    "level": "L2",
+    "graphemes": ["y", "e", "ll"],
+    "tricky": false
+  },
+  {
     "word": "kiss",
     "level": "L2",
     "graphemes": ["k", "i", "ss"],
@@ -342,15 +1140,87 @@
     "tricky": false
   },
   {
+    "word": "boss",
+    "level": "L2",
+    "graphemes": ["b", "o", "ss"],
+    "tricky": false
+  },
+  {
+    "word": "less",
+    "level": "L2",
+    "graphemes": ["l", "e", "ss"],
+    "tricky": false
+  },
+  {
+    "word": "miss",
+    "level": "L2",
+    "graphemes": ["m", "i", "ss"],
+    "tricky": false
+  },
+  {
+    "word": "hiss",
+    "level": "L2",
+    "graphemes": ["h", "i", "ss"],
+    "tricky": false
+  },
+  {
+    "word": "moss",
+    "level": "L2",
+    "graphemes": ["m", "o", "ss"],
+    "tricky": false
+  },
+  {
+    "word": "fuss",
+    "level": "L2",
+    "graphemes": ["f", "u", "ss"],
+    "tricky": false
+  },
+  {
     "word": "off",
     "level": "L2",
     "graphemes": ["o", "ff"],
     "tricky": false
   },
   {
+    "word": "cuff",
+    "level": "L2",
+    "graphemes": ["c", "u", "ff"],
+    "tricky": false
+  },
+  {
+    "word": "puff",
+    "level": "L2",
+    "graphemes": ["p", "u", "ff"],
+    "tricky": false
+  },
+  {
+    "word": "huff",
+    "level": "L2",
+    "graphemes": ["h", "u", "ff"],
+    "tricky": false
+  },
+  {
     "word": "buzz",
     "level": "L2",
     "graphemes": ["b", "u", "zz"],
+    "tricky": false
+  },
+  {
+    "word": "fizz",
+    "level": "L2",
+    "graphemes": ["f", "i", "zz"],
+    "tricky": false
+  },
+  {
+    "word": "jazz",
+    "level": "L2",
+    "graphemes": ["j", "a", "zz"],
+    "tricky": false
+  },
+  {
+    "word": "fuzz",
+    "level": "L2",
+    "graphemes": ["f", "u", "zz"],
     "tricky": false
   },
   {
@@ -366,9 +1236,39 @@
     "tricky": false
   },
   {
+    "word": "quack",
+    "level": "L2",
+    "graphemes": ["qu", "a", "ck"],
+    "tricky": false
+  },
+  {
+    "word": "quit",
+    "level": "L2",
+    "graphemes": ["qu", "i", "t"],
+    "tricky": false
+  },
+  {
+    "word": "quill",
+    "level": "L2",
+    "graphemes": ["qu", "i", "ll"],
+    "tricky": false
+  },
+  {
     "word": "when",
     "level": "L2",
     "graphemes": ["wh", "e", "n"],
+    "tricky": false
+  },
+  {
+    "word": "which",
+    "level": "L2",
+    "graphemes": ["wh", "i", "ch"],
+    "tricky": false
+  },
+  {
+    "word": "whip",
+    "level": "L2",
+    "graphemes": ["wh", "i", "p"],
     "tricky": false
   },
   {
@@ -381,6 +1281,60 @@
     "word": "tail",
     "level": "L3",
     "graphemes": ["t", "ai", "l"],
+    "tricky": false
+  },
+  {
+    "word": "pain",
+    "level": "L3",
+    "graphemes": ["p", "ai", "n"],
+    "tricky": false
+  },
+  {
+    "word": "nail",
+    "level": "L3",
+    "graphemes": ["n", "ai", "l"],
+    "tricky": false
+  },
+  {
+    "word": "sail",
+    "level": "L3",
+    "graphemes": ["s", "ai", "l"],
+    "tricky": false
+  },
+  {
+    "word": "wait",
+    "level": "L3",
+    "graphemes": ["w", "ai", "t"],
+    "tricky": false
+  },
+  {
+    "word": "mail",
+    "level": "L3",
+    "graphemes": ["m", "ai", "l"],
+    "tricky": false
+  },
+  {
+    "word": "paint",
+    "level": "L3",
+    "graphemes": ["p", "ai", "n", "t"],
+    "tricky": false
+  },
+  {
+    "word": "snail",
+    "level": "L3",
+    "graphemes": ["s", "n", "ai", "l"],
+    "tricky": false
+  },
+  {
+    "word": "train",
+    "level": "L3",
+    "graphemes": ["t", "r", "ai", "n"],
+    "tricky": false
+  },
+  {
+    "word": "chain",
+    "level": "L3",
+    "graphemes": ["ch", "ai", "n"],
     "tricky": false
   },
   {
@@ -402,6 +1356,60 @@
     "tricky": false
   },
   {
+    "word": "bee",
+    "level": "L3",
+    "graphemes": ["b", "ee"],
+    "tricky": false
+  },
+  {
+    "word": "seed",
+    "level": "L3",
+    "graphemes": ["s", "ee", "d"],
+    "tricky": false
+  },
+  {
+    "word": "deep",
+    "level": "L3",
+    "graphemes": ["d", "ee", "p"],
+    "tricky": false
+  },
+  {
+    "word": "keep",
+    "level": "L3",
+    "graphemes": ["k", "ee", "p"],
+    "tricky": false
+  },
+  {
+    "word": "week",
+    "level": "L3",
+    "graphemes": ["w", "ee", "k"],
+    "tricky": false
+  },
+  {
+    "word": "sheep",
+    "level": "L3",
+    "graphemes": ["sh", "ee", "p"],
+    "tricky": false
+  },
+  {
+    "word": "green",
+    "level": "L3",
+    "graphemes": ["g", "r", "ee", "n"],
+    "tricky": false
+  },
+  {
+    "word": "feel",
+    "level": "L3",
+    "graphemes": ["f", "ee", "l"],
+    "tricky": false
+  },
+  {
+    "word": "need",
+    "level": "L3",
+    "graphemes": ["n", "ee", "d"],
+    "tricky": false
+  },
+  {
     "word": "night",
     "level": "L3",
     "graphemes": ["n", "igh", "t"],
@@ -417,6 +1425,36 @@
     "word": "high",
     "level": "L3",
     "graphemes": ["h", "igh"],
+    "tricky": false
+  },
+  {
+    "word": "sigh",
+    "level": "L3",
+    "graphemes": ["s", "igh"],
+    "tricky": false
+  },
+  {
+    "word": "might",
+    "level": "L3",
+    "graphemes": ["m", "igh", "t"],
+    "tricky": false
+  },
+  {
+    "word": "right",
+    "level": "L3",
+    "graphemes": ["r", "igh", "t"],
+    "tricky": false
+  },
+  {
+    "word": "fight",
+    "level": "L3",
+    "graphemes": ["f", "igh", "t"],
+    "tricky": false
+  },
+  {
+    "word": "tight",
+    "level": "L3",
+    "graphemes": ["t", "igh", "t"],
     "tricky": false
   },
   {
@@ -438,6 +1476,36 @@
     "tricky": false
   },
   {
+    "word": "road",
+    "level": "L3",
+    "graphemes": ["r", "oa", "d"],
+    "tricky": false
+  },
+  {
+    "word": "soap",
+    "level": "L3",
+    "graphemes": ["s", "oa", "p"],
+    "tricky": false
+  },
+  {
+    "word": "load",
+    "level": "L3",
+    "graphemes": ["l", "oa", "d"],
+    "tricky": false
+  },
+  {
+    "word": "toad",
+    "level": "L3",
+    "graphemes": ["t", "oa", "d"],
+    "tricky": false
+  },
+  {
+    "word": "foam",
+    "level": "L3",
+    "graphemes": ["f", "oa", "m"],
+    "tricky": false
+  },
+  {
     "word": "moon",
     "level": "L3",
     "graphemes": ["m", "oo", "n"],
@@ -447,6 +1515,84 @@
     "word": "food",
     "level": "L3",
     "graphemes": ["f", "oo", "d"],
+    "tricky": false
+  },
+  {
+    "word": "zoo",
+    "level": "L3",
+    "graphemes": ["z", "oo"],
+    "tricky": false
+  },
+  {
+    "word": "roof",
+    "level": "L3",
+    "graphemes": ["r", "oo", "f"],
+    "tricky": false
+  },
+  {
+    "word": "soon",
+    "level": "L3",
+    "graphemes": ["s", "oo", "n"],
+    "tricky": false
+  },
+  {
+    "word": "cool",
+    "level": "L3",
+    "graphemes": ["c", "oo", "l"],
+    "tricky": false
+  },
+  {
+    "word": "pool",
+    "level": "L3",
+    "graphemes": ["p", "oo", "l"],
+    "tricky": false
+  },
+  {
+    "word": "boot",
+    "level": "L3",
+    "graphemes": ["b", "oo", "t"],
+    "tricky": false
+  },
+  {
+    "word": "book",
+    "level": "L3",
+    "graphemes": ["b", "oo", "k"],
+    "tricky": false
+  },
+  {
+    "word": "look",
+    "level": "L3",
+    "graphemes": ["l", "oo", "k"],
+    "tricky": false
+  },
+  {
+    "word": "cook",
+    "level": "L3",
+    "graphemes": ["c", "oo", "k"],
+    "tricky": false
+  },
+  {
+    "word": "foot",
+    "level": "L3",
+    "graphemes": ["f", "oo", "t"],
+    "tricky": false
+  },
+  {
+    "word": "good",
+    "level": "L3",
+    "graphemes": ["g", "oo", "d"],
+    "tricky": false
+  },
+  {
+    "word": "wood",
+    "level": "L3",
+    "graphemes": ["w", "oo", "d"],
+    "tricky": false
+  },
+  {
+    "word": "hood",
+    "level": "L3",
+    "graphemes": ["h", "oo", "d"],
     "tricky": false
   },
   {
@@ -468,6 +1614,42 @@
     "tricky": false
   },
   {
+    "word": "farm",
+    "level": "L3",
+    "graphemes": ["f", "ar", "m"],
+    "tricky": false
+  },
+  {
+    "word": "card",
+    "level": "L3",
+    "graphemes": ["c", "ar", "d"],
+    "tricky": false
+  },
+  {
+    "word": "dark",
+    "level": "L3",
+    "graphemes": ["d", "ar", "k"],
+    "tricky": false
+  },
+  {
+    "word": "hard",
+    "level": "L3",
+    "graphemes": ["h", "ar", "d"],
+    "tricky": false
+  },
+  {
+    "word": "jar",
+    "level": "L3",
+    "graphemes": ["j", "ar"],
+    "tricky": false
+  },
+  {
+    "word": "yard",
+    "level": "L3",
+    "graphemes": ["y", "ar", "d"],
+    "tricky": false
+  },
+  {
     "word": "fork",
     "level": "L3",
     "graphemes": ["f", "or", "k"],
@@ -477,6 +1659,36 @@
     "word": "corn",
     "level": "L3",
     "graphemes": ["c", "or", "n"],
+    "tricky": false
+  },
+  {
+    "word": "sort",
+    "level": "L3",
+    "graphemes": ["s", "or", "t"],
+    "tricky": false
+  },
+  {
+    "word": "born",
+    "level": "L3",
+    "graphemes": ["b", "or", "n"],
+    "tricky": false
+  },
+  {
+    "word": "horn",
+    "level": "L3",
+    "graphemes": ["h", "or", "n"],
+    "tricky": false
+  },
+  {
+    "word": "short",
+    "level": "L3",
+    "graphemes": ["sh", "or", "t"],
+    "tricky": false
+  },
+  {
+    "word": "storm",
+    "level": "L3",
+    "graphemes": ["s", "t", "or", "m"],
     "tricky": false
   },
   {
@@ -492,6 +1704,30 @@
     "tricky": false
   },
   {
+    "word": "hurt",
+    "level": "L3",
+    "graphemes": ["h", "ur", "t"],
+    "tricky": false
+  },
+  {
+    "word": "curl",
+    "level": "L3",
+    "graphemes": ["c", "ur", "l"],
+    "tricky": false
+  },
+  {
+    "word": "surf",
+    "level": "L3",
+    "graphemes": ["s", "ur", "f"],
+    "tricky": false
+  },
+  {
+    "word": "fur",
+    "level": "L3",
+    "graphemes": ["f", "ur"],
+    "tricky": false
+  },
+  {
     "word": "cow",
     "level": "L3",
     "graphemes": ["c", "ow"],
@@ -504,6 +1740,30 @@
     "tricky": false
   },
   {
+    "word": "owl",
+    "level": "L3",
+    "graphemes": ["ow", "l"],
+    "tricky": false
+  },
+  {
+    "word": "town",
+    "level": "L3",
+    "graphemes": ["t", "ow", "n"],
+    "tricky": false
+  },
+  {
+    "word": "how",
+    "level": "L3",
+    "graphemes": ["h", "ow"],
+    "tricky": false
+  },
+  {
+    "word": "now",
+    "level": "L3",
+    "graphemes": ["n", "ow"],
+    "tricky": false
+  },
+  {
     "word": "coin",
     "level": "L3",
     "graphemes": ["c", "oi", "n"],
@@ -513,6 +1773,24 @@
     "word": "oil",
     "level": "L3",
     "graphemes": ["oi", "l"],
+    "tricky": false
+  },
+  {
+    "word": "boil",
+    "level": "L3",
+    "graphemes": ["b", "oi", "l"],
+    "tricky": false
+  },
+  {
+    "word": "soil",
+    "level": "L3",
+    "graphemes": ["s", "oi", "l"],
+    "tricky": false
+  },
+  {
+    "word": "join",
+    "level": "L3",
+    "graphemes": ["j", "oi", "n"],
     "tricky": false
   },
   {
@@ -534,6 +1812,18 @@
     "tricky": false
   },
   {
+    "word": "dear",
+    "level": "L3",
+    "graphemes": ["d", "ear"],
+    "tricky": false
+  },
+  {
+    "word": "year",
+    "level": "L3",
+    "graphemes": ["y", "ear"],
+    "tricky": false
+  },
+  {
     "word": "fair",
     "level": "L3",
     "graphemes": ["f", "air"],
@@ -552,15 +1842,93 @@
     "tricky": false
   },
   {
+    "word": "pair",
+    "level": "L3",
+    "graphemes": ["p", "air"],
+    "tricky": false
+  },
+  {
+    "word": "stair",
+    "level": "L3",
+    "graphemes": ["s", "t", "air"],
+    "tricky": false
+  },
+  {
     "word": "her",
     "level": "L3",
     "graphemes": ["h", "er"],
     "tricky": false
   },
   {
+    "word": "fern",
+    "level": "L3",
+    "graphemes": ["f", "er", "n"],
+    "tricky": false
+  },
+  {
     "word": "play",
     "level": "L3",
     "graphemes": ["p", "l", "ay"],
+    "tricky": false
+  },
+  {
+    "word": "day",
+    "level": "L3",
+    "graphemes": ["d", "ay"],
+    "tricky": false
+  },
+  {
+    "word": "say",
+    "level": "L3",
+    "graphemes": ["s", "ay"],
+    "tricky": false
+  },
+  {
+    "word": "way",
+    "level": "L3",
+    "graphemes": ["w", "ay"],
+    "tricky": false
+  },
+  {
+    "word": "may",
+    "level": "L3",
+    "graphemes": ["m", "ay"],
+    "tricky": false
+  },
+  {
+    "word": "stay",
+    "level": "L3",
+    "graphemes": ["s", "t", "ay"],
+    "tricky": false
+  },
+  {
+    "word": "out",
+    "level": "L3",
+    "graphemes": ["ou", "t"],
+    "tricky": false
+  },
+  {
+    "word": "loud",
+    "level": "L3",
+    "graphemes": ["l", "ou", "d"],
+    "tricky": false
+  },
+  {
+    "word": "shout",
+    "level": "L3",
+    "graphemes": ["sh", "ou", "t"],
+    "tricky": false
+  },
+  {
+    "word": "cloud",
+    "level": "L3",
+    "graphemes": ["c", "l", "ou", "d"],
+    "tricky": false
+  },
+  {
+    "word": "mouth",
+    "level": "L3",
+    "graphemes": ["m", "ou", "th"],
     "tricky": false
   },
   {
@@ -702,9 +2070,189 @@
     "tricky": true
   },
   {
+    "word": "were",
+    "level": "L4",
+    "graphemes": ["w", "ere"],
+    "tricky": true
+  },
+  {
+    "word": "there",
+    "level": "L4",
+    "graphemes": ["th", "ere"],
+    "tricky": true
+  },
+  {
+    "word": "little",
+    "level": "L4",
+    "graphemes": ["l", "i", "tt", "le"],
+    "tricky": true
+  },
+  {
     "word": "one",
     "level": "L4",
     "graphemes": ["o", "ne"],
+    "tricky": true
+  },
+  {
+    "word": "what",
+    "level": "L4",
+    "graphemes": ["wh", "a", "t"],
+    "tricky": true
+  },
+  {
+    "word": "oh",
+    "level": "L4",
+    "graphemes": ["o", "h"],
+    "tricky": true
+  },
+  {
+    "word": "their",
+    "level": "L4",
+    "graphemes": ["th", "eir"],
+    "tricky": true
+  },
+  {
+    "word": "people",
+    "level": "L4",
+    "graphemes": ["p", "eo", "p", "le"],
+    "tricky": true
+  },
+  {
+    "word": "could",
+    "level": "L4",
+    "graphemes": ["c", "ou", "ld"],
+    "tricky": true
+  },
+  {
+    "word": "would",
+    "level": "L4",
+    "graphemes": ["w", "ou", "ld"],
+    "tricky": true
+  },
+  {
+    "word": "should",
+    "level": "L4",
+    "graphemes": ["sh", "ou", "ld"],
+    "tricky": true
+  },
+  {
+    "word": "pull",
+    "level": "L4",
+    "graphemes": ["p", "u", "ll"],
+    "tricky": true
+  },
+  {
+    "word": "full",
+    "level": "L4",
+    "graphemes": ["f", "u", "ll"],
+    "tricky": true
+  },
+  {
+    "word": "push",
+    "level": "L4",
+    "graphemes": ["p", "u", "sh"],
+    "tricky": true
+  },
+  {
+    "word": "put",
+    "level": "L4",
+    "graphemes": ["p", "u", "t"],
+    "tricky": true
+  },
+  {
+    "word": "of",
+    "level": "L4",
+    "graphemes": ["o", "f"],
+    "tricky": true
+  },
+  {
+    "word": "by",
+    "level": "L4",
+    "graphemes": ["b", "y"],
+    "tricky": true
+  },
+  {
+    "word": "your",
+    "level": "L4",
+    "graphemes": ["y", "our"],
+    "tricky": true
+  },
+  {
+    "word": "does",
+    "level": "L4",
+    "graphemes": ["d", "oe", "s"],
+    "tricky": true
+  },
+  {
+    "word": "once",
+    "level": "L4",
+    "graphemes": ["o", "n", "ce"],
+    "tricky": true
+  },
+  {
+    "word": "any",
+    "level": "L4",
+    "graphemes": ["a", "n", "y"],
+    "tricky": true
+  },
+  {
+    "word": "many",
+    "level": "L4",
+    "graphemes": ["m", "a", "n", "y"],
+    "tricky": true
+  },
+  {
+    "word": "who",
+    "level": "L4",
+    "graphemes": ["wh", "o"],
+    "tricky": true
+  },
+  {
+    "word": "why",
+    "level": "L4",
+    "graphemes": ["wh", "y"],
+    "tricky": true
+  },
+  {
+    "word": "where",
+    "level": "L4",
+    "graphemes": ["wh", "ere"],
+    "tricky": true
+  },
+  {
+    "word": "our",
+    "level": "L4",
+    "graphemes": ["ou", "r"],
+    "tricky": true
+  },
+  {
+    "word": "here",
+    "level": "L4",
+    "graphemes": ["h", "ere"],
+    "tricky": true
+  },
+  {
+    "word": "love",
+    "level": "L4",
+    "graphemes": ["l", "o", "ve"],
+    "tricky": true
+  },
+  {
+    "word": "two",
+    "level": "L4",
+    "graphemes": ["t", "wo"],
+    "tricky": true
+  },
+  {
+    "word": "says",
+    "level": "L4",
+    "graphemes": ["s", "ay", "s"],
+    "tricky": true
+  },
+  {
+    "word": "gone",
+    "level": "L4",
+    "graphemes": ["g", "o", "ne"],
     "tricky": true
   }
 ]

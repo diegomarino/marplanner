@@ -41,9 +41,20 @@ export function isValidPhonicsCount(value: unknown): value is number {
   );
 }
 
-/** Seed `${date}|phonics|${level}`: level-scoped and member-independent, so the whole
- * household sees the same words on a date. The level pool is shuffled once per seed and the
- * first `count` words are taken, so raising the count only appends words.
+/** Day number of a `YYYY-MM-DD` business date (days since 1970-01-01). */
+function dayNumber(date: string): number {
+  const ms = Date.parse(`${date}T00:00:00Z`);
+  if (Number.isNaN(ms)) {
+    throw new CorpusBlockParamError(`daily-briefing phonics: invalid date "${date}"`);
+  }
+  return Math.floor(ms / 86_400_000);
+}
+
+/** Rotation through the level: the word sequence is one seeded shuffle of the level pool after
+ * another (pass k shuffled with seed `phonics|${level}|${k}`), and day d reads positions
+ * d*count onwards. Every word of the level comes up once before any repeats; only a pass
+ * boundary can bring a word back early, and a duplicate inside one day is skipped. The seed
+ * carries no member id, so the whole household gets the same words.
  */
 export function generatePhonics(ctx: CorpusGenerationContext): PhonicsData {
   assertCorpusLanguageAvailable(TYPE, ctx.params);
@@ -61,7 +72,22 @@ export function generatePhonics(ctx: CorpusGenerationContext): PhonicsData {
   }
 
   const pool = phonicsCorpus.filter((entry) => entry.level === level);
-  const picked = fisherYates(pool, hashSeed(`${ctx.date}|phonics|${level}`)).slice(0, count);
+  const passes = new Map<number, typeof pool>();
+  const wordAt = (position: number) => {
+    const pass = Math.floor(position / pool.length);
+    let order = passes.get(pass);
+    if (!order) {
+      order = fisherYates(pool, hashSeed(`phonics|${level}|${pass}`));
+      passes.set(pass, order);
+    }
+    return order[position % pool.length];
+  };
+
+  const picked: typeof pool = [];
+  for (let position = dayNumber(ctx.date) * count; picked.length < count; position += 1) {
+    const entry = wordAt(position);
+    if (!picked.includes(entry)) picked.push(entry);
+  }
   return {
     level,
     words: picked.map((entry) => ({

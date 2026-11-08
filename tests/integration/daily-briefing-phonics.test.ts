@@ -54,9 +54,9 @@ const VOWEL_GRAPHEMES = new Set([
 ]);
 
 describe("phonics corpus", () => {
-  it("holds roughly 100 unique lowercase words", () => {
-    expect(phonicsCorpus.length).toBeGreaterThanOrEqual(90);
-    expect(phonicsCorpus.length).toBeLessThanOrEqual(130);
+  it("holds 300-400 unique lowercase words", () => {
+    expect(phonicsCorpus.length).toBeGreaterThanOrEqual(300);
+    expect(phonicsCorpus.length).toBeLessThanOrEqual(400);
     const words = phonicsCorpus.map((entry) => entry.word);
     expect(new Set(words).size).toBe(words.length);
     for (const word of words) expect(word).toMatch(/^[a-z]+$/);
@@ -74,10 +74,10 @@ describe("phonics corpus", () => {
     }
   });
 
-  it("fills all four levels with at least 20 words each", () => {
+  it("fills L1-L3 with at least 75 words each and L4 with at least 40 tricky words", () => {
     for (const level of LEVELS) {
       expect(phonicsCorpus.filter((entry) => entry.level === level).length).toBeGreaterThanOrEqual(
-        20
+        level === "L4" ? 40 : 75
       );
     }
     expect(phonicsCorpus.every((entry) => LEVELS.includes(entry.level))).toBe(true);
@@ -111,6 +111,27 @@ describe("phonics corpus", () => {
         entry.graphemes.some((g) => VOWEL_GRAPHEMES.has(g)),
         entry.word
       ).toBe(true);
+    }
+  });
+
+  it("uses only known graphemes in decodable words: single letters, consonant digraphs, vowel graphemes", () => {
+    for (const entry of phonicsCorpus.filter((e) => !e.tricky)) {
+      for (const g of entry.graphemes) {
+        const known = g.length === 1 || CONSONANT_DIGRAPHS.has(g) || VOWEL_GRAPHEMES.has(g);
+        expect(known, `${entry.word}: "${g}"`).toBe(true);
+      }
+    }
+  });
+
+  it("keeps split digraphs (cake, bike, home) out of the decodable levels", () => {
+    // A final lone "e" after consonant + single vowel would get a dot of its own, which is wrong
+    // for a split digraph (a_e, i_e, o_e, u_e): those words are not taught until later.
+    const vowels = new Set(["a", "e", "i", "o", "u"]);
+    for (const entry of phonicsCorpus.filter((e) => !e.tricky)) {
+      const g = entry.graphemes;
+      const n = g.length;
+      const split = n >= 3 && g[n - 1] === "e" && !vowels.has(g[n - 2]) && vowels.has(g[n - 3]);
+      expect(split, entry.word).toBe(false);
     }
   });
 
@@ -149,23 +170,35 @@ describe("generatePhonics", () => {
     expect(picks.size).toBeGreaterThan(5);
   });
 
-  it("returns `count` distinct words from the chosen level, a larger count extending a smaller one", () => {
+  it("returns `count` distinct words from the chosen level", () => {
     const four = generatePhonics({
       date: DATE,
       memberId: "m1",
       params: { level: "L2", count: 4 },
-    });
-    const two = generatePhonics({
-      date: DATE,
-      memberId: "m1",
-      params: { level: "L2", count: 2 },
     });
     expect(four.words).toHaveLength(4);
     expect(new Set(four.words.map((w) => w.word)).size).toBe(4);
     expect(
       four.words.every((w) => phonicsCorpus.some((e) => e.word === w.word && e.level === "L2"))
     ).toBe(true);
-    expect(two.words).toEqual(four.words.slice(0, 2));
+  });
+
+  it("walks the whole level before repeating a word", () => {
+    // Day d takes positions d*count .. d*count+count-1 of a sequence made of one shuffle of the
+    // level after another. Start on a day aligned with a pass boundary and read one full pass.
+    const count = 3;
+    const pool = phonicsCorpus.filter((e) => e.level === "L1").length;
+    const dayMs = 86_400_000;
+    const firstDay = Math.ceil((20 * pool) / count); // the 21st pass starts on or before this day
+    const lastDay = Math.floor((21 * pool) / count) - 1; // last day fully inside that pass
+    const seen: string[] = [];
+    for (let day = firstDay; day <= lastDay; day += 1) {
+      const date = new Date(day * dayMs).toISOString().slice(0, 10);
+      const data = generatePhonics({ date, memberId: "m1", params: { level: "L1", count } });
+      seen.push(...data.words.map((w) => w.word));
+    }
+    expect(new Set(seen).size).toBe(seen.length);
+    expect(seen.length).toBeGreaterThanOrEqual(pool - 2 * count);
   });
 
   it("carries graphemes and the tricky flag through to the block data", () => {
@@ -178,6 +211,10 @@ describe("generatePhonics", () => {
       expect(w.tricky).toBe(true);
       expect(w.graphemes.join("")).toBe(w.word);
     }
+  });
+
+  it("throws on a date that is not YYYY-MM-DD", () => {
+    expect(() => generatePhonics({ date: "not-a-date", memberId: "m1" })).toThrow(/date/);
   });
 
   it("throws on an invalid level, an out-of-range count, or an unavailable language", () => {

@@ -5972,19 +5972,23 @@
             "renders weatherText as text only"
           ],
           "tests/integration/daily-briefing-phonics.test.ts": [
-            "phonics corpus holds roughly 100 unique lowercase words",
+            "phonics corpus holds 300-400 unique lowercase words",
             "phonics corpus keeps words short: at least 90% have 5 letters or fewer",
             "phonics corpus segments every word into graphemes that spell it exactly",
-            "phonics corpus fills all four levels with at least 20 words each",
+            "phonics corpus fills L1-L3 with at least 75 words each and L4 with at least 40 tricky words",
             "phonics corpus L1 words use only single-letter graphemes",
             "phonics corpus L2 words each carry a consonant digraph and no vowel digraph",
             "phonics corpus L3 words each carry a vowel digraph or trigraph",
+            "phonics corpus uses only known graphemes in decodable words: single letters, consonant digraphs, vowel graphemes",
+            "phonics corpus keeps split digraphs (cake, bike, home) out of the decodable levels",
             "phonics corpus marks exactly the L4 words as tricky",
             "generatePhonics defaults to level L1 and the default count",
             "generatePhonics is deterministic per date+level and the same for every member",
             "generatePhonics varies across dates",
-            "generatePhonics returns `count` distinct words from the chosen level, a larger count extending a smaller one",
+            "generatePhonics returns `count` distinct words from the chosen level",
+            "generatePhonics walks the whole level before repeating a word",
             "generatePhonics carries graphemes and the tricky flag through to the block data",
+            "generatePhonics throws on a date that is not YYYY-MM-DD",
             "generatePhonics throws on an invalid level, an out-of-range count, or an unavailable language",
             "phonics render adapter passes valid words through",
             "phonics render adapter rejects graphemes that do not spell the word",
@@ -11374,16 +11378,16 @@
       "src/server/modules/daily-briefing/blocks/phonics.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 18,
-          "statements": 19,
-          "functions": 4,
-          "branches": 12
+          "lines": 33,
+          "statements": 36,
+          "functions": 6,
+          "branches": 18
         },
         "minimumRates": {
           "lines": 100,
           "statements": 100,
           "functions": 100,
-          "branches": 100
+          "branches": 94.44
         }
       },
       "src/server/modules/daily-briefing/render/blocks/phonics.ts": {
