@@ -207,16 +207,19 @@ export function reconcileExternalCalendar(
   db.transaction(() => {
     const existing = db
       .prepare(
-        `SELECT meta.event_id, events.end_date, events.end_utc
+        `SELECT meta.event_id, meta.external_uid, events.end_date, events.end_utc
        FROM calendar_external_event_meta meta
        JOIN calendar_events events ON events.id = meta.event_id
        WHERE meta.source_id = ?`
       )
       .all(sourceId) as Array<{
       event_id: string;
+      external_uid: string;
       end_date: string | null;
       end_utc: string | null;
     }>;
+    // A UID a feed limit dropped or truncated is unknown, not removed: keep its rows as they are.
+    const retained = new Set(parsed.retainedUids ?? []);
 
     for (const [id, { occurrence, memberIds }] of desired) {
       db.prepare(
@@ -267,7 +270,7 @@ export function reconcileExternalCalendar(
     }
 
     for (const row of existing) {
-      if (!desired.has(row.event_id)) {
+      if (!desired.has(row.event_id) && !retained.has(row.external_uid)) {
         db.prepare(
           "UPDATE calendar_external_event_meta SET status = 'cancelled', updated_at = ? WHERE event_id = ?"
         ).run(now, row.event_id);

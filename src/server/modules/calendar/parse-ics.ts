@@ -29,13 +29,13 @@ export const ICS_FEED_LIMITS = Object.freeze({
   maxExdatesPerEvent: 2_000,
   /** Occurrences kept per VEVENT (the earliest ones in the window). */
   maxOccurrencesPerEvent: 1_000,
-  /** Occurrences kept per feed; later VEVENTs are skipped once it is reached. */
+  /** Occurrences per feed; a feed over it fails the sync instead of publishing a partial set. */
   maxOccurrencesPerFeed: 10_000,
   /** Stored text per occurrence, in code points; longer values are truncated. */
   maxTitleChars: 500,
   maxDescriptionChars: 8_000,
   maxLocationChars: 1_000,
-  /** Wall-clock budget for expanding one feed; later VEVENTs are skipped once it is spent. */
+  /** Wall-clock budget for expanding one feed; a feed over it fails the sync. */
   parseBudgetMs: 5_000,
 });
 
@@ -71,6 +71,9 @@ export interface ParsedExternalOccurrence {
 export interface ParsedCalendar {
   occurrences: ParsedExternalOccurrence[];
   skippedCount: number;
+  /** UIDs of VEVENTs a per-event limit dropped or truncated. Their outcome is unknown rather than
+   * removed, so reconciliation keeps their previously imported rows instead of cancelling them. */
+  retainedUids?: string[];
   /** Present only when a feed limit dropped or truncated something. */
   limits?: Partial<Record<IcsFeedLimitCode, number>>;
 }
@@ -371,6 +374,23 @@ function sortKey(occurrence: ParsedExternalOccurrence): string {
 
 type LimitCounter = (code: IcsFeedLimitCode, count?: number) => void;
 
+/** Codes that make a feed incomplete as a whole: publishing what was expanded so far would
+ * cancel every later event, so the sync fails and the previous snapshot stays authoritative. */
+type IcsFeedFailureCode = "feed_occurrences_truncated" | "time_budget_exhausted";
+
+/** Thrown when a feed-wide limit is reached; carries the per-reason counts for logging. */
+export class IcsFeedLimitError extends Error {
+  readonly code: IcsFeedFailureCode;
+  readonly limits: Partial<Record<IcsFeedLimitCode, number>>;
+
+  constructor(code: IcsFeedFailureCode, limits: Partial<Record<IcsFeedLimitCode, number>>) {
+    super(code);
+    this.name = "IcsFeedLimitError";
+    this.code = code;
+    this.limits = { ...limits, [code]: (limits[code] ?? 0) + 1 };
+  }
+}
+
 /** Property name of an unfolded content line (up to the first `;` or `:`), as written. */
 function propertyName(line: string): string {
   let end = 0;
@@ -458,8 +478,13 @@ function recurrenceProblem(
  * node-ical matches them (case-sensitive, nested), while recurrence property names are matched
  * case-insensitively as node-ical stores them; a recurrence property outside any VEVENT that
  * exceeds the limits is dropped on its own. */
-function screenFeed(source: string, count: LimitCounter): string {
+function screenFeed(source: string, count: LimitCounter, retain: (uid: string) => void): string {
   const out: string[] = [];
+  const dropped = (lines: string[]) => {
+    for (const line of lines) {
+      if (propertyName(line).toUpperCase() === "UID") retain(propertyValue(line).trim());
+    }
+  };
   let event: string[] | undefined;
   let depth = 0;
   let problem: IcsFeedLimitCode | undefined;
@@ -487,8 +512,12 @@ function screenFeed(source: string, count: LimitCounter): string {
     if (boundary) {
       depth += name === "BEGIN" ? 1 : -1;
       if (depth > 0) continue;
-      if (problem) count(problem);
-      else for (const kept of event) out.push(kept);
+      if (problem) {
+        count(problem);
+        dropped(event);
+      } else {
+        for (const kept of event) out.push(kept);
+      }
       event = undefined;
       problem = undefined;
       continue;
@@ -497,7 +526,10 @@ function screenFeed(source: string, count: LimitCounter): string {
   }
   // An unterminated VEVENT keeps node-ical's own structural handling (and the calendar's closing
   // line, which it swallowed); when it is over limit only its recurrence properties are dropped.
-  if (problem) count(problem);
+  if (problem) {
+    count(problem);
+    dropped(event ?? []);
+  }
   for (const kept of event ?? []) {
     if (!problem || !RECURRENCE_PROPERTIES.has(propertyName(kept).toUpperCase())) out.push(kept);
   }
@@ -505,8 +537,10 @@ function screenFeed(source: string, count: LimitCounter): string {
 }
 
 /** Normalize a bounded node-ical parse into Calendar-owned occurrence values. Every feed limit
- * in `ICS_FEED_LIMITS` is enforced here; anything dropped is counted in `skippedCount` and, per
- * reason, in `limits`, so one hostile event never fails or stalls the rest of the feed. */
+ * in `ICS_FEED_LIMITS` is enforced here. A per-event limit skips or truncates that event (counted
+ * in `skippedCount` and `limits`, its UID in `retainedUids`), so one hostile event never fails the
+ * rest of the feed; a feed-wide limit throws `IcsFeedLimitError` instead of returning a partial
+ * feed that reconciliation would read as authoritative. */
 export function parseIcs(source: string, options: ParseIcsOptions = {}): ParsedCalendar {
   const now = options.now ?? new Date();
   if (Number.isNaN(now.valueOf())) throw new TypeError("now must be a valid Date");
@@ -517,6 +551,10 @@ export function parseIcs(source: string, options: ParseIcsOptions = {}): ParsedC
   const startedAt = clock();
 
   const limits: Partial<Record<IcsFeedLimitCode, number>> = {};
+  const retainedUids = new Set<string>();
+  const retain = (uid: string) => {
+    if (uid) retainedUids.add(uid);
+  };
   let skippedCount = 0;
   const count: LimitCounter = (code, amount = 1) => {
     limits[code] = (limits[code] ?? 0) + amount;
@@ -532,20 +570,14 @@ export function parseIcs(source: string, options: ParseIcsOptions = {}): ParsedC
   const allDayTo = allDayWindowBoundary(to, true);
   if (!isCalendarEnvelope(source)) throw new Error("invalid_calendar");
   const parsed = parseCalendar(
-    screenFeed(source, (code) => (code === "line_too_long" ? count(code) : skip(code)))
+    screenFeed(source, (code) => (code === "line_too_long" ? count(code) : skip(code)), retain)
   );
   const byIdentity = new Map<string, ParsedExternalOccurrence>();
 
   const events = Object.values(parsed).filter(isEvent);
-  for (const [index, component] of events.entries()) {
-    const remaining = events.length - index;
+  for (const component of events) {
     if (clock() - startedAt > ICS_FEED_LIMITS.parseBudgetMs) {
-      skip("time_budget_exhausted", remaining);
-      break;
-    }
-    if (byIdentity.size >= ICS_FEED_LIMITS.maxOccurrencesPerFeed) {
-      skip("feed_occurrences_truncated", remaining);
-      break;
+      throw new IcsFeedLimitError("time_budget_exhausted", limits);
     }
     if (!eventIsStructurallyValid(component)) {
       skippedCount += 1;
@@ -582,6 +614,7 @@ export function parseIcs(source: string, options: ParseIcsOptions = {}): ParsedC
     if (occurrences.length > ICS_FEED_LIMITS.maxOccurrencesPerEvent) {
       // Keep the earliest occurrences: the ones the household sees first.
       count("event_occurrences_truncated");
+      retain(component.uid.trim());
       occurrences.sort((left, right) => sortKey(left).localeCompare(sortKey(right)));
       occurrences.length = ICS_FEED_LIMITS.maxOccurrencesPerEvent;
     }
@@ -591,8 +624,7 @@ export function parseIcs(source: string, options: ParseIcsOptions = {}): ParsedC
       if (byIdentity.has(identity)) {
         skippedCount += 1;
       } else if (byIdentity.size >= ICS_FEED_LIMITS.maxOccurrencesPerFeed) {
-        count("feed_occurrences_truncated");
-        break;
+        throw new IcsFeedLimitError("feed_occurrences_truncated", limits);
       }
       byIdentity.set(identity, occurrence);
     }
@@ -603,6 +635,7 @@ export function parseIcs(source: string, options: ParseIcsOptions = {}): ParsedC
       sortKey(left).localeCompare(sortKey(right))
     ),
     skippedCount,
+    ...(retainedUids.size > 0 ? { retainedUids: [...retainedUids].sort() } : {}),
     ...(Object.keys(limits).length > 0 ? { limits } : {}),
   };
 }

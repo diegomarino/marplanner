@@ -8,7 +8,7 @@ import {
   fetchIcsResult,
   type FetchIcsDependencies,
 } from "./fetch-ics";
-import { parseIcs } from "./parse-ics";
+import { IcsFeedLimitError, parseIcs } from "./parse-ics";
 import { reconcileExternalCalendar, recordUnchangedSynchronization } from "./reconcile";
 
 export interface CalendarFeedDependencies extends FetchIcsDependencies {
@@ -161,6 +161,10 @@ async function runSynchronization(
       try {
         parsed = parseIcs(fetched.body);
       } catch (error) {
+        if (error instanceof IcsFeedLimitError) {
+          // Counts only: neither feed content nor the token-bearing URL is logged.
+          console.warn("calendar.external-sources.feed-limits", { sourceId, ...error.limits });
+        }
         throw new Error("parse_failed", { cause: error });
       }
     }

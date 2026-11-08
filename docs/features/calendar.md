@@ -151,15 +151,26 @@ assignments — leaving no orphaned rows.
   | `BYHOUR` × `BYMINUTE` × `BYSECOND` per day | 24                        | the event is skipped                           |
   | `RDATE` / `EXDATE` values per event        | 1,000 / 2,000             | the event is skipped                           |
   | Occurrences per event                      | 1,000                     | only the earliest are kept                     |
-  | Occurrences per feed                       | 10,000                    | later events are skipped                       |
-  | Expansion time per feed                    | 5 s                       | later events are skipped                       |
+  | Occurrences per feed                       | 10,000                    | the sync fails (`parse_failed`)                |
+  | Expansion time per feed                    | 5 s                       | the sync fails (`parse_failed`)                |
   | Stored title / description / location      | 500 / 8,000 / 1,000 chars | truncated                                      |
 
   `COUNT` and `UNTIL` need no separate cap because expansion never leaves the
   window. The screening pass and the title-initials scan are linear-time (no
-  backtracking regular expression over feed text). Skipped events count toward
-  the source's skipped count, and the sync logs
+  backtracking regular expression over feed text). The sync logs
   `calendar.external-sources.feed-limits` with per-reason counts only (never feed
-  content or the feed URL); other events in the feed and other feeds still sync.
+  content or the feed URL).
+
+  A per-event limit (frequency, time-of-day product, date lists, occurrences per
+  event) affects only that event: it counts toward the source's skipped count, the
+  rest of the feed publishes, and the event's UID is reported as retained, so
+  reconciliation keeps its previously imported rows as they are instead of
+  cancelling them. A dropped event's outcome is unknown, not removed; cancelling
+  would silently delete real events (and their title assignments) whenever a
+  provider started emitting a rule over the limits. A feed-wide limit (occurrences
+  per feed, expansion time) makes the feed incomplete as a whole, so the sync fails
+  with `parse_failed` and the previous snapshot stays authoritative, exactly like an
+  unreachable feed; publishing the partial feed would cancel every event after the
+  cut-off.
 
 - Atomicity and date/weekday primitives are provided per ADR-043/ADR-005/ADR-006.

@@ -1248,7 +1248,7 @@
             "Calendar ICS parser adapter fails an invalid whole calendar without returning partial output",
             "Calendar ICS parser adapter bounds hostile recurrence and still expands ordinary series inside the window",
             "Calendar ICS parser adapter screens recurrence wherever node-ical would read it: stray, nested, or unterminated",
-            "Calendar ICS parser adapter stops a feed sync that exhausts its expansion time budget",
+            "Calendar ICS parser adapter fails a feed that exceeds its occurrence cap or time budget instead of returning part of it",
             "Calendar ICS parser adapter drops an over-long property line in linear time, clips stored text, and refuses an oversized feed"
           ],
           "tests/boundary/calendar-parser-dependency.test.ts": [
@@ -1360,7 +1360,9 @@
             "calendar external-source lifecycle lets an active run settle after disable but blocks every later trigger",
             "calendar external-source lifecycle waits for an active run, blocks waiting triggers, and leaves no source-owned rows",
             "calendar external-source lifecycle keeps the successful snapshot after a later failed retrieval",
-            "calendar external-source lifecycle publishes the rest of a feed and logs only counts when one event exceeds the feed limits"
+            "calendar external-source lifecycle publishes the rest of a feed and logs only counts when one event exceeds the feed limits",
+            "calendar external-source lifecycle fails the sync and keeps the previous snapshot when a feed exceeds a feed-wide limit",
+            "calendar external-source lifecycle keeps an imported event a feed limit now drops and still cancels one the feed removed"
           ],
           "tests/boundary/calendar-sync.test.ts": [
             "calendar sync publication repeats without duplicates, replaces title assignments, and cancels missing occurrences",
@@ -8823,10 +8825,10 @@
       "src/server/modules/calendar/parse-ics.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 252,
-          "statements": 288,
-          "functions": 41,
-          "branches": 285
+          "lines": 261,
+          "statements": 297,
+          "functions": 44,
+          "branches": 293
         },
         "minimumRates": {
           "lines": 91.54,

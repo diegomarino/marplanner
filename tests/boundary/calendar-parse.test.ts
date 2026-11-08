@@ -1,6 +1,10 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { ICS_FEED_LIMITS, parseIcs } from "../../src/server/modules/calendar/parse-ics";
+import {
+  ICS_FEED_LIMITS,
+  IcsFeedLimitError,
+  parseIcs,
+} from "../../src/server/modules/calendar/parse-ics";
 
 const fixture = (name: string): string =>
   readFileSync(new URL(`../fixtures/calendar/${name}`, import.meta.url), "utf8");
@@ -162,7 +166,7 @@ describe("Calendar ICS parser adapter", () => {
       vevent("time-of-day-product", "RRULE:FREQ=DAILY;BYHOUR=1,2,3,4,5;BYMINUTE=1,2,3,4,5,6"),
       vevent("date-list", `EXDATE:${exdateList(ICS_FEED_LIMITS.maxExdatesPerEvent + 1)}`),
       vevent("dense-daily", "RRULE:FREQ=DAILY;BYHOUR=8,9,10,11,12,13;COUNT=1000000000"),
-      ...Array.from({ length: 60 }, (_, index) => vevent(`daily-${index}`, "RRULE:FREQ=DAILY"))
+      ...Array.from({ length: 20 }, (_, index) => vevent(`daily-${index}`, "RRULE:FREQ=DAILY"))
     );
 
     const started = performance.now();
@@ -181,13 +185,19 @@ describe("Calendar ICS parser adapter", () => {
     }
     expect(byUid("dense-daily")).toHaveLength(ICS_FEED_LIMITS.maxOccurrencesPerEvent);
     expect(byUid("dense-daily")[0].startUtc).toBe("2026-02-23T12:00:00.000Z");
-    expect(parsed.occurrences.length).toBeLessThanOrEqual(ICS_FEED_LIMITS.maxOccurrencesPerFeed);
+    expect(byUid("daily-19")).toHaveLength(395);
     expect(parsed.limits).toEqual({
       unsupported_rrule: 3,
       too_many_dates: 1,
       event_occurrences_truncated: 1,
-      feed_occurrences_truncated: expect.any(Number),
     });
+    expect(parsed.retainedUids).toEqual([
+      "date-list",
+      "dense-daily",
+      "lower-case-sub-daily",
+      "sub-daily",
+      "time-of-day-product",
+    ]);
   });
 
   it("screens recurrence wherever node-ical would read it: stray, nested, or unterminated", () => {
@@ -213,33 +223,46 @@ describe("Calendar ICS parser adapter", () => {
       "neighbour",
     ]);
     expect(parsed.limits).toEqual({ unsupported_rrule: 2 });
+    expect(parsed.retainedUids).toEqual(["inner", "outer"]);
 
     // node-ical yields nothing for an unterminated VEVENT; its rule is still never built.
     const unterminated = ["BEGIN:VEVENT", "UID:open", "SUMMARY:open", hourly].join("\r\n");
     expect(parseIcs(calendar(unterminated), { now })).toEqual({
       occurrences: [],
       skippedCount: 2,
+      retainedUids: ["open"],
       limits: { unsupported_rrule: 1 },
     });
   });
 
-  it("stops a feed sync that exhausts its expansion time budget", () => {
+  it("fails a feed that exceeds its occurrence cap or time budget instead of returning part of it", () => {
+    const weekly = ["first", "second", "third"].map((uid) => vevent(uid, "RRULE:FREQ=WEEKLY"));
     let clock = 0;
-    const parsed = parseIcs(
-      calendar(
-        vevent("first", "RRULE:FREQ=WEEKLY"),
-        vevent("second", "RRULE:FREQ=WEEKLY"),
-        vevent("third", "RRULE:FREQ=WEEKLY")
-      ),
-      {
+    const overBudget = () =>
+      parseIcs(calendar(...weekly), {
         now: referenceDate,
         clock: () => (clock += ICS_FEED_LIMITS.parseBudgetMs * 0.75),
-      }
-    );
+      });
+    expect(overBudget).toThrow(IcsFeedLimitError);
+    clock = 0;
+    expect(overBudget).toThrow("time_budget_exhausted");
 
-    expect(new Set(parsed.occurrences.map((item) => item.externalUid))).toEqual(new Set(["first"]));
-    expect(parsed.limits).toEqual({ time_budget_exhausted: 2 });
-    expect(parsed.skippedCount).toBe(2);
+    const dailySeries = Math.ceil(ICS_FEED_LIMITS.maxOccurrencesPerFeed / 396) + 1;
+    const overCap = calendar(
+      ...Array.from({ length: dailySeries }, (_, index) =>
+        vevent(`daily-${index}`, "RRULE:FREQ=DAILY")
+      )
+    );
+    let failure: unknown;
+    try {
+      parseIcs(overCap, { now: referenceDate });
+    } catch (error) {
+      failure = error;
+    }
+    expect(failure).toMatchObject({
+      code: "feed_occurrences_truncated",
+      limits: { feed_occurrences_truncated: 1 },
+    });
   });
 
   it("drops an over-long property line in linear time, clips stored text, and refuses an oversized feed", () => {
