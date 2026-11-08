@@ -8,7 +8,9 @@ import { resolveBuildInfo } from "./build-info.mjs";
 import { assertNoPrivateInputs, seedBundlePlugin } from "./seed-bundle-plugin.mjs";
 import { writeLicenses } from "./bundled-licenses.mjs";
 
-const RESVG_EXTERNALS = ["@resvg/resvg-js", "@resvg/resvg-wasm"];
+// harfbuzzjs (imported by satori >= 0.33) is an Emscripten loader that reads __dirname and
+// loads hb.wasm from its own package dir; bundled into ESM output it throws at boot.
+const RESVG_EXTERNALS = ["@resvg/resvg-js", "@resvg/resvg-wasm", "harfbuzzjs"];
 const NATIVE_EXTERNALS = ["argon2", "better-sqlite3", ...RESVG_EXTERNALS];
 // ESM-output shim: some bundled CJS deps reference require; provide it.
 const REQUIRE_SHIM_BANNER = {
