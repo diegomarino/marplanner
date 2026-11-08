@@ -3,6 +3,11 @@ import { execFileSync } from "node:child_process";
 import { requireCandidate } from "./candidate-identity.mjs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+// The reviewed coverage cohort is measured with exactly this toolchain; a
+// different V8 provider or runtime can count statements and branches
+// differently. Bump it together with `coveragePolicy.toolchain` in
+// tests/fixtures/assembly-cohort.json and the exact pins in package.json.
+export const PINNED_TOOLCHAIN = Object.freeze({ node: "24.21.0", vitest: "5.1.0" });
 const METRICS = ["lines", "statements", "functions", "branches"];
 const FLOORS = {
   total: [85, 85, 85, 80],
@@ -19,7 +24,7 @@ function object(value, label) {
   return value;
 }
 export function preflightCoverage(policy, pkg, runtime, root = process.cwd()) {
-  for (const [key, version] of Object.entries({ node: "24.21.0", vitest: "5.0.4" })) {
+  for (const [key, version] of Object.entries(PINNED_TOOLCHAIN)) {
     const actual = key === "node" ? runtime.node : pkg.devDependencies?.vitest;
     if (policy.toolchain?.[key] !== version || actual !== version)
       fail(`${key} toolchain mismatch`);
@@ -49,7 +54,7 @@ export function preflightBrowserEnvironment(env = process.env) {
 export function verifyCoverage(expected, observed) {
   if (!expected?.candidate || observed?.candidate !== expected.candidate)
     fail("candidate identity missing or stale");
-  for (const [key, version] of Object.entries({ node: "24.21.0", vitest: "5.0.4" })) {
+  for (const [key, version] of Object.entries(PINNED_TOOLCHAIN)) {
     if (expected.toolchain?.[key] !== version || observed.toolchain?.[key] !== version)
       fail(`${key} toolchain mismatch`);
   }

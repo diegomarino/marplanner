@@ -26,6 +26,21 @@ updates:
           - "fastify-*"
           - find-my-way
           - fast-uri
+      # vitest is pinned exactly in tools/verify-coverage.mjs (PINNED_TOOLCHAIN)
+      # and in tests/fixtures/assembly-cohort.json (coveragePolicy.toolchain),
+      # so a bump fails `check:preflight` until both pins are updated and the
+      # coverage cohort is re-measured. Keep it in its own PR so it never
+      # blocks the rest of the minor/patch or security batch.
+      vitest-toolchain:
+        applies-to: version-updates
+        patterns:
+          - vitest
+          - "@vitest/*"
+      vitest-toolchain-security:
+        applies-to: security-updates
+        patterns:
+          - vitest
+          - "@vitest/*"
       # All other deps: batch minor+patch weekly; majors stay individual PRs
       # for deliberate review.
       minor-and-patch:
@@ -38,6 +53,8 @@ updates:
           - "fastify-*"
           - find-my-way
           - fast-uri
+          - vitest
+          - "@vitest/*"
         update-types:
           - minor
           - patch
@@ -51,6 +68,8 @@ updates:
           - "fastify-*"
           - find-my-way
           - fast-uri
+          - vitest
+          - "@vitest/*"
 
   # github-actions version updates — NEW capability (nothing existed for
   # actions before this config); grouped into one weekly PR.
