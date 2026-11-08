@@ -5,6 +5,7 @@ import {
   fromV8Coverage,
   preflightCoverage,
   preflightBrowserEnvironment,
+  PINNED_TOOLCHAIN,
 } from "./verify-coverage.mjs";
 
 const metrics = (covered, total) =>
@@ -13,7 +14,7 @@ const metrics = (covered, total) =>
   );
 const expected = {
   candidate: "candidate-1",
-  toolchain: { node: "24.21.0", vitest: "5.0.4" },
+  toolchain: { ...PINNED_TOOLCHAIN },
   files: {
     "src/client/a.ts": {
       layer: "client",
@@ -34,7 +35,7 @@ const expected = {
 };
 const observed = {
   candidate: "candidate-1",
-  toolchain: { node: "24.21.0", vitest: "5.0.4" },
+  toolchain: { ...PINNED_TOOLCHAIN },
   files: {
     "src/client/a.ts": { metrics: metrics(10, 10) },
     "src/server/b.ts": { metrics: metrics(10, 10) },
@@ -165,14 +166,17 @@ test("preflight accepts source edits and rejects toolchain drift before runners"
       toolchain: expected.toolchain,
       files: { "a.ts": { layer: "shared" } },
     };
-    const pkg = { packageManager: "npm@11.19.0", devDependencies: { vitest: "5.0.4" } };
+    const pkg = {
+      packageManager: "npm@11.19.0",
+      devDependencies: { vitest: PINNED_TOOLCHAIN.vitest },
+    };
     const runtime = { node: "24.21.0", npm: "11.19.0" };
     assert.equal(preflightCoverage(policy, pkg, runtime, root).files, 1);
     fs.writeFileSync(join(root, "a.ts"), "export const a = 1; // comment-only\n");
     assert.equal(preflightCoverage(policy, pkg, runtime, root).files, 1);
-    const stalePkg = { ...pkg, devDependencies: { vitest: "5.0.2" } };
+    const stalePkg = { ...pkg, devDependencies: { vitest: "5.0.4" } };
     assert.throws(() => preflightCoverage(policy, stalePkg, runtime, root), /vitest toolchain/);
-    const staleEvidence = { ...observed, toolchain: { ...observed.toolchain, vitest: "5.0.2" } };
+    const staleEvidence = { ...observed, toolchain: { ...observed.toolchain, vitest: "5.0.4" } };
     assert.throws(() => verifyCoverage(expected, staleEvidence), /vitest toolchain/);
     fs.rmSync(join(root, "a.ts"));
     assert.throws(
