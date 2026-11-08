@@ -91,10 +91,15 @@ kind (`wouldYouRather` if corpus-backed, `streakText` if not) and mirror it:
    block without a corpus has no language override
    ([daily-briefing](docs/features/daily-briefing.md)).
 
-Done when every file under `src/` that names the reference type also names the new one
-(`grep -rl <referenceType> src` vs `grep -rl <newType> src`), and the
-`tests/integration/daily-briefing-*` tests and `tests/client/daily-briefing-view.test.tsx`
-pass.
+Done when both of these hold:
+
+- In each shared registration file of steps 1, 2 and 4–6 (the per-type `<name>.ts` files
+  aside), `grep -c <newType>` matches `grep -c <referenceType>`, any gap explained by a
+  type-specific key such as `wouldYouRatherOr`.
+- The daily-briefing suites pass, including the admin mirror fence that compares the
+  client language map with the server registry:
+  `npm exec -- vitest run tests/client/daily-briefing` and
+  `npm exec -- vitest run tests/integration/daily-briefing --environment node`.
 
 ## Gotchas
 
