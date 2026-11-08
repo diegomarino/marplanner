@@ -295,6 +295,20 @@ describe("calendar sync publication", () => {
     });
   });
 
+  it("reads title initials in linear time when a feed title carries a long whitespace run", () => {
+    const run = " ".repeat(60_000);
+    const titles = [`Concierto${run}x`, `Concierto${run}- PN`, `Coro -${run}x`, `Coro -${run}`];
+    const started = performance.now();
+    const assigned = assignedByTitle(["Pablo", "Nico"], titles);
+    expect(performance.now() - started).toBeLessThan(200);
+    expect(assigned).toEqual({
+      [titles[0]]: [],
+      [titles[1]]: ["Pablo", "Nico"],
+      [titles[2]]: [],
+      [titles[3]]: [],
+    });
+  });
+
   it("leaves a shared initial unassigned unless it is repeated once per member", () => {
     expect(
       assignedByTitle(

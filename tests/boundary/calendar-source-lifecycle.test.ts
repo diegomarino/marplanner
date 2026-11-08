@@ -171,4 +171,136 @@ describe("calendar external-source lifecycle", () => {
       consecutive_failures: 1,
     });
   });
+
+  it("publishes the rest of a feed and logs only counts when one event exceeds the feed limits", async () => {
+    insertSource();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const overLimit = [
+      "BEGIN:VEVENT",
+      "UID:over-limit",
+      "DTSTAMP:20260928T000000Z",
+      "DTSTART:20261015T080000Z",
+      "SUMMARY:Over limit",
+      "RRULE:FREQ=HOURLY",
+      "END:VEVENT",
+    ];
+    const lines = feed.split("\r\n");
+    const mixed = [...lines.slice(0, -1), ...overLimit, lines.at(-1)].join("\r\n");
+    try {
+      await startExternalSourceSynchronization(sourceId, {
+        ...dependencies,
+        transport: async () => mixed,
+      });
+      expect(getEvents({ source: "external", range }).map((event) => event.title)).toEqual([
+        "Alex school day",
+      ]);
+      expect(warn).toHaveBeenCalledWith("calendar.external-sources.feed-limits", {
+        sourceId,
+        unsupported_rrule: 1,
+      });
+      expect(
+        getDb()
+          .prepare("SELECT last_error_code, last_skipped_count FROM calendar_external_sources")
+          .get()
+      ).toEqual({ last_error_code: null, last_skipped_count: 1 });
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  const timedEvent = (uid: string, rule: string): string[] => [
+    "BEGIN:VEVENT",
+    `UID:${uid}`,
+    "DTSTAMP:20260928T000000Z",
+    "DTSTART:20261015T080000Z",
+    `SUMMARY:${uid}`,
+    rule,
+    "END:VEVENT",
+  ];
+  const calendarOf = (...events: string[][]): string =>
+    ["BEGIN:VCALENDAR", "VERSION:2.0", ...events.flat(), "END:VCALENDAR"].join("\r\n");
+  const statusByUid = () =>
+    Object.fromEntries(
+      (
+        getDb()
+          .prepare(
+            "SELECT external_uid, MIN(status) AS status FROM calendar_external_event_meta GROUP BY external_uid"
+          )
+          .all() as Array<{ external_uid: string; status: string }>
+      ).map(({ external_uid, status }) => [external_uid, status])
+    );
+
+  it("fails the sync and keeps the previous snapshot when a feed exceeds a feed-wide limit", async () => {
+    insertSource();
+    await startExternalSourceSynchronization(sourceId, dependencies);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const series = Array.from({ length: 30 }, (_, index) =>
+      timedEvent(`daily-${index}`, "RRULE:FREQ=DAILY")
+    );
+    try {
+      await startExternalSourceSynchronization(sourceId, {
+        ...dependencies,
+        transport: async () => calendarOf(...series),
+      });
+      expect(getEvents({ source: "external", range }).map((event) => event.title)).toEqual([
+        "Alex school day",
+      ]);
+      expect(statusByUid()).toEqual({ "school-day": "active" });
+      expect(
+        getDb()
+          .prepare("SELECT last_error_code, consecutive_failures FROM calendar_external_sources")
+          .get()
+      ).toEqual({ last_error_code: "parse_failed", consecutive_failures: 1 });
+      expect(warn).toHaveBeenCalledWith("calendar.external-sources.feed-limits", {
+        sourceId,
+        feed_occurrences_truncated: 1,
+      });
+
+      // A feed node-ical itself rejects fails the same way but logs no limit counts.
+      warn.mockClear();
+      await startExternalSourceSynchronization(sourceId, {
+        ...dependencies,
+        transport: async () => calendarOf(timedEvent("broken", "RRULE:freq=daily")),
+      });
+      expect(statusByUid()).toEqual({ "school-day": "active" });
+      expect(
+        getDb().prepare("SELECT last_error_code FROM calendar_external_sources").get()
+      ).toEqual({ last_error_code: "parse_failed" });
+      expect(warn).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("keeps an imported event a feed limit now drops and still cancels one the feed removed", async () => {
+    insertSource();
+    const weekly = timedEvent("club", "RRULE:FREQ=WEEKLY;COUNT=3");
+    const school = timedEvent("school", "");
+    await startExternalSourceSynchronization(sourceId, {
+      ...dependencies,
+      transport: async () => calendarOf(weekly, school),
+    });
+    expect(statusByUid()).toEqual({ club: "active", school: "active" });
+
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    try {
+      await startExternalSourceSynchronization(sourceId, {
+        ...dependencies,
+        transport: async () => calendarOf(timedEvent("club", "RRULE:FREQ=HOURLY")),
+      });
+    } finally {
+      warn.mockRestore();
+    }
+    expect(statusByUid()).toEqual({ club: "active", school: "cancelled" });
+    expect(
+      getDb()
+        .prepare(
+          "SELECT COUNT(*) AS count FROM calendar_external_event_meta WHERE external_uid = 'club'"
+        )
+        .get()
+    ).toEqual({ count: 3 });
+    expect(getDb().prepare("SELECT last_error_code FROM calendar_external_sources").get()).toEqual({
+      last_error_code: null,
+    });
+  });
 });
