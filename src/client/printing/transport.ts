@@ -11,11 +11,11 @@
  * 100-byte chunks (`CHUNK_SIZE`), 5 ms inter-chunk delay (`INTER_CHUNK_DELAY_MS`),
  * `writeValueWithoutResponse` with a `writeValue` fallback, 3x GATT-connect retries
  * (`GATT_CONNECT_RETRIES`) with a 2 s backoff, pairing via `requestDevice` behind an
- * explicit user gesture. D6's one deliberate simplification vs v1: no persisted
- * `deviceId`/`getDevices` silent-reconnect path — "device re-acquired per session
- * (browser amnesia accepted)" means every session re-runs the same explicit-gesture
- * `pair` ritual instead of v1's `connect({requireUserGesture})` two-path split; the stored
- * `printerTransport` UUIDs are only a try-first preference — pairing still needs the gesture.
+ * explicit user gesture. Reconnect is gesture-free for a device this browser already granted
+ * (`reconnect`): the in-memory `BluetoothDevice` after an unexpected drop, else
+ * `navigator.bluetooth.getDevices()` where the browser implements it, with a bounded GATT
+ * connect. Without either, the explicit-gesture `pair` ritual is the fallback. The stored
+ * `printerTransport` UUIDs stay a try-first preference.
  * Seam (D6): `__setPrintTransportForTests` overrides `createPrintTransport`'s return
  * value unconditionally (client unit/component tests call this directly — no env flag
  * needed). Absent an override, a DEV or `VITE_E2E_HOOKS=true` build (mirrors
@@ -121,6 +121,31 @@ export async function retryWithDelay<T>(
   throw lastError;
 }
 
+/** Gesture-free reconnect budget: Android Chrome's `gatt.connect()` can wait indefinitely for
+ * a printer that is off or out of range, so a reconnect attempt is bounded. */
+export const RECONNECT_TIMEOUT_MS = 10_000;
+
+/** Reject with `onTimeout()` when `promise` has not settled within `ms`. */
+export function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  onTimeout: () => Error
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(onTimeout()), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err: unknown) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /* PrintTransport — the executor's only view of "the printer" */
 /* ------------------------------------------------------------------ */
@@ -151,6 +176,11 @@ export interface PrintTransport {
    * ready; rejects with a `PrintTransportError` otherwise (never leaves a half-paired state).
    * Resolves the paired device's identity; a preference is tried first, never required. */
   pair(preference?: PrinterEndpointPreference): Promise<PrinterTransportSettings>;
+  /** Gesture-free reconnect to a device this browser already granted: the in-memory device
+   * after an unexpected drop, else `navigator.bluetooth.getDevices()` where the browser has it.
+   * Rejects with `pairing_required` when the device cannot be reached without a new gesture,
+   * or with a recoverable code (`connect_failed`, ...) when it is known but did not answer. */
+  reconnect(remembered: PrinterTransportSettings): Promise<PrinterTransportSettings>;
   /** Whether a connected, writable device is currently available. */
   isReady(): boolean;
   /** Transmit printer-ready bytes in chunked form. Rejects with a `PrintTransportError` on any
@@ -179,6 +209,10 @@ export interface FakePrintTransport extends PrintTransport {
   reset(): void;
   /** The NEXT `pair` call rejects with `error` instead of succeeding (one-shot). */
   scriptPairFailure(error?: PrintTransportError): void;
+  /** The NEXT `reconnect` call rejects with `error` instead of succeeding (one-shot). */
+  scriptReconnectFailure(error?: PrintTransportError): void;
+  /** How many times `reconnect` has been called since creation or `reset`. */
+  reconnectCalls(): number;
   /** The NEXT `printJob` call rejects with `error` instead of succeeding (one-shot).
    * `disconnect: true` also flips `isReady` to false, simulating a dropped connection
    * (spec US4 AC2 — the executor must observe this to render "disconnected" and require
@@ -201,6 +235,9 @@ export const FAKE_PRINTER_IDENTITY: PrinterTransportSettings = {
   characteristicUuid: "bef8d6c9-9c21-4c9e-b632-bd58c1009f9f",
 };
 
+const DEFAULT_RECONNECT_FAILURE = (): PrintTransportError =>
+  new PrintTransportError("connect_failed", "scripted reconnect failure");
+
 const DEFAULT_PRINT_FAILURE = (): PrintTransportError =>
   new PrintTransportError("write_failed", "scripted write failure");
 
@@ -212,6 +249,8 @@ export function createFakePrintTransport(): FakePrintTransport {
   let ready = false;
   let chunks: Uint8Array[] = [];
   let pairFailure: PrintTransportError | null = null;
+  let reconnectFailure: PrintTransportError | null = null;
+  let reconnectCount = 0;
   let printFailure: { error: PrintTransportError; disconnect: boolean } | null = null;
   const disconnectListeners = new Set<() => void>();
 
@@ -229,6 +268,16 @@ export function createFakePrintTransport(): FakePrintTransport {
         characteristicUuid:
           preference?.characteristicUuid || FAKE_PRINTER_IDENTITY.characteristicUuid,
       };
+    },
+    async reconnect(remembered) {
+      reconnectCount += 1;
+      if (reconnectFailure) {
+        const err = reconnectFailure;
+        reconnectFailure = null;
+        throw err;
+      }
+      ready = true;
+      return { ...remembered };
     },
     isReady() {
       return ready;
@@ -266,7 +315,15 @@ export function createFakePrintTransport(): FakePrintTransport {
       chunks = [];
       ready = false;
       pairFailure = null;
+      reconnectFailure = null;
+      reconnectCount = 0;
       printFailure = null;
+    },
+    scriptReconnectFailure(error = DEFAULT_RECONNECT_FAILURE()) {
+      reconnectFailure = error;
+    },
+    reconnectCalls() {
+      return reconnectCount;
     },
     scriptPairFailure(error = DEFAULT_PAIR_FAILURE()) {
       pairFailure = error;
@@ -282,8 +339,8 @@ export function createFakePrintTransport(): FakePrintTransport {
 /* ------------------------------------------------------------------ */
 
 /** v1's candidate service UUIDs (cited module doc) — tried in order until one exposes a
- * writable characteristic. Kept as a flat list (D6's simplification: no persisted
- * deviceId/service-uuid config to thread through — every session re-discovers).
+ * writable characteristic. Kept as a flat list; a remembered or stored service is moved to the
+ * front by `orderCandidateServices`.
  * Typed as the ambient `BluetoothServiceUUID`'s own definition (`number | string`, see
  * `@types/web-bluetooth`) rather than that type name itself — it's a pure type alias with no
  * runtime global counterpart, which trips `no-undef` (the `globals` package's browser list
@@ -357,61 +414,156 @@ export function createBluetoothPrintTransport(): PrintTransport {
     });
   }
 
+  // Every pair/reconnect/disconnect starts a new operation. A superseded one (a slow
+  // background reconnect overtaken by a manual pair, say) must never touch the shared
+  // `device`/`characteristic` or tear down a link the newer operation now owns.
+  let operation = 0;
+
+  function superseded(): PrintTransportError {
+    return new PrintTransportError("connect_failed", "Superseded by a newer printer operation.");
+  }
+
+  /** Attach `target`, connect its GATT server and select a writable characteristic, trying
+   * `services` in order. Leaves no half-open connection behind when nothing is writable, and
+   * aborts without side effects once operation `token` is no longer the current one. */
+  async function attachAndDiscover(
+    token: number,
+    target: BluetoothDevice,
+    services: (number | string)[],
+    preferredCharacteristic: string | undefined,
+    connect: () => Promise<BluetoothRemoteGATTServer>
+  ): Promise<PrinterTransportSettings> {
+    detachDeviceListener();
+    device = target;
+    characteristic = null;
+    target.addEventListener("gattserverdisconnected", notifyUnexpectedDisconnect);
+    const server = await connect();
+    if (token !== operation) throw superseded();
+
+    for (const serviceId of services) {
+      let service: BluetoothRemoteGATTService;
+      try {
+        service = await server.getPrimaryService(serviceId);
+      } catch {
+        continue;
+      }
+      let characteristics: BluetoothRemoteGATTCharacteristic[];
+      try {
+        characteristics = await service.getCharacteristics();
+      } catch {
+        continue;
+      }
+      if (token !== operation) throw superseded();
+      const writableCharacteristics = characteristics.filter(
+        (c) => c.properties.write || c.properties.writeWithoutResponse
+      );
+      const writable =
+        writableCharacteristics.find((c) => c.uuid === preferredCharacteristic) ??
+        writableCharacteristics[0];
+      if (writable) {
+        characteristic = writable;
+        return {
+          deviceId: target.id,
+          name: target.name ?? "",
+          serviceUuid: service.uuid,
+          characteristicUuid: writable.uuid,
+        };
+      }
+    }
+    if (token !== operation) throw superseded();
+
+    //: a GATT connection was established above but no candidate service
+    // exposed a writable characteristic — disconnect it before throwing, or a re-click of
+    // the pair affordance opens a SECOND chooser on top of this still-open (but useless)
+    // GATT connection, leaking it. Detach the listener FIRST — this is a
+    // self-initiated teardown, not the unexpected drop `onDisconnect` exists for.
+    detachDeviceListener();
+    device?.gatt?.disconnect();
+    device = null;
+    throw new PrintTransportError(
+      "characteristic_not_found",
+      "No writable characteristic found in candidate Bluetooth printer services."
+    );
+  }
+
+  /** The remembered device without a gesture: the in-memory one (still valid after a drop),
+   * else the browser's granted-device list. `null` means a new gesture is required. */
+  async function findGrantedDevice(deviceId: string): Promise<BluetoothDevice | null> {
+    if (device?.id === deviceId) return device;
+    if (typeof navigator.bluetooth.getDevices !== "function") return null;
+    let granted: BluetoothDevice[];
+    try {
+      granted = await navigator.bluetooth.getDevices();
+    } catch {
+      return null;
+    }
+    return granted.find((candidate) => candidate.id === deviceId) ?? null;
+  }
+
   return {
     async pair(preference) {
       ensureBluetoothAvailable();
+      const token = ++operation;
       const services = orderCandidateServices(preference?.serviceUuid);
-      const preferredCharacteristic = preference?.characteristicUuid?.toLowerCase();
       const paired = await navigator.bluetooth.requestDevice({
         filters: [{ services: [BLUETOOTH_PRINTER_FILTER_SERVICE] }],
         optionalServices: services,
       });
-      device = paired;
-      paired.addEventListener("gattserverdisconnected", notifyUnexpectedDisconnect);
-      const server = await connectGattWithRetry();
-
-      for (const serviceId of services) {
-        let service: BluetoothRemoteGATTService;
-        try {
-          service = await server.getPrimaryService(serviceId);
-        } catch {
-          continue;
-        }
-        let characteristics: BluetoothRemoteGATTCharacteristic[];
-        try {
-          characteristics = await service.getCharacteristics();
-        } catch {
-          continue;
-        }
-        const writableCharacteristics = characteristics.filter(
-          (c) => c.properties.write || c.properties.writeWithoutResponse
-        );
-        const writable =
-          writableCharacteristics.find((c) => c.uuid === preferredCharacteristic) ??
-          writableCharacteristics[0];
-        if (writable) {
-          characteristic = writable;
-          return {
-            deviceId: paired.id,
-            name: paired.name ?? "",
-            serviceUuid: service.uuid,
-            characteristicUuid: writable.uuid,
-          };
-        }
-      }
-
-      //: a GATT connection was established above but no candidate service
-      // exposed a writable characteristic — disconnect it before throwing, or a re-click of
-      // the pair affordance opens a SECOND chooser on top of this still-open (but useless)
-      // GATT connection, leaking it. Detach the listener FIRST — this is a
-      // self-initiated teardown, not the unexpected drop `onDisconnect` exists for.
-      detachDeviceListener();
-      device?.gatt?.disconnect();
-      device = null;
-      throw new PrintTransportError(
-        "characteristic_not_found",
-        "No writable characteristic found in candidate Bluetooth printer services."
+      if (token !== operation) throw superseded();
+      return attachAndDiscover(
+        token,
+        paired,
+        services,
+        preference?.characteristicUuid?.toLowerCase(),
+        connectGattWithRetry
       );
+    },
+    async reconnect(remembered) {
+      ensureBluetoothAvailable();
+      const token = ++operation;
+      const target = remembered.deviceId ? await findGrantedDevice(remembered.deviceId) : null;
+      if (token !== operation) throw superseded();
+      if (!target) {
+        throw new PrintTransportError(
+          "pairing_required",
+          "The remembered printer cannot be reached without pairing again."
+        );
+      }
+      try {
+        return await attachAndDiscover(
+          token,
+          target,
+          orderCandidateServices(remembered.serviceUuid),
+          remembered.characteristicUuid.toLowerCase(),
+          async () => {
+            const server = await withTimeout(
+              target.gatt?.connect() ?? Promise.resolve(undefined),
+              RECONNECT_TIMEOUT_MS,
+              () => new PrintTransportError("connect_failed", "Printer reconnect timed out.")
+            );
+            if (!server) throw new PrintTransportError("connect_failed", "No GATT server.");
+            return server;
+          }
+        );
+      } catch (err) {
+        if (token !== operation) {
+          // Superseded: the newer operation owns the shared state. Only release what is ours —
+          // never a link to the device the newer operation is now using.
+          if (target !== device) {
+            target.removeEventListener("gattserverdisconnected", notifyUnexpectedDisconnect);
+            target.gatt?.disconnect();
+          }
+          throw superseded();
+        }
+        // Keep the device reference for the next attempt, but never a half-open connection or
+        // a listener that would report our own teardown as an unexpected drop.
+        detachDeviceListener();
+        target.gatt?.disconnect();
+        device = target;
+        characteristic = null;
+        if (err instanceof PrintTransportError) throw err;
+        throw new PrintTransportError("connect_failed", String(err));
+      }
     },
     isReady() {
       return characteristic !== null && (device?.gatt?.connected ?? false);
@@ -431,6 +583,7 @@ export function createBluetoothPrintTransport(): PrintTransport {
       }
     },
     disconnect() {
+      operation += 1; // cancels any in-flight pair/reconnect
       detachDeviceListener(); // self-initiated — never notify onDisconnect subscribers
       device?.gatt?.disconnect();
       device = null;

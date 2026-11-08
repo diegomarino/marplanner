@@ -12,7 +12,9 @@ import {
   FAKE_PRINTER_IDENTITY,
   orderCandidateServices,
   PrintTransportError,
+  RECONNECT_TIMEOUT_MS,
   retryWithDelay,
+  withTimeout,
   writeChunks,
   __setPrintTransportForTests,
 } from "@/printing/transport";
@@ -398,5 +400,229 @@ describe("createPrintTransport HOOKS_ENABLED gating (window.__mpPrintTransport, 
     mod.createPrintTransport();
 
     expect(window.__mpPrintTransport).toBeUndefined();
+  });
+});
+
+describe("withTimeout (bounded gesture-free reconnect)", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("resolves with the promise's value when it settles in time", async () => {
+    await expect(withTimeout(Promise.resolve(7), 1_000, () => new Error("late"))).resolves.toBe(7);
+  });
+
+  it("propagates the promise's own rejection", async () => {
+    await expect(
+      withTimeout(Promise.reject(new Error("boom")), 1_000, () => new Error("late"))
+    ).rejects.toThrow("boom");
+  });
+
+  it("rejects with the timeout error when the promise never settles", async () => {
+    vi.useFakeTimers();
+    const pending = withTimeout(new Promise<never>(() => {}), 500, () => new Error("late"));
+    const assertion = expect(pending).rejects.toThrow("late");
+    await vi.advanceTimersByTimeAsync(500);
+    await assertion;
+  });
+});
+
+describe("createBluetoothPrintTransport reconnect() (gesture-free)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  const remembered = {
+    deviceId: "dev-1",
+    name: "Thermal X",
+    serviceUuid: "49535343-fe7d-4ae5-8fa9-9fafd205e455",
+    characteristicUuid: "49535343-8841-43f4-a8d4-ecbe34729bb3",
+  };
+
+  function makeDevice(id = "dev-1") {
+    const listeners = new Map<string, () => void>();
+    const getPrimaryService = vi.fn(async (serviceId: number | string) => ({
+      uuid: String(serviceId),
+      getCharacteristics: async () => [
+        {
+          uuid: remembered.characteristicUuid,
+          properties: { write: true, writeWithoutResponse: false },
+        },
+      ],
+    }));
+    const gatt = {
+      connected: false,
+      connect: vi.fn(async () => {
+        gatt.connected = true;
+        return { getPrimaryService };
+      }),
+      disconnect: vi.fn(() => {
+        gatt.connected = false;
+      }),
+    };
+    return {
+      id,
+      name: "Thermal X",
+      gatt,
+      getPrimaryService,
+      addEventListener: vi.fn((type: string, cb: () => void) => listeners.set(type, cb)),
+      removeEventListener: vi.fn((type: string) => listeners.delete(type)),
+      drop() {
+        gatt.connected = false;
+        listeners.get("gattserverdisconnected")?.();
+      },
+    };
+  }
+
+  it("reconnects through getDevices() and resolves the stored identity", async () => {
+    const device = makeDevice();
+    const requestDevice = vi.fn();
+    const getDevices = vi.fn().mockResolvedValue([makeDevice("other"), device]);
+    vi.stubGlobal("navigator", {
+      ...globalThis.navigator,
+      bluetooth: { requestDevice, getDevices },
+    });
+
+    const transport = createBluetoothPrintTransport();
+    await expect(transport.reconnect(remembered)).resolves.toEqual(remembered);
+
+    expect(requestDevice).not.toHaveBeenCalled();
+    expect(device.getPrimaryService).toHaveBeenNthCalledWith(1, remembered.serviceUuid);
+    expect(transport.isReady()).toBe(true);
+  });
+
+  it("reconnects the in-memory device after a drop even without getDevices()", async () => {
+    const device = makeDevice();
+    const requestDevice = vi.fn().mockResolvedValue(device);
+    vi.stubGlobal("navigator", { ...globalThis.navigator, bluetooth: { requestDevice } });
+
+    const transport = createBluetoothPrintTransport();
+    const onDrop = vi.fn();
+    transport.onDisconnect(onDrop);
+    const identity = await transport.pair(remembered);
+    device.drop();
+    expect(onDrop).toHaveBeenCalledTimes(1);
+    expect(transport.isReady()).toBe(false);
+
+    await expect(transport.reconnect(identity)).resolves.toEqual(remembered);
+    expect(requestDevice).toHaveBeenCalledTimes(1); // no second chooser
+    expect(device.gatt.connect).toHaveBeenCalledTimes(2);
+    expect(transport.isReady()).toBe(true);
+  });
+
+  it("rejects with pairing_required when the browser cannot list granted devices", async () => {
+    vi.stubGlobal("navigator", { ...globalThis.navigator, bluetooth: { requestDevice: vi.fn() } });
+
+    await expect(createBluetoothPrintTransport().reconnect(remembered)).rejects.toMatchObject({
+      code: "pairing_required",
+    });
+  });
+
+  it("rejects with pairing_required when the remembered device is no longer granted", async () => {
+    vi.stubGlobal("navigator", {
+      ...globalThis.navigator,
+      bluetooth: { requestDevice: vi.fn(), getDevices: vi.fn().mockResolvedValue([]) },
+    });
+
+    await expect(createBluetoothPrintTransport().reconnect(remembered)).rejects.toMatchObject({
+      code: "pairing_required",
+    });
+  });
+
+  it("times out a GATT connect that never answers and keeps no listener behind", async () => {
+    vi.useFakeTimers();
+    const device = makeDevice();
+    device.gatt.connect.mockImplementation(() => new Promise(() => {}));
+    vi.stubGlobal("navigator", {
+      ...globalThis.navigator,
+      bluetooth: { requestDevice: vi.fn(), getDevices: vi.fn().mockResolvedValue([device]) },
+    });
+
+    const attempt = createBluetoothPrintTransport().reconnect(remembered);
+    const assertion = expect(attempt).rejects.toMatchObject({ code: "connect_failed" });
+    await vi.advanceTimersByTimeAsync(RECONNECT_TIMEOUT_MS);
+    await assertion;
+    expect(device.removeEventListener).toHaveBeenCalledWith(
+      "gattserverdisconnected",
+      expect.any(Function)
+    );
+  });
+  it("a reconnect overtaken by a manual pair never replaces the new printer's characteristic", async () => {
+    const stale = makeDevice("dev-1");
+    let releaseStale: (() => void) | undefined;
+    stale.gatt.connect.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          releaseStale = () => {
+            stale.gatt.connected = true;
+            resolve({ getPrimaryService: stale.getPrimaryService });
+          };
+        })
+    );
+    const fresh = makeDevice("dev-2");
+    const writeValue = vi.fn(async () => {});
+    const staleWrite = vi.fn(async () => {});
+    fresh.getPrimaryService.mockImplementation(async (serviceId: number | string) => ({
+      uuid: String(serviceId),
+      getCharacteristics: async () => [
+        {
+          uuid: remembered.characteristicUuid,
+          properties: { write: true, writeWithoutResponse: false },
+          writeValue,
+        },
+      ],
+    }));
+    stale.getPrimaryService.mockImplementation(async (serviceId: number | string) => ({
+      uuid: String(serviceId),
+      getCharacteristics: async () => [
+        {
+          uuid: remembered.characteristicUuid,
+          properties: { write: true, writeWithoutResponse: false },
+          writeValue: staleWrite,
+        },
+      ],
+    }));
+    vi.stubGlobal("navigator", {
+      ...globalThis.navigator,
+      bluetooth: {
+        requestDevice: vi.fn().mockResolvedValue(fresh),
+        getDevices: vi.fn().mockResolvedValue([stale]),
+      },
+    });
+
+    const transport = createBluetoothPrintTransport();
+    const slowReconnect = transport.reconnect(remembered);
+    const slowOutcome = expect(slowReconnect).rejects.toMatchObject({ code: "connect_failed" });
+    await vi.waitFor(() => expect(stale.gatt.connect).toHaveBeenCalled());
+
+    await expect(transport.pair(remembered)).resolves.toMatchObject({ deviceId: "dev-2" });
+    releaseStale?.();
+    await slowOutcome;
+
+    expect(transport.isReady()).toBe(true);
+    await transport.printJob(new Uint8Array([1, 2, 3]));
+    expect(writeValue).toHaveBeenCalledTimes(1);
+    expect(staleWrite).not.toHaveBeenCalled();
+    expect(fresh.gatt.disconnect).not.toHaveBeenCalled();
+    expect(stale.gatt.disconnect).toHaveBeenCalled(); // the stale link is released
+  });
+});
+
+describe("createFakePrintTransport reconnect()", () => {
+  it("counts calls, becomes ready, and honours a one-shot scripted failure", async () => {
+    const transport = createFakePrintTransport();
+    transport.scriptReconnectFailure();
+    await expect(transport.reconnect(FAKE_PRINTER_IDENTITY)).rejects.toMatchObject({
+      code: "connect_failed",
+    });
+    expect(transport.isReady()).toBe(false);
+    await expect(transport.reconnect(FAKE_PRINTER_IDENTITY)).resolves.toEqual(
+      FAKE_PRINTER_IDENTITY
+    );
+    expect(transport.isReady()).toBe(true);
+    expect(transport.reconnectCalls()).toBe(2);
+    transport.reset();
+    expect(transport.reconnectCalls()).toBe(0);
   });
 });

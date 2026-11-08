@@ -7,6 +7,10 @@
  * failure merely because its acknowledgement request failed. A rotated lease
  * ends the retry; the queue's documented at-least-once semantics still apply.
  * Production polling is 15 seconds. Tests may inject a shorter interval.
+ * A printer this browser paired before is reconnected without a gesture: on mount (a reload,
+ * including the kiosk's daily one) and after an unexpected drop, then once per poll interval
+ * while it stays unreachable. Only `pairing_required` (the browser cannot reach the device
+ * without a new chooser) stops those attempts; the pair affordance stays available throughout.
  */
 import {
   createContext,
@@ -33,6 +37,7 @@ import {
 } from "./transport";
 import { PRINT_INTENT_ENQUEUED_EVENT } from "./queueWakeup";
 import { usePrintingPluginActive } from "./pluginStatus";
+import { loadRememberedPrinter, saveRememberedPrinter } from "./rememberedPrinter";
 
 export const DEFAULT_POLL_INTERVAL_MS = 15_000;
 
@@ -177,6 +182,14 @@ export function PrintExecutor({
   const busyRef = useRef(false); // guards overlapping poll ticks
   const wakePendingRef = useRef(false);
   const pendingAckRef = useRef<PendingAck | null>(null); //
+  // Gesture-free reconnect bookkeeping: one attempt in flight at a time; a manual pair bumps
+  // the generation so a slower background attempt never overrides the user's own pairing.
+  const reconnectInFlightRef = useRef(false);
+  const pairGenerationRef = useRef(0);
+  const [autoReconnect, setAutoReconnect] = useState(true);
+  // Only the mount-time attempt shows progress, so a reload of a paired kiosk reads
+  // "Pairing…" for a moment instead of flashing "Not paired".
+  const [restoring, setRestoring] = useState(() => loadRememberedPrinter() !== null);
 
   const applyAckOutcome = useCallback(
     (jobId: string, leaseToken: string, outcome: AckOutcome): void => {
@@ -205,6 +218,7 @@ export function PrintExecutor({
 
   const handlePair = useCallback(
     (preference?: PrinterEndpointPreference) => {
+      pairGenerationRef.current += 1;
       setConnection("pairing");
       setLastError(null);
       transport
@@ -216,6 +230,8 @@ export function PrintExecutor({
           return identity;
         })
         .then((identity) => {
+          saveRememberedPrinter(identity);
+          setAutoReconnect(true);
           setPairedDevice(identity);
           setConnection("paired");
         })
@@ -238,6 +254,50 @@ export function PrintExecutor({
   // or the fake's scriptable `triggerDisconnect`) transitions straight to "disconnected" —
   // subscribed once for the life of this component; the SAME transport instance persists
   // across re-pairs (lazy ref above), so this never needs to re-subscribe per pairing.
+  const attemptReconnect = useCallback(async (): Promise<void> => {
+    if (reconnectInFlightRef.current) return;
+    const remembered = loadRememberedPrinter();
+    if (!remembered) {
+      setAutoReconnect(false);
+      return;
+    }
+    reconnectInFlightRef.current = true;
+    const generation = pairGenerationRef.current;
+    try {
+      const identity = await transport.reconnect(remembered);
+      if (generation !== pairGenerationRef.current) return; // a manual pair took over
+      await registerCapability();
+      if (generation !== pairGenerationRef.current) return;
+      saveRememberedPrinter(identity);
+      setPairedDevice(identity);
+      setLastError(null);
+      setConnection("paired");
+    } catch (err) {
+      if (generation !== pairGenerationRef.current) return;
+      if (err instanceof PrintTransportError && err.code === "pairing_required") {
+        setAutoReconnect(false);
+      }
+      // Capability registration can fail after the GATT link came up: never keep it orphaned.
+      if (transport.isReady()) transport.disconnect();
+    } finally {
+      reconnectInFlightRef.current = false;
+      setRestoring(false);
+    }
+  }, [registerCapability, transport]);
+
+  // Gesture-free reconnect loop: immediately on entering "unpaired" (mount) or "disconnected"
+  // (an unexpected drop), then once per poll interval until it succeeds, the user pairs by
+  // hand, or the transport says a new gesture is unavoidable. Failed attempts never change the
+  // displayed state, so the pair affordance stays put between them.
+  const reconnectEligible =
+    pluginActive && autoReconnect && (connection === "unpaired" || connection === "disconnected");
+  useEffect(() => {
+    if (!reconnectEligible) return;
+    void attemptReconnect();
+    const interval = setInterval(() => void attemptReconnect(), pollIntervalMs);
+    return () => clearInterval(interval);
+  }, [attemptReconnect, pollIntervalMs, reconnectEligible]);
+
   useEffect(() => {
     const unsubscribe = transport.onDisconnect(() => {
       setConnection("disconnected");
@@ -382,17 +442,19 @@ export function PrintExecutor({
   }, [connection, pollIntervalMs, pollTick]);
 
   const displayState: DisplayState =
-    connection === "unpaired"
-      ? "unpaired"
-      : connection === "pairing"
-        ? "pairing"
-        : connection === "disconnected"
-          ? "disconnected"
-          : activity === "printing"
-            ? "printing"
-            : lastError
-              ? "error"
-              : "paired";
+    connection === "unpaired" && restoring
+      ? "pairing"
+      : connection === "unpaired"
+        ? "unpaired"
+        : connection === "pairing"
+          ? "pairing"
+          : connection === "disconnected"
+            ? "disconnected"
+            : activity === "printing"
+              ? "printing"
+              : lastError
+                ? "error"
+                : "paired";
 
   const stateLabelKey =
     displayState === "unpaired"
@@ -407,7 +469,8 @@ export function PrintExecutor({
               ? ("printing.executor.state.error" as const)
               : ("printing.executor.state.paired" as const);
 
-  const showPairAffordance = connection === "unpaired" || connection === "disconnected";
+  const showPairAffordance =
+    (connection === "unpaired" && !restoring) || connection === "disconnected";
 
   // Inactive or unresolved catalog state hides pairing and printer controls.
   // An already paired session retains its hooks; the server's lifecycle gate
