@@ -99,7 +99,7 @@
     "lucide-react": "^1.68.0",
     "node-ical": "0.27.3",
     "pngjs": "7.0.0",
-    "pressedslip": "0.5.1",
+    "pressedslip": "0.5.2",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "rrule": "2.8.1",
@@ -148,6 +148,9 @@
     },
     "pressedslip": {
       "zod": "$zod"
+    },
+    "satori": {
+      "fflate": "^0.7.5"
     }
   },
   "packageManager": "npm@11.19.0",
