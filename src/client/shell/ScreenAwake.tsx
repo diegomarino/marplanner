@@ -13,7 +13,7 @@ import {
   SCREEN_AWAKE_STORAGE_KEY,
   screenAwakeSupport,
   type ScreenAwakePreferences,
-} from "./screenAwake";
+} from "./screenAwakePreferences";
 
 /** How long a tap lifts the night dimming before it settles again. */
 export const NIGHT_PEEK_MS = 5 * 60_000;

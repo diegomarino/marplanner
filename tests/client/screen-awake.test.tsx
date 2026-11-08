@@ -16,7 +16,7 @@ import {
   SCREEN_AWAKE_CHANGE_EVENT,
   SCREEN_AWAKE_STORAGE_KEY,
   screenAwakeSupport,
-} from "@/shell/screenAwake";
+} from "@/shell/screenAwakePreferences";
 
 // The household timezone normally comes from the shell's one `/api/settings` read.
 const household = vi.hoisted(() => ({ timezone: "UTC" as string | null }));

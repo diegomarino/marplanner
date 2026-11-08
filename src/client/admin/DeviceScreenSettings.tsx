@@ -10,7 +10,7 @@ import {
   screenAwakeSupport,
   type ScreenAwakeNight,
   type ScreenAwakePreferences,
-} from "@/shell/screenAwake";
+} from "@/shell/screenAwakePreferences";
 
 const SUPPORT_KEYS: Record<ReturnType<typeof screenAwakeSupport>, MessageKey> = {
   supported: "admin.device.screenAwake.supported",
