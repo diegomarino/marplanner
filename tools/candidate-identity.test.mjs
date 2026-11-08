@@ -64,9 +64,9 @@ test("CI binds the checked-out tree instead of a stale embedded candidate hash",
   assert.deepEqual(Object.keys(config.jobs).sort(), ["container", "full", "native", "standard"]);
   assert.deepEqual(config.jobs.full.needs, ["standard", "native", "container"]);
   assert.equal(config.jobs.full.if, "${{ always() }}");
-  for (const job of ["standard", "native", "container"]) {
-    assert.equal(config.jobs[job]["runs-on"], "ubuntu-latest");
-  }
+  assert.equal(config.jobs.standard["runs-on"], "macos-15");
+  assert.equal(config.jobs.native["runs-on"], "macos-15");
+  assert.equal(config.jobs.container["runs-on"], "ubuntu-latest");
   assert.equal(config.jobs.standard.needs, undefined);
   assert.equal(config.jobs.container.needs, undefined);
   assert.deepEqual(config.jobs.native.needs, ["standard"]);
