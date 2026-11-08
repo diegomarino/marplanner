@@ -4,27 +4,20 @@ name: Product quality and coverage
   push:
     branches:
       - main
-  workflow_dispatch:
-    inputs:
-      force_hosted:
-        description: Use GitHub-hosted execution for product checks
-        type: boolean
-        default: false
+  workflow_dispatch: null
 permissions:
   contents: read
 # A new push to a PR supersedes the previous run; pushes to main are never cancelled.
 concurrency:
   group: coverage-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# Every job runs on GitHub-hosted runners. The repository is public, so a
+# runner on our own hardware must never be reachable: a fork PR controls this file.
 jobs:
-  select:
-    uses: ./.github/workflows/mac-mini-ci.yml
-    with:
-      force_hosted: ${{ inputs.force_hosted || false }}
   standard:
     name: standard
-    runs-on: ${{ fromJSON(needs.select.outputs.runner) }}
-    timeout-minutes: ${{ contains(needs.select.outputs.runner, 'self-hosted') && 300 || 45 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
     env:
       CI: "true"
     steps:
@@ -83,14 +76,12 @@ jobs:
     defaults:
       run:
         working-directory: ci-${{ github.run_id }}-${{ github.run_attempt }}-standard
-    needs: select
   native:
     name: native
     needs:
-      - select
       - standard
-    runs-on: ${{ fromJSON(needs.select.outputs.runner) }}
-    timeout-minutes: ${{ contains(needs.select.outputs.runner, 'self-hosted') && 300 || 60 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
     env:
       CI: "true"
     steps:
@@ -154,9 +145,8 @@ jobs:
         working-directory: ci-${{ github.run_id }}-${{ github.run_attempt }}-native
   container:
     name: container
-    needs: [select]
-    runs-on: ${{ fromJSON(needs.select.outputs.container_runner) }}
-    timeout-minutes: ${{ contains(needs.select.outputs.container_runner, 'self-hosted') && 300 || 30 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -195,7 +185,7 @@ jobs:
       - name: Require a configured Linux Docker engine
         run: |-
           if ! test "$(docker info --format '{{.OSType}}')" = linux; then
-            echo "::error::Container checks require a running Linux Docker engine accessible to the runner account. Restore the existing Docker configuration or dispatch with force_hosted=true."
+            echo "::error::Container checks require a running Linux Docker engine accessible to the runner account."
             exit 1
           fi
       - name: Build production container (runner architecture only)
@@ -218,7 +208,6 @@ jobs:
   full:
     name: full
     needs:
-      - select
       - standard
       - native
       - container
@@ -235,7 +224,7 @@ jobs:
           import os
 
           results = json.loads(os.environ["RESULTS"])
-          required = {"select", "standard", "native", "container"}
+          required = {"standard", "native", "container"}
           assert set(results) == required, "Required product jobs missing"
           for name, job in results.items():
               print(f"{name}: {job['result']}")

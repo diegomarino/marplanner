@@ -693,7 +693,8 @@
             "tracked checkout inventory comes from git and rejects untracked files",
             "CI binds the checked-out tree instead of a stale embedded candidate hash",
             "time-announcements browser check runs only when requested and stays off the mac mini",
-            "runner selector queues trusted jobs and requires explicit hosted execution"
+            "every workflow job runs on a GitHub-hosted runner",
+            "container check requires a Linux Docker engine"
           ],
           "tools/check-openapi-drift.test.mjs": [
             "discoverContracts: finds contracts under slices that have one, skips slices that don't",
