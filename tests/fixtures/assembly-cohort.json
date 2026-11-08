@@ -4323,7 +4323,9 @@
             "PrintExecutor — FR-013 hiding (issue #691) exposes the compact attention presentation, not the removed executor card, once status reports active: true",
             "PrintExecutor — FR-013 hiding (issue #691) stays hidden when the status read reports active: false",
             "PrintExecutor — FR-013 hiding (issue #691) stays hidden (never flashes the UI) when the status read fails at the network level",
-            "PrintExecutor — FR-013 hiding (issue #691) stays hidden when the status read answers a non-2xx status — even with an active:true body"
+            "PrintExecutor — FR-013 hiding (issue #691) stays hidden when the status read answers a non-2xx status — even with an active:true body",
+            "PrintExecutor — FR-013 hiding (issue #691) labels the pill as an attention request while the printer is not paired",
+            "PrintExecutor — FR-013 hiding (issue #691) turns the pill discreet once a remembered printer reconnects"
           ],
           "tests/client/printing-executor.test.tsx": [
             "PrintExecutor exposes the paired device identity after a successful pair",
@@ -4350,7 +4352,14 @@
             "PrintExecutor FOLD-1(b): a retried ack that succeeds clears pendingAck/error, with no duplicate print and no /fail",
             "PrintExecutor FOLD-1(c): an ack retry that gets 409 drops pendingAck, and the NEXT tick claims normally",
             "PrintExecutor FOLD-2(d): a scripted onDisconnect event transitions to disconnected without any write",
-            "PrintExecutor FOLD-2(e): transport not-ready at a poll tick fires zero /claim and transitions to disconnected"
+            "PrintExecutor FOLD-2(e): transport not-ready at a poll tick fires zero /claim and transitions to disconnected",
+            "PrintExecutor gesture-free reconnect remembers the printer after a manual pair",
+            "PrintExecutor gesture-free reconnect reconnects a remembered printer on mount without a gesture",
+            "PrintExecutor gesture-free reconnect falls back to the pair affordance when the browser cannot reach the remembered printer",
+            "PrintExecutor gesture-free reconnect reconnects by itself after an unexpected drop",
+            "PrintExecutor gesture-free reconnect keeps retrying an unreachable printer once per poll interval until it answers",
+            "PrintExecutor gesture-free reconnect a manual pair wins over a slower reconnect, which never overlaps itself",
+            "PrintExecutor gesture-free reconnect drops a reconnected link whose capability registration fails and keeps retrying"
           ],
           "tests/client/printing-i18n-parity.test.ts": [
             "printing-i18n-parity every printing key in en exists in es",
@@ -4372,6 +4381,12 @@
             "usePrintingPluginActive derives active state from the shared catalog without polling the Printing status endpoint",
             "usePrintingPluginActive stays false when Printing is inactive",
             "usePrintingPluginActive stays false when Printing is errored"
+          ],
+          "tests/client/printing-remembered-printer.test.ts": [
+            "rememberedPrinter round-trips a saved identity",
+            "rememberedPrinter remembers nothing for an identity without a device id",
+            "rememberedPrinter treats malformed or incomplete entries as nothing remembered",
+            "rememberedPrinter degrades to nothing remembered when storage throws"
           ],
           "tests/client/printing-surfaces.test.tsx": [
             "PrintingManagement — the shared L2 panel was actually ADOPTED (FR-009) renders through AdminPanel, not a hand-rolled wrapper",
@@ -4412,7 +4427,16 @@
             "__setPrintTransportForTests / createPrintTransport seam createPrintTransport() returns the exact override instance once set",
             "__setPrintTransportForTests / createPrintTransport seam createPrintTransport() returns a fully-shaped PrintTransport when no override is set",
             "createPrintTransport HOOKS_ENABLED gating (window.__mpPrintTransport, DEV/e2e-gated) exposes a fake at window.__mpPrintTransport when DEV is on and no override is set",
-            "createPrintTransport HOOKS_ENABLED gating (window.__mpPrintTransport, DEV/e2e-gated) stays gated off (no window hook) when DEV is off and VITE_E2E_HOOKS is unset"
+            "createPrintTransport HOOKS_ENABLED gating (window.__mpPrintTransport, DEV/e2e-gated) stays gated off (no window hook) when DEV is off and VITE_E2E_HOOKS is unset",
+            "withTimeout (bounded gesture-free reconnect) resolves with the promise's value when it settles in time",
+            "withTimeout (bounded gesture-free reconnect) propagates the promise's own rejection",
+            "withTimeout (bounded gesture-free reconnect) rejects with the timeout error when the promise never settles",
+            "createBluetoothPrintTransport reconnect() (gesture-free) reconnects through getDevices() and resolves the stored identity",
+            "createBluetoothPrintTransport reconnect() (gesture-free) reconnects the in-memory device after a drop even without getDevices()",
+            "createBluetoothPrintTransport reconnect() (gesture-free) rejects with pairing_required when the browser cannot list granted devices",
+            "createBluetoothPrintTransport reconnect() (gesture-free) rejects with pairing_required when the remembered device is no longer granted",
+            "createBluetoothPrintTransport reconnect() (gesture-free) times out a GATT connect that never answers and keeps no listener behind",
+            "createFakePrintTransport reconnect() counts calls, becomes ready, and honours a one-shot scripted failure"
           ],
           "tests/client/provisioning-gate.test.tsx": [
             "ProvisioningScreen — the shared L2 components were actually ADOPTED (FR-009) renders through AdminPanel's region + heading landmark, not a hand-rolled wrapper",
@@ -7888,6 +7912,21 @@
           "statements": 2,
           "functions": 1,
           "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/client/printing/rememberedPrinter.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 14,
+          "statements": 18,
+          "functions": 3,
+          "branches": 15
         },
         "minimumRates": {
           "lines": 100,
