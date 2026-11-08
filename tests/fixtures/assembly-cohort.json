@@ -607,6 +607,15 @@
             "api docs markdown keeps pattern alternations inside their table cell",
             "api docs markdown documents the item fields of list responses"
           ],
+          "tools/docs-site.test.mjs": [
+            "landing page has a card for every OpenAPI tag and no stale ones",
+            "landing page build rejects a tag without display copy",
+            "landing page replaces its API markers and links each card into the reference",
+            "landing page references only screenshots that exist, through relative paths",
+            "landing page deploy buttons use the same links as the README",
+            "landing page reference points its examples at a local instance, not the Pages host",
+            "landing page build writes the page, reference, spec, screenshots and offline bundle"
+          ],
           "tools/audit-accessible-names.test.mjs": [
             "input: fires with no aria-label/label/placeholder (RoutinesManagement.tsx:401 shape)",
             "select: fires with no aria-label/label (RoutinesManagement.tsx:320 shape)",

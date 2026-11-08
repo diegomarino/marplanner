@@ -1,0 +1,54 @@
+name: Landing page
+# Builds the GitHub Pages site (`npm run docs:site` → dist/site) on every change to its inputs,
+# and deploys it once Pages is enabled: set the repository variable MP_PAGES_ENABLED to "true"
+# after choosing "GitHub Actions" as the Pages source (Settings → Pages).
+"on":
+  push:
+    branches:
+      - main
+    paths:
+      - site/**
+      - docs/api/openapi.json
+      - docs/api/README.md
+      - docs/images/features/**
+      - public/favicon.svg
+      - tools/docs/**
+      # The reference's Scalar bundle comes from node_modules, so a dependency bump changes it.
+      - package.json
+      - package-lock.json
+      - .github/workflows/pages.yml
+  workflow_dispatch: null
+permissions:
+  contents: read
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.21.0
+      - run: npm install --global npm@11.19.0
+      - run: npm ci
+      - run: npm run docs:site
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: dist/site
+  deploy:
+    needs: build
+    if: ${{ vars.MP_PAGES_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

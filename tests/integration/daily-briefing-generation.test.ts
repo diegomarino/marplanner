@@ -1085,7 +1085,8 @@ describe("daily-briefing full generation", () => {
           / WORD OF THE DAY$/
         );
       }
-    });
+      // Five full generations: 6-8 s on hosted CI runners under coverage, past the 5 s default.
+    }, 20_000);
 
     it("the *Text titles are distinct from their visual twins (streakText/streak, weatherText/weather) (en household)", async () => {
       seedHouseholdLanguage("en");
