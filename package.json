@@ -146,9 +146,11 @@
     "@esbuild-kit/core-utils": {
       "esbuild": "^0.28.2"
     },
-    "fflate": "^0.7.5",
     "pressedslip": {
       "zod": "$zod"
+    },
+    "satori": {
+      "fflate": "^0.7.5"
     }
   },
   "packageManager": "npm@11.19.0",
