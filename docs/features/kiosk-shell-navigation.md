@@ -51,8 +51,10 @@ without the API simply keeps its default screen timeout.
 - A pending PWA update waits for an idle-of-edits moment (or the ~4am forced reload) before reloading.
 - Time announcements continue even on admin routes; printing uses one claimant per live lease in a capable browser; lost acknowledgements may cause resend.
 - Archived members/children are never resurrected onto user-facing surfaces.
-- Keep-the-screen-on reads the day-period catalog only while it is enabled; if that read fails the
-  screen just stays on (never dimmed), and the operating system's own sleep settings can still win.
+- Keep-the-screen-on reads the day-period catalog only while it is enabled, again right after this
+  device saves a boundary and every 15 minutes (edits from other devices). Until the catalog and the
+  household timezone are both known, or if either read fails, the screen just stays on (never dimmed
+  on the browser's own clock), and the operating system's own sleep settings can still win.
 
 ## Requirements
 

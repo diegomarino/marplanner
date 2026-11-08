@@ -4610,6 +4610,9 @@
             "ScreenAwake service releases the lock at night when the night choice is off",
             "ScreenAwake service stays awake as daytime when the day periods cannot be read or the lock is refused",
             "ScreenAwake service treats a malformed day-period catalog as daytime instead of failing",
+            "ScreenAwake service never dims on the browser clock while the household timezone is unknown",
+            "ScreenAwake service re-reads the night boundaries after a local day-period save and periodically",
+            "ScreenAwake service applies a change whose storage write was refused",
             "ScreenAwake service releases a lock that resolves after the service was unmounted",
             "DeviceScreenSettings saves the keep-awake and night choices to this device at once",
             "DeviceScreenSettings explains that plain http cannot keep the screen on"
@@ -8152,10 +8155,10 @@
       "src/client/shell/ScreenAwake.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 72,
-          "statements": 92,
-          "functions": 28,
-          "branches": 47
+          "lines": 81,
+          "statements": 99,
+          "functions": 29,
+          "branches": 46
         },
         "minimumRates": {
           "lines": 100,
@@ -8212,8 +8215,8 @@
       "src/client/shell/screenAwake.ts": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 17,
-          "statements": 19,
+          "lines": 18,
+          "statements": 20,
           "functions": 3,
           "branches": 16
         },

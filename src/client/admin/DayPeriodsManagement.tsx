@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAdminUnlock } from "@/lib/adminUnlock";
 import { authFetch } from "@/lib/credential";
+import { DAY_PERIODS_CHANGED_EVENT } from "@/shell/screenAwake";
 import { useHouseholdSettings } from "@/lib/householdSettings";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ErrorNotice } from "@/components/ErrorNotice";
@@ -196,6 +197,7 @@ function DayPeriodsManagementContent() {
       })
       .then(() => {
         refreshPeriods();
+        window.dispatchEvent(new Event(DAY_PERIODS_CHANGED_EVENT));
         setDrafts(({ [id]: _saved, ...rest }) => rest);
       })
       .catch(() => {

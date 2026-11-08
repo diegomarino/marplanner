@@ -7,6 +7,7 @@ import { log } from "@/lib/logger";
 import type { DayPeriodDTO } from "../../shared";
 import { resolveActivePeriod } from "../../shared/dayPeriods";
 import {
+  DAY_PERIODS_CHANGED_EVENT,
   loadScreenAwakePreferences,
   SCREEN_AWAKE_CHANGE_EVENT,
   SCREEN_AWAKE_STORAGE_KEY,
@@ -17,11 +18,13 @@ import {
 /** How long a tap lifts the night dimming before it settles again. */
 export const NIGHT_PEEK_MS = 5 * 60_000;
 const CLOCK_TICK_MS = 30_000;
+/** Day-period edits made on another device carry no push event, so the catalog is re-read. */
+export const DAY_PERIODS_REFRESH_MS = 15 * 60_000;
 
-/** Wall-clock minutes since midnight in `timezone`, or in the browser's zone when it is null. */
-export function wallClockMinutes(now: Date, timezone: string | null): number {
+/** Wall-clock minutes since midnight in the household `timezone`. */
+export function wallClockMinutes(now: Date, timezone: string): number {
   const parts = new Intl.DateTimeFormat("en-GB", {
-    ...(timezone ? { timeZone: timezone } : {}),
+    timeZone: timezone,
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
@@ -33,14 +36,18 @@ export function wallClockMinutes(now: Date, timezone: string | null): number {
 function useScreenAwakePreferences(): ScreenAwakePreferences {
   const [preferences, setPreferences] = useState(loadScreenAwakePreferences);
   useEffect(() => {
-    const reload = () => setPreferences(loadScreenAwakePreferences());
+    // This tab's own save carries the new value: apply it directly, because a blocked storage
+    // write would make a re-read return the old value.
+    const onChange = (event: Event) =>
+      setPreferences((event as CustomEvent<ScreenAwakePreferences>).detail);
     const onStorage = (event: StorageEvent) => {
-      if (event.key === null || event.key === SCREEN_AWAKE_STORAGE_KEY) reload();
+      if (event.key === null || event.key === SCREEN_AWAKE_STORAGE_KEY)
+        setPreferences(loadScreenAwakePreferences());
     };
-    window.addEventListener(SCREEN_AWAKE_CHANGE_EVENT, reload);
+    window.addEventListener(SCREEN_AWAKE_CHANGE_EVENT, onChange);
     window.addEventListener("storage", onStorage);
     return () => {
-      window.removeEventListener(SCREEN_AWAKE_CHANGE_EVENT, reload);
+      window.removeEventListener(SCREEN_AWAKE_CHANGE_EVENT, onChange);
       window.removeEventListener("storage", onStorage);
     };
   }, []);
@@ -48,8 +55,10 @@ function useScreenAwakePreferences(): ScreenAwakePreferences {
 }
 
 /** True while the household's `night` day period is active. The catalog is read only while the
- * feature is on, so a device that never enables it makes no extra request. A failed read means
- * "never night": the screen simply stays awake. */
+ * feature is on, so a device that never enables it makes no extra request; it is re-read after a
+ * local day-period save and every `DAY_PERIODS_REFRESH_MS`. Until both the catalog and the
+ * household timezone are known (or when either read fails) it is "never night": the screen stays
+ * awake rather than dimming on the browser's own clock. */
 function useIsNight(enabled: boolean): boolean {
   const { timezone } = useHouseholdSettings();
   const [periods, setPeriods] = useState<DayPeriodDTO[] | null>(null);
@@ -58,19 +67,26 @@ function useIsNight(enabled: boolean): boolean {
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
-    authFetch("/api/day-periods", { credentials: "include" })
-      .then((res) => {
-        if (!res.ok) throw new Error(`list day-periods: ${res.status}`);
-        return res.json() as Promise<DayPeriodDTO[]>;
-      })
-      .then((data) => {
-        if (!cancelled) setPeriods(data);
-      })
-      .catch((err: unknown) => {
-        log("warn", "screen-awake", "day_periods_unavailable", { detail: String(err) });
-      });
+    const read = () => {
+      authFetch("/api/day-periods", { credentials: "include" })
+        .then((res) => {
+          if (!res.ok) throw new Error(`list day-periods: ${res.status}`);
+          return res.json() as Promise<DayPeriodDTO[]>;
+        })
+        .then((data) => {
+          if (!cancelled) setPeriods(data);
+        })
+        .catch((err: unknown) => {
+          log("warn", "screen-awake", "day_periods_unavailable", { detail: String(err) });
+        });
+    };
+    read();
+    const interval = setInterval(read, DAY_PERIODS_REFRESH_MS);
+    window.addEventListener(DAY_PERIODS_CHANGED_EVENT, read);
     return () => {
       cancelled = true;
+      clearInterval(interval);
+      window.removeEventListener(DAY_PERIODS_CHANGED_EVENT, read);
     };
   }, [enabled]);
 
@@ -80,7 +96,7 @@ function useIsNight(enabled: boolean): boolean {
     return () => clearInterval(interval);
   }, [enabled]);
 
-  if (!enabled || !periods || periods.length === 0) return false;
+  if (!enabled || !timezone || !periods || periods.length === 0) return false;
   // A malformed catalog must never take the always-mounted shell down: treat it as daytime.
   try {
     return resolveActivePeriod(periods, wallClockMinutes(new Date(now), timezone)) === "night";

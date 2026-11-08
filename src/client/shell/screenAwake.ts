@@ -23,6 +23,11 @@ export const SCREEN_AWAKE_STORAGE_KEY = "marplanner.screenAwake.v1";
  * once; other tabs hear the native `storage` event instead. */
 export const SCREEN_AWAKE_CHANGE_EVENT = "marplanner:screen-awake-change";
 
+/** Dispatched on `window` after this device saves a day-period boundary, so the keep-awake
+ * service re-reads the catalog at once instead of dimming at the old time. Edits made on another
+ * device reach it through the service's periodic re-read. */
+export const DAY_PERIODS_CHANGED_EVENT = "marplanner:day-periods-changed";
+
 export const DEFAULT_SCREEN_AWAKE: ScreenAwakePreferences = { enabled: false, night: "dim" };
 
 export function loadScreenAwakePreferences(): ScreenAwakePreferences {

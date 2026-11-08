@@ -2,8 +2,14 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DeviceScreenSettings } from "@/admin/DeviceScreenSettings";
-import { NIGHT_PEEK_MS, ScreenAwake, wallClockMinutes } from "@/shell/ScreenAwake";
 import {
+  DAY_PERIODS_REFRESH_MS,
+  NIGHT_PEEK_MS,
+  ScreenAwake,
+  wallClockMinutes,
+} from "@/shell/ScreenAwake";
+import {
+  DAY_PERIODS_CHANGED_EVENT,
   DEFAULT_SCREEN_AWAKE,
   loadScreenAwakePreferences,
   saveScreenAwakePreferences,
@@ -11,6 +17,12 @@ import {
   SCREEN_AWAKE_STORAGE_KEY,
   screenAwakeSupport,
 } from "@/shell/screenAwake";
+
+// The household timezone normally comes from the shell's one `/api/settings` read.
+const household = vi.hoisted(() => ({ timezone: "UTC" as string | null }));
+vi.mock("@/lib/householdSettings", () => ({
+  useHouseholdSettings: () => ({ timezone: household.timezone }),
+}));
 
 const PERIODS = [
   { id: "morning", labelKey: "dayPeriods.morning", start: "07:00", sortOrder: 0 },
@@ -63,6 +75,7 @@ function setVisibility(state: DocumentVisibilityState) {
 }
 
 beforeEach(() => {
+  household.timezone = "UTC";
   window.localStorage.clear();
   Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" });
   Object.defineProperty(window, "isSecureContext", { configurable: true, value: true });
@@ -117,7 +130,6 @@ describe("screenAwake preferences", () => {
     const instant = new Date("2026-11-08T22:30:00Z");
     expect(wallClockMinutes(instant, "UTC")).toBe(22 * 60 + 30);
     expect(wallClockMinutes(instant, "Asia/Tokyo")).toBe(7 * 60 + 30);
-    expect(typeof wallClockMinutes(instant, null)).toBe("number");
   });
 });
 
@@ -133,7 +145,7 @@ describe("ScreenAwake service", () => {
 
   it("holds a lock during the day, re-acquires it on return to visible and releases it when turned off", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
-    vi.setSystemTime(new Date("2026-11-08T10:00:00"));
+    vi.setSystemTime(new Date("2026-11-08T10:00:00Z"));
     const wakeLock = installWakeLock();
     stubDayPeriods();
     saveScreenAwakePreferences({ enabled: true, night: "dim" });
@@ -185,7 +197,7 @@ describe("ScreenAwake service", () => {
 
   it("dims at night while keeping the lock, and a tap lifts the dimming for a while", async () => {
     vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
-    vi.setSystemTime(new Date("2026-11-08T23:00:00"));
+    vi.setSystemTime(new Date("2026-11-08T23:00:00Z"));
     const wakeLock = installWakeLock();
     stubDayPeriods();
     saveScreenAwakePreferences({ enabled: true, night: "dim" });
@@ -204,7 +216,7 @@ describe("ScreenAwake service", () => {
 
   it("lifts the dimming by itself when the morning period starts", async () => {
     vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
-    vi.setSystemTime(new Date("2026-11-08T06:59:00"));
+    vi.setSystemTime(new Date("2026-11-08T06:59:00Z"));
     installWakeLock();
     stubDayPeriods();
     saveScreenAwakePreferences({ enabled: true, night: "dim" });
@@ -219,7 +231,7 @@ describe("ScreenAwake service", () => {
 
   it("releases the lock at night when the night choice is off", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
-    vi.setSystemTime(new Date("2026-11-08T23:00:00"));
+    vi.setSystemTime(new Date("2026-11-08T23:00:00Z"));
     const wakeLock = installWakeLock();
     stubDayPeriods();
     saveScreenAwakePreferences({ enabled: true, night: "off" });
@@ -231,7 +243,7 @@ describe("ScreenAwake service", () => {
 
   it("stays awake as daytime when the day periods cannot be read or the lock is refused", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
-    vi.setSystemTime(new Date("2026-11-08T23:00:00"));
+    vi.setSystemTime(new Date("2026-11-08T23:00:00Z"));
     const request = vi.fn(() => Promise.reject(new Error("NotAllowedError")));
     Object.defineProperty(navigator, "wakeLock", { configurable: true, value: { request } });
     stubDayPeriods(() => new Response("nope", { status: 500 }));
@@ -249,6 +261,60 @@ describe("ScreenAwake service", () => {
     render(<ScreenAwake />);
     await flush();
     expect(screen.queryByTestId("screen-awake-night-dim")).toBeNull();
+  });
+
+  it("never dims on the browser clock while the household timezone is unknown", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-08T23:00:00Z"));
+    household.timezone = null;
+    const wakeLock = installWakeLock();
+    stubDayPeriods();
+    saveScreenAwakePreferences({ enabled: true, night: "off" });
+    render(<ScreenAwake />);
+    await flush();
+    expect(wakeLock.held()).toHaveLength(1);
+    expect(screen.queryByTestId("screen-awake-night-dim")).toBeNull();
+  });
+
+  it("re-reads the night boundaries after a local day-period save and periodically", async () => {
+    vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
+    vi.setSystemTime(new Date("2026-11-08T20:30:00Z"));
+    installWakeLock();
+    let periods = PERIODS;
+    const fetchMock = stubDayPeriods(() => Response.json(periods));
+    saveScreenAwakePreferences({ enabled: true, night: "dim" });
+    render(<ScreenAwake />);
+    await flush();
+    expect(screen.queryByTestId("screen-awake-night-dim")).toBeNull();
+
+    periods = PERIODS.map((p) => (p.id === "night" ? { ...p, start: "20:00" } : p));
+    act(() => {
+      window.dispatchEvent(new Event(DAY_PERIODS_CHANGED_EVENT));
+    });
+    await flush();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(screen.getByTestId("screen-awake-night-dim")).toBeTruthy();
+
+    periods = PERIODS;
+    act(() => {
+      vi.advanceTimersByTime(DAY_PERIODS_REFRESH_MS);
+    });
+    await flush();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(screen.queryByTestId("screen-awake-night-dim")).toBeNull();
+  });
+
+  it("applies a change whose storage write was refused", async () => {
+    const wakeLock = installWakeLock();
+    stubDayPeriods();
+    render(<ScreenAwake />);
+    await flush();
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    act(() => saveScreenAwakePreferences({ enabled: true, night: "dim" }));
+    await flush();
+    expect(wakeLock.request).toHaveBeenCalledTimes(1);
   });
 
   it("releases a lock that resolves after the service was unmounted", async () => {
