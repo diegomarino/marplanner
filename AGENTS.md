@@ -75,34 +75,31 @@ Acceptance rules (candidate stamp, coverage floors, cohorts):
 
 ### Adding a daily-briefing block
 
-A block type is registered at every one of these sites. Pick a reference type of the same
-kind (`wouldYouRather` if corpus-backed, `streakText` if not) and mirror it:
+A block is declared once and then implemented on each side. Pick a reference type of the
+same kind (`wouldYouRather` if corpus-backed, `streakText` if not) and mirror it:
 
 1. `src/shared/dailyBriefingBlocks.ts`: one `BRIEFING_BLOCKS` entry (`type`, `scope`, `kind`,
-   `defaultEnabled`, corpus `languages`, `params`). The block-type unions, the server lists in
-   `corpora/block-types.ts`, the generation scope and the OpenAPI enums derive from it.
-2. `npm run generate:openapi` (the enums are derived, the generated file still changes).
-3. `src/server/modules/daily-briefing/blocks/<name>.ts` (generator), wired in
-   `index.ts`: import and the generation `switch`.
-4. `render/blocks/<name>.ts`, registered in `render/registry.ts`; `render/adapter.ts`
-   case; `render/labels.ts` title in `en` and `es`.
-5. Client: `daily-briefing/admin/briefingBlocks.ts` (order, label key, corpus languages),
-   `DailyBriefingView.tsx` and `blockRenderers.tsx`, keys in `i18n/messages.ts` (en + es).
-6. Corpus-backed blocks: data in `corpora/` (English `.json`, optional `.es.json` sibling); a
+   `defaultEnabled`, corpus `languages`, `params`). The block-type unions, the server lists,
+   the generation scope, the OpenAPI enums and the admin matrix rows and controls derive from
+   it. Then `npm run generate:openapi`.
+2. `npm run typecheck` now lists every remaining site, because each one is exhaustive over the
+   catalogue:
+   - generator `src/server/modules/daily-briefing/blocks/<name>.ts`, wired into a `switch` in
+     `index.ts` (`generateLocalBlockData`, or `finishBlocks` for `kind: "external"`);
+   - `render/blocks/<name>.ts` in `RENDER_BLOCKS` (`render/registry.ts`), its
+     `render/adapter.ts` case, and its `render/labels.ts` title in `en` and `es`;
+   - client: the `DailyBriefingView.tsx` case with its renderer in `blockRenderers.tsx`, and
+     the `dailyBriefing.admin.blockType.<type>` key in `i18n/messages.ts` (en + es);
+   - the `TYPE_FIXTURES` entry in `tests/integration/daily-briefing-render-defs.test.ts`.
+3. Corpus-backed blocks: data in `corpora/` (English `.json`, optional `.es.json` sibling); a
    block without a corpus has no language override
    ([daily-briefing](docs/features/daily-briefing.md)).
-7. Cohort fixture: the two new `<name>.ts` files and every new test case go into
+4. Cohort fixture: the new `<name>.ts` files and every new test case go into
    `tests/fixtures/assembly-cohort.json` (see [Cohort fixture](#cohort-fixture)).
 
-Done when both of these hold:
-
-- In each shared registration file of steps 1, 4 and 5 (the per-type `<name>.ts` files
-  aside), `grep -c <newType>` matches `grep -c <referenceType>`, any gap explained by a
-  type-specific key such as `wouldYouRatherOr`.
-- The daily-briefing suites pass, including the admin mirror fence that compares the
-  client language map with the server registry:
-  `npm exec -- vitest run tests/client/daily-briefing` and
-  `npm exec -- vitest run tests/integration/daily-briefing --environment node`.
+Done when `npm run typecheck` passes and the daily-briefing suites pass:
+`npm exec -- vitest run tests/client/daily-briefing` and
+`npm exec -- vitest run tests/integration/daily-briefing --environment node`.
 
 ## Cohort fixture
 
