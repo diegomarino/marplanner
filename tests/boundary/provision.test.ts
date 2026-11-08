@@ -46,6 +46,8 @@ describe("provision — FR-007", () => {
       expect(cookies.find((cookie) => cookie.startsWith("mp_device_key="))).toContain(
         "HttpOnly; Secure; SameSite=Lax"
       );
+      // Persistent, not session cookies: an Android PWA drops session cookies on close.
+      expect(cookies.every((cookie) => cookie.includes("Max-Age=34560000"))).toBe(true);
     } finally {
       await app.close();
       if (previousBootstrap === undefined) delete process.env.MP_BOOTSTRAP_KEY;

@@ -25,7 +25,10 @@ support sibling deployments without ordinary cross-path cookie delivery.
 4. Use the single factory in `src/server/auth/cookies.ts` for both protected
    cookies: Secure, HttpOnly, SameSite=Lax and mount-scoped Path. Root uses `/`;
    a non-root mount uses `{basePath}/`. The provisioning marker and its deletion
-   use the same mount path.
+   use the same mount path. Both protected cookies and the marker carry
+   `Max-Age` of 400 days (Chromium's maximum): session cookies are dropped when
+   an Android PWA is closed, which would log the device out although its key
+   never expires server-side.
 5. Cookie Path controls ordinary delivery, not origin isolation. Mutually untrusted
    applications require separate origins. SameSite=Lax supports ordinary incoming
    navigation while limiting cross-site cookie delivery.

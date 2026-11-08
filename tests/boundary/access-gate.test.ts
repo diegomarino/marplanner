@@ -157,6 +157,10 @@ describe("access gate", () => {
     expect(Array.isArray(setCookie) ? setCookie.join(",") : setCookie!).toContain("mp_gate=");
     expect(Array.isArray(setCookie) ? setCookie.join(",") : setCookie!).toContain("HttpOnly");
     expect(Array.isArray(setCookie) ? setCookie.join(",") : setCookie!).toContain("Secure");
+    // Persistent, not a session cookie: an Android PWA drops session cookies on close.
+    expect(Array.isArray(setCookie) ? setCookie.join(",") : setCookie!).toContain(
+      "Max-Age=34560000"
+    );
     expect(res.headers.location).toBe("/");
   });
 
