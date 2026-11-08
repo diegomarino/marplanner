@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { BriefingWorkspace } from "@/daily-briefing/admin/BriefingWorkspace";
 import { LanguageProvider } from "@/i18n";
+import { PRINT_INTENT_ENQUEUED_EVENT } from "@/printing/queueWakeup";
 import { Role } from "../../src/shared";
 import type { Briefing, MemberDTO } from "../../src/shared";
 
@@ -252,6 +253,32 @@ describe("BriefingWorkspace", () => {
     await screen.findByTestId("daily-briefing-generated-payload");
     expect(screen.getByTestId("daily-briefing-print")).toBeDisabled();
     expect(screen.getByTestId("daily-briefing-print-unavailable")).toBeVisible();
+  });
+
+  it("wakes the print executor whenever Print queues a job, so it prints without waiting for the poll", async () => {
+    const wakeups = vi.fn();
+    window.addEventListener(PRINT_INTENT_ENQUEUED_EVENT, wakeups);
+    try {
+      mockBackend();
+      renderWorkspace();
+      await waitFor(() => expect(screen.getByTestId("daily-briefing-print")).toBeEnabled());
+      fireEvent.click(screen.getByTestId("daily-briefing-print"));
+      await screen.findByTestId("daily-briefing-print-notice");
+      expect(wakeups).toHaveBeenCalledTimes(1);
+
+      cleanup();
+      wakeups.mockClear();
+      mockBackend({ print: () => json({ jobId: "j1", enqueued: false }) });
+      renderWorkspace();
+      await waitFor(() => expect(screen.getByTestId("daily-briefing-print")).toBeEnabled());
+      fireEvent.click(screen.getByTestId("daily-briefing-print"));
+      expect(await screen.findByTestId("daily-briefing-print-notice")).toHaveTextContent(
+        "Already waiting in the printer queue."
+      );
+      expect(wakeups).toHaveBeenCalledTimes(1);
+    } finally {
+      window.removeEventListener(PRINT_INTENT_ENQUEUED_EVENT, wakeups);
+    }
   });
 
   it("shows still-rendering with a Retry that refetches", async () => {

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { usePrintingPluginActive } from "@/printing/pluginStatus";
+import { notifyPrintIntentEnqueued } from "@/printing/queueWakeup";
 import type { WeekdayCode } from "@/components/WeekdayPicker";
 import { BriefingImage } from "./BriefingImage";
 import { weekdayOfDate } from "./briefingBlocks";
@@ -225,6 +226,9 @@ export function BriefingWorkspace({
         );
       }
       const result = (await response.json()) as BriefingPrintResponse;
+      // Wake the shared executor so the job is claimed now, not on its next 15 s poll. Also when
+      // it was already queued (a retry): an extra claim attempt is harmless.
+      notifyPrintIntentEnqueued();
       setNotice({
         testId: "daily-briefing-print-notice",
         text: t(
