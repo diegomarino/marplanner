@@ -12,7 +12,7 @@ import { unlockAdmin } from "./admin-unlock";
  * Flow: fresh boot (locked → access-gate FORM, never the shell, FR-029) → gate
  * passed (dedicated httpOnly gate cookie, FR-030) → provisioning from browser
  * defaults with no authed settings call (FR-031) → cold settings readable with
- * the device key alone → admin unlock (long-press reveal + PIN) → member create
+ * the device key alone → admin unlock (Admin tap + PIN) → member create
  * → a REAL server-process restart against the same DATA_DIR → device key
  * survives (no re-provision on reload) → the created member re-read via the
  * key-authorized GET /api/members (FR-032) AND store-level durability of the
@@ -236,8 +236,8 @@ test("B1 members: authorization, edit, archive, restore and restart", async ({ p
     await page.reload();
     await expect(page.getByRole("link", { name: "Home" })).toBeVisible();
 
-    // 5. Admin unlock (FR-017/018): hold the Options-menu Admin button for three seconds,
-    // then enter the PIN through the touch keypad and verify it server-side.
+    // 5. Admin unlock (FR-017/018): tap the Options-menu Admin button, then enter the PIN
+    // through the self-submitting touch keypad, verified server-side.
     await unlockAdmin(page, MP_ADMIN_PIN);
 
     // 6. Member create (FR-019/022/023): display name + role=parent → 201.

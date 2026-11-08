@@ -1,4 +1,4 @@
-import { act, render, screen, fireEvent, waitFor, cleanup, within } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, cleanup, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Shell, ProvisioningScreen, registerShellService } from "@/shell/Shell";
@@ -233,18 +233,17 @@ describe("Shell — unprovisioned gate", () => {
       "aria-current",
       "page"
     );
-    // With Admin as its only entry, Options is the Admin hold affordance itself, not a
-    // one-item menu.
+    // With Admin as its only entry, Options is the Admin affordance itself, not a one-item menu.
     const options = screen.getByRole("button", { name: "Options" });
     expect(options).toHaveAttribute("data-testid", "admin-affordance");
-    expect(options).toHaveAttribute("data-hold-state", "idle");
     expect(options).not.toHaveAttribute("aria-expanded");
     expect(options).not.toHaveAttribute("aria-controls");
     expect(options).not.toHaveAttribute("tabindex", "-1");
     expect(screen.queryByRole("button", { name: "Admin" })).not.toBeInTheDocument();
     fireEvent.click(options, { detail: 1 });
     expect(screen.queryByRole("group", { name: "Options" })).not.toBeInTheDocument();
-    expect(window.location.pathname).toBe("/calendar");
+    expect(window.location.pathname).toBe("/admin");
+    expect(await screen.findByTestId("admin-pin-keypad")).toBeInTheDocument();
   });
 
   it("organizes the household chrome into compact navigation, contextual center, and secondary actions", async () => {
@@ -312,7 +311,7 @@ describe("Shell — unprovisioned gate", () => {
     expect(screen.getByTestId("plugin-catalog")).toBeInTheDocument();
   });
 
-  it("requires a three-second physical hold, shows progress, and resets after an early release", async () => {
+  it("opens the PIN gate on a plain tap with no hold or progress indicator", async () => {
     document.cookie = "mp_provisioned=1; path=/";
     mockFetch.mockImplementation((url) => {
       if (String(url) === "/api/plugins") return Promise.resolve(pluginCatalogResponse());
@@ -325,32 +324,40 @@ describe("Shell — unprovisioned gate", () => {
 
     await screen.findByTestId("plugin-health-indicator");
     const admin = await screen.findByTestId("admin-affordance");
-    const progress = screen.getByTestId("admin-hold-progress");
+    expect(screen.queryByTestId("admin-hold-progress")).not.toBeInTheDocument();
 
-    vi.useFakeTimers();
-    try {
-      fireEvent.pointerDown(admin, { pointerId: 7 });
-      expect(admin).toHaveAttribute("data-hold-state", "holding");
-      expect(progress).toHaveAttribute("data-progress-state", "filling");
-      expect(progress).toHaveClass("scale-x-100", "duration-[3000ms]");
-
-      await act(() => vi.advanceTimersByTime(2_999));
-      expect(window.location.pathname).toBe("/");
-
-      fireEvent.pointerUp(admin, { pointerId: 7 });
-      expect(admin).toHaveAttribute("data-hold-state", "idle");
-      expect(progress).toHaveAttribute("data-progress-state", "idle");
-      expect(progress).toHaveClass("scale-x-0");
-
-      fireEvent.pointerDown(admin, { pointerId: 8 });
-      await act(() => vi.advanceTimersByTime(3_000));
-    } finally {
-      vi.useRealTimers();
-    }
+    fireEvent.pointerDown(admin, { pointerId: 7, pointerType: "touch" });
+    fireEvent.pointerUp(admin, { pointerId: 7, pointerType: "touch" });
+    fireEvent.click(admin, { detail: 1 });
 
     expect(window.location.pathname).toBe("/admin");
     expect(await screen.findByTestId("admin-pin-keypad")).toBeInTheDocument();
     expect(screen.queryByRole("group", { name: "Options" })).not.toBeInTheDocument();
+  });
+
+  it("a second Admin activation on the open PIN gate adds no history entry and Cancel returns to the origin", async () => {
+    document.cookie = "mp_provisioned=1; path=/";
+    mockFetch.mockImplementation((url) => {
+      if (String(url) === "/api/plugins") return Promise.resolve(pluginCatalogResponse());
+      const value = String(url).includes("/api/settings")
+        ? { locale: { timezone: "UTC", language: "en", weekStartDay: 1 } }
+        : [];
+      return Promise.resolve(Response.json(value));
+    });
+    window.history.pushState({}, "", "/calendar");
+    render(<Shell />);
+
+    await screen.findByTestId("plugin-health-indicator");
+    const before = window.history.length;
+    fireEvent.click(await screen.findByTestId("admin-affordance"), { detail: 1 });
+    expect(await screen.findByTestId("admin-pin-keypad")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("admin-affordance"), { detail: 2 });
+
+    expect(window.history.length).toBe(before + 1);
+    expect(window.history.state).toEqual({ marplannerAdminReturnPath: "/calendar" });
+
+    fireEvent.click(screen.getByTestId("admin-pin-cancel"));
+    await waitFor(() => expect(window.location.pathname).toBe("/calendar"));
   });
 
   it("opens admin immediately when the local PIN bypass flag is enabled", async () => {
@@ -369,7 +376,7 @@ describe("Shell — unprovisioned gate", () => {
     await screen.findByTestId("plugin-health-indicator");
     const admin = await screen.findByTestId("admin-affordance");
 
-    fireEvent.pointerDown(admin, { pointerId: 1 });
+    fireEvent.click(admin, { detail: 1 });
 
     expect(window.location.pathname).toBe("/admin");
     expect(await screen.findByTestId("admin-nav-calendar")).toBeInTheDocument();
@@ -377,7 +384,7 @@ describe("Shell — unprovisioned gate", () => {
     expect(screen.queryByRole("group", { name: "Options" })).not.toBeInTheDocument();
   });
 
-  it("rejects a quick physical tap but accepts keyboard hold and synthetic AT activation", async () => {
+  it("opens the PIN gate from keyboard and synthetic AT activation", async () => {
     document.cookie = "mp_provisioned=1; path=/";
     mockFetch.mockImplementation((url) => {
       const value = String(url).includes("/api/settings")
@@ -387,92 +394,18 @@ describe("Shell — unprovisioned gate", () => {
     });
     render(<Shell />);
 
-    let admin = await screen.findByTestId("admin-affordance");
-    for (const [index, pointerType] of ["mouse", "touch", "pen"].entries()) {
-      fireEvent.pointerDown(admin, { pointerId: index + 1, pointerType });
-      fireEvent.pointerUp(admin, { pointerId: index + 1, pointerType });
-      if (pointerType === "touch") await new Promise((resolve) => setTimeout(resolve, 0));
-      fireEvent.click(admin, { detail: 1 });
-      expect(window.location.pathname).toBe("/");
-    }
-
-    vi.useFakeTimers();
-    try {
-      fireEvent.keyDown(admin, { key: "Enter" });
+    for (const key of ["Enter", " "]) {
+      const admin = await screen.findByTestId("admin-affordance");
+      admin.focus();
+      // A focused button turns Enter/Space into a click carrying `detail: 0`.
+      fireEvent.keyDown(admin, { key });
       fireEvent.click(admin, { detail: 0 });
-      expect(window.location.pathname).toBe("/");
-      await act(() => vi.advanceTimersByTime(3_000));
-    } finally {
-      vi.useRealTimers();
+      expect(window.location.pathname).toBe("/admin");
+      expect(await screen.findByTestId("admin-pin-keypad")).toBeInTheDocument();
+
+      window.history.replaceState({}, "", "/");
+      window.dispatchEvent(new PopStateEvent("popstate"));
     }
-    expect(window.location.pathname).toBe("/admin");
-
-    window.history.replaceState({}, "", "/");
-    window.dispatchEvent(new PopStateEvent("popstate"));
-    admin = await screen.findByTestId("admin-affordance");
-    vi.useFakeTimers();
-    try {
-      fireEvent.keyDown(admin, { key: " " });
-      fireEvent.click(admin, { detail: 0 });
-      expect(window.location.pathname).toBe("/");
-      await act(() => vi.advanceTimersByTime(3_000));
-    } finally {
-      vi.useRealTimers();
-    }
-    expect(window.location.pathname).toBe("/admin");
-
-    window.history.replaceState({}, "", "/");
-    window.dispatchEvent(new PopStateEvent("popstate"));
-    admin = await screen.findByTestId("admin-affordance");
-    fireEvent.click(admin, { detail: 0 });
-    expect(window.location.pathname).toBe("/admin");
-  });
-
-  it("captures the pointer, survives layout-shift leave events, and resets on cancellation", async () => {
-    document.cookie = "mp_provisioned=1; path=/";
-    mockFetch.mockImplementation((url) => {
-      const value = String(url).includes("/api/settings")
-        ? { locale: { timezone: "UTC", language: "en", weekStartDay: 1 } }
-        : [];
-      return Promise.resolve(Response.json(value));
-    });
-    render(<Shell />);
-
-    const admin = await screen.findByTestId("admin-affordance");
-    const capture = vi.fn();
-    Object.defineProperty(admin, "setPointerCapture", { configurable: true, value: capture });
-
-    vi.useFakeTimers();
-    try {
-      fireEvent.pointerDown(admin, { pointerId: 42 });
-      expect(capture).toHaveBeenCalledWith(42);
-      await act(() => vi.advanceTimersByTime(200));
-      fireEvent.mouseLeave(admin);
-      fireEvent.pointerLeave(admin);
-      await act(() => vi.advanceTimersByTime(2_800));
-    } finally {
-      vi.useRealTimers();
-    }
-    expect(window.location.pathname).toBe("/admin");
-
-    window.history.replaceState({}, "", "/");
-    window.dispatchEvent(new PopStateEvent("popstate"));
-    const cancelledAdmin = await screen.findByTestId("admin-affordance");
-    vi.useFakeTimers();
-    try {
-      fireEvent.pointerDown(cancelledAdmin, { pointerId: 43 });
-      fireEvent.pointerCancel(cancelledAdmin, { pointerId: 43 });
-      await act(() => vi.advanceTimersByTime(3_000));
-      expect(cancelledAdmin).toHaveAttribute("data-hold-state", "idle");
-
-      fireEvent.pointerDown(cancelledAdmin, { pointerId: 44 });
-      fireEvent.lostPointerCapture(cancelledAdmin, { pointerId: 44 });
-      await act(() => vi.advanceTimersByTime(3_000));
-    } finally {
-      vi.useRealTimers();
-    }
-    expect(window.location.pathname).toBe("/");
-    expect(cancelledAdmin).toHaveAttribute("data-hold-state", "idle");
   });
 
   it("does NOT bypass the provisioning gate at /calendar (fail-closed, FR-031/ADR-059)", () => {

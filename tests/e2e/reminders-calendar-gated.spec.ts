@@ -206,7 +206,7 @@ test("calendar_gated admin author → dry-run → emit: query + membership assig
   });
   expect(assignResp.status()).toBe(200);
 
-  // --- 5) Admin unlock (long-press → PIN) ---
+  // --- 5) Admin unlock (tap → PIN) ---
   await unlockAdmin(page, MP_ADMIN_PIN);
   await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
 

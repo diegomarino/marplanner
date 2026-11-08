@@ -53,8 +53,27 @@ function initialsLabels(title: string): string[] {
   const undecorated = title.replace(/^[^\p{L}\p{N}]+/u, "");
   const prefix =
     undecorated.match(/^([^:]{1,48}):/)?.[1] ?? undecorated.match(/^(.{1,48}?)\s+-\s+/)?.[1];
-  const suffix = undecorated.match(/\s+-\s+(\S+)/)?.[1];
+  const suffix = dashSuffix(undecorated);
   return [prefix, suffix].filter((label): label is string => label !== undefined);
+}
+
+const isSpace = (char: string): boolean => /\s/u.test(char);
+
+/** The word after the first ` - ` (whitespace on both sides), as `/\s+-\s+(\S+)/` would capture
+ * it, found in one linear scan: an unanchored regex retries its whitespace run from every
+ * offset, which is quadratic on a feed title made of long whitespace runs. */
+function dashSuffix(title: string): string | undefined {
+  for (let dash = 1; dash < title.length - 1; dash += 1) {
+    if (title[dash] !== "-" || !isSpace(title[dash - 1]) || !isSpace(title[dash + 1])) continue;
+    let start = dash + 1;
+    while (start < title.length && isSpace(title[start])) start += 1;
+    // Only whitespace follows this dash, so no later dash can be followed by a word either.
+    if (start === title.length) return undefined;
+    let end = start;
+    while (end < title.length && !isSpace(title[end])) end += 1;
+    return title.slice(start, end);
+  }
+  return undefined;
 }
 
 /** Every letter must name a member, and a letter shared by several members must be written once
@@ -188,16 +207,19 @@ export function reconcileExternalCalendar(
   db.transaction(() => {
     const existing = db
       .prepare(
-        `SELECT meta.event_id, events.end_date, events.end_utc
+        `SELECT meta.event_id, meta.external_uid, events.end_date, events.end_utc
        FROM calendar_external_event_meta meta
        JOIN calendar_events events ON events.id = meta.event_id
        WHERE meta.source_id = ?`
       )
       .all(sourceId) as Array<{
       event_id: string;
+      external_uid: string;
       end_date: string | null;
       end_utc: string | null;
     }>;
+    // A UID a feed limit dropped or truncated is unknown, not removed: keep its rows as they are.
+    const retained = new Set(parsed.retainedUids ?? []);
 
     for (const [id, { occurrence, memberIds }] of desired) {
       db.prepare(
@@ -248,7 +270,7 @@ export function reconcileExternalCalendar(
     }
 
     for (const row of existing) {
-      if (!desired.has(row.event_id)) {
+      if (!desired.has(row.event_id) && !retained.has(row.external_uid)) {
         db.prepare(
           "UPDATE calendar_external_event_meta SET status = 'cancelled', updated_at = ? WHERE event_id = ?"
         ).run(now, row.event_id);

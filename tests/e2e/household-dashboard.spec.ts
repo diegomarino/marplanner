@@ -313,12 +313,10 @@ test("household dashboard: integrated family flow remains independently usable",
   await expect(page.getByTestId("home-surface")).toHaveCount(0);
 
   await page.goto("/");
-  // With Admin as its only entry, Options is the long-press Admin affordance itself.
+  // With Admin as its only entry, Options is the Admin affordance itself; a tap opens the gate.
   const adminButton = page.getByRole("button", { name: m["shell.options.label"], exact: true });
-  await adminButton.hover();
-  await page.mouse.down();
-  await expect(page.getByTestId("admin-pin-keypad")).toBeVisible({ timeout: 6_000 });
-  await page.mouse.up();
+  await adminButton.click();
+  await expect(page.getByTestId("admin-pin-keypad")).toBeVisible();
   await expect(page).toHaveURL(/\/admin$/);
   await expect(page.getByTestId("admin-panel-scope")).toHaveCount(0);
 });

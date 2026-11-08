@@ -137,4 +137,40 @@ assignments — leaving no orphaned rows.
   rule to no occurrences, because rrule.js expansion is synchronous and a sub-daily
   or never-occurring rule would block the shared event loop
   (`supportedRruleProblem`, `src/server/modules/calendar/recurrence.ts`).
+- External feeds are parsed and expanded synchronously on the shared event loop, so
+  every feed is bounded by `ICS_FEED_LIMITS`
+  (`src/server/modules/calendar/parse-ics.ts`); ordinary Google, iCloud and Outlook
+  feeds stay far below each limit:
+
+  | Limit                                      | Value                     | Over the limit                                 |
+  | ------------------------------------------ | ------------------------- | ---------------------------------------------- |
+  | Feed download / parse size                 | 2 MiB (UTF-8)             | the sync fails with `too_large` / parse failed |
+  | Unfolded content line                      | 64 Ki chars               | that property line is dropped                  |
+  | Expansion window                           | −30 d / +365 d            | occurrences outside it are not produced        |
+  | RRULE `FREQ`                               | `DAILY`+                  | `HOURLY`/`MINUTELY`/`SECONDLY` skip the event  |
+  | `BYHOUR` × `BYMINUTE` × `BYSECOND` per day | 24                        | the event is skipped                           |
+  | `RDATE` / `EXDATE` values per event        | 1,000 / 2,000             | the event is skipped                           |
+  | Occurrences per event                      | 1,000                     | only the earliest are kept                     |
+  | Occurrences per feed                       | 10,000                    | the sync fails (`parse_failed`)                |
+  | Expansion time per feed                    | 5 s                       | the sync fails (`parse_failed`)                |
+  | Stored title / description / location      | 500 / 8,000 / 1,000 chars | truncated                                      |
+
+  `COUNT` and `UNTIL` need no separate cap because expansion never leaves the
+  window. The screening pass and the title-initials scan are linear-time (no
+  backtracking regular expression over feed text). The sync logs
+  `calendar.external-sources.feed-limits` with per-reason counts only (never feed
+  content or the feed URL).
+
+  A per-event limit (frequency, time-of-day product, date lists, occurrences per
+  event) affects only that event: it counts toward the source's skipped count, the
+  rest of the feed publishes, and the event's UID is reported as retained, so
+  reconciliation keeps its previously imported rows as they are instead of
+  cancelling them. A dropped event's outcome is unknown, not removed; cancelling
+  would silently delete real events (and their title assignments) whenever a
+  provider started emitting a rule over the limits. A feed-wide limit (occurrences
+  per feed, expansion time) makes the feed incomplete as a whole, so the sync fails
+  with `parse_failed` and the previous snapshot stays authoritative, exactly like an
+  unreachable feed; publishing the partial feed would cancel every event after the
+  cut-off.
+
 - Atomicity and date/weekday primitives are provided per ADR-043/ADR-005/ADR-006.

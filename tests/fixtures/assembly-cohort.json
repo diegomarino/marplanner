@@ -1245,7 +1245,11 @@
             "Calendar ICS parser adapter retains valid events while counting malformed and duplicate identities",
             "Calendar ICS parser adapter bounds expansion to the fixed -30 day and +365 day window",
             "Calendar ICS parser adapter produces stable hashes and one identity per occurrence",
-            "Calendar ICS parser adapter fails an invalid whole calendar without returning partial output"
+            "Calendar ICS parser adapter fails an invalid whole calendar without returning partial output",
+            "Calendar ICS parser adapter bounds hostile recurrence and still expands ordinary series inside the window",
+            "Calendar ICS parser adapter screens recurrence wherever node-ical would read it: stray, nested, or unterminated",
+            "Calendar ICS parser adapter fails a feed that exceeds its occurrence cap or time budget instead of returning part of it",
+            "Calendar ICS parser adapter drops an over-long property line in linear time, clips stored text, and refuses an oversized feed"
           ],
           "tests/boundary/calendar-parser-dependency.test.ts": [
             "node-ical 0.27.2 dependency boundary expands RRULE across DST and exposes RDATE, EXDATE, moved RECURRENCE-ID, and cancellation",
@@ -1355,7 +1359,10 @@
             "calendar external-source lifecycle hides retained rows on disable and immediately restores them on enable",
             "calendar external-source lifecycle lets an active run settle after disable but blocks every later trigger",
             "calendar external-source lifecycle waits for an active run, blocks waiting triggers, and leaves no source-owned rows",
-            "calendar external-source lifecycle keeps the successful snapshot after a later failed retrieval"
+            "calendar external-source lifecycle keeps the successful snapshot after a later failed retrieval",
+            "calendar external-source lifecycle publishes the rest of a feed and logs only counts when one event exceeds the feed limits",
+            "calendar external-source lifecycle fails the sync and keeps the previous snapshot when a feed exceeds a feed-wide limit",
+            "calendar external-source lifecycle keeps an imported event a feed limit now drops and still cancels one the feed removed"
           ],
           "tests/boundary/calendar-sync.test.ts": [
             "calendar sync publication repeats without duplicates, replaces title assignments, and cancels missing occurrences",
@@ -1365,6 +1372,7 @@
             "calendar sync publication starts manual sync for an enabled source and rejects missing or disabled sources",
             "calendar sync publication assigns members named anywhere in the title, by first name unless it is shared",
             "calendar sync publication assigns initials only as an uppercase title prefix or dash suffix",
+            "calendar sync publication reads title initials in linear time when a feed title carries a long whitespace run",
             "calendar sync publication leaves a shared initial unassigned unless it is repeated once per member",
             "calendar sync publication re-derives title assignments on an unchanged feed and keeps manual ones",
             "calendar sync publication leaves title assignments untouched on an unchanged feed while the household is unchanged",
@@ -2560,6 +2568,57 @@
             "provision — FR-007 POST /api/auth/provision without Authorization header → 401, no cookie set, no raw key in body",
             "provision — FR-007 POST /api/auth/provision with valid key but NO active bootstrap row in DB → 401"
           ],
+          "tests/boundary/provision-label.test.ts": [
+            "provision — device key labels stores an explicit, trimmed label",
+            "provision — device key labels accepts a label of exactly 80 characters",
+            "provision — device key labels rejects an empty label with 400 invalid_label and mints nothing",
+            "provision — device key labels rejects a whitespace-only label with 400 invalid_label and mints nothing",
+            "provision — device key labels rejects an 81-character label with 400 invalid_label and mints nothing",
+            "provision — device key labels rejects a non-string label with 400 invalid_label and mints nothing",
+            "provision — device key labels rejects an extra key with 400 invalid_label and mints nothing",
+            "provision — device key labels rejects an unknown key without label with 400 invalid_label and mints nothing",
+            "provision — device key labels rejects an array body with 400 invalid_label and mints nothing",
+            "provision — device key labels still refuses a bad bootstrap key with 401 before looking at the label",
+            "provision — device key labels labels a key from Safari on iPadOS's User-Agent",
+            "provision — device key labels labels a key from Safari on iOS's User-Agent",
+            "provision — device key labels labels a key from Safari on macOS's User-Agent",
+            "provision — device key labels labels a key from Chrome on Android's User-Agent",
+            "provision — device key labels labels a key from Edge on Windows's User-Agent",
+            "provision — device key labels labels a key from Firefox on Linux's User-Agent",
+            "provision — device key labels labels a key from curl's User-Agent",
+            "provision — device key labels labels a key from Node.js fetch's User-Agent",
+            "provision — device key labels labels a key from an unknown client's User-Agent",
+            "provision — device key labels labels a key 'Device · <date>' when the User-Agent is missing",
+            "provision — device key labels keeps an empty-body request working exactly as before, with a derived label",
+            "provision — device key labels prefers an explicit label over the User-Agent",
+            "provision — device key labels dates the derived label in the household timezone"
+          ],
+          "tests/boundary/user-agent-label.test.ts": [
+            "user-agent-label parses \"Mozilla/5.0 (iPad; CPU OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1\" as Safari on iPadOS",
+            "user-agent-label parses \"Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1\" as Safari on iOS",
+            "user-agent-label parses \"Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/130.0.6723.90 Mobile/15E148 Safari/604.1\" as Chrome on iOS",
+            "user-agent-label parses \"Mozilla/5.0 (iPad; CPU OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/132.0 Mobile/15E148 Safari/605.1.15\" as Firefox on iPadOS",
+            "user-agent-label parses \"Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 EdgiOS/130.0.2849.80 Mobile/15E148 Safari/605.1.15\" as Edge on iOS",
+            "user-agent-label parses \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15\" as Safari on macOS",
+            "user-agent-label parses \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36\" as Chrome on macOS",
+            "user-agent-label parses \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36\" as Chrome on Windows",
+            "user-agent-label parses \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0\" as Edge on Windows",
+            "user-agent-label parses \"Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36 EdgA/130.0.0.0\" as Edge on Android",
+            "user-agent-label parses \"Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36\" as Chrome on Android",
+            "user-agent-label parses \"Mozilla/5.0 (Android 14; Mobile; rv:132.0) Gecko/132.0 Firefox/132.0\" as Firefox on Android",
+            "user-agent-label parses \"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0\" as Firefox on Windows",
+            "user-agent-label parses \"Mozilla/5.0 (X11; Linux x86_64; rv:132.0) Gecko/20100101 Firefox/132.0\" as Firefox on Linux",
+            "user-agent-label parses \"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36\" as Chrome on Linux",
+            "user-agent-label parses \"curl/8.7.1\" as curl on Unknown",
+            "user-agent-label parses \"node\" as Node.js on Unknown",
+            "user-agent-label parses \"undici\" as Node.js on Unknown",
+            "user-agent-label parses \"Node.js/24.0 (linux; x64)\" as Node.js on Linux",
+            "user-agent-label parses \"Wget/1.21.4\" as Unknown on Unknown",
+            "user-agent-label parses \"\" as Unknown on Unknown",
+            "user-agent-label formats '<Browser> · <OS> · <date>'",
+            "user-agent-label falls back to 'Device · <date>' without a User-Agent",
+            "user-agent-label never exceeds 80 characters"
+          ],
           "tests/boundary/reminders-assembly.test.ts": [
             "reminders-assembly (real-process smoke, Scenario A) Scenario A: create an apply_to_all reminder, then read emissions over real HTTP"
           ],
@@ -3116,7 +3175,8 @@
             "rejects arbitrary-property density overrides while preserving tokens, growth and descendants"
           ],
           "tests/boundary/verify-pin.test.ts": [
-            "verify-pin: match/no-match no-session correct PIN ⇒ {match:true} and incorrect PIN ⇒ {match:false}, no session row either way (FR-016/FR-026)"
+            "verify-pin: match/no-match no-session correct PIN ⇒ {match:true} and incorrect PIN ⇒ {match:false}, no session row either way (FR-016/FR-026)",
+            "verify-pin: match/no-match no-session repeated 6-digit entries with 4- and 5-digit auto-submit probes never trigger backoff or lockout"
           ],
           "tests/boundary/weather-briefing-block.test.ts": [
             "daily-briefing weather block selects the daily[] entry matching the briefing's household-local date",
@@ -3285,8 +3345,13 @@
             "AdminGate touch PIN keypad draws Backspace on the same circular key surface as the digits",
             "AdminGate touch PIN keypad accepts hardware keyboard digits, Backspace, and Enter to submit",
             "AdminGate touch PIN keypad keeps modified keys, editing fields, and focused control activation out of global PIN entry",
-            "AdminGate touch PIN keypad caps keyboard entry and freezes it while a PIN verification is pending",
-            "AdminGate touch PIN keypad submits only 4-6 digits and retains wrong-PIN and request-error feedback",
+            "AdminGate touch PIN keypad auto-submits at 4, 5 and 6 digits and unlocks on a match without the button",
+            "AdminGate touch PIN keypad keeps 4- and 5-digit rejections silent and leaves the digits in place",
+            "AdminGate touch PIN keypad shows the error and clears the digits when the 6-digit attempt is rejected",
+            "AdminGate touch PIN keypad never runs two verifications at once and sends only the latest waiting digits",
+            "AdminGate touch PIN keypad does not submit after Backspace and drops a waiting attempt for deleted digits",
+            "AdminGate touch PIN keypad caps keyboard entry and freezes it while the visible verification is pending",
+            "AdminGate touch PIN keypad keeps the Unlock button as a manual, visible submit for 4-6 digits",
             "AdminGate touch PIN keypad clears state and returns to the recorded family route on Cancel",
             "AdminGate touch PIN keypad falls back to Home when direct Admin navigation has no family history marker"
           ],
@@ -3863,10 +3928,10 @@
           ],
           "tests/client/household-options-menu.test.tsx": [
             "HouseholdChrome — Options menu opens a menu holding Admin and every extra entry once there is more than one",
-            "HouseholdChrome — Options menu a tap on the Admin affordance explains that Admin needs a hold, then hides the hint",
-            "HouseholdChrome — Options menu a tap on the Admin affordance shows the hint for an early keyboard release too",
-            "HouseholdChrome — Options menu a tap on the Admin affordance shows no hint after a completed hold",
-            "HouseholdChrome — Options menu a tap on the Admin affordance hides the hint as soon as a new hold starts"
+            "HouseholdChrome — Options menu the Admin affordance opens Admin on a plain tap, with no hold timer or hint",
+            "HouseholdChrome — Options menu the Admin affordance opens Admin from the menu entry on a plain tap and closes the menu",
+            "HouseholdChrome — Options menu the Admin affordance opens Admin from keyboard and assistive-technology activation",
+            "HouseholdChrome — Options menu the unlocked admin bar navigates Home and up the breadcrumb on a plain click, and leaves modified clicks native"
           ],
           "tests/client/logger.test.ts": [
             "client logger CLIENT-LOGGING-TELEMETRY-INV-03: an entry carries the canonical envelope shape",
@@ -4608,10 +4673,10 @@
             "Shell — unprovisioned gate marks the current family destination and makes Options the Admin affordance while Admin is its only entry",
             "Shell — unprovisioned gate organizes the household chrome into compact navigation, contextual center, and secondary actions",
             "Shell — unprovisioned gate keeps the unlocked admin subtree mounted when Printing is deactivated",
-            "Shell — unprovisioned gate requires a three-second physical hold, shows progress, and resets after an early release",
+            "Shell — unprovisioned gate opens the PIN gate on a plain tap with no hold or progress indicator",
+            "Shell — unprovisioned gate a second Admin activation on the open PIN gate adds no history entry and Cancel returns to the origin",
             "Shell — unprovisioned gate opens admin immediately when the local PIN bypass flag is enabled",
-            "Shell — unprovisioned gate rejects a quick physical tap but accepts keyboard hold and synthetic AT activation",
-            "Shell — unprovisioned gate captures the pointer, survives layout-shift leave events, and resets on cancellation",
+            "Shell — unprovisioned gate opens the PIN gate from keyboard and synthetic AT activation",
             "Shell — unprovisioned gate does NOT bypass the provisioning gate at /calendar (fail-closed, FR-031/ADR-059)",
             "Shell — stale mp_provisioned marker recovery (FR-013) falls back to the provisioning gate when an authenticated call 401s (no manual refresh needed)",
             "Shell — stale mp_provisioned marker recovery (FR-013) falls back to the provisioning gate on a 403 (revoked key) the same way",
@@ -5013,6 +5078,16 @@
             "HTTP shutdown drainage does not discard a partial HTTP header while closing",
             "HTTP shutdown drainage drains a streamed request body received after shutdown begins",
             "HTTP shutdown drainage discards a never-requested connection accepted during preClose and removes its listeners"
+          ],
+          "tests/integration/backups-restore-credentials.test.ts": [
+            "restore preserves live credentials (ADR-030) keeps keys revoked since the backup revoked and keys created since the backup active",
+            "restore preserves live credentials (ADR-030) never makes a key that existed only in the backup valid",
+            "restore preserves live credentials (ADR-030) re-applies live credentials after migrating a backup that predates later migrations",
+            "restore preserves live credentials (ADR-030) refuses a backup whose triggers touch the credentials table",
+            "restore preserves live credentials (ADR-030) leaves credentials untouched when the restore fails after the swap",
+            "restore preserves live credentials (ADR-030) aborts before touching the database when the live credentials cannot be read",
+            "restore preserves live credentials (ADR-030) rolls back to the pre-restore credentials when re-applying them fails",
+            "restore over HTTP keeps the requesting device connected (ADR-030) the device that requested the restore still works and a backup-only key is refused"
           ],
           "tests/integration/backups-restore.test.ts": [
             "restore engine — confirmation + validation (BACKUPS-AC-01, no side effects) empty/missing filename -> validation_error, no side effects",
@@ -5714,12 +5789,26 @@
           ],
           "tests/client/device-credentials-management.test.tsx": [
             "DeviceCredentialsManagement lists credentials, marks this device and hides revoked keys behind a filter",
+            "DeviceCredentialsManagement shows when each key was added to the minute, in the household timezone",
+            "DeviceCredentialsManagement dates expiries by day and falls back to the browser timezone before settings load",
             "DeviceCredentialsManagement disables revoking the configured bootstrap key and explains how to rotate it",
             "DeviceCredentialsManagement revokes another device only after confirmation",
             "DeviceCredentialsManagement warns before revoking this device and logs the screen out afterwards",
             "DeviceCredentialsManagement shows the bootstrap explanation, not a generic error, when the server refuses",
             "DeviceCredentialsManagement renames a credential and rejects an empty name locally",
             "DeviceCredentialsManagement shows a retryable error when the list cannot load"
+          ],
+          "tests/boundary/route-boundary.test.ts": [
+            "API-key boundary covers every URL spelling that routes to an /api handler refuses non-origin-form request targets before routing, even with a device key (BASE_PATH=\"\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler refuses non-origin-form request targets before routing, even with a device key (BASE_PATH=\"/family/planner\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler unauthenticated origin-form variants never return /api data (BASE_PATH=\"\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler unauthenticated origin-form variants never return /api data (BASE_PATH=\"/family/planner\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler authenticates by the matched route even under a router that normalizes URLs (BASE_PATH=\"\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler authenticates by the matched route even under a router that normalizes URLs (BASE_PATH=\"/family/planner\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler a live device key keeps working on canonical targets (BASE_PATH=\"\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler a live device key keeps working on canonical targets (BASE_PATH=\"/family/planner\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler provisioning and /health stay the only unauthenticated routes (BASE_PATH=\"\")",
+            "API-key boundary covers every URL spelling that routes to an /api handler provisioning and /health stay the only unauthenticated routes (BASE_PATH=\"/family/planner\")"
           ],
           "tests/boundary/reminders-content-type.test.ts": [
             "reminders content type (text | images) creates an images reminder, defaults a text reminder, and lists both with their content",
@@ -5837,6 +5926,31 @@
             "0002_member_celebration migration accepts a custom set of one to six emojis",
             "member celebration over HTTP refuses a non-object sound setting at the settings seam",
             "member celebration over HTTP reads a stored sound setting that no longer validates as the default"
+          ],
+          "tests/boundary/daily-briefing-weather-icons.test.ts": [
+            "daily-briefing weather block — Weather Icons draws clear with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws mostlyClear with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws partlyCloudy with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws overcast with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws fog with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws drizzle with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws freezingDrizzle with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws rain with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws freezingRain with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws snow with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws snowGrains with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws rainShowers with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws snowShowers with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws thunderstorm with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws thunderstormHail with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons draws unknown with its own day icon, a single black path",
+            "daily-briefing weather block — Weather Icons gives thunderstorm, fog, hail and partly cloudy their own icons, unknown reads n/a",
+            "daily-briefing weather block — Weather Icons draws wi-raindrop beside a rain probability and drops the rain column at 0%",
+            "daily-briefing weather block — Weather Icons renders every condition through the real pipeline without failures"
+          ],
+          "tests/client/daily-briefing-weather-icon.test.tsx": [
+            "renders the condition icon before the text, hidden from assistive tech",
+            "renders weatherText as text only"
           ]
         }
       },
@@ -5854,7 +5968,7 @@
           "tests/e2e/admin-routines.spec.ts": ["9039bdc4f4b37608b18c-2d67652f4c452d3453f0"],
           "tests/e2e/admin-settings.spec.ts": ["f375f71858043ffaa49e-780f363c12847aa39921"],
           "tests/e2e/admin-unlock-resilience.spec.ts": [
-            "224608ef7363313c2282-9f89fbd41fbab627eca2",
+            "224608ef7363313c2282-e9e7a481722f7c9f4ffc",
             "224608ef7363313c2282-8d68d3e6e84b83b77ca0"
           ],
           "tests/e2e/backups-restore.spec.ts": [
@@ -7121,10 +7235,10 @@
       "src/client/home/WeatherIcon.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 11,
-          "statements": 11,
+          "lines": 9,
+          "statements": 9,
           "functions": 3,
-          "branches": 9
+          "branches": 5
         },
         "minimumRates": {
           "lines": 81.81,
@@ -7161,21 +7275,6 @@
           "statements": 100,
           "functions": 100,
           "branches": 96.42
-        }
-      },
-      "src/client/home/weather-icons/paths.ts": {
-        "layer": "client",
-        "minimumTotals": {
-          "lines": 1,
-          "statements": 1,
-          "functions": 0,
-          "branches": 0
-        },
-        "minimumRates": {
-          "lines": 100,
-          "statements": 100,
-          "functions": 100,
-          "branches": 100
         }
       },
       "src/client/home/weatherCache.ts": {
@@ -7916,10 +8015,10 @@
       "src/client/shell/HouseholdChrome.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 81,
-          "statements": 97,
-          "functions": 24,
-          "branches": 57
+          "lines": 51,
+          "statements": 57,
+          "functions": 20,
+          "branches": 44
         },
         "minimumRates": {
           "lines": 90.12,
@@ -8318,6 +8417,21 @@
           "branches": 100
         }
       },
+      "src/server/auth/user-agent-label.ts": {
+        "layer": "server",
+        "minimumTotals": {
+          "lines": 11,
+          "statements": 12,
+          "functions": 4,
+          "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/server/backups/job.ts": {
         "layer": "server",
         "minimumTotals": {
@@ -8336,10 +8450,10 @@
       "src/server/backups/restore.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 160,
-          "statements": 168,
-          "functions": 23,
-          "branches": 52
+          "lines": 187,
+          "statements": 200,
+          "functions": 30,
+          "branches": 58
         },
         "minimumRates": {
           "lines": 93.75,
@@ -8711,10 +8825,10 @@
       "src/server/modules/calendar/parse-ics.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 142,
-          "statements": 158,
-          "functions": 27,
-          "branches": 190
+          "lines": 261,
+          "statements": 297,
+          "functions": 44,
+          "branches": 293
         },
         "minimumRates": {
           "lines": 91.54,
@@ -9552,16 +9666,16 @@
       "src/server/modules/daily-briefing/render/blocks/weather.ts": {
         "layer": "server",
         "minimumTotals": {
-          "lines": 12,
-          "statements": 12,
+          "lines": 8,
+          "statements": 8,
           "functions": 3,
-          "branches": 18
+          "branches": 4
         },
         "minimumRates": {
           "lines": 100,
           "statements": 100,
           "functions": 100,
-          "branches": 94.44
+          "branches": 100
         }
       },
       "src/server/modules/daily-briefing/render/blocks/word-of-day.ts": {
@@ -11122,6 +11236,36 @@
           "statements": 100,
           "functions": 100,
           "branches": 50
+        }
+      },
+      "src/shared/weather-icons/conditionIcons.ts": {
+        "layer": "shared",
+        "minimumTotals": {
+          "lines": 3,
+          "statements": 3,
+          "functions": 1,
+          "branches": 4
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
+      "src/shared/weather-icons/paths.ts": {
+        "layer": "shared",
+        "minimumTotals": {
+          "lines": 1,
+          "statements": 1,
+          "functions": 0,
+          "branches": 0
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/shared/plugins.ts": {

@@ -8,6 +8,7 @@
  *   npm run dev:unifi-fixture -- --api http://127.0.0.1:3100
  */
 import { createHash } from "node:crypto";
+import { hostname } from "node:os";
 import {
   startUnifiFixtureServer,
   type UnifiFixtureClient,
@@ -66,9 +67,16 @@ async function provisionCookie(base: string): Promise<string> {
   const token = process.env.MP_ACCESS_TOKEN?.trim() ?? "";
   const bootstrapKey = process.env.MP_BOOTSTRAP_KEY?.trim() ?? "";
   const gate = `mp_gate=${createHash("sha256").update(token).digest("hex")}`;
+  const label = hostname().trim().slice(0, 80);
   const res = await fetch(`${base}/api/auth/provision`, {
     method: "POST",
-    headers: { cookie: gate, authorization: `Bearer ${bootstrapKey}` },
+    headers: {
+      cookie: gate,
+      authorization: `Bearer ${bootstrapKey}`,
+      ...(label ? { "content-type": "application/json" } : {}),
+    },
+    // Name the key after this machine so Admin → Access keys can tell it apart.
+    ...(label ? { body: JSON.stringify({ label }) } : {}),
   });
   if (!res.ok) {
     throw new Error(
