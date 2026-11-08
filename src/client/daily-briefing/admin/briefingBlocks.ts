@@ -98,7 +98,7 @@ export const ALL_BLOCK_TYPES = [
   "drawingPrompt",
   "streakText",
   "weatherText",
-  "firstWords",
+  "phonics",
 ] as const;
 
 export type BlockRegistryType = (typeof ALL_BLOCK_TYPES)[number];
@@ -125,7 +125,7 @@ export const BLOCK_LABEL_KEYS: Record<BlockRegistryType, MessageKey> = {
   drawingPrompt: "dailyBriefing.admin.blockType.drawingPrompt",
   streakText: "dailyBriefing.admin.blockType.streakText",
   weatherText: "dailyBriefing.admin.blockType.weatherText",
-  firstWords: "dailyBriefing.admin.blockType.firstWords",
+  phonics: "dailyBriefing.admin.blockType.phonics",
 };
 
 export function effectiveMatrixBlockTypes(blockOrder: BlockOrderInstance[]): BlockRegistryType[] {
@@ -166,17 +166,14 @@ export function reorderBlockOrderByType(
 /** Mirrors `DEFAULT_DISABLED_BLOCK_TYPES` in block-types.ts (FR-013). */
 export const DEFAULT_DISABLED_BLOCK_TYPES: ReadonlySet<BlockRegistryType> = new Set([
   "onThisDay",
-  "firstWords",
+  "phonics",
 ]);
 
-/** Mirrors `LEVEL`-taking block types — `wordOfDay` and `firstWords` (FR-022). */
-export const LEVEL_BLOCK_TYPES: ReadonlySet<BlockRegistryType> = new Set([
-  "wordOfDay",
-  "firstWords",
-]);
+/** Mirrors `LEVEL`-taking block types — `wordOfDay` and `phonics` (FR-022). */
+export const LEVEL_BLOCK_TYPES: ReadonlySet<BlockRegistryType> = new Set(["wordOfDay", "phonics"]);
 
-/** Mirrors `COUNT`-taking block types and the server's FIRST_WORDS_{MIN,MAX}_COUNT bounds. */
-export const COUNT_BLOCK_TYPES: ReadonlySet<BlockRegistryType> = new Set(["firstWords"]);
+/** Mirrors `COUNT`-taking block types and the server's PHONICS_{MIN,MAX}_COUNT bounds. */
+export const COUNT_BLOCK_TYPES: ReadonlySet<BlockRegistryType> = new Set(["phonics"]);
 export const COUNTS = [1, 2, 3, 4, 5, 6] as const;
 export const LEVELS = ["L1", "L2", "L3", "L4"] as const;
 
@@ -206,7 +203,7 @@ export const CORPUS_LANGUAGE_AVAILABILITY: Partial<Record<BlockRegistryType, rea
   wouldYouRather: ["en", "es"],
   wordSearch: ["en"],
   drawingPrompt: ["en", "es"],
-  firstWords: ["en"],
+  phonics: ["en"],
 };
 
 export function defaultMemberBlockSettings(

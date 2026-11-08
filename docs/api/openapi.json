@@ -189,7 +189,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 6,
-            "description": "firstWords only: how many words to print."
+            "description": "phonics only: how many words to print."
           }
         },
         "additionalProperties": false,
@@ -222,7 +222,7 @@
           "drawingPrompt",
           "streakText",
           "weatherText",
-          "firstWords"
+          "phonics"
         ]
       },
       "BoardChore": {
@@ -374,7 +374,7 @@
                           "drawingPrompt",
                           "streakText",
                           "weatherText",
-                          "firstWords"
+                          "phonics"
                         ]
                       }
                     }

@@ -23,7 +23,7 @@ export const ALL_BLOCK_TYPES = [
   "drawingPrompt",
   "streakText",
   "weatherText",
-  "firstWords",
+  "phonics",
 ] as const;
 
 export type BlockRegistryType = (typeof ALL_BLOCK_TYPES)[number];
@@ -41,7 +41,7 @@ export function isKnownBlockType(type: unknown): type is BlockRegistryType {
 export const DEFAULT_DISABLED_BLOCK_TYPES: ReadonlySet<string> = new Set([
   "onThisDay",
   // Early-reader content only suits households with a beginning reader: opt-in.
-  "firstWords",
+  "phonics",
 ]);
 
 /** Corpus-backed block types — the subset offering a `params.language` override (FR-008/FR-009). */
@@ -55,7 +55,7 @@ export const CORPUS_BLOCK_TYPES = [
   "wouldYouRather",
   "wordSearch",
   "drawingPrompt",
-  "firstWords",
+  "phonics",
 ] as const;
 
 export type CorpusBlockType = (typeof CORPUS_BLOCK_TYPES)[number];
@@ -85,7 +85,7 @@ export const CORPUS_LANGUAGE_AVAILABILITY: Readonly<
   wouldYouRather: ["en", "es"],
   wordSearch: ["en"],
   drawingPrompt: ["en", "es"],
-  firstWords: ["en"],
+  phonics: ["en"],
 };
 
 export function corpusLanguagesFor(type: CorpusBlockType): readonly CorpusLanguage[] {

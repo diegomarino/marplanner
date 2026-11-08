@@ -4,7 +4,7 @@
 export * from "./block-types";
 export type {
   AnimalFactEntry,
-  FirstWordsEntry,
+  PhonicsWordEntry,
   NumberFactEntry,
   RiddleEntry,
   TextEntry,
@@ -19,7 +19,7 @@ export {
   animalFactsCorpus,
   dadJokesCorpus,
   drawingPromptsCorpus,
-  firstWordsCorpus,
+  phonicsCorpus,
   getWordSearchPool,
   numberFactsCorpus,
   riddlesCorpus,

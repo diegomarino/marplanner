@@ -1,4 +1,4 @@
-// firstWords render-def: early-reader words printed as large as the paper allows, one word per
+// phonics render-def: early-reader words printed as large as the paper allows, one word per
 // line, with "sound buttons" underneath — a dot under each single-letter grapheme and a dash
 // under each multi-letter grapheme (digraph/trigraph). Tricky words print without marks.
 //
@@ -10,10 +10,10 @@ import { applyTextStyle, defineBlock, type BlockDefinition } from "pressedslip";
 import { type ZodType, z } from "zod";
 
 /** Advance width of every JetBrains Mono glyph, in em (hmtx 600 / unitsPerEm 1000). */
-export const FIRST_WORDS_GLYPH_ADVANCE_EM = 0.6;
+export const PHONICS_GLYPH_ADVANCE_EM = 0.6;
 /** Ceiling for very short words (2-letter tricky words would otherwise reach ~440px). A 3-letter
  * CVC word on 80mm paper (~293px) still prints at full width. */
-export const FIRST_WORDS_MAX_FONT_PX = 300;
+export const PHONICS_MAX_FONT_PX = 300;
 
 const LINE_HEIGHT_EM = 1.2;
 const MARK_GAP_EM = 0.04;
@@ -23,38 +23,38 @@ const DASH_INSET_CELLS = 0.15;
 const WORD_GAP_EM = 0.12;
 const INK = "#000000";
 
-interface FirstWordsWord {
+interface PhonicsWord {
   word: string;
   graphemes: string[];
   tricky: boolean;
 }
 
-const schema: ZodType<{ words: FirstWordsWord[] }> = z.object({
+const schema: ZodType<{ words: PhonicsWord[] }> = z.object({
   words: z.array(
     z.object({ word: z.string(), graphemes: z.array(z.string()), tricky: z.boolean() })
   ),
 });
-export type FirstWordsRenderData = z.infer<typeof schema>;
+export type PhonicsRenderData = z.infer<typeof schema>;
 
-export interface FirstWordsMark {
+export interface PhonicsMark {
   kind: "dot" | "dash";
   width: number;
   height: number;
 }
 
-export interface FirstWordsLayout {
+export interface PhonicsLayout {
   fontSize: number;
   cellWidth: number;
-  words: Array<{ graphemes: string[]; cells: number[]; marks: FirstWordsMark[] }>;
+  words: Array<{ graphemes: string[]; cells: number[]; marks: PhonicsMark[] }>;
 }
 
 /** Largest font at which the longest word fits `contentWidth`, capped for very short words.
  * Integer maths (0.6 = 3/5) so the "fits, and one pixel more would not" boundary is exact. */
-export function layoutFirstWords(words: FirstWordsWord[], contentWidth: number): FirstWordsLayout {
+export function layoutPhonics(words: PhonicsWord[], contentWidth: number): PhonicsLayout {
   const longest = Math.max(1, ...words.map((w) => w.word.length));
   const fitted = Math.floor((5 * contentWidth) / (3 * longest));
-  const fontSize = Math.max(1, Math.min(FIRST_WORDS_MAX_FONT_PX, fitted));
-  const cellWidth = fontSize * FIRST_WORDS_GLYPH_ADVANCE_EM;
+  const fontSize = Math.max(1, Math.min(PHONICS_MAX_FONT_PX, fitted));
+  const cellWidth = fontSize * PHONICS_GLYPH_ADVANCE_EM;
   const dot = Math.max(6, Math.round(fontSize * DOT_EM));
   const dashThickness = Math.max(4, Math.round(fontSize * DASH_THICKNESS_EM));
 
@@ -63,7 +63,7 @@ export function layoutFirstWords(words: FirstWordsWord[], contentWidth: number):
     cellWidth,
     words: words.map((w) => {
       const cells = w.graphemes.map((g) => g.length);
-      const marks: FirstWordsMark[] = w.tricky
+      const marks: PhonicsMark[] = w.tricky
         ? []
         : cells.map((n) =>
             n === 1
@@ -79,11 +79,11 @@ export function layoutFirstWords(words: FirstWordsWord[], contentWidth: number):
   };
 }
 
-export const firstWordsBlock: BlockDefinition<FirstWordsRenderData> = defineBlock({
-  type: "firstWords",
+export const phonicsBlock: BlockDefinition<PhonicsRenderData> = defineBlock({
+  type: "phonics",
   schema,
   render: ({ data, ctx }) => {
-    const layout = layoutFirstWords(data.words, ctx.contentWidth);
+    const layout = layoutPhonics(data.words, ctx.contentWidth);
     const { fontSize, cellWidth } = layout;
     const letterStyle = {
       ...applyTextStyle(ctx.theme.textStyles.display, ctx.fontRoles),

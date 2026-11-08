@@ -52,7 +52,7 @@ export type BlockType =
   | "drawingPrompt"
   | "streakText"
   | "weatherText"
-  | "firstWords";
+  | "phonics";
 
 /** BlockScope — `chores`/`reminders` = member; `calendar`/`meals` = shared.
  */

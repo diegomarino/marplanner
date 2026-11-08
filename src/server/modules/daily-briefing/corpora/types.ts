@@ -47,10 +47,10 @@ export interface VocabularyEntry {
   pronunciation: string | null;
 }
 
-/** One early-reader word (`first-words.json`). `graphemes` spell `word` exactly, one entry per
+/** One early-reader word (`phonics-words.json`). `graphemes` spell `word` exactly, one entry per
  * sound (`ship` -> `["sh", "i", "p"]`); `tricky` words are printed without sound buttons.
  */
-export interface FirstWordsEntry {
+export interface PhonicsWordEntry {
   word: string;
   level: "L1" | "L2" | "L3" | "L4";
   graphemes: string[];

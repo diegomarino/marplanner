@@ -18,11 +18,7 @@ import {
   isCorpusLanguageAvailable,
   isKnownBlockType,
 } from "./corpora/index";
-import {
-  FIRST_WORDS_MAX_COUNT,
-  FIRST_WORDS_MIN_COUNT,
-  isValidFirstWordsCount,
-} from "./blocks/first-words";
+import { PHONICS_MAX_COUNT, PHONICS_MIN_COUNT, isValidPhonicsCount } from "./blocks/phonics";
 import { DailyBriefingValidationError } from "./errors";
 import { getBriefingTime, rearmDailyBriefingSchedule } from "./job";
 import { listMemberSchedules } from "./schedule";
@@ -133,9 +129,9 @@ function validateParams(blockType: string, value: unknown): Record<string, unkno
       `Invalid difficulty "${String(params.difficulty)}": must be one of easy, medium, hard`
     );
   }
-  if (params.count !== undefined && !isValidFirstWordsCount(params.count)) {
+  if (params.count !== undefined && !isValidPhonicsCount(params.count)) {
     throw new DailyBriefingValidationError(
-      `Invalid count "${String(params.count)}": must be an integer ${FIRST_WORDS_MIN_COUNT}-${FIRST_WORDS_MAX_COUNT}`
+      `Invalid count "${String(params.count)}": must be an integer ${PHONICS_MIN_COUNT}-${PHONICS_MAX_COUNT}`
     );
   }
   if (params.language !== undefined) {

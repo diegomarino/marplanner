@@ -50,7 +50,7 @@ describe("daily content demo seed boundary", () => {
       "drawingPrompt",
       "streakText",
       "weatherText",
-      "firstWords",
+      "phonics",
     ];
     expect(readAllSettings().blockOrder.map(({ type }) => type)).toEqual(types);
     for (const memberId of ["demo:member:homer", "demo:member:lisa", "demo:member:marge"]) {
@@ -148,7 +148,7 @@ describe("daily content demo seed boundary", () => {
         { type: "drawingPrompt" },
         { type: "streakText" },
         { type: "weatherText" },
-        { type: "firstWords" },
+        { type: "phonics" },
       ],
       memberBlockSettings: [
         {
@@ -160,13 +160,6 @@ describe("daily content demo seed boundary", () => {
         },
         {
           memberId: "demo:member:homer",
-          blockType: "firstWords",
-          enabled: true,
-          weekdays: null,
-          params: null,
-        },
-        {
-          memberId: "demo:member:homer",
           blockType: "message",
           enabled: true,
           weekdays: null,
@@ -180,8 +173,8 @@ describe("daily content demo seed boundary", () => {
           params: null,
         },
         {
-          memberId: "demo:member:lisa",
-          blockType: "firstWords",
+          memberId: "demo:member:homer",
+          blockType: "phonics",
           enabled: true,
           weekdays: null,
           params: null,
@@ -201,8 +194,8 @@ describe("daily content demo seed boundary", () => {
           params: null,
         },
         {
-          memberId: "demo:member:marge",
-          blockType: "firstWords",
+          memberId: "demo:member:lisa",
+          blockType: "phonics",
           enabled: true,
           weekdays: null,
           params: null,
@@ -210,6 +203,13 @@ describe("daily content demo seed boundary", () => {
         {
           memberId: "demo:member:marge",
           blockType: "onThisDay",
+          enabled: true,
+          weekdays: null,
+          params: null,
+        },
+        {
+          memberId: "demo:member:marge",
+          blockType: "phonics",
           enabled: true,
           weekdays: null,
           params: null,

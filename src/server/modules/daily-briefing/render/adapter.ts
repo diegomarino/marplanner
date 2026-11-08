@@ -99,7 +99,7 @@ export function adaptBlockData(blockType: string, raw: unknown): unknown {
       }
       return out;
     }
-    case "firstWords":
+    case "phonics":
       return {
         words: needArray<Record<string, unknown>>(blockType, "words", data.words, "object").map(
           (w, i) => {

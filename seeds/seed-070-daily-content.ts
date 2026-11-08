@@ -168,7 +168,7 @@ const MEMBER_BLOCK_SETTINGS = [
     params: null,
   },
   // Default-off blocks are switched on for opted-in members so the demo shows every block.
-  ...(["onThisDay", "firstWords"] as const).flatMap((blockType) =>
+  ...(["onThisDay", "phonics"] as const).flatMap((blockType) =>
     BRIEFING_OPT_INS.filter(({ enabled }) => enabled).map(({ memberId }) => ({
       memberId,
       blockType,

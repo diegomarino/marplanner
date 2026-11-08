@@ -429,12 +429,12 @@ describe("daily-briefing settings boundary", () => {
     expect(res.json()).toMatchObject({ error: "corpus_language_unavailable" });
   });
 
-  // ── firstWords: level + count params ─────────────────────────────────────────────────────
+  // ── phonics: level + count params ─────────────────────────────────────────────────────
 
-  it("accepts firstWords level and count params", async () => {
+  it("accepts phonics level and count params", async () => {
     const res = await app.inject({
       method: "PUT",
-      url: `/api/daily-briefing/block-settings/${memberId}/firstWords`,
+      url: `/api/daily-briefing/block-settings/${memberId}/phonics`,
       cookies: auth(),
       payload: { params: { level: "L2", count: 4 } },
     });
@@ -442,18 +442,18 @@ describe("daily-briefing settings boundary", () => {
     expect(res.json()).toMatchObject({ params: { level: "L2", count: 4 } });
   });
 
-  it.each([0, 7, 2.5, "3"])("rejects firstWords count %j with 400", async (count) => {
+  it.each([0, 7, 2.5, "3"])("rejects phonics count %j with 400", async (count) => {
     const res = await app.inject({
       method: "PUT",
-      url: `/api/daily-briefing/block-settings/${memberId}/firstWords`,
+      url: `/api/daily-briefing/block-settings/${memberId}/phonics`,
       cookies: auth(),
       payload: { params: { count } },
     });
     expect(res.statusCode).toBe(400);
   });
 
-  it("firstWords resolves disabled by default with no persisted row", () => {
-    expect(resolveMemberBlockSettings(memberId, "firstWords")).toMatchObject({ enabled: false });
+  it("phonics resolves disabled by default with no persisted row", () => {
+    expect(resolveMemberBlockSettings(memberId, "phonics")).toMatchObject({ enabled: false });
   });
 
   // ── FR-013: onThisDay default-disabled bootstrap ─────────────────────────────────────────

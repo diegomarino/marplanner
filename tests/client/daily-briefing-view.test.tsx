@@ -180,11 +180,11 @@ function fullRegistryBlocks(): BlockInstance[] {
       },
     },
     {
-      type: "firstWords",
+      type: "phonics",
       scope: "shared",
       status: "ok",
       index: 22,
-      title: "22 FIRST WORDS",
+      title: "22 PHONICS",
       data: {
         level: "L2",
         words: [
@@ -438,11 +438,11 @@ describe("DailyBriefingView — full block registry", () => {
     expect(wordOfDay).toHaveTextContent("ih-FEM-er-uhl");
     expect(wordOfDay).toHaveTextContent("Fame is ephemeral");
 
-    const firstWords = screen.getByTestId("daily-briefing-block-firstWords");
-    expect(firstWords).toHaveTextContent("ship");
-    expect(firstWords).toHaveTextContent("said");
-    expect(within(firstWords).getAllByTestId("first-words-mark-dot")).toHaveLength(2);
-    expect(within(firstWords).getAllByTestId("first-words-mark-dash")).toHaveLength(1);
+    const phonics = screen.getByTestId("daily-briefing-block-phonics");
+    expect(phonics).toHaveTextContent("ship");
+    expect(phonics).toHaveTextContent("said");
+    expect(within(phonics).getAllByTestId("phonics-mark-dot")).toHaveLength(2);
+    expect(within(phonics).getAllByTestId("phonics-mark-dash")).toHaveLength(1);
 
     const animalFact = screen.getByTestId("daily-briefing-block-animalFact");
     expect(animalFact).toHaveTextContent("Octopuses have three hearts");

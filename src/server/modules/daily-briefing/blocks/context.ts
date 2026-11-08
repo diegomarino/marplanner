@@ -10,7 +10,7 @@ export interface CorpusBlockParams {
   language?: string;
   level?: string;
   difficulty?: string;
-  /** firstWords only: how many words to print. */
+  /** phonics only: how many words to print. */
   count?: number;
 }
 

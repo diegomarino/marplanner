@@ -60,7 +60,7 @@ import { generateWeatherBlock, readWeatherBlockInputs } from "./blocks/weather";
 import type { WeatherBlockInputs } from "./blocks/weather";
 import { generateDadJoke } from "./blocks/dad-joke";
 import { generateWordOfDay } from "./blocks/word-of-day";
-import { generateFirstWords } from "./blocks/first-words";
+import { generatePhonics } from "./blocks/phonics";
 import { generateAnimalFact } from "./blocks/animal-fact";
 import { generateNumberFact } from "./blocks/number-fact";
 import { generateTrivia } from "./blocks/trivia";
@@ -480,7 +480,7 @@ const BLOCK_SCOPE: Record<string, "shared" | "member"> = {
   drawingPrompt: "shared",
   streakText: "member",
   weatherText: "shared",
-  firstWords: "shared",
+  phonics: "shared",
 };
 
 /** v1's `titleFor` port (— TITLES), localized per DAILY-BRIEFING-INV-06 (fold):
@@ -755,9 +755,9 @@ function generateLocalBlockData(
         return {
           data: generateDrawingPrompt({ date, memberId, params: params as CorpusBlockParams }),
         };
-      case "firstWords":
+      case "phonics":
         return {
-          data: generateFirstWords({ date, memberId, params: params as CorpusBlockParams }),
+          data: generatePhonics({ date, memberId, params: params as CorpusBlockParams }),
         };
       default:
         // The effective-order merge only ever emits known types (buildEffectiveOrder filters

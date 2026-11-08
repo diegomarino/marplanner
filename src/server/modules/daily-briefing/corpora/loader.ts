@@ -18,7 +18,7 @@
  */
 import type {
   AnimalFactEntry,
-  FirstWordsEntry,
+  PhonicsWordEntry,
   NumberFactEntry,
   RiddleEntry,
   TextEntry,
@@ -43,14 +43,14 @@ import drawingPromptsEsJson from "./drawing-prompts.es.json";
 import wouldYouRathersEnJson from "./would-you-rathers.json";
 import wouldYouRathersEsJson from "./would-you-rathers.es.json";
 import wordSearchCorpusJson from "./word-search-corpus.json";
-import firstWordsJson from "./first-words.json";
+import phonicsWordsJson from "./phonics-words.json";
 
 // ── EN-only corpora ──────────────────────────────────────────────────────────
 export const dadJokesCorpus = jokesJson as TextEntry[];
 export const riddlesCorpus = riddlesJson as RiddleEntry[];
 export const triviaCorpus = triviaQuestionsJson as TriviaEntry[];
 export const vocabularyCorpus = vocabularyEntriesJson as VocabularyEntry[];
-export const firstWordsCorpus = firstWordsJson as FirstWordsEntry[];
+export const phonicsCorpus = phonicsWordsJson as PhonicsWordEntry[];
 
 // ── EN + ES corpora (INV-06: language variant = the `.es.json` sibling) ─────────────
 export const animalFactsCorpus: Record<CorpusLanguage, AnimalFactEntry[]> = {

@@ -108,7 +108,7 @@ export interface WordOfDayData {
   pronunciation?: string;
 }
 
-export interface FirstWordsData {
+export interface PhonicsData {
   level: string;
   words: Array<{ word: string; graphemes: string[]; tricky: boolean }>;
 }
@@ -351,7 +351,7 @@ export function WordOfDayBlock({ data }: { data: WordOfDayData }): React.JSX.Ele
 
 /** Early-reader words with sound buttons: a dot under each single-letter grapheme, a dash under
  * each digraph/trigraph; tricky words carry no marks (mirrors the printed slip). */
-export function FirstWordsBlock({ data }: { data: FirstWordsData }): React.JSX.Element {
+export function PhonicsBlock({ data }: { data: PhonicsData }): React.JSX.Element {
   return (
     <ul className="flex flex-col gap-3">
       {data.words.map((entry) => (
@@ -361,13 +361,13 @@ export function FirstWordsBlock({ data }: { data: FirstWordsData }): React.JSX.E
               <span>{grapheme}</span>
               {entry.tricky ? null : grapheme.length === 1 ? (
                 <span
-                  data-testid="first-words-mark-dot"
+                  data-testid="phonics-mark-dot"
                   aria-hidden="true"
                   className="mt-1 size-2.5 rounded-full bg-foreground"
                 />
               ) : (
                 <span
-                  data-testid="first-words-mark-dash"
+                  data-testid="phonics-mark-dash"
                   aria-hidden="true"
                   className="mt-1.5 h-1.5 w-4/5 rounded-full bg-foreground"
                 />

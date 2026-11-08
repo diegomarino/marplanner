@@ -5,7 +5,7 @@ import { animalFactBlock } from "./blocks/animal-fact";
 import { birthdayBlock } from "./blocks/birthday";
 import { dadJokeBlock } from "./blocks/dad-joke";
 import { drawingPromptBlock } from "./blocks/drawing-prompt";
-import { firstWordsBlock } from "./blocks/first-words";
+import { phonicsBlock } from "./blocks/phonics";
 import { mealsBlock } from "./blocks/meals";
 import { messageBlock } from "./blocks/message";
 import { numberFactBlock } from "./blocks/number-fact";
@@ -46,5 +46,5 @@ export const dailyBriefingRenderRegistry: Registry = createRegistry([
   weatherTextBlock,
   shotgunBlock,
   wordSearchBlock,
-  firstWordsBlock,
+  phonicsBlock,
 ]);

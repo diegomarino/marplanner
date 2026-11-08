@@ -1,23 +1,23 @@
-// firstWords: an early-reader block. A phonics-sequenced English word list (CVC words, then
+// phonics: an early-reader block. A phonics-sequenced English word list (CVC words, then
 // consonant digraphs, then vowel digraphs, then tricky words), printed as large as the paper
 // allows with "sound buttons" under each grapheme — a dot under a single-letter grapheme, a dash
 // under a multi-letter one, and no marks at all on tricky words.
 import { describe, expect, it } from "vitest";
-import { firstWordsCorpus } from "../../src/server/modules/daily-briefing/corpora";
+import { phonicsCorpus } from "../../src/server/modules/daily-briefing/corpora";
 import {
-  FIRST_WORDS_DEFAULT_COUNT,
-  FIRST_WORDS_MAX_COUNT,
-  generateFirstWords,
-} from "../../src/server/modules/daily-briefing/blocks/first-words";
+  PHONICS_DEFAULT_COUNT,
+  PHONICS_MAX_COUNT,
+  generatePhonics,
+} from "../../src/server/modules/daily-briefing/blocks/phonics";
 import {
   AdapterError,
   adaptBlockData,
 } from "../../src/server/modules/daily-briefing/render/adapter";
 import {
-  FIRST_WORDS_GLYPH_ADVANCE_EM,
-  FIRST_WORDS_MAX_FONT_PX,
-  layoutFirstWords,
-} from "../../src/server/modules/daily-briefing/render/blocks/first-words";
+  PHONICS_GLYPH_ADVANCE_EM,
+  PHONICS_MAX_FONT_PX,
+  layoutPhonics,
+} from "../../src/server/modules/daily-briefing/render/blocks/phonics";
 import { renderBriefingBitmap } from "../../src/server/modules/daily-briefing/render/bridge";
 
 const DATE = "2026-09-08";
@@ -53,22 +53,22 @@ const VOWEL_GRAPHEMES = new Set([
   "ou",
 ]);
 
-describe("firstWords corpus", () => {
+describe("phonics corpus", () => {
   it("holds roughly 100 unique lowercase words", () => {
-    expect(firstWordsCorpus.length).toBeGreaterThanOrEqual(90);
-    expect(firstWordsCorpus.length).toBeLessThanOrEqual(130);
-    const words = firstWordsCorpus.map((entry) => entry.word);
+    expect(phonicsCorpus.length).toBeGreaterThanOrEqual(90);
+    expect(phonicsCorpus.length).toBeLessThanOrEqual(130);
+    const words = phonicsCorpus.map((entry) => entry.word);
     expect(new Set(words).size).toBe(words.length);
     for (const word of words) expect(word).toMatch(/^[a-z]+$/);
   });
 
   it("keeps words short: at least 90% have 5 letters or fewer", () => {
-    const short = firstWordsCorpus.filter((entry) => entry.word.length <= 5).length;
-    expect(short / firstWordsCorpus.length).toBeGreaterThanOrEqual(0.9);
+    const short = phonicsCorpus.filter((entry) => entry.word.length <= 5).length;
+    expect(short / phonicsCorpus.length).toBeGreaterThanOrEqual(0.9);
   });
 
   it("segments every word into graphemes that spell it exactly", () => {
-    for (const entry of firstWordsCorpus) {
+    for (const entry of phonicsCorpus) {
       expect(entry.graphemes.join(""), entry.word).toBe(entry.word);
       for (const g of entry.graphemes) expect(g.length, entry.word).toBeGreaterThan(0);
     }
@@ -76,15 +76,15 @@ describe("firstWords corpus", () => {
 
   it("fills all four levels with at least 20 words each", () => {
     for (const level of LEVELS) {
-      expect(
-        firstWordsCorpus.filter((entry) => entry.level === level).length
-      ).toBeGreaterThanOrEqual(20);
+      expect(phonicsCorpus.filter((entry) => entry.level === level).length).toBeGreaterThanOrEqual(
+        20
+      );
     }
-    expect(firstWordsCorpus.every((entry) => LEVELS.includes(entry.level))).toBe(true);
+    expect(phonicsCorpus.every((entry) => LEVELS.includes(entry.level))).toBe(true);
   });
 
   it("L1 words use only single-letter graphemes", () => {
-    for (const entry of firstWordsCorpus.filter((e) => e.level === "L1")) {
+    for (const entry of phonicsCorpus.filter((e) => e.level === "L1")) {
       expect(
         entry.graphemes.every((g) => g.length === 1),
         entry.word
@@ -93,7 +93,7 @@ describe("firstWords corpus", () => {
   });
 
   it("L2 words each carry a consonant digraph and no vowel digraph", () => {
-    for (const entry of firstWordsCorpus.filter((e) => e.level === "L2")) {
+    for (const entry of phonicsCorpus.filter((e) => e.level === "L2")) {
       expect(
         entry.graphemes.some((g) => CONSONANT_DIGRAPHS.has(g)),
         entry.word
@@ -106,7 +106,7 @@ describe("firstWords corpus", () => {
   });
 
   it("L3 words each carry a vowel digraph or trigraph", () => {
-    for (const entry of firstWordsCorpus.filter((e) => e.level === "L3")) {
+    for (const entry of phonicsCorpus.filter((e) => e.level === "L3")) {
       expect(
         entry.graphemes.some((g) => VOWEL_GRAPHEMES.has(g)),
         entry.word
@@ -115,24 +115,24 @@ describe("firstWords corpus", () => {
   });
 
   it("marks exactly the L4 words as tricky", () => {
-    for (const entry of firstWordsCorpus) {
+    for (const entry of phonicsCorpus) {
       expect(entry.tricky, entry.word).toBe(entry.level === "L4");
     }
   });
 });
 
-describe("generateFirstWords", () => {
+describe("generatePhonics", () => {
   it("defaults to level L1 and the default count", () => {
-    const data = generateFirstWords({ date: DATE, memberId: "m1" });
+    const data = generatePhonics({ date: DATE, memberId: "m1" });
     expect(data.level).toBe("L1");
-    expect(data.words).toHaveLength(FIRST_WORDS_DEFAULT_COUNT);
-    const pool = new Set(firstWordsCorpus.filter((e) => e.level === "L1").map((e) => e.word));
+    expect(data.words).toHaveLength(PHONICS_DEFAULT_COUNT);
+    const pool = new Set(phonicsCorpus.filter((e) => e.level === "L1").map((e) => e.word));
     for (const w of data.words) expect(pool.has(w.word)).toBe(true);
   });
 
   it("is deterministic per date+level and the same for every member", () => {
-    const a = generateFirstWords({ date: DATE, memberId: "m1", params: { level: "L3" } });
-    const b = generateFirstWords({ date: DATE, memberId: "m2", params: { level: "L3" } });
+    const a = generatePhonics({ date: DATE, memberId: "m1", params: { level: "L3" } });
+    const b = generatePhonics({ date: DATE, memberId: "m2", params: { level: "L3" } });
     expect(a).toEqual(b);
   });
 
@@ -141,7 +141,7 @@ describe("generateFirstWords", () => {
     for (let day = 1; day <= 10; day += 1) {
       const date = `2026-09-${String(day).padStart(2, "0")}`;
       picks.add(
-        generateFirstWords({ date, memberId: "m1" })
+        generatePhonics({ date, memberId: "m1" })
           .words.map((w) => w.word)
           .join(",")
       );
@@ -150,12 +150,12 @@ describe("generateFirstWords", () => {
   });
 
   it("returns `count` distinct words from the chosen level, a larger count extending a smaller one", () => {
-    const four = generateFirstWords({
+    const four = generatePhonics({
       date: DATE,
       memberId: "m1",
       params: { level: "L2", count: 4 },
     });
-    const two = generateFirstWords({
+    const two = generatePhonics({
       date: DATE,
       memberId: "m1",
       params: { level: "L2", count: 2 },
@@ -163,13 +163,13 @@ describe("generateFirstWords", () => {
     expect(four.words).toHaveLength(4);
     expect(new Set(four.words.map((w) => w.word)).size).toBe(4);
     expect(
-      four.words.every((w) => firstWordsCorpus.some((e) => e.word === w.word && e.level === "L2"))
+      four.words.every((w) => phonicsCorpus.some((e) => e.word === w.word && e.level === "L2"))
     ).toBe(true);
     expect(two.words).toEqual(four.words.slice(0, 2));
   });
 
   it("carries graphemes and the tricky flag through to the block data", () => {
-    const data = generateFirstWords({
+    const data = generatePhonics({
       date: DATE,
       memberId: "m1",
       params: { level: "L4", count: 2 },
@@ -181,21 +181,21 @@ describe("generateFirstWords", () => {
   });
 
   it("throws on an invalid level, an out-of-range count, or an unavailable language", () => {
-    expect(() =>
-      generateFirstWords({ date: DATE, memberId: "m1", params: { level: "L9" } })
-    ).toThrow(/level/);
-    expect(() => generateFirstWords({ date: DATE, memberId: "m1", params: { count: 0 } })).toThrow(
+    expect(() => generatePhonics({ date: DATE, memberId: "m1", params: { level: "L9" } })).toThrow(
+      /level/
+    );
+    expect(() => generatePhonics({ date: DATE, memberId: "m1", params: { count: 0 } })).toThrow(
       /count/
     );
     expect(() =>
-      generateFirstWords({
+      generatePhonics({
         date: DATE,
         memberId: "m1",
-        params: { count: FIRST_WORDS_MAX_COUNT + 1 },
+        params: { count: PHONICS_MAX_COUNT + 1 },
       })
     ).toThrow(/count/);
     expect(() =>
-      generateFirstWords({ date: DATE, memberId: "m1", params: { language: "es" } })
+      generatePhonics({ date: DATE, memberId: "m1", params: { language: "es" } })
     ).toThrow();
   });
 });
@@ -208,41 +208,41 @@ const SAMPLE = {
   ],
 };
 
-describe("firstWords render adapter", () => {
+describe("phonics render adapter", () => {
   it("passes valid words through", () => {
-    expect(adaptBlockData("firstWords", SAMPLE)).toEqual({ words: SAMPLE.words });
+    expect(adaptBlockData("phonics", SAMPLE)).toEqual({ words: SAMPLE.words });
   });
 
   it("rejects graphemes that do not spell the word", () => {
     const bad = { words: [{ word: "ship", graphemes: ["s", "i", "p"], tricky: false }] };
-    expect(() => adaptBlockData("firstWords", bad)).toThrow(AdapterError);
+    expect(() => adaptBlockData("phonics", bad)).toThrow(AdapterError);
   });
 
   it("rejects a missing tricky flag", () => {
     const bad = { words: [{ word: "cat", graphemes: ["c", "a", "t"] }] };
-    expect(() => adaptBlockData("firstWords", bad)).toThrow(AdapterError);
+    expect(() => adaptBlockData("phonics", bad)).toThrow(AdapterError);
   });
 });
 
-describe("layoutFirstWords", () => {
+describe("layoutPhonics", () => {
   it("picks the largest font whose longest word still fits the content width", () => {
     const words = [
       { word: "chair", graphemes: ["ch", "air"], tricky: false },
       { word: "cat", graphemes: ["c", "a", "t"], tricky: false },
     ];
-    const layout = layoutFirstWords(words, 528);
-    const width = (px: number) => px * FIRST_WORDS_GLYPH_ADVANCE_EM * 5;
+    const layout = layoutPhonics(words, 528);
+    const width = (px: number) => px * PHONICS_GLYPH_ADVANCE_EM * 5;
     expect(width(layout.fontSize)).toBeLessThanOrEqual(528);
     expect(width(layout.fontSize + 1)).toBeGreaterThan(528);
   });
 
   it("caps the font for very short words", () => {
-    const layout = layoutFirstWords([{ word: "go", graphemes: ["g", "o"], tricky: true }], 528);
-    expect(layout.fontSize).toBe(FIRST_WORDS_MAX_FONT_PX);
+    const layout = layoutPhonics([{ word: "go", graphemes: ["g", "o"], tricky: true }], 528);
+    expect(layout.fontSize).toBe(PHONICS_MAX_FONT_PX);
   });
 
   it("puts a dot under single letters and a dash under digraphs, spanning their cells", () => {
-    const layout = layoutFirstWords(
+    const layout = layoutPhonics(
       [{ word: "ship", graphemes: ["sh", "i", "p"], tricky: false }],
       528
     );
@@ -253,7 +253,7 @@ describe("layoutFirstWords", () => {
   });
 
   it("prints tricky words without marks", () => {
-    const layout = layoutFirstWords(
+    const layout = layoutPhonics(
       [{ word: "said", graphemes: ["s", "ai", "d"], tricky: true }],
       528
     );
@@ -261,13 +261,13 @@ describe("layoutFirstWords", () => {
   });
 });
 
-describe("firstWords through the real render bridge", () => {
+describe("phonics through the real render bridge", () => {
   it("renders without failed or unrendered blocks", async () => {
     const rendered = await renderBriefingBitmap({
       memberId: "m1",
       memberName: "Ada",
       date: DATE,
-      blocks: [{ type: "firstWords", title: "01 FIRST WORDS", data: SAMPLE }],
+      blocks: [{ type: "phonics", title: "01 PHONICS", data: SAMPLE }],
     });
     expect(rendered.bitmapPng).not.toBeNull();
     expect(rendered.failedRenderBlocks).toEqual([]);

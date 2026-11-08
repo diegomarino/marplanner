@@ -213,7 +213,7 @@ describe("daily-briefing corpora", () => {
       numberFact: { en: true, es: true },
       trivia: { en: true, es: false },
       riddle: { en: true, es: false },
-      firstWords: { en: true, es: false },
+      phonics: { en: true, es: false },
       wouldYouRather: { en: true, es: true },
       wordSearch: { en: true, es: false },
       drawingPrompt: { en: true, es: true },

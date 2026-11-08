@@ -37,7 +37,7 @@ export const BlockType = component(
     "drawingPrompt",
     "streakText",
     "weatherText",
-    "firstWords",
+    "phonics",
   ])
 );
 
@@ -56,7 +56,7 @@ export const BlockParams = component(
       .int()
       .min(1)
       .max(6)
-      .meta({ description: "firstWords only: how many words to print." })
+      .meta({ description: "phonics only: how many words to print." })
       .optional(),
   }),
   {
@@ -156,7 +156,7 @@ export const BriefingPayload = component(
                       "drawingPrompt",
                       "streakText",
                       "weatherText",
-                      "firstWords",
+                      "phonics",
                     ],
                   },
                 },
