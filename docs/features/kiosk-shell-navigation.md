@@ -30,6 +30,20 @@ When the API is down, each widget shows its own error and the global health indi
 — never a silently empty dashboard — distinguishing a global "no API connection" from a single widget's
 local failure.
 
+### User Story 4 — Keep the kiosk screen on
+
+On the tablet that serves as the household display, an administrator opens Admin → Settings → This
+device and turns on "Keep the screen on". The shell then holds a Screen Wake Lock so the screen does
+not go dark between glances, re-acquiring it whenever the page becomes visible again. "At night"
+chooses what happens during the household's `night` day period: **dim** keeps the lock and covers the
+page with a near-black layer that lifts by itself when `morning` starts (a tap lifts it for five
+minutes), while **let it turn off** releases the lock so the operating system can sleep the screen,
+which then stays dark until someone touches it, because a web page cannot turn a screen on. Both
+choices live in this browser's `localStorage` (`marplanner.screenAwake.v1`), never on the server,
+apply immediately and affect no other device. The wake lock needs a secure context (HTTPS or
+localhost); the settings panel says so when the page is served over plain `http://`, and a browser
+without the API simply keeps its default screen timeout.
+
 ### Edge Cases
 
 - All "today" computations across widgets use the household timezone, never browser/UTC-local.
@@ -38,6 +52,10 @@ local failure.
 - A pending PWA update waits for an idle-of-edits moment (or the ~4am forced reload) before reloading.
 - Time announcements continue even on admin routes; printing uses one claimant per live lease in a capable browser; lost acknowledgements may cause resend.
 - Archived members/children are never resurrected onto user-facing surfaces.
+- Keep-the-screen-on reads the day-period catalog only while it is enabled, again right after this
+  device saves a boundary and every 15 minutes (edits from other devices). Until the catalog and the
+  household timezone are both known, or if either read fails, the screen just stays on (never dimmed
+  on the browser's own clock), and the operating system's own sleep settings can still win.
 
 ## Requirements
 

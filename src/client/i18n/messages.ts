@@ -380,6 +380,24 @@ export const messages = {
       "Language, week start and time zone were saved; the weather location was not.",
     "admin.settings.scopeNote":
       "Save applies to language, week start, time zone and weather. Day periods are saved on their own.",
+    "admin.device.title": "This device",
+    "admin.device.description":
+      "Saved in this browser only and applied at once; other devices keep their own choice.",
+    "admin.device.screenAwake.label": "Keep the screen on",
+    "admin.device.screenAwake.description":
+      "Stops this tablet's screen from turning off while Marplanner is open.",
+    "admin.device.screenAwake.on": "On",
+    "admin.device.screenAwake.off": "Off",
+    "admin.device.screenAwake.supported": "This browser supports it.",
+    "admin.device.screenAwake.insecure":
+      "Needs HTTPS: open Marplanner through an https:// address for this to work.",
+    "admin.device.screenAwake.unsupported": "This browser cannot keep the screen on.",
+    "admin.device.screenAwake.night": "At night",
+    "admin.device.screenAwake.nightDescription":
+      "During the night day period. Dimmed turns back on by itself in the morning; off waits for a touch.",
+    "admin.device.screenAwake.nightDim": "Dim the screen",
+    "admin.device.screenAwake.nightOff": "Let it turn off",
+    "screenAwake.night.wake": "Tap to wake the screen",
     // admin-routines
     "routines.admin.new": "New routine",
     "routines.admin.selectPrompt": "Select a routine to manage its chores",
@@ -2027,6 +2045,25 @@ export const messages = {
       "Se guardaron el idioma, el inicio de semana y la zona horaria; la ubicación del tiempo no.",
     "admin.settings.scopeNote":
       "Guardar aplica al idioma, el inicio de semana, la zona horaria y el tiempo. Los periodos del día se guardan por separado.",
+    "admin.device.title": "Este dispositivo",
+    "admin.device.description":
+      "Se guarda solo en este navegador y se aplica al momento; cada dispositivo tiene su propia elección.",
+    "admin.device.screenAwake.label": "Mantener la pantalla encendida",
+    "admin.device.screenAwake.description":
+      "Evita que la pantalla de esta tablet se apague mientras Marplanner está abierto.",
+    "admin.device.screenAwake.on": "Sí",
+    "admin.device.screenAwake.off": "No",
+    "admin.device.screenAwake.supported": "Este navegador lo admite.",
+    "admin.device.screenAwake.insecure":
+      "Necesita HTTPS: abre Marplanner desde una dirección https:// para que funcione.",
+    "admin.device.screenAwake.unsupported":
+      "Este navegador no puede mantener la pantalla encendida.",
+    "admin.device.screenAwake.night": "De noche",
+    "admin.device.screenAwake.nightDescription":
+      "Durante el periodo de noche. Atenuada vuelve sola por la mañana; apagada espera a que alguien la toque.",
+    "admin.device.screenAwake.nightDim": "Atenuar la pantalla",
+    "admin.device.screenAwake.nightOff": "Dejar que se apague",
+    "screenAwake.night.wake": "Toca para encender la pantalla",
     // admin-routines
     "routines.admin.new": "Nueva rutina",
     "routines.admin.selectPrompt": "Selecciona una rutina para gestionar sus tareas",

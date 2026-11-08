@@ -4597,6 +4597,27 @@
             "ScheduleXWeekView event projection formats a retained timed event in the household timezone",
             "updates actual week headings when the household language changes"
           ],
+          "tests/client/screen-awake.test.tsx": [
+            "screenAwake preferences defaults to off with night dimming when nothing, garbage or a non-object is stored",
+            "screenAwake preferences round-trips a saved choice and announces it to this tab",
+            "screenAwake preferences still announces the change when storage refuses the write",
+            "screenAwake preferences reports support, the HTTPS requirement and a missing API",
+            "screenAwake preferences reads the wall clock in the household zone or the browser zone",
+            "ScreenAwake service does nothing and fetches nothing while the device setting is off",
+            "ScreenAwake service holds a lock during the day, re-acquires it on return to visible and releases it when turned off",
+            "ScreenAwake service follows a change made in another tab through the storage event",
+            "ScreenAwake service dims at night while keeping the lock, and a tap lifts the dimming for a while",
+            "ScreenAwake service lifts the dimming by itself when the morning period starts",
+            "ScreenAwake service releases the lock at night when the night choice is off",
+            "ScreenAwake service stays awake as daytime when the day periods cannot be read or the lock is refused",
+            "ScreenAwake service treats a malformed day-period catalog as daytime instead of failing",
+            "ScreenAwake service never dims on the browser clock while the household timezone is unknown",
+            "ScreenAwake service re-reads the night boundaries after a local day-period save and periodically",
+            "ScreenAwake service applies a change whose storage write was refused",
+            "ScreenAwake service releases a lock that resolves after the service was unmounted",
+            "DeviceScreenSettings saves the keep-awake and night choices to this device at once",
+            "DeviceScreenSettings explains that plain http cannot keep the screen on"
+          ],
           "tests/client/select-item-density.test.tsx": [
             "SelectItem — kiosk density on the rendered popover options (#790) meets kiosk density once the popover is OPEN, over the rendered options — the state no prior batch measured",
             "SelectItem — kiosk density on the rendered popover options (#790) tracks data-density rather than being hardcoded to the kiosk value — comfortable renders the comfortable token, kiosk renders the kiosk one, both via the SAME var() reference",
@@ -6255,6 +6276,21 @@
           "statements": 90.19,
           "functions": 92.3,
           "branches": 80.89
+        }
+      },
+      "src/client/admin/DeviceScreenSettings.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 12,
+          "statements": 12,
+          "functions": 4,
+          "branches": 2
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/client/admin/MealsManagement.tsx": {
@@ -8117,6 +8153,21 @@
           "branches": 78.94
         }
       },
+      "src/client/shell/ScreenAwake.tsx": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 81,
+          "statements": 99,
+          "functions": 29,
+          "branches": 46
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/client/shell/Shell.tsx": {
         "layer": "client",
         "minimumTotals": {
@@ -8160,6 +8211,21 @@
           "statements": 93.33,
           "functions": 100,
           "branches": 87.5
+        }
+      },
+      "src/client/shell/screenAwake.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 18,
+          "statements": 20,
+          "functions": 3,
+          "branches": 16
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
         }
       },
       "src/client/shell/usePresentationMode.ts": {

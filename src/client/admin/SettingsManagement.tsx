@@ -27,6 +27,7 @@ import {
   type LocaleObject,
 } from "../../shared";
 import { DayPeriodsManagement } from "./DayPeriodsManagement";
+import { DeviceScreenSettings } from "./DeviceScreenSettings";
 import { timeZoneGroups } from "./timezones";
 import {
   WeatherManagement,
@@ -375,6 +376,8 @@ export function SettingsManagement() {
       )}
 
       <DayPeriodsManagement />
+
+      <DeviceScreenSettings />
     </div>
   );
 }

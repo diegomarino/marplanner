@@ -16,6 +16,7 @@ import { PluginCatalogProvider } from "@/plugins/PluginCatalogProvider";
 import { PluginContribution } from "@/plugins/contributions";
 import { HouseholdChrome, UnknownFamilyRoute } from "./HouseholdChrome";
 import { resolveHouseholdRoute } from "./routes";
+import { ScreenAwake } from "./ScreenAwake";
 import { log } from "@/lib/logger";
 import { readPublicDefaultCredentials } from "@/lib/default-credentials";
 
@@ -276,6 +277,7 @@ function ProvisionedShell({ currentPath }: { currentPath: string }) {
     <AdminUnlockProvider>
       <AdminUnlockRouteReset active={route.kind === "admin"} />
       <ShellServices>{printingScopedChrome}</ShellServices>
+      <ScreenAwake />
     </AdminUnlockProvider>
   );
 }
