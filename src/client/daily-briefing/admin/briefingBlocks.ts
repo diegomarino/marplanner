@@ -46,6 +46,7 @@ export interface BlockParams {
   level?: "L1" | "L2" | "L3" | "L4";
   difficulty?: string;
   language?: string;
+  count?: number;
 }
 
 export interface BlockOrderInstance {
@@ -97,6 +98,7 @@ export const ALL_BLOCK_TYPES = [
   "drawingPrompt",
   "streakText",
   "weatherText",
+  "phonics",
 ] as const;
 
 export type BlockRegistryType = (typeof ALL_BLOCK_TYPES)[number];
@@ -123,6 +125,7 @@ export const BLOCK_LABEL_KEYS: Record<BlockRegistryType, MessageKey> = {
   drawingPrompt: "dailyBriefing.admin.blockType.drawingPrompt",
   streakText: "dailyBriefing.admin.blockType.streakText",
   weatherText: "dailyBriefing.admin.blockType.weatherText",
+  phonics: "dailyBriefing.admin.blockType.phonics",
 };
 
 export function effectiveMatrixBlockTypes(blockOrder: BlockOrderInstance[]): BlockRegistryType[] {
@@ -161,10 +164,17 @@ export function reorderBlockOrderByType(
 }
 
 /** Mirrors `DEFAULT_DISABLED_BLOCK_TYPES` in block-types.ts (FR-013). */
-export const DEFAULT_DISABLED_BLOCK_TYPES: ReadonlySet<BlockRegistryType> = new Set(["onThisDay"]);
+export const DEFAULT_DISABLED_BLOCK_TYPES: ReadonlySet<BlockRegistryType> = new Set([
+  "onThisDay",
+  "phonics",
+]);
 
-/** Mirrors `LEVEL`-taking block types — today, only `wordOfDay` (FR-022). */
-export const LEVEL_BLOCK_TYPES: ReadonlySet<BlockRegistryType> = new Set(["wordOfDay"]);
+/** Mirrors `LEVEL`-taking block types — `wordOfDay` and `phonics` (FR-022). */
+export const LEVEL_BLOCK_TYPES: ReadonlySet<BlockRegistryType> = new Set(["wordOfDay", "phonics"]);
+
+/** Mirrors `COUNT`-taking block types and the server's PHONICS_{MIN,MAX}_COUNT bounds. */
+export const COUNT_BLOCK_TYPES: ReadonlySet<BlockRegistryType> = new Set(["phonics"]);
+export const COUNTS = [1, 2, 3, 4, 5, 6] as const;
 export const LEVELS = ["L1", "L2", "L3", "L4"] as const;
 
 /** Mirrors `DIFFICULTY`-taking block types — `trivia` and `wordSearch` (FR-022). */
@@ -193,6 +203,7 @@ export const CORPUS_LANGUAGE_AVAILABILITY: Partial<Record<BlockRegistryType, rea
   wouldYouRather: ["en", "es"],
   wordSearch: ["en"],
   drawingPrompt: ["en", "es"],
+  phonics: ["en"],
 };
 
 export function defaultMemberBlockSettings(

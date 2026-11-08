@@ -108,6 +108,11 @@ export interface WordOfDayData {
   pronunciation?: string;
 }
 
+export interface PhonicsData {
+  level: string;
+  words: Array<{ word: string; graphemes: string[]; tricky: boolean }>;
+}
+
 export interface AnimalFactData {
   text: string;
   animal: string;
@@ -341,6 +346,37 @@ export function WordOfDayBlock({ data }: { data: WordOfDayData }): React.JSX.Ele
       <p className="mt-1 text-base">{data.definition}</p>
       {data.example ? <p className="mt-1 text-sm italic">“{data.example}”</p> : null}
     </div>
+  );
+}
+
+/** Early-reader words with sound buttons: a dot under each single-letter grapheme, a dash under
+ * each digraph/trigraph; tricky words carry no marks (mirrors the printed slip). */
+export function PhonicsBlock({ data }: { data: PhonicsData }): React.JSX.Element {
+  return (
+    <ul className="flex flex-col gap-3">
+      {data.words.map((entry) => (
+        <li key={entry.word} className="flex justify-center font-mono text-5xl font-bold">
+          {entry.graphemes.map((grapheme, index) => (
+            <span key={`${grapheme}-${index}`} className="flex flex-col items-center">
+              <span>{grapheme}</span>
+              {entry.tricky ? null : grapheme.length === 1 ? (
+                <span
+                  data-testid="phonics-mark-dot"
+                  aria-hidden="true"
+                  className="mt-1 size-2.5 rounded-full bg-foreground"
+                />
+              ) : (
+                <span
+                  data-testid="phonics-mark-dash"
+                  aria-hidden="true"
+                  className="mt-1.5 h-1.5 w-4/5 rounded-full bg-foreground"
+                />
+              )}
+            </span>
+          ))}
+        </li>
+      ))}
+    </ul>
   );
 }
 

@@ -429,6 +429,33 @@ describe("daily-briefing settings boundary", () => {
     expect(res.json()).toMatchObject({ error: "corpus_language_unavailable" });
   });
 
+  // ── phonics: level + count params ─────────────────────────────────────────────────────
+
+  it("accepts phonics level and count params", async () => {
+    const res = await app.inject({
+      method: "PUT",
+      url: `/api/daily-briefing/block-settings/${memberId}/phonics`,
+      cookies: auth(),
+      payload: { params: { level: "L2", count: 4 } },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ params: { level: "L2", count: 4 } });
+  });
+
+  it.each([0, 7, 2.5, "3"])("rejects phonics count %j with 400", async (count) => {
+    const res = await app.inject({
+      method: "PUT",
+      url: `/api/daily-briefing/block-settings/${memberId}/phonics`,
+      cookies: auth(),
+      payload: { params: { count } },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it("phonics resolves disabled by default with no persisted row", () => {
+    expect(resolveMemberBlockSettings(memberId, "phonics")).toMatchObject({ enabled: false });
+  });
+
   // ── FR-013: onThisDay default-disabled bootstrap ─────────────────────────────────────────
 
   it("onThisDay resolves disabled by default with no persisted row (no seed write)", () => {

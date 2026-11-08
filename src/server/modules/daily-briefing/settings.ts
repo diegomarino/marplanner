@@ -18,6 +18,7 @@ import {
   isCorpusLanguageAvailable,
   isKnownBlockType,
 } from "./corpora/index";
+import { PHONICS_MAX_COUNT, PHONICS_MIN_COUNT, isValidPhonicsCount } from "./blocks/phonics";
 import { DailyBriefingValidationError } from "./errors";
 import { getBriefingTime, rearmDailyBriefingSchedule } from "./job";
 import { listMemberSchedules } from "./schedule";
@@ -42,7 +43,7 @@ const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 const VALID_LEVELS = new Set(["L1", "L2", "L3", "L4"]);
 const VALID_DIFFICULTIES = new Set(["easy", "medium", "hard"]);
-const ALLOWED_PARAM_KEYS = new Set(["level", "difficulty", "language"]);
+const ALLOWED_PARAM_KEYS = new Set(["level", "difficulty", "language", "count"]);
 
 const DEFAULT_GENERATION_TIME = "06:00";
 
@@ -126,6 +127,11 @@ function validateParams(blockType: string, value: unknown): Record<string, unkno
   ) {
     throw new DailyBriefingValidationError(
       `Invalid difficulty "${String(params.difficulty)}": must be one of easy, medium, hard`
+    );
+  }
+  if (params.count !== undefined && !isValidPhonicsCount(params.count)) {
+    throw new DailyBriefingValidationError(
+      `Invalid count "${String(params.count)}": must be an integer ${PHONICS_MIN_COUNT}-${PHONICS_MAX_COUNT}`
     );
   }
   if (params.language !== undefined) {

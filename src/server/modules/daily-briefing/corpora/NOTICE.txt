@@ -35,3 +35,9 @@ word-search-corpus.json
   frequency data.
 
 All other corpora in this directory are part of Marplanner and covered by its license.
+
+phonics-words.json is one of them: its words and grapheme segmentation were written for
+Marplanner. Its level order follows the phonics progression of Letters and Sounds:
+Principles and Practice of High Quality Phonics (Department for Education and Skills,
+2007), the sequence also used by UK programmes such as Monster Phonics. No words,
+images, colours or names are taken from either.

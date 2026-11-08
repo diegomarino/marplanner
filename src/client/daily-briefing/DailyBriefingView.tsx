@@ -46,6 +46,7 @@ import {
   WeatherBlock,
   WeatherTextBlock,
   WordOfDayBlock,
+  PhonicsBlock,
   WordSearchBlock,
   WouldYouRatherBlock,
   type AnimalFactData,
@@ -63,6 +64,7 @@ import {
   type TodayData,
   type TriviaData,
   type WordOfDayData,
+  type PhonicsData,
   type WordSearchData,
   type WouldYouRatherData,
 } from "./blockRenderers";
@@ -285,6 +287,8 @@ function BlockData({ type, data }: Pick<BlockInstance, "type" | "data">): React.
       return <BirthdayBlock data={data as BirthdayData} />;
     case "wordOfDay":
       return <WordOfDayBlock data={data as WordOfDayData} />;
+    case "phonics":
+      return <PhonicsBlock data={data as PhonicsData} />;
     case "animalFact":
       return <AnimalFactBlock data={data as AnimalFactData} />;
     case "numberFact":

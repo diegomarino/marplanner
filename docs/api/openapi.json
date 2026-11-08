@@ -184,6 +184,12 @@
           "language": {
             "type": "string",
             "description": "validated against corpus availability (FR-009)"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6,
+            "description": "phonics only: how many words to print."
           }
         },
         "additionalProperties": false,
@@ -215,7 +221,8 @@
           "wordSearch",
           "drawingPrompt",
           "streakText",
-          "weatherText"
+          "weatherText",
+          "phonics"
         ]
       },
       "BoardChore": {
@@ -366,7 +373,8 @@
                           "wordSearch",
                           "drawingPrompt",
                           "streakText",
-                          "weatherText"
+                          "weatherText",
+                          "phonics"
                         ]
                       }
                     }

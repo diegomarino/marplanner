@@ -132,6 +132,23 @@ describe("BlockMatrix", () => {
     expect(props.onParamChange).toHaveBeenCalledWith("wordOfDay", { level: undefined });
   });
 
+  it("offers level and word count for phonics", () => {
+    const props = renderMatrix();
+    fireEvent.change(screen.getByTestId("daily-briefing-admin-block-level-phonics"), {
+      target: { value: "L3" },
+    });
+    expect(props.onParamChange).toHaveBeenCalledWith("phonics", { level: "L3" });
+    fireEvent.change(screen.getByTestId("daily-briefing-admin-block-count-phonics"), {
+      target: { value: "5" },
+    });
+    expect(props.onParamChange).toHaveBeenCalledWith("phonics", { count: 5 });
+    fireEvent.change(screen.getByTestId("daily-briefing-admin-block-count-phonics"), {
+      target: { value: "" },
+    });
+    expect(props.onParamChange).toHaveBeenCalledWith("phonics", { count: undefined });
+    expect(screen.queryByTestId("daily-briefing-admin-block-count-wordOfDay")).toBeNull();
+  });
+
   it("names the drag handles and disables them while the order saves", () => {
     renderMatrix({ orderSaving: true });
     expect(screen.getByRole("button", { name: "Reorder Weather" })).toBeDisabled();

@@ -33,6 +33,8 @@ import {
   DIFFICULTIES,
   DIFFICULTY_BLOCK_TYPES,
   DIFFICULTY_LABEL_KEYS,
+  COUNT_BLOCK_TYPES,
+  COUNTS,
   LEVEL_BLOCK_TYPES,
   LEVELS,
   WEEKDAY_LABEL_KEYS,
@@ -273,6 +275,18 @@ function BlockRow({
                 onParamChange(type, {
                   level: value === "" ? undefined : (value as BlockParams["level"]),
                 })
+              }
+            />
+          )}
+          {COUNT_BLOCK_TYPES.has(type) && (
+            <ParamSelect
+              label={t("dailyBriefing.admin.blockCountLabel")}
+              testId={`daily-briefing-admin-block-count-${type}`}
+              value={settings.params?.count === undefined ? "" : String(settings.params.count)}
+              disabled={saving}
+              options={COUNTS.map((count) => ({ value: String(count), label: String(count) }))}
+              onChange={(value) =>
+                onParamChange(type, { count: value === "" ? undefined : Number(value) })
               }
             />
           )}

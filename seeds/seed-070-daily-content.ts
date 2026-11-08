@@ -167,13 +167,16 @@ const MEMBER_BLOCK_SETTINGS = [
     weekdays: null,
     params: null,
   },
-  ...BRIEFING_OPT_INS.filter(({ enabled }) => enabled).map(({ memberId }) => ({
-    memberId,
-    blockType: "onThisDay",
-    enabled: true,
-    weekdays: null,
-    params: null,
-  })),
+  // Default-off blocks are switched on for opted-in members so the demo shows every block.
+  ...(["onThisDay", "phonics"] as const).flatMap((blockType) =>
+    BRIEFING_OPT_INS.filter(({ enabled }) => enabled).map(({ memberId }) => ({
+      memberId,
+      blockType,
+      enabled: true,
+      weekdays: null,
+      params: null,
+    }))
+  ),
 ] as const;
 
 /**

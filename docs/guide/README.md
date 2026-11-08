@@ -125,6 +125,12 @@ content block:
 - **Fun content:** dad joke, word of the day, animal fact, number fact, on this day,
   quote of the day, trivia, riddle (printed upside down), would you rather, a word
   search and a drawing prompt with an empty box to fill in.
+- **Early readers:** "phonics" prints a few words as large as the paper allows, with
+  sound buttons underneath (a dot per single-letter sound, a dash per digraph such as sh
+  or ee). Pick the level (L1 CVC words, L2 consonant digraphs, L3 vowel digraphs, L4
+  tricky words, printed without marks) and how many words; the block walks the whole
+  level before repeating a word. The levels follow the Letters and Sounds progression
+  used by UK programmes such as Monster Phonics. It is off by default.
 
 You choose who gets a briefing, on which days, and which blocks it contains. Each
 briefing is a **frozen snapshot**: a printed slip never changes afterwards. It only
