@@ -3742,6 +3742,7 @@
             "BriefingWorkspace regenerates today with only memberId, and a past date with the date",
             "BriefingWorkspace reports a paused day instead of generating",
             "BriefingWorkspace prints through the queue and says so; Print is disabled when Printing is off",
+            "BriefingWorkspace wakes the print executor when Print enqueues a new job, so it prints without waiting for the poll",
             "BriefingWorkspace shows still-rendering with a Retry that refetches",
             "BriefingWorkspace offers Retry when the history fails to load",
             "BriefingWorkspace offers Open Blocks from the paused notice",
