@@ -19,6 +19,11 @@ import {
   isKnownBlockType,
 } from "./corpora/index";
 import { PHONICS_MAX_COUNT, PHONICS_MIN_COUNT, isValidPhonicsCount } from "./blocks/phonics";
+import {
+  BLOCK_DIFFICULTIES,
+  BLOCK_LEVELS,
+  BRIEFING_BLOCKS,
+} from "../../../shared/dailyBriefingBlocks";
 import { DailyBriefingValidationError } from "./errors";
 import { getBriefingTime, rearmDailyBriefingSchedule } from "./job";
 import { listMemberSchedules } from "./schedule";
@@ -41,9 +46,15 @@ export class CorpusLanguageUnavailableError extends DailyBriefingValidationError
 // Strict 24h HH:MM, `00:00`-`23:59`. Reject, never normalize.
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-const VALID_LEVELS = new Set(["L1", "L2", "L3", "L4"]);
-const VALID_DIFFICULTIES = new Set(["easy", "medium", "hard"]);
-const ALLOWED_PARAM_KEYS = new Set(["level", "difficulty", "language", "count"]);
+const VALID_LEVELS: ReadonlySet<string> = new Set(BLOCK_LEVELS);
+const VALID_DIFFICULTIES: ReadonlySet<string> = new Set(BLOCK_DIFFICULTIES);
+// The keys any catalogue block declares, plus `language` (implied by a corpus block's
+// `languages`). Accepted on every block type, as before the catalogue existed: stored settings
+// and the public seed carry keys a block does not read.
+const ALLOWED_PARAM_KEYS: ReadonlySet<string> = new Set([
+  "language",
+  ...BRIEFING_BLOCKS.flatMap((block) => ("params" in block ? Object.keys(block.params) : [])),
+]);
 
 const DEFAULT_GENERATION_TIME = "06:00";
 
@@ -95,8 +106,8 @@ function validateEnabled(value: unknown): boolean {
   return value;
 }
 
-/** `params` is validated generically across the three known keys (`level`/`difficulty`/
- * `language`) rather than per-block-type — the full per-type param schema belongs to each block
+/** `params` is validated generically across the known keys (`level`/`difficulty`/`count`/
+ * `language`, from the block catalogue) rather than per-block-type — the full per-type param schema belongs to each block
  * generator; this layer only enforces the write-boundary rules the contract
  * names explicitly. `language` is checked against `blockType`'s corpus availability (FR-008/
  * FR-009) regardless of whether `blockType` is even corpus-backed — a non-corpus type has an
@@ -118,7 +129,7 @@ function validateParams(blockType: string, value: unknown): Record<string, unkno
     (typeof params.level !== "string" || !VALID_LEVELS.has(params.level))
   ) {
     throw new DailyBriefingValidationError(
-      `Invalid level "${String(params.level)}": must be one of L1, L2, L3, L4`
+      `Invalid level "${String(params.level)}": must be one of ${BLOCK_LEVELS.join(", ")}`
     );
   }
   if (
@@ -126,7 +137,7 @@ function validateParams(blockType: string, value: unknown): Record<string, unkno
     (typeof params.difficulty !== "string" || !VALID_DIFFICULTIES.has(params.difficulty))
   ) {
     throw new DailyBriefingValidationError(
-      `Invalid difficulty "${String(params.difficulty)}": must be one of easy, medium, hard`
+      `Invalid difficulty "${String(params.difficulty)}": must be one of ${BLOCK_DIFFICULTIES.join(", ")}`
     );
   }
   if (params.count !== undefined && !isValidPhonicsCount(params.count)) {
@@ -346,7 +357,7 @@ export function resolveMemberBlockSettings(
   return {
     memberId,
     blockType,
-    enabled: !DEFAULT_DISABLED_BLOCK_TYPES.has(blockType),
+    enabled: !(isKnownBlockType(blockType) && DEFAULT_DISABLED_BLOCK_TYPES.has(blockType)),
     weekdays: null,
     params: null,
     updatedAt: null,

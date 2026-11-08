@@ -5,6 +5,17 @@
 import { z } from "zod";
 import { component, defineRouteSchemas } from "./zod";
 import { Weekday, authenticationBackoffResponse } from "./common";
+import { LEGACY_BLOCK_TYPES, type BlockType as BlockTypeName } from "../../shared/dailyBriefing";
+import {
+  ALL_BLOCK_TYPES,
+  BLOCK_LEVELS,
+  blockParamSpec,
+  type BlockCountParamSpec,
+} from "../../shared/dailyBriefingBlocks";
+
+// Generated from the block catalogue (src/shared/dailyBriefingBlocks.ts): the enum stays
+// closed, and adding a catalogue entry updates it.
+const PHONICS_COUNT = blockParamSpec("phonics").count as BlockCountParamSpec;
 
 export const AutoPrintTrigger = component(
   "AutoPrintTrigger",
@@ -13,32 +24,7 @@ export const AutoPrintTrigger = component(
 
 export const BlockType = component(
   "BlockType",
-  z.enum([
-    "calendar",
-    "chores",
-    "shotgun",
-    "message",
-    "streak",
-    "today",
-    "weather",
-    "meals",
-    "birthday",
-    "reminders",
-    "dadJoke",
-    "wordOfDay",
-    "animalFact",
-    "numberFact",
-    "onThisDay",
-    "quoteOfDay",
-    "trivia",
-    "riddle",
-    "wouldYouRather",
-    "wordSearch",
-    "drawingPrompt",
-    "streakText",
-    "weatherText",
-    "phonics",
-  ])
+  z.enum([...LEGACY_BLOCK_TYPES, ...ALL_BLOCK_TYPES] as [BlockTypeName, ...BlockTypeName[]])
 );
 
 export const BlockScope = component("BlockScope", z.enum(["shared", "member"]));
@@ -46,7 +32,7 @@ export const BlockScope = component("BlockScope", z.enum(["shared", "member"]));
 export const BlockParams = component(
   "BlockParams",
   z.strictObject({
-    level: z.enum(["L1", "L2", "L3", "L4"]).optional(),
+    level: z.enum(BLOCK_LEVELS).optional(),
     difficulty: z.string().optional(),
     language: z
       .string()
@@ -54,8 +40,8 @@ export const BlockParams = component(
       .optional(),
     count: z
       .int()
-      .min(1)
-      .max(6)
+      .min(PHONICS_COUNT.min)
+      .max(PHONICS_COUNT.max)
       .meta({ description: "phonics only: how many words to print." })
       .optional(),
   }),
@@ -133,32 +119,7 @@ export const BriefingPayload = component(
             blocks: {
               items: {
                 properties: {
-                  type: {
-                    enum: [
-                      "shotgun",
-                      "message",
-                      "streak",
-                      "today",
-                      "weather",
-                      "meals",
-                      "birthday",
-                      "reminders",
-                      "dadJoke",
-                      "wordOfDay",
-                      "animalFact",
-                      "numberFact",
-                      "onThisDay",
-                      "quoteOfDay",
-                      "trivia",
-                      "riddle",
-                      "wouldYouRather",
-                      "wordSearch",
-                      "drawingPrompt",
-                      "streakText",
-                      "weatherText",
-                      "phonics",
-                    ],
-                  },
+                  type: { enum: [...ALL_BLOCK_TYPES] },
                 },
               },
             },

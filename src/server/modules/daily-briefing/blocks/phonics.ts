@@ -6,6 +6,7 @@
  */
 import { fisherYates, phonicsCorpus, hashSeed } from "../corpora";
 import type { CorpusBlockType } from "../corpora";
+import { blockParamSpec, type BlockCountParamSpec } from "../../../../shared/dailyBriefingBlocks";
 import {
   assertCorpusLanguageAvailable,
   CorpusBlockParamError,
@@ -16,9 +17,11 @@ const TYPE: CorpusBlockType = "phonics";
 const VALID_LEVELS = new Set(["L1", "L2", "L3", "L4"]);
 const DEFAULT_LEVEL = "L1";
 
-export const PHONICS_DEFAULT_COUNT = 3;
-export const PHONICS_MIN_COUNT = 1;
-export const PHONICS_MAX_COUNT = 6;
+// Count bounds are declared once, in the block catalogue.
+const COUNT_SPEC = blockParamSpec("phonics").count as BlockCountParamSpec;
+export const PHONICS_DEFAULT_COUNT = COUNT_SPEC.default;
+export const PHONICS_MIN_COUNT = COUNT_SPEC.min;
+export const PHONICS_MAX_COUNT = COUNT_SPEC.max;
 
 export interface PhonicsWord {
   word: string;

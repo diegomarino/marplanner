@@ -688,6 +688,7 @@ export interface DailyMessageUpsert {
 // ─── Daily Briefing DTOs ─────────────────────────────────────
 
 export * from "./dailyBriefing.js";
+export * from "./dailyBriefingBlocks.js";
 
 // ─── Background-Jobs Scheduler DTOs ─────────────────────────
 

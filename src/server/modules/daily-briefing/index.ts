@@ -38,6 +38,11 @@ import type {
   Weekday,
 } from "../../../shared";
 import { ALL_BLOCK_TYPES, isCorpusBackedBlockType, isKnownBlockType } from "./corpora/index";
+import {
+  blockKind,
+  blockScope,
+  type BlockRegistryType,
+} from "../../../shared/dailyBriefingBlocks";
 import { resolveCorpusLanguage } from "./blocks/context";
 import type { CorpusBlockParams } from "./blocks/context";
 import { readBlockOrder, resolveMemberBlockSettings } from "./settings";
@@ -455,33 +460,7 @@ function deriveOverallStatus(
   return dataStatus;
 }
 
-// ── Full 21-block registry generation ( FR-011/FR-014/FR-020) ──
-
-/** v1-parity scope tags per registry type ("The 21 block types"). */
-const BLOCK_SCOPE: Record<string, "shared" | "member"> = {
-  shotgun: "shared",
-  message: "member",
-  streak: "member",
-  today: "member",
-  weather: "shared",
-  meals: "shared",
-  birthday: "member",
-  reminders: "member",
-  dadJoke: "shared",
-  wordOfDay: "shared",
-  animalFact: "shared",
-  numberFact: "shared",
-  onThisDay: "shared",
-  quoteOfDay: "shared",
-  trivia: "member",
-  riddle: "shared",
-  wouldYouRather: "member",
-  wordSearch: "member",
-  drawingPrompt: "shared",
-  streakText: "member",
-  weatherText: "shared",
-  phonics: "shared",
-};
+// ── Full block-registry generation (FR-011/FR-014/FR-020) ──
 
 /** v1's `titleFor` port (— TITLES), localized per DAILY-BRIEFING-INV-06 (fold):
  * the display name per type — formerly a literal camelCase-split algorithm plus 4 hard-coded
@@ -510,7 +489,7 @@ function titleFor(type: string, ordinal: number, language: string): string {
 }
 
 interface EffectiveBlockInstance {
-  type: string;
+  type: BlockRegistryType;
   params?: Record<string, unknown>;
 }
 
@@ -812,7 +791,7 @@ function gatherLocalBlocks(
     }
 
     if (!isPluginContentSourceActive(instance.type)) continue;
-    const external = ["weather", "weatherText", "quoteOfDay", "onThisDay"].includes(instance.type);
+    const external = blockKind(instance.type) === "external";
     const outcome = external
       ? null
       : generateLocalBlockData(instance.type, memberId, date, params, language, txCtx);
@@ -820,7 +799,7 @@ function gatherLocalBlocks(
 
     const block: BlockInstance = {
       type: instance.type as BlockInstance["type"],
-      scope: BLOCK_SCOPE[instance.type] ?? "shared",
+      scope: blockScope(instance.type),
       status: "ok",
       index: position,
       title: titleFor(instance.type, position, language),
