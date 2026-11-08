@@ -5,7 +5,7 @@
 // only the envelope's own field names changed (v1's `BriefingEnvelope`
 // carries `.version`/`.blocks[].id`, dropped here — see RenderEnvelope,
 // ./types.ts). Every case below is pure data-shape dispatch/validation
-// for the full 21-type registry (`./registry.ts`).
+// for every catalogue block type (`src/shared/dailyBriefingBlocks.ts`).
 //
 // BOUNDARY (v1 spec §2 unwrap-or-throw, preserved verbatim):
 // - Reads ONLY block.type/title/data — no defaults, no coalescing, no
@@ -14,6 +14,7 @@
 // NOT carried into the Slot — pressedslip derives its own synthetic id
 // from `${blockType}-${index}` internally.
 // ─────────────────────────────────────────────────────────────────────
+import type { BlockRegistryType } from "../../../../shared/dailyBriefingBlocks";
 import { notoEmojiPngDataUri } from "./emoji-images";
 import { REMINDER_EMOJI_PX, type RemindersData } from "./blocks/reminders";
 
@@ -77,7 +78,9 @@ export function adaptBlockData(blockType: string, raw: unknown): unknown {
     throw new AdapterError(blockType, "<root>", "expected object");
   }
 
-  switch (blockType) {
+  // Exhaustive over the catalogue: a block type without a case fails typecheck at `default`.
+  const type = blockType as BlockRegistryType;
+  switch (type) {
     case "quoteOfDay":
       return {
         text: needString(blockType, "text", data.text),
@@ -405,7 +408,10 @@ export function adaptBlockData(blockType: string, raw: unknown): unknown {
         }),
       };
     }
-    default:
-      throw new AdapterError(blockType, "<type>", "unknown block type");
+    default: {
+      // Unknown strings from stored envelopes still land here at runtime.
+      const unhandled: never = type;
+      throw new AdapterError(String(unhandled), "<type>", "unknown block type");
+    }
   }
 }
