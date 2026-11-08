@@ -33,6 +33,7 @@
     "check:ui-debt": "node tools/dev/count-ui-debt.mjs",
     "dev:chrome": "node tools/dev/chrome-cdp.mjs",
     "docs:api-bundle": "node tools/docs/api-bundle.mjs",
+    "docs:site": "node tools/docs/site.mjs",
     "docs:screenshots": "node tools/docs/capture-screenshots.mjs",
     "deploy:fly": "node tools/deploy/fly.mjs",
     "dev:fresh": "node tools/dev/fresh-local.mjs",

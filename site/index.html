@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Marplanner: the household planner for your wall</title>
+    <meta
+      name="description"
+      content="Self-hosted household planner for a shared tablet: calendar, chores with streaks, meals, reminders and a printed morning briefing for every child. Launch your own demo in one click."
+    />
+    <meta property="og:title" content="Marplanner: the household planner for your wall" />
+    <meta
+      property="og:description"
+      content="Calendar, chores, meals, reminders and a printed morning briefing for every child. Self-hosted, API-first, English and Spanish."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="images/home-dashboard.png" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+    <script>
+      // Apply a stored theme before first paint, so the page never flashes the other one.
+      try {
+        const theme = localStorage.getItem("mp-site-theme");
+        if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+      } catch {
+        // Storage unavailable: follow the system preference.
+      }
+    </script>
+    <script src="main.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <a class="brand" href="#top" aria-label="Marplanner home">
+          <img src="favicon.svg" alt="" width="28" height="28" />
+          <span>Marplanner</span>
+        </a>
+        <nav class="topnav" aria-label="Sections">
+          <a href="#features">Features</a>
+          <a href="#run">Run it</a>
+          <a href="#api">API</a>
+          <a href="https://github.com/diegomarino/marplanner">GitHub</a>
+        </nav>
+        <button class="theme-toggle" type="button" aria-label="Toggle dark mode" data-theme-toggle>
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20">
+            <path
+              class="icon-moon"
+              d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"
+              fill="currentColor"
+            />
+            <g
+              class="icon-sun"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <circle cx="12" cy="12" r="4.5" fill="currentColor" stroke="none" />
+              <path
+                d="M12 1.5v2.5M12 20v2.5M1.5 12H4M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"
+              />
+            </g>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top">
+        <div class="container hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">Self-hosted · open source · English &amp; Spanish</p>
+            <h1>The household planner that lives on your wall.</h1>
+            <p class="lede">
+              Marplanner turns a tablet in the kitchen into the family's shared screen: calendar,
+              chores with streaks, meals, reminders, and a
+              <strong>printed morning briefing</strong> for every child.
+            </p>
+            <div class="cta" id="demo">
+              <p class="cta-title">Launch your own demo in one click</p>
+              <p class="cta-note">
+                It runs in <em>your</em> account on the host you pick, filled with a sample family
+                and a week of events, chores and meals.
+              </p>
+              <div class="deploy-buttons">
+                <a href="https://render.com/deploy?repo=https://github.com/diegomarino/marplanner"
+                  ><img
+                    src="https://render.com/images/deploy-to-render-button.svg"
+                    alt="Deploy to Render"
+                    height="40"
+                /></a>
+                <a
+                  href="https://app.koyeb.com/deploy?type=git&amp;repository=github.com%2Fdiegomarino%2Fmarplanner&amp;branch=main&amp;name=marplanner&amp;builder=dockerfile&amp;dockerfile=infra%2Fdocker%2FDockerfile&amp;instance_type=free&amp;instances_max=1&amp;ports=3000%3Bhttp%3B%2F&amp;hc_protocol%5B3000%5D=http&amp;hc_path%5B3000%5D=%2Fhealth&amp;hc_method%5B3000%5D=get&amp;hc_grace_period%5B3000%5D=30&amp;env%5BMP_ACCESS_TOKEN%5D=mpg-local-change-me&amp;env%5BMP_BOOTSTRAP_KEY%5D=mpk-local-bootstrap-change-me&amp;env%5BMP_ADMIN_PIN%5D=0000&amp;env%5BMP_SEED_ON_EMPTY%5D=true&amp;env%5BPORT%5D=3000"
+                  ><img
+                    src="https://www.koyeb.com/static/images/deploy/button.svg"
+                    alt="Deploy to Koyeb"
+                    height="40"
+                /></a>
+                <a
+                  href="https://cloud.digitalocean.com/apps/new?repo=https://github.com/diegomarino/marplanner/tree/main"
+                  ><img
+                    src="https://www.deploytodo.com/do-btn-blue.svg"
+                    alt="Deploy to DigitalOcean"
+                    height="40"
+                /></a>
+              </div>
+              <p class="cta-secondary">
+                <a class="button button-ghost" href="https://github.com/diegomarino/marplanner">
+                  <svg aria-hidden="true" viewBox="0 0 16 16" width="18" height="18">
+                    <path
+                      fill="currentColor"
+                      d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"
+                    />
+                  </svg>
+                  View the source
+                </a>
+                <a class="button button-ghost" href="#run">Install it at home</a>
+              </p>
+            </div>
+          </div>
+          <figure class="hero-device">
+            <div class="device">
+              <img
+                src="images/home-dashboard.png"
+                alt="Marplanner home screen on a tablet: today's agenda, chores per child, meals and weather"
+                width="1920"
+                height="1200"
+                fetchpriority="high"
+              />
+            </div>
+            <div class="printer">
+              <div class="paper">
+                <img
+                  src="images/briefing-preview-top.png"
+                  alt="A child's daily briefing slip coming out of a small thermal printer"
+                  width="384"
+                  height="1046"
+                />
+              </div>
+              <div class="printer-body" aria-hidden="true">
+                <span class="printer-slot"></span>
+                <span class="printer-led"></span>
+              </div>
+            </div>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section" id="features" aria-labelledby="features-title">
+        <div class="container">
+          <p class="eyebrow">Features</p>
+          <h2 id="features-title">Everything the family needs, on one screen</h2>
+          <p class="section-lede">
+            Home, Calendar, Chores and Meals for everyone. Settings, members, content and recovery
+            live in an admin area behind a PIN. Optional features are plugins you switch on when you
+            need them.
+          </p>
+
+          <div class="bento">
+            <article class="tile tile-briefing">
+              <div class="tile-text">
+                <span class="tile-icon" aria-hidden="true">🧾</span>
+                <h3>A printed morning briefing for every child</h3>
+                <p>
+                  A cheap Bluetooth thermal printer next to the tablet prints a personal slip each
+                  morning: their events, meals, weather, reminders, a note from a parent, birthday
+                  countdowns and chore streaks.
+                </p>
+                <p>
+                  Plus the fun part: dad jokes, word of the day, trivia, an upside-down riddle, a
+                  word search and a drawing prompt. More than 20 block types.
+                </p>
+                <ul class="ticks">
+                  <li>You choose who gets one, on which weekdays, with which blocks</li>
+                  <li>It can print itself once the morning chores are done</li>
+                  <li>No print server or drivers: ESC/POS straight over Web Bluetooth</li>
+                </ul>
+              </div>
+              <img
+                src="images/briefing-preview-top.png"
+                alt="Printed briefing slip with the day's agenda and weather"
+                width="384"
+                height="1046"
+                loading="lazy"
+              />
+            </article>
+
+            <article class="tile tile-wide">
+              <img
+                src="images/chores-board.png"
+                alt="Chores board with emoji chores grouped by part of the day for each child"
+                width="1920"
+                height="1200"
+                loading="lazy"
+              />
+              <div class="tile-text">
+                <span class="tile-icon" aria-hidden="true">✅</span>
+                <h3>Routines &amp; chores with streaks</h3>
+                <p>
+                  Emoji chores grouped by part of the day, assigned to each child on chosen
+                  weekdays. Ticking a block off plays a little jingle and keeps the streak alive.
+                </p>
+              </div>
+            </article>
+
+            <article class="tile">
+              <img
+                src="images/meals-board.png"
+                alt="Weekly meals board"
+                width="1920"
+                height="1200"
+                loading="lazy"
+              />
+              <div class="tile-text">
+                <span class="tile-icon" aria-hidden="true">🍽️</span>
+                <h3>Meals &amp; recipes</h3>
+                <p>
+                  A recipe catalogue, repeating weekly plans and one-off meals, merged into one
+                  menu.
+                </p>
+              </div>
+            </article>
+
+            <article class="tile">
+              <img
+                src="images/calendar-month.png"
+                alt="Calendar month view with colour-coded family events"
+                width="1920"
+                height="1200"
+                loading="lazy"
+              />
+              <div class="tile-text">
+                <span class="tile-icon" aria-hidden="true">📅</span>
+                <h3>Shared calendar</h3>
+                <p>
+                  Local events plus ICS feeds from school or work, assigned to members automatically
+                  and decorated with emoji.
+                </p>
+              </div>
+            </article>
+
+            <article class="tile">
+              <img
+                src="images/admin-plugins.png"
+                alt="Admin plugins page with optional features to switch on"
+                width="1920"
+                height="1200"
+                loading="lazy"
+              />
+              <div class="tile-text">
+                <span class="tile-icon" aria-hidden="true">🧩</span>
+                <h3>Admin behind a PIN, features as plugins</h3>
+                <p>
+                  Members, content, integrations and recovery. Turn on only what your household
+                  uses.
+                </p>
+              </div>
+            </article>
+
+            <article class="tile tile-mini">
+              <span class="tile-icon" aria-hidden="true">🔔</span>
+              <h3>Reminders &amp; daily messages</h3>
+              <p>
+                Scheduled reminders on the wall and a message from a parent for each child, every
+                day.
+              </p>
+            </article>
+            <article class="tile tile-mini">
+              <span class="tile-icon" aria-hidden="true">🌤️</span>
+              <h3>Weather, no API key</h3>
+              <p>Today's forecast from Open-Meteo, on the screen and on the printed slip.</p>
+            </article>
+            <article class="tile tile-mini">
+              <span class="tile-icon" aria-hidden="true">🗣️</span>
+              <h3>Spoken time</h3>
+              <p>The tablet says the time out loud at the moments that matter: 08:15, shoes on!</p>
+            </article>
+            <article class="tile tile-mini">
+              <span class="tile-icon" aria-hidden="true">📵</span>
+              <h3>Screen-time switch</h3>
+              <p>
+                Block or restore a device's internet access from the admin area. Handy at dinner
+                time (UniFi).
+              </p>
+            </article>
+            <article class="tile tile-mini">
+              <span class="tile-icon" aria-hidden="true">💾</span>
+              <h3>Backups &amp; restore</h3>
+              <p>
+                Snapshots of the single SQLite database, downloadable and restorable from the admin.
+              </p>
+            </article>
+            <article class="tile tile-mini">
+              <span class="tile-icon" aria-hidden="true">🌍</span>
+              <h3>English &amp; Spanish</h3>
+              <p>The whole interface, and the printed briefing, in either language.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-alt" id="run" aria-labelledby="run-title">
+        <div class="container">
+          <p class="eyebrow">Run it</p>
+          <h2 id="run-title">From demo to your own kitchen</h2>
+          <p class="section-lede">
+            One Node.js server and one SQLite file. Try it in the cloud, then run it at home with
+            Docker or straight from source.
+          </p>
+
+          <div class="tabs" data-tabs>
+            <div class="tablist" role="tablist" aria-label="Ways to run Marplanner">
+              <button role="tab" id="tab-cloud" aria-controls="panel-cloud" aria-selected="true">
+                One-click demo
+              </button>
+              <button
+                role="tab"
+                id="tab-docker"
+                aria-controls="panel-docker"
+                aria-selected="false"
+                tabindex="-1"
+              >
+                Docker
+              </button>
+              <button
+                role="tab"
+                id="tab-node"
+                aria-controls="panel-node"
+                aria-selected="false"
+                tabindex="-1"
+              >
+                Node.js
+              </button>
+            </div>
+
+            <div class="tabpanel" role="tabpanel" id="panel-cloud" aria-labelledby="tab-cloud">
+              <p>
+                Each button creates <strong>your own</strong> instance on that host, seeded with a
+                sample family. Nobody runs a shared demo.
+              </p>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th scope="col">Launch</th>
+                      <th scope="col">Cost of the demo</th>
+                      <th scope="col">Data on restart or redeploy</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        <a
+                          class="deploy-link"
+                          href="https://render.com/deploy?repo=https://github.com/diegomarino/marplanner"
+                          ><img
+                            src="https://render.com/images/deploy-to-render-button.svg"
+                            alt="Deploy to Render"
+                            height="32"
+                        /></a>
+                      </td>
+                      <td>Free web service</td>
+                      <td>Lost (no disk on the free plan; sleeps when idle)</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a
+                          class="deploy-link"
+                          href="https://app.koyeb.com/deploy?type=git&amp;repository=github.com%2Fdiegomarino%2Fmarplanner&amp;branch=main&amp;name=marplanner&amp;builder=dockerfile&amp;dockerfile=infra%2Fdocker%2FDockerfile&amp;instance_type=free&amp;instances_max=1&amp;ports=3000%3Bhttp%3B%2F&amp;hc_protocol%5B3000%5D=http&amp;hc_path%5B3000%5D=%2Fhealth&amp;hc_method%5B3000%5D=get&amp;hc_grace_period%5B3000%5D=30&amp;env%5BMP_ACCESS_TOKEN%5D=mpg-local-change-me&amp;env%5BMP_BOOTSTRAP_KEY%5D=mpk-local-bootstrap-change-me&amp;env%5BMP_ADMIN_PIN%5D=0000&amp;env%5BMP_SEED_ON_EMPTY%5D=true&amp;env%5BPORT%5D=3000"
+                          ><img
+                            src="https://www.koyeb.com/static/images/deploy/button.svg"
+                            alt="Deploy to Koyeb"
+                            height="32"
+                        /></a>
+                      </td>
+                      <td>Free instance</td>
+                      <td>Lost (no volumes on the free instance)</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a
+                          class="deploy-link"
+                          href="https://cloud.digitalocean.com/apps/new?repo=https://github.com/diegomarino/marplanner/tree/main"
+                          ><img
+                            src="https://www.deploytodo.com/do-btn-blue.svg"
+                            alt="Deploy to DigitalOcean"
+                            height="32"
+                        /></a>
+                      </td>
+                      <td>Smallest paid service ($5/mo)</td>
+                      <td>Lost (App Platform has no persistent volumes)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p>Every sign-in screen shows the demo credentials prefilled:</p>
+              <dl class="creds">
+                <div>
+                  <dt>Access token</dt>
+                  <dd><code>mpg-local-change-me</code></dd>
+                </div>
+                <div>
+                  <dt>Bootstrap key</dt>
+                  <dd><code>mpk-local-bootstrap-change-me</code></dd>
+                </div>
+                <div>
+                  <dt>Admin PIN</dt>
+                  <dd><code>0000</code></dd>
+                </div>
+              </dl>
+              <p class="callout">
+                <strong>It is a demo, not a household install.</strong> Anyone who knows these
+                defaults can open it. For real use, set your own credentials on fresh storage, as
+                the Docker and Node.js tabs show.
+              </p>
+            </div>
+
+            <div
+              class="tabpanel"
+              role="tabpanel"
+              id="panel-docker"
+              aria-labelledby="tab-docker"
+              hidden
+            >
+              <p>Docker Engine and Docker Compose. From a clone of the repository:</p>
+              <div class="code">
+                <button class="copy" type="button" data-copy>Copy</button>
+                <pre><code>cp infra/docker/.env.example infra/docker/.env.local
+# Fill MP_ACCESS_TOKEN (mpg- prefix), MP_BOOTSTRAP_KEY (mpk- prefix), MP_ADMIN_PIN.
+docker compose --env-file infra/docker/.env.local -f infra/docker/compose.yaml -p marplanner-home up --build -d
+docker compose --env-file infra/docker/.env.local -f infra/docker/compose.yaml -p marplanner-home port marplanner 3000</code></pre>
+              </div>
+              <p>
+                The image runs as a non-root user and keeps SQLite and backups in
+                <code>/data</code>.
+                <a
+                  href="https://github.com/diegomarino/marplanner/blob/main/docs/operations.md#container-installation"
+                  >Container operations</a
+                >
+                cover HTTPS, upgrades and subpath hosting.
+              </p>
+            </div>
+
+            <div class="tabpanel" role="tabpanel" id="panel-node" aria-labelledby="tab-node" hidden>
+              <p>Node.js 24 and a writable, persistent data directory:</p>
+              <div class="code">
+                <button class="copy" type="button" data-copy>Copy</button>
+                <pre><code>git clone https://github.com/diegomarino/marplanner.git && cd marplanner
+npm ci
+npm run build
+cp .env.example .env.local   # then replace every sample value
+DATA_DIR=/path/to/persistent/marplanner npm start</code></pre>
+              </div>
+              <p>
+                The server listens on <code>0.0.0.0:3000</code> and fails closed until you configure
+                its credentials. Read
+                <a href="https://github.com/diegomarino/marplanner/blob/main/SECURITY.md"
+                  >security</a
+                >
+                before exposing it beyond your home network.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="api" aria-labelledby="api-title">
+        <div class="container">
+          <p class="eyebrow">For developers</p>
+          <h2 id="api-title">API-first: the tablet is just another client</h2>
+          <p class="section-lede">
+            The kiosk and the admin screens use the same documented HTTP API you can script against.
+            Tick off a chore from Home Assistant, add events from cron, or show tonight's dinner on
+            your own dashboard.
+          </p>
+
+          <div class="api-grid">
+            <div class="code code-dark">
+              <button class="copy" type="button" data-copy>Copy</button>
+              <pre><code><span class="c"># Provision a device once, with the bootstrap key</span>
+curl -c jar.txt -X POST "$BASE/api/auth/provision" \
+  -H "Authorization: Bearer $MP_BOOTSTRAP_KEY"
+
+<span class="c"># Then call any route with its device cookie</span>
+curl -b jar.txt "$BASE/api/members"
+curl -b jar.txt "$BASE/api/chores/board?date=$TODAY"
+curl -b jar.txt "$BASE/api/calendar/events?from=$TODAY&amp;to=$TOMORROW"</code></pre>
+            </div>
+            <ul class="api-facts">
+              <li>
+                <strong>OpenAPI 3.1, generated from the code.</strong> Every route declares its
+                schema next to its handler, and CI fails if the document drifts.
+              </li>
+              <li>
+                <strong>Closed by default.</strong> Every request is authenticated and checked
+                against <code>domain:verb</code> permissions.
+              </li>
+              <li>
+                <strong>Also on your instance.</strong> Each server serves its own interactive
+                reference at <code>/api/docs/</code>.
+              </li>
+            </ul>
+          </div>
+
+          <div class="api-actions">
+            <a class="button button-primary" href="api/">Open the API reference</a>
+            <a class="button button-ghost" href="downloads/marplanner-api-docs.zip"
+              >Offline docs (.zip)</a
+            >
+            <a class="button button-ghost" href="openapi.json">openapi.json</a>
+          </div>
+
+          <h3 class="api-domains-title">
+            <!-- @api-summary -->
+          </h3>
+          <ul class="api-domains">
+            <!-- @api-tags -->
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <div class="brand">
+          <img src="favicon.svg" alt="" width="24" height="24" />
+          <span>Marplanner</span>
+        </div>
+        <nav aria-label="Project links">
+          <a href="https://github.com/diegomarino/marplanner">Repository</a>
+          <a href="https://github.com/diegomarino/marplanner/blob/main/docs/guide/README.md"
+            >Feature tour</a
+          >
+          <a href="https://github.com/diegomarino/marplanner/blob/main/docs/operations.md"
+            >Operations</a
+          >
+          <a href="https://github.com/diegomarino/marplanner/blob/main/CONTRIBUTING.md"
+            >Contributing</a
+          >
+          <a href="https://github.com/diegomarino/marplanner/blob/main/SECURITY.md">Security</a>
+          <a href="https://github.com/diegomarino/marplanner/blob/main/LICENSE">MIT License</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

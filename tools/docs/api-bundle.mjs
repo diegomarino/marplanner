@@ -71,7 +71,7 @@ export function createZip(entries) {
 }
 
 /** The standalone Scalar bundle, read through the same plugin and version the server registers. */
-async function scalarBundle() {
+export async function scalarBundle() {
   const { default: Fastify } = await import("fastify");
   const { default: fastifyApiReference } = await import("@scalar/fastify-api-reference");
   const app = Fastify();

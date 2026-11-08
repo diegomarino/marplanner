@@ -474,6 +474,15 @@ export default [
     },
   },
 
+  // The landing page script (site/, published to GitHub Pages) runs in the browser.
+  {
+    files: ["site/**/*.js"],
+    languageOptions: {
+      sourceType: "script",
+      globals: { ...globals.browser },
+    },
+  },
+
   // TypeScript rules own unused bindings; the core rule misreads type declarations.
   {
     files: ["**/*.ts", "**/*.tsx"],
