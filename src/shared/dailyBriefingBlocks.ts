@@ -143,6 +143,10 @@ type CatalogEntry = (typeof BRIEFING_BLOCKS)[number];
 
 export type BlockRegistryType = CatalogEntry["type"];
 export type CorpusBlockType = Extract<CatalogEntry, { kind: "corpus" }>["type"];
+/** Blocks generated after the read transaction, from a cached provider. */
+export type ExternalBlockType = Extract<CatalogEntry, { kind: "external" }>["type"];
+/** Blocks generated inside the read transaction (domain seams and corpora). */
+export type InTransactionBlockType = Exclude<BlockRegistryType, ExternalBlockType>;
 
 export const ALL_BLOCK_TYPES: readonly BlockRegistryType[] = BRIEFING_BLOCKS.map(
   (block) => block.type
@@ -167,6 +171,10 @@ export function blockScope(type: BlockRegistryType): BlockScope {
 
 export function blockKind(type: BlockRegistryType): BlockKind {
   return blockDescriptor(type).kind;
+}
+
+export function isExternalBlockType(type: unknown): type is ExternalBlockType {
+  return typeof type === "string" && BY_TYPE.get(type)?.kind === "external";
 }
 
 export function blockParamSpec(type: BlockRegistryType): BlockParamSpec {
