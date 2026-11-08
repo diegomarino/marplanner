@@ -81,6 +81,9 @@ test("landing page build writes the page, reference, spec, screenshots and offli
       assert.ok(existsSync(join(outDir, file)), file);
     }
     assert.match(readFileSync(join(outDir, "api/index.html"), "utf8"), /localhost:3000/);
+    // The downloadable spec carries the same servers, so an imported copy never targets Pages.
+    const served = JSON.parse(readFileSync(join(outDir, "openapi.json"), "utf8"));
+    assert.deepEqual(served.servers, publishedSpec(spec).servers);
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }

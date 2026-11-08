@@ -6,8 +6,9 @@
 // Nothing generated is committed. The build copies site/ as is, then adds:
 // - images/: the screenshots index.html references, from docs/images/features/
 // - favicon.svg: the app's own icon, from public/
-// - openapi.json and api/: the committed OpenAPI document and the same Scalar viewer
-//   `/api/docs` serves (read-only, document inline), via tools/docs/api-bundle.mjs
+// - openapi.json and api/: the committed OpenAPI document, its `servers` pointed at the
+//   reader's own instance (publishedSpec), and the same Scalar viewer `/api/docs` serves
+//   (read-only, document inline), via tools/docs/api-bundle.mjs
 // - downloads/marplanner-api-docs.zip: the offline API bundle (`npm run docs:api-bundle`)
 // - the API domain cards, one per OpenAPI tag, in place of the `<!-- @api-tags -->` marker
 // So the published reference never drifts from docs/api/openapi.json, which
@@ -163,10 +164,11 @@ export async function buildSite({ root = ROOT, outDir = join(root, "dist/site") 
     copyFileSync(join(root, "docs/images/features", image), join(outDir, "images", image));
   }
   copyFileSync(join(root, "public/favicon.svg"), join(outDir, "favicon.svg"));
-  copyFileSync(join(root, "docs/api/openapi.json"), join(outDir, "openapi.json"));
+  const published = publishedSpec(spec);
+  writeFileSync(join(outDir, "openapi.json"), `${JSON.stringify(published, null, 2)}\n`);
 
   mkdirSync(join(outDir, "api/js"), { recursive: true });
-  writeFileSync(join(outDir, "api/index.html"), viewerHtml(publishedSpec(spec)));
+  writeFileSync(join(outDir, "api/index.html"), viewerHtml(published));
   writeFileSync(join(outDir, "api/js/scalar.js"), await scalarBundle());
 
   const scratch = mkdtempSync(join(tmpdir(), "marplanner-site-"));
