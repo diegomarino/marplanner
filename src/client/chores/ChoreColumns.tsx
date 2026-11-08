@@ -363,11 +363,12 @@ function ChoreColumn({
     <div
       data-testid={`${layout === "fit" ? "today-chores" : "chores-board"}-column-${column.memberId}`}
       className={cn(
-        // "fit" (Home) shares the width equally, down to a compact floor that still reads, so a
-        // 13-inch kiosk fits four children without scrolling sideways; "scroll" (Tasks board)
+        // "fit" (Home) shares the width equally and its cards compact themselves through the
+        // column's container queries, so a tablet fits four children without scrolling sideways.
+        // The floor is in px so Android text scaling cannot widen it. "scroll" (Tasks board)
         // keeps the roomier 220px column.
-        layout === "fit" ? "min-w-44 basis-0" : "min-w-[220px] basis-[220px]",
-        "h-full flex-1 overflow-y-auto rounded-2xl border p-3 shadow-sm [background:linear-gradient(180deg,color-mix(in_oklch,var(--member-color)_16%,var(--member-mix-ground)),color-mix(in_oklch,var(--member-color)_8%,var(--member-mix-ground)))] [border-color:color-mix(in_oklch,var(--member-color)_28%,var(--member-mix-ground))]"
+        layout === "fit" ? "min-w-[120px] basis-0" : "min-w-[220px] basis-[220px]",
+        "@container h-full flex-1 overflow-y-auto rounded-2xl border p-3 shadow-sm [background:linear-gradient(180deg,color-mix(in_oklch,var(--member-color)_16%,var(--member-mix-ground)),color-mix(in_oklch,var(--member-color)_8%,var(--member-mix-ground)))] [border-color:color-mix(in_oklch,var(--member-color)_28%,var(--member-mix-ground))]"
       )}
       // eslint-disable-next-line ui-policy/debt -- The configured member identity is passed through one CSS custom property into the token layer.
       style={{ "--member-color": scale.colorVar } as CSSProperties}
@@ -431,7 +432,7 @@ function ChoreColumn({
           <section
             data-testid="today-chores-active-period"
             data-period-id={period.id}
-            className="rounded-xl border p-2 [background:color-mix(in_oklch,var(--member-color)_10%,var(--member-mix-ground))] [border-color:color-mix(in_oklch,var(--member-color)_25%,var(--member-mix-ground))]"
+            className="rounded-xl border p-2 @max-[13rem]:p-1 [background:color-mix(in_oklch,var(--member-color)_10%,var(--member-mix-ground))] [border-color:color-mix(in_oklch,var(--member-color)_25%,var(--member-mix-ground))]"
           >
             <header className="mb-2 flex flex-wrap items-center gap-2">
               <h3 className="font-semibold">{t(DAY_PERIOD_LABEL_KEYS[period.id])}</h3>
@@ -456,7 +457,7 @@ function ChoreColumn({
                         <span className="flex w-full flex-1 flex-col self-stretch">
                           <span
                             className={cn(
-                              "flex flex-1 items-center justify-center px-4 py-3",
+                              "flex flex-1 items-center justify-center px-4 py-3 @max-[13rem]:px-2 @max-[13rem]:py-2",
                               chore.completed
                                 ? "[background:color-mix(in_oklch,var(--member-color)_30%,var(--member-mix-ground))]"
                                 : "[background:color-mix(in_oklch,var(--member-color)_14%,var(--member-mix-ground))]"
@@ -467,14 +468,14 @@ function ChoreColumn({
                               data-testid={`today-chore-icon-${column.memberId}-${chore.id}`}
                               data-emoji={chore.icon ?? "📋"}
                               className={cn(
-                                "relative flex size-12 items-center justify-center text-5xl leading-none",
+                                "relative flex size-12 items-center justify-center text-5xl leading-none @max-[13rem]:size-10",
                                 chore.completed && "line-through opacity-55"
                               )}
                             >
                               <NotoEmoji
                                 emoji={chore.icon ?? "📋"}
                                 size={48}
-                                className="block size-12"
+                                className="block size-12 @max-[13rem]:size-10"
                               />
                               {chore.completed && (
                                 <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-foreground" />
@@ -483,7 +484,7 @@ function ChoreColumn({
                           </span>
                           <span
                             className={cn(
-                              "flex min-h-12 items-center gap-3 px-4 py-2",
+                              "flex min-h-12 items-center gap-3 px-4 py-2 @max-[13rem]:gap-1.5 @max-[13rem]:px-2",
                               chore.completed
                                 ? "[background:color-mix(in_oklch,var(--member-color)_50%,var(--member-mix-ground))]"
                                 : "[background:color-mix(in_oklch,var(--member-color)_26%,var(--member-mix-ground))]"
@@ -492,7 +493,7 @@ function ChoreColumn({
                             <span
                               data-testid={`today-chore-name-${column.memberId}-${chore.id}`}
                               className={cn(
-                                "flex-1 text-left font-serif text-lg leading-tight font-semibold",
+                                "min-w-0 flex-1 text-left font-serif text-lg leading-tight font-semibold break-words @max-[13rem]:text-base",
                                 chore.completed && "text-muted-foreground line-through"
                               )}
                             >

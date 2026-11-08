@@ -33,7 +33,7 @@ local failure.
 ### Edge Cases
 
 - All "today" computations across widgets use the household timezone, never browser/UTC-local.
-- The dashboard's chore columns share the widget's width equally down to a compact minimum (11rem), so a 13-inch tablet in landscape fits four children without horizontal scrolling; only when that minimum no longer fits does the row scroll sideways as a whole, never inside a column. On a narrow column the streak and progress counters and the period header wrap, and a long name is truncated. The chores board keeps its wider 220px columns and scrolls horizontally sooner.
+- The dashboard's chore columns share the widget's width equally, so a tablet in landscape fits four children without horizontal scrolling; a narrow column compacts its chore cards (padding, emoji and name size) instead of keeping a wide minimum. Only below a 120px floor (in px, so Android text scaling cannot widen it) does the row scroll sideways as a whole, never inside a column. On a narrow column the streak and progress counters and the period header wrap, and a long name is truncated. The chores board keeps its wider 220px columns and scrolls horizontally sooner.
 - Inactive plugins appear nowhere except `admin/plugins`.
 - A pending PWA update waits for an idle-of-edits moment (or the ~4am forced reload) before reloading.
 - Time announcements continue even on admin routes; printing uses one claimant per live lease in a capable browser; lost acknowledgements may cause resend.
