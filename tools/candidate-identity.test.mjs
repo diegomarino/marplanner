@@ -186,7 +186,10 @@ test("every workflow job runs on a GitHub-hosted runner", async () => {
     assert.doesNotMatch(text, /self-hosted|macmini/, file);
     for (const [name, job] of Object.entries(load(text).jobs)) {
       if (job.uses) continue;
-      assert.ok(hosted.has(job["runs-on"]), `${file}: ${name} runs on ${JSON.stringify(job["runs-on"])}`);
+      assert.ok(
+        hosted.has(job["runs-on"]),
+        `${file}: ${name} runs on ${JSON.stringify(job["runs-on"])}`
+      );
     }
   }
 });
