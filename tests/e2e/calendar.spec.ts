@@ -84,13 +84,25 @@ test("calendar critical flow: create/read (recurrence-expanded) → assign+membe
 
   // 3) Read the merged feed on the surface. The recurring master EXPANDS to
   // multiple occurrences end-to-end (INV-01 read spine + recurrence).
-  const feedResp = page.waitForResponse(
-    (r) => r.url().includes("/api/calendar/events") && r.request().method() === "GET"
+  // Two races make a plain waitForResponse on the URL flaky ("No data found for resource"):
+  // the home surface (TodayAgenda) also GETs /api/calendar/events and its body is discarded
+  // once page.goto navigates away, and CalendarView aborts its in-flight read when its effect
+  // re-runs (e.g. once translations settle) — an aborted fetch can still emit `response`
+  // without a body. So: scope the match to requests issued by the /calendar document, wait
+  // for `requestfinished` (aborted requests emit `requestfailed`, never this), and read the
+  // body right away.
+  const feedFinished = page.waitForEvent(
+    "requestfinished",
+    (req) =>
+      req.url().includes("/api/calendar/events") &&
+      req.method() === "GET" &&
+      new URL(req.headers()["referer"] ?? "http://invalid/").pathname === "/calendar"
   );
   await page.goto("/calendar");
-  await expect(page.getByRole("heading", { name: /calendario|calendar/i })).toBeVisible();
-  const feed = await feedResp;
+  const feed = (await (await feedFinished).response())!;
   expect(feed.status()).toBe(200);
+  const feedItems = (await feed.json()) as Array<{ title: string }>;
+  await expect(page.getByRole("heading", { name: /calendario|calendar/i })).toBeVisible();
   // Loading indicator must clear (surface actually rendered the feed).
   await expect(page.getByText(/cargando calendario|loading calendar/i)).toHaveCount(0, {
     timeout: 15_000,
@@ -98,7 +110,6 @@ test("calendar critical flow: create/read (recurrence-expanded) → assign+membe
   // Wait for the initial range to load before clock installation temporarily changes Date.now.
   // Keep the 10:00 event in the viewport while timers continue normally.
   await page.clock.setFixedTime(new Date(`${ymd(new Date())}T08:00:00.000Z`));
-  const feedItems = (await feed.json()) as Array<{ title: string }>;
   expect(feedItems.filter((item) => item.title === recurringTitle).length).toBeGreaterThanOrEqual(
     2
   );
