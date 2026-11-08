@@ -152,8 +152,8 @@
   },
   "packageManager": "npm@11.19.0",
   "allowScripts": {
-    "argon2@0.45.1": true,
-    "better-sqlite3@12.11.1": true,
+    "argon2@0.45.2": true,
+    "better-sqlite3@13.0.3": true,
     "esbuild@0.25.12": true,
     "esbuild@0.28.2": true,
     "unrs-resolver@1.12.2": true,
