@@ -363,9 +363,10 @@ function ChoreColumn({
     <div
       data-testid={`${layout === "fit" ? "today-chores" : "chores-board"}-column-${column.memberId}`}
       className={cn(
-        // "fit" (Home) shares the width among every child so the kiosk never scrolls sideways;
-        // "scroll" (Tasks board) keeps a readable minimum and scrolls past it.
-        layout === "fit" ? "min-w-0 basis-0" : "min-w-[220px] basis-[220px]",
+        // "fit" (Home) shares the width equally, down to a compact floor that still reads, so a
+        // 13-inch kiosk fits four children without scrolling sideways; "scroll" (Tasks board)
+        // keeps the roomier 220px column.
+        layout === "fit" ? "min-w-44 basis-0" : "min-w-[220px] basis-[220px]",
         "h-full flex-1 overflow-y-auto rounded-2xl border p-3 shadow-sm [background:linear-gradient(180deg,color-mix(in_oklch,var(--member-color)_16%,var(--member-mix-ground)),color-mix(in_oklch,var(--member-color)_8%,var(--member-mix-ground)))] [border-color:color-mix(in_oklch,var(--member-color)_28%,var(--member-mix-ground))]"
       )}
       // eslint-disable-next-line ui-policy/debt -- The configured member identity is passed through one CSS custom property into the token layer.
@@ -381,7 +382,7 @@ function ChoreColumn({
         >
           {column.displayName}
         </span>
-        <div className="ml-auto flex shrink-0 items-center gap-2 text-sm font-semibold tabular-nums">
+        <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2 text-sm font-semibold tabular-nums">
           {column.streak !== null && (
             <span className="inline-flex items-center gap-1 rounded-full border px-2 py-1 [background:color-mix(in_oklch,var(--member-color)_12%,var(--member-mix-ground))] [border-color:color-mix(in_oklch,var(--member-color)_34%,var(--member-mix-ground))]">
               <Flame aria-hidden="true" className="size-4 fill-current text-accent" />
@@ -432,7 +433,7 @@ function ChoreColumn({
             data-period-id={period.id}
             className="rounded-xl border p-2 [background:color-mix(in_oklch,var(--member-color)_10%,var(--member-mix-ground))] [border-color:color-mix(in_oklch,var(--member-color)_25%,var(--member-mix-ground))]"
           >
-            <header className="mb-2 flex items-center gap-2">
+            <header className="mb-2 flex flex-wrap items-center gap-2">
               <h3 className="font-semibold">{t(DAY_PERIOD_LABEL_KEYS[period.id])}</h3>
               <span className="rounded-full px-2 py-0.5 text-sm [background:color-mix(in_oklch,var(--member-color)_18%,var(--member-mix-ground))]">
                 {period.chores.filter((chore) => chore.completed).length}/{period.chores.length}
