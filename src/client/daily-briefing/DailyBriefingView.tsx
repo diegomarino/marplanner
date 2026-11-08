@@ -222,7 +222,10 @@ function BriefingBlock({ block }: { block: BlockInstance }): React.JSX.Element {
 function BlockData({ type, data }: Pick<BlockInstance, "type" | "data">): React.JSX.Element {
   const { t } = useTranslation();
 
-  switch (type as BlockType) {
+  // Exhaustive over `BlockType` (legacy names + the shared catalogue): a catalogue type without
+  // a case fails typecheck at `default`. Unknown strings from stored rows still land there.
+  const blockType = type as BlockType;
+  switch (blockType) {
     // ── Retired tracer names — schemaVersion 1 rows only (backward-read, INV-01) ──
     case "calendar": {
       const items = Array.isArray(data) ? (data as FeedItem[]) : [];
@@ -268,7 +271,7 @@ function BlockData({ type, data }: Pick<BlockInstance, "type" | "data">): React.
       }
       return <MealsBlock data={data as MealsV2Data} />;
 
-    // ── The 21-block registry, verbatim from ALL_BLOCK_TYPES ──
+    // ── The block catalogue (src/shared/dailyBriefingBlocks.ts) ──
     case "shotgun":
       return <ShotgunBlock data={data as ShotgunData} />;
     case "message":
@@ -307,9 +310,12 @@ function BlockData({ type, data }: Pick<BlockInstance, "type" | "data">): React.
       return <WordSearchBlock data={data as WordSearchData} />;
     case "drawingPrompt":
       return <DrawingPromptBlock data={data as DrawingPromptData} />;
-    default:
+    default: {
       // Unknown/future block type (FR-023): quiet generic fallback — title only, no crash.
+      const unhandled: never = blockType;
+      void unhandled;
       return <></>;
+    }
   }
 }
 

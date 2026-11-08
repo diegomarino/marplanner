@@ -2,8 +2,17 @@ import { CANONICAL_WEEKDAY_ORDER } from "@/components/WeekdayPicker";
 import type { WeekdayCode, WeekdayLabels } from "@/components/WeekdayPicker";
 import type { MessageKey } from "@/i18n/messages";
 import type { BriefingSchedule, BriefingStatus } from "../../../shared";
+import {
+  ALL_BLOCK_TYPES,
+  BLOCK_DIFFICULTIES,
+  BLOCK_LEVELS,
+  CORPUS_LANGUAGE_AVAILABILITY,
+  DEFAULT_DISABLED_BLOCK_TYPES,
+  blockParamSpec,
+  type BlockRegistryType,
+} from "../../../shared/dailyBriefingBlocks";
 
-// Pure helpers for the Daily Briefing admin: the block registry mirror, label maps and the
+// Pure helpers for the Daily Briefing admin: the block registry, label maps and the
 // rules that turn the blocks × weekdays matrix into block-settings writes (spec D4/D15).
 
 // ── Settings-layer types (docs/api/openapi.json `DailyBriefingSettingsView`) ──
@@ -71,62 +80,19 @@ export interface DailyBriefingSettingsView {
   memberSchedules?: BriefingSchedule[];
 }
 
-/** The 21-block registry universe, hand-mirrored from the server's single source of truth
- * (src/server/modules/daily-briefing/corpora/block-types.ts `ALL_BLOCK_TYPES`) — the client
- * cannot import server modules, so this list (and the two below) must be kept in sync by hand
- * if the registry ever changes.
- */
-export const ALL_BLOCK_TYPES = [
-  "shotgun",
-  "message",
-  "streak",
-  "today",
-  "weather",
-  "meals",
-  "birthday",
-  "reminders",
-  "dadJoke",
-  "wordOfDay",
-  "animalFact",
-  "numberFact",
-  "onThisDay",
-  "quoteOfDay",
-  "trivia",
-  "riddle",
-  "wouldYouRather",
-  "wordSearch",
-  "drawingPrompt",
-  "streakText",
-  "weatherText",
-  "phonics",
-] as const;
+// The block registry comes from the shared catalogue (src/shared/dailyBriefingBlocks.ts), the
+// same declaration the server derives its lists from.
+export { ALL_BLOCK_TYPES, CORPUS_LANGUAGE_AVAILABILITY, DEFAULT_DISABLED_BLOCK_TYPES };
+export type { BlockRegistryType };
 
-export type BlockRegistryType = (typeof ALL_BLOCK_TYPES)[number];
+type BlockLabelKey = `dailyBriefing.admin.blockType.${BlockRegistryType}`;
+// Compile-time check: every catalogue type has an admin label in `messages.ts`.
+const blockLabelKeysExist: BlockLabelKey extends MessageKey ? true : never = true;
+void blockLabelKeysExist;
 
-export const BLOCK_LABEL_KEYS: Record<BlockRegistryType, MessageKey> = {
-  shotgun: "dailyBriefing.admin.blockType.shotgun",
-  message: "dailyBriefing.admin.blockType.message",
-  streak: "dailyBriefing.admin.blockType.streak",
-  today: "dailyBriefing.admin.blockType.today",
-  weather: "dailyBriefing.admin.blockType.weather",
-  meals: "dailyBriefing.admin.blockType.meals",
-  birthday: "dailyBriefing.admin.blockType.birthday",
-  reminders: "dailyBriefing.admin.blockType.reminders",
-  dadJoke: "dailyBriefing.admin.blockType.dadJoke",
-  wordOfDay: "dailyBriefing.admin.blockType.wordOfDay",
-  animalFact: "dailyBriefing.admin.blockType.animalFact",
-  numberFact: "dailyBriefing.admin.blockType.numberFact",
-  onThisDay: "dailyBriefing.admin.blockType.onThisDay",
-  quoteOfDay: "dailyBriefing.admin.blockType.quoteOfDay",
-  trivia: "dailyBriefing.admin.blockType.trivia",
-  riddle: "dailyBriefing.admin.blockType.riddle",
-  wouldYouRather: "dailyBriefing.admin.blockType.wouldYouRather",
-  wordSearch: "dailyBriefing.admin.blockType.wordSearch",
-  drawingPrompt: "dailyBriefing.admin.blockType.drawingPrompt",
-  streakText: "dailyBriefing.admin.blockType.streakText",
-  weatherText: "dailyBriefing.admin.blockType.weatherText",
-  phonics: "dailyBriefing.admin.blockType.phonics",
-};
+export const BLOCK_LABEL_KEYS: Record<BlockRegistryType, MessageKey> = Object.fromEntries(
+  ALL_BLOCK_TYPES.map((type) => [type, `dailyBriefing.admin.blockType.${type}` as BlockLabelKey])
+) as Record<BlockRegistryType, MessageKey>;
 
 export function effectiveMatrixBlockTypes(blockOrder: BlockOrderInstance[]): BlockRegistryType[] {
   const configured = blockOrder
@@ -163,47 +129,28 @@ export function reorderBlockOrderByType(
   return nextTypes.flatMap((type) => instancesByType.get(type) ?? []);
 }
 
-/** Mirrors `DEFAULT_DISABLED_BLOCK_TYPES` in block-types.ts (FR-013). */
-export const DEFAULT_DISABLED_BLOCK_TYPES: ReadonlySet<BlockRegistryType> = new Set([
-  "onThisDay",
-  "phonics",
-]);
+function typesWithParam(param: "level" | "difficulty" | "count"): ReadonlySet<BlockRegistryType> {
+  return new Set(ALL_BLOCK_TYPES.filter((type) => blockParamSpec(type)[param] !== undefined));
+}
 
-/** Mirrors `LEVEL`-taking block types — `wordOfDay` and `phonics` (FR-022). */
-export const LEVEL_BLOCK_TYPES: ReadonlySet<BlockRegistryType> = new Set(["wordOfDay", "phonics"]);
+/** Block types that read `params.level` / `params.count` / `params.difficulty` (FR-022). */
+export const LEVEL_BLOCK_TYPES = typesWithParam("level");
+export const COUNT_BLOCK_TYPES = typesWithParam("count");
+export const DIFFICULTY_BLOCK_TYPES = typesWithParam("difficulty");
+export const LEVELS = BLOCK_LEVELS;
+export const DIFFICULTIES = BLOCK_DIFFICULTIES;
 
-/** Mirrors `COUNT`-taking block types and the server's PHONICS_{MIN,MAX}_COUNT bounds. */
-export const COUNT_BLOCK_TYPES: ReadonlySet<BlockRegistryType> = new Set(["phonics"]);
-export const COUNTS = [1, 2, 3, 4, 5, 6] as const;
-export const LEVELS = ["L1", "L2", "L3", "L4"] as const;
+/** The count choices a block declares, `min`..`max` inclusive; empty when it takes no count. */
+export function countOptions(type: BlockRegistryType): number[] {
+  const spec = blockParamSpec(type).count;
+  if (!spec) return [];
+  return Array.from({ length: spec.max - spec.min + 1 }, (_, index) => spec.min + index);
+}
 
-/** Mirrors `DIFFICULTY`-taking block types — `trivia` and `wordSearch` (FR-022). */
-export const DIFFICULTY_BLOCK_TYPES: ReadonlySet<BlockRegistryType> = new Set([
-  "trivia",
-  "wordSearch",
-]);
-export const DIFFICULTIES = ["easy", "medium", "hard"] as const;
 export const DIFFICULTY_LABEL_KEYS: Record<(typeof DIFFICULTIES)[number], MessageKey> = {
   easy: "dailyBriefing.admin.difficulty.easy",
   medium: "dailyBriefing.admin.difficulty.medium",
   hard: "dailyBriefing.admin.difficulty.hard",
-};
-
-/** Mirrors `CORPUS_LANGUAGE_AVAILABILITY` in block-types.ts (FR-008/FR-009) — the ONLY types
- * offering a `params.language` override, each restricted to the languages with an on-disk
- * corpus. A type absent from this map renders no language control at all (FR-008).
- */
-export const CORPUS_LANGUAGE_AVAILABILITY: Partial<Record<BlockRegistryType, readonly string[]>> = {
-  dadJoke: ["en"],
-  wordOfDay: ["en"],
-  animalFact: ["en", "es"],
-  numberFact: ["en", "es"],
-  trivia: ["en"],
-  riddle: ["en"],
-  wouldYouRather: ["en", "es"],
-  wordSearch: ["en"],
-  drawingPrompt: ["en", "es"],
-  phonics: ["en"],
 };
 
 export function defaultMemberBlockSettings(

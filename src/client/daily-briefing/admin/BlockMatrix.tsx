@@ -34,7 +34,7 @@ import {
   DIFFICULTY_BLOCK_TYPES,
   DIFFICULTY_LABEL_KEYS,
   COUNT_BLOCK_TYPES,
-  COUNTS,
+  countOptions,
   LEVEL_BLOCK_TYPES,
   LEVELS,
   WEEKDAY_LABEL_KEYS,
@@ -45,6 +45,7 @@ import {
   type BlockRegistryType,
   type MemberBlockSettings,
 } from "./briefingBlocks";
+import { isCorpusBackedBlockType } from "../../../shared/dailyBriefingBlocks";
 
 export interface BlockMatrixProps {
   memberName: string;
@@ -221,7 +222,7 @@ function BlockRow({
   });
   const label = t(BLOCK_LABEL_KEYS[type]);
   const on = new Set(effectiveBlockDays(settings));
-  const languages = CORPUS_LANGUAGE_AVAILABILITY[type];
+  const languages = isCorpusBackedBlockType(type) ? CORPUS_LANGUAGE_AVAILABILITY[type] : undefined;
 
   return (
     <tr
@@ -261,7 +262,7 @@ function BlockRow({
               className="text-xs text-muted-foreground"
               data-testid={`daily-briefing-admin-block-default-disabled-${type}`}
             >
-              {t("dailyBriefing.admin.onThisDayDefaultDisabledNote")}
+              {t("dailyBriefing.admin.defaultDisabledNote")}
             </span>
           )}
           {LEVEL_BLOCK_TYPES.has(type) && (
@@ -284,7 +285,10 @@ function BlockRow({
               testId={`daily-briefing-admin-block-count-${type}`}
               value={settings.params?.count === undefined ? "" : String(settings.params.count)}
               disabled={saving}
-              options={COUNTS.map((count) => ({ value: String(count), label: String(count) }))}
+              options={countOptions(type).map((count) => ({
+                value: String(count),
+                label: String(count),
+              }))}
               onChange={(value) =>
                 onParamChange(type, { count: value === "" ? undefined : Number(value) })
               }
