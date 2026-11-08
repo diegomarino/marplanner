@@ -125,6 +125,15 @@
 }
 
 @layer components {
+  /* Night dimming for a keep-awake kiosk (shell/ScreenAwake.tsx): above every dialog and toast,
+   * near-black on purpose in either theme, so an OLED panel is effectively dark. */
+  .screen-awake-night-dim {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    background: oklch(0 0 0 / 0.96);
+    cursor: default;
+  }
   .member-event-surface {
     background: var(--member-event-background, var(--color-muted));
     border-left-color: var(--member-event-border, transparent);
