@@ -65,6 +65,44 @@ describe("PrinterAttention", () => {
     });
   });
 
+  it("marks an unpaired session as destructive, stays open on a failed pair and closes after a successful one", async () => {
+    window.localStorage.clear(); // no remembered printer, so no gesture-free reconnect
+    const transport = createFakePrintTransport();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify(url === "/api/printing/status" ? { active: true } : { registered: true })
+          )
+        )
+      )
+    );
+    render(
+      <PrinterSessionProvider transport={transport}>
+        <PrinterAttention />
+      </PrinterSessionProvider>
+    );
+
+    const pill = await screen.findByTestId("printer-attention-pill");
+    await waitFor(() => expect(pill).toHaveAttribute("data-healthy", "false"));
+    expect(pill.className).toContain("bg-destructive");
+
+    fireEvent.click(pill);
+    transport.scriptPairFailure();
+    fireEvent.click(screen.getByTestId("printer-attention-pair"));
+    await waitFor(() =>
+      expect(screen.getByTestId("printer-attention-state")).toHaveTextContent("Not paired")
+    );
+    expect(screen.getByTestId("printer-attention-dialog")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("printer-attention-pair"));
+    await waitFor(() => {
+      expect(screen.queryByTestId("printer-attention-dialog")).not.toBeInTheDocument();
+    });
+    expect(screen.getByTestId("printer-attention-pill")).toHaveAttribute("data-healthy", "true");
+  });
+
   it("does not render the attention pill when the real plugin-status boundary reports inactive", async () => {
     const fetchMock = vi
       .fn()

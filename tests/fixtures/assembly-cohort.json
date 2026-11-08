@@ -4286,6 +4286,7 @@
           ],
           "tests/client/printer-attention.test.tsx": [
             "PrinterAttention opens with dialog focus, uses the shared pair action, and returns focus after Escape",
+            "PrinterAttention marks an unpaired session as destructive, stays open on a failed pair and closes after a successful one",
             "PrinterAttention does not render the attention pill when the real plugin-status boundary reports inactive"
           ],
           "tests/client/printer-diagnostics-tab.test.tsx": [
@@ -7864,16 +7865,16 @@
       "src/client/printing/PrinterAttention.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 5,
-          "statements": 6,
-          "functions": 2,
-          "branches": 6
+          "lines": 16,
+          "statements": 18,
+          "functions": 4,
+          "branches": 21
         },
         "minimumRates": {
           "lines": 100,
           "statements": 100,
           "functions": 100,
-          "branches": 83.33
+          "branches": 95.23
         }
       },
       "src/client/printing/PrinterSession.tsx": {
