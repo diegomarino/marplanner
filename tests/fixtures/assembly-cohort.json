@@ -4436,6 +4436,7 @@
             "createBluetoothPrintTransport reconnect() (gesture-free) rejects with pairing_required when the browser cannot list granted devices",
             "createBluetoothPrintTransport reconnect() (gesture-free) rejects with pairing_required when the remembered device is no longer granted",
             "createBluetoothPrintTransport reconnect() (gesture-free) times out a GATT connect that never answers and keeps no listener behind",
+            "createBluetoothPrintTransport reconnect() (gesture-free) a reconnect overtaken by a manual pair never replaces the new printer's characteristic",
             "createFakePrintTransport reconnect() counts calls, becomes ready, and honours a one-shot scripted failure"
           ],
           "tests/client/provisioning-gate.test.tsx": [
