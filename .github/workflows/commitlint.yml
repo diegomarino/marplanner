@@ -33,11 +33,12 @@ jobs:
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: printf '%s\n' "$PR_TITLE" | npx --no-install commitlint --config commitlint.title.config.mjs --verbose
-      # Editing the title or body does not change the commits. Merge commits
-      # such as "Merge branch 'main' into ..." are skipped by commitlint's
-      # default ignores.
+      # Runs on every event and even when the title step failed: the job is a
+      # single check, so skipping this step would let a title-only fix pass
+      # with invalid commits. Merge commits such as "Merge branch 'main' into
+      # ..." are skipped by commitlint's default ignores.
       - name: Lint the commits of the PR
-        if: github.event.action != 'edited'
+        if: ${{ !cancelled() }}
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
