@@ -4,7 +4,15 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Madrid
     rebase-strategy: disabled
+    # Skip releases younger than 5 days, so a same-week re-release does not
+    # regenerate the PR (security updates are not delayed).
+    cooldown:
+      default-days: 5
+    open-pull-requests-limit: 3
     # The runtime is pinned to Node 24 (`engines.node` in package.json,
     # `.nvmrc`), so its type definitions must not move past the 24.x line.
     ignore:
@@ -78,7 +86,15 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Madrid
     rebase-strategy: disabled
+    # Skip releases younger than 5 days, so a same-week re-release does not
+    # regenerate the PR (security updates are not delayed).
+    cooldown:
+      default-days: 5
+    open-pull-requests-limit: 3
     groups:
       actions:
         patterns:

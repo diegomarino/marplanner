@@ -8,36 +8,23 @@ Boundary guarantees in [boundary-guarantees.yaml](boundary-guarantees.yaml) reco
 
 - `npm run check:fast` runs formatting, generated member-color and emoji freshness, types, lint, all `tools/*.test.mjs` Node tests and client unit tests. It is not static-only and does not produce standard acceptance evidence.
 - `npm run check:standard` first runs `check:preflight`, then stamps the maintained candidate, checks formatting/generated artifacts/types/lint, builds it, executes the discovered Node and client/boundary/integration Vitest cohorts with coverage, and verifies OpenAPI, UI debt, exception lists, accessible names, coverage and runner evidence.
-- `npm run check:full` runs standard followed by `check:aggregate-only`: browser preflight, build, built-render smoke, Playwright discovery/execution for the acceptance cohort, and aggregate cohort verification. The real-clock time-announcements browser spec is not in that cohort. Run it locally with `npm run test:e2e:time-announcements`. On a pull request, add the `e2e-time-announcements` label, or run the `Time announcements browser check` workflow and choose the branch. That run uses GitHub-hosted Ubuntu, does not take the Mac mini, and is not part of the required `full` gate.
+- `npm run check:full` runs standard followed by `check:aggregate-only`: browser preflight, build, built-render smoke, Playwright discovery/execution for the acceptance cohort, and aggregate cohort verification. The real-clock time-announcements browser spec is not in that cohort. Run it locally with `npm run test:e2e:time-announcements`. On a pull request, add the `e2e-time-announcements` label, or run the `Time announcements browser check` workflow and choose the branch. That run uses GitHub-hosted Ubuntu and is not part of the required `full` gate.
 
 Apply the required tier to the same reviewed candidate bytes. Changes after a pass invalidate affected evidence. `npm run build` alone produces a distributable build; it does not accept the candidate.
 
 `npm run check:preflight` checks that the checkout matches the git-tracked file list, that every coverage-policy file is present, and the pinned Node/npm/Vitest toolchain without running tests. The Node and Vitest pins live in `PINNED_TOOLCHAIN` in `tools/verify-coverage.mjs` and in `coveragePolicy.toolchain` of `tests/fixtures/assembly-cohort.json`; bump both with the exact `vitest`/`@vitest/coverage-v8` pins in `package.json` and re-measure the coverage cohort. Dependabot keeps Vitest in its own `vitest-toolchain` group for that reason. Standard runs it before the destructive stamp. `npm run check:preflight:browser` also checks the retained candidate stamp and standard coverage/cohort artifacts, rejects inherited `SCHEDULER_DISABLED=1` and acceptance server reuse (`PW_REUSE_SERVER=1`), and checks local `BASE_URL`/`PORT` consistency before the aggregate build. These early checks do not establish browser execution or a complete environment/build fingerprint; the browser runner still owns browser availability, synthetic data and server startup.
 
-CI calls the existing selector in `mac-mini-ci.yml`. Trusted internal pushes and
-same-repository PRs use the existing `[self-hosted, macOS, macmini]` labels for
-`standard`, `native` and `container`. GitHub queues jobs while the runner is busy,
-offline or temporarily disconnected; there is no availability lookup or automatic
-hosted fallback. Local outages leave CI waiting. GitHub currently cancels
-self-hosted jobs after [24 hours in the queue](https://docs.github.com/en/actions/reference/limits),
-so the required checks can fail without execution.
+CI runs every job of `coverage.yml` on GitHub-hosted `ubuntu-latest`. Once the
+repository is public, `standard` and `native` can move to `macos-15`, which is
+about twice as fast for this suite and free for public repositories; `container`
+stays on Ubuntu because hosted macOS has no Docker engine. The repository is public, and a fork PR
+controls the workflow files it runs, so no runner on the maintainer's own
+hardware is registered or referenced. `tools/candidate-identity.test.mjs` fails
+if any workflow job targets a runner that is not GitHub-hosted.
 
-Fork PRs, Dependabot runs/PRs and events without established trust retain hosted execution on GitHub-hosted
-Ubuntu for both native checks and containers. The `force_hosted` workflow-dispatch
-boolean defaults to false and explicitly selects those hosted routes. The trust
-guard checks both the initiating actor and PR author, so rerunning a Dependabot
-PR as a maintainer does not route it to the persistent runner. The old
-`MP_FORCE_HOSTED` variable no longer affects routing. `RUNNER_READ_TOKEN` is no
-longer consumed; missing credentials and API lookup failures cannot trigger paid
-fallback. Existing remote secrets and variables need not be removed.
-
-Runner configuration remains the existing label array in `mac-mini-ci.yml`,
-validated before trusted jobs are scheduled. Missing or invalid labels fail with
-an actionable error. An unregistered runner or a runner with mismatched labels
-leaves jobs queued: the selector deliberately does not query registration or
-availability. Operators must check repository Settings > Actions > Runners for
-all required labels. Recover the existing runner or explicitly dispatch with
-`force_hosted=true`; rerunning an ordinary push/PR does not enable hosted execution.
+`native` waits for `standard`; `container` starts at the same time as
+`standard`, since it builds from its own checkout. A new push to a pull request
+cancels that pull request's previous run. Pushes to `main` are never cancelled.
 
 `standard` runs the complete standard tier. `native` independently installs the
 same candidate, restores the standard tar archive with its original timestamps,
@@ -49,15 +36,11 @@ names include run ID and attempt to prevent mixing retries. Each job has a fresh
 checkout path, job-owned npm configuration/cache/prefix and browser installation;
 no personal environment files, desktop session or existing browser cache is used.
 
-`container` builds and accepts the Docker image on the selected runner, including
-its browser flow. Local execution requires an already configured Linux Docker
-engine accessible to the runner service account; its prerequisite check fails
-with recovery instructions when that configuration is unavailable. This routing
-change does not install Docker, start host services or add runners. Builds retain
-the runner architecture and existing image/evidence identity checks. The single
-registered Mac mini serializes local jobs; job-owned checkout/cache paths and
-browser/printer locking remain unchanged. The required `full` check always runs on Ubuntu and succeeds
-only when `select`, `standard`, `native` and `container` all succeeded. Failure,
+`container` builds and accepts the Docker image, including its browser flow. Its
+prerequisite check fails when no Linux Docker engine is available. Builds use the
+runner architecture and keep the existing image/evidence identity checks. The
+required `full` check succeeds only when `standard`, `native` and `container` all
+succeeded. Failure,
 cancellation, missing constituents or unexpected skips fail the aggregate gate.
 The required status names remain `standard` and `full`.
 

@@ -61,25 +61,15 @@ test("CI binds the checked-out tree instead of a stale embedded candidate hash",
   const config = load(workflow);
   assert.deepEqual(Object.keys(config.on).sort(), ["pull_request", "push", "workflow_dispatch"]);
   assert.deepEqual(config.on.push.branches, ["main"]);
-  assert.deepEqual(Object.keys(config.jobs).sort(), [
-    "container",
-    "full",
-    "native",
-    "select",
-    "standard",
-  ]);
-  assert.deepEqual(config.jobs.full.needs, ["select", "standard", "native", "container"]);
+  assert.deepEqual(Object.keys(config.jobs).sort(), ["container", "full", "native", "standard"]);
+  assert.deepEqual(config.jobs.full.needs, ["standard", "native", "container"]);
   assert.equal(config.jobs.full.if, "${{ always() }}");
-  assert.equal(
-    config.jobs.container["runs-on"],
-    "${{ fromJSON(needs.select.outputs.container_runner) }}"
-  );
-  assert.deepEqual(config.jobs.container.needs, ["select", "standard"]);
-  for (const job of ["standard", "native"]) {
-    assert.equal(config.jobs[job]["runs-on"], "${{ fromJSON(needs.select.outputs.runner) }}");
-    assert.ok(config.jobs[job].needs.includes("select"));
+  for (const job of ["standard", "native", "container"]) {
+    assert.equal(config.jobs[job]["runs-on"], "ubuntu-latest");
   }
-  assert.equal(config.jobs.select.uses, "./.github/workflows/mac-mini-ci.yml");
+  assert.equal(config.jobs.standard.needs, undefined);
+  assert.equal(config.jobs.container.needs, undefined);
+  assert.deepEqual(config.jobs.native.needs, ["standard"]);
   const steps = (job) => config.jobs[job].steps;
   const commands = (job) =>
     steps(job)
@@ -181,116 +171,38 @@ test("time-announcements browser check runs only when requested and stays off th
   assert.equal(JSON.stringify(workflow).includes("macmini"), false);
 });
 
-test("runner selector queues trusted jobs and requires explicit hosted execution", async () => {
-  const { readFileSync, existsSync } = await import("node:fs");
+test("every workflow job runs on a GitHub-hosted runner", async () => {
+  const { readFileSync, readdirSync } = await import("node:fs");
   const { load } = await import("js-yaml");
-  const selector = load(readFileSync(".github/workflows/mac-mini-ci.yml", "utf8"));
-  const coverage = load(readFileSync(".github/workflows/coverage.yml", "utf8"));
-  const step = selector.jobs.select.steps[0];
-  assert.match(step.env.TRUSTED, /head.repo.full_name == github.repository/);
-  const trust = (actor, author, repository = "test/repo") => {
-    const github = {
-      actor,
-      repository: "test/repo",
-      event: author
-        ? { pull_request: { user: { login: author }, head: { repo: { full_name: repository } } } }
-        : {},
-    };
-    return Function("github", `return ${step.env.TRUSTED.slice(3, -2)}`)(github);
-  };
-  assert.equal(trust("maintainer", "maintainer"), true);
-  assert.equal(trust("maintainer"), true);
-  assert.equal(trust("contributor", "contributor", "fork/repo"), false);
-  assert.equal(trust("dependabot[bot]", "dependabot[bot]"), false);
-  assert.equal(trust("maintainer", "dependabot[bot]"), false);
-  assert.equal(trust("dependabot[bot]"), false);
-  assert.equal(step.env.FORCE_HOSTED, "${{ inputs.force_hosted || false }}");
-  assert.equal(step.env.RUNNER_READ_TOKEN, undefined);
-  assert.equal(coverage.jobs.select.secrets, undefined);
-  for (const workflow of [selector, coverage]) {
-    assert.equal(workflow.on.workflow_dispatch.inputs.force_hosted.type, "boolean");
-    assert.equal(workflow.on.workflow_dispatch.inputs.force_hosted.default, false);
-  }
-  assert.equal(
-    selector.on.workflow_call.outputs.container_runner.value,
-    "${{ jobs.select.outputs.container_runner }}"
-  );
-  const script = step.run.split("python3 - <<'PY'\n")[1].split("\nPY")[0];
-  const local = ["self-hosted", "macOS", "macmini"];
-  const root = mkdtempSync(join(tmpdir(), "runner-selector-"));
-  try {
-    for (const [label, changes, trusted, forced, token, throws, expected, container] of [
-      ["idle", {}, "true", "false", "test", false, local, local],
-      ["busy", { busy: true }, "true", "false", "test", false, local, local],
-      ["offline", { status: "offline" }, "true", "false", "test", false, local, local],
-      ["disconnected", { runners: [] }, "true", "false", "test", false, local, local],
-      ["lookup failure", {}, "true", "false", "test", true, local, local],
-      ["no credentials", {}, "true", "false", "", true, local, local],
-      ["fork", {}, "false", "false", "", true, ["ubuntu-latest"], ["ubuntu-latest"]],
-      ["unknown trust", {}, "", "false", "", true, ["ubuntu-latest"], ["ubuntu-latest"]],
-      [
-        "dependabot",
-        {},
-        String(trust("dependabot[bot]", "dependabot[bot]")),
-        "false",
-        "",
-        true,
-        ["ubuntu-latest"],
-        ["ubuntu-latest"],
-      ],
-      [
-        "dependabot rerun",
-        {},
-        String(trust("maintainer", "dependabot[bot]")),
-        "false",
-        "",
-        true,
-        ["ubuntu-latest"],
-        ["ubuntu-latest"],
-      ],
-      ["forced", {}, "true", "true", "", true, ["ubuntu-latest"], ["ubuntu-latest"]],
-      ["forced fork", {}, "false", "true", "", true, ["ubuntu-latest"], ["ubuntu-latest"]],
-    ]) {
-      const output = join(root, label);
-      const runner = {
-        name: "macmini",
-        status: "online",
-        busy: false,
-        labels: local.map((name) => ({ name })),
-        ...changes,
-      };
-      const response = changes.runners ? changes : { runners: [runner] };
-      const setup = throws
-        ? "import urllib.request\ndef unavailable(*args, **kwargs):\n    raise OSError('lookup unavailable')\nurllib.request.urlopen = unavailable\n"
-        : `import io, urllib.request\nurllib.request.urlopen = lambda *args, **kwargs: io.StringIO(${JSON.stringify(JSON.stringify(response))})\n`;
-      const result = spawnSync("python3", ["-c", setup + script], {
-        env: {
-          ...process.env,
-          ...step.env,
-          RUNNER_READ_TOKEN: token,
-          REPOSITORY: "test/repo",
-          TRUSTED: trusted,
-          FORCE_HOSTED: forced,
-          GITHUB_OUTPUT: output,
-        },
-        encoding: "utf8",
-      });
-      assert.equal(result.status, 0, `${label}: ${result.stderr}`);
-      const outputs = Object.fromEntries(
-        readFileSync(output, "utf8")
-          .trim()
-          .split("\n")
-          .map((line) => {
-            const [key, value] = line.split("=");
-            return [key, JSON.parse(value)];
-          })
+  // The repository is public: a fork PR controls the workflow files, so no job
+  // may target a self-hosted runner and no selector may choose one. A pattern
+  // is not enough: a self-hosted runner can carry any custom label, such as
+  // "ubuntu-private". Add a label here only after checking it is GitHub-hosted.
+  const hosted = new Set(["ubuntu-latest", "macos-15"]);
+  const files = readdirSync(".github/workflows").filter((name) => /\.ya?ml$/.test(name));
+  assert.ok(files.includes("coverage.yml"));
+  for (const file of files) {
+    const text = readFileSync(join(".github/workflows", file), "utf8");
+    assert.doesNotMatch(text, /self-hosted|macmini/, file);
+    for (const [name, job] of Object.entries(load(text).jobs)) {
+      if (job.uses) continue;
+      assert.ok(
+        hosted.has(job["runs-on"]),
+        `${file}: ${name} runs on ${JSON.stringify(job["runs-on"])}`
       );
-      assert.deepEqual(outputs.runner, expected, label);
-      assert.deepEqual(outputs.container_runner, container, label);
     }
-    const dockerCheck = coverage.jobs.container.steps.find(
-      (step) => step.name === "Require a configured Linux Docker engine"
-    ).run;
+  }
+});
+
+test("container check requires a Linux Docker engine", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { load } = await import("js-yaml");
+  const coverage = load(readFileSync(".github/workflows/coverage.yml", "utf8"));
+  const dockerCheck = coverage.jobs.container.steps.find(
+    (step) => step.name === "Require a configured Linux Docker engine"
+  ).run;
+  const root = mkdtempSync(join(tmpdir(), "docker-check-"));
+  try {
     mkdirSync(join(root, "bin"));
     for (const [name, command, status] of [
       ["linux", "echo linux", 0],
@@ -303,26 +215,7 @@ test("runner selector queues trusted jobs and requires explicit hosted execution
         encoding: "utf8",
       });
       assert.equal(result.status, status, name);
-      if (status) assert.match(result.stdout, /::error::.*Linux Docker engine.*force_hosted=true/);
-    }
-    for (const labels of ["", "[]", "invalid", '["self-hosted"]', '["self-hosted","macOS",null]']) {
-      const output = join(root, `missing-${labels.length}`);
-      const result = spawnSync("python3", ["-c", script], {
-        env: {
-          ...process.env,
-          TRUSTED: "true",
-          FORCE_HOSTED: "false",
-          LOCAL_RUNNER_LABELS: labels,
-          GITHUB_OUTPUT: output,
-        },
-        encoding: "utf8",
-      });
-      assert.notEqual(result.status, 0);
-      assert.match(
-        result.stdout + result.stderr,
-        /LOCAL_RUNNER_LABELS.*self-hosted.*macOS.*macmini/
-      );
-      assert.equal(existsSync(output), false);
+      if (status) assert.match(result.stdout, /::error::.*Linux Docker engine/);
     }
   } finally {
     rmSync(root, { recursive: true, force: true });
