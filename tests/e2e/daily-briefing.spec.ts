@@ -987,7 +987,7 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   });
   await expect(page.getByTestId(`chores-board-column-${optOutMember.id}`)).toBeVisible();
 
-  // 4) Admin unlock enters the protected subtree before the existing long-press/PIN flow.
+  // 4) Admin unlock enters the protected subtree before the existing tap/PIN flow.
   await unlockAdmin(page, MP_ADMIN_PIN);
 
   // 5) Pair through the compact shared-session presentation (printing.spec.ts's precedent).

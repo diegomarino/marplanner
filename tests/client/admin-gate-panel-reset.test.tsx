@@ -19,7 +19,7 @@ import type { HouseholdSettingsValue } from "@/lib/householdSettings";
  * loading gate and reach its title/description header, even where the panel's OWN
  * fetch payload doesn't match what it expects (any resulting parse error is caught
  * internally and only affects that panel's error text, never the header).
- * `unlocked: true` is mocked directly (skips the long-press + PIN flow — irrelevant to
+ * `unlocked: true` is mocked directly (skips the Admin tap + PIN flow — irrelevant to
  * this fence) and `@/lib/householdSettings` is mocked so `LanguageProvider` resolves
  * synchronously, matching the house pattern in the other AdminGate/panel tests.
  */

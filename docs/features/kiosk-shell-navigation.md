@@ -18,10 +18,10 @@ cookie exists, it sees the provisioning screen where the raw `*` key is entered 
 for an httpOnly-cookie-bound device key. A provisioned device lands on the dashboard and never shows
 those screens again unless its key is revoked.
 
-### User Story 2 — Enter admin via long-press + PIN
+### User Story 2 — Enter admin via tap + PIN
 
-The admin link is visible but needs a sustained ~3s long-press (a casual tap does nothing); the PIN gate
-follows, and on the correct PIN ephemeral admin-unlock UI state is set. It re-locks on leaving the admin
+The admin link is visible and a plain tap opens the PIN gate (`ADR-034`); the keypad submits the PIN
+by itself once it is complete, and on the correct PIN ephemeral admin-unlock UI state is set. It re-locks on leaving the admin
 subtree, on inactivity, and on refresh — while the backend authorizes purely by API key, never by PIN.
 
 ### User Story 3 — Degrade gracefully when a domain is down
@@ -58,7 +58,7 @@ local failure.
 
 - **FR-008**: Given a device that is unprovisioned (at boot or on any later navigation or refresh), when any surface is requested, then it MUST show the access gate then the provisioning screen, and it MUST never show household data. Contract: KIOSK-SHELL-NAVIGATION-AC-01.
 
-- **FR-009**: Given admin content, when it is reached, then it MUST be reachable only after long-press + PIN, while the backend MUST authorize by API key regardless of PIN state. Contract: KIOSK-SHELL-NAVIGATION-AC-02.
+- **FR-009**: Given admin content, when it is reached, then it MUST be reachable only through the PIN gate, while the backend MUST authorize by API key regardless of PIN state. Contract: KIOSK-SHELL-NAVIGATION-AC-02.
 
 - **FR-010**: Given any widget's "today", when it is computed, then it MUST match the household timezone (the acceptance surface for FR-003/INV-03). Contract: KIOSK-SHELL-NAVIGATION-AC-03.
 
@@ -104,7 +104,7 @@ local failure.
 - Delegated domains own their data; the shell invents no domain logic and reads/writes through their
   APIs. The scheduler / ADR-035 connected-session signal feeds the health indicator and the
   capability-based dispatch of hardware work.
-- Long-press duration, inactivity timeout, and refresh-idle threshold are configurable UI params with
+- Inactivity timeout and refresh-idle threshold are configurable UI params with
   sensible defaults (Open Decision; possible future App Settings).
 - No owned server table and no offline data cache in this system; browser-local state is device-local and not
   migrated (ADR-026), with a clear re-provision / admin-unlock path.

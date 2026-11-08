@@ -182,10 +182,7 @@ async function unlockCurrentAdminRouteWithKeyboard(page: Page): Promise<void> {
     await tabTo(page, digitButton);
     await page.keyboard.press("Enter");
   }
-  const unlock = page.getByTestId("admin-pin-unlock");
-  await tabTo(page, unlock);
-  await page.keyboard.press("Enter");
-  // Unlocked: the admin sidebar is on every admin page, whichever one was requested.
+  // The completed PIN submits itself. Unlocked: the admin sidebar is on every admin page, whichever one was requested.
   await expect(page.getByTestId("admin-sidebar")).toBeVisible({ timeout: 10_000 });
 }
 
@@ -193,12 +190,10 @@ async function navigateFromHomeToPluginManagementWithKeyboard(
   page: Page,
   copy: Copy
 ): Promise<void> {
-  // With Admin as its only entry, Options is the long-press Admin affordance itself.
+  // With Admin as its only entry, Options is the Admin affordance itself.
   const admin = page.getByRole("button", { name: copy["shell.options.label"], exact: true });
   await tabTo(page, admin);
-  await page.keyboard.down("Enter");
-  await expect(page).toHaveURL(/\/admin$/, { timeout: 5_500 });
-  await page.keyboard.up("Enter");
+  await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/admin$/);
   await unlockCurrentAdminRouteWithKeyboard(page);
   const plugins = page.getByTestId("admin-nav-plugins");

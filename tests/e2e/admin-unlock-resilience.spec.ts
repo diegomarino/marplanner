@@ -1,21 +1,9 @@
-// admin-unlock-resilience.spec.ts — the regression test, in its final form.
+// admin-unlock-resilience.spec.ts — the Admin entry and protected-route PIN flows end to end.
 //
-// LINEAGE, because this spec has deliberately changed meaning once: it began as proof that the
-// shared unlock helper's RETRY recovered from a layout-shift-cancelled press, asserting
-// `attempts > 1`. That assertion carried its own retirement signal: the day was fixed at the
-// source, the first press would survive the shift, `attempts` would be 1, and this spec would go
-// red — forcing exactly this rewrite. fixed with pointer capture, the spec went red on
-// schedule (CI run 34486569445), the helper's retry collapsed to a single press, and this file now
-// pins the fix itself:
-//
-// a layout shift under a STATIONARY pointer must NOT cancel the hold.
-//
-// The sabotage below is the exact reproduction from the investigation: 200ms into the hold,
-// insert a 300px spacer above the affordance so it moves out from under the unmoving pointer. On
-// the old `onMouseLeave={cancelPress}` implementation this cancelled the press 100% of the time
-// (control pair: SHIFT=false / CONTROL=true). With pointer capture the element keeps receiving the
-// pointer stream wherever it moves, so a SINGLE press must complete — there is no retry left to
-// hide behind.
+// The Admin affordance opens the PIN gate on a plain tap (ADR-034). The earlier three-second
+// hold, and its layout-shift regression (#793, fixed with pointer capture), no longer exist: with
+// no press to keep alive there is nothing a layout shift can cancel. The first test pins the tap
+// entry itself; the second proves every protected destination survives load and refresh.
 
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import { messages, resolveLang } from "../../src/client/i18n/messages";
@@ -25,7 +13,6 @@ const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "mpg-e2e-access-token";
 const BOOTSTRAP_KEY = process.env.MP_BOOTSTRAP_KEY ?? "mpk-e2e-bootstrap-key";
 const MP_ADMIN_PIN = process.env.MP_ADMIN_PIN ?? "1234";
 
-const SPACER_ATTR = "data-mp-shift-probe";
 type Translations = (typeof messages)[ReturnType<typeof resolveLang>];
 
 async function provision(page: Page): Promise<void> {
@@ -41,27 +28,7 @@ async function provision(page: Page): Promise<void> {
   await expect(page.getByTestId("home-surface")).toBeVisible({ timeout: 15_000 });
 }
 
-/** Arm a ONE-SHOT layout shift 200ms into the first press on the affordance. */
-async function armOneShotShift(page: Page): Promise<void> {
-  await page.evaluate((attr) => {
-    const el = document.querySelector('[data-testid="admin-affordance"]');
-    if (!el?.parentElement) throw new Error("probe setup: admin affordance not found");
-    let armed = true;
-    el.addEventListener("pointerdown", () => {
-      if (!armed) return;
-      armed = false;
-      setTimeout(() => {
-        const spacer = document.createElement("div");
-        spacer.style.height = "300px";
-        spacer.setAttribute(attr, "");
-        document.documentElement.setAttribute(attr, "fired");
-        el.parentElement?.insertBefore(spacer, el);
-      }, 200);
-    });
-  }, SPACER_ATTR);
-}
-
-test("the hold SURVIVES a layout shift under a stationary pointer (#793 fixed via pointer capture)", async ({
+test("a plain tap on the Admin affordance opens the PIN gate and the completed PIN unlocks", async ({
   page,
 }) => {
   await provision(page);
@@ -71,22 +38,14 @@ test("the hold SURVIVES a layout shift under a stationary pointer (#793 fixed vi
   const m = messages[resolveLang(settings.locale.language)];
 
   // With Admin as its only entry, Options is the Admin affordance itself.
-  await expect(
-    page.getByRole("button", { name: m["shell.options.label"], exact: true })
-  ).toHaveAttribute("data-testid", "admin-affordance");
-  // A plain tap does not open Admin, but it says why.
-  await page.getByTestId("admin-affordance").click();
-  await expect(page.getByTestId("admin-hold-hint")).toHaveText(m["shell.options.holdHint"]);
-  await expect(page).toHaveURL((url) => url.pathname === "/");
-  await armOneShotShift(page);
+  const admin = page.getByRole("button", { name: m["shell.options.label"], exact: true });
+  await expect(admin).toHaveAttribute("data-testid", "admin-affordance");
+  await admin.click();
+  await expect(page).toHaveURL((url) => url.pathname === "/admin");
+  await expect(page.getByTestId("admin-pin-keypad")).toBeVisible();
 
-  // A SINGLE press — the helper has no retry. If pointer capture regresses, this throws.
   await unlockAdmin(page, MP_ADMIN_PIN);
-
   await expect(page.getByTestId("admin-overview")).toBeVisible({ timeout: 10_000 });
-  // The sabotage must actually have fired mid-hold — otherwise this spec proves nothing about
-  // shift survival and would pass on any implementation.
-  await expect(page.locator("html")).toHaveAttribute(SPACER_ATTR, "fired");
 });
 
 const adminDestinations: ReadonlyArray<{
@@ -151,7 +110,7 @@ const adminDestinations: ReadonlyArray<{
 test("every protected destination survives direct load and refresh with its primary action reachable", async ({
   page,
 }) => {
-  // Each destination exercises direct PIN entry before and after refresh. The physical hold is
+  // Each destination exercises direct PIN entry before and after refresh. The tap entry is
   // owned by the Options-menu entry test above, not duplicated on direct protected routes.
   test.setTimeout(90_000);
   await provision(page);

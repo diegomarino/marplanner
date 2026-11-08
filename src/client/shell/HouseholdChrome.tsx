@@ -7,9 +7,7 @@ import {
   useId,
   useRef,
   useState,
-  type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 
@@ -23,10 +21,6 @@ import { PrinterAttention } from "@/printing/PrinterAttention";
 import { PluginHealthIndicator } from "@/plugins/PluginHealthIndicator";
 import { PluginContribution, usePluginActive } from "@/plugins/contributions";
 import { familyRoutes, navigateHousehold } from "./routes";
-
-const ADMIN_HOLD_MS = 3_000;
-/** How long the "hold to open" hint stays after a press released too early. */
-const ADMIN_HOLD_HINT_MS = 2_500;
 
 function isUnmodifiedPrimaryClick(event: ReactMouseEvent<HTMLAnchorElement>): boolean {
   return (
@@ -88,12 +82,6 @@ function HouseholdChromeContent({
   const optionsId = useId();
   const optionsTriggerRef = useRef<HTMLButtonElement>(null);
   const mealsActive = usePluginActive("meals-recipes");
-  const adminHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const keyboardReleaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const keyboardHoldingRef = useRef(false);
-  const [adminHolding, setAdminHolding] = useState(false);
-  const holdHintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [holdHintVisible, setHoldHintVisible] = useState(false);
   const { unlocked } = useAdminUnlock();
   // Once admin is unlocked the bar turns into the admin bar: a way home and where you are.
   // The locked PIN screen keeps the household bar, so the kiosk is never a dead end.
@@ -102,144 +90,27 @@ function HouseholdChromeContent({
     (unlocked || isAdminPinBypassEnabled());
 
   const closeOptions = () => {
-    if (adminHoldTimerRef.current) clearTimeout(adminHoldTimerRef.current);
-    if (keyboardReleaseTimerRef.current) clearTimeout(keyboardReleaseTimerRef.current);
-    adminHoldTimerRef.current = null;
-    keyboardReleaseTimerRef.current = null;
-    keyboardHoldingRef.current = false;
-    setAdminHolding(false);
     setOptionsOpen(false);
     optionsTriggerRef.current?.focus();
   };
 
   const openAdmin = useCallback(() => {
-    if (adminHoldTimerRef.current) clearTimeout(adminHoldTimerRef.current);
-    if (keyboardReleaseTimerRef.current) clearTimeout(keyboardReleaseTimerRef.current);
-    adminHoldTimerRef.current = null;
-    keyboardReleaseTimerRef.current = null;
-    keyboardHoldingRef.current = false;
-    setAdminHolding(false);
     setOptionsOpen(false);
+    // The locked PIN gate keeps this bar, so a second tap (or a double tap) lands here while
+    // already on /admin. Pushing again would stack a history entry whose return path is /admin
+    // and make Cancel lose the family route the parent came from.
+    if (currentPath === "/admin" || currentPath.startsWith("/admin/")) return;
     window.history.pushState({ marplannerAdminReturnPath: currentPath }, "", appUrl("/admin"));
     window.dispatchEvent(new PopStateEvent("popstate"));
   }, [currentPath]);
 
-  const cancelAdminHold = useCallback(() => {
-    if (adminHoldTimerRef.current) clearTimeout(adminHoldTimerRef.current);
-    adminHoldTimerRef.current = null;
-    setAdminHolding(false);
-  }, []);
-
-  const hideHoldHint = useCallback(() => {
-    if (holdHintTimerRef.current) clearTimeout(holdHintTimerRef.current);
-    holdHintTimerRef.current = null;
-    setHoldHintVisible(false);
-  }, []);
-
-  // A press let go before the hold completed is a tap: say why nothing opened. A cancelled
-  // pointer or a lost focus is not a tap, so those go straight to `cancelAdminHold`.
-  const releaseAdminHold = useCallback(() => {
-    if (adminHoldTimerRef.current) {
-      if (holdHintTimerRef.current) clearTimeout(holdHintTimerRef.current);
-      setHoldHintVisible(true);
-      holdHintTimerRef.current = setTimeout(() => {
-        holdHintTimerRef.current = null;
-        setHoldHintVisible(false);
-      }, ADMIN_HOLD_HINT_MS);
-    }
-    cancelAdminHold();
-  }, [cancelAdminHold]);
-
-  const startAdminHold = useCallback(() => {
-    if (adminHoldTimerRef.current) return;
-    hideHoldHint();
-    // Dev-only local bypass already unlocks the PIN gate; keep the affordance path
-    // frictionless so local work does not wait the deliberate kiosk hold.
-    if (isAdminPinBypassEnabled()) {
-      openAdmin();
-      return;
-    }
-    setAdminHolding(true);
-    adminHoldTimerRef.current = setTimeout(openAdmin, ADMIN_HOLD_MS);
-  }, [hideHoldHint, openAdmin]);
-
-  useEffect(
-    () => () => {
-      cancelAdminHold();
-      if (keyboardReleaseTimerRef.current) clearTimeout(keyboardReleaseTimerRef.current);
-      if (holdHintTimerRef.current) clearTimeout(holdHintTimerRef.current);
-    },
-    [cancelAdminHold]
-  );
-
-  // The long-press Admin entry: the Options button itself while Admin is the only entry,
-  // otherwise the first item of the Options menu. Same hold, same testid either way.
+  // The Admin entry: the Options button itself while Admin is the only entry, otherwise the
+  // first item of the Options menu. A plain activation (tap, click, Enter/Space, or a synthetic
+  // AT click) opens the PIN gate; the PIN is the safeguard (ADR-034, ADR-013).
   const adminAffordanceProps = {
     "data-testid": "admin-affordance",
-    "data-hold-state": adminHolding ? "holding" : "idle",
-    onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => {
-      if (event.button !== 0) return;
-      keyboardHoldingRef.current = false;
-      try {
-        event.currentTarget.setPointerCapture(event.pointerId);
-      } catch {
-        // Pointer capture is unavailable in jsdom and can be rejected by a
-        // browser for an already-cancelled pointer. The timer remains usable.
-      }
-      startAdminHold();
-    },
-    onPointerUp: releaseAdminHold,
-    onPointerCancel: cancelAdminHold,
-    onLostPointerCapture: cancelAdminHold,
-    onKeyDown: (event: ReactKeyboardEvent<HTMLButtonElement>) => {
-      if (event.repeat || (event.key !== "Enter" && event.key !== " ")) return;
-      event.preventDefault();
-      keyboardHoldingRef.current = true;
-      startAdminHold();
-    },
-    onKeyUp: (event: ReactKeyboardEvent<HTMLButtonElement>) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      event.preventDefault();
-      releaseAdminHold();
-      keyboardReleaseTimerRef.current = setTimeout(() => {
-        keyboardHoldingRef.current = false;
-        keyboardReleaseTimerRef.current = null;
-      }, 0);
-    },
-    onBlur: () => {
-      keyboardHoldingRef.current = false;
-      cancelAdminHold();
-    },
-    onClick: (event: ReactMouseEvent<HTMLButtonElement>) => {
-      if (event.detail !== 0 || keyboardHoldingRef.current) return;
-      openAdmin();
-    },
+    onClick: openAdmin,
   };
-  const adminHoldProgress = (
-    <span
-      aria-hidden="true"
-      data-testid="admin-hold-progress"
-      data-progress-state={adminHolding ? "filling" : "idle"}
-      className={`bg-primary/25 absolute inset-x-0 bottom-0 h-1 origin-left transition-transform duration-[3000ms] ease-linear ${
-        adminHolding ? "scale-x-100" : "scale-x-0"
-      }`}
-    />
-  );
-  // Under the Options button it floats over the page; inside the menu it is a line of its own.
-  const adminHoldHint = (floating: boolean) =>
-    holdHintVisible && (
-      <span
-        role="status"
-        data-testid="admin-hold-hint"
-        className={
-          floating
-            ? "bg-popover text-popover-foreground absolute right-0 top-full z-20 mt-1 whitespace-nowrap rounded-md border px-2 py-1 text-sm shadow-md"
-            : "text-muted-foreground text-sm"
-        }
-      >
-        {t("shell.options.holdHint")}
-      </span>
-    );
   const adminIsOnlyOption = extraOptions.length === 0;
 
   useEffect(() => {
@@ -338,11 +209,10 @@ function HouseholdChromeContent({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="text-muted-foreground relative isolate overflow-hidden"
+                    className="text-muted-foreground"
                     {...adminAffordanceProps}
                   >
-                    <span className="relative z-10">{t("shell.options.label")}</span>
-                    {adminHoldProgress}
+                    {t("shell.options.label")}
                   </Button>
                 ) : (
                   <Button
@@ -373,22 +243,14 @@ function HouseholdChromeContent({
                   >
                     {/* TODO(density): remount with persisted boot density and shell visibility tests;
                         see docs/development/style-guide.md#release-density-behavior. */}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="relative isolate overflow-hidden"
-                      {...adminAffordanceProps}
-                    >
-                      <span className="relative z-10">{t("shell.options.admin")}</span>
-                      {adminHoldProgress}
+                    <Button type="button" variant="outline" {...adminAffordanceProps}>
+                      {t("shell.options.admin")}
                     </Button>
-                    {adminHoldHint(false)}
                     {extraOptions.map((entry) => (
                       <Fragment key={entry.id}>{entry.render()}</Fragment>
                     ))}
                   </div>
                 )}
-                {adminIsOnlyOption && adminHoldHint(true)}
               </div>
             )}
           </div>

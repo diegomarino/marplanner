@@ -69,7 +69,7 @@ historical record is fabricated to fill the numbering gap.
 - [ADR-031 Frontend Access Gate Stays Separate; Unauthenticated API Surface is Health-Only](ADR-031-frontend-access-gate-and-unauthenticated-surface.md)
 - [ADR-032 Bootstrap `*` Key Establishment (Deployment-Agnostic)](ADR-032-bootstrap-key-establishment.md)
 - [ADR-033 Fail-Closed Always; No Environment-Conditional Auth Bypass](ADR-033-fail-closed-no-environment-auth-bypass.md)
-- [ADR-034 Admin Entry Affordance: Visible Link, Long-Press to Activate](ADR-034-admin-entry-long-press-affordance.md)
+- [ADR-034 Admin Entry Affordance: Visible Link, Tap to Open the PIN Gate](ADR-034-admin-entry-long-press-affordance.md)
 - [ADR-035 Runtime Service Placement: Capability-Based, Decision/Execution Split](ADR-035-runtime-service-placement.md)
 - [ADR-036 Connection-Setup / Device Provisioning Placement](ADR-036-connection-setup-provisioning-placement.md)
 - [ADR-037 Credential Format, Generation, and Failure-Based Rate Limiting](ADR-037-credential-format-and-generation.md)
