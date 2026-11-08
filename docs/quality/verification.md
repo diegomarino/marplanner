@@ -14,10 +14,10 @@ Apply the required tier to the same reviewed candidate bytes. Changes after a pa
 
 `npm run check:preflight` checks that the checkout matches the git-tracked file list, that every coverage-policy file is present, and the pinned Node/npm/Vitest toolchain without running tests. The Node and Vitest pins live in `PINNED_TOOLCHAIN` in `tools/verify-coverage.mjs` and in `coveragePolicy.toolchain` of `tests/fixtures/assembly-cohort.json`; bump both with the exact `vitest`/`@vitest/coverage-v8` pins in `package.json` and re-measure the coverage cohort. Dependabot keeps Vitest in its own `vitest-toolchain` group for that reason. Standard runs it before the destructive stamp. `npm run check:preflight:browser` also checks the retained candidate stamp and standard coverage/cohort artifacts, rejects inherited `SCHEDULER_DISABLED=1` and acceptance server reuse (`PW_REUSE_SERVER=1`), and checks local `BASE_URL`/`PORT` consistency before the aggregate build. These early checks do not establish browser execution or a complete environment/build fingerprint; the browser runner still owns browser availability, synthetic data and server startup.
 
-CI runs every job of `coverage.yml` on GitHub-hosted `ubuntu-latest`. Once the
-repository is public, `standard` and `native` can move to `macos-15`, which is
-about twice as fast for this suite and free for public repositories; `container`
-stays on Ubuntu because hosted macOS has no Docker engine. The repository is public, and a fork PR
+CI runs every job of `coverage.yml` on GitHub-hosted runners: `standard` and
+`native` on `macos-15` (about twice as fast as Ubuntu for this suite, and free
+for public repositories), and `container` and `full` on `ubuntu-latest`, since
+hosted macOS has no Docker engine. The repository is public, and a fork PR
 controls the workflow files it runs, so no runner on the maintainer's own
 hardware is registered or referenced. `tools/candidate-identity.test.mjs` fails
 if any workflow job targets a runner that is not GitHub-hosted.

@@ -16,10 +16,9 @@ concurrency:
 jobs:
   standard:
     name: standard
-    # Switch standard and native to macos-15 once the repository is public:
-    # it runs standard in under half the time (4:49 vs 10:49) and is free
-    # there, but bills 10x while the repository is private.
-    runs-on: ubuntu-latest
+    # macOS runs standard in under half the time Ubuntu takes (4:49 vs 10:49)
+    # and is free for public repositories.
+    runs-on: macos-15
     timeout-minutes: 45
     env:
       CI: "true"
@@ -83,7 +82,7 @@ jobs:
     name: native
     needs:
       - standard
-    runs-on: ubuntu-latest
+    runs-on: macos-15
     timeout-minutes: 60
     env:
       CI: "true"
