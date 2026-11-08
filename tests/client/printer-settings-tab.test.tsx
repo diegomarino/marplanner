@@ -82,6 +82,8 @@ function putBodies(mock: ReturnType<typeof stubFetchRoutes>) {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  // A pairing remembers the printer; a later test would otherwise auto-reconnect on mount.
+  window.localStorage.clear();
 });
 
 describe("printer settings helpers", () => {
