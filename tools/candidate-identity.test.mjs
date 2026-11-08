@@ -175,8 +175,10 @@ test("every workflow job runs on a GitHub-hosted runner", async () => {
   const { readFileSync, readdirSync } = await import("node:fs");
   const { load } = await import("js-yaml");
   // The repository is public: a fork PR controls the workflow files, so no job
-  // may target a self-hosted runner and no selector may choose one.
-  const hosted = /^(ubuntu|macos|windows)-[a-z0-9.-]+$/;
+  // may target a self-hosted runner and no selector may choose one. A pattern
+  // is not enough: a self-hosted runner can carry any custom label, such as
+  // "ubuntu-private". Add a label here only after checking it is GitHub-hosted.
+  const hosted = new Set(["ubuntu-latest", "macos-15"]);
   const files = readdirSync(".github/workflows").filter((name) => /\.ya?ml$/.test(name));
   assert.ok(files.includes("coverage.yml"));
   for (const file of files) {
@@ -184,7 +186,7 @@ test("every workflow job runs on a GitHub-hosted runner", async () => {
     assert.doesNotMatch(text, /self-hosted|macmini/, file);
     for (const [name, job] of Object.entries(load(text).jobs)) {
       if (job.uses) continue;
-      assert.match(String(job["runs-on"]), hosted, `${file}: ${name}`);
+      assert.ok(hosted.has(job["runs-on"]), `${file}: ${name} runs on ${JSON.stringify(job["runs-on"])}`);
     }
   }
 });
