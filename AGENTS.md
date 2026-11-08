@@ -36,7 +36,9 @@ Run the owning test first, then widen:
 | Checkpoint               | `npm run check:fast`                                        |
 | CI gate (`coverage.yml`) | `npm run check:standard`, then `check:aggregate-only`       |
 
-`npm run format` fixes formatting; Prettier also covers Markdown, so it is the doc lint.
+Adding, renaming or removing a test or a `src/` file also means editing the
+[cohort fixture](#cohort-fixture). `npm run format` fixes formatting; Prettier also covers
+Markdown, so it is the doc lint.
 Acceptance rules (candidate stamp, coverage floors, cohorts):
 [verification](docs/quality/verification.md).
 
@@ -90,6 +92,8 @@ kind (`wouldYouRather` if corpus-backed, `streakText` if not) and mirror it:
 7. Corpus-backed blocks: data in `corpora/` (English `.json`, optional `.es.json` sibling); a
    block without a corpus has no language override
    ([daily-briefing](docs/features/daily-briefing.md)).
+8. Cohort fixture: the two new `<name>.ts` files and every new test case go into
+   `tests/fixtures/assembly-cohort.json` (see [Cohort fixture](#cohort-fixture)).
 
 Done when both of these hold:
 
@@ -101,14 +105,35 @@ Done when both of these hold:
   `npm exec -- vitest run tests/client/daily-briefing` and
   `npm exec -- vitest run tests/integration/daily-briefing --environment node`.
 
+## Cohort fixture
+
+`tests/fixtures/assembly-cohort.json` is the reviewed inventory of the repo, and the most
+often forgotten edit: local tests stay green while `check:standard` fails in CI. It has no
+generator; every change that alters the inventory updates it by hand in the same commit.
+
+| Change                                     | Fixture key                                                                                               | Enforced by                                                   |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Test case added, renamed or removed        | `testCohorts.runners.{node,vitest,playwright}.files` (file → titles; Playwright: test IDs)                | `check:test-cohorts:standard`, `check:test-cohorts`           |
+| Production file under `src/` added/removed | `coveragePolicy.files` (`layer`, `minimumTotals`, `minimumRates`)                                         | `check:coverage`                                              |
+| Route, scheduler job, plugin               | `coreRoutes`, `pluginRoutes`, `familyRouteIds`, `adminRouteIds`, `registeredJobIds`, `installedPluginIds` | `tests/integration/foundation-entrypoint.test.ts`             |
+| OpenAPI contract, host API export          | `apiContracts`, `hostApiExportNames`                                                                      | `check:openapi`, `tests/boundary/foundation-host-api.test.ts` |
+
+To resync test titles and coverage, from a clean worktree:
+
+1. `npm run test:cohorts:stamp`, `npm run test:cohorts:node`,
+   `npm run test:cohorts:vitest:list`, `npm run test:cohorts:vitest`.
+2. Copy the new titles (`fullName`) from `.quality/vitest-results.json` and the new files'
+   totals from `coverage/coverage-final.json` into the fixture; `normalizeVitest`
+   (`tools/verify-test-cohorts.mjs`) and `fromV8Coverage` (`tools/verify-coverage.mjs`)
+   produce the exact shapes. Then `npm run format`.
+3. The fixture is part of the candidate hash: re-stamp (`npm run test:cohorts:stamp`), then run
+   `npm run check:coverage && npm run check:test-cohorts:standard`.
+
+Done when both checks in step 3 pass. A file below its reviewed `minimumRates` gets more
+tests; the floors stay put.
+
 ## Gotchas
 
-- **Cohort fixture**: a new test case or production file makes `check:standard` fail until
-  `tests/fixtures/assembly-cohort.json` lists it (test titles under
-  `testCohorts.runners.vitest.files`, coverage minimums under `coveragePolicy.files`).
-  No generator exists; edit it by hand from `.quality/vitest-results.json` and
-  `coverage/coverage-final.json`, then run `npm run format`. Meet a coverage floor with
-  tests; the floors stay put.
 - **Candidate stamp**: `check:standard` stamps the tracked tree; stray untracked
   directories (for example `.playwright-mcp/`) or a nested worktree break it. Run it from a
   clean worktree.
