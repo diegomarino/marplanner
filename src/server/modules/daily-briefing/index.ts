@@ -38,11 +38,7 @@ import type {
   Weekday,
 } from "../../../shared";
 import { ALL_BLOCK_TYPES, isCorpusBackedBlockType, isKnownBlockType } from "./corpora/index";
-import {
-  blockKind,
-  blockScope,
-  type BlockRegistryType,
-} from "../../../shared/dailyBriefingBlocks";
+import { blockKind, blockScope, type BlockRegistryType } from "../../../shared/dailyBriefingBlocks";
 import { resolveCorpusLanguage } from "./blocks/context";
 import type { CorpusBlockParams } from "./blocks/context";
 import { readBlockOrder, resolveMemberBlockSettings } from "./settings";
