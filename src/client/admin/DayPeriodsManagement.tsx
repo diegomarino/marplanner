@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAdminUnlock } from "@/lib/adminUnlock";
 import { authFetch } from "@/lib/credential";
-import { DAY_PERIODS_CHANGED_EVENT } from "@/shell/screenAwake";
+import { DAY_PERIODS_CHANGED_EVENT } from "@/shell/screenAwakePreferences";
 import { useHouseholdSettings } from "@/lib/householdSettings";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ErrorNotice } from "@/components/ErrorNotice";

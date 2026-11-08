@@ -8213,7 +8213,7 @@
           "branches": 87.5
         }
       },
-      "src/client/shell/screenAwake.ts": {
+      "src/client/shell/screenAwakePreferences.ts": {
         "layer": "client",
         "minimumTotals": {
           "lines": 18,
