@@ -270,20 +270,24 @@ describe("phonics render adapter", () => {
 });
 
 describe("layoutPhonics", () => {
-  it("picks the largest font whose longest word still fits the content width", () => {
+  it("shrinks below the cap only when the longest word would not fit the content width", () => {
     const words = [
-      { word: "chair", graphemes: ["ch", "air"], tricky: false },
+      { word: "people", graphemes: ["p", "eo", "p", "le"], tricky: true },
       { word: "cat", graphemes: ["c", "a", "t"], tricky: false },
     ];
     const layout = layoutPhonics(words, 528);
-    const width = (px: number) => px * PHONICS_GLYPH_ADVANCE_EM * 5;
+    const width = (px: number) => px * PHONICS_GLYPH_ADVANCE_EM * 6;
+    expect(layout.fontSize).toBeLessThan(PHONICS_MAX_FONT_PX);
     expect(width(layout.fontSize)).toBeLessThanOrEqual(528);
     expect(width(layout.fontSize + 1)).toBeGreaterThan(528);
   });
 
-  it("caps the font for very short words", () => {
-    const layout = layoutPhonics([{ word: "go", graphemes: ["g", "o"], tricky: true }], 528);
-    expect(layout.fontSize).toBe(PHONICS_MAX_FONT_PX);
+  it("caps the font at 160px (~20mm at 203dpi), so every word of up to 5 letters prints the same size on 80mm paper", () => {
+    expect(PHONICS_MAX_FONT_PX).toBe(160);
+    for (const word of ["go", "cat", "chair"]) {
+      const layout = layoutPhonics([{ word, graphemes: [...word], tricky: false }], 528);
+      expect(layout.fontSize, word).toBe(160);
+    }
   });
 
   it("puts a dot under single letters and a dash under digraphs, spanning their cells", () => {
