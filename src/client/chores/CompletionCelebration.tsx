@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import type { MessageKey } from "@/i18n/messages";
 import { cn } from "@/lib/utils";
@@ -108,7 +108,9 @@ export function CompletionCelebration({
     if (soundRef.current) playCelebrationSound();
   }, []);
 
-  useEffect(() => {
+  // Layout effect: the dismiss listener must exist as soon as the overlay is in the DOM,
+  // or a tap landing before passive effects flush is lost.
+  useLayoutEffect(() => {
     const timer = setTimeout(() => dismissRef.current(), CELEBRATION_DURATION_MS);
     const dismiss = () => dismissRef.current();
     document.addEventListener("pointerdown", dismiss, { capture: true });
