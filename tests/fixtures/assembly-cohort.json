@@ -3674,7 +3674,8 @@
             "briefingBlocks — order moves a type and keeps repeated instances with their params",
             "briefingBlocks — order returns the same array when nothing moves",
             "briefingBlocks — dates and labels reads a calendar date's weekday without a timezone",
-            "briefingBlocks — dates and labels maps every weekday to its own key"
+            "briefingBlocks — dates and labels maps every weekday to its own key",
+            "briefingBlocks — catalogue-derived controls offers each block's declared count range and none to blocks without a count"
           ],
           "tests/client/daily-briefing-i18n-parity.test.ts": [
             "daily-briefing-i18n-parity every daily briefing key in en exists in es",
@@ -5506,6 +5507,7 @@
           ],
           "tests/integration/daily-briefing-render-defs.test.ts": [
             "daily-briefing render-defs — per-type render through the real bridge type \"message\" renders: raster produced, absent from unrendered AND failed lists",
+            "daily-briefing render-defs — per-type render through the real bridge type \"phonics\" renders: raster produced, absent from unrendered AND failed lists",
             "daily-briefing render-defs — per-type render through the real bridge type \"quoteOfDay\" renders: raster produced, absent from unrendered AND failed lists",
             "daily-briefing render-defs — per-type render through the real bridge type \"dadJoke\" renders: raster produced, absent from unrendered AND failed lists",
             "daily-briefing render-defs — per-type render through the real bridge type \"wordOfDay\" renders: raster produced, absent from unrendered AND failed lists",
@@ -5542,6 +5544,7 @@
             "daily-briefing render-defs — per-type render through the real bridge structural labels — household language (DAILY-BRIEFING-INV-06, Codex #709 P1 fold) weather renders the condition label in household language (RAIN / LLUVIA)",
             "daily-briefing render-defs — per-type render through the real bridge structural labels — household language (DAILY-BRIEFING-INV-06, Codex #709 P1 fold) streak's day-of-week strip renders in household language (W for Wednesday vs X for miércoles)",
             "daily-briefing render-defs — per-type render through the real bridge structural labels — household language (DAILY-BRIEFING-INV-06, Codex #709 P1 fold) an es envelope threads through the real bridge into a label-consuming def's ctx.composition.meta.language",
+            "daily-briefing render-defs — per-type render through the real bridge catalogue completeness registers one render definition per catalogue type, keyed by its own type",
             "daily-briefing render-defs — per-type render through the real bridge DoD: a full generation across all registered types drains unrendered_blocks to [] all 21 types in one envelope render with zero unrendered and zero failed, raster at least as tall as its tallest constituent"
           ],
           "tests/integration/daily-briefing-render-degrade.test.ts": [
