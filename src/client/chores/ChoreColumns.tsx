@@ -362,14 +362,22 @@ function ChoreColumn({
   return (
     <div
       data-testid={`${layout === "fit" ? "today-chores" : "chores-board"}-column-${column.memberId}`}
-      className="h-full min-w-[220px] flex-1 basis-[220px] overflow-y-auto rounded-2xl border p-3 shadow-sm [background:linear-gradient(180deg,color-mix(in_oklch,var(--member-color)_16%,var(--member-mix-ground)),color-mix(in_oklch,var(--member-color)_8%,var(--member-mix-ground)))] [border-color:color-mix(in_oklch,var(--member-color)_28%,var(--member-mix-ground))]"
+      className={cn(
+        // "fit" (Home) shares the width among every child so the kiosk never scrolls sideways;
+        // "scroll" (Tasks board) keeps a readable minimum and scrolls past it.
+        layout === "fit" ? "min-w-0 basis-0" : "min-w-[220px] basis-[220px]",
+        "h-full flex-1 overflow-y-auto rounded-2xl border p-3 shadow-sm [background:linear-gradient(180deg,color-mix(in_oklch,var(--member-color)_16%,var(--member-mix-ground)),color-mix(in_oklch,var(--member-color)_8%,var(--member-mix-ground)))] [border-color:color-mix(in_oklch,var(--member-color)_28%,var(--member-mix-ground))]"
+      )}
       // eslint-disable-next-line ui-policy/debt -- The configured member identity is passed through one CSS custom property into the token layer.
       style={{ "--member-color": scale.colorVar } as CSSProperties}
     >
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <span
           data-testid="today-chores-member-badge"
-          className={cn("min-w-0 rounded-full px-3 py-1 text-lg font-semibold", scale.badge)}
+          className={cn(
+            "min-w-0 truncate rounded-full px-3 py-1 text-lg font-semibold",
+            scale.badge
+          )}
         >
           {column.displayName}
         </span>
