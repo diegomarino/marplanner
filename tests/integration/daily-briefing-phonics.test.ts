@@ -213,6 +213,14 @@ describe("generatePhonics", () => {
     }
   });
 
+  it("handles dates before 1970 (negative day numbers)", () => {
+    for (const date of ["1969-12-31", "1950-06-15"]) {
+      const data = generatePhonics({ date, memberId: "m1", params: { level: "L2", count: 4 } });
+      expect(data.words).toHaveLength(4);
+      for (const w of data.words) expect(w.graphemes.join("")).toBe(w.word);
+    }
+  });
+
   it("throws on a date that is not YYYY-MM-DD", () => {
     expect(() => generatePhonics({ date: "not-a-date", memberId: "m1" })).toThrow(/date/);
   });

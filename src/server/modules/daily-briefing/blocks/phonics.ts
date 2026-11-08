@@ -80,7 +80,8 @@ export function generatePhonics(ctx: CorpusGenerationContext): PhonicsData {
       order = fisherYates(pool, hashSeed(`phonics|${level}|${pass}`));
       passes.set(pass, order);
     }
-    return order[position % pool.length];
+    // Offset within the pass, never negative: dates before 1970 give negative positions.
+    return order[position - pass * pool.length];
   };
 
   const picked: typeof pool = [];

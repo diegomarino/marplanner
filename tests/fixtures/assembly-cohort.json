@@ -5988,6 +5988,7 @@
             "generatePhonics returns `count` distinct words from the chosen level",
             "generatePhonics walks the whole level before repeating a word",
             "generatePhonics carries graphemes and the tricky flag through to the block data",
+            "generatePhonics handles dates before 1970 (negative day numbers)",
             "generatePhonics throws on a date that is not YYYY-MM-DD",
             "generatePhonics throws on an invalid level, an out-of-range count, or an unavailable language",
             "phonics render adapter passes valid words through",
