@@ -859,4 +859,60 @@ describe("PrintExecutor gesture-free reconnect", () => {
     expect(transport.reconnectCalls()).toBe(2);
     expect(screen.getByTestId("print-executor-state")).toHaveAttribute("data-state", "paired");
   });
+
+  it("a manual pair wins over a slower reconnect, which never overlaps itself", async () => {
+    const transport = createFakePrintTransport();
+    mockFetch.mockResolvedValueOnce(jsonResponse({ registered: true })); // manual pair
+    mockFetch.mockResolvedValueOnce(jsonResponse({ registered: true })); // manual re-pair
+    mockFetch.mockResolvedValue(new Response(null, { status: 204 }));
+
+    renderExecutor({ transport, pollIntervalMs: 1_000 });
+    fireEvent.click(screen.getByTestId("print-executor-pair-button"));
+    await flushMicrotasks();
+
+    let resolveReconnect: (() => void) | undefined;
+    const reconnect = vi.spyOn(transport, "reconnect").mockImplementation(
+      (remembered) =>
+        new Promise((resolve) => {
+          resolveReconnect = () => resolve(remembered);
+        })
+    );
+    transport.triggerDisconnect();
+    await flushMicrotasks();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2_000); // interval ticks while the attempt hangs
+    });
+    expect(reconnect).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByTestId("print-executor-pair-button"));
+    await flushMicrotasks();
+    expect(screen.getByTestId("print-executor-state")).toHaveAttribute("data-state", "paired");
+    const capabilityBefore = capabilityCalls();
+
+    resolveReconnect?.();
+    await flushMicrotasks();
+    expect(capabilityCalls()).toBe(capabilityBefore); // the stale attempt registers nothing
+    expect(screen.getByTestId("print-executor-state")).toHaveAttribute("data-state", "paired");
+  });
+
+  it("drops a reconnected link whose capability registration fails and keeps retrying", async () => {
+    remember();
+    const transport = createFakePrintTransport();
+    mockFetch.mockResolvedValueOnce(new Response(null, { status: 500 })); // capability fails
+    mockFetch.mockResolvedValueOnce(jsonResponse({ registered: true })); // next attempt
+    mockFetch.mockResolvedValue(new Response(null, { status: 204 }));
+
+    renderExecutor({ transport, pollIntervalMs: 1_000 });
+    await flushMicrotasks();
+
+    expect(transport.isReady()).toBe(false);
+    expect(screen.getByTestId("print-executor-state")).toHaveAttribute("data-state", "unpaired");
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000);
+    });
+    await flushMicrotasks();
+    expect(transport.reconnectCalls()).toBe(2);
+    expect(screen.getByTestId("print-executor-state")).toHaveAttribute("data-state", "paired");
+  });
 });
