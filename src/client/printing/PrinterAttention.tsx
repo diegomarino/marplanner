@@ -13,17 +13,27 @@ import {
 import { useT } from "@/i18n";
 import { usePrinterSession } from "./PrinterSession";
 
-/** A compact recovery entry point; it reports session facts but never infers printer health. */
+/** A compact recovery entry point; it reports session facts but never infers printer health.
+ * Discreet while the session is healthy (paired or printing) and labelled as an attention
+ * request only when action is needed (kiosk-shell-navigation contract). */
 export function PrinterAttention(): React.JSX.Element | null {
   const t = useT();
   const session = usePrinterSession();
   if (!session?.active) return null;
+  const healthy = session.displayState === "paired" || session.displayState === "printing";
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button type="button" variant="outline" data-testid="printer-attention-pill">
-          {t("printing.attention.pill")}
+        <Button
+          type="button"
+          variant={healthy ? "ghost" : "outline"}
+          data-testid="printer-attention-pill"
+          data-healthy={healthy ? "true" : "false"}
+        >
+          {healthy
+            ? `${t("printing.executor.title")} · ${t(session.stateLabelKey)}`
+            : t("printing.attention.pill")}
         </Button>
       </DialogTrigger>
       <DialogContent data-testid="printer-attention-dialog" showCloseButton={false}>

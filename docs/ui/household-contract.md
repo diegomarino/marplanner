@@ -26,7 +26,8 @@ guards `/admin/**` against accidental settings or destructive administration cha
 security boundary.
 
 The printer attention pill is visible by default when existing printing capability is active. It
-opens a focus-managed dialog containing generic attention copy, genuine session state if available,
+reads as a discreet printer status while the session is paired or printing, and as an attention
+request otherwise. It opens a focus-managed dialog containing generic attention copy, genuine session state if available,
 pair/re-pair, and a link to `/admin/printing`. Closing returns focus to the trigger.
 
 ## Dashboard

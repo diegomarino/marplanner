@@ -8,7 +8,12 @@ import {
   PrintExecutor,
   usePrinterSession,
 } from "@/printing/PrintExecutor";
-import { createFakePrintTransport } from "@/printing/transport";
+import { REMEMBERED_PRINTER_KEY } from "@/printing/rememberedPrinter";
+import {
+  createFakePrintTransport,
+  FAKE_PRINTER_IDENTITY,
+  PrintTransportError,
+} from "@/printing/transport";
 import type { AckRequest, ClaimResponse, PrintJob } from "../../src/shared";
 
 /** (US4, FR-019/FR-020/FR-021). Every scenario injects its own
@@ -146,6 +151,7 @@ describe("PrintExecutor", () => {
 
   beforeEach(() => {
     currentLanguage = "en";
+    window.localStorage.clear();
     mockFetch = vi.fn<typeof fetch>();
     vi.stubGlobal("fetch", mockFetch);
     vi.useFakeTimers();
@@ -685,6 +691,8 @@ describe("PrintExecutor", () => {
 
     expect(screen.getByTestId("print-executor-state")).toHaveTextContent("Ready");
 
+    // The gesture-free reconnect must fail for the disconnected state to persist.
+    transport.scriptReconnectFailure(new PrintTransportError("pairing_required", "gone"));
     transport.triggerDisconnect();
     await flushMicrotasks();
 
@@ -709,6 +717,7 @@ describe("PrintExecutor", () => {
     // Belt-and-braces path: drop readiness WITHOUT going through onDisconnect (disconnect
     // never notifies subscribers — see the fake's own doc comment) — this is the fallback
     // `pollTick` itself must still catch.
+    transport.scriptReconnectFailure(new PrintTransportError("pairing_required", "gone"));
     transport.disconnect();
 
     const claimCallsBefore = mockFetch.mock.calls.filter((c) =>
@@ -727,5 +736,127 @@ describe("PrintExecutor", () => {
       "data-state",
       "disconnected"
     );
+  });
+});
+
+describe("PrintExecutor gesture-free reconnect", () => {
+  let mockFetch: ReturnType<typeof vi.fn<typeof fetch>>;
+
+  beforeEach(() => {
+    currentLanguage = "en";
+    window.localStorage.clear();
+    mockFetch = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", mockFetch);
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    window.localStorage.clear();
+  });
+
+  function remember() {
+    window.localStorage.setItem(REMEMBERED_PRINTER_KEY, JSON.stringify(FAKE_PRINTER_IDENTITY));
+  }
+
+  function capabilityCalls(): number {
+    return mockFetch.mock.calls.filter((c) => String(c[0]).includes("/api/printing/capability"))
+      .length;
+  }
+
+  it("remembers the printer after a manual pair", async () => {
+    const transport = createFakePrintTransport();
+    mockFetch.mockResolvedValueOnce(jsonResponse({ registered: true }));
+    mockFetch.mockResolvedValue(new Response(null, { status: 204 }));
+
+    renderExecutor({ transport });
+    fireEvent.click(screen.getByTestId("print-executor-pair-button"));
+    await flushMicrotasks();
+
+    expect(JSON.parse(window.localStorage.getItem(REMEMBERED_PRINTER_KEY) ?? "null")).toEqual(
+      FAKE_PRINTER_IDENTITY
+    );
+  });
+
+  it("reconnects a remembered printer on mount without a gesture", async () => {
+    remember();
+    const transport = createFakePrintTransport();
+    mockFetch.mockResolvedValueOnce(jsonResponse({ registered: true }));
+    mockFetch.mockResolvedValue(new Response(null, { status: 204 }));
+
+    renderExecutor({ transport });
+    expect(screen.getByTestId("print-executor-state")).toHaveAttribute("data-state", "pairing");
+    expect(screen.queryByTestId("print-executor-pair-button")).not.toBeInTheDocument();
+    await flushMicrotasks();
+
+    expect(transport.reconnectCalls()).toBe(1);
+    expect(capabilityCalls()).toBe(1);
+    expect(screen.getByTestId("print-executor-state")).toHaveAttribute("data-state", "paired");
+    expect(screen.getByTestId("print-executor-paired-device")).toHaveTextContent("fake-printer");
+  });
+
+  it("falls back to the pair affordance when the browser cannot reach the remembered printer", async () => {
+    remember();
+    const transport = createFakePrintTransport();
+    transport.scriptReconnectFailure(new PrintTransportError("pairing_required", "no grant"));
+
+    renderExecutor({ transport, pollIntervalMs: 1_000 });
+    await flushMicrotasks();
+
+    expect(screen.getByTestId("print-executor-state")).toHaveAttribute("data-state", "unpaired");
+    expect(screen.getByTestId("print-executor-pair-button")).toBeInTheDocument();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5_000);
+    });
+    expect(transport.reconnectCalls()).toBe(1); // pairing_required stops the loop
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("reconnects by itself after an unexpected drop", async () => {
+    const transport = createFakePrintTransport();
+    mockFetch.mockResolvedValueOnce(jsonResponse({ registered: true }));
+    mockFetch.mockResolvedValueOnce(jsonResponse({ registered: true }));
+    mockFetch.mockResolvedValue(new Response(null, { status: 204 }));
+
+    renderExecutor({ transport, pollIntervalMs: 15_000 });
+    fireEvent.click(screen.getByTestId("print-executor-pair-button"));
+    await flushMicrotasks();
+    transport.triggerDisconnect();
+    await flushMicrotasks();
+
+    expect(transport.reconnectCalls()).toBe(1);
+    expect(capabilityCalls()).toBe(2);
+    expect(screen.getByTestId("print-executor-state")).toHaveAttribute("data-state", "paired");
+  });
+
+  it("keeps retrying an unreachable printer once per poll interval until it answers", async () => {
+    const transport = createFakePrintTransport();
+    mockFetch.mockResolvedValueOnce(jsonResponse({ registered: true }));
+    mockFetch.mockResolvedValueOnce(jsonResponse({ registered: true }));
+    mockFetch.mockResolvedValue(new Response(null, { status: 204 }));
+
+    renderExecutor({ transport, pollIntervalMs: 1_000 });
+    fireEvent.click(screen.getByTestId("print-executor-pair-button"));
+    await flushMicrotasks();
+    transport.scriptReconnectFailure(); // printer off: connect_failed, recoverable
+    transport.triggerDisconnect();
+    await flushMicrotasks();
+
+    expect(transport.reconnectCalls()).toBe(1);
+    expect(screen.getByTestId("print-executor-state")).toHaveAttribute(
+      "data-state",
+      "disconnected"
+    );
+    expect(screen.getByTestId("print-executor-pair-button")).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000);
+    });
+    await flushMicrotasks();
+
+    expect(transport.reconnectCalls()).toBe(2);
+    expect(screen.getByTestId("print-executor-state")).toHaveAttribute("data-state", "paired");
   });
 });

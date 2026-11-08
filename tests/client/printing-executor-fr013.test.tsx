@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LanguageProvider } from "@/i18n";
 import { PrinterAttention } from "@/printing/PrinterAttention";
 import { PrintExecutor } from "@/printing/PrintExecutor";
+import { REMEMBERED_PRINTER_KEY } from "@/printing/rememberedPrinter";
+import { createFakePrintTransport, FAKE_PRINTER_IDENTITY } from "@/printing/transport";
 
 /** FR-013 client half — the REAL `usePrintingPluginActive` hook (unmocked, unlike
  * `printing-executor.test.tsx`), proving the executor region hides/shows against its actual
@@ -44,6 +46,7 @@ describe("PrintExecutor — FR-013 hiding (issue #691)", () => {
   let mockFetch: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    window.localStorage.clear();
     mockFetch = vi.fn();
     vi.stubGlobal("fetch", mockFetch);
   });
@@ -104,5 +107,40 @@ describe("PrintExecutor — FR-013 hiding (issue #691)", () => {
 
     expect(screen.queryByTestId("print-executor")).not.toBeInTheDocument();
     expect(screen.queryByTestId("printer-attention-pill")).not.toBeInTheDocument();
+  });
+
+  it("labels the pill as an attention request while the printer is not paired", async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ active: true }), { status: 200 })
+    );
+    renderExecutor(<PrinterAttention />);
+    await flushMicrotasks();
+
+    const pill = screen.getByTestId("printer-attention-pill");
+    expect(pill).toHaveAttribute("data-healthy", "false");
+    expect(pill).toHaveTextContent("Printer attention");
+  });
+
+  it("turns the pill discreet once a remembered printer reconnects", async () => {
+    window.localStorage.setItem(REMEMBERED_PRINTER_KEY, JSON.stringify(FAKE_PRINTER_IDENTITY));
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ active: true }), { status: 200 })
+    );
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ registered: true }), { status: 200 })
+    ); // capability
+    mockFetch.mockResolvedValue(new Response(null, { status: 204 })); // claims: nothing queued
+    render(
+      <LanguageProvider>
+        <PrintExecutor transport={createFakePrintTransport()} pollIntervalMs={60_000}>
+          <PrinterAttention />
+        </PrintExecutor>
+      </LanguageProvider>
+    );
+    await flushMicrotasks(30);
+
+    const pill = screen.getByTestId("printer-attention-pill");
+    expect(pill).toHaveAttribute("data-healthy", "true");
+    expect(pill).toHaveTextContent("Printer · Ready");
   });
 });
