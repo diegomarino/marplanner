@@ -118,6 +118,9 @@ pass.
   never authorizes a backend request.
 - **E2E**: Playwright builds and starts its own server on port `43173`; the real-clock
   `time-announcements.spec.ts` runs only via `npm run test:e2e:time-announcements`.
+- **Install scripts**: `allowScripts` in `package.json` pins exact versions. A bump of a
+  package with an install script (`argon2`, `better-sqlite3`, `esbuild`, ...) must update
+  its entry; `npm install-scripts ls` lists the uncovered ones.
 - **Private seeds**: `seeds/seed*-PRIVATE.*` are gitignored real household data. Copy them
   into a new worktree with `npm run seed:sync-private`; keep them out of commits and
   fixtures.
