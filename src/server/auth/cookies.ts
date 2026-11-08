@@ -13,11 +13,20 @@
 export const DEVICE_COOKIE = "mp_device_key";
 export const GATE_COOKIE = "mp_gate";
 
+/** Lifetime of the gate, device and `mp_provisioned` cookies: 400 days, the
+ * longest Chromium accepts. Without it they are session cookies, and an Android
+ * PWA drops them whenever the app is closed, which logs the device out. Device
+ * keys never expire server-side (`expiresAt = null`), so the cookie must outlive
+ * the browser session too.
+ */
+export const AUTH_COOKIE_MAX_AGE_SECONDS = 400 * 24 * 60 * 60;
+
 /** Serialize an auth cookie with the one shared attribute policy: `Secure`
  * (accepted on localhost, enforced under the TLS-required-for-non-localhost
  * posture) + `HttpOnly` + `SameSite=Lax` (so a bookmark navigation into the app
- * still sends the cookie) + the deployment mount cookie path.
+ * still sends the cookie) + the deployment mount cookie path + a persistent
+ * `Max-Age`.
  */
 export function serializeAuthCookie(name: string, value: string, basePath = ""): string {
-  return `${name}=${value}; HttpOnly; Secure; SameSite=Lax; Path=${basePath}/`;
+  return `${name}=${value}; HttpOnly; Secure; SameSite=Lax; Path=${basePath}/; Max-Age=${AUTH_COOKIE_MAX_AGE_SECONDS}`;
 }

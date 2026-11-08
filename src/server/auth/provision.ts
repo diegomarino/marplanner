@@ -5,7 +5,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { getDb } from "../db/client";
 import { apiKeys } from "../db/schema";
 import { generateKey, hashKey, verifyKey } from "./credentials";
-import { DEVICE_COOKIE, serializeAuthCookie } from "./cookies";
+import { AUTH_COOKIE_MAX_AGE_SECONDS, DEVICE_COOKIE, serializeAuthCookie } from "./cookies";
 import { resolveAdminPin } from "./default-credentials";
 import argon2 from "argon2";
 import { DeviceCredentialError, normalizeLabel } from "./devices";
@@ -156,7 +156,7 @@ export async function provisionDevice(app: FastifyInstance, basePath = ""): Prom
       // Companion NON-HttpOnly marker cookie so the client can detect provisioned
       // state from its own credential's presence WITHOUT probing an authenticated
       // endpoint (FR-031 / ADR-059). Carries no secret — just a presence flag.
-      const provisionedMarker = `mp_provisioned=1; Secure; SameSite=Lax; Path=${basePath}/`;
+      const provisionedMarker = `mp_provisioned=1; Secure; SameSite=Lax; Path=${basePath}/; Max-Age=${AUTH_COOKIE_MAX_AGE_SECONDS}`;
       reply.header("Set-Cookie", [cookieValue, provisionedMarker]);
 
       // Return the provisioned result — body does NOT contain the raw key.
