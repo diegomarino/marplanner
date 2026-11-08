@@ -7865,16 +7865,16 @@
       "src/client/printing/PrinterAttention.tsx": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 19,
-          "statements": 22,
+          "lines": 16,
+          "statements": 18,
           "functions": 4,
-          "branches": 24
+          "branches": 21
         },
         "minimumRates": {
           "lines": 100,
           "statements": 100,
           "functions": 100,
-          "branches": 95.83
+          "branches": 95.23
         }
       },
       "src/client/printing/PrinterSession.tsx": {

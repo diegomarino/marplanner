@@ -26,14 +26,13 @@ export function PrinterAttention(): React.JSX.Element | null {
   const [pairRequested, setPairRequested] = useState(false);
   const displayState = session?.displayState;
 
+  // The request stays set until the dialog closes: a failed or cancelled pair leaves it open,
+  // and the next healthy state closes it. Clearing it on failure from an effect would race a
+  // quick retry (the stale effect can run after the next click and erase that request).
   useEffect(() => {
-    if (!pairRequested) return;
-    if (displayState === "paired" || displayState === "printing") {
+    if (pairRequested && (displayState === "paired" || displayState === "printing")) {
       setPairRequested(false);
       setOpen(false);
-    } else if (displayState !== "pairing") {
-      // The pair attempt ended without a connection (cancelled chooser, error): stay open.
-      setPairRequested(false);
     }
   }, [pairRequested, displayState]);
 
