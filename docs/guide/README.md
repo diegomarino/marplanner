@@ -42,7 +42,9 @@ The Home screen is what the tablet shows all day. One glance from the kitchen
 answers the three questions every family asks each morning:
 
 - **What's happening today?** The agenda lists all-day events, then timed events in
-  order. Each event is painted in the colours of the members it involves.
+  order. All-day events for the whole family come first, then each person's in
+  alphabetical order, then those that belong to nobody. Each event is painted in the
+  colours of the members it involves.
 - **Who still has chores to do?** There is one column per child for the current part
   of the day, with big emoji tiles that are easy to tap. A progress badge and a
   streak counter (🔥) sit next to each name.
