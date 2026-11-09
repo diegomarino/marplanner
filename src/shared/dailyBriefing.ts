@@ -1,4 +1,5 @@
 import type { WeekdayCode } from "./weekdays.js";
+import type { BlockRegistryType, BlockScope } from "./dailyBriefingBlocks.js";
 
 // ─────────────────────────────────────────────────────────────────────
 // Daily Briefing DTOs — pure types, no I/O, no deps.
@@ -18,45 +19,21 @@ export type BriefingStatus = "pending" | "ready" | "partial" | "failed" | "rende
 /** BlockType — the block-type vocabulary a stored envelope's blocks may use.
  * `"calendar"`/`"chores"` are the retired schemaVersion 1 names. `readBriefing` never
  * rewrites an existing row, so its payload keeps reading back exactly as generated
- * (INV-01). The 21-name registry vocabulary below is what schemaVersion 2 rows use; `"today"` replaces
- * `"calendar"`'s role and `"streak"` replaces `"chores"`'s.
+ * (INV-01). schemaVersion 2 rows use the catalogue vocabulary (`BRIEFING_BLOCKS` in
+ * `./dailyBriefingBlocks.ts`); `"today"` replaces `"calendar"`'s role and `"streak"` replaces
+ * `"chores"`'s.
  * `weather` (the briefing weather block) is scope
  * `shared`, present only when the household's daily[] forecast covers the briefing's
  * household-local date (WEATHER-INV-05) and never emitted with `status: "failed"`
  * (WEATHER-INV-10/12 — a failed/absent forecast contributes no block at all).
- * The block instance `type` follows the `ALL_BLOCK_TYPES` registry.
  */
-export type BlockType =
-  // Retired schemaVersion 1 names.
-  | "calendar"
-  | "chores"
-  // The block registry, verbatim from `ALL_BLOCK_TYPES`.
-  | "shotgun"
-  | "message"
-  | "streak"
-  | "today"
-  | "weather"
-  | "meals"
-  | "birthday"
-  | "reminders"
-  | "dadJoke"
-  | "wordOfDay"
-  | "animalFact"
-  | "numberFact"
-  | "onThisDay"
-  | "quoteOfDay"
-  | "trivia"
-  | "riddle"
-  | "wouldYouRather"
-  | "wordSearch"
-  | "drawingPrompt"
-  | "streakText"
-  | "weatherText"
-  | "phonics";
+export type BlockType = LegacyBlockType | BlockRegistryType;
 
-/** BlockScope — `chores`/`reminders` = member; `calendar`/`meals` = shared.
- */
-export type BlockScope = "shared" | "member";
+/** The retired schemaVersion 1 block names. */
+export const LEGACY_BLOCK_TYPES = ["calendar", "chores"] as const;
+export type LegacyBlockType = (typeof LEGACY_BLOCK_TYPES)[number];
+
+export type { BlockScope };
 
 /** Resolved meal content frozen in canonical menu order (ADR-045). */
 export interface BriefingMealItem {
