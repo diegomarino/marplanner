@@ -173,6 +173,46 @@ describe("household-day range and projection", () => {
     ).toEqual([]);
   });
 
+  it("orders all-day events: whole household, then each person alphabetically, then nobody's", () => {
+    const allDay = (id: string, assignedTo: string[]) =>
+      event(id, "2026-09-22", undefined, { allDay: true, assignedTo });
+    const result = presentAgenda(
+      [
+        allDay("Unowned first", []),
+        allDay("Blair only", ["b"]),
+        allDay("Archived only", ["c"]),
+        allDay("Ghost only", ["missing-aaa"]),
+        allDay("Household", ["b", "d", "a"]),
+        allDay("Alex and archived", ["c", "a"]),
+        allDay("Alex only", ["a"]),
+        allDay("Unowned second", []),
+        allDay("Household again", ["a", "b", "c", "d"]),
+        allDay("Blair and Alex", ["b", "a"]),
+        allDay("Blair again", ["b"]),
+        allDay("Household missing Drew", ["b", "a", "c"]),
+        event("Timed", "2026-09-22T09:00:00Z", "2026-09-22T09:30:00Z", { assignedTo: ["a"] }),
+      ],
+      [...members, { ...members[0], id: "d", displayName: "Drew", colorKey: "teal" }],
+      "UTC",
+      NOW
+    );
+    expect(result.map((item) => item.event.title)).toEqual([
+      "Household",
+      "Household again",
+      "Alex only",
+      "Blair and Alex",
+      "Household missing Drew",
+      "Alex and archived",
+      "Blair only",
+      "Blair again",
+      "Archived only",
+      "Ghost only",
+      "Unowned first",
+      "Unowned second",
+      "Timed",
+    ]);
+  });
+
   it("retains assignment order and readable archived/missing references without active identity", () => {
     const item = presentAgenda([events[1]], members, "UTC", NOW)[0];
     expect(item.activeAssignees).toEqual([

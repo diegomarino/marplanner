@@ -35,6 +35,40 @@ export function householdDayRange(timezone: string, now: number) {
   };
 }
 
+/** All-day rows read as groups: events for the whole active household first, then each
+ * person's events by name (an event for several people sorts by its names in alphabetical
+ * order), then events nobody owns. Ties keep the read order. Items are already all-day first.
+ */
+function sortAllDay(items: AgendaPresentationItem[], members: readonly Member[]): void {
+  const active = members.filter((member) => member.lifecycle === "active");
+  const collator = new Intl.Collator(undefined, { sensitivity: "base" });
+  const rank = (item: AgendaPresentationItem) => {
+    if (item.event.assignedTo.length === 0) return 2;
+    const owners = new Set(item.activeAssignees.map((assignee) => assignee.memberId));
+    return active.length > 1 && active.every((member) => owners.has(member.id)) ? 0 : 1;
+  };
+  // Archived or missing owners sort after every active name.
+  const names = (item: AgendaPresentationItem) => [
+    ...item.activeAssignees
+      .map((assignee) => [0, assignee.label] as const)
+      .sort((x, y) => collator.compare(x[1], y[1])),
+    ...item.fallbackAssigneeLabels.map((label) => [1, label] as const),
+  ];
+  const compare = (a: AgendaPresentationItem, b: AgendaPresentationItem) => {
+    const byRank = rank(a) - rank(b);
+    if (byRank !== 0 || rank(a) !== 1) return byRank;
+    const [left, right] = [names(a), names(b)];
+    for (let index = 0; index < Math.min(left.length, right.length); index++) {
+      const byName =
+        left[index][0] - right[index][0] || collator.compare(left[index][1], right[index][1]);
+      if (byName !== 0) return byName;
+    }
+    return left.length - right.length;
+  };
+  const allDayCount = items.filter((item) => item.kind === "all-day").length;
+  items.splice(0, allDayCount, ...items.slice(0, allDayCount).sort(compare));
+}
+
 export function presentAgenda(
   events: readonly FeedItem[],
   members: readonly Member[],
@@ -85,6 +119,7 @@ export function presentAgenda(
         fallbackAssigneeLabels,
       };
     });
+  sortAllDay(items, members);
   if (!items.some((item) => item.temporalState === "in-progress")) {
     const next = items.find((item) => item.kind === "timed" && item.temporalState === "future");
     if (next) next.temporalState = "next";

@@ -4928,6 +4928,7 @@
           "tests/client/today-agenda.test.tsx": [
             "household-day range and projection keeps read order for ties, all-day first, and emphasizes every current interval",
             "household-day range and projection selects only the first future tie when none is in progress; all-day cannot steal next",
+            "household-day range and projection orders all-day events: whole household, then each person alphabetically, then nobody's",
             "household-day range and projection retains assignment order and readable archived/missing references without active identity",
             "household-day range and projection filters padded reads using literal all-day dates and half-open household timed boundaries",
             "household-day range and projection does not invent a duration for a timed occurrence with no end",
