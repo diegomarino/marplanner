@@ -182,6 +182,7 @@ describe("household-day range and projection", () => {
         allDay("Blair only", ["b"]),
         allDay("Archived only", ["c"]),
         allDay("Ghost only", ["missing-aaa"]),
+        allDay("Two ghosts", ["zzz", "c"]),
         allDay("Household", ["b", "d", "a"]),
         allDay("Alex and archived", ["c", "a"]),
         allDay("Alex only", ["a"]),
@@ -206,11 +207,35 @@ describe("household-day range and projection", () => {
       "Blair only",
       "Blair again",
       "Archived only",
+      "Two ghosts",
       "Ghost only",
       "Unowned first",
       "Unowned second",
       "Timed",
     ]);
+  });
+
+  it("collates member names in the household language", () => {
+    const people = ["Ñora", "Nuria"].map((displayName, index) => ({
+      ...members[0],
+      id: `p${index}`,
+      displayName,
+    }));
+    const titles = (locale: string) =>
+      presentAgenda(
+        people.map((person) =>
+          event(person.displayName, "2026-09-22", undefined, {
+            allDay: true,
+            assignedTo: [person.id],
+          })
+        ),
+        [...people, members[1]],
+        "UTC",
+        NOW,
+        locale
+      ).map((item) => item.event.title);
+    expect(titles("es")).toEqual(["Nuria", "Ñora"]);
+    expect(titles("en")).toEqual(["Ñora", "Nuria"]);
   });
 
   it("retains assignment order and readable archived/missing references without active identity", () => {

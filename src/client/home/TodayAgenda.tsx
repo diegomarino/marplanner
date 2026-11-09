@@ -138,7 +138,9 @@ export function TodayAgenda(): React.JSX.Element {
   }, [state, now]);
 
   const items =
-    state.status === "ready" ? presentAgenda(state.events, state.members, state.timezone, now) : [];
+    state.status === "ready"
+      ? presentAgenda(state.events, state.members, state.timezone, now, language)
+      : [];
   const time =
     state.status === "ready"
       ? new Intl.DateTimeFormat(language === "es" ? "es-ES" : "en-GB", {

@@ -91,7 +91,7 @@ without the API simply keeps its default screen timeout.
 
 - **FR-015**: Given provisioned family-facing routes, when any such route renders, then it MUST share persistent navigation for dashboard, calendar, chores, and meals; administration MUST live only under the PIN-protected `/admin` subtree, and Daily Briefing MUST have no family-facing route. Contract: KIOSK-SHELL-NAVIGATION-INV-08.
 
-- **FR-016**: Given a provisioned household display on the dashboard, when the current day loads, then it MUST show today's agenda, one independently operable chore column per active child, and today's meal summary together, and one widget's failure MUST NOT hide the others. Contract: KIOSK-SHELL-NAVIGATION-AC-08.
+- **FR-016**: Given a provisioned household display on the dashboard, when the current day loads, then it MUST show today's agenda, one independently operable chore column per active child, and today's meal summary together, and one widget's failure MUST NOT hide the others. The agenda MUST list all-day events before timed ones, grouped as events for every active member, then events for some members ordered by their names alphabetically in the household language (a multi-person event by its sorted names; archived or missing owners after active ones), then events nobody owns, with ties in read order. Contract: KIOSK-SHELL-NAVIGATION-AC-08.
 
 - **FR-017**: Given any provisioned family-facing route, when a household member uses the persistent navigation, then dashboard, calendar, chores, and meals MUST be reachable without typing a URL, and Daily Briefing MUST be absent from that navigation and from the family-facing route set. Contract: KIOSK-SHELL-NAVIGATION-AC-09.
 
