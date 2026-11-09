@@ -38,7 +38,13 @@ import type {
   Weekday,
 } from "../../../shared";
 import { ALL_BLOCK_TYPES, isCorpusBackedBlockType, isKnownBlockType } from "./corpora/index";
-import { blockKind, blockScope, type BlockRegistryType } from "../../../shared/dailyBriefingBlocks";
+import {
+  blockScope,
+  isExternalBlockType,
+  type BlockRegistryType,
+  type ExternalBlockType,
+  type InTransactionBlockType,
+} from "../../../shared/dailyBriefingBlocks";
 import { resolveCorpusLanguage } from "./blocks/context";
 import type { CorpusBlockParams } from "./blocks/context";
 import { readBlockOrder, resolveMemberBlockSettings } from "./settings";
@@ -635,7 +641,7 @@ async function generateExternalBlock<T>(
  * dispatch, corpus ones especially, may throw for an invalid param — see each `case`).
  */
 function generateLocalBlockData(
-  type: string,
+  type: InTransactionBlockType,
   memberId: string,
   date: string,
   params: Record<string, unknown> | undefined,
@@ -734,10 +740,11 @@ function generateLocalBlockData(
         return {
           data: generatePhonics({ date, memberId, params: params as CorpusBlockParams }),
         };
-      default:
-        // The effective-order merge only ever emits known types (buildEffectiveOrder filters
-        // unknown ones out) — unreachable in production; a defensive omit, never a throw.
-        return null;
+      default: {
+        // Compile-time exhaustiveness: a catalogue type without a case fails typecheck here.
+        const unhandled: never = type;
+        return unhandled;
+      }
     }
   } catch (err) {
     console.error("daily-briefing.generate-block.failed", {
@@ -787,10 +794,11 @@ function gatherLocalBlocks(
     }
 
     if (!isPluginContentSourceActive(instance.type)) continue;
-    const external = blockKind(instance.type) === "external";
+    const { type } = instance;
+    const external = isExternalBlockType(type);
     const outcome = external
       ? null
-      : generateLocalBlockData(instance.type, memberId, date, params, language, txCtx);
+      : generateLocalBlockData(type, memberId, date, params, language, txCtx);
     if (!external && outcome === null) continue; // handoff note: null-omit, never a recorded block.
 
     const block: BlockInstance = {
@@ -834,7 +842,8 @@ async function finishBlocks(
     let outcome = localOutcome;
     if (external) {
       try {
-        switch (block.type) {
+        const type = block.type as ExternalBlockType;
+        switch (type) {
           case "weather":
           case "weatherText": {
             const data = await generateWeatherBlock(cache, date, now, weatherInputs);
@@ -852,6 +861,10 @@ async function finishBlocks(
               source ? () => source(date) : null
             );
             break;
+          }
+          default: {
+            const unhandled: never = type;
+            throw new Error(`no external generator for "${String(unhandled)}"`);
           }
         }
       } catch (err) {

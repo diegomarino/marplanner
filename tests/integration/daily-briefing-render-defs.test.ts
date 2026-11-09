@@ -19,6 +19,9 @@ import { birthdayBlock } from "../../src/server/modules/daily-briefing/render/bl
 import { weatherTextBlock } from "../../src/server/modules/daily-briefing/render/blocks/weather-text";
 import { weatherBlock } from "../../src/server/modules/daily-briefing/render/blocks/weather";
 import { streakBlock } from "../../src/server/modules/daily-briefing/render/blocks/streak";
+import type { BlockRegistryType } from "../../src/shared/dailyBriefingBlocks";
+import { ALL_BLOCK_TYPES } from "../../src/shared/dailyBriefingBlocks";
+import { RENDER_BLOCKS } from "../../src/server/modules/daily-briefing/render/registry";
 import type {
   RenderBlockInput,
   RenderEnvelope,
@@ -30,8 +33,16 @@ const MEMBER_NAME = "Render Defs Member";
 
 /** One valid `data` fixture per block type, matching EXACTLY what render/adapter.ts's
  * corresponding case accepts (the adapter is the contract every def consumes). */
-const TYPE_FIXTURES: Record<string, unknown> = {
+// Keyed by the catalogue type: a block type without a fixture fails typecheck.
+const TYPE_FIXTURES: Record<BlockRegistryType, unknown> = {
   message: { text: "Have a wonderful day!" },
+  phonics: {
+    level: "L1",
+    words: [
+      { word: "cat", graphemes: ["c", "a", "t"], tricky: false },
+      { word: "the", graphemes: ["the"], tricky: true },
+    ],
+  },
   quoteOfDay: {
     text: "The only way to do great work is to love what you do.",
     author: "Steve Jobs",
@@ -107,13 +118,13 @@ const TYPE_FIXTURES: Record<string, unknown> = {
 };
 
 /** Every type the render registry ships as of (message + the 20 ported this module). */
-const ALL_TYPES = Object.keys(TYPE_FIXTURES);
+const ALL_TYPES: string[] = Object.keys(TYPE_FIXTURES);
 
 function envelopeFor(types: string[]): RenderEnvelope {
   const blocks: RenderBlockInput[] = types.map((type) => ({
     type,
     title: type.toUpperCase(),
-    data: TYPE_FIXTURES[type],
+    data: TYPE_FIXTURES[type as BlockRegistryType],
   }));
   return { memberId: MEMBER_ID, memberName: MEMBER_NAME, date: DATE, blocks };
 }
@@ -418,6 +429,14 @@ describe("daily-briefing render-defs — per-type render through the real bridge
       } finally {
         renderSpy.mockRestore();
       }
+    });
+  });
+
+  describe("catalogue completeness", () => {
+    it("registers one render definition per catalogue type, keyed by its own type", () => {
+      expect(Object.keys(RENDER_BLOCKS).sort()).toEqual([...ALL_BLOCK_TYPES].sort());
+      for (const [key, def] of Object.entries(RENDER_BLOCKS)) expect(def.type).toBe(key);
+      expect([...ALL_TYPES].sort()).toEqual([...ALL_BLOCK_TYPES].sort());
     });
   });
 

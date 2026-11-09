@@ -1,6 +1,7 @@
 // Register all supported briefing block renderers. Structural copy uses the household
 // language through labels.ts; missing renderers remain visible as unrenderedBlocks.
 import { createRegistry, type Registry } from "pressedslip";
+import type { BlockRegistryType } from "../../../../shared/dailyBriefingBlocks";
 import { animalFactBlock } from "./blocks/animal-fact";
 import { birthdayBlock } from "./blocks/birthday";
 import { dadJokeBlock } from "./blocks/dad-joke";
@@ -24,27 +25,30 @@ import { wordOfDayBlock } from "./blocks/word-of-day";
 import { wordSearchBlock } from "./blocks/word-search";
 import { wouldYouRatherBlock } from "./blocks/would-you-rather";
 
-export const dailyBriefingRenderRegistry: Registry = createRegistry([
-  messageBlock,
-  quoteOfDayBlock,
-  dadJokeBlock,
-  wordOfDayBlock,
-  wouldYouRatherBlock,
-  riddleBlock,
-  animalFactBlock,
-  numberFactBlock,
-  triviaBlock,
-  onThisDayBlock,
-  drawingPromptBlock,
-  birthdayBlock,
-  todayBlock,
-  remindersBlock,
-  mealsBlock,
-  streakBlock,
-  streakTextBlock,
-  weatherBlock,
-  weatherTextBlock,
-  shotgunBlock,
-  wordSearchBlock,
-  phonicsBlock,
-]);
+/** One render definition per catalogue block type; a missing entry fails typecheck. */
+export const RENDER_BLOCKS = {
+  shotgun: shotgunBlock,
+  message: messageBlock,
+  streak: streakBlock,
+  today: todayBlock,
+  weather: weatherBlock,
+  meals: mealsBlock,
+  birthday: birthdayBlock,
+  reminders: remindersBlock,
+  dadJoke: dadJokeBlock,
+  wordOfDay: wordOfDayBlock,
+  animalFact: animalFactBlock,
+  numberFact: numberFactBlock,
+  onThisDay: onThisDayBlock,
+  quoteOfDay: quoteOfDayBlock,
+  trivia: triviaBlock,
+  riddle: riddleBlock,
+  wouldYouRather: wouldYouRatherBlock,
+  wordSearch: wordSearchBlock,
+  drawingPrompt: drawingPromptBlock,
+  streakText: streakTextBlock,
+  weatherText: weatherTextBlock,
+  phonics: phonicsBlock,
+} satisfies Record<BlockRegistryType, { readonly type: string }>;
+
+export const dailyBriefingRenderRegistry: Registry = createRegistry(Object.values(RENDER_BLOCKS));
