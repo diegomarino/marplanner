@@ -3,15 +3,15 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Marplanner: the household planner for your wall</title>
+    <title>Marplanner: the family planner that prints your kids' day</title>
     <meta
       name="description"
-      content="Self-hosted household planner for a shared tablet: calendar, chores with streaks, meals, reminders and a printed morning briefing for every child. Launch your own demo in one click."
+      content="Every morning, a small thermal printer by the kitchen tablet prints each child a slip with their day, plus a joke and a puzzle for breakfast. Calendar, chores, meals and reminders stay on the wall all day. Self-hosted and open source."
     />
-    <meta property="og:title" content="Marplanner: the household planner for your wall" />
+    <meta property="og:title" content="Marplanner: the family planner that prints your kids' day" />
     <meta
       property="og:description"
-      content="Calendar, chores, meals, reminders and a printed morning briefing for every child. Self-hosted, API-first, English and Spanish."
+      content="A printed morning slip for every child, and the family calendar, chores and meals on the wall all day. Self-hosted, API-first, English and Spanish."
     />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="images/home-dashboard.png" />
@@ -38,6 +38,7 @@
           <span>Marplanner</span>
         </a>
         <nav class="topnav" aria-label="Sections">
+          <a href="#morning">How it works</a>
           <a href="#features">Features</a>
           <a href="#run">Run it</a>
           <a href="#api">API</a>
@@ -72,14 +73,15 @@
         <div class="container hero-grid">
           <div class="hero-copy">
             <p class="eyebrow">Self-hosted · open source · English &amp; Spanish</p>
-            <h1>The household planner that lives on your wall.</h1>
+            <h1>The family planner that prints your kids' day.</h1>
             <p class="lede">
-              Marplanner turns a tablet in the kitchen into the family's shared screen: calendar,
-              chores with streaks, meals, reminders, and a
-              <strong>printed morning briefing</strong> for every child.
+              Every morning, a small thermal printer next to the kitchen tablet hands each child
+              <strong>their own paper slip</strong>: what's on today, what's for dinner, the
+              weather, their chore streak, and a joke or a puzzle to read over breakfast. The tablet
+              keeps the family's calendar, chores and meals on the wall all day.
             </p>
             <div class="cta" id="demo">
-              <p class="cta-title">Launch your own demo in one click</p>
+              <p class="cta-title">Try it with a sample family, in one click</p>
               <p class="cta-note">
                 It runs in <em>your</em> account on the host you pick, filled with a sample family
                 and a week of events, chores and meals.
@@ -148,34 +150,73 @@
         </div>
       </section>
 
+      <section class="section section-alt" id="morning" aria-labelledby="morning-title">
+        <div class="container">
+          <p class="eyebrow">How it works</p>
+          <h2 id="morning-title">On paper at breakfast, on the wall all day</h2>
+          <p class="section-lede">
+            Kids don't need another screen in the morning. Marplanner gives them a slip of paper
+            they can read, fold and take with them, and keeps the plan for everyone else on the
+            tablet.
+          </p>
+          <ol class="steps">
+            <li class="step">
+              <span class="step-when">Before breakfast</span>
+              <h3>Each child's slip prints itself</h3>
+              <p>
+                At the time you set, or as soon as the morning chores are ticked off. One slip per
+                child, on the days you choose.
+              </p>
+            </li>
+            <li class="step">
+              <span class="step-when">At the table</span>
+              <h3>Their day, plus something fun</h3>
+              <p>
+                Events, meals, weather, a note from a parent and birthday countdowns, then a dad
+                joke, a riddle printed upside down or a word search.
+              </p>
+            </li>
+            <li class="step">
+              <span class="step-when">The rest of the day</span>
+              <h3>The tablet keeps the plan</h3>
+              <p>
+                Calendar, chores with streaks, meals and reminders on the kitchen wall, and the time
+                read out loud at the moments that matter.
+              </p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
       <section class="section" id="features" aria-labelledby="features-title">
         <div class="container">
           <p class="eyebrow">Features</p>
-          <h2 id="features-title">Everything the family needs, on one screen</h2>
+          <h2 id="features-title">One planner for the whole household</h2>
           <p class="section-lede">
-            Home, Calendar, Chores and Meals for everyone. Settings, members, content and recovery
-            live in an admin area behind a PIN. Optional features are plugins you switch on when you
-            need them.
+            Home, Calendar, Chores and Meals for everyone at the tablet. Members, settings and
+            recovery sit in an admin area behind a PIN, and the optional features are plugins you
+            switch on only when you want them.
           </p>
 
           <div class="bento">
             <article class="tile tile-briefing">
               <div class="tile-text">
                 <span class="tile-icon" aria-hidden="true">🧾</span>
-                <h3>A printed morning briefing for every child</h3>
+                <h3>A morning slip for every child</h3>
                 <p>
-                  A cheap Bluetooth thermal printer next to the tablet prints a personal slip each
-                  morning: their events, meals, weather, reminders, a note from a parent, birthday
+                  A cheap Bluetooth thermal printer next to the tablet prints each child their own
+                  slip: their events, meals, weather, reminders, a note from a parent, birthday
                   countdowns and chore streaks.
                 </p>
                 <p>
-                  Plus the fun part: dad jokes, word of the day, trivia, an upside-down riddle, a
-                  word search and a drawing prompt. More than 20 block types.
+                  Then the part they actually look forward to: a dad joke, the word of the day,
+                  trivia, a riddle printed upside down, a word search or a drawing prompt. More than
+                  20 blocks to mix and match.
                 </p>
                 <ul class="ticks">
-                  <li>You choose who gets one, on which weekdays, with which blocks</li>
-                  <li>It can print itself once the morning chores are done</li>
-                  <li>No print server or drivers: ESC/POS straight over Web Bluetooth</li>
+                  <li>You choose who gets one, on which weekdays, and with which blocks</li>
+                  <li>It can wait to print until the morning chores are done</li>
+                  <li>No print server, no drivers: the browser talks to the printer directly</li>
                 </ul>
               </div>
               <img
@@ -199,8 +240,9 @@
                 <span class="tile-icon" aria-hidden="true">✅</span>
                 <h3>Routines &amp; chores with streaks</h3>
                 <p>
-                  Emoji chores grouped by part of the day, assigned to each child on chosen
-                  weekdays. Ticking a block off plays a little jingle and keeps the streak alive.
+                  Emoji chores grouped by part of the day, from morning to night, assigned to each
+                  child on chosen weekdays. Finishing a block plays a little jingle and keeps the
+                  streak alive.
                 </p>
               </div>
             </article>
@@ -235,8 +277,8 @@
                 <span class="tile-icon" aria-hidden="true">📅</span>
                 <h3>Shared calendar</h3>
                 <p>
-                  Local events plus ICS feeds from school or work, assigned to members automatically
-                  and decorated with emoji.
+                  Your own events plus the school and work calendars you already have (ICS feeds),
+                  sorted by person automatically and decorated with emoji.
                 </p>
               </div>
             </article>
@@ -253,8 +295,8 @@
                 <span class="tile-icon" aria-hidden="true">🧩</span>
                 <h3>Admin behind a PIN, features as plugins</h3>
                 <p>
-                  Members, content, integrations and recovery. Turn on only what your household
-                  uses.
+                  Parents manage members, content and integrations from the same tablet. Turn on
+                  only what your household uses.
                 </p>
               </div>
             </article>
@@ -295,7 +337,10 @@
             <article class="tile tile-mini">
               <span class="tile-icon" aria-hidden="true">🌍</span>
               <h3>English &amp; Spanish</h3>
-              <p>The whole interface, and the printed briefing, in either language.</p>
+              <p>
+                The whole interface and the printed slip, in either language. A few puzzles are
+                English-only for now.
+              </p>
             </article>
           </div>
         </div>
