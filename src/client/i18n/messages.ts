@@ -652,7 +652,7 @@ export const messages = {
     "members.create.role": "Role",
     "members.create.selectRole": "Select a role",
     "members.create.parent": "Adult",
-    "members.create.child": "Child / minor",
+    "members.create.child": "Child",
     "members.create.creating": "Creating…",
     "members.create.submit": "Create Member",
     "members.create.success": "Member created successfully.",
