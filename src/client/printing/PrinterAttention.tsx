@@ -6,7 +6,6 @@ import { whenCelebrationsSettled } from "@/chores/CompletionCelebration";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { useT } from "@/i18n";
 import { usePrinterSession } from "./PrinterSession";
+import { loadRememberedPrinter } from "./rememberedPrinter";
 
 /** A compact recovery entry point; it reports session facts but never infers printer health.
  * Discreet while the session is healthy (paired or printing) and a destructive-styled attention
@@ -23,7 +23,8 @@ import { usePrinterSession } from "./PrinterSession";
  * dialog closes it once the session reports paired; a failed pair keeps it open.
  * It also opens by itself when the session finds queued work and no printer to drain it (an
  * auto-printed briefing), after any chore celebration on screen has finished, and then leads
- * with a large pair button a child can recognise. */
+ * with a prominent pair button a child can recognise. The copy says whether this screen had a
+ * printer before (the session's last pairing, else the one remembered for reconnects). */
 export function PrinterAttention(): React.JSX.Element | null {
   const t = useT();
   const session = usePrinterSession();
@@ -56,6 +57,21 @@ export function PrinterAttention(): React.JSX.Element | null {
 
   if (!session?.active) return null;
   const healthy = displayState === "paired" || displayState === "printing";
+  const known = session.pairedDevice ?? loadRememberedPrinter();
+  const withName = (
+    key: "printing.attention.knownPrinter" | "printing.attention.connectedPrinter"
+  ) => t(key).replace("{name}", known?.name ?? "");
+  const printerLine = healthy
+    ? known?.name
+      ? withName("printing.attention.connectedPrinter")
+      : t(session.stateLabelKey)
+    : displayState === "pairing"
+      ? t(session.stateLabelKey)
+      : known
+        ? known.name
+          ? withName("printing.attention.knownPrinter")
+          : t("printing.attention.knownPrinterUnnamed")
+        : t("printing.attention.noPrinter");
 
   return (
     <Dialog
@@ -83,52 +99,37 @@ export function PrinterAttention(): React.JSX.Element | null {
       <DialogContent
         data-testid="printer-attention-dialog"
         data-reason={waitingWork ? "waiting-work" : "manual"}
-        showCloseButton={false}
+        closeLabel={t("printing.attention.dismiss")}
       >
         <DialogHeader>
           <DialogTitle>
             {t(waitingWork ? "printing.attention.waitingTitle" : "printing.attention.title")}
           </DialogTitle>
-          <DialogDescription>
-            {t(
-              waitingWork
-                ? "printing.attention.waitingDescription"
-                : "printing.attention.description"
-            )}
+          <DialogDescription data-testid="printer-attention-state" data-state={displayState}>
+            {printerLine}
+            {waitingWork && !healthy && ` ${t("printing.attention.waitingDescription")}`}
           </DialogDescription>
         </DialogHeader>
-        <p data-testid="printer-attention-state" className="text-sm">
-          {t(session.stateLabelKey)}
-        </p>
         {session.canPair && (
           <Button
             type="button"
             data-testid="printer-attention-pair"
-            className="min-h-28 w-full gap-4 rounded-2xl shadow-lg ring-4 ring-primary/30"
+            className="min-h-16 w-full rounded-xl shadow-md ring-4 ring-primary/25"
             onClick={() => {
               setPairRequested(true);
               session.pair();
             }}
           >
-            <Printer aria-hidden="true" className="size-12 motion-safe:animate-bounce" />
-            <span className="text-3xl font-bold">
-              {t(
-                session.displayState === "disconnected"
-                  ? "printing.executor.repairButton"
-                  : "printing.executor.pairButton"
-              )}
+            <Printer aria-hidden="true" className="size-6" />
+            <span className="text-xl font-semibold">
+              {t(known ? "printing.attention.reconnectButton" : "printing.executor.pairButton")}
             </span>
           </Button>
         )}
         <DialogFooter>
-          <Button variant="outline" asChild>
+          <Button variant="link" size="sm" asChild>
             <a href={appUrl("/admin/printing")}>{t("printing.attention.admin")}</a>
           </Button>
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
-              {t("printing.attention.dismiss")}
-            </Button>
-          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>

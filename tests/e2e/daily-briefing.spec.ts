@@ -999,9 +999,9 @@ test(": morning chores done through the real UI auto-prints the daily briefing; 
   expect(hookPresent).toBe(true);
   await attentionPill.click();
   const attentionState = page.getByTestId("printer-attention-state");
-  await expect(attentionState).toHaveText(m["printing.executor.state.unpaired"]);
+  await expect(attentionState).toHaveAttribute("data-state", "unpaired");
   await page.getByTestId("printer-attention-pair").click();
-  await expect(attentionState).toHaveText(m["printing.executor.state.paired"], {
+  await expect(attentionState).toHaveAttribute("data-state", "paired", {
     timeout: 10_000,
   });
   await page.keyboard.press("Escape");

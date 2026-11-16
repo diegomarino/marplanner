@@ -4292,7 +4292,10 @@
             "PrinterAttention opens the pairing prompt by itself when queued work finds no paired printer",
             "PrinterAttention stays closed when the wake finds nothing waiting for a printer",
             "PrinterAttention waits for an on-screen celebration to finish before prompting",
-            "PrinterAttention renders nothing outside a printer session"
+            "PrinterAttention renders nothing outside a printer session",
+            "PrinterAttention says a printer was paired before (\"Kitchen printer\") and offers to reconnect it",
+            "PrinterAttention says a printer was paired before (\"\") and offers to reconnect it",
+            "PrinterAttention names the connected printer while healthy"
           ],
           "tests/client/printer-diagnostics-tab.test.tsx": [
             "PrinterDiagnosticsTab — recent prints renders member, source, status, attempts and failure reason per job",

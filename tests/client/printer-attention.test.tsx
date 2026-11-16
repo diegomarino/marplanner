@@ -5,7 +5,8 @@ import { CompletionCelebration } from "@/chores/CompletionCelebration";
 import { PrinterAttention } from "@/printing/PrinterAttention";
 import { PrinterSessionProvider } from "@/printing/PrinterSession";
 import { notifyPrintIntentEnqueued } from "@/printing/queueWakeup";
-import { createFakePrintTransport } from "@/printing/transport";
+import { REMEMBERED_PRINTER_KEY } from "@/printing/rememberedPrinter";
+import { createFakePrintTransport, PrintTransportError } from "@/printing/transport";
 
 vi.mock("@/lib/householdSettings", () => ({
   useHouseholdSettingsContext: () => ({ language: "en" }),
@@ -110,7 +111,10 @@ describe("PrinterAttention", () => {
     transport.scriptPairFailure();
     fireEvent.click(screen.getByTestId("printer-attention-pair"));
     await waitFor(() =>
-      expect(screen.getByTestId("printer-attention-state")).toHaveTextContent("Not paired")
+      expect(screen.getByTestId("printer-attention-state")).toHaveAttribute(
+        "data-state",
+        "unpaired"
+      )
     );
     expect(screen.getByTestId("printer-attention-dialog")).toBeInTheDocument();
 
@@ -156,6 +160,9 @@ describe("PrinterAttention", () => {
     const dialog = await screen.findByTestId("printer-attention-dialog");
     expect(dialog).toHaveAttribute("data-reason", "waiting-work");
     expect(screen.getByText("Something is ready to print!")).toBeInTheDocument();
+    expect(screen.getByTestId("printer-attention-state")).toHaveTextContent(
+      "No printer has been paired on this screen yet. Connect the printer and it will print by itself."
+    );
     expect(screen.getByTestId("printer-attention-pair")).toHaveTextContent("Pair printer");
     expect(fetchMock).toHaveBeenCalledWith("/api/printing/jobs", expect.anything());
 
@@ -224,5 +231,51 @@ describe("PrinterAttention", () => {
   it("renders nothing outside a printer session", () => {
     const { container } = render(<PrinterAttention />);
     expect(container).toBeEmptyDOMElement();
+  });
+
+  function rememberPrinter(name: string) {
+    window.localStorage.setItem(
+      REMEMBERED_PRINTER_KEY,
+      JSON.stringify({ deviceId: "dev-1", name, serviceUuid: "svc", characteristicUuid: "chr" })
+    );
+  }
+
+  it.each([
+    ["Kitchen printer", "The printer “Kitchen printer” is not connected."],
+    ["", "The usual printer is not connected."],
+  ])("says a printer was paired before (%j) and offers to reconnect it", async (name, expected) => {
+    window.localStorage.clear();
+    rememberPrinter(name);
+    const transport = createFakePrintTransport();
+    transport.scriptReconnectFailure(new PrintTransportError("pairing_required", "gone"));
+    vi.stubGlobal("fetch", queueFetch([]));
+    render(
+      <PrinterSessionProvider transport={transport}>
+        <PrinterAttention />
+      </PrinterSessionProvider>
+    );
+    const pill = await screen.findByTestId("printer-attention-pill");
+    await waitFor(() => expect(pill).toHaveAttribute("data-healthy", "false"));
+    fireEvent.click(pill);
+    expect(screen.getByTestId("printer-attention-state")).toHaveTextContent(expected);
+    expect(screen.getByTestId("printer-attention-pair")).toHaveTextContent("Reconnect printer");
+  });
+
+  it("names the connected printer while healthy", async () => {
+    window.localStorage.clear();
+    rememberPrinter("Kitchen printer");
+    vi.stubGlobal("fetch", queueFetch([]));
+    render(
+      <PrinterSessionProvider transport={createFakePrintTransport()}>
+        <PrinterAttention />
+      </PrinterSessionProvider>
+    );
+    const pill = await screen.findByTestId("printer-attention-pill");
+    await waitFor(() => expect(pill).toHaveAttribute("data-healthy", "true"));
+    fireEvent.click(pill);
+    expect(screen.getByTestId("printer-attention-state")).toHaveTextContent(
+      "Connected to “Kitchen printer”."
+    );
+    expect(screen.queryByTestId("printer-attention-pair")).not.toBeInTheDocument();
   });
 });

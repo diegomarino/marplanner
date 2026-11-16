@@ -27,11 +27,12 @@ security boundary.
 
 The printer attention pill is visible by default when existing printing capability is active. It
 reads as a discreet printer status while the session is paired or printing, and as an attention
-request otherwise. It opens a focus-managed dialog containing generic attention copy, genuine session state if available,
-pair/re-pair, and a link to `/admin/printing`. Closing returns focus to the trigger. The pair
-button is the dialog's largest control (full width, printer icon), so a child recognises it. The
-dialog also opens on its own when queued print work finds no connected printer, after any
-completion celebration on screen has ended.
+request otherwise. It opens one focus-managed dialog, whether tapped or opened by queued print work
+that finds no connected printer (then only after any completion celebration on screen has ended,
+with "ready to print" copy). The dialog says whether this screen had a printer before (by name when
+known) or never paired one, offers a full-width pair or reconnect button somewhat larger than a
+normal control, and a link to `/admin/printing`. It closes with the corner X, Escape or a tap
+outside; closing returns focus to the trigger.
 
 ## Dashboard
 

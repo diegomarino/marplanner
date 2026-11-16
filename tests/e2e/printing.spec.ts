@@ -180,9 +180,9 @@ test("admin test-print → claim → degrade → retry → ack → printed; re-t
   // capability registration (FR-021) happens inside handlePair BEFORE "paired" is observable.
   await attentionPill.click();
   const attentionState = page.getByTestId("printer-attention-state");
-  await expect(attentionState).toHaveText(m["printing.executor.state.unpaired"]);
+  await expect(attentionState).toHaveAttribute("data-state", "unpaired");
   await page.getByTestId("printer-attention-pair").click();
-  await expect(attentionState).toHaveText(m["printing.executor.state.paired"], { timeout: 10_000 });
+  await expect(attentionState).toHaveAttribute("data-state", "paired", { timeout: 10_000 });
   await page.keyboard.press("Escape");
   await expect(page.getByTestId("printer-attention-dialog")).toHaveCount(0);
 
