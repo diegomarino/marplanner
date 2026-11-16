@@ -138,6 +138,7 @@ export function useTodayChores(forDate?: string): TodayChoresState {
         chore.completed || targetDate !== date
           ? null
           : isPeriodComplete(columnsRef.current, memberId, chore.id);
+      let wakePrinter = false;
       try {
         const res = chore.completed
           ? await authFetch(
@@ -153,7 +154,9 @@ export function useTodayChores(forDate?: string): TodayChoresState {
               body: JSON.stringify({ memberId, date: targetDate } satisfies CompletionInput),
             });
         if (!res.ok) throw new Error(`toggle: ${res.status}`);
-        if (!chore.completed) notifyPrintIntentEnqueued();
+        // Woken after the celebration decision below (see `finally`), so a pairing prompt the
+        // wake may raise finds the celebration already mounted and waits for it.
+        wakePrinter = !chore.completed;
         const after = isPeriodComplete(await fetchBoard(targetDate), memberId, chore.id);
         if (
           before !== null &&
@@ -172,6 +175,7 @@ export function useTodayChores(forDate?: string): TodayChoresState {
       } catch {
         setToggleError(t("chores.board.toggleError"));
       } finally {
+        if (wakePrinter) notifyPrintIntentEnqueued();
         setPending((prev) => {
           const next = new Set(prev);
           next.delete(chore.id);

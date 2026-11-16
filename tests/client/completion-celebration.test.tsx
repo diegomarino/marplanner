@@ -8,6 +8,7 @@ import {
   CELEBRATION_DURATION_MS,
   CompletionCelebration,
   celebrationParticles,
+  whenCelebrationsSettled,
 } from "@/chores/CompletionCelebration";
 import {
   playCelebrationSound,
@@ -142,6 +143,35 @@ describe("CompletionCelebration", () => {
       throw new Error("no audio device");
     });
     expect(() => renderCelebration({ sound: true })).not.toThrow();
+  });
+
+  it("reports settled right away with none on screen, else after the last one leaves", () => {
+    const immediate = vi.fn();
+    whenCelebrationsSettled(immediate)();
+    expect(immediate).toHaveBeenCalledTimes(1);
+
+    const celebration = (title: string) => (
+      <CompletionCelebration
+        colorKey="teal"
+        emojis={[]}
+        title={title}
+        sound={false}
+        onDismiss={() => {}}
+      />
+    );
+    const first = render(celebration("First"));
+    const second = render(celebration("Second"));
+    const settled = vi.fn();
+    const cancelled = vi.fn();
+    whenCelebrationsSettled(settled);
+    const cancel = whenCelebrationsSettled(cancelled);
+    cancel();
+
+    first.unmount();
+    expect(settled).not.toHaveBeenCalled();
+    second.unmount();
+    expect(settled).toHaveBeenCalledTimes(1);
+    expect(cancelled).not.toHaveBeenCalled();
   });
 });
 

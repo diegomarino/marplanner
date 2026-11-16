@@ -30,6 +30,12 @@ dates and permanent failures are dead-lettered. No
 `printedAt` is stamped. Physical paper outcomes (jam / out) are out of scope and recovered by a
 human manual reprint, which re-enqueues the current output.
 
+When a local action can enqueue work (ticking a chore, which can complete the morning routine
+and auto-print the daily briefing) and this browser has no connected printer, the executor reads
+the queue; if a `pending` or `retrying` job is waiting, the printer attention dialog opens by
+itself with "ready to print" copy and a large pair button. It waits for any chore celebration on
+screen to finish first, so the prompt never covers the confetti.
+
 ### User Story 3 — Regenerate and re-print a superseded output
 
 A producer regenerates an output and calls `supersedePrintRecord(outputRef, date)`;

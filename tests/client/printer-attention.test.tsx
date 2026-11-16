@@ -1,8 +1,10 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { CompletionCelebration } from "@/chores/CompletionCelebration";
 import { PrinterAttention } from "@/printing/PrinterAttention";
 import { PrinterSessionProvider } from "@/printing/PrinterSession";
+import { notifyPrintIntentEnqueued } from "@/printing/queueWakeup";
 import { createFakePrintTransport } from "@/printing/transport";
 
 vi.mock("@/lib/householdSettings", () => ({
@@ -13,6 +15,22 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
 });
+
+function queueFetch(derivedStates: string[]) {
+  return vi.fn((url: string) =>
+    Promise.resolve(
+      new Response(
+        JSON.stringify(
+          url === "/api/printing/status"
+            ? { active: true }
+            : url === "/api/printing/jobs"
+              ? { jobs: derivedStates.map((derivedState, i) => ({ id: `job-${i}`, derivedState })) }
+              : { registered: true }
+        )
+      )
+    )
+  );
+}
 
 describe("PrinterAttention", () => {
   it("opens with dialog focus, uses the shared pair action, and returns focus after Escape", async () => {
@@ -120,5 +138,91 @@ describe("PrinterAttention", () => {
     });
     expect(fetchMock).toHaveBeenCalledWith("/api/printing/status", { credentials: "include" });
     expect(screen.queryByTestId("printer-attention-pill")).not.toBeInTheDocument();
+  });
+
+  it("opens the pairing prompt by itself when queued work finds no paired printer", async () => {
+    window.localStorage.clear();
+    const fetchMock = queueFetch(["printed", "pending"]);
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <PrinterSessionProvider transport={createFakePrintTransport()}>
+        <PrinterAttention />
+      </PrinterSessionProvider>
+    );
+    await screen.findByTestId("printer-attention-pill");
+
+    act(() => notifyPrintIntentEnqueued());
+
+    const dialog = await screen.findByTestId("printer-attention-dialog");
+    expect(dialog).toHaveAttribute("data-reason", "waiting-work");
+    expect(screen.getByText("Something is ready to print!")).toBeInTheDocument();
+    expect(screen.getByTestId("printer-attention-pair")).toHaveTextContent("Pair printer");
+    expect(fetchMock).toHaveBeenCalledWith("/api/printing/jobs", expect.anything());
+
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    await waitFor(() =>
+      expect(screen.queryByTestId("printer-attention-dialog")).not.toBeInTheDocument()
+    );
+  });
+
+  it("stays closed when the wake finds nothing waiting for a printer", async () => {
+    window.localStorage.clear();
+    const fetchMock = queueFetch(["printed", "dead-letter"]);
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <PrinterSessionProvider transport={createFakePrintTransport()}>
+        <PrinterAttention />
+      </PrinterSessionProvider>
+    );
+    await screen.findByTestId("printer-attention-pill");
+
+    act(() => notifyPrintIntentEnqueued());
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith("/api/printing/jobs", expect.anything())
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.queryByTestId("printer-attention-dialog")).not.toBeInTheDocument();
+  });
+
+  it("waits for an on-screen celebration to finish before prompting", async () => {
+    window.localStorage.clear();
+    vi.stubGlobal("fetch", queueFetch(["pending"]));
+    const view = render(
+      <PrinterSessionProvider transport={createFakePrintTransport()}>
+        <PrinterAttention />
+        <CompletionCelebration
+          colorKey="blue"
+          emojis={[]}
+          title="Morning done!"
+          sound={false}
+          onDismiss={() => {}}
+        />
+      </PrinterSessionProvider>
+    );
+    await screen.findByTestId("printer-attention-pill");
+
+    act(() => notifyPrintIntentEnqueued());
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(screen.getByTestId("completion-celebration")).toBeInTheDocument();
+    expect(screen.queryByTestId("printer-attention-dialog")).not.toBeInTheDocument();
+
+    view.rerender(
+      <PrinterSessionProvider transport={createFakePrintTransport()}>
+        <PrinterAttention />
+      </PrinterSessionProvider>
+    );
+    expect(await screen.findByTestId("printer-attention-dialog")).toHaveAttribute(
+      "data-reason",
+      "waiting-work"
+    );
+  });
+
+  it("renders nothing outside a printer session", () => {
+    const { container } = render(<PrinterAttention />);
+    expect(container).toBeEmptyDOMElement();
   });
 });

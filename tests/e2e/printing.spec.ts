@@ -377,3 +377,104 @@ test("printing administration uses the same pair action as printer attention", a
     });
   }
 });
+
+/** mon..sun of a household-local YYYY-MM-DD (chores-board.spec.ts's own helper). */
+function weekdayCode(date: string): string {
+  const [y, mo, d] = date.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-US", { timeZone: "UTC", weekday: "long" })
+    .format(new Date(Date.UTC(y, mo - 1, d)))
+    .substring(0, 3)
+    .toLowerCase();
+}
+
+test("finishing the morning with print work queued and no printer prompts pairing after the celebration", async ({
+  page,
+  printerSession,
+}, testInfo) => {
+  const rid = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  await page.goto("/");
+  await page.getByTestId("access-gate-form").locator('input[name="token"]').fill(ACCESS_TOKEN);
+  await page.getByRole("button", { name: "Enter" }).click();
+  await page.getByLabel("Bootstrap key").fill(BOOTSTRAP_KEY);
+  await page.getByRole("button", { name: "Provision Device" }).click();
+  await expect(page.getByTestId("home-surface")).toBeVisible({ timeout: 15_000 });
+
+  const settings = (await (await page.request.get("/api/settings")).json()) as {
+    locale: { language?: string; timezone: string };
+  };
+  const m = messages[resolveLang(settings.locale.language)];
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: settings.locale.timezone }).format(
+    new Date()
+  );
+
+  // A child whose morning is one tap from complete.
+  const member = (await (
+    await page.request.post("/api/members", {
+      data: { displayName: `Print Kid ${rid}`, role: "child" },
+    })
+  ).json()) as { id: string };
+  try {
+    const routine = (await (
+      await page.request.post("/api/routines", {
+        data: { name: `Print Routine ${rid}`, dayPeriodId: "morning" },
+      })
+    ).json()) as { id: string };
+    const choreIds: string[] = [];
+    for (const name of [`Teeth ${rid}`, `Bag ${rid}`]) {
+      const chore = (await (
+        await page.request.post(`/api/routines/${routine.id}/chores`, { data: { name } })
+      ).json()) as { id: string };
+      choreIds.push(chore.id);
+    }
+    await page.request.put(`/api/routines/${routine.id}/assignments/${member.id}`, {
+      data: { weekdays: [weekdayCode(today)], active: true },
+    });
+    await page.request.post(`/api/chores/${choreIds[0]}/completions`, {
+      data: { memberId: member.id, date: today },
+    });
+
+    // Print work waiting in the queue (the scheduler is off under e2e, so the test print stands
+    // in for the auto-printed briefing), and this kiosk has never paired a printer.
+    expect((await page.request.post("/api/printing/test-print", { data: {} })).status()).toBe(200);
+
+    await page.goto("/chores");
+    const column = page.getByTestId(`chores-board-column-${member.id}`);
+    await expect(column).toBeVisible({ timeout: 15_000 });
+    const activePeriod = column.getByTestId("today-chores-active-period");
+    for (let i = 0; i < 4 && (await activePeriod.getAttribute("data-period-id")) !== "morning"; i++)
+      await column
+        .getByRole("button", { name: m["todayChores.previousPeriod"], exact: true })
+        .click();
+    await page.getByTestId(`chore-toggle-${choreIds[1]}`).click();
+
+    // The celebration plays first; the prompt waits for it instead of covering it.
+    const celebration = page.getByTestId("completion-celebration");
+    const dialog = page.getByTestId("printer-attention-dialog");
+    await expect(celebration).toBeVisible();
+    await expect(dialog).toHaveCount(0);
+    await page.screenshot({ path: testInfo.outputPath("1-celebration.png") });
+
+    await expect(celebration).toHaveCount(0, { timeout: 10_000 });
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toHaveAttribute("data-reason", "waiting-work");
+    await expect(dialog).toContainText(m["printing.attention.waitingTitle"]);
+    await page.screenshot({ path: testInfo.outputPath("2-pairing-prompt.png") });
+
+    // One tap pairs, closes the prompt, and the queued work prints.
+    await page.getByTestId("printer-attention-pair").click();
+    await expect(dialog).toHaveCount(0, { timeout: 10_000 });
+    await expect
+      .poll(
+        async () => {
+          const { jobs } = (await (await page.request.get("/api/printing/jobs")).json()) as {
+            jobs: PrintJobDto[];
+          };
+          return jobs.find((job) => job.recordKey === "test-print")?.derivedState;
+        },
+        { timeout: 15_000 }
+      )
+      .toBe("printed");
+  } finally {
+    await page.request.post(`/api/members/${member.id}/archive`);
+  }
+});

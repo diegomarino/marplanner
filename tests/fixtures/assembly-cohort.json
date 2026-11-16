@@ -4288,7 +4288,11 @@
           "tests/client/printer-attention.test.tsx": [
             "PrinterAttention opens with dialog focus, uses the shared pair action, and returns focus after Escape",
             "PrinterAttention marks an unpaired session as destructive, stays open on a failed pair and closes after a successful one",
-            "PrinterAttention does not render the attention pill when the real plugin-status boundary reports inactive"
+            "PrinterAttention does not render the attention pill when the real plugin-status boundary reports inactive",
+            "PrinterAttention opens the pairing prompt by itself when queued work finds no paired printer",
+            "PrinterAttention stays closed when the wake finds nothing waiting for a printer",
+            "PrinterAttention waits for an on-screen celebration to finish before prompting",
+            "PrinterAttention renders nothing outside a printer session"
           ],
           "tests/client/printer-diagnostics-tab.test.tsx": [
             "PrinterDiagnosticsTab — recent prints renders member, source, status, attempts and failure reason per job",
@@ -5928,6 +5932,7 @@
             "CompletionCelebration plays nothing when sound is off",
             "CompletionCelebration swallows a refused play()",
             "CompletionCelebration swallows a play() that throws synchronously",
+            "CompletionCelebration reports settled right away with none on screen, else after the last one leaves",
             "celebration emojis are vendored every preset emoji is in the emoji catalog, so it renders as a Noto SVG",
             "celebration sound priming starts the element muted inside the gesture, then pauses and unmutes it",
             "celebration sound priming primes once; later taps leave the unlocked element alone",
@@ -6118,7 +6123,8 @@
           "tests/e2e/plugin-lifecycle.spec.ts": ["890958b0bb7f57610ba1-ea2aeda258f94bf710a3"],
           "tests/e2e/printing.spec.ts": [
             "64adef587d995e42b8f9-e514127cf2cc038cd196",
-            "64adef587d995e42b8f9-5a07534a8a7a882aeda5"
+            "64adef587d995e42b8f9-5a07534a8a7a882aeda5",
+            "64adef587d995e42b8f9-c463c3cb74ea882dda45"
           ],
           "tests/e2e/reminders-calendar-gated.spec.ts": [
             "bad9dac693639b46b647-24ac887a4a592482faee",

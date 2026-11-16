@@ -1529,6 +1529,9 @@ export const messages = {
       "Open printer administration or pair the printer to continue.",
     "printing.attention.admin": "Printer administration",
     "printing.attention.dismiss": "Dismiss",
+    "printing.attention.waitingTitle": "Something is ready to print!",
+    "printing.attention.waitingDescription":
+      "The printer is not connected. Tap the big button to connect it and it will print.",
 
     // FR-012/FR-013/FR-018 and SC-003 cover the admin test-print trigger + jobs
     // list. `derivedState` renders dead-letter/retrying as their OWN distinct labels, never
@@ -3189,6 +3192,9 @@ export const messages = {
       "Abre la administración de impresión o empareja la impresora para continuar.",
     "printing.attention.admin": "Administración de impresión",
     "printing.attention.dismiss": "Cerrar",
+    "printing.attention.waitingTitle": "¡Hay algo listo para imprimir!",
+    "printing.attention.waitingDescription":
+      "La impresora no está conectada. Pulsa el botón grande para conectarla y se imprimirá.",
 
     "printing.management.title": "Impresión",
     "printing.management.description":

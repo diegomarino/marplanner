@@ -26,6 +26,7 @@ import type {
   AckRequest,
   ClaimResponse,
   FailRequest,
+  JobsListResponse,
   PrintFailureErrorCode,
   PrinterTransportSettings,
 } from "../../shared";
@@ -86,6 +87,9 @@ export interface PrinterSession {
   /** The identity resolved by the last successful pairing; kept across disconnects. */
   pairedDevice: PrinterTransportSettings | null;
   pair: (preference?: PrinterEndpointPreference) => void;
+  /** Bumped each time queued work is found waiting while no printer is connected, so the
+   * attention surface can ask for a pairing; `0` until the first such request. */
+  pairingPromptId: number;
 }
 
 const PrinterSessionContext = createContext<PrinterSession | null>(null);
@@ -120,6 +124,19 @@ function transportPermanentCode(err: unknown): PrintFailureErrorCode | undefined
 function describeError(err: unknown): string {
   if (err instanceof Error) return err.message;
   return String(err);
+}
+
+/** Whether the queue holds work only a connected printer can drain (claimable now or after a
+ * recoverable failure). A failed read reports nothing waiting: the prompt is a courtesy. */
+async function hasWaitingJobs(): Promise<boolean> {
+  try {
+    const res = await authFetch("/api/printing/jobs", { credentials: "include" });
+    if (!res.ok) return false;
+    const { jobs } = (await res.json()) as JobsListResponse;
+    return jobs.some((job) => job.derivedState === "pending" || job.derivedState === "retrying");
+  } catch {
+    return false;
+  }
 }
 
 async function parseCode(response: Response): Promise<string | undefined> {
@@ -472,6 +489,25 @@ export function PrintExecutor({
   const showPairAffordance =
     (connection === "unpaired" && !restoring) || connection === "disconnected";
 
+  // Work enqueued while no printer is connected (the morning briefing, printed when the last
+  // morning chore is ticked) asks for a pairing instead of waiting silently in the queue.
+  const [pairingPromptId, setPairingPromptId] = useState(0);
+  const promptEligible = pluginActive && showPairAffordance;
+  useEffect(() => {
+    if (!promptEligible) return;
+    let cancelled = false;
+    const check = () => {
+      void hasWaitingJobs().then((waiting) => {
+        if (waiting && !cancelled) setPairingPromptId((id) => id + 1);
+      });
+    };
+    window.addEventListener(PRINT_INTENT_ENQUEUED_EVENT, check);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(PRINT_INTENT_ENQUEUED_EVENT, check);
+    };
+  }, [promptEligible]);
+
   // Inactive or unresolved catalog state hides pairing and printer controls.
   // An already paired session retains its hooks; the server's lifecycle gate
   // rejects new claims while inactive. Pending acknowledgements remain fenced.
@@ -485,6 +521,7 @@ export function PrintExecutor({
           canPair: false,
           pairedDevice,
           pair: handlePair,
+          pairingPromptId,
         }}
       >
         {children}
@@ -499,6 +536,7 @@ export function PrintExecutor({
     canPair: showPairAffordance,
     pairedDevice,
     pair: handlePair,
+    pairingPromptId,
   };
 
   return (
