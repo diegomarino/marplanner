@@ -165,6 +165,26 @@ it("scales the localized built-in dialog close in both densities and closes the 
   }
 });
 
+it("closes the dialog from a caller-supplied DialogClose action", async () => {
+  const { Dialog, DialogClose, DialogContent, DialogTitle, DialogDescription } =
+    await import("@/components/ui/dialog");
+  const onOpenChange = vi.fn();
+  render(
+    <Dialog defaultOpen onOpenChange={onOpenChange}>
+      <DialogContent showCloseButton={false}>
+        <DialogTitle>Details</DialogTitle>
+        <DialogDescription>Details description</DialogDescription>
+        <DialogClose asChild>
+          <Button type="button">Done</Button>
+        </DialogClose>
+      </DialogContent>
+    </Dialog>
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Done" }));
+  expect(onOpenChange).toHaveBeenCalledWith(false);
+  expect(screen.queryByRole("dialog")).toBeNull();
+});
+
 it("renders every interactive primitive in the density census and exposes new omissions", async () => {
   const { readdirSync, readFileSync } = await import("node:fs");
   const { Input, Textarea } = await import("@/ui");

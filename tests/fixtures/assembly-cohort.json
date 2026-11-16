@@ -3930,6 +3930,7 @@
             "B0 foundation primitives keeps status name invariant, exposes pressed/busy state and blocks repeat press",
             "B0 foundation primitives uses canonical weekday order for multi selections and preserves the group name",
             "scales the localized built-in dialog close in both densities and closes the portal",
+            "closes the dialog from a caller-supplied DialogClose action",
             "renders every interactive primitive in the density census and exposes new omissions"
           ],
           "tests/client/foundation-settings.test.tsx": [
