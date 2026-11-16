@@ -118,7 +118,7 @@ describe("PrintExecutor — FR-013 hiding (issue #691)", () => {
 
     const pill = screen.getByTestId("printer-attention-pill");
     expect(pill).toHaveAttribute("data-healthy", "false");
-    expect(pill).toHaveTextContent("Printer attention");
+    expect(pill).toHaveTextContent("Check printer");
   });
 
   it("turns the pill discreet once a remembered printer reconnects", async () => {
