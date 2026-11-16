@@ -17,7 +17,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function queueFetch(derivedStates: string[]) {
+const TODAY = new Intl.DateTimeFormat("en-CA").format(new Date());
+const FUTURE = "2999-01-01";
+
+/** Jobs as `[derivedState, targetDate]`; a bare state means a job for today. */
+function queueFetch(jobs: Array<string | [string, string]>) {
   return vi.fn((url: string) =>
     Promise.resolve(
       new Response(
@@ -25,7 +29,12 @@ function queueFetch(derivedStates: string[]) {
           url === "/api/printing/status"
             ? { active: true }
             : url === "/api/printing/jobs"
-              ? { jobs: derivedStates.map((derivedState, i) => ({ id: `job-${i}`, derivedState })) }
+              ? {
+                  jobs: jobs.map((job, i) => {
+                    const [derivedState, targetDate] = typeof job === "string" ? [job, TODAY] : job;
+                    return { id: `job-${i}`, derivedState, targetDate };
+                  }),
+                }
               : { registered: true }
         )
       )
@@ -174,7 +183,8 @@ describe("PrinterAttention", () => {
 
   it("stays closed when the wake finds nothing waiting for a printer", async () => {
     window.localStorage.clear();
-    const fetchMock = queueFetch(["printed", "dead-letter"]);
+    // A future-dated job stays pending, but the server only claims today's work.
+    const fetchMock = queueFetch(["printed", "dead-letter", ["pending", FUTURE]]);
     vi.stubGlobal("fetch", fetchMock);
     render(
       <PrinterSessionProvider transport={createFakePrintTransport()}>
@@ -277,5 +287,32 @@ describe("PrinterAttention", () => {
       "Connected to “Kitchen printer”."
     );
     expect(screen.queryByTestId("printer-attention-pair")).not.toBeInTheDocument();
+  });
+
+  it("closes an automatic prompt when a gesture-free reconnect succeeds meanwhile", async () => {
+    window.localStorage.clear();
+    rememberPrinter("Kitchen printer");
+    const transport = createFakePrintTransport();
+    transport.scriptReconnectFailure();
+    vi.stubGlobal("fetch", queueFetch(["pending"]));
+    render(
+      <PrinterSessionProvider transport={transport} pollIntervalMs={300}>
+        <PrinterAttention />
+      </PrinterSessionProvider>
+    );
+    const pill = await screen.findByTestId("printer-attention-pill");
+    await waitFor(() => expect(pill).toHaveAttribute("data-healthy", "false"));
+
+    act(() => notifyPrintIntentEnqueued());
+    expect(await screen.findByTestId("printer-attention-dialog")).toHaveAttribute(
+      "data-reason",
+      "waiting-work"
+    );
+
+    // The next background attempt succeeds and the prompt goes away by itself.
+    await waitFor(() => expect(pill).toHaveAttribute("data-healthy", "true"), { timeout: 2000 });
+    await waitFor(() =>
+      expect(screen.queryByTestId("printer-attention-dialog")).not.toBeInTheDocument()
+    );
   });
 });

@@ -22,6 +22,7 @@ import {
   type ReactNode,
 } from "react";
 import { authFetch } from "@/lib/credential";
+import { useHouseholdSettingsContext } from "@/lib/householdSettings";
 import type {
   AckRequest,
   ClaimResponse,
@@ -126,14 +127,28 @@ function describeError(err: unknown): string {
   return String(err);
 }
 
-/** Whether the queue holds work only a connected printer can drain (claimable now or after a
- * recoverable failure). A failed read reports nothing waiting: the prompt is a courtesy. */
-async function hasWaitingJobs(): Promise<boolean> {
+/** Household-local YYYY-MM-DD (en-CA formats that way); the browser's own zone until the
+ * household timezone is known. */
+function householdToday(timezone: string | null | undefined): string {
+  return new Intl.DateTimeFormat("en-CA", timezone ? { timeZone: timezone } : {}).format(
+    new Date()
+  );
+}
+
+/** Whether the queue holds work a connected printer could drain right now: claimable today
+ * (the server only claims jobs for household-today, so a future-dated one waits regardless),
+ * fresh or after a recoverable failure. A failed read reports nothing waiting: the prompt is a
+ * courtesy. */
+async function hasWaitingJobs(today: string): Promise<boolean> {
   try {
     const res = await authFetch("/api/printing/jobs", { credentials: "include" });
     if (!res.ok) return false;
     const { jobs } = (await res.json()) as JobsListResponse;
-    return jobs.some((job) => job.derivedState === "pending" || job.derivedState === "retrying");
+    return jobs.some(
+      (job) =>
+        job.targetDate === today &&
+        (job.derivedState === "pending" || job.derivedState === "retrying")
+    );
   } catch {
     return false;
   }
@@ -493,11 +508,12 @@ export function PrintExecutor({
   // morning chore is ticked) asks for a pairing instead of waiting silently in the queue.
   const [pairingPromptId, setPairingPromptId] = useState(0);
   const promptEligible = pluginActive && showPairAffordance;
+  const timezone = useHouseholdSettingsContext()?.timezone;
   useEffect(() => {
     if (!promptEligible) return;
     let cancelled = false;
     const check = () => {
-      void hasWaitingJobs().then((waiting) => {
+      void hasWaitingJobs(householdToday(timezone)).then((waiting) => {
         if (waiting && !cancelled) setPairingPromptId((id) => id + 1);
       });
     };
@@ -506,7 +522,7 @@ export function PrintExecutor({
       cancelled = true;
       window.removeEventListener(PRINT_INTENT_ENQUEUED_EVENT, check);
     };
-  }, [promptEligible]);
+  }, [promptEligible, timezone]);
 
   // Inactive or unresolved catalog state hides pairing and printer controls.
   // An already paired session retains its hooks; the server's lifecycle gate

@@ -45,6 +45,15 @@ export function PrinterAttention(): React.JSX.Element | null {
     }
   }, [pairRequested, displayState]);
 
+  // An automatic prompt has nothing left to ask once the session is healthy again, including
+  // after a gesture-free reconnect that finished while it was open.
+  useEffect(() => {
+    if (waitingWork && (displayState === "paired" || displayState === "printing")) {
+      setWaitingWork(false);
+      setOpen(false);
+    }
+  }, [waitingWork, displayState]);
+
   // Each new prompt request opens the dialog, but never on top of a celebration: the confetti
   // finishes (timer or tap) first, then the pairing prompt appears.
   useEffect(() => {

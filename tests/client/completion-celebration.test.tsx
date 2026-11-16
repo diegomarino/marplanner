@@ -145,7 +145,7 @@ describe("CompletionCelebration", () => {
     expect(() => renderCelebration({ sound: true })).not.toThrow();
   });
 
-  it("reports settled right away with none on screen, else after the last one leaves", () => {
+  it("reports settled right away with none on screen, else after the last one leaves", async () => {
     const immediate = vi.fn();
     whenCelebrationsSettled(immediate)();
     expect(immediate).toHaveBeenCalledTimes(1);
@@ -168,10 +168,36 @@ describe("CompletionCelebration", () => {
     cancel();
 
     first.unmount();
+    await act(async () => {});
     expect(settled).not.toHaveBeenCalled();
     second.unmount();
+    await act(async () => {});
     expect(settled).toHaveBeenCalledTimes(1);
     expect(cancelled).not.toHaveBeenCalled();
+  });
+
+  it("does not report settled while a keyed celebration replaces another", async () => {
+    const celebration = (key: number) => (
+      <CompletionCelebration
+        key={key}
+        colorKey="teal"
+        emojis={[]}
+        title="Again"
+        sound={false}
+        onDismiss={() => {}}
+      />
+    );
+    const view = render(celebration(1));
+    const settled = vi.fn();
+    whenCelebrationsSettled(settled);
+
+    view.rerender(celebration(2));
+    await act(async () => {});
+    expect(settled).not.toHaveBeenCalled();
+
+    view.unmount();
+    await act(async () => {});
+    expect(settled).toHaveBeenCalledTimes(1);
   });
 });
 

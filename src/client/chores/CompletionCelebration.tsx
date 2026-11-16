@@ -96,10 +96,14 @@ function useActiveCelebration(): void {
     activeCelebrations += 1;
     return () => {
       activeCelebrations -= 1;
-      if (activeCelebrations > 0) return;
-      const listeners = [...settledListeners];
-      settledListeners.clear();
-      for (const listener of listeners) listener();
+      // A keyed replacement unmounts the old celebration before the new one's effect runs, in
+      // the same commit: recheck afterwards so that hand-over never reads as settled.
+      queueMicrotask(() => {
+        if (activeCelebrations > 0) return;
+        const listeners = [...settledListeners];
+        settledListeners.clear();
+        for (const listener of listeners) listener();
+      });
     };
   }, []);
 }

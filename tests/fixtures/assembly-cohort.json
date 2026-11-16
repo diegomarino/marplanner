@@ -4295,7 +4295,8 @@
             "PrinterAttention renders nothing outside a printer session",
             "PrinterAttention says a printer was paired before (\"Kitchen printer\") and offers to reconnect it",
             "PrinterAttention says a printer was paired before (\"\") and offers to reconnect it",
-            "PrinterAttention names the connected printer while healthy"
+            "PrinterAttention names the connected printer while healthy",
+            "PrinterAttention closes an automatic prompt when a gesture-free reconnect succeeds meanwhile"
           ],
           "tests/client/printer-diagnostics-tab.test.tsx": [
             "PrinterDiagnosticsTab — recent prints renders member, source, status, attempts and failure reason per job",
@@ -5936,6 +5937,7 @@
             "CompletionCelebration swallows a refused play()",
             "CompletionCelebration swallows a play() that throws synchronously",
             "CompletionCelebration reports settled right away with none on screen, else after the last one leaves",
+            "CompletionCelebration does not report settled while a keyed celebration replaces another",
             "celebration emojis are vendored every preset emoji is in the emoji catalog, so it renders as a Noto SVG",
             "celebration sound priming starts the element muted inside the gesture, then pauses and unmutes it",
             "celebration sound priming primes once; later taps leave the unlocked element alone",
