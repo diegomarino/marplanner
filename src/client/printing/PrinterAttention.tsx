@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useT } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import { usePrinterSession } from "./PrinterSession";
 import { loadRememberedPrinter } from "./rememberedPrinter";
 
@@ -69,7 +70,7 @@ export function PrinterAttention(): React.JSX.Element | null {
   const known = session.pairedDevice ?? loadRememberedPrinter();
   const withName = (
     key: "printing.attention.knownPrinter" | "printing.attention.connectedPrinter"
-  ) => t(key).replace("{name}", known?.name ?? "");
+  ) => interpolate(t(key), { name: known?.name ?? "" });
   const printerLine = healthy
     ? known?.name
       ? withName("printing.attention.connectedPrinter")

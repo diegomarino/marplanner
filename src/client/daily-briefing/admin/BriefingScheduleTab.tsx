@@ -1,4 +1,5 @@
 import { useT } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import type { MessageKey } from "@/i18n/messages";
 import { useHouseholdSettings } from "@/lib/householdSettings";
 import { Button } from "@/components/ui/button";
@@ -83,7 +84,7 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
   const columnBriefing = t("dailyBriefing.admin.columnBriefing");
   const columnDays = t("dailyBriefing.admin.columnDays");
   const columnResult = shownDate
-    ? t("dailyBriefing.admin.columnResult").replace("{date}", shownDate)
+    ? interpolate(t("dailyBriefing.admin.columnResult"), { date: shownDate })
     : t("dailyBriefing.admin.columnResultNoDate");
 
   return (
@@ -127,7 +128,7 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
                 {props.generatingAll
                   ? t("dailyBriefing.management.generating")
                   : notToday && shownDate
-                    ? t("dailyBriefing.admin.generateAllOnDate").replace("{date}", shownDate)
+                    ? interpolate(t("dailyBriefing.admin.generateAllOnDate"), { date: shownDate })
                     : t("dailyBriefing.admin.generateAllButton")}
               </Button>
             </div>
@@ -242,10 +243,9 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
                               variant="outline"
                               size="sm"
                               data-testid={`daily-briefing-open-blocks-${member.id}`}
-                              aria-label={t("dailyBriefing.admin.openBlocksAria").replace(
-                                "{name}",
-                                member.displayName
-                              )}
+                              aria-label={interpolate(t("dailyBriefing.admin.openBlocksAria"), {
+                                name: member.displayName,
+                              })}
                               onClick={() => props.onOpen(member.id, "blocks")}
                             >
                               {t("dailyBriefing.admin.tabBlocks")}
@@ -255,10 +255,9 @@ export function BriefingScheduleTab(props: BriefingScheduleTabProps) {
                               variant="outline"
                               size="sm"
                               data-testid={`daily-briefing-open-briefings-${member.id}`}
-                              aria-label={t("dailyBriefing.admin.openBriefingsAria").replace(
-                                "{name}",
-                                member.displayName
-                              )}
+                              aria-label={interpolate(t("dailyBriefing.admin.openBriefingsAria"), {
+                                name: member.displayName,
+                              })}
                               onClick={() => props.onOpen(member.id, "preview")}
                             >
                               {t("dailyBriefing.admin.tabBriefings")}

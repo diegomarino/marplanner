@@ -5,6 +5,7 @@ import { GripVertical, Pencil, Trash2 } from "lucide-react";
 import type { Chore } from "../../../shared";
 import type { MessageKey } from "@/i18n/messages";
 import { useT } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import { Button } from "@/components/ui/button";
 import { NotoEmoji } from "@/chores/noto-emoji";
 
@@ -23,7 +24,7 @@ export function SortableChoreRow({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: chore.id,
   });
-  const named = (key: MessageKey) => t(key).replace("{name}", chore.name);
+  const named = (key: MessageKey) => interpolate(t(key), { name: chore.name });
 
   return (
     <li

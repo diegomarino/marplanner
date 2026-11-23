@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { bumpCredentialGeneration, CREDENTIAL_LOST_EVENT } from "@/lib/credential";
 import { HouseholdSettingsProvider } from "@/lib/householdSettings";
 import { LanguageProvider } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import { messages, resolveLang, type Language, type MessageKey } from "@/i18n/messages";
 import { PrinterSessionProvider } from "@/printing/PrinterSession";
 import { PluginCatalogProvider } from "@/plugins/PluginCatalogProvider";
@@ -379,7 +380,9 @@ function ProvisioningScreen({
                   ? t("provisioning.gate.error")
                   : retryAfter === null
                     ? t("provisioning.gate.throttled")
-                    : t("provisioning.gate.retryAfter").replace("{seconds}", String(retryAfter))
+                    : interpolate(t("provisioning.gate.retryAfter"), {
+                        seconds: String(retryAfter),
+                      })
                 : null
             }
           >

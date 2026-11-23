@@ -17,6 +17,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useT } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import { authFetch } from "@/lib/credential";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -149,9 +150,10 @@ export function CalendarManagement() {
     const moved = next.find((rule) => rule.id === String(event.active.id))!;
     publishRules(next);
     setRuleStatus(
-      t("calendar.admin.movedRule")
-        .replace("{emoji}", moved.emoji)
-        .replace("{position}", String(next.findIndex((rule) => rule.id === moved.id) + 1))
+      interpolate(t("calendar.admin.movedRule"), {
+        emoji: moved.emoji,
+        position: String(next.findIndex((rule) => rule.id === moved.id) + 1),
+      })
     );
     setRuleActionError(null);
     setRuleBusy(true);
@@ -408,27 +410,22 @@ export function CalendarManagement() {
               screenReaderInstructions: { draggable: t("calendar.admin.dragInstructions") },
               announcements: {
                 onDragStart: ({ active }) =>
-                  t("calendar.admin.dragStarted").replace(
-                    "{emoji}",
-                    rulesRef.current.find((rule) => rule.id === active.id)?.emoji ?? ""
-                  ),
+                  interpolate(t("calendar.admin.dragStarted"), {
+                    emoji: rulesRef.current.find((rule) => rule.id === active.id)?.emoji ?? "",
+                  }),
                 onDragOver: ({ active, over }) =>
                   over
-                    ? t("calendar.admin.dragOver")
-                        .replace(
-                          "{emoji}",
-                          rulesRef.current.find((rule) => rule.id === active.id)?.emoji ?? ""
-                        )
-                        .replace(
-                          "{position}",
-                          String(rulesRef.current.findIndex((rule) => rule.id === over.id) + 1)
-                        )
+                    ? interpolate(t("calendar.admin.dragOver"), {
+                        emoji: rulesRef.current.find((rule) => rule.id === active.id)?.emoji ?? "",
+                        position: String(
+                          rulesRef.current.findIndex((rule) => rule.id === over.id) + 1
+                        ),
+                      })
                     : "",
                 onDragEnd: ({ active }) =>
-                  t("calendar.admin.dragEnded").replace(
-                    "{emoji}",
-                    rulesRef.current.find((rule) => rule.id === active.id)?.emoji ?? ""
-                  ),
+                  interpolate(t("calendar.admin.dragEnded"), {
+                    emoji: rulesRef.current.find((rule) => rule.id === active.id)?.emoji ?? "",
+                  }),
                 onDragCancel: () => t("calendar.admin.dragCancelled"),
               },
             }}

@@ -17,18 +17,12 @@
  * "It's five fifty") — deliberately NOT the Spanish "menos" (to-the-next-hour) shape,
  * which the Spanish generic-past-half form uses; see `buildPhraseEn` below.
  */
+import { interpolate } from "@/i18n/interpolate";
 import { messages, type Language, type MessageKey } from "@/i18n/messages";
 
 /** `messages[locale][key] ?? messages.en[key]` — never throws (FR-010 edge case: a missing es key falls back to en text). */
 function phraseText(locale: Language, key: MessageKey): string {
   return messages[locale][key] ?? messages.en[key];
-}
-
-/** `{name}`-token interpolation — the only templating this module needs. */
-function interpolate(template: string, vars: Record<string, string>): string {
-  return template.replace(/\{(\w+)\}/g, (match, name: string) =>
-    Object.prototype.hasOwnProperty.call(vars, name) ? vars[name] : match
-  );
 }
 
 /** 12-hour-clock hour index (1..12) for a raw 0..23 hour — noon/midnight are special-cased by callers before reaching this. */

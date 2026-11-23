@@ -2,6 +2,7 @@ import { LocalizedApiError, responseMessage } from "@/lib/api-error";
 import { useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/credential";
 import { useT } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import { useHouseholdSettings } from "@/lib/householdSettings";
 import { todayInHouseholdTimezone } from "@/lib/household-date";
 import { AdminPanel } from "@/components/AdminPanel";
@@ -537,10 +538,9 @@ export function DailyBriefingManagement() {
             >
               {settings && (
                 <p className="text-sm text-muted-foreground">
-                  {t("dailyBriefing.admin.blocksCaption").replaceAll(
-                    "{name}",
-                    selected.displayName
-                  )}
+                  {interpolate(t("dailyBriefing.admin.blocksCaption"), {
+                    name: selected.displayName,
+                  })}
                 </p>
               )}
               {settingsChanged && (

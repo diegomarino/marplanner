@@ -427,6 +427,17 @@ describe("BriefingWorkspace", () => {
     expect(onOpenBlocks).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps a member name that looks like another placeholder out of the paused notice's date", async () => {
+    mockBackend({ notGenerated: [TODAY] });
+    renderWorkspace({
+      member: { ...ben, displayName: "{date}" },
+      briefingDays: ["mon", "tue", "wed", "fri"],
+    });
+    expect(await screen.findByTestId("daily-briefing-paused-notice")).toHaveTextContent(
+      `{date}'s briefing is paused on ${TODAY}`
+    );
+  });
+
   it("says only once that there is nothing yet for a member with no briefings", async () => {
     mockBackend({ noHistory: true, notGenerated: [TODAY] });
     renderWorkspace();

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import type { MessageKey } from "@/i18n/messages";
 import { cn } from "@/lib/utils";
 import { EMOJI_CATEGORIES } from "./emoji-catalog";
@@ -70,7 +71,7 @@ export function EmojiPicker({
         // eslint-disable-next-line ui-policy/sizing -- Decorative 24px glyph; this icon-only button retains its density-controlled touch target.
         className="size-[var(--control-height)] p-0 [font-size:1.5rem]"
         aria-label={
-          value ? t(labels.change).replace("{icon}", value) : (emptyLabel ?? t(labels.select))
+          value ? interpolate(t(labels.change), { icon: value }) : (emptyLabel ?? t(labels.select))
         }
         aria-expanded={open}
         aria-haspopup="dialog"

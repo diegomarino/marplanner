@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { DayPeriodDTO, type PeriodId } from "../../shared";
 import { useTranslation } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import type { MessageKey } from "@/i18n/messages";
 import {
   derivedEndMinutes,
@@ -163,15 +164,17 @@ function DayPeriodsManagementContent() {
       if (err instanceof PeriodOrderError) {
         const thisLabel = t(DAY_PERIOD_LABEL_KEYS[err.periodId]);
         const prevLabel = t(DAY_PERIOD_LABEL_KEYS[err.prevPeriodId]);
-        message = t("dayPeriods.action.orderError")
-          .replace("{period}", thisLabel)
-          .replace("{previous}", prevLabel);
+        message = interpolate(t("dayPeriods.action.orderError"), {
+          period: thisLabel,
+          previous: prevLabel,
+        });
       } else if (err instanceof PeriodUniquenessError) {
         const id1Label = t(DAY_PERIOD_LABEL_KEYS[err.periodId1]);
         const id2Label = t(DAY_PERIOD_LABEL_KEYS[err.periodId2]);
-        message = t("dayPeriods.action.sameTimeError")
-          .replace("{first}", id1Label)
-          .replace("{second}", id2Label);
+        message = interpolate(t("dayPeriods.action.sameTimeError"), {
+          first: id1Label,
+          second: id2Label,
+        });
       }
 
       setError(message);

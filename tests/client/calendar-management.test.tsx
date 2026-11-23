@@ -149,6 +149,19 @@ describe("Admin Calendar sources", () => {
     await waitFor(() => expect(calls.some((call) => call.startsWith("DELETE "))).toBe(true));
   });
 
+  it("shows a source name holding `$$` and `$&` exactly as stored in the delete confirmation", async () => {
+    const name = "Budget $$ & $& plan";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: Parameters<typeof fetch>[0]) =>
+        json(String(input).endsWith("/external-sources") ? [{ ...source, name }] : [])
+      )
+    );
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "Delete source" }));
+    expect(screen.getByRole("dialog")).toHaveAccessibleName(`Delete ${name}?`);
+  });
+
   it("polls only active phases and refreshes Calendar events after success", async () => {
     // Fake timers skip the 1 s poll interval; shouldAdvanceTime keeps waitFor working.
     vi.useFakeTimers({ shouldAdvanceTime: true });

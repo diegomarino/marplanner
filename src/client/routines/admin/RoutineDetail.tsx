@@ -18,6 +18,7 @@ import {
 import { Pencil, Plus, Trash2, Users } from "lucide-react";
 import type { Assignment, Chore, Member, Routine } from "../../../shared";
 import { useT } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { RoutineWeekGrid } from "./RoutineWeekGrid";
@@ -129,18 +130,18 @@ export function RoutineDetail({
             screenReaderInstructions: { draggable: t("routines.admin.dragInstructions") },
             announcements: {
               onDragStart: ({ active }) =>
-                t("routines.admin.dragStarted").replace("{name}", nameOf(active.id)),
+                interpolate(t("routines.admin.dragStarted"), { name: nameOf(active.id) }),
               onDragOver: ({ active, over }) =>
                 over
-                  ? t("routines.admin.dragOver")
-                      .replace("{name}", nameOf(active.id))
-                      .replace(
-                        "{position}",
-                        String(chores.findIndex((chore) => chore.id === String(over.id)) + 1)
-                      )
+                  ? interpolate(t("routines.admin.dragOver"), {
+                      name: nameOf(active.id),
+                      position: String(
+                        chores.findIndex((chore) => chore.id === String(over.id)) + 1
+                      ),
+                    })
                   : "",
               onDragEnd: ({ active }) =>
-                t("routines.admin.dragEnded").replace("{name}", nameOf(active.id)),
+                interpolate(t("routines.admin.dragEnded"), { name: nameOf(active.id) }),
               onDragCancel: () => t("routines.admin.dragCancelled"),
             },
           }}

@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { MAX_REMINDER_EMOJIS } from "../../shared";
 import { useTranslation } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import { Button } from "@/components/ui/button";
 import { EmojiPicker } from "@/chores/EmojiPicker";
 import { emojiLabelKey } from "@/chores/emoji-catalog";
@@ -55,7 +56,7 @@ export function ReminderEmojiSequence({ value, onChange }: ReminderEmojiSequence
                   variant="ghost"
                   size="icon"
                   disabled={index === 0}
-                  aria-label={t("reminders.images.moveEarlier").replace("{emoji}", name)}
+                  aria-label={interpolate(t("reminders.images.moveEarlier"), { emoji: name })}
                   onClick={() => move(index, index - 1)}
                 >
                   <ChevronLeft className="size-4" aria-hidden="true" />
@@ -65,7 +66,7 @@ export function ReminderEmojiSequence({ value, onChange }: ReminderEmojiSequence
                   variant="ghost"
                   size="icon"
                   disabled={index === value.length - 1}
-                  aria-label={t("reminders.images.moveLater").replace("{emoji}", name)}
+                  aria-label={interpolate(t("reminders.images.moveLater"), { emoji: name })}
                   onClick={() => move(index, index + 1)}
                 >
                   <ChevronRight className="size-4" aria-hidden="true" />
@@ -76,7 +77,7 @@ export function ReminderEmojiSequence({ value, onChange }: ReminderEmojiSequence
                   size="icon"
                   className="text-muted-foreground hover:text-destructive"
                   data-testid={`reminder-emoji-remove-${index}`}
-                  aria-label={t("reminders.images.remove").replace("{emoji}", name)}
+                  aria-label={interpolate(t("reminders.images.remove"), { emoji: name })}
                   onClick={() => onChange(value.filter((_, i) => i !== index))}
                 >
                   <X className="size-4" aria-hidden="true" />

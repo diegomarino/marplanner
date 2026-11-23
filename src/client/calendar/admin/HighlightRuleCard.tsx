@@ -5,6 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Trash2 } from "lucide-react";
 import type { HighlightRule } from "../../../shared";
 import { useT } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
@@ -43,7 +44,7 @@ export function HighlightRuleCard({
           size="icon"
           type="button"
           className="shrink-0 cursor-grab touch-none rounded p-1 active:cursor-grabbing"
-          aria-label={t("calendar.admin.dragRule").replace("{emoji}", rule.emoji)}
+          aria-label={interpolate(t("calendar.admin.dragRule"), { emoji: rule.emoji })}
           disabled={busy}
           {...attributes}
           {...listeners}
@@ -75,7 +76,7 @@ export function HighlightRuleCard({
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title={t("calendar.admin.deleteRuleConfirm").replace("{emoji}", rule.emoji)}
+        title={interpolate(t("calendar.admin.deleteRuleConfirm"), { emoji: rule.emoji })}
         description={t("calendar.admin.deleteRuleDescription")}
         confirmLabel={t("calendar.admin.delete")}
         cancelLabel={t("calendar.admin.cancel")}

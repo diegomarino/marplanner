@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useT } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import { authFetch } from "@/lib/credential";
 import { appUrl } from "@/lib/base-path";
 import { LocalizedApiError, responseMessage } from "@/lib/api-error";
@@ -171,10 +172,11 @@ export function BriefingWorkspace({
       if ("skipped" in result) {
         setNotice({
           testId: "daily-briefing-paused-notice",
-          text: t("dailyBriefing.admin.pausedNotice")
-            .replace("{name}", member.displayName)
-            .replace("{date}", result.date)
-            .replace("{blocks}", t("dailyBriefing.admin.tabBlocks")),
+          text: interpolate(t("dailyBriefing.admin.pausedNotice"), {
+            name: member.displayName,
+            date: result.date,
+            blocks: t("dailyBriefing.admin.tabBlocks"),
+          }),
         });
         return;
       }
@@ -199,10 +201,11 @@ export function BriefingWorkspace({
     (pausedDate && activeDate
       ? {
           testId: "daily-briefing-paused-notice",
-          text: t("dailyBriefing.admin.pausedNotice")
-            .replace("{name}", member.displayName)
-            .replace("{date}", activeDate)
-            .replace("{blocks}", t("dailyBriefing.admin.tabBlocks")),
+          text: interpolate(t("dailyBriefing.admin.pausedNotice"), {
+            name: member.displayName,
+            date: activeDate,
+            blocks: t("dailyBriefing.admin.tabBlocks"),
+          }),
         }
       : null);
 
@@ -221,7 +224,9 @@ export function BriefingWorkspace({
           await responseMessage(response, t("dailyBriefing.admin.printError"), {
             plugin_inactive: t("dailyBriefing.admin.printUnavailable"),
             printable_raster_missing: t("dailyBriefing.admin.printNoRaster"),
-            not_found: t("dailyBriefing.admin.noBriefingForDate").replace("{date}", activeDate),
+            not_found: interpolate(t("dailyBriefing.admin.noBriefingForDate"), {
+              date: activeDate,
+            }),
           })
         );
       }
@@ -434,7 +439,7 @@ export function BriefingWorkspace({
           </div>
         ) : shownRead && activeDate && !(history && history.entries.length === 0) ? (
           <p className="text-sm text-muted-foreground" data-testid="daily-briefing-no-briefing">
-            {t("dailyBriefing.admin.noBriefingForDate").replace("{date}", activeDate)}
+            {interpolate(t("dailyBriefing.admin.noBriefingForDate"), { date: activeDate })}
           </p>
         ) : null}
       </div>

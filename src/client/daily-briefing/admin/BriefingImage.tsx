@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useT } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import { authFetch } from "@/lib/credential";
 import { Button } from "@/components/ui/button";
 import { ErrorNotice } from "@/components/ErrorNotice";
@@ -94,7 +95,7 @@ export function BriefingImage({ memberId, date, version, status }: BriefingImage
         </>
       )}
       {state.kind === "missing" && (
-        <p>{t("dailyBriefing.admin.noBriefingForDate").replace("{date}", date)}</p>
+        <p>{interpolate(t("dailyBriefing.admin.noBriefingForDate"), { date })}</p>
       )}
       {state.kind === "noRaster" &&
         (status === "render-failed" ? (

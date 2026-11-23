@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { authFetch } from "@/lib/credential";
 import { useTranslation } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import type {
   LiveCacheState,
   LiveClient,
@@ -261,10 +262,9 @@ export function DiscoverDevices({
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleSort(col.key)}
-                      aria-label={t("networkDevices.discover.sortBy").replace(
-                        "{column}",
-                        col.label
-                      )}
+                      aria-label={interpolate(t("networkDevices.discover.sortBy"), {
+                        column: col.label,
+                      })}
                       data-testid={`network-devices-sort-${col.key}`}
                     >
                       {col.label}

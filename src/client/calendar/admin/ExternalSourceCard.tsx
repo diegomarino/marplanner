@@ -3,6 +3,7 @@ import { useState } from "react";
 import { RefreshCcw, Trash2 } from "lucide-react";
 import type { ExternalSourcePublic, SynchronizationPhase } from "../../../shared";
 import { useTranslation } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import { useHouseholdSettings } from "@/lib/householdSettings";
 import type { MessageKey } from "@/i18n/messages";
 import { Button } from "@/components/ui/button";
@@ -121,7 +122,7 @@ export function ExternalSourceCard({
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title={t("calendar.admin.deleteConfirm").replace("{name}", source.name)}
+        title={interpolate(t("calendar.admin.deleteConfirm"), { name: source.name })}
         description={t("calendar.admin.deleteDescription")}
         confirmLabel={t("calendar.admin.delete")}
         cancelLabel={t("calendar.admin.cancel")}

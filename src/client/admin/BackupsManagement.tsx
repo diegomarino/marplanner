@@ -6,6 +6,7 @@ import { useHouseholdSettings } from "@/lib/householdSettings";
 import { STATUS_BANNER_CLASSES, TYPE_PILL_CLASSES } from "@/lib/recipes";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import type { MessageKey } from "@/i18n/messages";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -212,7 +213,7 @@ export function BackupsManagement() {
         setSnapshotInfo(t("backups.management.snapshotAlreadyRunning"));
       } else {
         setSnapshotSuccess(
-          t("backups.management.snapshotCreated").replace("{filename}", result.filename)
+          interpolate(t("backups.management.snapshotCreated"), { filename: result.filename })
         );
         await loadBackups();
       }
@@ -342,7 +343,7 @@ export function BackupsManagement() {
       }
       const result = (await response.json()) as UploadResult;
       setUploadSuccess(
-        t("backups.management.uploadSuccess").replace("{filename}", result.filename)
+        interpolate(t("backups.management.uploadSuccess"), { filename: result.filename })
       );
       await loadBackups();
     } catch (cause) {
@@ -692,7 +693,7 @@ export function BackupsManagement() {
         </Field>
         {uploading && (
           <p className="text-muted-foreground mt-2 text-control" role="status" aria-live="polite">
-            {t("backups.management.uploadingFile").replace("{filename}", uploadingName)}
+            {interpolate(t("backups.management.uploadingFile"), { filename: uploadingName })}
           </p>
         )}
         <ErrorNotice message={uploadError} className="mt-2" data-testid="backups-upload-error" />

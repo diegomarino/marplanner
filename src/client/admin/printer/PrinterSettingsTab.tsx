@@ -9,6 +9,7 @@ import { Field } from "@/components/Field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import { LocalizedApiError, responseMessage } from "@/lib/api-error";
 import { appUrl } from "@/lib/base-path";
 import { authFetch } from "@/lib/credential";
@@ -290,7 +291,9 @@ export function PrinterSettingsTab(): React.JSX.Element {
       session.displayState === "error");
   const statusText =
     connected && pairedDevice
-      ? t("admin.printer.connectedTo").replace("{name}", pairedDevice.name || pairedDevice.deviceId)
+      ? interpolate(t("admin.printer.connectedTo"), {
+          name: pairedDevice.name || pairedDevice.deviceId,
+        })
       : t(session?.stateLabelKey ?? "printing.executor.state.unpaired");
   const pluginActive = session?.active ?? true;
 

@@ -7,6 +7,7 @@ import { primeCelebrationSound } from "@/chores/celebration-sound";
 import { EmojiPicker, type EmojiPickerLabels } from "@/chores/EmojiPicker";
 import { NotoEmoji } from "@/chores/noto-emoji";
 import { useTranslation } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import type { MessageKey } from "@/i18n/messages";
 import { useHouseholdSettings } from "@/lib/householdSettings";
 import { cn } from "@/lib/utils";
@@ -216,9 +217,10 @@ export function MemberCelebrationField({
           >
             {celebrationProblem(value)
               ? t("members.celebration.customEmpty")
-              : t("members.celebration.customHint")
-                  .replace("{count}", String(customEmojis.length))
-                  .replace("{max}", String(CELEBRATION_CUSTOM_MAX))}
+              : interpolate(t("members.celebration.customHint"), {
+                  count: String(customEmojis.length),
+                  max: String(CELEBRATION_CUSTOM_MAX),
+                })}
           </p>
         </div>
       )}

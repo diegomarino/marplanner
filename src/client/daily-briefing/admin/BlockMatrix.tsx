@@ -19,6 +19,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import { useT } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import { cn } from "@/lib/utils";
 import { NATIVE_SELECT_CLASSES } from "@/lib/recipes";
 import { useHouseholdSettings } from "@/lib/householdSettings";
@@ -106,18 +107,16 @@ export function BlockMatrix(props: BlockMatrixProps) {
           screenReaderInstructions: { draggable: t("dailyBriefing.admin.dragInstructions") },
           announcements: {
             onDragStart: ({ active }) =>
-              t("dailyBriefing.admin.dragStarted").replace("{block}", blockName(active.id)),
+              interpolate(t("dailyBriefing.admin.dragStarted"), { block: blockName(active.id) }),
             onDragOver: ({ active, over }) =>
               over
-                ? t("dailyBriefing.admin.dragOver")
-                    .replace("{block}", blockName(active.id))
-                    .replace(
-                      "{position}",
-                      String(types.indexOf(String(over.id) as BlockRegistryType) + 1)
-                    )
+                ? interpolate(t("dailyBriefing.admin.dragOver"), {
+                    block: blockName(active.id),
+                    position: String(types.indexOf(String(over.id) as BlockRegistryType) + 1),
+                  })
                 : "",
             onDragEnd: ({ active }) =>
-              t("dailyBriefing.admin.dragEnded").replace("{block}", blockName(active.id)),
+              interpolate(t("dailyBriefing.admin.dragEnded"), { block: blockName(active.id) }),
             onDragCancel: () => t("dailyBriefing.admin.dragCancelled"),
           },
         }}
@@ -153,7 +152,9 @@ export function BlockMatrix(props: BlockMatrixProps) {
                     checked={props.schedule.includes(day)}
                     disabled={props.scheduleSaving}
                     onChange={() => props.onToggleDay(day)}
-                    label={t("dailyBriefing.admin.dayRunsLabel").replace("{day}", dayName(day))}
+                    label={interpolate(t("dailyBriefing.admin.dayRunsLabel"), {
+                      day: dayName(day),
+                    })}
                     labelHidden
                     className="justify-center"
                   />
@@ -248,7 +249,7 @@ function BlockRow({
             variant="ghost"
             size="icon"
             className="shrink-0 cursor-grab touch-none active:cursor-grabbing"
-            aria-label={t("dailyBriefing.admin.reorderLabel").replace("{block}", label)}
+            aria-label={interpolate(t("dailyBriefing.admin.reorderLabel"), { block: label })}
             disabled={orderSaving}
             data-testid={`daily-briefing-admin-block-drag-${type}`}
             {...attributes}
@@ -336,9 +337,10 @@ function BlockRow({
               checked={on.has(day)}
               disabled={saving || paused}
               onChange={() => onToggleCell(type, day)}
-              label={t("dailyBriefing.admin.cellLabel")
-                .replace("{block}", label)
-                .replace("{day}", dayName(day))}
+              label={interpolate(t("dailyBriefing.admin.cellLabel"), {
+                block: label,
+                day: dayName(day),
+              })}
               labelHidden
               className="justify-center"
             />
@@ -351,9 +353,14 @@ function BlockRow({
           variant="outline"
           data-testid={`daily-briefing-block-row-toggle-${type}`}
           disabled={saving}
-          aria-label={t(
-            on.size > 0 ? "dailyBriefing.admin.rowOffEveryDay" : "dailyBriefing.admin.rowOnEveryDay"
-          ).replace("{block}", label)}
+          aria-label={interpolate(
+            t(
+              on.size > 0
+                ? "dailyBriefing.admin.rowOffEveryDay"
+                : "dailyBriefing.admin.rowOnEveryDay"
+            ),
+            { block: label }
+          )}
           onClick={() => onToggleRow(type)}
         >
           {t(on.size > 0 ? "dailyBriefing.admin.rowOff" : "dailyBriefing.admin.rowOn")}

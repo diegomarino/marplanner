@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import type { MessageKey } from "@/i18n/messages";
 import { authFetch, reportCredentialLoss } from "@/lib/credential";
 import { useHouseholdSettings } from "@/lib/householdSettings";
@@ -210,7 +211,7 @@ export function DeviceCredentialsManagement() {
           className="self-start"
           checked={showRevoked}
           onChange={setShowRevoked}
-          label={t("accessKeys.filter.showRevoked").replace("{count}", String(revokedCount))}
+          label={interpolate(t("accessKeys.filter.showRevoked"), { count: String(revokedCount) })}
           data-testid="access-keys-show-revoked"
         />
       )}
@@ -274,19 +275,21 @@ export function DeviceCredentialsManagement() {
                     </div>
                     <p className="text-muted-foreground text-control">
                       <span data-testid={`access-keys-created-${credential.id}`}>
-                        {t("accessKeys.row.created").replace(
-                          "{date}",
-                          formatDateTime(credential.createdAt)
-                        )}
+                        {interpolate(t("accessKeys.row.created"), {
+                          date: formatDateTime(credential.createdAt),
+                        })}
                       </span>
                       {credential.expiresAt !== null && (
                         <>
                           {" · "}
-                          {t(
-                            credential.state === "expired"
-                              ? "accessKeys.row.expired"
-                              : "accessKeys.row.expires"
-                          ).replace("{date}", formatDate(credential.expiresAt))}
+                          {interpolate(
+                            t(
+                              credential.state === "expired"
+                                ? "accessKeys.row.expired"
+                                : "accessKeys.row.expires"
+                            ),
+                            { date: formatDate(credential.expiresAt) }
+                          )}
                         </>
                       )}
                     </p>
@@ -378,7 +381,9 @@ export function DeviceCredentialsManagement() {
         onOpenChange={(open) => {
           if (!open) setRevoking(null);
         }}
-        title={revoking ? t("accessKeys.revoke.title").replace("{name}", nameOf(revoking)) : ""}
+        title={
+          revoking ? interpolate(t("accessKeys.revoke.title"), { name: nameOf(revoking) }) : ""
+        }
         description={
           revoking?.current
             ? t("accessKeys.revoke.currentDescription")

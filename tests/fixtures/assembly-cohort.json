@@ -3479,6 +3479,7 @@
             "Admin Calendar sources registers the protected route and renders the v1 two-column composition",
             "Admin Calendar sources creates a source with a fixed 15-minute interval and keeps failed first sync retryable",
             "Admin Calendar sources keeps toggle, sync, and confirmed delete as separate actions",
+            "Admin Calendar sources shows a source name holding `$$` and `$&` exactly as stored in the delete confirmation",
             "Admin Calendar sources polls only active phases and refreshes Calendar events after success",
             "Admin Calendar sources uses the household language for the durable success time",
             "Admin Calendar sources keeps enabled toggles and drag handles at kiosk density",
@@ -3760,6 +3761,7 @@
             "BriefingWorkspace shows no image frame for a date without a briefing",
             "BriefingWorkspace offers a way back to today after browsing another date",
             "BriefingWorkspace explains a paused day up front, links to Blocks and does not offer Generate",
+            "BriefingWorkspace keeps a member name that looks like another placeholder out of the paused notice's date",
             "BriefingWorkspace says only once that there is nothing yet for a member with no briefings",
             "BriefingWorkspace offers Retry when the stored briefing fails to load",
             "BriefingWorkspace shows the server's message when Generate or Print fails",
@@ -3952,6 +3954,16 @@
             "HouseholdChrome — Options menu the Admin affordance opens Admin from the menu entry on a plain tap and closes the menu",
             "HouseholdChrome — Options menu the Admin affordance opens Admin from keyboard and assistive-technology activation",
             "HouseholdChrome — Options menu the unlocked admin bar navigates Home and up the breadcrumb on a plain click, and leaves modified clicks native"
+          ],
+          "tests/client/i18n-interpolate.test.ts": [
+            "interpolate() — message placeholder filling fills each named placeholder",
+            "interpolate() — message placeholder filling inserts `$$` literally",
+            "interpolate() — message placeholder filling inserts `$&`, `` $` `` and `$'` literally",
+            "interpolate() — message placeholder filling inserts `$1` literally",
+            "interpolate() — message placeholder filling does not fill a placeholder that arrives inside a value",
+            "interpolate() — message placeholder filling fills every occurrence of a repeated placeholder",
+            "interpolate() — message placeholder filling leaves a placeholder without a value untouched",
+            "interpolate() — message placeholder filling accepts number values"
           ],
           "tests/client/logger.test.ts": [
             "client logger CLIENT-LOGGING-TELEMETRY-INV-03: an entry carries the canonical envelope shape",
@@ -5874,6 +5886,7 @@
             "DeviceCredentialsManagement dates expiries by day and falls back to the browser timezone before settings load",
             "DeviceCredentialsManagement disables revoking the configured bootstrap key and explains how to rotate it",
             "DeviceCredentialsManagement revokes another device only after confirmation",
+            "DeviceCredentialsManagement shows a key name holding `$$` and `$&` exactly as stored in the revoke confirmation",
             "DeviceCredentialsManagement warns before revoking this device and logs the screen out afterwards",
             "DeviceCredentialsManagement shows the bootstrap explanation, not a generic error, when the server refuses",
             "DeviceCredentialsManagement renames a credential and rejects an empty name locally",
@@ -7435,6 +7448,21 @@
           "branches": 100
         }
       },
+      "src/client/i18n/interpolate.ts": {
+        "layer": "client",
+        "minimumTotals": {
+          "lines": 2,
+          "statements": 2,
+          "functions": 2,
+          "branches": 2
+        },
+        "minimumRates": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        }
+      },
       "src/client/i18n/index.tsx": {
         "layer": "client",
         "minimumTotals": {
@@ -8308,10 +8336,10 @@
       "src/client/time-announcements/phrases.ts": {
         "layer": "client",
         "minimumTotals": {
-          "lines": 53,
-          "statements": 59,
-          "functions": 8,
-          "branches": 74
+          "lines": 51,
+          "statements": 57,
+          "functions": 6,
+          "branches": 72
         },
         "minimumRates": {
           "lines": 100,

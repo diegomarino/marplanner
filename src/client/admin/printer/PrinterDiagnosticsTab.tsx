@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n";
+import { interpolate } from "@/i18n/interpolate";
 import type { MessageKey } from "@/i18n/messages";
 import { authFetch } from "@/lib/credential";
 import { useHouseholdSettingsContext } from "@/lib/householdSettings";
@@ -143,9 +144,10 @@ export function PrinterDiagnosticsTab(): React.JSX.Element {
         text:
           data.resetRecords === 0
             ? t("admin.printer.reset.nothing")
-            : t("admin.printer.reset.done")
-                .replace("{records}", String(data.resetRecords))
-                .replace("{jobs}", String(data.cancelledJobs)),
+            : interpolate(t("admin.printer.reset.done"), {
+                records: String(data.resetRecords),
+                jobs: String(data.cancelledJobs),
+              }),
         unhealthy: false,
         testId: "printing-reset-today-result",
       });

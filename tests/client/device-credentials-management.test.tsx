@@ -184,6 +184,15 @@ describe("DeviceCredentialsManagement", () => {
     window.removeEventListener(CREDENTIAL_LOST_EVENT, lost);
   });
 
+  it("shows a key name holding `$$` and `$&` exactly as stored in the revoke confirmation", async () => {
+    const label = "Till $$ & $& tablet";
+    fetchMock.mockImplementation(async () => json({ credentials: [credential({ label })] }));
+    renderPanel();
+
+    fireEvent.click(await screen.findByTestId("access-keys-revoke-kitchen"));
+    expect(await screen.findByRole("dialog")).toHaveTextContent(`Revoke “${label}”?`);
+  });
+
   it("warns before revoking this device and logs the screen out afterwards", async () => {
     routeFetch({
       revoke: () =>
