@@ -22,6 +22,19 @@ import {
 import { usePresentationMode } from "@/shell/usePresentationMode";
 import { AdminUnlockProvider, isAdminPinBypassEnabled, useAdminUnlock } from "@/lib/adminUnlock";
 
+// `@/main` mounts the application in a root it does not export. The roots are recorded so the
+// test that imports it can unmount the application: left mounted, its timers and pending reads
+// re-render after the test environment is gone ("window is not defined").
+const createdRoots = vi.hoisted(() => [] as { unmount(): void }[]);
+vi.mock("react-dom/client", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-dom/client")>();
+  const createRoot: typeof actual.createRoot = (...args) => {
+    const root = actual.createRoot(...args);
+    createdRoots.push(root);
+    return root;
+  };
+  return { ...actual, createRoot };
+});
 vi.mock("@/lib/credential", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/credential")>()),
   authFetch: vi.fn(),
@@ -247,6 +260,7 @@ describe("B0 device presentation state", () => {
     const root = document.createElement("div");
     root.id = "root";
     document.body.append(root);
+    const rootsBefore = createdRoots.length;
     try {
       await import("@/main");
       await waitFor(() => expect(screen.getByTestId("provisioning-gate-panel")).toBeVisible());
@@ -282,6 +296,9 @@ describe("B0 device presentation state", () => {
         expect.objectContaining({ message: "synthetic promise failure" })
       );
     } finally {
+      act(() => {
+        for (const appRoot of createdRoots.slice(rootsBefore)) appRoot.unmount();
+      });
       root.remove();
       vi.unstubAllGlobals();
     }
